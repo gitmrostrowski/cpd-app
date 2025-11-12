@@ -1,10 +1,9 @@
 // lib/supabaseServer.ts
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { cookies } from "next/headers";
+import { createServerClient, type SupabaseClient } from "@supabase/ssr";
 
-export async function createServerSupabase() {
-  // Next 15: cookies() jest asynchroniczne i zwraca ReadonlyRequestCookies
-  const cookieStore = await cookies();
+export function createServerSupabase(): SupabaseClient {
+  const cookieStore = cookies(); // <— bez await!
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,12 +13,12 @@ export async function createServerSupabase() {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        // W App Routerze (bez NextResponse) nie ustawiamy cookies – to no-op.
-        set(_name: string, _value: string, _options: CookieOptions) {
-          /* no-op on server */
+        // Jeśli lint marudzi o "any", możesz dodać @ts-expect-error lub typ własny
+        set(name: string, value: string, options: any) {
+          try { cookieStore.set({ name, value, ...options }); } catch {}
         },
-        remove(_name: string, _options: CookieOptions) {
-          /* no-op on server */
+        remove(name: string, options: any) {
+          try { cookieStore.set({ name, value: "", ...options }); } catch {}
         },
       },
     }
