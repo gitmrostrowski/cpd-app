@@ -1,8 +1,7 @@
-// app/api/activities/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { supabaseServer } from "@/lib/supabase/server";
-import type { Database } from "@/types/supabase";
+import { supabaseServer } from "../../../lib/supabase/server";
+import type { Database } from "../../../types/supabase";
 
 type ActivityInsert = Database["public"]["Tables"]["activities"]["Insert"];
 
@@ -29,7 +28,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Nie podajemy user_id — wstawi DB (DEFAULT auth.uid()).
   const payload: ActivityInsert = {
     title: parsed.data.title,
     type: parsed.data.type,
