@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ⬇️ WYMAGANE przez Twoje typy: przekazujemy user_id z tokena
   const payload: ActivityInsert = {
     user_id: authData.user.id,
     title: parsed.data.title,
@@ -38,7 +37,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from("activities")
-    .insert([payload])
+    .insert<ActivityInsert>([payload]) // <-- KLUCZOWE
     .select("*")
     .single();
 
