@@ -38,21 +38,18 @@ export async function GET() {
     headless: true, // bezpiecznie na Vercel
   });
 
-  const page = await browser.newPage();
-  await page.setViewport({ width: 1280, height: 800 }); // opcjonalnie
-  await page.setContent(html, { waitUntil: 'networkidle0' });
-
   const pdf = await page.pdf({ format: 'A4', printBackground: true });
   await browser.close();
 
-  // Response potrzebuje ArrayBuffer
-  const buf = Buffer.isBuffer(pdf) ? pdf : Buffer.from(pdf as Uint8Array);
-  const arr = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+  // Zamiast ArrayBuffer -> Blob (prościej dla TS)
+  const pdfBuf = Buffer.isBuffer(pdf) ? pdf : Buffer.from(pdf as Uint8Array);
+  const blob = new Blob([pdfBuf], { type: 'application/pdf' });
 
-  return new Response(arr, {
+  return new Response(blob, {
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': 'attachment; filename="cpd-portfolio.pdf"',
     },
   });
+
 }
