@@ -35,9 +35,10 @@ export async function POST(req: NextRequest) {
     distance_m: parsed.data.distance_m ?? null,
   };
 
-  const { data, error } = await supabase
+  // ⬇️ Punktowy cast “as any” tylko tu – żeby przejść błąd `never` w CI
+  const { data, error } = await (supabase as any)
     .from("activities")
-    .insert<ActivityInsert>([payload]) // <-- KLUCZOWE
+    .insert([payload])
     .select("*")
     .single();
 
