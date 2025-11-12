@@ -1,43 +1,70 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabase } from '@/lib/supabaseServer'
-import crypto from 'crypto'
+// app/api/activities/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import type { Database } from "@/types/supabase";
+
+const bodySchema = z.object({
+  title: z.string().min(1),
+  type: z.enum(["ride", "run", "walk"]),
+  distance_m: z.number().int().nonnegative().optional(),
+});
+
+type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
 
 export async function POST(req: NextRequest) {
-  try {
-    const form = await req.formData()
-    const title = String(form.get('title') || '')
-    const organizer = String(form.get('organizer') || '')
-    const activityDate = String(form.get('activityDate') || '')
-    const points = Number(form.get('points') || 0)
-    const status = String(form.get('status') || 'confirmed')
-    const file = form.get('file') as File | null
+  const supabase = createSupabaseServerClient();
 
-    const supabase = await createServerSupabase()
-    const { data: auth } = await supabase.auth.getUser()
-    if (!auth?.user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
-
-    const { data: ins, error } = await supabase.from('activities').insert({
-      user_id: auth.user.id,
-      title,
-      organizer,
-      activity_date: activityDate,
-      points,
-      status
-    }).select('id').single()
-
-    if (error) throw error
-    if (file && file.size > 0) {
-      const arrayBuffer = await file.arrayBuffer()
-      const buf = Buffer.from(arrayBuffer)
-      const hash = crypto.createHash('sha256').update(buf).digest('hex')
-      const path = `certificates/${auth.user.id}/${ins.id}_${file.name}`
-      const { error: upErr } = await supabase.storage.from('certificates').upload(path, buf, { contentType: file.type })
-      if (upErr) throw upErr
-      await supabase.from('attachments').insert({ activity_id: ins.id, file_path: path, file_hash: hash })
+  const raw = await req.json().catch(() => null);
+  const parsed = bodySchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid payload", details: parsed.error.flatten() },
+      { status: 400 }
+    );
     }
 
-    return NextResponse.json({ ok: true })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Error' }, { status: 500 })
+  const { data: auth, error: authErr } = await supabase.auth.getUser();
+  if (authErr || !auth?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const { data, error } = await supabase
+    .from("activities")
+    .insert({
+      user_id: auth.user.id,
+      title: parsed.data.title,
+      type: parsed.data.type,
+      distance_m: parsed.data.distance_m ?? null,
+    })
+    .select()
+    .single<ActivityRow>();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data, { status: 201 });
+}
+
+export async function GET(req: NextRequest) {
+  const supabase = createSupabaseServerClient();
+  const url = new URL(req.url);
+  const limit = Number(url.searchParams.get("limit") ?? "20");
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { data, error } = await supabase
+    .from("activities")
+    .select("*")
+    .eq("user_id", auth.user.id)
+    .order("created_at", { ascending: false })
+    .limit(Number.isFinite(limit) ? limit : 20);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json(data ?? []);
 }
