@@ -1,7 +1,7 @@
 import Link from 'next/link'; import { createClient } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 export default async function Page() {
-  const supabase = createClient(); const { data: auth } = await supabase.auth.getUser();
+  const supabase = await createClient(); const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return <div>Musisz się zalogować.</div>;
   const { data: activities } = await supabase.from('activities').select('id,title,activity_date,points,status').order('activity_date', { ascending: false });
   return (<div><div className='flex items-center justify-between'><h1 className='text-2xl font-semibold'>Aktywności</h1><Link href='/activities/new' className='text-sm underline'>Dodaj</Link></div>
