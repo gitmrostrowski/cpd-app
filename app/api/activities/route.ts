@@ -12,7 +12,7 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const supabase = supabaseServer();
+  const supabase = supabaseServer(); // ⬅︎ SYNCHRONICZNIE
 
   const { data: authData, error: authError } = await supabase.auth.getUser();
   if (authError || !authData?.user) {
@@ -22,10 +22,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten() },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
   const payload: ActivityInsert = {
@@ -35,16 +32,12 @@ export async function POST(req: NextRequest) {
     distance_m: parsed.data.distance_m ?? null,
   };
 
-  // ⬇️ Punktowy cast “as any” tylko tu – żeby przejść błąd `never` w CI
   const { data, error } = await (supabase as any)
     .from("activities")
     .insert([payload])
     .select("*")
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
 }
