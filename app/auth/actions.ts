@@ -1,10 +1,11 @@
-'use server'
+// app/auth/actions.ts
+"use server";
 
-import { redirect } from 'next/navigation'
-import { createServerSupabase } from '@/lib/supabaseServer'
+import { redirect } from "next/navigation";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export async function signOut() {
-  const supabase = createServerSupabase()
-  await supabase.auth.signOut()
-  redirect('/')
+  const supabase = supabaseServer(); // bez await
+  await supabase.auth.signOut();
+  redirect("/");
 }

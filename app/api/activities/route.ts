@@ -1,70 +1,50 @@
 // app/api/activities/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabase/server";
 import type { Database } from "@/types/supabase";
 
-const bodySchema = z.object({
-  title: z.string().min(1),
+type ActivityInsert = Database["public"]["Tables"]["activities"]["Insert"];
+
+const schema = z.object({
+  title: z.string().min(1, "Title is required"),
   type: z.enum(["ride", "run", "walk"]),
-  distance_m: z.number().int().nonnegative().optional(),
+  distance_m: z.number().nullable().optional(),
 });
 
-type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
-
 export async function POST(req: NextRequest) {
-  const supabase = createSupabaseServerClient();
+  const supabase = supabaseServer();
 
-  const raw = await req.json().catch(() => null);
-  const parsed = bodySchema.safeParse(raw);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid payload", details: parsed.error.flatten() },
-      { status: 400 }
-    );
-    }
-
-  const { data: auth, error: authErr } = await supabase.auth.getUser();
-  if (authErr || !auth?.user) {
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const body = await req.json().catch(() => null);
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  // Nie podajemy user_id — wstawi DB (DEFAULT auth.uid()).
+  const payload: ActivityInsert = {
+    title: parsed.data.title,
+    type: parsed.data.type,
+    distance_m: parsed.data.distance_m ?? null,
+  };
+
   const { data, error } = await supabase
     .from("activities")
-    .insert({
-      user_id: auth.user.id,
-      title: parsed.data.title,
-      type: parsed.data.type,
-      distance_m: parsed.data.distance_m ?? null,
-    })
-    .select()
-    .single<ActivityRow>();
+    .insert([payload])
+    .select("*")
+    .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   return NextResponse.json(data, { status: 201 });
-}
-
-export async function GET(req: NextRequest) {
-  const supabase = createSupabaseServerClient();
-  const url = new URL(req.url);
-  const limit = Number(url.searchParams.get("limit") ?? "20");
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data, error } = await supabase
-    .from("activities")
-    .select("*")
-    .eq("user_id", auth.user.id)
-    .order("created_at", { ascending: false })
-    .limit(Number.isFinite(limit) ? limit : 20);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-  return NextResponse.json(data ?? []);
 }
