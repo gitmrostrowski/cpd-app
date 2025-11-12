@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     const status = String(form.get('status') || 'confirmed')
     const file = form.get('file') as File | null
 
-    const supabase = createServerSupabase()
+    const supabase = await createServerSupabase()
     const { data: auth } = await supabase.auth.getUser()
     if (!auth?.user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
