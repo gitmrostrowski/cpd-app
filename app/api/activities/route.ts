@@ -28,7 +28,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // ⬇️ WYMAGANE przez Twoje typy: przekazujemy user_id z tokena
   const payload: ActivityInsert = {
+    user_id: authData.user.id,
     title: parsed.data.title,
     type: parsed.data.type,
     distance_m: parsed.data.distance_m ?? null,
