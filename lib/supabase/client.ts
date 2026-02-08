@@ -1,38 +1,19 @@
 "use client";
 
-import { createBrowserClient } from "@supabase/ssr";
-import type { Database } from "../../types/supabase";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/types";
 
-function mustGetEnv(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY") {
-  const v = process.env[name];
-  if (!v || !v.trim()) {
-    throw new Error(`Missing env: ${name}`);
-  }
-  return v.trim();
-}
+// ⚠️ MUSI być statycznie (Next inlinuje tylko takie odwołania)
+const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim();
+const SUPABASE_ANON = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "").trim();
 
-function normalizeSupabaseUrl(raw: string) {
-  let url = raw.trim();
+let _client: SupabaseClient<Database> | null = null;
 
-  // jeśli ktoś wkleił bez https
-  if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+export function supabaseBrowser(): SupabaseClient<Database> {
+  if (!SUPABASE_URL) throw new Error("Missing env: NEXT_PUBLIC_SUPABASE_URL");
+  if (!SUPABASE_ANON) throw new Error("Missing env: NEXT_PUBLIC_SUPABASE_ANON_KEY");
 
-  // usuń trailing slash (czasem robi problemy w niektórych setupach)
-  url = url.replace(/\/+$/, "");
-
-  // twarda walidacja: musi być *.supabase.co
-  if (!/\.supabase\.co$/i.test(new URL(url).host)) {
-    throw new Error(
-      `Invalid NEXT_PUBLIC_SUPABASE_URL: "${url}". Expected something like "https://<project>.supabase.co".`
-    );
-  }
-
-  return url;
-}
-
-export function supabaseClient() {
-  const url = normalizeSupabaseUrl(mustGetEnv("NEXT_PUBLIC_SUPABASE_URL"));
-  const anon = mustGetEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-
-  return createBrowserClient<Database>(url, anon);
+  if (_client) return _client;
+  _client = createClient<Database>(SUPABASE_URL, SUPABASE_ANON);
+  return _client;
 }
