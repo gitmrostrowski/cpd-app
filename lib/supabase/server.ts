@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../types/supabase";
+import type { Database } from "@/types/supabase";
 
 /**
  * Synchronizujemy API: cookies() bywa typowane u Ciebie jako Promise.
