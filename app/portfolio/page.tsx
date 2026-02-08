@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { addActivity, deleteActivity } from "./actions";
+import ImportFromCalculator from "./ImportFromCalculator";
 import {
   normalizePeriod,
   sumPoints,
@@ -10,6 +11,8 @@ import {
   type ActivityLike,
 } from "@/lib/cpd/calc";
 
+export const dynamic = "force-dynamic";
+
 type DbActivity = {
   id: string;
   type: string;
@@ -18,6 +21,17 @@ type DbActivity = {
   organizer: string | null;
   created_at: string;
 };
+
+const TYPES = [
+  "Kurs stacjonarny",
+  "Kurs online / webinar",
+  "Konferencja / kongres",
+  "Warsztaty praktyczne",
+  "Publikacja naukowa",
+  "Prowadzenie szkolenia",
+  "Samokształcenie",
+  "Staż / praktyka",
+] as const;
 
 export default async function PortfolioPage() {
   const supabase = supabaseServer();
@@ -33,7 +47,7 @@ export default async function PortfolioPage() {
   const requiredPoints = 200;
 
   const { data, error } = await supabase
-    .from("activities") // <-- WAŻNE: dopasowane do Twojego projektu
+    .from("activities") // dopasowane do Twojego projektu
     .select("id,type,points,year,organizer,created_at")
     .order("year", { ascending: false })
     .order("created_at", { ascending: false });
@@ -67,9 +81,7 @@ export default async function PortfolioPage() {
     <div className="mx-auto w-full max-w-6xl">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-            Portfolio Dashboard
-          </h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Portfolio Dashboard</h1>
           <p className="mt-2 text-slate-600">
             Liczymy punkty w okresie{" "}
             <span className="font-medium text-slate-900">
@@ -78,6 +90,11 @@ export default async function PortfolioPage() {
             .
           </p>
         </div>
+      </div>
+
+      {/* Import z kalkulatora (localStorage -> Supabase) */}
+      <div className="mb-6">
+        <ImportFromCalculator />
       </div>
 
       {/* Status */}
@@ -98,15 +115,15 @@ export default async function PortfolioPage() {
         <div className="mt-4 grid grid-cols-3 gap-3">
           <div className="rounded-xl bg-white/60 p-3">
             <div className="text-xs text-slate-600">Masz</div>
-            <div className="text-lg font-bold text-slate-900">{total}</div>
+            <div className="text-lg font-bold text-slate-900">{Math.round(total)}</div>
           </div>
           <div className="rounded-xl bg-white/60 p-3">
             <div className="text-xs text-slate-600">Wymagane</div>
-            <div className="text-lg font-bold text-slate-900">{requiredPoints}</div>
+            <div className="text-lg font-bold text-slate-900">{Math.round(requiredPoints)}</div>
           </div>
           <div className="rounded-xl bg-white/60 p-3">
             <div className="text-xs text-slate-600">Brakuje</div>
-            <div className="text-lg font-bold text-slate-900">{missing}</div>
+            <div className="text-lg font-bold text-slate-900">{Math.round(missing)}</div>
           </div>
         </div>
 
@@ -128,11 +145,17 @@ export default async function PortfolioPage() {
         <form action={addActivity} className="mt-4 grid gap-3 md:grid-cols-12">
           <div className="md:col-span-4">
             <label className="text-sm font-medium text-slate-700">Rodzaj</label>
-            <input
+            <select
               name="type"
               defaultValue="Kurs online / webinar"
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-            />
+            >
+              {TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="md:col-span-2">
@@ -195,6 +218,7 @@ export default async function PortfolioPage() {
               <tbody>
                 {activities.map((a) => {
                   const inPeriod = a.year >= period.start && a.year <= period.end;
+
                   return (
                     <tr key={a.id} className="text-sm">
                       <td className="border-b px-3 py-3">{a.type}</td>
