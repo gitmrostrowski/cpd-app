@@ -4,14 +4,23 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase/client";
 
+function isRateLimitError(message?: string) {
+  const m = (message ?? "").toLowerCase();
+  return m.includes("rate limit") || m.includes("too many requests") || m.includes("throttle");
+}
+
 export default function LoginPage() {
   const supabase = supabaseClient();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  // cooldown dla maili (otp / signup), żeby nie wpadać w limit
+  const [emailCooldownUntil, setEmailCooldownUntil] = useState<number>(0);
 
   const redirectTo = useMemo(() => {
     // callback endpoint musi istnieć: app/auth/callback/route.ts
@@ -19,11 +28,20 @@ export default function LoginPage() {
     return `${window.location.origin}/auth/callback`;
   }, []);
 
-  const canSubmit = email.trim().length > 3 && password.length >= 6;
+  const emailTrim = email.trim();
+  const canPasswordSubmit = emailTrim.length > 3 && password.length >= 6;
+  const canEmailSubmit = emailTrim.length > 3;
+
+  const now = Date.now();
+  const emailCooldownActive = now < emailCooldownUntil;
+  const cooldownSecondsLeft = emailCooldownActive
+    ? Math.ceil((emailCooldownUntil - now) / 1000)
+    : 0;
 
   async function signInWithPassword(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit) {
+
+    if (!canPasswordSubmit) {
       setMsg("Wpisz poprawny e-mail i hasło (min. 6 znaków).");
       return;
     }
@@ -33,19 +51,19 @@ export default function LoginPage() {
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: emailTrim,
         password,
       });
 
       if (error) {
-        setMsg(error.message);
+        setMsg(error.message || "Nie udało się zalogować.");
         return;
       }
 
       // jeśli email confirmations włączone, a użytkownik nie potwierdził,
       // Supabase potrafi nie dać sesji
       if (!data.session) {
-        setMsg("Zalogowanie nie powiodło się — sprawdź czy konto zostało potwierdzone e-mailem.");
+        setMsg("Brak sesji po logowaniu. Sprawdź czy konto jest potwierdzone e-mailem.");
         return;
       }
 
@@ -59,8 +77,14 @@ export default function LoginPage() {
 
   async function signUp(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
-    if (!canSubmit) {
+
+    if (!canPasswordSubmit) {
       setMsg("Wpisz poprawny e-mail i hasło (min. 6 znaków).");
+      return;
+    }
+
+    if (emailCooldownActive) {
+      setMsg(`Odczekaj ${cooldownSecondsLeft}s przed kolejną wysyłką e-mail.`);
       return;
     }
 
@@ -69,7 +93,7 @@ export default function LoginPage() {
 
     try {
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: emailTrim,
         password,
         options: {
           emailRedirectTo: redirectTo,
@@ -77,7 +101,12 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setMsg(error.message);
+        if (isRateLimitError(error.message)) {
+          setMsg("Za dużo prób wysyłki e-mail. Odczekaj 1–2 minuty i spróbuj ponownie.");
+          setEmailCooldownUntil(Date.now() + 90_000);
+          return;
+        }
+        setMsg(error.message || "Nie udało się utworzyć konta.");
         return;
       }
 
@@ -89,6 +118,7 @@ export default function LoginPage() {
 
       // Jeśli potwierdzenia są WŁĄCZONE — user powstaje, ale bez sesji
       setMsg("Konto utworzone. Sprawdź e-mail i kliknij link aktywacyjny, potem zaloguj się.");
+      setEmailCooldownUntil(Date.now() + 60_000);
     } catch (err: any) {
       setMsg(err?.message || "Nie udało się utworzyć konta (błąd połączenia).");
     } finally {
@@ -98,8 +128,14 @@ export default function LoginPage() {
 
   async function magicLink(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
-    if (email.trim().length < 4) {
+
+    if (!canEmailSubmit) {
       setMsg("Wpisz poprawny e-mail.");
+      return;
+    }
+
+    if (emailCooldownActive) {
+      setMsg(`Odczekaj ${cooldownSecondsLeft}s przed kolejną wysyłką e-mail.`);
       return;
     }
 
@@ -108,14 +144,24 @@ export default function LoginPage() {
 
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
+        email: emailTrim,
         options: {
           emailRedirectTo: redirectTo,
         },
       });
 
-      if (error) setMsg(error.message);
-      else setMsg("Wysłaliśmy link logowania na e-mail.");
+      if (error) {
+        if (isRateLimitError(error.message)) {
+          setMsg("Za dużo prób wysyłki e-mail. Odczekaj 1–2 minuty i spróbuj ponownie.");
+          setEmailCooldownUntil(Date.now() + 90_000);
+          return;
+        }
+        setMsg(error.message || "Nie udało się wysłać linku.");
+        return;
+      }
+
+      setMsg("Wysłaliśmy link logowania na e-mail.");
+      setEmailCooldownUntil(Date.now() + 60_000);
     } catch (err: any) {
       setMsg(err?.message || "Nie udało się wysłać linku (błąd połączenia).");
     } finally {
@@ -151,28 +197,43 @@ export default function LoginPage() {
 
         <button
           className="w-full rounded border bg-black p-2 text-white disabled:opacity-60"
-          disabled={pending}
+          disabled={pending || !canPasswordSubmit}
           type="submit"
+          title={!canPasswordSubmit ? "Wpisz e-mail i hasło (min. 6 znaków)" : undefined}
         >
           {pending ? "Loguję…" : "Zaloguj (hasło)"}
         </button>
 
         <button
           className="w-full rounded border p-2 disabled:opacity-60"
-          disabled={pending}
+          disabled={pending || !canPasswordSubmit || emailCooldownActive}
           type="button"
           onClick={signUp}
+          title={
+            emailCooldownActive
+              ? `Odczekaj ${cooldownSecondsLeft}s`
+              : !canPasswordSubmit
+              ? "Wpisz e-mail i hasło (min. 6 znaków)"
+              : undefined
+          }
         >
-          Załóż konto
+          {emailCooldownActive ? `Załóż konto (${cooldownSecondsLeft}s)` : "Załóż konto"}
         </button>
 
         <button
           className="w-full rounded border p-2 disabled:opacity-60"
-          disabled={pending}
+          disabled={pending || !canEmailSubmit || emailCooldownActive}
           type="button"
           onClick={magicLink}
+          title={
+            emailCooldownActive
+              ? `Odczekaj ${cooldownSecondsLeft}s`
+              : !canEmailSubmit
+              ? "Wpisz e-mail"
+              : undefined
+          }
         >
-          Magic link na e-mail
+          {emailCooldownActive ? `Magic link (${cooldownSecondsLeft}s)` : "Magic link na e-mail"}
         </button>
       </form>
 
