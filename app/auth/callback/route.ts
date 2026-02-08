@@ -4,15 +4,13 @@ import { supabaseServer } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-
-  // gdzie przekierować po udanym logowaniu
   const next = url.searchParams.get("next") ?? "/portfolio";
 
   if (!code) {
     return NextResponse.redirect(new URL(`/login?e=missing_code`, url.origin));
   }
 
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
