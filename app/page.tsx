@@ -10,10 +10,9 @@ import Hero from "@/components/Hero";
 import FeatureGrid from "@/components/FeatureGrid";
 import BottomCTA from "@/components/BottomCTA";
 
-type PointsRow = {
-  total_points: number | null;
-  period_start: string | null;
-  period_end: string | null;
+type ActivityRow = {
+  points: number;
+  created_at: string;
 };
 
 export default function Page() {
@@ -27,22 +26,56 @@ export default function Page() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: auth } = await supabase.auth.getUser();
+      const { data: auth, error: authError } = await supabase.auth.getUser();
+      if (authError) {
+        console.error(authError);
+        return;
+      }
+
       const user = auth?.user ?? null;
       setUserEmail(user?.email ?? null);
       if (!user) return;
 
-      const { data } = await supabase
-        .from("v_user_points")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle<PointsRow>();
+      const { data: rows, error } = await supabase
+        .from("activities")
+        .select("points, created_at")
+        .eq("user_id", user.id);
 
-      if (data) {
-        setPoints(Number(data.total_points ?? 0));
-        setPeriodStart(data.period_start);
-        setPeriodEnd(data.period_end);
+      if (error) {
+        console.error(error);
+        return;
       }
+
+      const list = (rows ?? []) as ActivityRow[];
+
+      const sum = list.reduce((acc, r) => acc + (Number(r.points) || 0), 0);
+      setPoints(sum);
+
+      if (!list.length) {
+        setPeriodStart(null);
+        setPeriodEnd(null);
+        return;
+      }
+
+      // okres jako min/max created_at
+      const dates = list
+        .map((r) => (r.created_at ? new Date(r.created_at) : null))
+        .filter((d): d is Date => !!d && !isNaN(d.getTime()));
+
+      if (!dates.length) {
+        setPeriodStart(null);
+        setPeriodEnd(null);
+        return;
+      }
+
+      const minD = new Date(Math.min(...dates.map((d) => d.getTime())));
+      const maxD = new Date(Math.max(...dates.map((d) => d.getTime())));
+
+      const fmt = (d: Date) =>
+        d.toLocaleDateString("pl-PL", { year: "numeric", month: "2-digit", day: "2-digit" });
+
+      setPeriodStart(fmt(minD));
+      setPeriodEnd(fmt(maxD));
     };
 
     fetchData();
@@ -57,13 +90,9 @@ export default function Page() {
 
   return (
     <>
-      {/* HERO + pas jak na CPDme */}
       <Hero />
-
-      {/* Siatka funkcji */}
       <FeatureGrid />
 
-      {/* Sekcja „Dashboard” – Twoje kafle (widoczne zawsze; przy niezalogowanym z CTA) */}
       <section className="mx-auto max-w-6xl px-4 py-12">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-3xl font-bold">Dashboard</h2>
@@ -99,7 +128,7 @@ export default function Page() {
           <div className="rounded-2xl border bg-white p-5">
             <div className="text-sm text-slate-500">Okres</div>
             <div className="mt-2 text-2xl font-semibold">
-              {periodStart ?? "—"} {periodStart && "–"} {periodEnd ?? ""}
+              {periodStart ?? "—"} {periodStart && periodEnd && "–"} {periodEnd ?? ""}
             </div>
           </div>
         </div>
@@ -111,7 +140,6 @@ export default function Page() {
         )}
       </section>
 
-      {/* Dolny pasek z wezwaniem do działania */}
       <BottomCTA />
     </>
   );
