@@ -12,3 +12,6 @@ export function supabaseBrowser() {
 
   return createBrowserClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
+
+// ✅ alias pod Twoje istniejące importy w app/page.tsx
+export const createBrowserSupabase = supabaseBrowser;
