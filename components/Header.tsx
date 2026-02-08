@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
 
 const NAV = [
   { href: "/", label: "Home" },
@@ -15,6 +16,8 @@ const NAV = [
 export default function Header() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+
+  const { user, loading, signOut } = useAuth();
 
   useEffect(() => {
     const onResize = () => {
@@ -30,6 +33,15 @@ export default function Header() {
         ? "bg-blue-50 text-blue-700 font-semibold"
         : "text-slate-700 hover:bg-slate-100"
     }`;
+
+  const isActive = (href: string) => pathname === href;
+
+  async function handleSignOut() {
+    await signOut();
+    setOpen(false);
+    // opcjonalnie: możesz przekierować po wylogowaniu, ale nie jest to konieczne
+    // router.push("/login");
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white backdrop-blur shadow-sm">
@@ -48,25 +60,57 @@ export default function Header() {
                 key={href}
                 href={href}
                 className={linkCls(href)}
-                aria-current={pathname === href ? "page" : undefined}
+                aria-current={isActive(href) ? "page" : undefined}
               >
                 {label}
               </Link>
             ))}
 
-            {/* CTA */}
-            <Link
-              href="/login"
-              className="ml-3 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
-            >
-              Portfolio Dashboard
-            </Link>
+            {/* AUTH AREA (DESKTOP) */}
+            <div className="ml-3 flex items-center gap-2">
+              {loading ? (
+                <div className="rounded-xl border px-3 py-2 text-sm text-slate-600">
+                  Sprawdzam sesję…
+                </div>
+              ) : user ? (
+                <>
+                  <div className="hidden md:block rounded-xl border px-3 py-2 text-sm">
+                    ✅ Zalogowany: <span className="font-medium">{user.email}</span>
+                  </div>
+
+                  {/* “Ludzik” */}
+                  <Link
+                    href="/profil"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border hover:bg-slate-50"
+                    aria-label="Profil"
+                    title="Profil"
+                  >
+                    👤
+                  </Link>
+
+                  <button
+                    onClick={handleSignOut}
+                    className="rounded-xl border px-4 py-2 text-sm font-medium hover:bg-slate-50"
+                    type="button"
+                  >
+                    Wyloguj
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+                >
+                  Zaloguj / Portfolio
+                </Link>
+              )}
+            </div>
           </nav>
 
           {/* HAMBURGER */}
           <button
             className="sm:hidden ml-auto inline-flex items-center rounded-xl border border-slate-300 px-3 py-2 text-slate-700"
-            onClick={() => setOpen(v => !v)}
+            onClick={() => setOpen((v) => !v)}
             aria-label="Menu"
           >
             ☰
@@ -82,20 +126,51 @@ export default function Header() {
                   key={href}
                   href={href}
                   className={linkCls(href)}
-                  aria-current={pathname === href ? "page" : undefined}
+                  aria-current={isActive(href) ? "page" : undefined}
                   onClick={() => setOpen(false)}
                 >
                   {label}
                 </Link>
               ))}
 
-              <Link
-                href="/login"
-                className="mt-3 rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-blue-700"
-                onClick={() => setOpen(false)}
-              >
-                Portfolio Dashboard
-              </Link>
+              {/* AUTH AREA (MOBILE) */}
+              <div className="mt-3 flex flex-col gap-2">
+                {loading ? (
+                  <div className="rounded-xl border px-4 py-2 text-sm text-slate-600">
+                    Sprawdzam sesję…
+                  </div>
+                ) : user ? (
+                  <>
+                    <div className="rounded-xl border px-4 py-2 text-sm">
+                      ✅ Zalogowany: <span className="font-medium">{user.email}</span>
+                    </div>
+
+                    <Link
+                      href="/profil"
+                      className="rounded-xl border px-4 py-2 text-center text-sm font-medium hover:bg-slate-50"
+                      onClick={() => setOpen(false)}
+                    >
+                      👤 Profil i ustawienia
+                    </Link>
+
+                    <button
+                      onClick={handleSignOut}
+                      className="rounded-xl border px-4 py-2 text-sm font-medium hover:bg-slate-50"
+                      type="button"
+                    >
+                      Wyloguj
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-blue-700"
+                    onClick={() => setOpen(false)}
+                  >
+                    Zaloguj / Portfolio
+                  </Link>
+                )}
+              </div>
             </div>
           </nav>
         )}
