@@ -1,6 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  normalizePeriod,
+  sumPoints,
+  calcMissing,
+  calcProgress,
+  getStatus,
+  getQuickRecommendations,
+} from "@/lib/cpd/calc";
 
 type ActivityType =
   | "Kurs stacjonarny"
@@ -42,10 +50,6 @@ function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n));
-}
-
 function formatInt(n: number) {
   return Number.isFinite(n) ? Math.round(n).toString() : "0";
 }
@@ -65,46 +69,26 @@ export default function CalculatorClient() {
     { id: uid(), type: "Konferencja / kongres", points: 20, year: currentYear, organizer: "" },
   ]);
 
-  const period = useMemo(() => {
+  // okres z UI (może być odwrócony), a potem normalizujemy do start<=end
+  const rawPeriod = useMemo(() => {
     const found = PERIODS.find((p) => p.label === periodLabel);
     if (!found) return { start: currentYear - 3, end: currentYear };
     if (found.label !== "Inny") return { start: found.start, end: found.end };
     return { start: customStart, end: customEnd };
   }, [periodLabel, customStart, customEnd, currentYear]);
 
-  const filteredActivities = useMemo(() => {
-    const start = Math.min(period.start, period.end);
-    const end = Math.max(period.start, period.end);
-    return activities.filter((a) => a.year >= start && a.year <= end);
-  }, [activities, period.start, period.end]);
+  const period = useMemo(() => normalizePeriod(rawPeriod), [rawPeriod]);
 
-  const totalPoints = useMemo(() => {
-    return filteredActivities.reduce((sum, a) => sum + (Number(a.points) || 0), 0);
-  }, [filteredActivities]);
+  // Wspólne obliczenia (te same zasady będą w Portfolio)
+  const totalPoints = useMemo(() => sumPoints(activities, period), [activities, period]);
 
-  const missing = Math.max(0, (Number(requiredPoints) || 0) - totalPoints);
-  const progress = requiredPoints > 0 ? clamp((totalPoints / requiredPoints) * 100, 0, 100) : 0;
+  const missing = useMemo(() => calcMissing(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
 
-  const status = useMemo(() => {
-    if (requiredPoints <= 0) return { tone: "neutral", title: "Ustaw wymagane punkty", desc: "" };
-    if (totalPoints >= requiredPoints)
-      return {
-        tone: "ok",
-        title: "Wygląda dobrze ✅",
-        desc: "Masz wystarczającą liczbę punktów na ten okres.",
-      };
-    if (missing <= 20)
-      return {
-        tone: "warn",
-        title: "Prawie! 🟡",
-        desc: "Brakuje niewiele — warto zaplanować 1–2 aktywności.",
-      };
-    return {
-      tone: "risk",
-      title: "Do nadrobienia 🔴",
-      desc: "Brakuje sporo punktów — rozważ plan uzupełnień na najbliższe miesiące.",
-    };
-  }, [missing, requiredPoints, totalPoints]);
+  const progress = useMemo(() => calcProgress(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
+
+  const status = useMemo(() => getStatus(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
+
+  const recommendations = useMemo(() => getQuickRecommendations(missing), [missing]);
 
   function addActivity() {
     setActivities((prev) => [
@@ -120,35 +104,6 @@ export default function CalculatorClient() {
   function removeActivity(id: string) {
     setActivities((prev) => prev.filter((a) => a.id !== id));
   }
-
-  const recommendations = useMemo(() => {
-    if (missing <= 0) return [];
-    // Proste, sensowne „koszyki” uzupełnień
-    const items = [
-      { label: "Kurs online / webinar", pts: 10 },
-      { label: "Konferencja / kongres", pts: 20 },
-      { label: "Warsztaty praktyczne", pts: 15 },
-    ];
-    // generujemy 2-3 propozycje
-    const combos: string[] = [];
-    const m = missing;
-
-    const nWebinars = Math.ceil(m / 10);
-    combos.push(`${nWebinars}× webinar/kurs online (po 10 pkt) ≈ ${nWebinars * 10} pkt`);
-
-    const nConfs = Math.ceil(m / 20);
-    combos.push(`${nConfs}× konferencja (po 20 pkt) ≈ ${nConfs * 20} pkt`);
-
-    const mix = Math.max(1, Math.floor(m / 20));
-    const rest = Math.max(0, m - mix * 20);
-    const restWebinars = Math.ceil(rest / 10);
-    combos.push(
-      `${mix}× konferencja (20 pkt) + ${restWebinars}× webinar (10 pkt) ≈ ${mix * 20 + restWebinars * 10} pkt`
-    );
-
-    // unikamy duplikatów
-    return Array.from(new Set(combos)).slice(0, 3);
-  }, [missing]);
 
   const toneStyles =
     status.tone === "ok"
@@ -247,7 +202,7 @@ export default function CalculatorClient() {
             <div className="text-right">
               <div className="text-xs opacity-80">Okres</div>
               <div className="text-sm font-semibold">
-                {Math.min(period.start, period.end)}–{Math.max(period.start, period.end)}
+                {period.start}–{period.end}
               </div>
             </div>
           </div>
@@ -321,9 +276,7 @@ export default function CalculatorClient() {
               </thead>
               <tbody>
                 {activities.map((a) => {
-                  const inPeriod =
-                    a.year >= Math.min(period.start, period.end) &&
-                    a.year <= Math.max(period.start, period.end);
+                  const inPeriod = a.year >= period.start && a.year <= period.end;
 
                   return (
                     <tr key={a.id} className="text-sm">
@@ -341,7 +294,7 @@ export default function CalculatorClient() {
                         </select>
                         {!inPeriod && (
                           <div className="mt-1 text-xs text-amber-700">
-                            Poza okresem {Math.min(period.start, period.end)}–{Math.max(period.start, period.end)}
+                            Poza okresem {period.start}–{period.end}
                           </div>
                         )}
                       </td>
@@ -394,7 +347,7 @@ export default function CalculatorClient() {
                 <div className="text-sm text-slate-600">
                   Liczymy tylko aktywności z okresu:{" "}
                   <span className="font-medium text-slate-900">
-                    {Math.min(period.start, period.end)}–{Math.max(period.start, period.end)}
+                    {period.start}–{period.end}
                   </span>
                 </div>
               </div>
