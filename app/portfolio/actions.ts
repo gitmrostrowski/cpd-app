@@ -42,7 +42,7 @@ function normalizeOrganizer(v: unknown): string | null {
 }
 
 export async function addActivity(formData: FormData) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   // auth (potrzebne do user_id)
   const { data: authData, error: authError } = await supabase.auth.getUser();
