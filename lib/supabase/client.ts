@@ -15,4 +15,8 @@ export function supabaseClient(): SupabaseClient<Database> {
 
   if (_client) return _client;
   _client = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
-  return _client_
+  return _client;
+}
+
+// ✅ opcjonalnie zostawiam alias, jeśli gdzieś już importowałeś supabaseBrowser
+export const supabaseBrowser = supabaseClient;
