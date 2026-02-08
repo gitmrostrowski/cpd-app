@@ -3,28 +3,47 @@ import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 
+function mustGetEnv(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY") {
+  const v = process.env[name];
+  if (!v || !v.trim()) {
+    throw new Error(`Missing env: ${name}`);
+  }
+  return v.trim();
+}
+
+function normalizeSupabaseUrl(raw: string) {
+  let url = raw.trim();
+
+  if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+  url = url.replace(/\/+$/, "");
+
+  const host = new URL(url).host;
+  if (!/\.supabase\.co$/i.test(host)) {
+    throw new Error(
+      `Invalid NEXT_PUBLIC_SUPABASE_URL: "${url}". Expected "https://<project>.supabase.co".`
+    );
+  }
+
+  return url;
+}
+
 /**
- * Synchronizujemy API: cookies() bywa typowane u Ciebie jako Promise.
- * Rzutujemy je na zwykłą funkcję zwracającą store, żeby TS przestał krzyczeć.
+ * Server-side Supabase client (SSR + cookies)
  */
 export function supabaseServer(): SupabaseClient<Database> {
-  const getCookieStore = cookies as unknown as () => {
-    get: (name: string) => { name: string; value: string } | undefined;
-  };
-  const cookieStore = getCookieStore(); // <- TERAZ SYNC dla TS
+  const cookieStore = cookies();
 
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        // Next 14/15: z serwera nie ustawiamy ciastek – no-op
-        set() {},
-        remove() {},
+  const url = normalizeSupabaseUrl(mustGetEnv("NEXT_PUBLIC_SUPABASE_URL"));
+  const anon = mustGetEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+
+  return createServerClient<Database>(url, anon, {
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value;
       },
-    }
-  );
+      // App Router: na serwerze nie mutujemy cookies
+      set() {},
+      remove() {},
+    },
+  });
 }
