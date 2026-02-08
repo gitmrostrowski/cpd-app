@@ -1,33 +1,13 @@
-// lib/supabaseBrowser.ts
 "use client";
 
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/types";
 
-function mustGetEnv(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY") {
-  const v = process.env[name];
-  if (!v || !v.trim()) throw new Error(`Missing env: ${name}`);
-  return v.trim();
-}
+const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim();
+const SUPABASE_ANON = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "").trim();
 
-function normalizeSupabaseUrl(raw: string) {
-  let url = raw.trim();
-
-  if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
-  url = url.replace(/\/+$/, "");
-
-  const host = new URL(url).host;
-  if (!/\.supabase\.co$/i.test(host)) {
-    throw new Error(
-      `Invalid NEXT_PUBLIC_SUPABASE_URL: "${url}". Expected "https://<project>.supabase.co".`
-    );
-  }
-
-  return url;
-}
-
-export function createBrowserSupabase() {
-  const url = normalizeSupabaseUrl(mustGetEnv("NEXT_PUBLIC_SUPABASE_URL"));
-  const anon = mustGetEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-
-  return createBrowserClient(url, anon);
-}
+export const supabase = (() => {
+  if (!SUPABASE_URL) throw new Error("Missing env: NEXT_PUBLIC_SUPABASE_URL");
+  if (!SUPABASE_ANON) throw new Error("Missing env: NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  return createClient<Database>(SUPABASE_URL, SUPABASE_ANON);
+})() satisfies SupabaseClient<Database>;
