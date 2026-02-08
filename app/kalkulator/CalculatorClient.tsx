@@ -70,21 +70,25 @@ function formatInt(n: number) {
 
 const STORAGE_KEY = "crpe_calculator_v1";
 
-function safeNumber(v: any, fallback: number) {
+function safeNumber(v: unknown, fallback: number) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
 
-function safeString(v: any, fallback = "") {
+function safeString(v: unknown, fallback = "") {
   return typeof v === "string" ? v : fallback;
 }
 
-function isActivityType(v: any): v is ActivityType {
-  return TYPES.includes(v);
+function isActivityType(v: unknown): v is ActivityType {
+  return typeof v === "string" && (TYPES as readonly string[]).includes(v);
 }
 
-function isPeriodLabel(v: any): v is (typeof PERIODS)[number]["label"] {
-  return PERIODS.some((p) => p.label === v);
+function normalizeActivityType(v: unknown): ActivityType {
+  return isActivityType(v) ? v : "Kurs online / webinar";
+}
+
+function isPeriodLabel(v: unknown): v is (typeof PERIODS)[number]["label"] {
+  return typeof v === "string" && PERIODS.some((p) => p.label === v);
 }
 
 export default function CalculatorClient() {
@@ -122,14 +126,10 @@ export default function CalculatorClient() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
 
-      const parsed = JSON.parse(raw);
+      const parsed: any = JSON.parse(raw);
 
       const nextProfession = parsed?.profession;
       const nextPeriodLabel = parsed?.periodLabel;
-      const nextCustomStart = parsed?.customStart;
-      const nextCustomEnd = parsed?.customEnd;
-      const nextRequiredPoints = parsed?.requiredPoints;
-      const nextActivities = parsed?.activities;
 
       if (nextProfession === "Lekarz" || nextProfession === "Lekarz dentysta" || nextProfession === "Inne") {
         setProfession(nextProfession);
@@ -137,14 +137,15 @@ export default function CalculatorClient() {
 
       if (isPeriodLabel(nextPeriodLabel)) setPeriodLabel(nextPeriodLabel);
 
-      setCustomStart(safeNumber(nextCustomStart, currentYear - 1));
-      setCustomEnd(safeNumber(nextCustomEnd, currentYear + 2));
-      setRequiredPoints(Math.max(0, safeNumber(nextRequiredPoints, 200)));
+      setCustomStart(safeNumber(parsed?.customStart, currentYear - 1));
+      setCustomEnd(safeNumber(parsed?.customEnd, currentYear + 2));
+      setRequiredPoints(Math.max(0, safeNumber(parsed?.requiredPoints, 200)));
 
+      const nextActivities = parsed?.activities;
       if (Array.isArray(nextActivities)) {
         const cleaned: Activity[] = nextActivities
           .map((a: any) => {
-            const type = isActivityType(a?.type) ? a.type : "Kurs online / webinar";
+            const type: ActivityType = normalizeActivityType(a?.type);
             const year = safeNumber(a?.year, currentYear);
             const points = Math.max(0, safeNumber(a?.points, DEFAULT_POINTS_BY_TYPE[type]));
             const organizer = safeString(a?.organizer ?? "", "");
@@ -252,12 +253,8 @@ export default function CalculatorClient() {
         if (a.id !== id) return a;
 
         const next: Activity = { ...a, type: nextType };
-
         // jeśli user nie ruszał punktów ręcznie (pointsAuto === true) → aktualizuj punkty wg typu
-        if (a.pointsAuto) {
-          next.points = DEFAULT_POINTS_BY_TYPE[nextType];
-        }
-
+        if (a.pointsAuto) next.points = DEFAULT_POINTS_BY_TYPE[nextType];
         return next;
       }),
     );
@@ -449,86 +446,8 @@ export default function CalculatorClient() {
             </div>
           </div>
 
-          {/* MOBILE: karty (bez scrolla) */}
-          <div className="mt-5 grid gap-3 md:hidden">
-            {activities.map((a) => {
-              const inPeriod = a.year >= period.start && a.year <= period.end;
-
-              return (
-                <div key={a.id} className="rounded-2xl border border-slate-200 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-xs font-semibold text-slate-500">Rodzaj</div>
-                      <select
-                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                        value={a.type}
-                        onChange={(e) => handleTypeChange(a.id, e.target.value as ActivityType)}
-                      >
-                        {TYPES.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-
-                      {!inPeriod && (
-                        <div className="mt-1 text-xs text-amber-700">
-                          Poza okresem {period.start}–{period.end} (nie liczy się do sumy)
-                        </div>
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => removeActivity(a.id)}
-                      className="shrink-0 rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
-                    >
-                      Usuń
-                    </button>
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <div>
-                      <div className="text-xs font-semibold text-slate-500">Punkty</div>
-                      <input
-                        type="number"
-                        min={0}
-                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                        value={a.points}
-                        onChange={(e) => handlePointsChange(a.id, Number(e.target.value || 0))}
-                      />
-                      <div className="mt-1 text-[11px] text-slate-500">
-                        {a.pointsAuto ? "Auto (wg rodzaju)" : "Ręcznie (z certyfikatu)"}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-xs font-semibold text-slate-500">Rok</div>
-                      <input
-                        type="number"
-                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                        value={a.year}
-                        onChange={(e) => updateActivity(a.id, { year: Number(e.target.value || currentYear) })}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-3">
-                    <div className="text-xs font-semibold text-slate-500">Organizator (opcjonalnie)</div>
-                    <input
-                      type="text"
-                      placeholder="np. OIL / towarzystwo naukowe"
-                      className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                      value={a.organizer ?? ""}
-                      onChange={(e) => updateActivity(a.id, { organizer: e.target.value })}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
           {/* DESKTOP/TABLET: tabela */}
-          <div className="mt-5 hidden md:block">
+          <div className="mt-5">
             <table className="w-full border-separate border-spacing-0">
               <thead>
                 <tr className="text-left text-xs font-semibold text-slate-600">
