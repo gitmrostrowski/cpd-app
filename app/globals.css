@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+html, body {
+  background-color: #ffffff !important;
+  color: #000000;
+}
+
+:root {
+  color-scheme: light;
+}
