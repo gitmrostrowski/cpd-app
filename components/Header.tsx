@@ -9,6 +9,7 @@ import { useAuth } from "@/components/AuthProvider";
 const NAV = [
   { href: "/", label: "Home" },
   { href: "/kalkulator", label: "Kalkulator" },
+  { href: "/activities", label: "Aktywności" }, // ✅ DODANE
   { href: "/raporty", label: "Raporty" },
   { href: "/profil", label: "Profil" },
 ];
@@ -27,20 +28,22 @@ export default function Header() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  const isActive = (href: string) => {
+    if (!pathname) return false;
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(href + "/");
+  };
+
   const linkCls = (href: string) =>
     `px-4 py-2 rounded-xl text-sm transition-colors ${
-      pathname === href
+      isActive(href)
         ? "bg-blue-50 text-blue-700 font-semibold"
         : "text-slate-700 hover:bg-slate-100"
     }`;
 
-  const isActive = (href: string) => pathname === href;
-
   async function handleSignOut() {
     await signOut();
     setOpen(false);
-    // opcjonalnie: możesz przekierować po wylogowaniu, ale nie jest to konieczne
-    // router.push("/login");
   }
 
   return (
