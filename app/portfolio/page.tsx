@@ -34,7 +34,7 @@ const TYPES = [
 ] as const;
 
 export default async function PortfolioPage() {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const {
     data: { user },
