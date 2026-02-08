@@ -6,6 +6,10 @@ import { supabaseServer } from "@/lib/supabase/server";
 export async function addActivity(formData: FormData) {
   const supabase = supabaseServer();
 
+  // auth (potrzebne do user_id)
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user) throw new Error("Unauthorized");
+
   const type = String(formData.get("type") || "").trim();
   const points = Number(formData.get("points") || 0);
   const year = Number(formData.get("year") || 0);
@@ -18,6 +22,7 @@ export async function addActivity(formData: FormData) {
   if (!Number.isFinite(year) || year < 1900 || year > 2100) throw new Error("Invalid year");
 
   const { error } = await supabase.from("activities").insert({
+    user_id: authData.user.id,
     type,
     points,
     year,
@@ -31,13 +36,21 @@ export async function addActivity(formData: FormData) {
 
 export async function deleteActivity(formData: FormData) {
   const supabase = supabaseServer();
-  const id = String(formData.get("id") || "");
 
+  // auth (żeby nie dało się usuwać cudzych wpisów)
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user) throw new Error("Unauthorized");
+
+  const id = String(formData.get("id") || "").trim();
   if (!id) return;
 
-  const { error } = await supabase.from("activities").delete().eq("id", id);
+  const { error } = await supabase
+    .from("activities")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", authData.user.id);
+
   if (error) throw new Error(error.message);
 
   revalidatePath("/portfolio");
 }
-
