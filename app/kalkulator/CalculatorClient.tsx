@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   normalizePeriod,
   sumPoints,
@@ -9,6 +10,7 @@ import {
   getStatus,
   getQuickRecommendations,
 } from "@/lib/cpd/calc";
+import { useAuth } from "@/components/AuthProvider";
 
 type ActivityType =
   | "Kurs stacjonarny"
@@ -41,7 +43,6 @@ const TYPES: ActivityType[] = [
   "Staż / praktyka",
 ];
 
-// proste, “startowe” domyślne wartości – możesz je potem podpiąć pod realne reguły
 const DEFAULT_POINTS_BY_TYPE: Record<ActivityType, number> = {
   "Kurs stacjonarny": 15,
   "Kurs online / webinar": 10,
@@ -92,6 +93,8 @@ function isPeriodLabel(v: unknown): v is (typeof PERIODS)[number]["label"] {
 }
 
 export default function CalculatorClient() {
+  const { user, loading: authLoading } = useAuth();
+
   const currentYear = new Date().getFullYear();
 
   const [profession, setProfession] = useState<"Lekarz" | "Lekarz dentysta" | "Inne">("Lekarz");
@@ -165,7 +168,7 @@ export default function CalculatorClient() {
         if (cleaned.length) setActivities(cleaned);
       }
     } catch {
-      // jeśli localStorage ma śmieci, po prostu ignorujemy
+      // ignorujemy śmieci w localStorage
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -191,6 +194,7 @@ export default function CalculatorClient() {
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {}
+
     setProfession("Lekarz");
     setPeriodLabel("2023–2026");
     setCustomStart(currentYear - 1);
@@ -253,7 +257,6 @@ export default function CalculatorClient() {
         if (a.id !== id) return a;
 
         const next: Activity = { ...a, type: nextType };
-        // jeśli user nie ruszał punktów ręcznie (pointsAuto === true) → aktualizuj punkty wg typu
         if (a.pointsAuto) next.points = DEFAULT_POINTS_BY_TYPE[nextType];
         return next;
       }),
@@ -279,6 +282,35 @@ export default function CalculatorClient() {
     <div className="grid gap-6 lg:grid-cols-12">
       {/* LEFT: Ustawienia */}
       <section className="lg:col-span-4">
+        {/* STATUS (wewnątrz kalkulatora) */}
+        <div className="mb-6 rounded-2xl border bg-white p-4 shadow-sm">
+          {authLoading ? (
+            <div className="text-sm text-slate-600">Status: sprawdzam sesję…</div>
+          ) : user ? (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-sm text-slate-800">
+                Status: <span className="font-semibold text-emerald-700">✅ Zalogowany</span>
+                <span className="text-slate-500"> • </span>
+                <span className="font-medium">{user.email}</span>
+              </div>
+              <Link href="/portfolio" className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                Przejdź do Portfolio
+              </Link>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-sm text-slate-800">
+                Status: <span className="font-semibold text-rose-700">❌ Niezalogowany</span>
+                <span className="text-slate-500"> • </span>
+                Tryb gościa (zapis lokalny)
+              </div>
+              <Link href="/login" className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                Zaloguj się
+              </Link>
+            </div>
+          )}
+        </div>
+
         <div className="rounded-2xl border bg-white p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -426,17 +458,29 @@ export default function CalculatorClient() {
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności</h2>
               <p className="mt-1 text-sm text-slate-600">
-                Tryb gościa: dane zapisują się lokalnie na tym urządzeniu. Do portfolio/raportów — zaloguj się.
+                {user
+                  ? "Jesteś zalogowany — możesz zapisywać do Portfolio i generować raporty."
+                  : "Tryb gościa: dane zapisują się lokalnie na tym urządzeniu. Do portfolio/raportów — zaloguj się."}
               </p>
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <a
-                href="/login"
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Zaloguj i zapisz
-              </a>
+              {user ? (
+                <Link
+                  href="/portfolio"
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Przejdź do Portfolio
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Zaloguj i zapisz
+                </Link>
+              )}
+
               <button
                 onClick={addActivity}
                 className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
@@ -554,22 +598,33 @@ export default function CalculatorClient() {
         <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900">Chcesz zapisać wynik w Portfolio?</h3>
           <p className="mt-1 text-sm text-slate-600">
-            W trybie gościa dane zapisują się lokalnie na tym urządzeniu. Po zalogowaniu możesz je trzymać na koncie i
-            generować raporty/zaświadczenia.
+            {user
+              ? "Jesteś zalogowany — przejdź do Portfolio, aby zapisać aktywności i generować raporty."
+              : "W trybie gościa dane zapisują się lokalnie na tym urządzeniu. Po zalogowaniu możesz je trzymać na koncie i generować raporty/zaświadczenia."}
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <a
-              href="/login"
-              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Zaloguj się
-            </a>
-            <a
+            {user ? (
+              <Link
+                href="/portfolio"
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Przejdź do Portfolio
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Zaloguj się
+              </Link>
+            )}
+
+            <Link
               href="/"
               className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               Wróć na stronę główną
-            </a>
+            </Link>
           </div>
         </div>
       </section>
