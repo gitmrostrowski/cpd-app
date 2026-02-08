@@ -67,7 +67,7 @@ export async function addActivity(formData: FormData) {
 }
 
 export async function deleteActivity(formData: FormData) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   // auth (żeby nie dało się usuwać cudzych wpisów)
   const { data: authData, error: authError } = await supabase.auth.getUser();
