@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   normalizePeriod,
   sumPoints,
@@ -26,6 +26,8 @@ type Activity = {
   points: number;
   year: number;
   organizer?: string;
+  /** jeśli true → punkty są "auto" i mogą się aktualizować przy zmianie rodzaju */
+  pointsAuto?: boolean;
 };
 
 const TYPES: ActivityType[] = [
@@ -38,6 +40,18 @@ const TYPES: ActivityType[] = [
   "Samokształcenie",
   "Staż / praktyka",
 ];
+
+// proste, “startowe” domyślne wartości – możesz je potem podpiąć pod realne reguły
+const DEFAULT_POINTS_BY_TYPE: Record<ActivityType, number> = {
+  "Kurs stacjonarny": 15,
+  "Kurs online / webinar": 10,
+  "Konferencja / kongres": 20,
+  "Warsztaty praktyczne": 15,
+  "Publikacja naukowa": 25,
+  "Prowadzenie szkolenia": 20,
+  "Samokształcenie": 5,
+  "Staż / praktyka": 10,
+};
 
 const PERIODS = [
   { label: "2023–2026", start: 2023, end: 2026 },
@@ -54,6 +68,25 @@ function formatInt(n: number) {
   return Number.isFinite(n) ? Math.round(n).toString() : "0";
 }
 
+const STORAGE_KEY = "crpe_calculator_v1";
+
+function safeNumber(v: any, fallback: number) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function safeString(v: any, fallback = "") {
+  return typeof v === "string" ? v : fallback;
+}
+
+function isActivityType(v: any): v is ActivityType {
+  return TYPES.includes(v);
+}
+
+function isPeriodLabel(v: any): v is (typeof PERIODS)[number]["label"] {
+  return PERIODS.some((p) => p.label === v);
+}
+
 export default function CalculatorClient() {
   const currentYear = new Date().getFullYear();
 
@@ -65,9 +98,114 @@ export default function CalculatorClient() {
   const [requiredPoints, setRequiredPoints] = useState<number>(200);
 
   const [activities, setActivities] = useState<Activity[]>([
-    { id: uid(), type: "Kurs online / webinar", points: 10, year: currentYear, organizer: "" },
-    { id: uid(), type: "Konferencja / kongres", points: 20, year: currentYear, organizer: "" },
+    {
+      id: uid(),
+      type: "Kurs online / webinar",
+      points: DEFAULT_POINTS_BY_TYPE["Kurs online / webinar"],
+      year: currentYear,
+      organizer: "",
+      pointsAuto: true,
+    },
+    {
+      id: uid(),
+      type: "Konferencja / kongres",
+      points: DEFAULT_POINTS_BY_TYPE["Konferencja / kongres"],
+      year: currentYear,
+      organizer: "",
+      pointsAuto: true,
+    },
   ]);
+
+  /** ---------- localStorage: load ---------- */
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw);
+
+      const nextProfession = parsed?.profession;
+      const nextPeriodLabel = parsed?.periodLabel;
+      const nextCustomStart = parsed?.customStart;
+      const nextCustomEnd = parsed?.customEnd;
+      const nextRequiredPoints = parsed?.requiredPoints;
+      const nextActivities = parsed?.activities;
+
+      if (nextProfession === "Lekarz" || nextProfession === "Lekarz dentysta" || nextProfession === "Inne") {
+        setProfession(nextProfession);
+      }
+
+      if (isPeriodLabel(nextPeriodLabel)) setPeriodLabel(nextPeriodLabel);
+
+      setCustomStart(safeNumber(nextCustomStart, currentYear - 1));
+      setCustomEnd(safeNumber(nextCustomEnd, currentYear + 2));
+      setRequiredPoints(Math.max(0, safeNumber(nextRequiredPoints, 200)));
+
+      if (Array.isArray(nextActivities)) {
+        const cleaned: Activity[] = nextActivities
+          .map((a: any) => {
+            const type = isActivityType(a?.type) ? a.type : "Kurs online / webinar";
+            const year = safeNumber(a?.year, currentYear);
+            const points = Math.max(0, safeNumber(a?.points, DEFAULT_POINTS_BY_TYPE[type]));
+            const organizer = safeString(a?.organizer ?? "", "");
+            const pointsAuto = typeof a?.pointsAuto === "boolean" ? a.pointsAuto : false;
+
+            return {
+              id: safeString(a?.id, uid()) || uid(),
+              type,
+              year,
+              points,
+              organizer,
+              pointsAuto,
+            };
+          })
+          .filter((a: Activity) => !!a.id);
+
+        if (cleaned.length) setActivities(cleaned);
+      }
+    } catch {
+      // jeśli localStorage ma śmieci, po prostu ignorujemy
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** ---------- localStorage: save ---------- */
+  useEffect(() => {
+    try {
+      const payload = {
+        profession,
+        periodLabel,
+        customStart,
+        customEnd,
+        requiredPoints,
+        activities,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // brak miejsca / prywatny tryb – ignor
+    }
+  }, [profession, periodLabel, customStart, customEnd, requiredPoints, activities]);
+
+  function clearCalculator() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+    setProfession("Lekarz");
+    setPeriodLabel("2023–2026");
+    setCustomStart(currentYear - 1);
+    setCustomEnd(currentYear + 2);
+    setRequiredPoints(200);
+    setActivities([
+      {
+        id: uid(),
+        type: "Kurs online / webinar",
+        points: DEFAULT_POINTS_BY_TYPE["Kurs online / webinar"],
+        year: currentYear,
+        organizer: "",
+        pointsAuto: true,
+      },
+    ]);
+  }
 
   // okres z UI (może być odwrócony), a potem normalizujemy do start<=end
   const rawPeriod = useMemo(() => {
@@ -81,19 +219,22 @@ export default function CalculatorClient() {
 
   // Wspólne obliczenia (te same zasady będą w Portfolio)
   const totalPoints = useMemo(() => sumPoints(activities, period), [activities, period]);
-
   const missing = useMemo(() => calcMissing(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
-
   const progress = useMemo(() => calcProgress(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
-
   const status = useMemo(() => getStatus(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
-
   const recommendations = useMemo(() => getQuickRecommendations(missing), [missing]);
 
   function addActivity() {
     setActivities((prev) => [
       ...prev,
-      { id: uid(), type: "Kurs online / webinar", points: 10, year: currentYear, organizer: "" },
+      {
+        id: uid(),
+        type: "Kurs online / webinar",
+        points: DEFAULT_POINTS_BY_TYPE["Kurs online / webinar"],
+        year: currentYear,
+        organizer: "",
+        pointsAuto: true,
+      },
     ]);
   }
 
@@ -103,6 +244,29 @@ export default function CalculatorClient() {
 
   function removeActivity(id: string) {
     setActivities((prev) => prev.filter((a) => a.id !== id));
+  }
+
+  function handleTypeChange(id: string, nextType: ActivityType) {
+    setActivities((prev) =>
+      prev.map((a) => {
+        if (a.id !== id) return a;
+
+        const next: Activity = { ...a, type: nextType };
+
+        // jeśli user nie ruszał punktów ręcznie (pointsAuto === true) → aktualizuj punkty wg typu
+        if (a.pointsAuto) {
+          next.points = DEFAULT_POINTS_BY_TYPE[nextType];
+        }
+
+        return next;
+      }),
+    );
+  }
+
+  function handlePointsChange(id: string, points: number) {
+    setActivities((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, points: Math.max(0, points), pointsAuto: false } : a)),
+    );
   }
 
   const toneStyles =
@@ -119,10 +283,20 @@ export default function CalculatorClient() {
       {/* LEFT: Ustawienia */}
       <section className="lg:col-span-4">
         <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Ustawienia</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Uzupełnij podstawowe dane, a potem dodaj aktywności.
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Ustawienia</h2>
+              <p className="mt-1 text-sm text-slate-600">Uzupełnij podstawowe dane, a potem dodaj aktywności.</p>
+            </div>
+
+            <button
+              onClick={clearCalculator}
+              className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              title="Czyści dane zapisane lokalnie (tryb gościa)"
+            >
+              Wyczyść
+            </button>
+          </div>
 
           <div className="mt-5 grid gap-4">
             <div>
@@ -182,11 +356,11 @@ export default function CalculatorClient() {
                 type="number"
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
                 value={requiredPoints}
-                onChange={(e) => setRequiredPoints(Number(e.target.value || 0))}
+                onChange={(e) => setRequiredPoints(Math.max(0, Number(e.target.value || 0)))}
                 min={0}
               />
               <p className="mt-1 text-xs text-slate-500">
-                Tip: zostaw edytowalne — różne izby/specjalizacje mogą mieć inne wartości.
+                Wpisz wymagania swojej izby/specjalizacji. (W trybie gościa zapisuje się lokalnie.)
               </p>
             </div>
           </div>
@@ -240,6 +414,9 @@ export default function CalculatorClient() {
                   <li key={r}>{r}</li>
                 ))}
               </ul>
+              <div className="mt-2 text-xs text-slate-600">
+                *To są przykładowe scenariusze na podstawie domyślnych punktów dla typów aktywności.
+              </div>
             </div>
           )}
         </div>
@@ -252,19 +429,107 @@ export default function CalculatorClient() {
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności</h2>
               <p className="mt-1 text-sm text-slate-600">
-                Dodawaj pozycje i licz punkty automatycznie (filtrowane po wybranym okresie).
+                Tryb gościa: dane zapisują się lokalnie na tym urządzeniu. Do portfolio/raportów — zaloguj się.
               </p>
             </div>
-            <button
-              onClick={addActivity}
-              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              + Dodaj aktywność
-            </button>
+
+            <div className="flex flex-wrap gap-2">
+              <a
+                href="/login"
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Zaloguj i zapisz
+              </a>
+              <button
+                onClick={addActivity}
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                + Dodaj aktywność
+              </button>
+            </div>
           </div>
 
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[780px] border-separate border-spacing-0">
+          {/* MOBILE: karty (bez scrolla) */}
+          <div className="mt-5 grid gap-3 md:hidden">
+            {activities.map((a) => {
+              const inPeriod = a.year >= period.start && a.year <= period.end;
+
+              return (
+                <div key={a.id} className="rounded-2xl border border-slate-200 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-slate-500">Rodzaj</div>
+                      <select
+                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                        value={a.type}
+                        onChange={(e) => handleTypeChange(a.id, e.target.value as ActivityType)}
+                      >
+                        {TYPES.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+
+                      {!inPeriod && (
+                        <div className="mt-1 text-xs text-amber-700">
+                          Poza okresem {period.start}–{period.end} (nie liczy się do sumy)
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => removeActivity(a.id)}
+                      className="shrink-0 rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                    >
+                      Usuń
+                    </button>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-xs font-semibold text-slate-500">Punkty</div>
+                      <input
+                        type="number"
+                        min={0}
+                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                        value={a.points}
+                        onChange={(e) => handlePointsChange(a.id, Number(e.target.value || 0))}
+                      />
+                      <div className="mt-1 text-[11px] text-slate-500">
+                        {a.pointsAuto ? "Auto (wg rodzaju)" : "Ręcznie (z certyfikatu)"}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs font-semibold text-slate-500">Rok</div>
+                      <input
+                        type="number"
+                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                        value={a.year}
+                        onChange={(e) => updateActivity(a.id, { year: Number(e.target.value || currentYear) })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-3">
+                    <div className="text-xs font-semibold text-slate-500">Organizator (opcjonalnie)</div>
+                    <input
+                      type="text"
+                      placeholder="np. OIL / towarzystwo naukowe"
+                      className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                      value={a.organizer ?? ""}
+                      onChange={(e) => updateActivity(a.id, { organizer: e.target.value })}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* DESKTOP/TABLET: tabela */}
+          <div className="mt-5 hidden md:block">
+            <table className="w-full border-separate border-spacing-0">
               <thead>
                 <tr className="text-left text-xs font-semibold text-slate-600">
                   <th className="border-b px-3 py-3">Rodzaj</th>
@@ -284,7 +549,7 @@ export default function CalculatorClient() {
                         <select
                           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
                           value={a.type}
-                          onChange={(e) => updateActivity(a.id, { type: e.target.value as ActivityType })}
+                          onChange={(e) => handleTypeChange(a.id, e.target.value as ActivityType)}
                         >
                           {TYPES.map((t) => (
                             <option key={t} value={t}>
@@ -294,19 +559,24 @@ export default function CalculatorClient() {
                         </select>
                         {!inPeriod && (
                           <div className="mt-1 text-xs text-amber-700">
-                            Poza okresem {period.start}–{period.end}
+                            Poza okresem {period.start}–{period.end} (nie liczy się do sumy)
                           </div>
                         )}
                       </td>
+
                       <td className="border-b px-3 py-3 align-top">
                         <input
                           type="number"
                           min={0}
                           className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2"
                           value={a.points}
-                          onChange={(e) => updateActivity(a.id, { points: Number(e.target.value || 0) })}
+                          onChange={(e) => handlePointsChange(a.id, Number(e.target.value || 0))}
                         />
+                        <div className="mt-1 text-[11px] text-slate-500">
+                          {a.pointsAuto ? "Auto (wg rodzaju)" : "Ręcznie (z certyfikatu)"}
+                        </div>
                       </td>
+
                       <td className="border-b px-3 py-3 align-top">
                         <input
                           type="number"
@@ -315,6 +585,7 @@ export default function CalculatorClient() {
                           onChange={(e) => updateActivity(a.id, { year: Number(e.target.value || currentYear) })}
                         />
                       </td>
+
                       <td className="border-b px-3 py-3 align-top">
                         <input
                           type="text"
@@ -324,6 +595,7 @@ export default function CalculatorClient() {
                           onChange={(e) => updateActivity(a.id, { organizer: e.target.value })}
                         />
                       </td>
+
                       <td className="border-b px-3 py-3 align-top text-right">
                         <button
                           onClick={() => removeActivity(a.id)}
@@ -361,16 +633,17 @@ export default function CalculatorClient() {
 
         {/* CTA */}
         <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Chcesz zapisać wynik?</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Chcesz zapisać wynik w Portfolio?</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Zaloguj się, żeby prowadzić pełne portfolio i generować raporty/zaświadczenia.
+            W trybie gościa dane zapisują się lokalnie na tym urządzeniu. Po zalogowaniu możesz je trzymać na koncie i
+            generować raporty/zaświadczenia.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <a
               href="/login"
               className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
             >
-              Przejdź do Portfolio Dashboard
+              Zaloguj się
             </a>
             <a
               href="/"
@@ -384,4 +657,3 @@ export default function CalculatorClient() {
     </div>
   );
 }
-
