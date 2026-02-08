@@ -94,7 +94,7 @@ export async function deleteActivity(formData: FormData) {
 export async function importFromCalculator(payload: {
   activities: { type: unknown; points: unknown; year: unknown; organizer?: unknown }[];
 }) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const { data: authData, error: authError } = await supabase.auth.getUser();
   if (authError || !authData?.user) throw new Error("Unauthorized");
