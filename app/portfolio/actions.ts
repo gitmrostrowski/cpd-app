@@ -30,7 +30,7 @@ export async function addActivity(formData: FormData) {
 }
 
 export async function deleteActivity(formData: FormData) {
-  const supabase = createSupabaseServerClient();
+  const supabase = supabaseServer();
   const id = String(formData.get("id") || "");
 
   if (!id) return;
