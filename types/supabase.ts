@@ -1,4 +1,13 @@
-// types/supabase.d.ts
+// types/supabase.ts
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
 export type Database = {
   public: {
     Tables: {
@@ -13,30 +22,29 @@ export type Database = {
           created_at: string;
         };
         Insert: {
-          // Jeśli user_id w DB ma DEFAULT (np. auth.uid()) i ustawiasz go w triggerze,
-          // możesz zmienić na user_id?: string;
+          id?: string;
           user_id: string;
           type: string;
           points: number;
           year: number;
           organizer?: string | null;
-          // created_at zwykle ma DEFAULT now(), więc nie wpisujemy
           created_at?: string;
-          id?: string;
         };
         Update: {
+          id?: string;
           user_id?: string;
           type?: string;
           points?: number;
           year?: number;
           organizer?: string | null;
           created_at?: string;
-          id?: string;
         };
+        Relationships: [];
       };
     };
     Views: {};
     Functions: {};
     Enums: {};
+    CompositeTypes: {};
   };
 };
