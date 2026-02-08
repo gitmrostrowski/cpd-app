@@ -73,7 +73,7 @@ export async function deleteActivity(formData: FormData) {
   const { data: authData, error: authError } = await supabase.auth.getUser();
   if (authError || !authData?.user) throw new Error("Unauthorized");
 
-  const id = String(formData.get("id") || "").trim();
+  const id = String(formData.get("id") ?? "").trim();
   if (!id) return;
 
   const { error } = await supabase
