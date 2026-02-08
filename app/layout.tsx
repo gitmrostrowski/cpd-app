@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pl">
-      <body className={`${inter.className} min-h-dvh bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100`}>
+      <body className={`${inter.className} min-h-dvh bg-white text-slate-900`}>
         <Header />
         <main className="mx-auto max-w-6xl px-4">{children}</main>
       </body>
