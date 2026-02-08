@@ -2,8 +2,8 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/types/supabase";
 
-export function supabaseServer() {
-  const cookieStore = cookies();
+export async function supabaseServer() {
+  const cookieStore = await cookies();
 
   const url = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim();
   const anon = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "").trim();
@@ -22,7 +22,7 @@ export function supabaseServer() {
             cookieStore.set(name, value, options);
           });
         } catch {
-          // w niektórych kontekstach (np. RSC) set może nie być dostępny — callback i tak działa
+          // w części kontekstów (np. RSC) set może nie zadziałać — to OK
         }
       },
     },
