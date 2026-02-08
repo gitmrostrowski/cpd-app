@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { supabaseServer } from "@/lib/supabase/server";
 import { addActivity, deleteActivity } from "./actions";
 import {
   normalizePeriod,
@@ -20,7 +20,7 @@ type DbActivity = {
 };
 
 export default async function PortfolioPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = supabaseServer();
 
   const {
     data: { user },
