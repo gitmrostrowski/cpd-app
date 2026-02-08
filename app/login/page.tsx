@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase/client";
 
@@ -13,15 +13,43 @@ export default function LoginPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  const redirectTo = useMemo(() => {
+    // callback endpoint musi istnieć: app/auth/callback/route.ts
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/auth/callback`;
+  }, []);
+
+  const canSubmit = email.trim().length > 3 && password.length >= 6;
+
   async function signInWithPassword(e: React.FormEvent) {
     e.preventDefault();
+    if (!canSubmit) {
+      setMsg("Wpisz poprawny e-mail i hasło (min. 6 znaków).");
+      return;
+    }
+
     setPending(true);
     setMsg(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setMsg(error.message);
-      else router.push("/portfolio");
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        setMsg(error.message);
+        return;
+      }
+
+      // jeśli email confirmations włączone, a użytkownik nie potwierdził,
+      // Supabase potrafi nie dać sesji
+      if (!data.session) {
+        setMsg("Zalogowanie nie powiodło się — sprawdź czy konto zostało potwierdzone e-mailem.");
+        return;
+      }
+
+      router.push("/portfolio");
     } catch (err: any) {
       setMsg(err?.message || "Nie udało się zalogować (błąd połączenia).");
     } finally {
@@ -31,13 +59,36 @@ export default function LoginPage() {
 
   async function signUp(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
+    if (!canSubmit) {
+      setMsg("Wpisz poprawny e-mail i hasło (min. 6 znaków).");
+      return;
+    }
+
     setPending(true);
     setMsg(null);
 
     try {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) setMsg(error.message);
-      else setMsg("Konto utworzone. Jeśli wymagane – potwierdź e-mail i zaloguj się.");
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: redirectTo,
+        },
+      });
+
+      if (error) {
+        setMsg(error.message);
+        return;
+      }
+
+      // Jeśli potwierdzenia są WYŁĄCZONE, czasem dostaniesz od razu sesję
+      if (data.session) {
+        router.push("/portfolio");
+        return;
+      }
+
+      // Jeśli potwierdzenia są WŁĄCZONE — user powstaje, ale bez sesji
+      setMsg("Konto utworzone. Sprawdź e-mail i kliknij link aktywacyjny, potem zaloguj się.");
     } catch (err: any) {
       setMsg(err?.message || "Nie udało się utworzyć konta (błąd połączenia).");
     } finally {
@@ -47,15 +98,19 @@ export default function LoginPage() {
 
   async function magicLink(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
+    if (email.trim().length < 4) {
+      setMsg("Wpisz poprawny e-mail.");
+      return;
+    }
+
     setPending(true);
     setMsg(null);
 
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        email,
+        email: email.trim(),
         options: {
-          // WAŻNE: callback endpoint musi istnieć w app/auth/callback/route.ts
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: redirectTo,
         },
       });
 
@@ -80,15 +135,18 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          autoComplete="email"
         />
 
         <input
           className="w-full rounded border p-2"
-          placeholder="hasło"
+          placeholder="hasło (min. 6 znaków)"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          minLength={6}
+          autoComplete="current-password"
         />
 
         <button
@@ -122,4 +180,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
