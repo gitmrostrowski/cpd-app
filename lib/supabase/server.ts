@@ -28,10 +28,10 @@ function normalizeSupabaseUrl(raw: string) {
 }
 
 /**
- * Server-side Supabase client (SSR + cookies)
+ * Server-side Supabase client (Next 16 / App Router)
  */
-export function supabaseServer(): SupabaseClient<Database> {
-  const cookieStore = cookies();
+export async function supabaseServer(): Promise<SupabaseClient<Database>> {
+  const cookieStore = await cookies();
 
   const url = normalizeSupabaseUrl(mustGetEnv("NEXT_PUBLIC_SUPABASE_URL"));
   const anon = mustGetEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
@@ -41,7 +41,7 @@ export function supabaseServer(): SupabaseClient<Database> {
       get(name: string) {
         return cookieStore.get(name)?.value;
       },
-      // App Router: na serwerze nie mutujemy cookies
+      // App Router: cookies mutujemy tylko w Route Handlers / Middleware
       set() {},
       remove() {},
     },
