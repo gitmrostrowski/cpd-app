@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
-  background-color: #ffffff !important;
-  color: #000000;
-}
 
 :root {
   color-scheme: light;
