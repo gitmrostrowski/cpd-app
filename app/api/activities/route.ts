@@ -6,13 +6,14 @@ import type { Database } from "../../../types/supabase";
 type ActivityInsert = Database["public"]["Tables"]["activities"]["Insert"];
 
 const schema = z.object({
-  title: z.string().min(1, "Title is required"),
-  type: z.enum(["ride", "run", "walk"]),
-  distance_m: z.number().nullable().optional(),
+  type: z.string().min(1, "Type is required"),
+  points: z.coerce.number().min(0, "Points must be >= 0"),
+  year: z.coerce.number().int().min(1900).max(2100),
+  organizer: z.string().optional().nullable(),
 });
 
 export async function POST(req: NextRequest) {
-  const supabase = supabaseServer(); // ⬅︎ SYNCHRONICZNIE
+  const supabase = supabaseServer();
 
   const { data: authData, error: authError } = await supabase.auth.getUser();
   if (authError || !authData?.user) {
@@ -27,14 +28,15 @@ export async function POST(req: NextRequest) {
 
   const payload: ActivityInsert = {
     user_id: authData.user.id,
-    title: parsed.data.title,
     type: parsed.data.type,
-    distance_m: parsed.data.distance_m ?? null,
+    points: parsed.data.points,
+    year: parsed.data.year,
+    organizer: parsed.data.organizer ?? null,
   };
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("activities")
-    .insert([payload])
+    .insert(payload)
     .select("*")
     .single();
 
