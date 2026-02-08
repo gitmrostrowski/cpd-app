@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 
 export async function addActivity(formData: FormData) {
-  const supabase = createSupabaseServerClient();
+  const supabase = supabaseServer();
 
   const type = String(formData.get("type") || "").trim();
   const points = Number(formData.get("points") || 0);
