@@ -2,14 +2,22 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
+  const url = new URL(request.url);
+  const code = url.searchParams.get("code");
 
-  if (code) {
-    const supabase = await supabaseServer();
-    await supabase.auth.exchangeCodeForSession(code);
+  // gdzie przekierować po udanym logowaniu
+  const next = url.searchParams.get("next") ?? "/portfolio";
+
+  if (!code) {
+    return NextResponse.redirect(new URL(`/login?e=missing_code`, url.origin));
   }
 
-  return NextResponse.redirect(`${origin}/portfolio`);
-}
+  const supabase = supabaseServer();
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
 
+  if (error) {
+    return NextResponse.redirect(new URL(`/login?e=exchange_failed`, url.origin));
+  }
+
+  return NextResponse.redirect(new URL(next, url.origin));
+}
