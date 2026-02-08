@@ -6,23 +6,33 @@ export type Database = {
         Row: {
           id: string;
           user_id: string;
-          title: string;
-          type: "ride" | "run" | "walk";
-          distance_m: number | null;
+          type: string;
+          points: number;
+          year: number;
+          organizer: string | null;
           created_at: string;
         };
         Insert: {
+          // Jeśli user_id w DB ma DEFAULT (np. auth.uid()) i ustawiasz go w triggerze,
+          // możesz zmienić na user_id?: string;
           user_id: string;
-          title: string;
-          type: "ride" | "run" | "walk";
-          distance_m?: number | null;
+          type: string;
+          points: number;
+          year: number;
+          organizer?: string | null;
+          // created_at zwykle ma DEFAULT now(), więc nie wpisujemy
+          created_at?: string;
+          id?: string;
         };
-        Update: Partial<{
-          user_id: string;
-          title: string;
-          type: "ride" | "run" | "walk";
-          distance_m: number | null;
-        }>;
+        Update: {
+          user_id?: string;
+          type?: string;
+          points?: number;
+          year?: number;
+          organizer?: string | null;
+          created_at?: string;
+          id?: string;
+        };
       };
     };
     Views: {};
