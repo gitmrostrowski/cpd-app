@@ -21,7 +21,6 @@ type Prefs = {
 };
 
 function parsePeriod(periodLabel: string) {
-  // akceptujemy "2023–2026" (en dash) i "2023-2026"
   const clean = periodLabel.replace("–", "-");
   const [a, b] = clean.split("-").map((x) => Number(String(x).trim()));
   const start = Number.isFinite(a) ? a : 2023;
@@ -53,7 +52,7 @@ export default function PortfolioPage() {
   const [fetching, setFetching] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // 1) wczytaj preferencje z localStorage (MVP)
+  // 1) preferencje z localStorage (MVP)
   useEffect(() => {
     try {
       const raw = localStorage.getItem("crpe_profile_prefs_v1");
@@ -69,7 +68,7 @@ export default function PortfolioPage() {
 
   const period = useMemo(() => parsePeriod(prefs.periodLabel), [prefs.periodLabel]);
 
-  // 2) pobierz aktywności z supabase
+  // 2) pobierz aktywności z Supabase
   useEffect(() => {
     let alive = true;
 
@@ -111,12 +110,15 @@ export default function PortfolioPage() {
     };
   }, [user, supabase]);
 
-  // 3) obliczenia “CPD status”
+  // 3) status CPD
   const inPeriod = useMemo(() => {
     return activities.filter((a) => a.year >= period.start && a.year <= period.end);
   }, [activities, period.start, period.end]);
 
-  const totalPoints = useMemo(() => inPeriod.reduce((sum, a) => sum + (Number(a.points) || 0), 0), [inPeriod]);
+  const totalPoints = useMemo(
+    () => inPeriod.reduce((sum, a) => sum + (Number(a.points) || 0), 0),
+    [inPeriod]
+  );
 
   const required = Math.max(0, Number(prefs.requiredPoints) || 0);
   const missing = Math.max(0, required - totalPoints);
@@ -124,7 +126,7 @@ export default function PortfolioPage() {
 
   const latest = useMemo(() => inPeriod.slice(0, 5), [inPeriod]);
 
-  // 4) “next actions” — proste heurystyki (MVP)
+  // 4) next actions (MVP)
   const actions = useMemo(() => {
     const list: Array<{ title: string; desc: string; href: string; kind?: "warn" | "ok" }> = [];
 
@@ -132,7 +134,7 @@ export default function PortfolioPage() {
       list.push({
         title: `Brakuje ${missing} pkt do celu`,
         desc: "Dodaj aktywności z bieżącego okresu rozliczeniowego.",
-        href: "/kalkulator",
+        href: "/activities", // ✅ było /kalkulator
         kind: "warn",
       });
     } else {
@@ -144,7 +146,6 @@ export default function PortfolioPage() {
       });
     }
 
-    // sprawdź brak organizatora
     const noOrg = inPeriod.filter((a) => !a.organizer || !String(a.organizer).trim()).length;
     if (noOrg > 0) {
       list.push({
@@ -155,7 +156,6 @@ export default function PortfolioPage() {
       });
     }
 
-    // jeśli mało wpisów w okresie
     if (inPeriod.length < 3) {
       list.push({
         title: "Dodaj więcej aktywności",
@@ -164,7 +164,6 @@ export default function PortfolioPage() {
       });
     }
 
-    // fallback
     if (list.length === 0) {
       list.push({
         title: "Porządek w portfolio",
@@ -184,6 +183,7 @@ export default function PortfolioPage() {
     );
   }
 
+  // NIEZALOGOWANY
   if (!user) {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-10">
@@ -200,8 +200,10 @@ export default function PortfolioPage() {
             >
               Zaloguj się
             </Link>
+
+            {/* ✅ tu ma być kalkulator jako gość */}
             <Link
-              href="/activities"
+              href="/kalkulator"
               className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               Kalkulator (tryb gościa)
@@ -212,14 +214,15 @@ export default function PortfolioPage() {
     );
   }
 
+  // ZALOGOWANY
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10">
-      {/* Title */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Portfolio</h1>
           <p className="mt-2 text-slate-600">
-            Status Twojego CPD w okresie <span className="font-semibold text-slate-900">{prefs.periodLabel}</span>
+            Status Twojego CPD w okresie{" "}
+            <span className="font-semibold text-slate-900">{prefs.periodLabel}</span>
           </p>
         </div>
 
@@ -230,16 +233,17 @@ export default function PortfolioPage() {
           >
             Aktywności
           </Link>
+
           <Link
             href="/activities"
             className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            + Dodaj / policz
+            + Dodaj aktywność
           </Link>
         </div>
       </div>
 
-      {/* Top status strip (CPDme-ish) */}
+      {/* Top status strip */}
       <div className="mt-6 rounded-2xl border bg-white p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -287,19 +291,14 @@ export default function PortfolioPage() {
           </div>
         )}
 
-        {fetching && (
-          <div className="mt-4 text-sm text-slate-500">Pobieram aktywności…</div>
-        )}
+        {fetching && <div className="mt-4 text-sm text-slate-500">Pobieram aktywności…</div>}
       </div>
 
-      {/* Grid: next actions + recent activities */}
+      {/* Grid */}
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        {/* Next actions */}
         <section className="rounded-2xl border bg-white p-6 lg:col-span-1">
           <h2 className="text-lg font-semibold text-slate-900">Następne kroki</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Szybkie działania, które poprawią kompletność Twojego portfolio.
-          </p>
+          <p className="mt-1 text-sm text-slate-600">Szybkie działania, które poprawią kompletność Twojego portfolio.</p>
 
           <div className="mt-4 space-y-3">
             {actions.map((a, idx) => (
@@ -338,7 +337,6 @@ export default function PortfolioPage() {
           </div>
         </section>
 
-        {/* Recent activities */}
         <section className="rounded-2xl border bg-white p-6 lg:col-span-2">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -389,7 +387,8 @@ export default function PortfolioPage() {
                         <span className="font-medium text-slate-900">{a.year}</span>
                         {a.created_at ? (
                           <>
-                            {" "}• Dodano:{" "}
+                            {" "}
+                            • Dodano:{" "}
                             <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
                           </>
                         ) : null}
@@ -405,10 +404,7 @@ export default function PortfolioPage() {
               ))}
 
               <div className="pt-2">
-                <Link
-                  href="/activities"
-                  className="text-sm font-medium text-blue-700 hover:underline"
-                >
+                <Link href="/activities" className="text-sm font-medium text-blue-700 hover:underline">
                   Zobacz wszystkie aktywności →
                 </Link>
               </div>
@@ -417,14 +413,11 @@ export default function PortfolioPage() {
         </section>
       </div>
 
-      {/* Bottom: light “report” preview */}
       <section className="mt-6 rounded-2xl border bg-white p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Raporty</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Eksport PDF/CSV i historia raportów — moduł w przygotowaniu.
-            </p>
+            <p className="mt-1 text-sm text-slate-600">Eksport PDF/CSV i historia raportów — moduł w przygotowaniu.</p>
           </div>
           <Link
             href="/raporty"
