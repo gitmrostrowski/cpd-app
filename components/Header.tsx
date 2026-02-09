@@ -1,4 +1,3 @@
-// components/Header.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -7,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 
-const REPORTS_READY = false; // <- jak zrobisz /raporty, ustaw na true
+const REPORTS_READY = false;
 
 const NAV = [
   { href: "/", label: "Home" },
@@ -53,21 +52,22 @@ export default function Header() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
-  // ✅ menu: niebieskie litery + subtelny active
+  // ✅ menu: semibold + niebieskie litery + delikatne szare tło na hover/active
   const linkCls = (href: string) =>
     cx(
-      "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-colors",
+      "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors",
+      "text-blue-700",
       isActive(href)
-        ? "bg-blue-50 text-blue-700 font-semibold"
-        : "text-blue-700/90 hover:bg-blue-50/70 hover:text-blue-800"
+        ? "bg-slate-100 text-blue-800"
+        : "hover:bg-slate-50"
     );
 
   const emailShort = useMemo(() => {
     const em = user?.email || "";
     if (!em) return "";
-    if (em.length <= 26) return em;
+    if (em.length <= 28) return em;
     const [name, domain] = em.split("@");
-    if (!domain) return em.slice(0, 26) + "…";
+    if (!domain) return em.slice(0, 28) + "…";
     const n = name.length > 10 ? name.slice(0, 10) + "…" : name;
     return `${n}@${domain}`;
   }, [user?.email]);
@@ -79,7 +79,7 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/85 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur shadow-sm">
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex h-16 items-center gap-4">
           {/* Logo */}
@@ -90,8 +90,7 @@ export default function Header() {
 
           {/* NAV DESKTOP */}
           <nav className="hidden sm:flex items-center gap-2 ml-auto">
-            {/* ✅ “pill” container – obwódka w niebieskim odcieniu */}
-            <div className="flex items-center gap-1 rounded-2xl border border-blue-200/70 bg-white px-1 py-1 shadow-sm">
+            <div className="flex items-center gap-1 rounded-2xl border border-blue-200/60 bg-white px-1 py-1 shadow-sm">
               {NAV.map(({ href, label, soon }) => (
                 <Link
                   key={href}
@@ -101,7 +100,7 @@ export default function Header() {
                 >
                   <span>{label}</span>
                   {soon ? (
-                    <span className="ml-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700">
+                    <span className="ml-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600">
                       Wkrótce
                     </span>
                   ) : null}
@@ -118,13 +117,11 @@ export default function Header() {
               </div>
             ) : user ? (
               <>
-                {/* status pill */}
                 <div className="hidden md:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
                   <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
                   <span className="font-medium">{emailShort}</span>
                 </div>
 
-                {/* user menu */}
                 <div className="relative" ref={userMenuRef}>
                   <button
                     type="button"
@@ -132,7 +129,7 @@ export default function Header() {
                     className={cx(
                       "inline-flex h-10 w-10 items-center justify-center rounded-full border transition",
                       openUser
-                        ? "bg-blue-50 border-blue-200"
+                        ? "border-blue-200 bg-slate-50"
                         : "border-slate-200 hover:bg-slate-50"
                     )}
                     aria-label="Menu użytkownika"
@@ -154,7 +151,7 @@ export default function Header() {
 
                       <Link
                         href="/profil"
-                        className="flex items-center rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                        className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                         onClick={() => setOpenUser(false)}
                       >
                         Profil i ustawienia
@@ -162,7 +159,7 @@ export default function Header() {
 
                       <Link
                         href="/portfolio"
-                        className="flex items-center rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                        className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                         onClick={() => setOpenUser(false)}
                       >
                         Portfolio
@@ -171,7 +168,7 @@ export default function Header() {
                       <button
                         type="button"
                         onClick={handleSignOut}
-                        className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"
                       >
                         Wyloguj
                       </button>
@@ -182,7 +179,7 @@ export default function Header() {
             ) : (
               <Link
                 href="/login"
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
               >
                 Zaloguj
               </Link>
@@ -214,7 +211,7 @@ export default function Header() {
                 >
                   <span>{label}</span>
                   {soon ? (
-                    <span className="ml-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700">
+                    <span className="ml-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">
                       Wkrótce
                     </span>
                   ) : null}
@@ -237,7 +234,7 @@ export default function Header() {
 
                     <Link
                       href="/profil"
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-center text-sm font-medium hover:bg-slate-50"
+                      className="rounded-xl border border-slate-200 px-4 py-2 text-center text-sm font-semibold hover:bg-slate-50"
                       onClick={() => setOpenMobile(false)}
                     >
                       Profil
@@ -245,7 +242,7 @@ export default function Header() {
 
                     <Link
                       href="/portfolio"
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-center text-sm font-medium hover:bg-slate-50"
+                      className="rounded-xl border border-slate-200 px-4 py-2 text-center text-sm font-semibold hover:bg-slate-50"
                       onClick={() => setOpenMobile(false)}
                     >
                       Portfolio
@@ -253,7 +250,7 @@ export default function Header() {
 
                     <button
                       onClick={handleSignOut}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium hover:bg-slate-50"
+                      className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
                       type="button"
                     >
                       Wyloguj
@@ -262,7 +259,7 @@ export default function Header() {
                 ) : (
                   <Link
                     href="/login"
-                    className="rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-blue-700"
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700"
                     onClick={() => setOpenMobile(false)}
                   >
                     Zaloguj
