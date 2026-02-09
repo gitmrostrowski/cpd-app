@@ -73,6 +73,38 @@ export type Database = {
           }
         ];
       };
+
+      // ✅ NOWA TABELA: profiles
+      profiles: {
+        Row: {
+          user_id: string;
+          profession: string | null;
+          period_start: number | null;
+          period_end: number | null;
+          required_points: number | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          user_id: string;
+          profession?: string | null;
+          period_start?: number | null;
+          period_end?: number | null;
+          required_points?: number | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          user_id?: string;
+          profession?: string | null;
+          period_start?: number | null;
+          period_end?: number | null;
+          required_points?: number | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};
@@ -80,3 +112,4 @@ export type Database = {
     CompositeTypes: {};
   };
 };
+
