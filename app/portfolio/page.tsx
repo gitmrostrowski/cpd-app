@@ -1,19 +1,11 @@
-import { redirect } from "next/navigation";
-import { supabaseServer } from "@/lib/supabase/server";
-import { addActivity, deleteActivity } from "./actions";
-import ImportFromCalculator from "./ImportFromCalculator";
-import {
-  normalizePeriod,
-  sumPoints,
-  calcMissing,
-  calcProgress,
-  getStatus,
-  type ActivityLike,
-} from "@/lib/cpd/calc";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
+import { supabaseClient } from "@/lib/supabase/client";
 
-type DbActivity = {
+type ActivityRow = {
   id: string;
   type: string;
   points: number;
@@ -22,236 +14,450 @@ type DbActivity = {
   created_at: string;
 };
 
-const TYPES = [
-  "Kurs stacjonarny",
-  "Kurs online / webinar",
-  "Konferencja / kongres",
-  "Warsztaty praktyczne",
-  "Publikacja naukowa",
-  "Prowadzenie szkolenia",
-  "Samokształcenie",
-  "Staż / praktyka",
-] as const;
+type Prefs = {
+  profession: "Lekarz" | "Lekarz dentysta" | "Inne";
+  requiredPoints: number;
+  periodLabel: string; // np. "2023–2026"
+};
 
-export default async function PortfolioPage() {
-  const supabase = await supabaseServer();
+function parsePeriod(periodLabel: string) {
+  // akceptujemy "2023–2026" (en dash) i "2023-2026"
+  const clean = periodLabel.replace("–", "-");
+  const [a, b] = clean.split("-").map((x) => Number(String(x).trim()));
+  const start = Number.isFinite(a) ? a : 2023;
+  const end = Number.isFinite(b) ? b : start + 3;
+  return { start, end };
+}
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+function formatDateShort(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("pl-PL", { year: "numeric", month: "2-digit", day: "2-digit" });
+}
 
-  if (!user) redirect("/login");
+function clamp(n: number, a: number, b: number) {
+  return Math.max(a, Math.min(b, n));
+}
 
-  // MVP: stałe (później przeniesiemy do profilu usera)
-  const period = normalizePeriod({ start: 2023, end: 2026 });
-  const requiredPoints = 200;
+export default function PortfolioPage() {
+  const { user, loading } = useAuth();
+  const supabase = useMemo(() => supabaseClient(), []);
 
-  const { data, error } = await supabase
-    .from("activities") // dopasowane do Twojego projektu
-    .select("id,type,points,year,organizer,created_at")
-    .order("year", { ascending: false })
-    .order("created_at", { ascending: false });
+  const [prefs, setPrefs] = useState<Prefs>({
+    profession: "Lekarz",
+    requiredPoints: 200,
+    periodLabel: "2023–2026",
+  });
 
-  if (error) {
+  const [activities, setActivities] = useState<ActivityRow[]>([]);
+  const [fetching, setFetching] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // 1) wczytaj preferencje z localStorage (MVP)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("crpe_profile_prefs_v1");
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      setPrefs((prev) => ({
+        profession: p?.profession ?? prev.profession,
+        requiredPoints: typeof p?.requiredPoints === "number" ? p.requiredPoints : prev.requiredPoints,
+        periodLabel: typeof p?.periodLabel === "string" ? p.periodLabel : prev.periodLabel,
+      }));
+    } catch {}
+  }, []);
+
+  const period = useMemo(() => parsePeriod(prefs.periodLabel), [prefs.periodLabel]);
+
+  // 2) pobierz aktywności z supabase
+  useEffect(() => {
+    let alive = true;
+
+    async function run() {
+      if (!user) {
+        setActivities([]);
+        return;
+      }
+      setFetching(true);
+      setErrorMsg(null);
+
+      try {
+        const { data, error } = await supabase
+          .from("activities")
+          .select("id,type,points,year,organizer,created_at")
+          .order("created_at", { ascending: false });
+
+        if (!alive) return;
+
+        if (error) {
+          setErrorMsg(error.message);
+          setActivities([]);
+          return;
+        }
+
+        setActivities((data as ActivityRow[]) ?? []);
+      } catch (e: any) {
+        if (!alive) return;
+        setErrorMsg(e?.message || "Nie udało się pobrać aktywności.");
+        setActivities([]);
+      } finally {
+        if (alive) setFetching(false);
+      }
+    }
+
+    run();
+    return () => {
+      alive = false;
+    };
+  }, [user, supabase]);
+
+  // 3) obliczenia “CPD status”
+  const inPeriod = useMemo(() => {
+    return activities.filter((a) => a.year >= period.start && a.year <= period.end);
+  }, [activities, period.start, period.end]);
+
+  const totalPoints = useMemo(() => inPeriod.reduce((sum, a) => sum + (Number(a.points) || 0), 0), [inPeriod]);
+
+  const required = Math.max(0, Number(prefs.requiredPoints) || 0);
+  const missing = Math.max(0, required - totalPoints);
+  const progressPct = required > 0 ? clamp((totalPoints / required) * 100, 0, 100) : 0;
+
+  const latest = useMemo(() => inPeriod.slice(0, 5), [inPeriod]);
+
+  // 4) “next actions” — proste heurystyki (MVP)
+  const actions = useMemo(() => {
+    const list: Array<{ title: string; desc: string; href: string; kind?: "warn" | "ok" }> = [];
+
+    if (missing > 0) {
+      list.push({
+        title: `Brakuje ${missing} pkt do celu`,
+        desc: "Dodaj aktywności z bieżącego okresu rozliczeniowego.",
+        href: "/kalkulator",
+        kind: "warn",
+      });
+    } else {
+      list.push({
+        title: "Cel punktowy osiągnięty ✅",
+        desc: "Możesz przygotować raport do rozliczeń (gdy moduł raportów będzie gotowy).",
+        href: "/raporty",
+        kind: "ok",
+      });
+    }
+
+    // sprawdź brak organizatora
+    const noOrg = inPeriod.filter((a) => !a.organizer || !String(a.organizer).trim()).length;
+    if (noOrg > 0) {
+      list.push({
+        title: `Uzupełnij organizatora (${noOrg})`,
+        desc: "W CPD przydaje się kompletność danych na certyfikatach/raportach.",
+        href: "/activities",
+        kind: "warn",
+      });
+    }
+
+    // jeśli mało wpisów w okresie
+    if (inPeriod.length < 3) {
+      list.push({
+        title: "Dodaj więcej aktywności",
+        desc: "Masz mało wpisów w okresie — lepiej uzupełniać na bieżąco.",
+        href: "/activities",
+      });
+    }
+
+    // fallback
+    if (list.length === 0) {
+      list.push({
+        title: "Porządek w portfolio",
+        desc: "Sprawdź aktywności i przygotuj raport.",
+        href: "/activities",
+      });
+    }
+
+    return list.slice(0, 3);
+  }, [missing, inPeriod]);
+
+  if (loading) {
     return (
-      <div className="mx-auto max-w-6xl">
-        <h1 className="text-2xl font-bold text-slate-900">Portfolio</h1>
-        <p className="mt-2 text-rose-600">Błąd pobierania danych: {error.message}</p>
+      <div className="mx-auto w-full max-w-6xl px-4 py-10">
+        <div className="rounded-2xl border bg-white p-6">Ładuję portfolio…</div>
       </div>
     );
   }
 
-  const activities = (data ?? []) as DbActivity[];
+  if (!user) {
+    return (
+      <div className="mx-auto w-full max-w-6xl px-4 py-10">
+        <div className="rounded-2xl border bg-white p-8">
+          <h1 className="text-2xl font-bold text-slate-900">Portfolio</h1>
+          <p className="mt-2 text-slate-600">
+            Zaloguj się, aby zapisywać aktywności, liczyć punkty w okresie i generować raporty.
+          </p>
 
-  const total = sumPoints(activities as ActivityLike[], period);
-  const missing = calcMissing(total, requiredPoints);
-  const progress = calcProgress(total, requiredPoints);
-  const status = getStatus(total, requiredPoints);
-
-  const toneStyles =
-    status.tone === "ok"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-      : status.tone === "warn"
-        ? "border-amber-200 bg-amber-50 text-amber-900"
-        : status.tone === "risk"
-          ? "border-rose-200 bg-rose-50 text-rose-900"
-          : "border-slate-200 bg-slate-50 text-slate-900";
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href="/login"
+              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Zaloguj się
+            </Link>
+            <Link
+              href="/kalkulator"
+              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Kalkulator (tryb gościa)
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto w-full max-w-6xl">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <main className="mx-auto w-full max-w-6xl px-4 py-10">
+      {/* Title */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Portfolio Dashboard</h1>
+          <h1 className="text-3xl font-extrabold text-slate-900">Portfolio</h1>
           <p className="mt-2 text-slate-600">
-            Liczymy punkty w okresie{" "}
-            <span className="font-medium text-slate-900">
-              {period.start}–{period.end}
-            </span>
-            .
+            Status Twojego CPD w okresie <span className="font-semibold text-slate-900">{prefs.periodLabel}</span>
           </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/activities"
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Aktywności
+          </Link>
+          <Link
+            href="/kalkulator"
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            + Dodaj / policz
+          </Link>
         </div>
       </div>
 
-      {/* Import z kalkulatora (localStorage -> Supabase) */}
-      <div className="mb-6">
-        <ImportFromCalculator />
-      </div>
+      {/* Top status strip (CPDme-ish) */}
+      <div className="mt-6 rounded-2xl border bg-white p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              Okres: <span className="font-semibold">{period.start}–{period.end}</span>
+            </span>
 
-      {/* Status */}
-      <div className={`rounded-2xl border p-5 ${toneStyles}`}>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-base font-semibold">{status.title}</h2>
-            {status.desc && <p className="mt-1 text-sm opacity-90">{status.desc}</p>}
+            <span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              Masz: <span className="font-semibold">{totalPoints}</span>
+            </span>
+
+            <span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              Wymagane: <span className="font-semibold">{required}</span>
+            </span>
+
+            <span
+              className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
+                missing > 0
+                  ? "border-rose-200 bg-rose-50 text-rose-700"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+              }`}
+            >
+              Brakuje: <span className="font-semibold">{missing}</span>
+            </span>
           </div>
-          <div className="text-right">
-            <div className="text-xs opacity-80">Okres</div>
-            <div className="text-sm font-semibold">
-              {period.start}–{period.end}
+
+          <div className="min-w-[220px]">
+            <div className="flex items-center justify-between text-sm text-slate-600">
+              <span>Postęp</span>
+              <span className="font-semibold text-slate-900">{Math.round(progressPct)}%</span>
+            </div>
+            <div className="mt-2 h-2 w-full rounded-full bg-slate-100">
+              <div
+                className="h-2 rounded-full bg-blue-600"
+                style={{ width: `${progressPct}%` }}
+                aria-label="Postęp"
+              />
             </div>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          <div className="rounded-xl bg-white/60 p-3">
-            <div className="text-xs text-slate-600">Masz</div>
-            <div className="text-lg font-bold text-slate-900">{Math.round(total)}</div>
-          </div>
-          <div className="rounded-xl bg-white/60 p-3">
-            <div className="text-xs text-slate-600">Wymagane</div>
-            <div className="text-lg font-bold text-slate-900">{Math.round(requiredPoints)}</div>
-          </div>
-          <div className="rounded-xl bg-white/60 p-3">
-            <div className="text-xs text-slate-600">Brakuje</div>
-            <div className="text-lg font-bold text-slate-900">{Math.round(missing)}</div>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <div className="flex items-center justify-between text-xs text-slate-600">
-            <span>Postęp</span>
-            <span>{Math.round(progress)}%</span>
-          </div>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/60">
-            <div className="h-full bg-blue-600" style={{ width: `${progress}%` }} />
-          </div>
-        </div>
-      </div>
-
-      {/* Formularz */}
-      <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Dodaj aktywność</h2>
-
-        <form action={addActivity} className="mt-4 grid gap-3 md:grid-cols-12">
-          <div className="md:col-span-4">
-            <label className="text-sm font-medium text-slate-700">Rodzaj</label>
-            <select
-              name="type"
-              defaultValue="Kurs online / webinar"
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-            >
-              {TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">Punkty</label>
-            <input
-              name="points"
-              type="number"
-              min={0}
-              defaultValue={10}
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">Rok</label>
-            <input
-              name="year"
-              type="number"
-              defaultValue={new Date().getFullYear()}
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-            />
-          </div>
-
-          <div className="md:col-span-3">
-            <label className="text-sm font-medium text-slate-700">Organizator</label>
-            <input
-              name="organizer"
-              placeholder="np. OIL / towarzystwo naukowe"
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-            />
-          </div>
-
-          <div className="md:col-span-1 flex items-end">
-            <button className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-              Dodaj
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Lista */}
-      <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Twoje wpisy</h2>
-
-        {activities.length === 0 ? (
-          <p className="mt-3 text-slate-600">Brak wpisów. Dodaj pierwszą aktywność powyżej.</p>
-        ) : (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[900px] border-separate border-spacing-0">
-              <thead>
-                <tr className="text-left text-xs font-semibold text-slate-600">
-                  <th className="border-b px-3 py-3">Rodzaj</th>
-                  <th className="border-b px-3 py-3">Punkty</th>
-                  <th className="border-b px-3 py-3">Rok</th>
-                  <th className="border-b px-3 py-3">Organizator</th>
-                  <th className="border-b px-3 py-3">Status</th>
-                  <th className="border-b px-3 py-3 text-right">Akcje</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activities.map((a) => {
-                  const inPeriod = a.year >= period.start && a.year <= period.end;
-
-                  return (
-                    <tr key={a.id} className="text-sm">
-                      <td className="border-b px-3 py-3">{a.type}</td>
-                      <td className="border-b px-3 py-3">{a.points}</td>
-                      <td className="border-b px-3 py-3">{a.year}</td>
-                      <td className="border-b px-3 py-3">{a.organizer ?? "—"}</td>
-                      <td className="border-b px-3 py-3">
-                        {inPeriod ? (
-                          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
-                            w okresie
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
-                            poza okresem
-                          </span>
-                        )}
-                      </td>
-                      <td className="border-b px-3 py-3 text-right">
-                        <form action={deleteActivity}>
-                          <input type="hidden" name="id" value={a.id} />
-                          <button className="rounded-xl border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-50">
-                            Usuń
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        {errorMsg && (
+          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+            Błąd pobierania aktywności: {errorMsg}
           </div>
         )}
+
+        {fetching && (
+          <div className="mt-4 text-sm text-slate-500">Pobieram aktywności…</div>
+        )}
       </div>
-    </div>
+
+      {/* Grid: next actions + recent activities */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        {/* Next actions */}
+        <section className="rounded-2xl border bg-white p-6 lg:col-span-1">
+          <h2 className="text-lg font-semibold text-slate-900">Następne kroki</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Szybkie działania, które poprawią kompletność Twojego portfolio.
+          </p>
+
+          <div className="mt-4 space-y-3">
+            {actions.map((a, idx) => (
+              <Link
+                key={idx}
+                href={a.href}
+                className={`
+                  block rounded-2xl border p-4 hover:bg-slate-50 transition
+                  ${a.kind === "warn" ? "border-rose-200" : "border-slate-200"}
+                `}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-semibold text-slate-900">{a.title}</div>
+                    <div className="mt-1 text-sm text-slate-600">{a.desc}</div>
+                  </div>
+                  <span className="text-slate-400">›</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="text-sm font-semibold text-slate-900">Ustawienia okresu</div>
+            <div className="mt-1 text-sm text-slate-600">
+              Zawód: <span className="font-medium text-slate-900">{prefs.profession}</span>
+              <br />
+              Cel: <span className="font-medium text-slate-900">{required}</span> pkt
+            </div>
+            <Link
+              href="/profil"
+              className="mt-3 inline-flex rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Zmień w profilu
+            </Link>
+          </div>
+        </section>
+
+        {/* Recent activities */}
+        <section className="rounded-2xl border bg-white p-6 lg:col-span-2">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Ostatnie aktywności</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Pokazujemy wpisy tylko z okresu <span className="font-semibold">{prefs.periodLabel}</span>.
+              </p>
+            </div>
+
+            <Link
+              href="/activities"
+              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Zobacz wszystkie
+            </Link>
+          </div>
+
+          {inPeriod.length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-8 text-center">
+              <div className="text-lg font-semibold text-slate-900">Brak aktywności w okresie</div>
+              <div className="mt-2 text-sm text-slate-600">
+                Dodaj pierwszą aktywność, a portfolio zacznie liczyć punkty i status.
+              </div>
+              <div className="mt-4 flex flex-wrap justify-center gap-3">
+                <Link
+                  href="/kalkulator"
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  + Dodaj aktywność
+                </Link>
+                <Link
+                  href="/activities"
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Przejdź do Aktywności
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {latest.map((a) => (
+                <div key={a.id} className="rounded-2xl border border-slate-200 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold text-slate-900">{a.type}</div>
+                      <div className="mt-1 text-sm text-slate-600">
+                        {a.organizer ? a.organizer : "Brak organizatora"} • Rok:{" "}
+                        <span className="font-medium text-slate-900">{a.year}</span>
+                        {a.created_at ? (
+                          <>
+                            {" "}• Dodano:{" "}
+                            <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                      <span className="text-slate-600">Punkty</span>
+                      <span className="font-semibold text-slate-900">{a.points}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <div className="pt-2">
+                <Link
+                  href="/activities"
+                  className="text-sm font-medium text-blue-700 hover:underline"
+                >
+                  Zobacz wszystkie aktywności →
+                </Link>
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
+
+      {/* Bottom: light “report” preview */}
+      <section className="mt-6 rounded-2xl border bg-white p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Raporty</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Eksport PDF/CSV i historia raportów — moduł w przygotowaniu.
+            </p>
+          </div>
+          <Link
+            href="/raporty"
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Przejdź do Raportów
+          </Link>
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 p-5">
+            <div className="font-semibold text-slate-900">Eksport CSV</div>
+            <div className="mt-1 text-sm text-slate-600">Lista aktywności do analizy i archiwizacji.</div>
+            <button
+              disabled
+              className="mt-3 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-500 disabled:opacity-70"
+            >
+              Wkrótce
+            </button>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 p-5">
+            <div className="font-semibold text-slate-900">Raport PDF</div>
+            <div className="mt-1 text-sm text-slate-600">Gotowy dokument do rozliczeń okresu CPD.</div>
+            <button
+              disabled
+              className="mt-3 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-500 disabled:opacity-70"
+            >
+              Wkrótce
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
