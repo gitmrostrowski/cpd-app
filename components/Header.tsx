@@ -1,3 +1,4 @@
+// components/Header.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -52,13 +53,13 @@ export default function Header() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
-  // ✅ spójny „accent” (jak w Hero): sky
+  // ✅ menu: niebieskie litery + subtelny active
   const linkCls = (href: string) =>
     cx(
       "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-colors",
       isActive(href)
-        ? "bg-sky-50 text-sky-700 font-semibold"
-        : "text-slate-700 hover:bg-slate-100"
+        ? "bg-blue-50 text-blue-700 font-semibold"
+        : "text-blue-700/90 hover:bg-blue-50/70 hover:text-blue-800"
     );
 
   const emailShort = useMemo(() => {
@@ -78,7 +79,7 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/85 backdrop-blur shadow-sm">
+    <header className="sticky top-0 z-50 border-b bg-white/85 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex h-16 items-center gap-4">
           {/* Logo */}
@@ -89,8 +90,8 @@ export default function Header() {
 
           {/* NAV DESKTOP */}
           <nav className="hidden sm:flex items-center gap-2 ml-auto">
-            {/* ✅ delikatny „container” żeby było bardziej uporządkowane */}
-            <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-white px-1 py-1 shadow-sm">
+            {/* ✅ “pill” container – obwódka w niebieskim odcieniu */}
+            <div className="flex items-center gap-1 rounded-2xl border border-blue-200/70 bg-white px-1 py-1 shadow-sm">
               {NAV.map(({ href, label, soon }) => (
                 <Link
                   key={href}
@@ -100,7 +101,7 @@ export default function Header() {
                 >
                   <span>{label}</span>
                   {soon ? (
-                    <span className="ml-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">
+                    <span className="ml-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700">
                       Wkrótce
                     </span>
                   ) : null}
@@ -129,8 +130,10 @@ export default function Header() {
                     type="button"
                     onClick={() => setOpenUser((v) => !v)}
                     className={cx(
-                      "inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 transition",
-                      openUser ? "bg-sky-50 border-sky-200" : "hover:bg-slate-50"
+                      "inline-flex h-10 w-10 items-center justify-center rounded-full border transition",
+                      openUser
+                        ? "bg-blue-50 border-blue-200"
+                        : "border-slate-200 hover:bg-slate-50"
                     )}
                     aria-label="Menu użytkownika"
                     title="Menu"
@@ -179,7 +182,7 @@ export default function Header() {
             ) : (
               <Link
                 href="/login"
-                className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 transition"
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
               >
                 Zaloguj
               </Link>
@@ -211,7 +214,7 @@ export default function Header() {
                 >
                   <span>{label}</span>
                   {soon ? (
-                    <span className="ml-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">
+                    <span className="ml-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700">
                       Wkrótce
                     </span>
                   ) : null}
@@ -259,7 +262,7 @@ export default function Header() {
                 ) : (
                   <Link
                     href="/login"
-                    className="rounded-xl bg-sky-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-sky-700"
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-blue-700"
                     onClick={() => setOpenMobile(false)}
                   >
                     Zaloguj
