@@ -7,6 +7,7 @@ import { supabaseClient } from "@/lib/supabase/client";
 
 type ActivityRow = {
   id: string;
+  user_id: string; // ✅ dodane
   type: string;
   points: number;
   year: number;
@@ -68,7 +69,7 @@ export default function PortfolioPage() {
 
   const period = useMemo(() => parsePeriod(prefs.periodLabel), [prefs.periodLabel]);
 
-  // 2) pobierz aktywności z Supabase
+  // 2) pobierz aktywności z Supabase (TYLKO usera)
   useEffect(() => {
     let alive = true;
 
@@ -83,7 +84,8 @@ export default function PortfolioPage() {
       try {
         const { data, error } = await supabase
           .from("activities")
-          .select("id,type,points,year,organizer,created_at")
+          .select("id,user_id,type,points,year,organizer,created_at") // ✅ user_id dodane
+          .eq("user_id", user.id) // ✅ kluczowa poprawka
           .order("created_at", { ascending: false });
 
         if (!alive) return;
@@ -134,7 +136,7 @@ export default function PortfolioPage() {
       list.push({
         title: `Brakuje ${missing} pkt do celu`,
         desc: "Dodaj aktywności z bieżącego okresu rozliczeniowego.",
-        href: "/activities", // ✅ było /kalkulator
+        href: "/activities",
         kind: "warn",
       });
     } else {
@@ -183,7 +185,6 @@ export default function PortfolioPage() {
     );
   }
 
-  // NIEZALOGOWANY
   if (!user) {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-10">
@@ -201,7 +202,6 @@ export default function PortfolioPage() {
               Zaloguj się
             </Link>
 
-            {/* ✅ tu ma być kalkulator jako gość */}
             <Link
               href="/kalkulator"
               className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
@@ -214,7 +214,6 @@ export default function PortfolioPage() {
     );
   }
 
-  // ZALOGOWANY
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -243,7 +242,6 @@ export default function PortfolioPage() {
         </div>
       </div>
 
-      {/* Top status strip */}
       <div className="mt-6 rounded-2xl border bg-white p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -276,11 +274,7 @@ export default function PortfolioPage() {
               <span className="font-semibold text-slate-900">{Math.round(progressPct)}%</span>
             </div>
             <div className="mt-2 h-2 w-full rounded-full bg-slate-100">
-              <div
-                className="h-2 rounded-full bg-blue-600"
-                style={{ width: `${progressPct}%` }}
-                aria-label="Postęp"
-              />
+              <div className="h-2 rounded-full bg-blue-600" style={{ width: `${progressPct}%` }} aria-label="Postęp" />
             </div>
           </div>
         </div>
@@ -294,7 +288,6 @@ export default function PortfolioPage() {
         {fetching && <div className="mt-4 text-sm text-slate-500">Pobieram aktywności…</div>}
       </div>
 
-      {/* Grid */}
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <section className="rounded-2xl border bg-white p-6 lg:col-span-1">
           <h2 className="text-lg font-semibold text-slate-900">Następne kroki</h2>
