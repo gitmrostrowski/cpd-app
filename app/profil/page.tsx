@@ -9,7 +9,7 @@ type Profession = "Lekarz" | "Lekarz dentysta" | "Inne";
 
 type ProfileRow = {
   user_id: string;
-  profession: string;
+  profession: Profession;
   period_start: number;
   period_end: number;
   required_points: number;
@@ -30,6 +30,13 @@ function parsePeriodLabel(label: string) {
 
 function makePeriodLabel(start: number, end: number) {
   return `${start}–${end}`;
+}
+
+const PREDEFINED = ["2023–2026", "2022–2025", "2021–2024"] as const;
+type PredefinedLabel = (typeof PREDEFINED)[number];
+
+function isProfession(v: any): v is Profession {
+  return v === "Lekarz" || v === "Lekarz dentysta" || v === "Inne";
 }
 
 export default function ProfilePage() {
@@ -66,20 +73,45 @@ export default function ProfilePage() {
       setProfileLoading(true);
       clearMessages();
 
+      // helper: localStorage
+      const loadFromLocal = () => {
+        try {
+          const raw = localStorage.getItem("crpe_profile_prefs_v1");
+          if (!raw) return;
+
+          const p = JSON.parse(raw);
+          if (!alive) return;
+
+          if (isProfession(p?.profession)) setProfession(p.profession);
+          if (typeof p?.requiredPoints === "number") setRequiredPoints(Math.max(0, p.requiredPoints));
+          if (typeof p?.periodLabel === "string") {
+            setPeriodLabel(p.periodLabel);
+            const { start, end } = parsePeriodLabel(p.periodLabel);
+            setCustomStart(start);
+            setCustomEnd(end);
+          }
+        } catch {}
+      };
+
       // 1a) DB
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("user_id,profession,period_start,period_end,required_points")
+          .select("user_id, profession, period_start, period_end, required_points")
           .eq("user_id", user.id)
           .maybeSingle();
 
         if (!alive) return;
 
+        // Jeśli DB krzyczy (np. brak kolumn) -> fallback do localStorage i kończymy
         if (error) {
           setErr(`Profil (DB): ${error.message}`);
-        } else if (!data) {
-          // brak profilu -> utwórz domyślny
+          loadFromLocal();
+          return;
+        }
+
+        // brak profilu -> utwórz domyślny (tylko jeśli tabela ma te kolumny)
+        if (!data) {
           const defaults: ProfileRow = {
             user_id: user.id,
             profession: "Lekarz",
@@ -94,74 +126,78 @@ export default function ProfilePage() {
 
           if (upErr) {
             setErr(`Profil (DB): ${upErr.message}`);
-          } else {
-            setProfession("Lekarz");
-            setRequiredPoints(200);
-            setPeriodLabel(makePeriodLabel(2023, 2026));
-            setCustomStart(2023);
-            setCustomEnd(2026);
-
-            try {
-              localStorage.setItem(
-                "crpe_profile_prefs_v1",
-                JSON.stringify({
-                  profession: defaults.profession,
-                  requiredPoints: defaults.required_points,
-                  periodLabel: makePeriodLabel(defaults.period_start, defaults.period_end),
-                })
-              );
-            } catch {}
+            loadFromLocal();
+            return;
           }
-        } else {
-          const row = data as ProfileRow;
 
-          const prof: Profession =
-            row.profession === "Lekarz dentysta" || row.profession === "Inne" ? (row.profession as Profession) : "Lekarz";
+          setProfession(defaults.profession);
+          setRequiredPoints(defaults.required_points);
+          setPeriodLabel(makePeriodLabel(defaults.period_start, defaults.period_end));
+          setCustomStart(defaults.period_start);
+          setCustomEnd(defaults.period_end);
 
-          setProfession(prof);
-          setRequiredPoints(safeInt(row.required_points, 200));
-          setPeriodLabel(makePeriodLabel(safeInt(row.period_start, 2023), safeInt(row.period_end, 2026)));
-          setCustomStart(safeInt(row.period_start, 2023));
-          setCustomEnd(safeInt(row.period_end, 2026));
-
-          // kompatybilność MVP (Portfolio)
           try {
             localStorage.setItem(
               "crpe_profile_prefs_v1",
               JSON.stringify({
-                profession: prof,
-                requiredPoints: safeInt(row.required_points, 200),
-                periodLabel: makePeriodLabel(safeInt(row.period_start, 2023), safeInt(row.period_end, 2026)),
-              })
+                profession: defaults.profession,
+                requiredPoints: defaults.required_points,
+                periodLabel: makePeriodLabel(defaults.period_start, defaults.period_end),
+              }),
             );
           } catch {}
+
+          return;
         }
+
+        // data istnieje
+        const row = data as any;
+
+        const prof: Profession = isProfession(row.profession) ? row.profession : "Lekarz";
+        const ps = safeInt(row.period_start, 2023);
+        const pe = safeInt(row.period_end, 2026);
+        const rp = safeInt(row.required_points, 200);
+
+        setProfession(prof);
+        setRequiredPoints(Math.max(0, rp));
+        setPeriodLabel(makePeriodLabel(ps, pe));
+        setCustomStart(ps);
+        setCustomEnd(pe);
+
+        try {
+          localStorage.setItem(
+            "crpe_profile_prefs_v1",
+            JSON.stringify({
+              profession: prof,
+              requiredPoints: Math.max(0, rp),
+              periodLabel: makePeriodLabel(ps, pe),
+            }),
+          );
+        } catch {}
       } catch (e: any) {
         if (!alive) return;
         setErr(`Profil (DB): ${e?.message || "Nie udało się pobrać profilu."}`);
+
+        // fallback
+        try {
+          const raw = localStorage.getItem("crpe_profile_prefs_v1");
+          if (!raw) return;
+          const p = JSON.parse(raw);
+          if (!alive) return;
+
+          if (isProfession(p?.profession)) setProfession(p.profession);
+          if (typeof p?.requiredPoints === "number") setRequiredPoints(Math.max(0, p.requiredPoints));
+          if (typeof p?.periodLabel === "string") {
+            setPeriodLabel(p.periodLabel);
+            const { start, end } = parsePeriodLabel(p.periodLabel);
+            setCustomStart(start);
+            setCustomEnd(end);
+          }
+        } catch {}
       } finally {
         if (!alive) return;
         setProfileLoading(false);
       }
-
-      // 1b) localStorage fallback (gdy DB się sypie)
-      try {
-        const raw = localStorage.getItem("crpe_profile_prefs_v1");
-        if (!raw) return;
-        const p = JSON.parse(raw);
-        if (!alive) return;
-
-        if (p?.profession === "Lekarz" || p?.profession === "Lekarz dentysta" || p?.profession === "Inne") {
-          setProfession(p.profession);
-        }
-        if (typeof p?.requiredPoints === "number") setRequiredPoints(Math.max(0, p.requiredPoints));
-        if (typeof p?.periodLabel === "string") {
-          setPeriodLabel(p.periodLabel);
-          const { start, end } = parsePeriodLabel(p.periodLabel);
-          setCustomStart(start);
-          setCustomEnd(end);
-        }
-      } catch {}
     }
 
     loadProfile();
@@ -172,8 +208,7 @@ export default function ProfilePage() {
 
   // UI: gdy zmienisz dropdown na predefiniowany okres, ustaw customStart/End też
   useEffect(() => {
-    const predefined = ["2023–2026", "2022–2025", "2021–2024"];
-    if (predefined.includes(periodLabel)) {
+    if ((PREDEFINED as readonly string[]).includes(periodLabel)) {
       const { start, end } = parsePeriodLabel(periodLabel);
       setCustomStart(start);
       setCustomEnd(end);
@@ -190,7 +225,10 @@ export default function ProfilePage() {
     try {
       const startEnd =
         periodLabel === "Inny"
-          ? { start: safeInt(customStart, 2023), end: safeInt(customEnd, safeInt(customStart, 2023) + 3) }
+          ? {
+              start: safeInt(customStart, 2023),
+              end: safeInt(customEnd, safeInt(customStart, 2023) + 3),
+            }
           : parsePeriodLabel(periodLabel);
 
       const start = Math.max(1900, Math.min(2100, startEnd.start));
@@ -218,7 +256,7 @@ export default function ProfilePage() {
       try {
         localStorage.setItem(
           "crpe_profile_prefs_v1",
-          JSON.stringify({ profession, requiredPoints: payload.required_points, periodLabel: label })
+          JSON.stringify({ profession, requiredPoints: payload.required_points, periodLabel: label }),
         );
       } catch {}
 
@@ -301,6 +339,9 @@ export default function ProfilePage() {
     );
   }
 
+  const previewLabel =
+    (PREDEFINED as readonly string[]).includes(periodLabel) ? periodLabel : makePeriodLabel(customStart, customEnd);
+
   // ZALOGOWANY
   return (
     <div className="mx-auto w-full max-w-4xl p-6 space-y-6">
@@ -366,7 +407,7 @@ export default function ProfilePage() {
             <select
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
               value={profession}
-              onChange={(e) => setProfession(e.target.value as any)}
+              onChange={(e) => setProfession(e.target.value as Profession)}
               disabled={busy}
             >
               <option>Lekarz</option>
@@ -379,7 +420,7 @@ export default function ProfilePage() {
             <label className="text-sm font-medium text-slate-700">Okres domyślny</label>
             <select
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-              value={["2023–2026", "2022–2025", "2021–2024"].includes(periodLabel) ? periodLabel : "Inny"}
+              value={(PREDEFINED as readonly string[]).includes(periodLabel) ? periodLabel : "Inny"}
               onChange={(e) => setPeriodLabel(e.target.value)}
               disabled={busy}
             >
@@ -389,7 +430,7 @@ export default function ProfilePage() {
               <option>Inny</option>
             </select>
 
-            {(["Inny"].includes(periodLabel) || !["2023–2026", "2022–2025", "2021–2024"].includes(periodLabel)) && (
+            {periodLabel === "Inny" && (
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-xs text-slate-600">Start</label>
@@ -431,11 +472,8 @@ export default function ProfilePage() {
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
           <div className="font-semibold text-slate-900">Podgląd (co zobaczy Portfolio)</div>
           <div className="mt-1">
-            {profession} • Okres:{" "}
-            <span className="font-semibold">
-              {(["2023–2026", "2022–2025", "2021–2024"].includes(periodLabel) ? periodLabel : makePeriodLabel(customStart, customEnd))}
-            </span>{" "}
-            • Cel: <span className="font-semibold">{requiredPoints}</span> pkt
+            {profession} • Okres: <span className="font-semibold">{previewLabel}</span> • Cel:{" "}
+            <span className="font-semibold">{requiredPoints}</span> pkt
           </div>
         </div>
       </div>
