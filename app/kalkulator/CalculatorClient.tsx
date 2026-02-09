@@ -11,6 +11,7 @@ import {
   getQuickRecommendations,
 } from "@/lib/cpd/calc";
 import { useAuth } from "@/components/AuthProvider";
+import { supabaseClient } from "@/lib/supabase/client";
 
 type ActivityType =
   | "Kurs stacjonarny"
@@ -28,7 +29,6 @@ type Activity = {
   points: number;
   year: number;
   organizer?: string;
-  /** jeśli true → punkty są "auto" i mogą się aktualizować przy zmianie rodzaju */
   pointsAuto?: boolean;
 };
 
@@ -61,47 +61,51 @@ const PERIODS = [
   { label: "Inny", start: 0, end: 0 },
 ] as const;
 
+type PeriodLabel = (typeof PERIODS)[number]["label"];
+type Profession = "Lekarz" | "Lekarz dentysta" | "Inne";
+
 function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
-
 function formatInt(n: number) {
   return Number.isFinite(n) ? Math.round(n).toString() : "0";
 }
-
 const STORAGE_KEY = "crpe_calculator_v1";
 
 function safeNumber(v: unknown, fallback: number) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
-
 function safeString(v: unknown, fallback = "") {
   return typeof v === "string" ? v : fallback;
 }
-
 function isActivityType(v: unknown): v is ActivityType {
   return typeof v === "string" && (TYPES as readonly string[]).includes(v);
 }
-
 function normalizeActivityType(v: unknown): ActivityType {
   return isActivityType(v) ? v : "Kurs online / webinar";
 }
-
-function isPeriodLabel(v: unknown): v is (typeof PERIODS)[number]["label"] {
+function isPeriodLabel(v: unknown): v is PeriodLabel {
   return typeof v === "string" && PERIODS.some((p) => p.label === v);
+}
+function isProfession(v: unknown): v is Profession {
+  return v === "Lekarz" || v === "Lekarz dentysta" || v === "Inne";
+}
+
+function clamp(n: number, a: number, b: number) {
+  return Math.max(a, Math.min(b, n));
 }
 
 export default function CalculatorClient() {
   const { user, loading: authLoading } = useAuth();
+  const supabase = useMemo(() => supabaseClient(), []);
 
   const currentYear = new Date().getFullYear();
 
-  const [profession, setProfession] = useState<"Lekarz" | "Lekarz dentysta" | "Inne">("Lekarz");
-  const [periodLabel, setPeriodLabel] = useState<(typeof PERIODS)[number]["label"]>("2023–2026");
+  const [profession, setProfession] = useState<Profession>("Lekarz");
+  const [periodLabel, setPeriodLabel] = useState<PeriodLabel>("2023–2026");
   const [customStart, setCustomStart] = useState<number>(currentYear - 1);
   const [customEnd, setCustomEnd] = useState<number>(currentYear + 2);
-
   const [requiredPoints, setRequiredPoints] = useState<number>(200);
 
   const [activities, setActivities] = useState<Activity[]>([
@@ -123,7 +127,16 @@ export default function CalculatorClient() {
     },
   ]);
 
-  /** ---------- localStorage: load ---------- */
+  const [info, setInfo] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  function clearMessages() {
+    setInfo(null);
+    setErr(null);
+  }
+
+  /** ---------- localStorage: load (guest) ---------- */
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -134,10 +147,7 @@ export default function CalculatorClient() {
       const nextProfession = parsed?.profession;
       const nextPeriodLabel = parsed?.periodLabel;
 
-      if (nextProfession === "Lekarz" || nextProfession === "Lekarz dentysta" || nextProfession === "Inne") {
-        setProfession(nextProfession);
-      }
-
+      if (isProfession(nextProfession)) setProfession(nextProfession);
       if (isPeriodLabel(nextPeriodLabel)) setPeriodLabel(nextPeriodLabel);
 
       setCustomStart(safeNumber(parsed?.customStart, currentYear - 1));
@@ -168,27 +178,53 @@ export default function CalculatorClient() {
         if (cleaned.length) setActivities(cleaned);
       }
     } catch {
-      // ignorujemy śmieci w localStorage
+      // ignore
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** ---------- localStorage: save ---------- */
+  /** ---------- localStorage: save (always, also useful as draft) ---------- */
   useEffect(() => {
     try {
-      const payload = {
-        profession,
-        periodLabel,
-        customStart,
-        customEnd,
-        requiredPoints,
-        activities,
-      };
+      const payload = { profession, periodLabel, customStart, customEnd, requiredPoints, activities };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
-      // brak miejsca / prywatny tryb – ignor
+      // ignore
     }
   }, [profession, periodLabel, customStart, customEnd, requiredPoints, activities]);
+
+  /** ---------- DB profile: load on login ---------- */
+  useEffect(() => {
+    let alive = true;
+
+    async function loadProfile() {
+      if (!user) return;
+
+      // Nie nadpisuj w trakcie edycji (na MVP zostawiamy prosto: zawsze ustawiamy po zalogowaniu)
+      try {
+        // Jeśli masz inne nazwy kolumn w profiles, podeślij schema i zmienię selecta.
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("profession, required_points, period_label")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!alive) return;
+        if (error) return; // w MVP nie blokujemy
+
+        if (data?.profession && isProfession(data.profession)) setProfession(data.profession);
+        if (typeof data?.required_points === "number") setRequiredPoints(Math.max(0, data.required_points));
+        if (typeof data?.period_label === "string" && isPeriodLabel(data.period_label)) setPeriodLabel(data.period_label);
+      } catch {
+        // ignore
+      }
+    }
+
+    loadProfile();
+    return () => {
+      alive = false;
+    };
+  }, [user, supabase]);
 
   function clearCalculator() {
     try {
@@ -210,9 +246,9 @@ export default function CalculatorClient() {
         pointsAuto: true,
       },
     ]);
+    clearMessages();
   }
 
-  // okres z UI (może być odwrócony), a potem normalizujemy do start<=end
   const rawPeriod = useMemo(() => {
     const found = PERIODS.find((p) => p.label === periodLabel);
     if (!found) return { start: currentYear - 3, end: currentYear };
@@ -222,12 +258,30 @@ export default function CalculatorClient() {
 
   const period = useMemo(() => normalizePeriod(rawPeriod), [rawPeriod]);
 
-  // Wspólne obliczenia (te same zasady będą w Portfolio)
   const totalPoints = useMemo(() => sumPoints(activities, period), [activities, period]);
   const missing = useMemo(() => calcMissing(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
   const progress = useMemo(() => calcProgress(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
   const status = useMemo(() => getStatus(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
   const recommendations = useMemo(() => getQuickRecommendations(missing), [missing]);
+
+  // Plan (MVP)
+  const plan = useMemo(() => {
+    const yearsTotal = Math.max(1, period.end - period.start + 1);
+    const yearsLeft = Math.max(1, period.end - currentYear + 1);
+    const perYear = missing > 0 ? Math.ceil(missing / yearsLeft) : 0;
+    const perMonth = missing > 0 ? Math.ceil(perYear / 12) : 0;
+
+    // „bezpieczny” plan kwartalny
+    const perQuarter = missing > 0 ? Math.ceil(perYear / 4) : 0;
+
+    return {
+      yearsTotal,
+      yearsLeft,
+      perYear,
+      perQuarter,
+      perMonth,
+    };
+  }, [missing, period.end, period.start, currentYear]);
 
   function addActivity() {
     setActivities((prev) => [
@@ -255,7 +309,6 @@ export default function CalculatorClient() {
     setActivities((prev) =>
       prev.map((a) => {
         if (a.id !== id) return a;
-
         const next: Activity = { ...a, type: nextType };
         if (a.pointsAuto) next.points = DEFAULT_POINTS_BY_TYPE[nextType];
         return next;
@@ -278,11 +331,59 @@ export default function CalculatorClient() {
           ? "border-rose-200 bg-rose-50 text-rose-900"
           : "border-slate-200 bg-slate-50 text-slate-900";
 
+  async function saveAllToPortfolio() {
+    if (!user) {
+      setErr("Zaloguj się, aby zapisać aktywności do Portfolio.");
+      return;
+    }
+    if (busy) return;
+
+    clearMessages();
+
+    // Walidacja
+    const cleaned = activities
+      .map((a) => ({
+        type: String(a.type),
+        points: Math.max(0, Number(a.points) || 0),
+        year: Number(a.year) || currentYear,
+        organizer: (a.organizer ?? "").trim() ? (a.organizer ?? "").trim() : null,
+      }))
+      .filter((a) => a.type && a.year >= 1900 && a.year <= 2100);
+
+    if (cleaned.length === 0) {
+      setErr("Nie ma nic do zapisania.");
+      return;
+    }
+
+    // Insert do DB (activities wymaga user_id)
+    const payload = cleaned.map((a) => ({
+      user_id: user.id,
+      type: a.type,
+      points: a.points,
+      year: a.year,
+      organizer: a.organizer,
+    }));
+
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("activities").insert(payload);
+      if (error) {
+        setErr(error.message);
+        return;
+      }
+      setInfo(`Zapisano ${payload.length} aktywności do Portfolio ✅`);
+    } catch (e: any) {
+      setErr(e?.message || "Nie udało się zapisać aktywności.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-12">
-      {/* LEFT: Ustawienia */}
+      {/* LEFT */}
       <section className="lg:col-span-4">
-        {/* STATUS (wewnątrz kalkulatora) */}
+        {/* status */}
         <div className="mb-6 rounded-2xl border bg-white p-4 shadow-sm">
           {authLoading ? (
             <div className="text-sm text-slate-600">Status: sprawdzam sesję…</div>
@@ -293,8 +394,11 @@ export default function CalculatorClient() {
                 <span className="text-slate-500"> • </span>
                 <span className="font-medium">{user.email}</span>
               </div>
-              <Link href="/portfolio" className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                Przejdź do Portfolio
+              <Link
+                href="/portfolio"
+                className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Portfolio
               </Link>
             </div>
           ) : (
@@ -304,24 +408,49 @@ export default function CalculatorClient() {
                 <span className="text-slate-500"> • </span>
                 Tryb gościa (zapis lokalny)
               </div>
-              <Link href="/login" className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              <Link
+                href="/login"
+                className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
                 Zaloguj się
               </Link>
             </div>
           )}
         </div>
 
+        {/* messages */}
+        {(info || err) && (
+          <div className="mb-6 rounded-2xl border bg-white p-4 text-sm">
+            {info ? <div className="text-emerald-700">{info}</div> : null}
+            {err ? <div className="text-rose-700">{err}</div> : null}
+            {info ? (
+              <div className="mt-2 flex flex-wrap gap-3">
+                <Link href="/activities" className="text-blue-700 hover:underline">
+                  Zobacz w Aktywnościach →
+                </Link>
+                <Link href="/portfolio" className="text-blue-700 hover:underline">
+                  Przejdź do Portfolio →
+                </Link>
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* settings */}
         <div className="rounded-2xl border bg-white p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Ustawienia</h2>
-              <p className="mt-1 text-sm text-slate-600">Uzupełnij podstawowe dane, a potem dodaj aktywności.</p>
+              <p className="mt-1 text-sm text-slate-600">
+                {user ? "Po zalogowaniu ustawienia bierzemy z profilu (DB)." : "W trybie gościa zapis lokalny."}
+              </p>
             </div>
 
             <button
               onClick={clearCalculator}
               className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
-              title="Czyści dane zapisane lokalnie (tryb gościa)"
+              title="Czyści zapis lokalny kalkulatora"
+              type="button"
             >
               Wyczyść
             </button>
@@ -333,7 +462,7 @@ export default function CalculatorClient() {
               <select
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
                 value={profession}
-                onChange={(e) => setProfession(e.target.value as any)}
+                onChange={(e) => setProfession(e.target.value as Profession)}
               >
                 <option>Lekarz</option>
                 <option>Lekarz dentysta</option>
@@ -346,7 +475,7 @@ export default function CalculatorClient() {
               <select
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
                 value={periodLabel}
-                onChange={(e) => setPeriodLabel(e.target.value as any)}
+                onChange={(e) => setPeriodLabel(e.target.value as PeriodLabel)}
               >
                 {PERIODS.map((p) => (
                   <option key={p.label} value={p.label}>
@@ -389,13 +518,13 @@ export default function CalculatorClient() {
                 min={0}
               />
               <p className="mt-1 text-xs text-slate-500">
-                Wpisz wymagania swojej izby/specjalizacji. (W trybie gościa zapisuje się lokalnie.)
+                Wartość z profilu (DB) po zalogowaniu. W trybie gościa — lokalnie.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Wynik */}
+        {/* result */}
         <div className={`mt-6 rounded-2xl border p-5 ${toneStyles}`}>
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -435,6 +564,30 @@ export default function CalculatorClient() {
             </div>
           </div>
 
+          {/* PLAN */}
+          {missing > 0 ? (
+            <div className="mt-5 rounded-xl bg-white/60 p-4">
+              <div className="text-sm font-semibold text-slate-900">Plan na uzupełnienie braków</div>
+              <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
+                <div>
+                  <div className="text-xs text-slate-600">Na rok</div>
+                  <div className="font-bold text-slate-900">{plan.perYear} pkt</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-600">Na kwartał</div>
+                  <div className="font-bold text-slate-900">{plan.perQuarter} pkt</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-600">Na miesiąc</div>
+                  <div className="font-bold text-slate-900">{plan.perMonth} pkt</div>
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-slate-600">
+                Liczone wg lat do końca okresu (do {period.end}). To MVP — później dodamy „termin rozliczenia” i dokładniejsze wyliczenia.
+              </div>
+            </div>
+          ) : null}
+
           {recommendations.length > 0 && (
             <div className="mt-5">
               <div className="text-sm font-semibold text-slate-900">Szybkie propozycje uzupełnienia</div>
@@ -444,33 +597,51 @@ export default function CalculatorClient() {
                 ))}
               </ul>
               <div className="mt-2 text-xs text-slate-600">
-                *To są przykładowe scenariusze na podstawie domyślnych punktów dla typów aktywności.
+                *Przykładowe scenariusze na bazie domyślnych punktów dla typów aktywności.
               </div>
             </div>
           )}
         </div>
       </section>
 
-      {/* RIGHT: Aktywności */}
+      {/* RIGHT */}
       <section className="lg:col-span-8">
         <div className="rounded-2xl border bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności (kalkulator)</h2>
               <p className="mt-1 text-sm text-slate-600">
                 {user
-                  ? "Jesteś zalogowany — możesz zapisywać do Portfolio i generować raporty."
-                  : "Tryb gościa: dane zapisują się lokalnie na tym urządzeniu. Do portfolio/raportów — zaloguj się."}
+                  ? "Zalogowany: możesz zapisać poniższe wpisy do bazy (Portfolio)."
+                  : "Tryb gościa: to tylko szkic lokalny. Zaloguj się, aby zapisać do bazy."}
               </p>
             </div>
 
             <div className="flex flex-wrap gap-2">
+              <button
+                onClick={addActivity}
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                type="button"
+              >
+                + Dodaj aktywność
+              </button>
+
+              <button
+                onClick={saveAllToPortfolio}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                disabled={!user || busy}
+                type="button"
+                title={!user ? "Zaloguj się, żeby zapisać." : "Zapisze wszystkie wiersze do Portfolio."}
+              >
+                {busy ? "Zapisuję…" : "Zapisz do Portfolio"}
+              </button>
+
               {user ? (
                 <Link
-                  href="/portfolio"
+                  href="/activities"
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
-                  Przejdź do Portfolio
+                  Aktywności
                 </Link>
               ) : (
                 <Link
@@ -480,17 +651,9 @@ export default function CalculatorClient() {
                   Zaloguj i zapisz
                 </Link>
               )}
-
-              <button
-                onClick={addActivity}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                + Dodaj aktywność
-              </button>
             </div>
           </div>
 
-          {/* DESKTOP/TABLET: tabela */}
           <div className="mt-5">
             <table className="w-full border-separate border-spacing-0">
               <thead>
@@ -498,7 +661,7 @@ export default function CalculatorClient() {
                   <th className="border-b px-3 py-3">Rodzaj</th>
                   <th className="border-b px-3 py-3">Punkty</th>
                   <th className="border-b px-3 py-3">Rok</th>
-                  <th className="border-b px-3 py-3">Organizator (opcjonalnie)</th>
+                  <th className="border-b px-3 py-3">Organizator</th>
                   <th className="border-b px-3 py-3 text-right">Akcje</th>
                 </tr>
               </thead>
@@ -520,6 +683,7 @@ export default function CalculatorClient() {
                             </option>
                           ))}
                         </select>
+
                         {!inPeriod && (
                           <div className="mt-1 text-xs text-amber-700">
                             Poza okresem {period.start}–{period.end} (nie liczy się do sumy)
@@ -552,7 +716,7 @@ export default function CalculatorClient() {
                       <td className="border-b px-3 py-3 align-top">
                         <input
                           type="text"
-                          placeholder="np. OIL / towarzystwo naukowe"
+                          placeholder="np. OIL / towarzystwo"
                           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
                           value={a.organizer ?? ""}
                           onChange={(e) => updateActivity(a.id, { organizer: e.target.value })}
@@ -563,6 +727,7 @@ export default function CalculatorClient() {
                         <button
                           onClick={() => removeActivity(a.id)}
                           className="rounded-xl border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-50"
+                          type="button"
                         >
                           Usuń
                         </button>
@@ -574,7 +739,6 @@ export default function CalculatorClient() {
             </table>
           </div>
 
-          {/* Podsumowanie */}
           <div className="mt-5 rounded-2xl bg-slate-50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -594,22 +758,29 @@ export default function CalculatorClient() {
           </div>
         </div>
 
-        {/* CTA */}
         <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Chcesz zapisać wynik w Portfolio?</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Następny krok</h3>
           <p className="mt-1 text-sm text-slate-600">
             {user
-              ? "Jesteś zalogowany — przejdź do Portfolio, aby zapisać aktywności i generować raporty."
-              : "W trybie gościa dane zapisują się lokalnie na tym urządzeniu. Po zalogowaniu możesz je trzymać na koncie i generować raporty/zaświadczenia."}
+              ? "Możesz zapisać wpisy do Portfolio albo przejść do Aktywności i dodać certyfikaty."
+              : "Zaloguj się, żeby zapisać wpisy do bazy i potem podpinać certyfikaty w Aktywnościach."}
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             {user ? (
-              <Link
-                href="/portfolio"
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                Przejdź do Portfolio
-              </Link>
+              <>
+                <Link
+                  href="/activities"
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Przejdź do Aktywności
+                </Link>
+                <Link
+                  href="/portfolio"
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Portfolio
+                </Link>
+              </>
             ) : (
               <Link
                 href="/login"
