@@ -7,6 +7,7 @@ import { supabaseClient } from "@/lib/supabase/client";
 
 type ActivityRow = {
   id: string;
+  user_id: string;
   type: string;
   points: number;
   year: number;
@@ -58,7 +59,8 @@ export default function ActivitiesPage() {
     try {
       const { data, error } = await supabase
         .from("activities")
-        .select("id,type,points,year,organizer,created_at")
+        .select("id,user_id,type,points,year,organizer,created_at")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -104,8 +106,11 @@ export default function ActivitiesPage() {
     }
 
     const org = organizer.trim();
+
+    // ✅ user_id jest wymagane w Twoich typach tabeli
     const payload = {
-      type,
+      user_id: user.id,
+      type: String(type),
       points: p,
       year: y,
       organizer: org.length ? org : null,
@@ -130,7 +135,9 @@ export default function ActivitiesPage() {
   }
 
   async function removeActivity(id: string) {
+    if (!user) return;
     if (busy) return;
+
     clearMessages();
 
     // optimistic UI
@@ -139,7 +146,12 @@ export default function ActivitiesPage() {
 
     setBusy(true);
     try {
-      const { error } = await supabase.from("activities").delete().eq("id", id);
+      const { error } = await supabase
+        .from("activities")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
       if (error) {
         setErr(error.message);
         setItems(prev); // rollback
