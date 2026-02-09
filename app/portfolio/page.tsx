@@ -14,7 +14,7 @@ type ActivityRow = {
   organizer: string | null;
   created_at: string;
 
-  // ✅ certyfikat (opcjonalnie)
+  // certyfikat (opcjonalnie)
   certificate_path?: string | null;
   certificate_name?: string | null;
   certificate_mime?: string | null;
@@ -24,6 +24,14 @@ type Prefs = {
   profession: "Lekarz" | "Lekarz dentysta" | "Inne";
   requiredPoints: number;
   periodLabel: string; // np. "2023–2026"
+};
+
+type ProfileRow = {
+  user_id: string;
+  profession: string;
+  period_start: number;
+  period_end: number;
+  required_points: number;
 };
 
 function parsePeriod(periodLabel: string) {
@@ -54,6 +62,16 @@ function shortFileName(name?: string | null) {
   return `${cut}…${ext}`;
 }
 
+function prefsFromProfile(p: ProfileRow): Prefs {
+  const prof =
+    p.profession === "Lekarz dentysta" || p.profession === "Inne" ? (p.profession as any) : "Lekarz";
+  return {
+    profession: prof,
+    requiredPoints: Number(p.required_points) || 200,
+    periodLabel: `${p.period_start}–${p.period_end}`,
+  };
+}
+
 export default function PortfolioPage() {
   const { user, loading } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
@@ -64,6 +82,9 @@ export default function PortfolioPage() {
     periodLabel: "2023–2026",
   });
 
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileErr, setProfileErr] = useState<string | null>(null);
+
   const [activities, setActivities] = useState<ActivityRow[]>([]);
   const [fetching, setFetching] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -71,23 +92,104 @@ export default function PortfolioPage() {
   // signed urls do certyfikatów (id -> url)
   const [certUrls, setCertUrls] = useState<Record<string, string>>({});
 
-  // 1) preferencje z localStorage (MVP)
+  // 1) PROFIL: DB -> fallback localStorage
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("crpe_profile_prefs_v1");
-      if (!raw) return;
-      const p = JSON.parse(raw);
-      setPrefs((prev) => ({
-        profession: p?.profession ?? prev.profession,
-        requiredPoints: typeof p?.requiredPoints === "number" ? p.requiredPoints : prev.requiredPoints,
-        periodLabel: typeof p?.periodLabel === "string" ? p.periodLabel : prev.periodLabel,
-      }));
-    } catch {}
-  }, []);
+    let alive = true;
+
+    async function loadProfile() {
+      if (!user) return;
+
+      setProfileLoading(true);
+      setProfileErr(null);
+
+      // 1a) spróbuj DB
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("user_id,profession,period_start,period_end,required_points")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!alive) return;
+
+        if (error) {
+          setProfileErr(error.message);
+        } else if (!data) {
+          // brak profilu -> utwórz domyślny
+          const defaults: ProfileRow = {
+            user_id: user.id,
+            profession: "Lekarz",
+            period_start: 2023,
+            period_end: 2026,
+            required_points: 200,
+          };
+
+          const { error: upErr } = await supabase.from("profiles").upsert(defaults, { onConflict: "user_id" });
+          if (!alive) return;
+
+          if (upErr) {
+            setProfileErr(upErr.message);
+          } else {
+            setPrefs(prefsFromProfile(defaults));
+            // utrzymaj kompatybilność MVP
+            try {
+              localStorage.setItem(
+                "crpe_profile_prefs_v1",
+                JSON.stringify({
+                  profession: defaults.profession,
+                  requiredPoints: defaults.required_points,
+                  periodLabel: `${defaults.period_start}–${defaults.period_end}`,
+                })
+              );
+            } catch {}
+          }
+        } else {
+          setPrefs(prefsFromProfile(data as ProfileRow));
+          // utrzymaj kompatybilność MVP
+          try {
+            localStorage.setItem(
+              "crpe_profile_prefs_v1",
+              JSON.stringify({
+                profession: (data as any).profession,
+                requiredPoints: (data as any).required_points,
+                periodLabel: `${(data as any).period_start}–${(data as any).period_end}`,
+              })
+            );
+          } catch {}
+        }
+      } catch (e: any) {
+        if (!alive) return;
+        setProfileErr(e?.message || "Nie udało się pobrać profilu z bazy.");
+      } finally {
+        if (!alive) return;
+        setProfileLoading(false);
+      }
+
+      // 1b) fallback localStorage tylko jeśli DB nie wstawiło prefs sensownie
+      // (czyli: gdy profileErr jest ustawione, user nadal ma coś widzieć)
+      try {
+        const raw = localStorage.getItem("crpe_profile_prefs_v1");
+        if (!raw) return;
+        const p = JSON.parse(raw);
+        if (!alive) return;
+
+        setPrefs((prev) => ({
+          profession: p?.profession ?? prev.profession,
+          requiredPoints: typeof p?.requiredPoints === "number" ? p.requiredPoints : prev.requiredPoints,
+          periodLabel: typeof p?.periodLabel === "string" ? p.periodLabel : prev.periodLabel,
+        }));
+      } catch {}
+    }
+
+    loadProfile();
+    return () => {
+      alive = false;
+    };
+  }, [user, supabase]);
 
   const period = useMemo(() => parsePeriod(prefs.periodLabel), [prefs.periodLabel]);
 
-  // 2) pobierz aktywności z Supabase (TYLKO usera) + pola certyfikatu
+  // 2) AKTYWNOŚCI (TYLKO usera) + pola certyfikatu
   useEffect(() => {
     let alive = true;
 
@@ -103,9 +205,7 @@ export default function PortfolioPage() {
       try {
         const { data, error } = await supabase
           .from("activities")
-          .select(
-            "id,user_id,type,points,year,organizer,created_at,certificate_path,certificate_name,certificate_mime"
-          )
+          .select("id,user_id,type,points,year,organizer,created_at,certificate_path,certificate_name,certificate_mime")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
@@ -121,12 +221,11 @@ export default function PortfolioPage() {
         const rows = (data as ActivityRow[]) ?? [];
         setActivities(rows);
 
-        // od razu przygotuj signed url dla tych co mają certyfikat
+        // signed url dla tych co mają certyfikat
         const withCert = rows.filter((r) => r.certificate_path);
         const nextMap: Record<string, string> = {};
         for (const r of withCert) {
           const path = r.certificate_path!;
-          // 1h ważności — wystarczy do kliknięcia w UI
           const { data: urlData } = await supabase.storage.from("certificates").createSignedUrl(path, 60 * 60);
           if (urlData?.signedUrl) nextMap[r.id] = urlData.signedUrl;
         }
@@ -152,10 +251,7 @@ export default function PortfolioPage() {
     return activities.filter((a) => a.year >= period.start && a.year <= period.end);
   }, [activities, period.start, period.end]);
 
-  const totalPoints = useMemo(
-    () => inPeriod.reduce((sum, a) => sum + (Number(a.points) || 0), 0),
-    [inPeriod]
-  );
+  const totalPoints = useMemo(() => inPeriod.reduce((sum, a) => sum + (Number(a.points) || 0), 0), [inPeriod]);
 
   const required = Math.max(0, Number(prefs.requiredPoints) || 0);
   const missing = Math.max(0, required - totalPoints);
@@ -230,10 +326,7 @@ export default function PortfolioPage() {
           </p>
 
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link
-              href="/login"
-              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
+            <Link href="/login" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
               Zaloguj się
             </Link>
 
@@ -255,9 +348,14 @@ export default function PortfolioPage() {
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Portfolio</h1>
           <p className="mt-2 text-slate-600">
-            Status Twojego CPD w okresie{" "}
-            <span className="font-semibold text-slate-900">{prefs.periodLabel}</span>
+            Status Twojego CPD w okresie <span className="font-semibold text-slate-900">{prefs.periodLabel}</span>
           </p>
+          {profileLoading ? <div className="mt-1 text-sm text-slate-500">Ładuję profil…</div> : null}
+          {profileErr ? (
+            <div className="mt-1 text-sm text-rose-700">
+              Profil (DB): {profileErr} — używam ustawień lokalnych (fallback).
+            </div>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -294,9 +392,7 @@ export default function PortfolioPage() {
 
             <span
               className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
-                missing > 0
-                  ? "border-rose-200 bg-rose-50 text-rose-700"
-                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                missing > 0 ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"
               }`}
             >
               Brakuje: <span className="font-semibold">{missing}</span>
@@ -314,13 +410,13 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        {errorMsg && (
+        {errorMsg ? (
           <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
             Błąd pobierania aktywności: {errorMsg}
           </div>
-        )}
+        ) : null}
 
-        {fetching && <div className="mt-4 text-sm text-slate-500">Pobieram aktywności…</div>}
+        {fetching ? <div className="mt-4 text-sm text-slate-500">Pobieram aktywności…</div> : null}
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
@@ -333,10 +429,9 @@ export default function PortfolioPage() {
               <Link
                 key={idx}
                 href={a.href}
-                className={`
-                  block rounded-2xl border p-4 hover:bg-slate-50 transition
-                  ${a.kind === "warn" ? "border-rose-200" : "border-slate-200"}
-                `}
+                className={`block rounded-2xl border p-4 hover:bg-slate-50 transition ${
+                  a.kind === "warn" ? "border-rose-200" : "border-slate-200"
+                }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -389,10 +484,7 @@ export default function PortfolioPage() {
                 Dodaj pierwszą aktywność, a portfolio zacznie liczyć punkty i status.
               </div>
               <div className="mt-4 flex flex-wrap justify-center gap-3">
-                <Link
-                  href="/activities"
-                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
+                <Link href="/activities" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
                   + Dodaj aktywność
                 </Link>
                 <Link
@@ -427,9 +519,7 @@ export default function PortfolioPage() {
                           <span className="font-medium text-slate-900">{a.year}</span>
                           {a.created_at ? (
                             <>
-                              {" "}
-                              • Dodano:{" "}
-                              <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
+                              {" "}• Dodano: <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
                             </>
                           ) : null}
                         </div>
@@ -437,20 +527,13 @@ export default function PortfolioPage() {
                         {hasCert ? (
                           <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
                             {certUrl ? (
-                              <a
-                                href={certUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="font-medium text-blue-700 hover:underline"
-                              >
+                              <a href={certUrl} target="_blank" rel="noreferrer" className="font-medium text-blue-700 hover:underline">
                                 Otwórz / pobierz
                               </a>
                             ) : (
                               <span className="text-slate-500">Generuję link…</span>
                             )}
-                            {a.certificate_name ? (
-                              <span className="text-slate-500">{shortFileName(a.certificate_name)}</span>
-                            ) : null}
+                            {a.certificate_name ? <span className="text-slate-500">{shortFileName(a.certificate_name)}</span> : null}
                           </div>
                         ) : null}
                       </div>
@@ -492,10 +575,7 @@ export default function PortfolioPage() {
           <div className="rounded-2xl border border-slate-200 p-5">
             <div className="font-semibold text-slate-900">Eksport CSV</div>
             <div className="mt-1 text-sm text-slate-600">Lista aktywności do analizy i archiwizacji.</div>
-            <button
-              disabled
-              className="mt-3 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-500 disabled:opacity-70"
-            >
+            <button disabled className="mt-3 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-500 disabled:opacity-70">
               Wkrótce
             </button>
           </div>
@@ -503,10 +583,7 @@ export default function PortfolioPage() {
           <div className="rounded-2xl border border-slate-200 p-5">
             <div className="font-semibold text-slate-900">Raport PDF</div>
             <div className="mt-1 text-sm text-slate-600">Gotowy dokument do rozliczeń okresu CPD.</div>
-            <button
-              disabled
-              className="mt-3 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-500 disabled:opacity-70"
-            >
+            <button disabled className="mt-3 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-500 disabled:opacity-70">
               Wkrótce
             </button>
           </div>
