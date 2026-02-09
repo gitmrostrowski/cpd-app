@@ -35,7 +35,7 @@ type ProfileRow = {
 };
 
 function parsePeriod(periodLabel: string) {
-  const clean = periodLabel.replace("–", "-");
+  const clean = String(periodLabel || "").replace("–", "-");
   const [a, b] = clean.split("-").map((x) => Number(String(x).trim()));
   const start = Number.isFinite(a) ? a : 2023;
   const end = Number.isFinite(b) ? b : start + 3;
@@ -72,6 +72,22 @@ function prefsFromProfile(p: ProfileRow): Prefs {
   };
 }
 
+function safePrefsFromLocal(prev: Prefs): Prefs {
+  try {
+    const raw = localStorage.getItem("crpe_profile_prefs_v1");
+    if (!raw) return prev;
+    const p = JSON.parse(raw);
+
+    return {
+      profession: p?.profession ?? prev.profession,
+      requiredPoints: typeof p?.requiredPoints === "number" ? p.requiredPoints : prev.requiredPoints,
+      periodLabel: typeof p?.periodLabel === "string" ? p.periodLabel : prev.periodLabel,
+    };
+  } catch {
+    return prev;
+  }
+}
+
 export default function PortfolioPage() {
   const { user, loading } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
@@ -102,6 +118,9 @@ export default function PortfolioPage() {
       setProfileLoading(true);
       setProfileErr(null);
 
+      // Na start ustaw fallback (żeby UI zawsze coś miało)
+      setPrefs((prev) => safePrefsFromLocal(prev));
+
       // 1a) spróbuj DB
       try {
         const { data, error } = await supabase
@@ -113,9 +132,13 @@ export default function PortfolioPage() {
         if (!alive) return;
 
         if (error) {
+          // np. "column period_start does not exist" -> nie próbuj upsert, tylko jedź na localStorage
           setProfileErr(error.message);
-        } else if (!data) {
-          // brak profilu -> utwórz domyślny
+          return;
+        }
+
+        if (!data) {
+          // brak profilu -> utwórz domyślny (Tylko jeśli SELECT nie zwrócił błędu)
           const defaults: ProfileRow = {
             user_id: user.id,
             profession: "Lekarz",
@@ -129,34 +152,27 @@ export default function PortfolioPage() {
 
           if (upErr) {
             setProfileErr(upErr.message);
-          } else {
-            setPrefs(prefsFromProfile(defaults));
-            // utrzymaj kompatybilność MVP
-            try {
-              localStorage.setItem(
-                "crpe_profile_prefs_v1",
-                JSON.stringify({
-                  profession: defaults.profession,
-                  requiredPoints: defaults.required_points,
-                  periodLabel: `${defaults.period_start}–${defaults.period_end}`,
-                })
-              );
-            } catch {}
+            return;
           }
-        } else {
-          setPrefs(prefsFromProfile(data as ProfileRow));
+
+          const nextPrefs = prefsFromProfile(defaults);
+          setPrefs(nextPrefs);
+
           // utrzymaj kompatybilność MVP
           try {
-            localStorage.setItem(
-              "crpe_profile_prefs_v1",
-              JSON.stringify({
-                profession: (data as any).profession,
-                requiredPoints: (data as any).required_points,
-                periodLabel: `${(data as any).period_start}–${(data as any).period_end}`,
-              })
-            );
+            localStorage.setItem("crpe_profile_prefs_v1", JSON.stringify(nextPrefs));
           } catch {}
+
+          return;
         }
+
+        const nextPrefs = prefsFromProfile(data as ProfileRow);
+        setPrefs(nextPrefs);
+
+        // utrzymaj kompatybilność MVP
+        try {
+          localStorage.setItem("crpe_profile_prefs_v1", JSON.stringify(nextPrefs));
+        } catch {}
       } catch (e: any) {
         if (!alive) return;
         setProfileErr(e?.message || "Nie udało się pobrać profilu z bazy.");
@@ -164,21 +180,6 @@ export default function PortfolioPage() {
         if (!alive) return;
         setProfileLoading(false);
       }
-
-      // 1b) fallback localStorage tylko jeśli DB nie wstawiło prefs sensownie
-      // (czyli: gdy profileErr jest ustawione, user nadal ma coś widzieć)
-      try {
-        const raw = localStorage.getItem("crpe_profile_prefs_v1");
-        if (!raw) return;
-        const p = JSON.parse(raw);
-        if (!alive) return;
-
-        setPrefs((prev) => ({
-          profession: p?.profession ?? prev.profession,
-          requiredPoints: typeof p?.requiredPoints === "number" ? p.requiredPoints : prev.requiredPoints,
-          periodLabel: typeof p?.periodLabel === "string" ? p.periodLabel : prev.periodLabel,
-        }));
-      } catch {}
     }
 
     loadProfile();
