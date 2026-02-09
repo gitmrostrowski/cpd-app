@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <!-- rounded square -->
+  <rect x="16" y="16" width="224" height="224" rx="48" fill="#2563EB"/>
+
+  <!-- document -->
+  <path d="M74 66c0-8.8 7.2-16 16-16h64l32 32v92c0 8.8-7.2 16-16 16H90c-8.8 0-16-7.2-16-16V66Z" fill="#FFFFFF" opacity="0.98"/>
+
+  <!-- folded corner -->
+  <path d="M154 50v28c0 6.6 5.4 12 12 12h28" fill="none" stroke="#2563EB" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+
+  <!-- lines on document -->
+  <path d="M98 110h80" stroke="#2563EB" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+  <path d="M98 146h68" stroke="#2563EB" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+
+  <!-- plus badge -->
+  <g transform="translate(158,150)">
+    <circle cx="34" cy="34" r="26" fill="#2563EB"/>
+    <path d="M34 22v24M22 34h24" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+  </g>
+</svg>
