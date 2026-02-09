@@ -1,89 +1,289 @@
-import Link from "next/link";
-import { supabaseServer } from "@/lib/supabase/server";
+"use client";
 
-type ActivityListRow = {
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
+import { supabaseClient } from "@/lib/supabase/client";
+
+type ActivityRow = {
   id: string;
   type: string;
   points: number;
   year: number;
   organizer: string | null;
   created_at: string;
-  certificate_path: string | null;
 };
 
-export default async function ActivitiesPage() {
-  const supabase = await supabaseServer();
+const TYPES = [
+  "Kurs stacjonarny",
+  "Kurs online / webinar",
+  "Konferencja / kongres",
+  "Warsztaty praktyczne",
+  "Publikacja naukowa",
+  "Prowadzenie szkolenia",
+  "Samokształcenie",
+  "Staż / praktyka",
+] as const;
 
-  const { data, error } = await supabase
-    .from("activities")
-    .select("id,type,points,year,organizer,created_at,certificate_path")
-    .order("year", { ascending: false })
-    .order("created_at", { ascending: false });
+export default function ActivitiesPage() {
+  const { user, loading } = useAuth();
+  const supabase = useMemo(() => supabaseClient(), []);
 
-  const activities = (data ?? []) as ActivityListRow[];
+  const [items, setItems] = useState<ActivityRow[]>([]);
+  const [fetching, setFetching] = useState(false);
+  const [info, setInfo] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
-  if (error) {
+  // form
+  const [type, setType] = useState<(typeof TYPES)[number]>(TYPES[1]);
+  const [points, setPoints] = useState<number>(10);
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [organizer, setOrganizer] = useState<string>("");
+
+  async function load() {
+    if (!user) {
+      setItems([]);
+      return;
+    }
+    setFetching(true);
+    setErr(null);
+    try {
+      const { data, error } = await supabase
+        .from("activities")
+        .select("id,type,points,year,organizer,created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        setErr(error.message);
+        setItems([]);
+        return;
+      }
+      setItems((data as ActivityRow[]) ?? []);
+    } catch (e: any) {
+      setErr(e?.message || "Nie udało się pobrać aktywności.");
+      setItems([]);
+    } finally {
+      setFetching(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  async function addActivity() {
+    if (!user) return;
+    setInfo(null);
+    setErr(null);
+
+    const org = organizer.trim();
+    const payload = {
+      type,
+      points: Number(points) || 0,
+      year: Number(year) || new Date().getFullYear(),
+      organizer: org.length ? org : null,
+    };
+
+    try {
+      const { error } = await supabase.from("activities").insert(payload);
+      if (error) {
+        setErr(error.message);
+        return;
+      }
+      setInfo("Dodano aktywność ✅");
+      setOrganizer("");
+      await load();
+    } catch (e: any) {
+      setErr(e?.message || "Nie udało się dodać aktywności.");
+    }
+  }
+
+  async function removeActivity(id: string) {
+    setInfo(null);
+    setErr(null);
+    try {
+      const { error } = await supabase.from("activities").delete().eq("id", id);
+      if (error) {
+        setErr(error.message);
+        return;
+      }
+      setInfo("Usunięto ✅");
+      setItems((prev) => prev.filter((x) => x.id !== id));
+    } catch (e: any) {
+      setErr(e?.message || "Nie udało się usunąć.");
+    }
+  }
+
+  if (loading) {
     return (
-      <div className="mx-auto max-w-4xl p-6">
-        <h1 className="text-xl font-semibold">Aktywności</h1>
-        <p className="mt-4 text-red-600">Błąd pobierania danych: {error.message}</p>
-      </div>
+      <main className="mx-auto max-w-6xl px-4 py-10">
+        <div className="rounded-2xl border bg-white p-6">Ładuję…</div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-10">
+        <div className="rounded-2xl border bg-white p-8">
+          <h1 className="text-2xl font-bold text-slate-900">Aktywności</h1>
+          <p className="mt-2 text-slate-600">Zaloguj się, aby zapisywać aktywności do portfolio.</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link href="/login" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+              Zaloguj się
+            </Link>
+            <Link href="/kalkulator" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              Kalkulator (tryb gościa)
+            </Link>
+          </div>
+        </div>
+      </main>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-6 space-y-4">
-      <div className="flex items-start justify-between gap-4">
+    <main className="mx-auto max-w-6xl px-4 py-10">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Aktywności</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Kliknij, żeby dodać/podejrzeć certyfikat.
-          </p>
+          <h1 className="text-3xl font-extrabold text-slate-900">Aktywności</h1>
+          <p className="mt-2 text-slate-600">Dodawaj i zarządzaj aktywnościami w portfolio.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/calculator" className="rounded border px-3 py-2 text-sm hover:bg-gray-50">
+        <div className="flex gap-2">
+          <Link href="/portfolio" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            Portfolio
+          </Link>
+          <Link href="/kalkulator" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             Kalkulator
           </Link>
         </div>
       </div>
 
-      {activities.length === 0 ? (
-        <p className="text-gray-600">Brak zapisanych aktywności.</p>
-      ) : (
-        <ul className="space-y-2">
-          {activities.map((a) => {
-            const hasCert = Boolean(a.certificate_path && a.certificate_path.trim().length);
-            return (
-              <li key={a.id} className="rounded border p-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="font-medium">{a.type}</div>
-                    <div className="text-sm text-gray-600">
-                      {a.year} · {a.points} pkt · {a.organizer ?? "—"}
+      {(info || err) && (
+        <div className="mt-4 rounded-2xl border bg-white p-4 text-sm">
+          {info ? <div className="text-emerald-700">{info}</div> : null}
+          {err ? <div className="text-rose-700">{err}</div> : null}
+        </div>
+      )}
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        {/* FORM */}
+        <section className="rounded-2xl border bg-white p-6 lg:col-span-1">
+          <h2 className="text-lg font-semibold text-slate-900">Dodaj aktywność</h2>
+          <p className="mt-1 text-sm text-slate-600">Zapis trafia do Supabase i od razu pokaże się w Portfolio.</p>
+
+          <div className="mt-4 space-y-3">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Rodzaj</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                value={type}
+                onChange={(e) => setType(e.target.value as any)}
+              >
+                {TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">Punkty</label>
+              <input
+                type="number"
+                min={0}
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                value={points}
+                onChange={(e) => setPoints(Math.max(0, Number(e.target.value || 0)))}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">Rok</label>
+              <input
+                type="number"
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value || new Date().getFullYear()))}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">Organizator (opcjonalnie)</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                value={organizer}
+                onChange={(e) => setOrganizer(e.target.value)}
+                placeholder="np. OIL / towarzystwo"
+              />
+            </div>
+
+            <button
+              onClick={addActivity}
+              className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              type="button"
+            >
+              + Zapisz aktywność
+            </button>
+          </div>
+        </section>
+
+        {/* LIST */}
+        <section className="rounded-2xl border bg-white p-6 lg:col-span-2">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności</h2>
+              <p className="mt-1 text-sm text-slate-600">Kliknij usuń, aby skasować wpis.</p>
+            </div>
+            <button
+              onClick={load}
+              type="button"
+              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Odśwież
+            </button>
+          </div>
+
+          {fetching ? (
+            <div className="mt-4 text-sm text-slate-500">Pobieram…</div>
+          ) : items.length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-8 text-center">
+              <div className="text-lg font-semibold text-slate-900">Brak zapisanych aktywności</div>
+              <div className="mt-2 text-sm text-slate-600">Dodaj pierwszą aktywność po lewej.</div>
+            </div>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {items.map((a) => (
+                <div key={a.id} className="rounded-2xl border border-slate-200 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold text-slate-900">{a.type}</div>
+                      <div className="mt-1 text-sm text-slate-600">
+                        {a.organizer ? a.organizer : "Brak organizatora"} • Rok:{" "}
+                        <span className="font-medium text-slate-900">{a.year}</span>
+                      </div>
                     </div>
-                    <div className="mt-2 text-xs">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 ${
-                          hasCert ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-700"
-                        }`}
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                        <span className="text-slate-600">Punkty</span>{" "}
+                        <span className="font-semibold text-slate-900">{a.points}</span>
+                      </div>
+                      <button
+                        onClick={() => removeActivity(a.id)}
+                        className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        type="button"
                       >
-                        📎 Certyfikat: {hasCert ? "Dodany" : "Brak"}
-                      </span>
+                        Usuń
+                      </button>
                     </div>
                   </div>
-
-                  <Link
-                    href={`/activities/${a.id}#certificate`}
-                    className="rounded border px-3 py-2 text-sm hover:bg-gray-50"
-                  >
-                    {hasCert ? "Szczegóły" : "Dodaj"}
-                  </Link>
                 </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
   );
 }
