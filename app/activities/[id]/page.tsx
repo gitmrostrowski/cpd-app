@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { deleteCertificate, uploadCertificate } from "../actions";
 
@@ -6,8 +7,10 @@ const BUCKET = "certificates";
 
 export default async function ActivityDetailsPage({
   params,
+  searchParams,
 }: {
   params: { id: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
 }) {
   const supabase = await supabaseServer();
 
@@ -16,6 +19,14 @@ export default async function ActivityDetailsPage({
     .select("*")
     .eq("id", params.id)
     .maybeSingle();
+
+  const errParam = searchParams?.err;
+  const errMsg =
+    typeof errParam === "string"
+      ? errParam
+      : Array.isArray(errParam)
+      ? errParam[0]
+      : null;
 
   if (error) {
     return (
@@ -49,20 +60,35 @@ export default async function ActivityDetailsPage({
     signedUrl = data?.signedUrl ?? null;
   }
 
-  async function onUpload(formData: FormData) {
+  // ✅ Server Action: musi przyjmować FormData i finalnie zwracać void/Promise<void>
+  async function onUpload(formData: FormData): Promise<void> {
     "use server";
-    return uploadCertificate(params.id, formData);
+
+    const res = await uploadCertificate(params.id, formData);
+
+    if (!res.ok) {
+      redirect(
+        `/activities/${params.id}?err=${encodeURIComponent(res.error)}#certificate`
+      );
+    }
+
+    redirect(`/activities/${params.id}#certificate`);
   }
 
-  // ✅ FIX: action w <form> musi mieć (formData: FormData) => Promise<void>
+  // ✅ Server Action: (formData) => Promise<void>
   async function onDelete(formData: FormData): Promise<void> {
     "use server";
 
     const id = String(formData.get("id") || params.id || "").trim();
     if (!id) return;
 
-    await deleteCertificate(id);
-    // nic nie zwracamy → Promise<void>
+    const res = await deleteCertificate(id);
+
+    if (!res.ok) {
+      redirect(`/activities/${id}?err=${encodeURIComponent(res.error)}#certificate`);
+    }
+
+    redirect(`/activities/${id}#certificate`);
   }
 
   const hasCert = Boolean(activity.certificate_path);
@@ -98,13 +124,18 @@ export default async function ActivityDetailsPage({
           </span>
         </div>
 
+        {/* ✅ ładny komunikat błędu, jeśli redirect wróci z ?err=... */}
+        {errMsg ? (
+          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {errMsg}
+          </div>
+        ) : null}
+
         {hasCert ? (
           <div className="space-y-3">
             <div className="text-sm text-gray-700">
               Plik:{" "}
-              <span className="font-medium">
-                {activity.certificate_name ?? "certyfikat"}
-              </span>
+              <span className="font-medium">{activity.certificate_name ?? "certyfikat"}</span>
               {activity.certificate_size ? (
                 <span className="text-gray-500">
                   {" "}
@@ -124,13 +155,10 @@ export default async function ActivityDetailsPage({
                   Podgląd
                 </a>
               ) : (
-                <span className="text-sm text-gray-500">
-                  Nie udało się wygenerować linku.
-                </span>
+                <span className="text-sm text-gray-500">Nie udało się wygenerować linku.</span>
               )}
 
               <form action={onDelete}>
-                {/* ✅ potrzebne, żeby onDelete miało skąd wziąć id */}
                 <input type="hidden" name="id" value={activity.id} />
                 <button
                   type="submit"
@@ -146,12 +174,7 @@ export default async function ActivityDetailsPage({
                 Podmiana pliku: wgraj nowy (stary zostanie usunięty).
               </p>
               <form action={onUpload} className="flex flex-col gap-2">
-                <input
-                  name="file"
-                  type="file"
-                  accept="application/pdf,image/*"
-                  required
-                />
+                <input name="file" type="file" accept="application/pdf,image/*" required />
                 <button
                   type="submit"
                   className="rounded bg-black text-white px-4 py-2 text-sm hover:opacity-90"
@@ -163,21 +186,14 @@ export default async function ActivityDetailsPage({
           </div>
         ) : (
           <form action={onUpload} className="flex flex-col gap-2">
-            <input
-              name="file"
-              type="file"
-              accept="application/pdf,image/*"
-              required
-            />
+            <input name="file" type="file" accept="application/pdf,image/*" required />
             <button
               type="submit"
               className="rounded bg-black text-white px-4 py-2 text-sm hover:opacity-90"
             >
               Dodaj certyfikat
             </button>
-            <p className="text-xs text-gray-500">
-              Dozwolone: PDF/JPG/PNG/WEBP · max 10 MB
-            </p>
+            <p className="text-xs text-gray-500">Dozwolone: PDF/JPG/PNG/WEBP · max 10 MB</p>
           </form>
         )}
       </div>
