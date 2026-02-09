@@ -56,13 +56,13 @@ export default function Page() {
       const user = auth?.user ?? null;
       setUserEmail(user?.email ?? null);
 
-      // niezalogowany → landing jak jest
+      // niezalogowany → landing
       if (!user) {
         setChecking(false);
         return;
       }
 
-      // 1) sprawdź profil (bramka do onboardingu)
+      // 1) profil (bramka do onboardingu)
       const { data: profile, error: profErr } = await supabase
         .from("profiles")
         .select("user_id, profession, period_start, period_end, required_points")
@@ -71,19 +71,14 @@ export default function Page() {
 
       if (!alive) return;
 
-      if (profErr) {
-        // nie blokujemy wejścia, ale pokażemy fallback w dashboardzie
-        console.warn("profiles error:", profErr.message);
-      }
+      if (profErr) console.warn("profiles error:", profErr.message);
 
-      // jeśli brak profilu → onboarding (/start)
       if (!profile) {
         router.replace("/start");
         return;
       }
 
       const p = profile as ProfileRow;
-
       const start = Number(p.period_start ?? 2023);
       const end = Number(p.period_end ?? 2026);
       const req = Number(p.required_points ?? 200);
@@ -91,7 +86,7 @@ export default function Page() {
       setPeriodLabel(`${start}–${end}`);
       setRequiredPoints(req);
 
-      // 2) policz punkty w okresie (po polu year)
+      // 2) punkty w okresie (po year)
       const { data: acts, error: actErr } = await supabase
         .from("activities")
         .select("points, year")
@@ -116,7 +111,6 @@ export default function Page() {
     }
 
     run();
-
     return () => {
       alive = false;
     };
@@ -138,109 +132,139 @@ export default function Page() {
     return Math.max(0, requiredPoints - pointsInPeriod);
   }, [pointsInPeriod, requiredPoints]);
 
+  // ✅ Landing tylko dla niezalogowanych
+  if (!userEmail) {
+    return (
+      <>
+        <Hero />
+        <FeatureGrid />
+        <BottomCTA />
+      </>
+    );
+  }
+
+  // ✅ Zalogowany: jedno, spójne “centrum”
   return (
     <>
-      <Hero />
-      <FeatureGrid />
+      <section className="relative">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-sky-50 via-white to-white" />
 
-      <section className="mx-auto max-w-6xl px-4 py-12">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-3xl font-bold">Centrum</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Szybki skrót Twojego CPD + nawigacja do dziennika i portfolio.
-            </p>
-          </div>
+        <div className="mx-auto max-w-6xl px-4 pt-10 pb-12">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs text-slate-600 shadow-sm backdrop-blur">
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                Zalogowany
+              </div>
 
-          {userEmail ? (
-            <div className="flex items-center gap-3">
-              <span className="hidden sm:inline text-sm text-slate-600">{userEmail}</span>
-              <button onClick={handleSignOut} className="rounded-xl border px-4 py-2 hover:bg-black/5">
+              <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
+                Twoje centrum CRPE
+              </h1>
+              <p className="mt-2 text-slate-600">
+                Szybki podgląd statusu i skróty do dziennika, portfolio oraz ustawień.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="font-medium">{userEmail}</span>
+              </div>
+
+              <button
+                onClick={handleSignOut}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
                 Wyloguj
               </button>
             </div>
-          ) : (
-            <Link href="/login" className="rounded-xl border px-4 py-2 hover:bg-black/5">
-              Zaloguj
-            </Link>
-          )}
-        </div>
+          </div>
 
-        {/* Jeśli user niezalogowany */}
-        {!userEmail ? (
-          <div className="rounded-2xl border bg-white p-6">
-            <div className="text-sm text-slate-600">
-              Zaloguj się, aby tworzyć dziennik aktywności, dodawać certyfikaty i liczyć punkty w okresie.
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="text-sm text-slate-500">Okres rozliczeniowy</div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900">
+                {checking ? "…" : periodLabel}
+              </div>
+              <div className="mt-4 flex gap-2">
+                <Link
+                  href="/profil"
+                  className="inline-flex items-center justify-center rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-sky-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+                >
+                  Ustawienia okresu
+                </Link>
+              </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Link href="/login" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                Zaloguj się
-              </Link>
-              <Link href="/kalkulator" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                Kalkulator (gość)
-              </Link>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="text-sm text-slate-500">Punkty w okresie</div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900">
+                {checking ? "…" : pointsInPeriod ?? "—"}
+              </div>
+              <div className="mt-1 text-sm text-slate-500">
+                Cel: <span className="font-medium text-slate-700">{requiredPoints ?? "—"}</span>
+              </div>
+
+              <div className="mt-4 h-2 w-full rounded-full bg-slate-100">
+                <div className="h-2 rounded-full bg-sky-600" style={{ width: `${progressPct}%` }} />
+              </div>
+              <div className="mt-2 text-sm text-slate-600">
+                {missing == null ? "—" : missing > 0 ? `Do celu brakuje: ${missing} pkt` : "Cel osiągnięty ✅"}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="text-sm text-slate-500">Szybkie akcje</div>
+
+              <div className="mt-4 grid gap-3">
+                <Link
+                  href="/activities"
+                  className="rounded-2xl bg-sky-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-sky-700"
+                >
+                  + Dodaj aktywność
+                </Link>
+
+                <Link
+                  href="/portfolio"
+                  className="rounded-2xl bg-white px-4 py-3 text-center text-sm font-semibold text-sky-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+                >
+                  Otwórz portfolio
+                </Link>
+
+                <Link
+                  href="/activities"
+                  className="rounded-2xl bg-white px-4 py-3 text-center text-sm font-semibold text-sky-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+                >
+                  Dziennik wpisów
+                </Link>
+              </div>
             </div>
           </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="rounded-2xl border bg-white p-5">
-                <div className="text-sm text-slate-500">Okres rozliczeniowy</div>
-                <div className="mt-2 text-2xl font-semibold">{checking ? "…" : periodLabel}</div>
-                <div className="mt-3 flex gap-2">
-                  <Link href="/profil" className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                    Ustawienia
-                  </Link>
-                </div>
-              </div>
 
-              <div className="rounded-2xl border bg-white p-5">
-                <div className="text-sm text-slate-500">Punkty w okresie</div>
-                <div className="mt-2 text-2xl font-semibold">{checking ? "…" : pointsInPeriod ?? "—"}</div>
-                <div className="mt-1 text-sm text-slate-500">
-                  Cel: <span className="font-medium text-slate-700">{requiredPoints ?? "—"}</span>
-                </div>
-              </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <Link href="/activities" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm hover:bg-slate-50 transition">
+              <div className="text-sm text-slate-500">Dziennik</div>
+              <div className="mt-1 text-lg font-semibold text-slate-900">Aktywności + certyfikaty</div>
+              <div className="mt-2 text-sm text-slate-600">Dodawaj wpisy i porządkuj dokumenty.</div>
+            </Link>
 
-              <div className="rounded-2xl border bg-white p-5">
-                <div className="flex items-center justify-between text-sm text-slate-600">
-                  <span>Postęp</span>
-                  <span className="font-semibold text-slate-900">{checking ? "…" : `${Math.round(progressPct)}%`}</span>
-                </div>
-                <div className="mt-2 h-2 w-full rounded-full bg-slate-100">
-                  <div className="h-2 rounded-full bg-blue-600" style={{ width: `${progressPct}%` }} />
-                </div>
-                <div className="mt-2 text-sm text-slate-600">
-                  {missing == null ? "—" : missing > 0 ? `Do celu brakuje: ${missing} pkt` : "Cel osiągnięty ✅"}
-                </div>
-              </div>
-            </div>
+            <Link href="/portfolio" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm hover:bg-slate-50 transition">
+              <div className="text-sm text-slate-500">Portfolio</div>
+              <div className="mt-1 text-lg font-semibold text-slate-900">Status i podsumowanie</div>
+              <div className="mt-2 text-sm text-slate-600">Punkty w okresie + ostatnie wpisy.</div>
+            </Link>
 
-            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-              <Link href="/activities" className="rounded-2xl border bg-white p-5 hover:bg-slate-50 transition">
-                <div className="text-sm text-slate-500">Dziennik</div>
-                <div className="mt-1 text-lg font-semibold text-slate-900">Aktywności + certyfikaty</div>
-                <div className="mt-2 text-sm text-slate-600">Dodawaj wpisy, porządkuj brakujące pola.</div>
-              </Link>
-
-              <Link href="/portfolio" className="rounded-2xl border bg-white p-5 hover:bg-slate-50 transition">
-                <div className="text-sm text-slate-500">Portfolio</div>
-                <div className="mt-1 text-lg font-semibold text-slate-900">Status i podsumowanie</div>
-                <div className="mt-2 text-sm text-slate-600">Szybki obraz okresu + ostatnie wpisy.</div>
-              </Link>
-
-              <Link href="/kalkulator" className="rounded-2xl border bg-white p-5 hover:bg-slate-50 transition">
-                <div className="text-sm text-slate-500">Planowanie</div>
-                <div className="mt-1 text-lg font-semibold text-slate-900">Kalkulator punktów</div>
-                <div className="mt-2 text-sm text-slate-600">Symulacje i „ile mi brakuje”.</div>
-              </Link>
-            </div>
-          </>
-        )}
+            <Link href="/kalkulator" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm hover:bg-slate-50 transition">
+              <div className="text-sm text-slate-500">Planowanie</div>
+              <div className="mt-1 text-lg font-semibold text-slate-900">Kalkulator punktów</div>
+              <div className="mt-2 text-sm text-slate-600">Symulacje i szybkie “ile brakuje”.</div>
+            </Link>
+          </div>
+        </div>
       </section>
 
+      <FeatureGrid />
       <BottomCTA />
     </>
   );
 }
-
