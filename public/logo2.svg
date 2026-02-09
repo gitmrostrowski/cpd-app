@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="200" viewBox="0 0 720 200" fill="none">
+  <!-- ICON -->
+  <g transform="translate(20,20)">
+    <!-- rounded square -->
+    <rect x="0" y="0" width="160" height="160" rx="36" fill="#2563EB"/>
+    <!-- document -->
+    <path d="M46 42c0-6.6 5.4-12 12-12h44l22 22v66c0 6.6-5.4 12-12 12H58c-6.6 0-12-5.4-12-12V42Z" fill="#FFFFFF" opacity="0.98"/>
+    <!-- folded corner -->
+    <path d="M102 30v18c0 4.4 3.6 8 8 8h18" fill="none" stroke="#2563EB" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+    <!-- lines on document -->
+    <path d="M66 70h50" stroke="#2563EB" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
+    <path d="M66 94h42" stroke="#2563EB" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
+    <!-- plus badge -->
+    <g transform="translate(104,96)">
+      <circle cx="28" cy="28" r="22" fill="#2563EB"/>
+      <path d="M28 18v20M18 28h20" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- WORDMARK -->
+  <text x="220" y="126" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="92" font-weight="800" fill="#0F172A" letter-spacing="1">
+    CRPE
+  </text>
+</svg>
