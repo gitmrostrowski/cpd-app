@@ -200,12 +200,12 @@ export default function CalculatorClient() {
     async function loadProfile() {
       if (!user) return;
 
-      // Nie nadpisuj w trakcie edycji (na MVP zostawiamy prosto: zawsze ustawiamy po zalogowaniu)
       try {
-        // Jeśli masz inne nazwy kolumn w profiles, podeślij schema i zmienię selecta.
+        // UWAGA: w Twojej bazie NIE MA kolumny period_label (stąd błąd build).
+        // Pobieramy tylko to, co faktycznie istnieje.
         const { data, error } = await supabase
           .from("profiles")
-          .select("profession, required_points, period_label")
+          .select("profession, required_points")
           .eq("user_id", user.id)
           .maybeSingle();
 
@@ -214,7 +214,8 @@ export default function CalculatorClient() {
 
         if (data?.profession && isProfession(data.profession)) setProfession(data.profession);
         if (typeof data?.required_points === "number") setRequiredPoints(Math.max(0, data.required_points));
-        if (typeof data?.period_label === "string" && isPeriodLabel(data.period_label)) setPeriodLabel(data.period_label);
+
+        // periodLabel zostaje lokalny (z localStorage / default) dopóki nie dodasz kolumny w DB.
       } catch {
         // ignore
       }
