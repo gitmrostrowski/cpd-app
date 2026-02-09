@@ -7,12 +7,17 @@ import { supabaseClient } from "@/lib/supabase/client";
 
 type ActivityRow = {
   id: string;
-  user_id: string; // ✅ dodane
+  user_id: string;
   type: string;
   points: number;
   year: number;
   organizer: string | null;
   created_at: string;
+
+  // ✅ certyfikat (opcjonalnie)
+  certificate_path?: string | null;
+  certificate_name?: string | null;
+  certificate_mime?: string | null;
 };
 
 type Prefs = {
@@ -39,6 +44,16 @@ function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
+function shortFileName(name?: string | null) {
+  const n = (name ?? "").trim();
+  if (!n) return "";
+  if (n.length <= 18) return n;
+  const ext = n.includes(".") ? "." + n.split(".").pop() : "";
+  const base = ext ? n.slice(0, -(ext.length)) : n;
+  const cut = base.slice(0, 14);
+  return `${cut}…${ext}`;
+}
+
 export default function PortfolioPage() {
   const { user, loading } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
@@ -52,6 +67,9 @@ export default function PortfolioPage() {
   const [activities, setActivities] = useState<ActivityRow[]>([]);
   const [fetching, setFetching] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // signed urls do certyfikatów (id -> url)
+  const [certUrls, setCertUrls] = useState<Record<string, string>>({});
 
   // 1) preferencje z localStorage (MVP)
   useEffect(() => {
@@ -69,13 +87,14 @@ export default function PortfolioPage() {
 
   const period = useMemo(() => parsePeriod(prefs.periodLabel), [prefs.periodLabel]);
 
-  // 2) pobierz aktywności z Supabase (TYLKO usera)
+  // 2) pobierz aktywności z Supabase (TYLKO usera) + pola certyfikatu
   useEffect(() => {
     let alive = true;
 
     async function run() {
       if (!user) {
         setActivities([]);
+        setCertUrls({});
         return;
       }
       setFetching(true);
@@ -84,8 +103,10 @@ export default function PortfolioPage() {
       try {
         const { data, error } = await supabase
           .from("activities")
-          .select("id,user_id,type,points,year,organizer,created_at") // ✅ user_id dodane
-          .eq("user_id", user.id) // ✅ kluczowa poprawka
+          .select(
+            "id,user_id,type,points,year,organizer,created_at,certificate_path,certificate_name,certificate_mime"
+          )
+          .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
         if (!alive) return;
@@ -93,14 +114,28 @@ export default function PortfolioPage() {
         if (error) {
           setErrorMsg(error.message);
           setActivities([]);
+          setCertUrls({});
           return;
         }
 
-        setActivities((data as ActivityRow[]) ?? []);
+        const rows = (data as ActivityRow[]) ?? [];
+        setActivities(rows);
+
+        // od razu przygotuj signed url dla tych co mają certyfikat
+        const withCert = rows.filter((r) => r.certificate_path);
+        const nextMap: Record<string, string> = {};
+        for (const r of withCert) {
+          const path = r.certificate_path!;
+          // 1h ważności — wystarczy do kliknięcia w UI
+          const { data: urlData } = await supabase.storage.from("certificates").createSignedUrl(path, 60 * 60);
+          if (urlData?.signedUrl) nextMap[r.id] = urlData.signedUrl;
+        }
+        if (alive) setCertUrls(nextMap);
       } catch (e: any) {
         if (!alive) return;
         setErrorMsg(e?.message || "Nie udało się pobrać aktywności.");
         setActivities([]);
+        setCertUrls({});
       } finally {
         if (alive) setFetching(false);
       }
@@ -370,31 +405,64 @@ export default function PortfolioPage() {
             </div>
           ) : (
             <div className="mt-5 space-y-3">
-              {latest.map((a) => (
-                <div key={a.id} className="rounded-2xl border border-slate-200 p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="font-semibold text-slate-900">{a.type}</div>
-                      <div className="mt-1 text-sm text-slate-600">
-                        {a.organizer ? a.organizer : "Brak organizatora"} • Rok:{" "}
-                        <span className="font-medium text-slate-900">{a.year}</span>
-                        {a.created_at ? (
-                          <>
-                            {" "}
-                            • Dodano:{" "}
-                            <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
-                          </>
+              {latest.map((a) => {
+                const hasCert = Boolean(a.certificate_path);
+                const certUrl = certUrls[a.id];
+
+                return (
+                  <div key={a.id} className="rounded-2xl border border-slate-200 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-[220px]">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="font-semibold text-slate-900">{a.type}</div>
+                          {hasCert ? (
+                            <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700">
+                              📎 Certyfikat
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-1 text-sm text-slate-600">
+                          {a.organizer ? a.organizer : "Brak organizatora"} • Rok:{" "}
+                          <span className="font-medium text-slate-900">{a.year}</span>
+                          {a.created_at ? (
+                            <>
+                              {" "}
+                              • Dodano:{" "}
+                              <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
+                            </>
+                          ) : null}
+                        </div>
+
+                        {hasCert ? (
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                            {certUrl ? (
+                              <a
+                                href={certUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="font-medium text-blue-700 hover:underline"
+                              >
+                                Otwórz / pobierz
+                              </a>
+                            ) : (
+                              <span className="text-slate-500">Generuję link…</span>
+                            )}
+                            {a.certificate_name ? (
+                              <span className="text-slate-500">{shortFileName(a.certificate_name)}</span>
+                            ) : null}
+                          </div>
                         ) : null}
                       </div>
-                    </div>
 
-                    <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-                      <span className="text-slate-600">Punkty</span>
-                      <span className="font-semibold text-slate-900">{a.points}</span>
+                      <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                        <span className="text-slate-600">Punkty</span>
+                        <span className="font-semibold text-slate-900">{a.points}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               <div className="pt-2">
                 <Link href="/activities" className="text-sm font-medium text-blue-700 hover:underline">
