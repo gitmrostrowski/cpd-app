@@ -1,23 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
 export default function ProfilePage() {
   const { user, loading, signOut } = useAuth();
-  const supabase = supabaseClient();
+  const supabase = useMemo(() => supabaseClient(), []);
 
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // opcjonalnie: mały “profil” lokalny (na start bez tabeli w Supabase)
+  // MVP: preferencje lokalne (LocalStorage)
   const [profession, setProfession] = useState<"Lekarz" | "Lekarz dentysta" | "Inne">("Lekarz");
   const [requiredPoints, setRequiredPoints] = useState<number>(200);
   const [periodLabel, setPeriodLabel] = useState<string>("2023–2026");
 
-  // zapis preferencji lokalnie (MVP)
   useEffect(() => {
     try {
       const raw = localStorage.getItem("crpe_profile_prefs_v1");
@@ -44,6 +43,8 @@ export default function ProfilePage() {
     try {
       await signOut();
       setInfo("Wylogowano.");
+    } catch (e: any) {
+      setInfo(e?.message || "Nie udało się wylogować.");
     } finally {
       setBusy(false);
     }
@@ -133,12 +134,14 @@ export default function ProfilePage() {
             >
               Portfolio
             </Link>
+
             <Link
               href="/raporty"
               className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               Raporty
             </Link>
+
             <Link
               href="/kalkulator"
               className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
@@ -202,9 +205,7 @@ export default function ProfilePage() {
       {/* Bezpieczeństwo */}
       <div className="rounded-2xl border bg-white p-6">
         <h2 className="text-lg font-semibold text-slate-900">Bezpieczeństwo</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Zarządzaj dostępem do konta.
-        </p>
+        <p className="mt-1 text-sm text-slate-600">Zarządzaj dostępem do konta.</p>
 
         <div className="mt-4 flex flex-wrap gap-3">
           <button
