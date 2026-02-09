@@ -52,14 +52,13 @@ export default function Header() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
-  // ✅ menu: semibold + niebieskie litery + delikatne szare tło na hover/active
+  // ✅ menu: CZARNA + POGRUBIONA, szare tło na hover/active
   const linkCls = (href: string) =>
     cx(
       "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors",
-      "text-blue-700",
       isActive(href)
-        ? "bg-slate-100 text-blue-800"
-        : "hover:bg-slate-50"
+        ? "bg-slate-100 text-slate-900"
+        : "text-slate-900 hover:bg-slate-50"
     );
 
   const emailShort = useMemo(() => {
