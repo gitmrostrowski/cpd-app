@@ -201,7 +201,7 @@ export default function PortfolioPage() {
               Zaloguj się
             </Link>
             <Link
-              href="/kalkulator"
+              href="/activities"
               className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               Kalkulator (tryb gościa)
@@ -231,7 +231,7 @@ export default function PortfolioPage() {
             Aktywności
           </Link>
           <Link
-            href="/kalkulator"
+            href="/activities"
             className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             + Dodaj / policz
@@ -364,7 +364,7 @@ export default function PortfolioPage() {
               </div>
               <div className="mt-4 flex flex-wrap justify-center gap-3">
                 <Link
-                  href="/kalkulator"
+                  href="/activities"
                   className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                 >
                   + Dodaj aktywność
