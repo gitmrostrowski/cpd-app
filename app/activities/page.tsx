@@ -14,7 +14,6 @@ type ActivityRow = {
   organizer: string | null;
   created_at: string;
 
-  // ✅ kolumny certyfikatu (wg Twojego schematu)
   certificate_path?: string | null;
   certificate_name?: string | null;
   certificate_mime?: string | null;
@@ -35,12 +34,7 @@ const TYPES = [
 
 const BUCKET = "certificates";
 const MAX_MB = 10;
-const ALLOWED_MIME = new Set([
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-]);
+const ALLOWED_MIME = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
 
 function extFromMime(mime: string) {
   if (mime === "application/pdf") return "pdf";
@@ -48,6 +42,37 @@ function extFromMime(mime: string) {
   if (mime === "image/png") return "png";
   if (mime === "image/webp") return "webp";
   return "bin";
+}
+
+function formatDateShort(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("pl-PL", { year: "numeric", month: "2-digit", day: "2-digit" });
+}
+
+function shortFileName(name?: string | null) {
+  const n = (name ?? "").trim();
+  if (!n) return "";
+  if (n.length <= 22) return n;
+  const ext = n.includes(".") ? "." + n.split(".").pop() : "";
+  const base = ext ? n.slice(0, -(ext.length)) : n;
+  const cut = base.slice(0, 16);
+  return `${cut}…${ext}`;
+}
+
+type StatusKind = "complete" | "missing";
+function getRowStatus(a: ActivityRow): { kind: StatusKind; missing: string[] } {
+  const missing: string[] = [];
+  const orgOk = Boolean(a.organizer && String(a.organizer).trim());
+  const certOk = Boolean(a.certificate_path);
+
+  if (!orgOk) missing.push("Brak organizatora");
+  if (!certOk) missing.push("Brak certyfikatu");
+
+  return {
+    kind: missing.length === 0 ? "complete" : "missing",
+    missing,
+  };
 }
 
 export default function ActivitiesPage() {
@@ -67,8 +92,24 @@ export default function ActivitiesPage() {
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [organizer, setOrganizer] = useState<string>("");
 
-  // ✅ cert file
+  // ✅ cert file przy dodawaniu
   const [file, setFile] = useState<File | null>(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
+
+  // ✅ cert file do podpięcia do istniejącego wiersza
+  const [attachToId, setAttachToId] = useState<string | null>(null);
+  const [attachFile, setAttachFile] = useState<File | null>(null);
+  const [attachInputKey, setAttachInputKey] = useState(0);
+
+  // ✅ signed urls (id -> url)
+  const [certUrls, setCertUrls] = useState<Record<string, string>>({});
+
+  // ✅ filtry
+  const [q, setQ] = useState("");
+  const [filterType, setFilterType] = useState<string>("Wszystkie");
+  const [filterYear, setFilterYear] = useState<string>("Wszystkie");
+  const [filterCert, setFilterCert] = useState<"all" | "yes" | "no">("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "complete" | "missing">("all");
 
   function clearMessages() {
     setInfo(null);
@@ -78,15 +119,20 @@ export default function ActivitiesPage() {
   function resetForm() {
     setOrganizer("");
     setFile(null);
-    // wyczyść wartość inputa (robimy to przez key)
     setFileInputKey((k) => k + 1);
   }
 
-  const [fileInputKey, setFileInputKey] = useState(0);
+  function validateFile(f: File) {
+    if (!ALLOWED_MIME.has(f.type)) return "Dozwolone: PDF, JPG, PNG, WEBP.";
+    const sizeMb = f.size / (1024 * 1024);
+    if (sizeMb > MAX_MB) return `Plik jest za duży (${sizeMb.toFixed(1)} MB). Limit: ${MAX_MB} MB.`;
+    return null;
+  }
 
   async function load() {
     if (!user) {
       setItems([]);
+      setCertUrls({});
       return;
     }
     setFetching(true);
@@ -96,7 +142,7 @@ export default function ActivitiesPage() {
       const { data, error } = await supabase
         .from("activities")
         .select(
-          "id,user_id,type,points,year,organizer,created_at,certificate_path,certificate_name,certificate_mime,certificate_size,certificate_uploaded_at"
+          "id,user_id,type,points,year,organizer,created_at,certificate_path,certificate_name,certificate_mime,certificate_size,certificate_uploaded_at",
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -104,13 +150,26 @@ export default function ActivitiesPage() {
       if (error) {
         setErr(error.message);
         setItems([]);
+        setCertUrls({});
         return;
       }
 
-      setItems((data as ActivityRow[]) ?? []);
+      const rows = (data as ActivityRow[]) ?? [];
+      setItems(rows);
+
+      // ✅ signed urls dla tych co mają certyfikat
+      const withCert = rows.filter((r) => r.certificate_path);
+      const nextMap: Record<string, string> = {};
+      for (const r of withCert) {
+        const path = r.certificate_path!;
+        const { data: urlData } = await supabase.storage.from(BUCKET).createSignedUrl(path, 60 * 60); // 1h
+        if (urlData?.signedUrl) nextMap[r.id] = urlData.signedUrl;
+      }
+      setCertUrls(nextMap);
     } catch (e: any) {
       setErr(e?.message || "Nie udało się pobrać aktywności.");
       setItems([]);
+      setCertUrls({});
     } finally {
       setFetching(false);
     }
@@ -119,42 +178,29 @@ export default function ActivitiesPage() {
   useEffect(() => {
     if (!user) {
       setItems([]);
+      setCertUrls({});
       return;
     }
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  function validateFile(f: File) {
-    if (!ALLOWED_MIME.has(f.type)) {
-      return "Dozwolone: PDF, JPG, PNG, WEBP.";
-    }
-    const sizeMb = f.size / (1024 * 1024);
-    if (sizeMb > MAX_MB) {
-      return `Plik jest za duży (${sizeMb.toFixed(1)} MB). Limit: ${MAX_MB} MB.`;
-    }
-    return null;
-  }
-
   async function uploadCertificate(activityId: string, f: File) {
     if (!user) throw new Error("Brak użytkownika.");
+
     const mime = f.type || "application/octet-stream";
     const ext = extFromMime(mime);
-    const safeName = f.name?.slice(0, 180) || `cert.${ext}`;
+    const safeName = (f.name || `cert.${ext}`).slice(0, 180);
 
-    // ✅ zgodnie z policy: auth.uid() + '/%'
+    // ✅ zgodnie z policy: auth.uid() + '/%':
     const path = `${user.id}/${activityId}-${Date.now()}.${ext}`;
 
-    const { error: upErr } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, f, {
-        upsert: true,
-        contentType: mime,
-      });
-
+    const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, f, {
+      upsert: true,
+      contentType: mime,
+    });
     if (upErr) throw new Error(upErr.message);
 
-    // zapisz metadane do DB
     const { error: updErr } = await supabase
       .from("activities")
       .update({
@@ -168,15 +214,7 @@ export default function ActivitiesPage() {
       .eq("user_id", user.id);
 
     if (updErr) throw new Error(updErr.message);
-
     return path;
-  }
-
-  function getPublicUrl(path: string) {
-    // jeśli bucket jest public → publicUrl zadziała
-    // jeśli private → i tak można przejść na signed URL (na razie robimy publicUrl)
-    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-    return data.publicUrl;
   }
 
   async function addActivity() {
@@ -206,7 +244,6 @@ export default function ActivitiesPage() {
     }
 
     const org = organizer.trim();
-
     const payload = {
       user_id: user.id,
       type: String(type),
@@ -217,13 +254,7 @@ export default function ActivitiesPage() {
 
     setBusy(true);
     try {
-      // ✅ bierzemy ID nowo dodanej aktywności
-      const { data, error } = await supabase
-        .from("activities")
-        .insert(payload)
-        .select("id")
-        .single();
-
+      const { data, error } = await supabase.from("activities").insert(payload).select("id").single();
       if (error) {
         setErr(error.message);
         return;
@@ -235,7 +266,6 @@ export default function ActivitiesPage() {
         return;
       }
 
-      // ✅ jeśli jest plik → upload + update rekordu
       if (file) {
         await uploadCertificate(newId, file);
         setInfo("Dodano aktywność + certyfikat ✅");
@@ -258,39 +288,32 @@ export default function ActivitiesPage() {
 
     clearMessages();
 
-    // optimistic UI
     const prev = items;
     setItems((cur) => cur.filter((x) => x.id !== id));
 
     setBusy(true);
     try {
-      // opcjonalnie usuń plik certyfikatu
       if (certPath) {
-        const { error: storErr } = await supabase.storage
-          .from(BUCKET)
-          .remove([certPath]);
-        // nie blokujemy kasowania aktywności jeśli storage zwróci błąd
-        if (storErr) {
-          // pokaż info, ale jedź dalej
-          setInfo("Uwaga: nie udało się usunąć pliku certyfikatu (sprawdź polityki).");
-        }
+        const { error: storErr } = await supabase.storage.from(BUCKET).remove([certPath]);
+        if (storErr) setInfo("Uwaga: nie udało się usunąć pliku certyfikatu (sprawdź polityki).");
       }
 
-      const { error } = await supabase
-        .from("activities")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
-
+      const { error } = await supabase.from("activities").delete().eq("id", id).eq("user_id", user.id);
       if (error) {
         setErr(error.message);
-        setItems(prev); // rollback
+        setItems(prev);
         return;
       }
       setInfo("Usunięto ✅");
+      // posprzątaj url mapę
+      setCertUrls((m) => {
+        const next = { ...m };
+        delete next[id];
+        return next;
+      });
     } catch (e: any) {
       setErr(e?.message || "Nie udało się usunąć.");
-      setItems(prev); // rollback
+      setItems(prev);
     } finally {
       setBusy(false);
     }
@@ -342,6 +365,63 @@ export default function ActivitiesPage() {
     }
   }
 
+  async function attachCertificateToExisting() {
+    if (!user) return;
+    if (!attachToId) return;
+    if (!attachFile) {
+      setErr("Wybierz plik certyfikatu.");
+      return;
+    }
+    const fileErr = validateFile(attachFile);
+    if (fileErr) {
+      setErr(fileErr);
+      return;
+    }
+    if (busy) return;
+
+    clearMessages();
+    setBusy(true);
+    try {
+      await uploadCertificate(attachToId, attachFile);
+      setInfo("Podpięto certyfikat ✅");
+      setAttachToId(null);
+      setAttachFile(null);
+      setAttachInputKey((k) => k + 1);
+      await load();
+    } catch (e: any) {
+      setErr(e?.message || "Nie udało się podpiąć certyfikatu.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const years = useMemo(() => {
+    const ys = Array.from(new Set(items.map((i) => i.year))).sort((a, b) => b - a);
+    return ys;
+  }, [items]);
+
+  const filtered = useMemo(() => {
+    const query = q.trim().toLowerCase();
+
+    return items.filter((a) => {
+      if (filterType !== "Wszystkie" && a.type !== filterType) return false;
+      if (filterYear !== "Wszystkie" && String(a.year) !== filterYear) return false;
+
+      const hasCert = Boolean(a.certificate_path);
+      if (filterCert === "yes" && !hasCert) return false;
+      if (filterCert === "no" && hasCert) return false;
+
+      const st = getRowStatus(a).kind;
+      if (filterStatus !== "all" && st !== filterStatus) return false;
+
+      if (query) {
+        const hay = `${a.type} ${a.organizer ?? ""} ${a.year} ${a.points}`.toLowerCase();
+        if (!hay.includes(query)) return false;
+      }
+      return true;
+    });
+  }, [items, q, filterType, filterYear, filterCert, filterStatus]);
+
   if (loading) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-10">
@@ -357,16 +437,10 @@ export default function ActivitiesPage() {
           <h1 className="text-2xl font-bold text-slate-900">Aktywności</h1>
           <p className="mt-2 text-slate-600">Zaloguj się, aby zapisywać aktywności do portfolio.</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link
-              href="/login"
-              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
+            <Link href="/login" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
               Zaloguj się
             </Link>
-            <Link
-              href="/kalkulator"
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
+            <Link href="/kalkulator" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
               Kalkulator (tryb gościa)
             </Link>
           </div>
@@ -381,20 +455,14 @@ export default function ActivitiesPage() {
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Aktywności</h1>
           <p className="mt-2 text-slate-600">
-            Dodawaj i zarządzaj aktywnościami w portfolio. (Opcjonalnie dodaj certyfikat PDF/JPG/PNG/WEBP.)
+            Logbook CPD: dodawaj aktywności, porządkuj dane i podpinaj certyfikaty.
           </p>
         </div>
         <div className="flex gap-2">
-          <Link
-            href="/portfolio"
-            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
+          <Link href="/portfolio" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             Portfolio
           </Link>
-          <Link
-            href="/kalkulator"
-            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
+          <Link href="/kalkulator" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             Kalkulator
           </Link>
         </div>
@@ -407,12 +475,12 @@ export default function ActivitiesPage() {
         </div>
       )}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        {/* FORM */}
-        <section className="rounded-2xl border bg-white p-6 lg:col-span-1">
+      <div className="mt-6 grid gap-6 lg:grid-cols-12">
+        {/* LEFT: FORM */}
+        <section className="rounded-2xl border bg-white p-6 lg:col-span-4">
           <h2 className="text-lg font-semibold text-slate-900">Dodaj aktywność</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Zapis trafia do Supabase i od razu pokaże się w Portfolio. Certyfikat zapisuje się do Storage.
+            Zapis trafia do Supabase. Certyfikat zapisuje się do Storage (prywatnie – link signed).
           </p>
 
           <div className="mt-4 space-y-3">
@@ -432,31 +500,32 @@ export default function ActivitiesPage() {
               </select>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-slate-700">Punkty</label>
-              <input
-                type="number"
-                min={0}
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-                value={points}
-                onChange={(e) => setPoints(Math.max(0, Number(e.target.value || 0)))}
-                disabled={busy}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium text-slate-700">Punkty</label>
+                <input
+                  type="number"
+                  min={0}
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                  value={points}
+                  onChange={(e) => setPoints(Math.max(0, Number(e.target.value || 0)))}
+                  disabled={busy}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">Rok</label>
+                <input
+                  type="number"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                  value={year}
+                  onChange={(e) => setYear(Number(e.target.value || new Date().getFullYear()))}
+                  disabled={busy}
+                />
+              </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-700">Rok</label>
-              <input
-                type="number"
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-                value={year}
-                onChange={(e) => setYear(Number(e.target.value || new Date().getFullYear()))}
-                disabled={busy}
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-slate-700">Organizator (opcjonalnie)</label>
+              <label className="text-sm font-medium text-slate-700">Organizator</label>
               <input
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
                 value={organizer}
@@ -464,9 +533,9 @@ export default function ActivitiesPage() {
                 placeholder="np. OIL / towarzystwo"
                 disabled={busy}
               />
+              <div className="mt-1 text-xs text-slate-500">To pole jest ważne w raportach.</div>
             </div>
 
-            {/* ✅ CERT */}
             <div>
               <label className="text-sm font-medium text-slate-700">Certyfikat (opcjonalnie)</label>
               <input
@@ -478,10 +547,7 @@ export default function ActivitiesPage() {
                 onChange={(e) => {
                   clearMessages();
                   const f = e.target.files?.[0] || null;
-                  if (!f) {
-                    setFile(null);
-                    return;
-                  }
+                  if (!f) return setFile(null);
                   const ve = validateFile(f);
                   if (ve) {
                     setErr(ve);
@@ -491,9 +557,7 @@ export default function ActivitiesPage() {
                   setFile(f);
                 }}
               />
-              <div className="mt-1 text-xs text-slate-500">
-                Limit: {MAX_MB} MB. Typy: PDF, JPG, PNG, WEBP.
-              </div>
+              <div className="mt-1 text-xs text-slate-500">Limit: {MAX_MB} MB. Typy: PDF, JPG, PNG, WEBP.</div>
               {file ? (
                 <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
                   Wybrano: <span className="font-medium">{file.name}</span> ({(file.size / (1024 * 1024)).toFixed(2)} MB)
@@ -510,16 +574,67 @@ export default function ActivitiesPage() {
               {busy ? "Zapisuję…" : "+ Zapisz aktywność"}
             </button>
           </div>
+
+          {/* Attach cert to existing */}
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="text-sm font-semibold text-slate-900">Podłącz certyfikat do istniejącego wpisu</div>
+            <div className="mt-1 text-xs text-slate-600">
+              Przydatne, gdy dodałeś aktywność wcześniej bez pliku.
+            </div>
+
+            <div className="mt-3 space-y-2">
+              <select
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={attachToId ?? ""}
+                onChange={(e) => setAttachToId(e.target.value || null)}
+                disabled={busy}
+              >
+                <option value="">Wybierz aktywność…</option>
+                {items.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.year} • {a.type} • {a.organizer ? a.organizer : "brak organizatora"} {a.certificate_path ? " • (ma cert)" : ""}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                key={attachInputKey}
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                disabled={busy}
+                onChange={(e) => {
+                  clearMessages();
+                  const f = e.target.files?.[0] || null;
+                  if (!f) return setAttachFile(null);
+                  const ve = validateFile(f);
+                  if (ve) {
+                    setErr(ve);
+                    setAttachFile(null);
+                    return;
+                  }
+                  setAttachFile(f);
+                }}
+              />
+
+              <button
+                type="button"
+                onClick={attachCertificateToExisting}
+                disabled={busy || !attachToId || !attachFile}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              >
+                {busy ? "Podpinam…" : "Podłącz certyfikat"}
+              </button>
+            </div>
+          </div>
         </section>
 
-        {/* LIST */}
-        <section className="rounded-2xl border bg-white p-6 lg:col-span-2">
-          <div className="flex items-center justify-between gap-3">
+        {/* RIGHT: LIST */}
+        <section className="rounded-2xl border bg-white p-6 lg:col-span-8">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności</h2>
-              <p className="mt-1 text-sm text-slate-600">
-                Możesz podpiąć certyfikat przy dodawaniu aktywności. Certyfikat jest widoczny w wierszu.
-              </p>
+              <p className="mt-1 text-sm text-slate-600">Filtruj, sprawdzaj kompletność i otwieraj certyfikaty.</p>
             </div>
             <button
               onClick={load}
@@ -531,46 +646,176 @@ export default function ActivitiesPage() {
             </button>
           </div>
 
+          {/* Filters */}
+          <div className="mt-4 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-4">
+            <div className="sm:col-span-2">
+              <label className="text-xs font-medium text-slate-600">Szukaj</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                placeholder="np. kongres, OIL, 2025…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600">Typ</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option>Wszystkie</option>
+                {TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600">Rok</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+              >
+                <option>Wszystkie</option>
+                {years.map((y) => (
+                  <option key={y} value={String(y)}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600">Certyfikat</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterCert}
+                onChange={(e) => setFilterCert(e.target.value as any)}
+              >
+                <option value="all">Wszystkie</option>
+                <option value="yes">Tylko z certyfikatem</option>
+                <option value="no">Tylko bez certyfikatu</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600">Status</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as any)}
+              >
+                <option value="all">Wszystkie</option>
+                <option value="complete">Complete</option>
+                <option value="missing">Missing</option>
+              </select>
+            </div>
+
+            <div className="sm:col-span-2 flex items-end gap-2">
+              <button
+                type="button"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                onClick={() => {
+                  setQ("");
+                  setFilterType("Wszystkie");
+                  setFilterYear("Wszystkie");
+                  setFilterCert("all");
+                  setFilterStatus("all");
+                }}
+              >
+                Wyczyść filtry
+              </button>
+              <div className="w-full text-right text-xs text-slate-600">
+                Wynik: <span className="font-semibold text-slate-900">{filtered.length}</span>
+              </div>
+            </div>
+          </div>
+
           {fetching ? (
             <div className="mt-4 text-sm text-slate-500">Pobieram…</div>
-          ) : items.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-8 text-center">
-              <div className="text-lg font-semibold text-slate-900">Brak zapisanych aktywności</div>
-              <div className="mt-2 text-sm text-slate-600">Dodaj pierwszą aktywność po lewej.</div>
+              <div className="text-lg font-semibold text-slate-900">Brak wyników</div>
+              <div className="mt-2 text-sm text-slate-600">Zmień filtry albo dodaj nową aktywność po lewej.</div>
             </div>
           ) : (
             <div className="mt-5 space-y-3">
-              {items.map((a) => {
+              {filtered.map((a) => {
                 const hasCert = Boolean(a.certificate_path);
-                const certUrl = hasCert && a.certificate_path ? getPublicUrl(a.certificate_path) : null;
+                const certUrl = hasCert ? certUrls[a.id] : null;
+
+                const st = getRowStatus(a);
 
                 return (
                   <div key={a.id} className="rounded-2xl border border-slate-200 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <div className="font-semibold text-slate-900">{a.type}</div>
+                      <div className="min-w-[260px]">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="font-semibold text-slate-900">{a.type}</div>
+
+                          {st.kind === "complete" ? (
+                            <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                              ✅ Complete
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
+                              ⚠️ Missing
+                            </span>
+                          )}
+
+                          {hasCert ? (
+                            <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700">
+                              📎 Cert
+                            </span>
+                          ) : null}
+                        </div>
+
                         <div className="mt-1 text-sm text-slate-600">
                           {a.organizer ? a.organizer : "Brak organizatora"} • Rok:{" "}
                           <span className="font-medium text-slate-900">{a.year}</span>
+                          {a.created_at ? (
+                            <>
+                              {" "}• Dodano: <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
+                            </>
+                          ) : null}
                         </div>
 
-                        {/* CERT row */}
-                        <div className="mt-2 text-sm">
-                          {hasCert && certUrl ? (
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
-                                📎 Certyfikat
-                              </span>
-                              <a
-                                href={certUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-sm font-medium text-blue-700 hover:underline"
+                        {st.kind === "missing" ? (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {st.missing.map((m) => (
+                              <span
+                                key={m}
+                                className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
                               >
-                                Otwórz / pobierz
-                              </a>
+                                {m}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        {/* Cert row */}
+                        <div className="mt-3 text-sm">
+                          {hasCert ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                              {certUrl ? (
+                                <a
+                                  href={certUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="font-medium text-blue-700 hover:underline"
+                                >
+                                  Otwórz certyfikat
+                                </a>
+                              ) : (
+                                <span className="text-slate-500">Generuję link…</span>
+                              )}
                               {a.certificate_name ? (
-                                <span className="text-xs text-slate-500">{a.certificate_name}</span>
+                                <span className="text-xs text-slate-500">{shortFileName(a.certificate_name)}</span>
                               ) : null}
 
                               <button
@@ -583,7 +828,7 @@ export default function ActivitiesPage() {
                               </button>
                             </div>
                           ) : (
-                            <div className="text-xs text-slate-500">Brak certyfikatu</div>
+                            <div className="text-xs text-slate-500">Brak certyfikatu (możesz podpiąć po lewej).</div>
                           )}
                         </div>
                       </div>
