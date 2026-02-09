@@ -31,6 +31,8 @@ export default function ActivitiesPage() {
 
   const [items, setItems] = useState<ActivityRow[]>([]);
   const [fetching, setFetching] = useState(false);
+  const [busy, setBusy] = useState(false);
+
   const [info, setInfo] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -40,6 +42,11 @@ export default function ActivitiesPage() {
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [organizer, setOrganizer] = useState<string>("");
 
+  function clearMessages() {
+    setInfo(null);
+    setErr(null);
+  }
+
   async function load() {
     if (!user) {
       setItems([]);
@@ -47,6 +54,7 @@ export default function ActivitiesPage() {
     }
     setFetching(true);
     setErr(null);
+
     try {
       const { data, error } = await supabase
         .from("activities")
@@ -58,6 +66,7 @@ export default function ActivitiesPage() {
         setItems([]);
         return;
       }
+
       setItems((data as ActivityRow[]) ?? []);
     } catch (e: any) {
       setErr(e?.message || "Nie udało się pobrać aktywności.");
@@ -68,50 +77,80 @@ export default function ActivitiesPage() {
   }
 
   useEffect(() => {
+    if (!user) {
+      setItems([]);
+      return;
+    }
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   async function addActivity() {
     if (!user) return;
-    setInfo(null);
-    setErr(null);
+    if (busy) return;
+
+    clearMessages();
+
+    const p = Number(points);
+    const y = Number(year);
+
+    if (!Number.isFinite(p) || p < 0) {
+      setErr("Punkty muszą być liczbą ≥ 0.");
+      return;
+    }
+    if (!Number.isFinite(y) || y < 1900 || y > 2100) {
+      setErr("Rok wygląda na nieprawidłowy (podaj np. 2024).");
+      return;
+    }
 
     const org = organizer.trim();
     const payload = {
       type,
-      points: Number(points) || 0,
-      year: Number(year) || new Date().getFullYear(),
+      points: p,
+      year: y,
       organizer: org.length ? org : null,
     };
 
+    setBusy(true);
     try {
       const { error } = await supabase.from("activities").insert(payload);
       if (error) {
         setErr(error.message);
         return;
       }
+
       setInfo("Dodano aktywność ✅");
       setOrganizer("");
       await load();
     } catch (e: any) {
       setErr(e?.message || "Nie udało się dodać aktywności.");
+    } finally {
+      setBusy(false);
     }
   }
 
   async function removeActivity(id: string) {
-    setInfo(null);
-    setErr(null);
+    if (busy) return;
+    clearMessages();
+
+    // optimistic UI
+    const prev = items;
+    setItems((cur) => cur.filter((x) => x.id !== id));
+
+    setBusy(true);
     try {
       const { error } = await supabase.from("activities").delete().eq("id", id);
       if (error) {
         setErr(error.message);
+        setItems(prev); // rollback
         return;
       }
       setInfo("Usunięto ✅");
-      setItems((prev) => prev.filter((x) => x.id !== id));
     } catch (e: any) {
       setErr(e?.message || "Nie udało się usunąć.");
+      setItems(prev); // rollback
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -130,10 +169,16 @@ export default function ActivitiesPage() {
           <h1 className="text-2xl font-bold text-slate-900">Aktywności</h1>
           <p className="mt-2 text-slate-600">Zaloguj się, aby zapisywać aktywności do portfolio.</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/login" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+            <Link
+              href="/login"
+              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
               Zaloguj się
             </Link>
-            <Link href="/kalkulator" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <Link
+              href="/kalkulator"
+              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
               Kalkulator (tryb gościa)
             </Link>
           </div>
@@ -150,10 +195,16 @@ export default function ActivitiesPage() {
           <p className="mt-2 text-slate-600">Dodawaj i zarządzaj aktywnościami w portfolio.</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/portfolio" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <Link
+            href="/portfolio"
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
             Portfolio
           </Link>
-          <Link href="/kalkulator" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <Link
+            href="/kalkulator"
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
             Kalkulator
           </Link>
         </div>
@@ -179,6 +230,7 @@ export default function ActivitiesPage() {
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
                 value={type}
                 onChange={(e) => setType(e.target.value as any)}
+                disabled={busy}
               >
                 {TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -196,6 +248,7 @@ export default function ActivitiesPage() {
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
                 value={points}
                 onChange={(e) => setPoints(Math.max(0, Number(e.target.value || 0)))}
+                disabled={busy}
               />
             </div>
 
@@ -206,6 +259,7 @@ export default function ActivitiesPage() {
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
                 value={year}
                 onChange={(e) => setYear(Number(e.target.value || new Date().getFullYear()))}
+                disabled={busy}
               />
             </div>
 
@@ -216,15 +270,17 @@ export default function ActivitiesPage() {
                 value={organizer}
                 onChange={(e) => setOrganizer(e.target.value)}
                 placeholder="np. OIL / towarzystwo"
+                disabled={busy}
               />
             </div>
 
             <button
               onClick={addActivity}
-              className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
               type="button"
+              disabled={busy}
             >
-              + Zapisz aktywność
+              {busy ? "Zapisuję…" : "+ Zapisz aktywność"}
             </button>
           </div>
         </section>
@@ -239,9 +295,10 @@ export default function ActivitiesPage() {
             <button
               onClick={load}
               type="button"
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              disabled={busy || fetching}
             >
-              Odśwież
+              {fetching ? "Odświeżam…" : "Odśwież"}
             </button>
           </div>
 
@@ -271,8 +328,9 @@ export default function ActivitiesPage() {
                       </div>
                       <button
                         onClick={() => removeActivity(a.id)}
-                        className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                         type="button"
+                        disabled={busy}
                       >
                         Usuń
                       </button>
