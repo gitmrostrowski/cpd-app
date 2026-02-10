@@ -1,20 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
-  <!-- rounded square -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 256 256" fill="none">
   <rect x="16" y="16" width="224" height="224" rx="48" fill="#2563EB"/>
 
-  <!-- document -->
-  <path d="M74 66c0-8.8 7.2-16 16-16h64l32 32v92c0 8.8-7.2 16-16 16H90c-8.8 0-16-7.2-16-16V66Z" fill="#FFFFFF" opacity="0.98"/>
+  <!-- większa biała "kartka" (mniej niebieskiego w środku) -->
+  <path d="M62 56c0-9.9 8.1-18 18-18h78l40 40v108c0 9.9-8.1 18-18 18H80c-9.9 0-18-8.1-18-18V56Z"
+        fill="#FFFFFF" opacity="0.99"/>
 
-  <!-- folded corner -->
-  <path d="M154 50v28c0 6.6 5.4 12 12 12h28" fill="none" stroke="#2563EB" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  <!-- zagięty róg -->
+  <path d="M158 38v34c0 7.2 5.8 13 13 13h34"
+        fill="none" stroke="#2563EB" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
 
-  <!-- lines on document -->
-  <path d="M98 110h80" stroke="#2563EB" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
-  <path d="M98 146h68" stroke="#2563EB" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+  <!-- linie na "kartce" -->
+  <path d="M88 116h92" stroke="#2563EB" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+  <path d="M88 154h78" stroke="#2563EB" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
 
-  <!-- plus badge -->
-  <g transform="translate(158,150)">
-    <circle cx="34" cy="34" r="26" fill="#2563EB"/>
-    <path d="M34 22v24M22 34h24" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+  <!-- większy badge + większy krzyż -->
+  <g transform="translate(156,154)">
+    <circle cx="40" cy="40" r="34" fill="#2563EB"/>
+    <path d="M40 18v44M18 40h44" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
   </g>
 </svg>
