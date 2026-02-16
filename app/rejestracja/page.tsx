@@ -43,25 +43,24 @@ export default function RegisterPage() {
       return;
     }
 
-    // Jeśli Supabase ma włączone potwierdzenie e-mail:
-    // data.user może istnieć, ale sesji nie będzie od razu.
+    // Jeżeli masz włączone potwierdzanie e-mail w Supabase:
     if (!data.session) {
       setLoading(false);
       setInfoMsg("Sprawdź skrzynkę e-mail i potwierdź rejestrację, aby aktywować konto.");
       return;
     }
 
-    // Jeśli rejestracja od razu loguje (bez email confirmation):
     setLoading(false);
-    router.push("/"); // albo /profil
+    router.push("/");
   }
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">
       <h1 className="text-2xl font-semibold">Załóż konto</h1>
+
       <p className="mt-2 text-sm opacity-70">
         Masz już konto?{" "}
-        <Link className="underline underline-offset-4" href="/zaloguj">
+        <Link className="underline underline-offset-4" href="/login">
           Zaloguj się
         </Link>
       </p>
@@ -115,4 +114,30 @@ export default function RegisterPage() {
             <Link
               className="underline underline-offset-4"
               href="/polityka-prywatnosci"
-              ta
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Politykę Prywatności
+            </Link>{" "}
+            (wersja {PRIVACY_VERSION}).
+          </span>
+        </label>
+
+        {errorMsg ? <p className="text-sm text-red-600">{errorMsg}</p> : null}
+        {infoMsg ? <p className="text-sm text-green-700">{infoMsg}</p> : null}
+
+        <button
+          type="submit"
+          className="w-full rounded-xl bg-blue-600 text-white px-4 py-2 disabled:opacity-50"
+          disabled={!accepted || loading}
+        >
+          {loading ? "Tworzenie konta..." : "Załóż konto"}
+        </button>
+
+        <p className="text-xs opacity-60">
+          Klikając „Załóż konto” potwierdzasz, że zapoznałeś(-aś) się z dokumentami.
+        </p>
+      </form>
+    </main>
+  );
+}
