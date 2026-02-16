@@ -1,21 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 256 256" fill="none">
+  <!-- tło -->
   <rect x="16" y="16" width="224" height="224" rx="48" fill="#2563EB"/>
 
-  <!-- większa biała "kartka" (mniej niebieskiego w środku) -->
-  <path d="M62 56c0-9.9 8.1-18 18-18h78l40 40v108c0 9.9-8.1 18-18 18H80c-9.9 0-18-8.1-18-18V56Z"
-        fill="#FFFFFF" opacity="0.99"/>
+  <!-- większa biała "kartka" -->
+  <path
+    d="M60 54c0-10.5 8.5-19 19-19h80l42 42v112c0 10.5-8.5 19-19 19H79c-10.5 0-19-8.5-19-19V54Z"
+    fill="#FFFFFF"
+    opacity="0.99"
+  />
 
   <!-- zagięty róg -->
-  <path d="M158 38v34c0 7.2 5.8 13 13 13h34"
-        fill="none" stroke="#2563EB" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  <path
+    d="M159 35v36c0 7.7 6.3 14 14 14h36"
+    fill="none"
+    stroke="#2563EB"
+    stroke-width="12"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.9"
+  />
 
   <!-- linie na "kartce" -->
-  <path d="M88 116h92" stroke="#2563EB" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
-  <path d="M88 154h78" stroke="#2563EB" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+  <path d="M88 118h96" stroke="#2563EB" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+  <path d="M88 156h82" stroke="#2563EB" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
 
-  <!-- większy badge + większy krzyż -->
-  <g transform="translate(156,154)">
-    <circle cx="40" cy="40" r="34" fill="#2563EB"/>
-    <path d="M40 18v44M18 40h44" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
+  <!-- większy badge + krzyż w stylu favicon -->
+  <g transform="translate(146,148)">
+    <circle cx="46" cy="46" r="38" fill="#2563EB"/>
+    <path d="M46 22v48M22 46h48" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
   </g>
 </svg>
