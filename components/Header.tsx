@@ -8,6 +8,9 @@ import { useAuth } from "@/components/AuthProvider";
 
 const REPORTS_READY = false;
 
+const LOGIN_HREF = "/login";
+const REGISTER_HREF = "/rejestracja";
+
 const NAV = [
   { href: "/", label: "Home" },
   { href: "/kalkulator", label: "Kalkulator" },
@@ -52,7 +55,6 @@ export default function Header() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
-  // ✅ menu: CZARNA + POGRUBIONA, szare tło na hover/active
   const linkCls = (href: string) =>
     cx(
       "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors",
@@ -87,8 +89,8 @@ export default function Header() {
             <span className="font-semibold text-slate-900">CRPE</span>
           </Link>
 
-          {/* NAV DESKTOP */}
-          <nav className="hidden sm:flex items-center gap-2 ml-auto">
+          {/* NAV DESKTOP (wycentrowane) */}
+          <nav className="hidden sm:flex flex-1 items-center justify-center">
             <div className="flex items-center gap-1 rounded-2xl border border-blue-200/60 bg-white px-1 py-1 shadow-sm">
               {NAV.map(({ href, label, soon }) => (
                 <Link
@@ -176,12 +178,23 @@ export default function Header() {
                 </div>
               </>
             ) : (
-              <Link
-                href="/login"
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
-              >
-                Zaloguj
-              </Link>
+              <>
+                {/* Rejestracja (secondary) */}
+                <Link
+                  href={REGISTER_HREF}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 transition"
+                >
+                  Rejestracja
+                </Link>
+
+                {/* Logowanie (primary) */}
+                <Link
+                  href={LOGIN_HREF}
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                >
+                  Zaloguj
+                </Link>
+              </>
             )}
           </div>
 
@@ -256,13 +269,23 @@ export default function Header() {
                     </button>
                   </>
                 ) : (
-                  <Link
-                    href="/login"
-                    className="rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700"
-                    onClick={() => setOpenMobile(false)}
-                  >
-                    Zaloguj
-                  </Link>
+                  <>
+                    <Link
+                      href={REGISTER_HREF}
+                      className="rounded-xl border border-slate-200 px-4 py-2 text-center text-sm font-semibold hover:bg-slate-50"
+                      onClick={() => setOpenMobile(false)}
+                    >
+                      Rejestracja
+                    </Link>
+
+                    <Link
+                      href={LOGIN_HREF}
+                      className="rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700"
+                      onClick={() => setOpenMobile(false)}
+                    >
+                      Zaloguj
+                    </Link>
+                  </>
                 )}
               </div>
             </div>
