@@ -96,6 +96,40 @@ function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
+/**
+ * MVP reguł / limitów (po zawodzie i typie aktywności).
+ * Na start pokazujemy mechanizm: limit roczny dla "Samokształcenie"
+ * dla lekarza/dentysty.
+ *
+ * Potem to przeniesiemy do JSON-a / bazy.
+ */
+const CATEGORY_LIMITS: Record<
+  Profession,
+  Partial<
+    Record<
+      ActivityType,
+      {
+        yearlyMaxPoints?: number; // max zaliczanych pkt/rok w tej kategorii
+        label?: string;
+      }
+    >
+  >
+> = {
+  Lekarz: {
+    "Samokształcenie": { yearlyMaxPoints: 20, label: "Samokształcenie (limit roczny)" },
+  },
+  "Lekarz dentysta": {
+    "Samokształcenie": { yearlyMaxPoints: 20, label: "Samokształcenie (limit roczny)" },
+  },
+  Inne: {},
+};
+
+type AppliedRow = Activity & {
+  inPeriod: boolean;
+  appliedPoints: number; // ile realnie liczymy do sumy (po limitach i okresie)
+  limitWarning?: string | null;
+};
+
 export default function CalculatorClient() {
   const { user, loading: authLoading } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
@@ -201,8 +235,6 @@ export default function CalculatorClient() {
       if (!user) return;
 
       try {
-        // UWAGA: w Twojej bazie NIE MA kolumny period_label (stąd błąd build).
-        // Pobieramy tylko to, co faktycznie istnieje.
         const { data, error } = await supabase
           .from("profiles")
           .select("profession, required_points")
@@ -210,12 +242,10 @@ export default function CalculatorClient() {
           .maybeSingle();
 
         if (!alive) return;
-        if (error) return; // w MVP nie blokujemy
+        if (error) return;
 
         if (data?.profession && isProfession(data.profession)) setProfession(data.profession);
         if (typeof data?.required_points === "number") setRequiredPoints(Math.max(0, data.required_points));
-
-        // periodLabel zostaje lokalny (z localStorage / default) dopóki nie dodasz kolumny w DB.
       } catch {
         // ignore
       }
@@ -259,20 +289,71 @@ export default function CalculatorClient() {
 
   const period = useMemo(() => normalizePeriod(rawPeriod), [rawPeriod]);
 
-  const totalPoints = useMemo(() => sumPoints(activities, period), [activities, period]);
+  /**
+   * Zastosowanie limitów kategorii:
+   * - Poza okresem → 0 pkt
+   * - W okresie → liczymy wg limitu rocznego (jeśli jest)
+   *
+   * To wyliczenie jest deterministyczne, działa w UI i daje ostrzeżenia na wierszach.
+   */
+  const appliedActivities: AppliedRow[] = useMemo(() => {
+    const limits = CATEGORY_LIMITS[profession] ?? {};
+
+    // grupujemy po (type, year) dla limitów rocznych
+    const usedByTypeYear = new Map<string, number>();
+
+    return activities.map((a) => {
+      const inPeriod = a.year >= period.start && a.year <= period.end;
+      if (!inPeriod) {
+        return { ...a, inPeriod, appliedPoints: 0, limitWarning: null };
+      }
+
+      const rule = limits[a.type];
+      const yearlyMax = rule?.yearlyMaxPoints;
+
+      if (!yearlyMax || yearlyMax <= 0) {
+        // brak limitu
+        return { ...a, inPeriod, appliedPoints: Math.max(0, a.points), limitWarning: null };
+      }
+
+      const key = `${a.type}__${a.year}`;
+      const used = usedByTypeYear.get(key) ?? 0;
+      const remaining = Math.max(0, yearlyMax - used);
+
+      const original = Math.max(0, a.points);
+      const applied = Math.min(original, remaining);
+
+      usedByTypeYear.set(key, used + applied);
+
+      const over = original - applied;
+      const warning =
+        over > 0
+          ? `Limit roczny dla „${a.type}”: ${yearlyMax} pkt. Ta pozycja zaliczy ${applied} pkt (nadwyżka ${over} pkt nie zwiększy sumy).`
+          : null;
+
+      return { ...a, inPeriod, appliedPoints: applied, limitWarning: warning };
+    });
+  }, [activities, period.start, period.end, profession]);
+
+  const totalPoints = useMemo(() => {
+    return appliedActivities.reduce((sum, a) => sum + (a.appliedPoints || 0), 0);
+  }, [appliedActivities]);
+
   const missing = useMemo(() => calcMissing(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
-  const progress = useMemo(() => calcProgress(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
+
+  // progress z calc.ts może dać >100 albo <0 — clampujemy pod pasek i %.
+  const progressRaw = useMemo(() => calcProgress(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
+  const progress = useMemo(() => clamp(progressRaw, 0, 100), [progressRaw]);
+
   const status = useMemo(() => getStatus(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
   const recommendations = useMemo(() => getQuickRecommendations(missing), [missing]);
 
-  // Plan (MVP)
+  // Plan (Tempo)
   const plan = useMemo(() => {
     const yearsTotal = Math.max(1, period.end - period.start + 1);
     const yearsLeft = Math.max(1, period.end - currentYear + 1);
     const perYear = missing > 0 ? Math.ceil(missing / yearsLeft) : 0;
     const perMonth = missing > 0 ? Math.ceil(perYear / 12) : 0;
-
-    // „bezpieczny” plan kwartalny
     const perQuarter = missing > 0 ? Math.ceil(perYear / 4) : 0;
 
     return {
@@ -332,6 +413,10 @@ export default function CalculatorClient() {
           ? "border-rose-200 bg-rose-50 text-rose-900"
           : "border-slate-200 bg-slate-50 text-slate-900";
 
+  // Progress bar kolor
+  const progressBarClass =
+    progress >= 100 ? "bg-emerald-600" : progress >= 60 ? "bg-blue-600" : "bg-rose-600";
+
   async function saveAllToPortfolio() {
     if (!user) {
       setErr("Zaloguj się, aby zapisać aktywności do Portfolio.");
@@ -341,7 +426,7 @@ export default function CalculatorClient() {
 
     clearMessages();
 
-    // Walidacja
+    // Walidacja — zapisujemy oryginalne punkty użytkownika (nie applied)
     const cleaned = activities
       .map((a) => ({
         type: String(a.type),
@@ -356,7 +441,6 @@ export default function CalculatorClient() {
       return;
     }
 
-    // Insert do DB (activities wymaga user_id)
     const payload = cleaned.map((a) => ({
       user_id: user.id,
       type: a.type,
@@ -469,6 +553,17 @@ export default function CalculatorClient() {
                 <option>Lekarz dentysta</option>
                 <option>Inne</option>
               </select>
+
+              {profession !== "Inne" && (
+                <div className="mt-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
+                  <div className="font-semibold">Limity (MVP)</div>
+                  <div className="mt-1">
+                    Dla <span className="font-medium">{profession}</span> aktywność{" "}
+                    <span className="font-medium">Samokształcenie</span> ma limit{" "}
+                    <span className="font-medium">20 pkt / rok</span> (mechanizm demonstracyjny — do rozbudowy).
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -561,30 +656,33 @@ export default function CalculatorClient() {
               <span>{Math.round(progress)}%</span>
             </div>
             <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/60">
-              <div className="h-full bg-blue-600" style={{ width: `${progress}%` }} />
+              <div className={`h-full ${progressBarClass}`} style={{ width: `${progress}%` }} />
             </div>
+            {progress >= 100 ? (
+              <div className="mt-2 text-xs text-emerald-800">✅ Cel osiągnięty — jesteś na 100% lub więcej.</div>
+            ) : null}
           </div>
 
-          {/* PLAN */}
+          {/* TEMPO / PLAN */}
           {missing > 0 ? (
             <div className="mt-5 rounded-xl bg-white/60 p-4">
-              <div className="text-sm font-semibold text-slate-900">Plan na uzupełnienie braków</div>
+              <div className="text-sm font-semibold text-slate-900">Tempo, żeby zdążyć</div>
               <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
                 <div>
-                  <div className="text-xs text-slate-600">Na rok</div>
+                  <div className="text-xs text-slate-600">Średnio na rok</div>
                   <div className="font-bold text-slate-900">{plan.perYear} pkt</div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-600">Na kwartał</div>
+                  <div className="text-xs text-slate-600">Średnio na kwartał</div>
                   <div className="font-bold text-slate-900">{plan.perQuarter} pkt</div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-600">Na miesiąc</div>
+                  <div className="text-xs text-slate-600">Średnio na miesiąc</div>
                   <div className="font-bold text-slate-900">{plan.perMonth} pkt</div>
                 </div>
               </div>
               <div className="mt-2 text-xs text-slate-600">
-                Liczone wg lat do końca okresu (do {period.end}). To MVP — później dodamy „termin rozliczenia” i dokładniejsze wyliczenia.
+                Liczone wg lat do końca okresu (do {period.end}). W kolejnej iteracji dodamy dokładne terminy rozliczeń.
               </div>
             </div>
           ) : null}
@@ -667,16 +765,21 @@ export default function CalculatorClient() {
                 </tr>
               </thead>
               <tbody>
-                {activities.map((a) => {
-                  const inPeriod = a.year >= period.start && a.year <= period.end;
+                {appliedActivities.map((a) => {
+                  const rowDisabled = !a.inPeriod;
 
                   return (
-                    <tr key={a.id} className="text-sm">
+                    <tr
+                      key={a.id}
+                      className={`text-sm ${rowDisabled ? "opacity-50" : ""}`}
+                      title={rowDisabled ? "Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone." : ""}
+                    >
                       <td className="border-b px-3 py-3 align-top">
                         <select
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
                           value={a.type}
                           onChange={(e) => handleTypeChange(a.id, e.target.value as ActivityType)}
+                          disabled={rowDisabled}
                         >
                           {TYPES.map((t) => (
                             <option key={t} value={t}>
@@ -685,20 +788,32 @@ export default function CalculatorClient() {
                           ))}
                         </select>
 
-                        {!inPeriod && (
+                        {!a.inPeriod && (
                           <div className="mt-1 text-xs text-amber-700">
-                            Poza okresem {period.start}–{period.end} (nie liczy się do sumy)
+                            Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone.
                           </div>
                         )}
+
+                        {a.limitWarning && (
+                          <div className="mt-1 text-xs text-rose-700">{a.limitWarning}</div>
+                        )}
+
+                        {/* mała podpowiedź: ile zaliczamy */}
+                        {a.inPeriod && a.appliedPoints !== Math.max(0, a.points) ? (
+                          <div className="mt-1 text-[11px] text-slate-600">
+                            Zaliczone do sumy: <span className="font-semibold">{a.appliedPoints}</span> pkt
+                          </div>
+                        ) : null}
                       </td>
 
                       <td className="border-b px-3 py-3 align-top">
                         <input
                           type="number"
                           min={0}
-                          className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2"
+                          className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
                           value={a.points}
                           onChange={(e) => handlePointsChange(a.id, Number(e.target.value || 0))}
+                          disabled={rowDisabled}
                         />
                         <div className="mt-1 text-[11px] text-slate-500">
                           {a.pointsAuto ? "Auto (wg rodzaju)" : "Ręcznie (z certyfikatu)"}
@@ -718,9 +833,10 @@ export default function CalculatorClient() {
                         <input
                           type="text"
                           placeholder="np. OIL / towarzystwo"
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
                           value={a.organizer ?? ""}
                           onChange={(e) => updateActivity(a.id, { organizer: e.target.value })}
+                          disabled={rowDisabled}
                         />
                       </td>
 
@@ -738,6 +854,17 @@ export default function CalculatorClient() {
                 })}
               </tbody>
             </table>
+
+            {/* drugi przycisk na dole */}
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={addActivity}
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                type="button"
+              >
+                + Dodaj aktywność
+              </button>
+            </div>
           </div>
 
           <div className="mt-5 rounded-2xl bg-slate-50 p-4">
