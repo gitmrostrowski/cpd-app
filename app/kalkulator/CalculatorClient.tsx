@@ -4,11 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   normalizePeriod,
-  sumPoints,
   calcMissing,
   calcProgress,
   getStatus,
   getQuickRecommendations,
+  applyRules,
+  sumPointsWithRules,
+  type CpdRules,
 } from "@/lib/cpd/calc";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
@@ -91,44 +93,24 @@ function isPeriodLabel(v: unknown): v is PeriodLabel {
 function isProfession(v: unknown): v is Profession {
   return v === "Lekarz" || v === "Lekarz dentysta" || v === "Inne";
 }
-
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
 /**
- * MVP reguł / limitów (po zawodzie i typie aktywności).
- * Na start pokazujemy mechanizm: limit roczny dla "Samokształcenie"
- * dla lekarza/dentysty.
- *
- * Potem to przeniesiemy do JSON-a / bazy.
+ * Reguły na bazie zawodu (MVP).
+ * Tu łatwo rozbudujesz potem o kolejne limity/kategorie.
  */
-const CATEGORY_LIMITS: Record<
-  Profession,
-  Partial<
-    Record<
-      ActivityType,
-      {
-        yearlyMaxPoints?: number; // max zaliczanych pkt/rok w tej kategorii
-        label?: string;
-      }
-    >
-  >
-> = {
-  Lekarz: {
-    "Samokształcenie": { yearlyMaxPoints: 20, label: "Samokształcenie (limit roczny)" },
-  },
-  "Lekarz dentysta": {
-    "Samokształcenie": { yearlyMaxPoints: 20, label: "Samokształcenie (limit roczny)" },
-  },
-  Inne: {},
-};
-
-type AppliedRow = Activity & {
-  inPeriod: boolean;
-  appliedPoints: number; // ile realnie liczymy do sumy (po limitach i okresie)
-  limitWarning?: string | null;
-};
+function rulesForProfession(prof: Profession): CpdRules | undefined {
+  if (prof === "Lekarz" || prof === "Lekarz dentysta") {
+    return {
+      yearlyMaxByType: {
+        Samokształcenie: 20,
+      },
+    };
+  }
+  return undefined;
+}
 
 export default function CalculatorClient() {
   const { user, loading: authLoading } = useAuth();
@@ -217,7 +199,7 @@ export default function CalculatorClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** ---------- localStorage: save (always, also useful as draft) ---------- */
+  /** ---------- localStorage: save ---------- */
   useEffect(() => {
     try {
       const payload = { profession, periodLabel, customStart, customEnd, requiredPoints, activities };
@@ -289,81 +271,28 @@ export default function CalculatorClient() {
 
   const period = useMemo(() => normalizePeriod(rawPeriod), [rawPeriod]);
 
-  /**
-   * Zastosowanie limitów kategorii:
-   * - Poza okresem → 0 pkt
-   * - W okresie → liczymy wg limitu rocznego (jeśli jest)
-   *
-   * To wyliczenie jest deterministyczne, działa w UI i daje ostrzeżenia na wierszach.
-   */
-  const appliedActivities: AppliedRow[] = useMemo(() => {
-    const limits = CATEGORY_LIMITS[profession] ?? {};
+  const rules = useMemo(() => rulesForProfession(profession), [profession]);
 
-    // grupujemy po (type, year) dla limitów rocznych
-    const usedByTypeYear = new Map<string, number>();
+  const applied = useMemo(() => applyRules(activities, { period, rules }), [activities, period, rules]);
 
-    return activities.map((a) => {
-      const inPeriod = a.year >= period.start && a.year <= period.end;
-      if (!inPeriod) {
-        return { ...a, inPeriod, appliedPoints: 0, limitWarning: null };
-      }
-
-      const rule = limits[a.type];
-      const yearlyMax = rule?.yearlyMaxPoints;
-
-      if (!yearlyMax || yearlyMax <= 0) {
-        // brak limitu
-        return { ...a, inPeriod, appliedPoints: Math.max(0, a.points), limitWarning: null };
-      }
-
-      const key = `${a.type}__${a.year}`;
-      const used = usedByTypeYear.get(key) ?? 0;
-      const remaining = Math.max(0, yearlyMax - used);
-
-      const original = Math.max(0, a.points);
-      const applied = Math.min(original, remaining);
-
-      usedByTypeYear.set(key, used + applied);
-
-      const over = original - applied;
-      const warning =
-        over > 0
-          ? `Limit roczny dla „${a.type}”: ${yearlyMax} pkt. Ta pozycja zaliczy ${applied} pkt (nadwyżka ${over} pkt nie zwiększy sumy).`
-          : null;
-
-      return { ...a, inPeriod, appliedPoints: applied, limitWarning: warning };
-    });
-  }, [activities, period.start, period.end, profession]);
-
-  const totalPoints = useMemo(() => {
-    return appliedActivities.reduce((sum, a) => sum + (a.appliedPoints || 0), 0);
-  }, [appliedActivities]);
+  const totalPoints = useMemo(() => sumPointsWithRules(activities, { period, rules }), [activities, period, rules]);
 
   const missing = useMemo(() => calcMissing(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
 
-  // progress z calc.ts może dać >100 albo <0 — clampujemy pod pasek i %.
   const progressRaw = useMemo(() => calcProgress(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
   const progress = useMemo(() => clamp(progressRaw, 0, 100), [progressRaw]);
 
   const status = useMemo(() => getStatus(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
   const recommendations = useMemo(() => getQuickRecommendations(missing), [missing]);
 
-  // Plan (Tempo)
   const plan = useMemo(() => {
-    const yearsTotal = Math.max(1, period.end - period.start + 1);
     const yearsLeft = Math.max(1, period.end - currentYear + 1);
     const perYear = missing > 0 ? Math.ceil(missing / yearsLeft) : 0;
     const perMonth = missing > 0 ? Math.ceil(perYear / 12) : 0;
     const perQuarter = missing > 0 ? Math.ceil(perYear / 4) : 0;
 
-    return {
-      yearsTotal,
-      yearsLeft,
-      perYear,
-      perQuarter,
-      perMonth,
-    };
-  }, [missing, period.end, period.start, currentYear]);
+    return { yearsLeft, perYear, perQuarter, perMonth };
+  }, [missing, period.end, currentYear]);
 
   function addActivity() {
     setActivities((prev) => [
@@ -413,9 +342,7 @@ export default function CalculatorClient() {
           ? "border-rose-200 bg-rose-50 text-rose-900"
           : "border-slate-200 bg-slate-50 text-slate-900";
 
-  // Progress bar kolor
-  const progressBarClass =
-    progress >= 100 ? "bg-emerald-600" : progress >= 60 ? "bg-blue-600" : "bg-rose-600";
+  const progressBarClass = progress >= 100 ? "bg-emerald-600" : progress >= 60 ? "bg-blue-600" : "bg-rose-600";
 
   async function saveAllToPortfolio() {
     if (!user) {
@@ -426,7 +353,6 @@ export default function CalculatorClient() {
 
     clearMessages();
 
-    // Walidacja — zapisujemy oryginalne punkty użytkownika (nie applied)
     const cleaned = activities
       .map((a) => ({
         type: String(a.type),
@@ -554,16 +480,16 @@ export default function CalculatorClient() {
                 <option>Inne</option>
               </select>
 
-              {profession !== "Inne" && (
+              {profession !== "Inne" ? (
                 <div className="mt-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
                   <div className="font-semibold">Limity (MVP)</div>
                   <div className="mt-1">
                     Dla <span className="font-medium">{profession}</span> aktywność{" "}
                     <span className="font-medium">Samokształcenie</span> ma limit{" "}
-                    <span className="font-medium">20 pkt / rok</span> (mechanizm demonstracyjny — do rozbudowy).
+                    <span className="font-medium">20 pkt / rok</span>.
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
 
             <div>
@@ -663,7 +589,6 @@ export default function CalculatorClient() {
             ) : null}
           </div>
 
-          {/* TEMPO / PLAN */}
           {missing > 0 ? (
             <div className="mt-5 rounded-xl bg-white/60 p-4">
               <div className="text-sm font-semibold text-slate-900">Tempo, żeby zdążyć</div>
@@ -682,7 +607,7 @@ export default function CalculatorClient() {
                 </div>
               </div>
               <div className="mt-2 text-xs text-slate-600">
-                Liczone wg lat do końca okresu (do {period.end}). W kolejnej iteracji dodamy dokładne terminy rozliczeń.
+                Liczone wg lat do końca okresu (do {period.end}).
               </div>
             </div>
           ) : null}
@@ -765,8 +690,8 @@ export default function CalculatorClient() {
                 </tr>
               </thead>
               <tbody>
-                {appliedActivities.map((a) => {
-                  const rowDisabled = !a.inPeriod;
+                {applied.map((a) => {
+                  const rowDisabled = !a.in_period;
 
                   return (
                     <tr
@@ -788,20 +713,17 @@ export default function CalculatorClient() {
                           ))}
                         </select>
 
-                        {!a.inPeriod && (
+                        {!a.in_period && (
                           <div className="mt-1 text-xs text-amber-700">
                             Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone.
                           </div>
                         )}
 
-                        {a.limitWarning && (
-                          <div className="mt-1 text-xs text-rose-700">{a.limitWarning}</div>
-                        )}
+                        {a.warning ? <div className="mt-1 text-xs text-rose-700">{a.warning}</div> : null}
 
-                        {/* mała podpowiedź: ile zaliczamy */}
-                        {a.inPeriod && a.appliedPoints !== Math.max(0, a.points) ? (
+                        {a.in_period && a.applied_points !== Math.max(0, Number(a.points) || 0) ? (
                           <div className="mt-1 text-[11px] text-slate-600">
-                            Zaliczone do sumy: <span className="font-semibold">{a.appliedPoints}</span> pkt
+                            Zaliczone do sumy: <span className="font-semibold">{a.applied_points}</span> pkt
                           </div>
                         ) : null}
                       </td>
@@ -811,12 +733,12 @@ export default function CalculatorClient() {
                           type="number"
                           min={0}
                           className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
-                          value={a.points}
+                          value={Number(a.points) || 0}
                           onChange={(e) => handlePointsChange(a.id, Number(e.target.value || 0))}
                           disabled={rowDisabled}
                         />
                         <div className="mt-1 text-[11px] text-slate-500">
-                          {a.pointsAuto ? "Auto (wg rodzaju)" : "Ręcznie (z certyfikatu)"}
+                          {(a as any).pointsAuto ? "Auto (wg rodzaju)" : "Ręcznie (z certyfikatu)"}
                         </div>
                       </td>
 
@@ -824,7 +746,7 @@ export default function CalculatorClient() {
                         <input
                           type="number"
                           className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2"
-                          value={a.year}
+                          value={Number(a.year) || currentYear}
                           onChange={(e) => updateActivity(a.id, { year: Number(e.target.value || currentYear) })}
                         />
                       </td>
@@ -834,7 +756,7 @@ export default function CalculatorClient() {
                           type="text"
                           placeholder="np. OIL / towarzystwo"
                           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
-                          value={a.organizer ?? ""}
+                          value={(a as any).organizer ?? ""}
                           onChange={(e) => updateActivity(a.id, { organizer: e.target.value })}
                           disabled={rowDisabled}
                         />
@@ -855,7 +777,6 @@ export default function CalculatorClient() {
               </tbody>
             </table>
 
-            {/* drugi przycisk na dole */}
             <div className="mt-4 flex justify-end">
               <button
                 onClick={addActivity}
