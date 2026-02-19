@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   normalizePeriod,
@@ -156,8 +156,6 @@ export default function CalculatorClient() {
    * KROK 2: zapis preferencji profilu do Supabase (profiles)
    * - UPDATE po user_id
    * - jeśli update się nie uda (np. brak wiersza) -> INSERT
-   *
-   * Uwaga: nie blokujemy działania kalkulatora; w razie problemu ustawiamy err.
    */
   async function saveProfilePrefs(patch: { profession?: Profession; required_points?: number }) {
     if (!user) return;
@@ -177,6 +175,32 @@ export default function CalculatorClient() {
       setErr(e?.message || "Nie udało się zapisać ustawień profilu.");
     }
   }
+
+  /**
+   * KROK 3: debounce zapisu (żeby nie robić requestu na każde kliknięcie/znak)
+   */
+  const saveTimerRef = useRef<number | null>(null);
+
+  function scheduleProfileSave(patch: { profession?: Profession; required_points?: number }) {
+    if (!user) return;
+
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+
+    saveTimerRef.current = window.setTimeout(() => {
+      saveProfilePrefs(patch);
+      saveTimerRef.current = null;
+    }, 700);
+  }
+
+  // sprzątanie timera przy unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
   /** ---------- localStorage: load (guest) ---------- */
   useEffect(() => {
@@ -574,6 +598,7 @@ export default function CalculatorClient() {
 
         {/* result */}
         <div className={`mt-6 rounded-2xl border p-5 ${toneStyles}`}>
+          {/* ...reszta bez zmian... */}
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="text-base font-semibold">{status.title}</h3>
@@ -654,6 +679,7 @@ export default function CalculatorClient() {
 
       {/* RIGHT */}
       <section className="lg:col-span-8">
+        {/* ...reszta bez zmian... */}
         <div className="rounded-2xl border bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -855,7 +881,10 @@ export default function CalculatorClient() {
                 </Link>
               </>
             ) : (
-              <Link href="/login" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+              <Link
+                href="/login"
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
                 Zaloguj się
               </Link>
             )}
