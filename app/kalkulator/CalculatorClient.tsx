@@ -152,6 +152,32 @@ export default function CalculatorClient() {
     setErr(null);
   }
 
+  /**
+   * KROK 2: zapis preferencji profilu do Supabase (profiles)
+   * - UPDATE po user_id
+   * - jeśli update się nie uda (np. brak wiersza) -> INSERT
+   *
+   * Uwaga: nie blokujemy działania kalkulatora; w razie problemu ustawiamy err.
+   */
+  async function saveProfilePrefs(patch: { profession?: Profession; required_points?: number }) {
+    if (!user) return;
+
+    try {
+      const { error: updErr } = await supabase.from("profiles").update(patch).eq("user_id", user.id);
+
+      if (updErr) {
+        const { error: insErr } = await supabase.from("profiles").insert({
+          user_id: user.id,
+          ...patch,
+        });
+
+        if (insErr) throw insErr;
+      }
+    } catch (e: any) {
+      setErr(e?.message || "Nie udało się zapisać ustawień profilu.");
+    }
+  }
+
   /** ---------- localStorage: load (guest) ---------- */
   useEffect(() => {
     try {
@@ -606,9 +632,7 @@ export default function CalculatorClient() {
                   <div className="font-bold text-slate-900">{plan.perMonth} pkt</div>
                 </div>
               </div>
-              <div className="mt-2 text-xs text-slate-600">
-                Liczone wg lat do końca okresu (do {period.end}).
-              </div>
+              <div className="mt-2 text-xs text-slate-600">Liczone wg lat do końca okresu (do {period.end}).</div>
             </div>
           ) : null}
 
@@ -831,10 +855,7 @@ export default function CalculatorClient() {
                 </Link>
               </>
             ) : (
-              <Link
-                href="/login"
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              >
+              <Link href="/login" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
                 Zaloguj się
               </Link>
             )}
