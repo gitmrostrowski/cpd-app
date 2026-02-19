@@ -156,6 +156,8 @@ export default function CalculatorClient() {
    * KROK 2: zapis preferencji profilu do Supabase (profiles)
    * - UPDATE po user_id
    * - jeśli update się nie uda (np. brak wiersza) -> INSERT
+   *
+   * Uwaga: nie blokujemy działania kalkulatora; w razie problemu ustawiamy err.
    */
   async function saveProfilePrefs(patch: { profession?: Profession; required_points?: number }) {
     if (!user) return;
@@ -176,26 +178,40 @@ export default function CalculatorClient() {
     }
   }
 
-  /**
-   * KROK 3: debounce zapisu (żeby nie robić requestu na każde kliknięcie/znak)
-   */
+  /** ---------------- KROK 4.1: debounce zapisu profilu ---------------- */
   const saveTimerRef = useRef<number | null>(null);
+  const lastPatchRef = useRef<{ profession?: Profession; required_points?: number }>({});
 
   function scheduleProfileSave(patch: { profession?: Profession; required_points?: number }) {
     if (!user) return;
 
-    if (saveTimerRef.current) {
-      window.clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = null;
-    }
+    // scalamy patche, żeby np. szybkie zmiany nie gubiły pól
+    lastPatchRef.current = { ...lastPatchRef.current, ...patch };
 
-    saveTimerRef.current = window.setTimeout(() => {
-      saveProfilePrefs(patch);
-      saveTimerRef.current = null;
-    }, 700);
+    // reset timera
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+
+    // odpal zapis po chwili
+    saveTimerRef.current = window.setTimeout(async () => {
+      const toSave = { ...lastPatchRef.current };
+      lastPatchRef.current = {};
+      await saveProfilePrefs(toSave);
+    }, 900);
   }
 
-  // sprzątanie timera przy unmount
+  /** KROK 4.1: handlery UI -> state + DB (debounce) */
+  function handleProfessionChange(next: Profession) {
+    setProfession(next);
+    scheduleProfileSave({ profession: next });
+  }
+
+  function handleRequiredPointsChange(next: number) {
+    const val = Math.max(0, Number(next) || 0);
+    setRequiredPoints(val);
+    scheduleProfileSave({ required_points: val });
+  }
+
+  /** sprzątanie timera przy unmount */
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
@@ -523,7 +539,7 @@ export default function CalculatorClient() {
               <select
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
                 value={profession}
-                onChange={(e) => setProfession(e.target.value as Profession)}
+                onChange={(e) => handleProfessionChange(e.target.value as Profession)} // KROK 4.2
               >
                 <option>Lekarz</option>
                 <option>Lekarz dentysta</option>
@@ -586,7 +602,7 @@ export default function CalculatorClient() {
                 type="number"
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
                 value={requiredPoints}
-                onChange={(e) => setRequiredPoints(Math.max(0, Number(e.target.value || 0)))}
+                onChange={(e) => handleRequiredPointsChange(Number(e.target.value || 0))} // KROK 4.3
                 min={0}
               />
               <p className="mt-1 text-xs text-slate-500">
@@ -598,7 +614,6 @@ export default function CalculatorClient() {
 
         {/* result */}
         <div className={`mt-6 rounded-2xl border p-5 ${toneStyles}`}>
-          {/* ...reszta bez zmian... */}
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="text-base font-semibold">{status.title}</h3>
@@ -679,7 +694,6 @@ export default function CalculatorClient() {
 
       {/* RIGHT */}
       <section className="lg:col-span-8">
-        {/* ...reszta bez zmian... */}
         <div className="rounded-2xl border bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
