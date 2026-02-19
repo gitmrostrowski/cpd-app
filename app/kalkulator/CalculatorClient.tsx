@@ -64,7 +64,43 @@ const PERIODS = [
 ] as const;
 
 type PeriodLabel = (typeof PERIODS)[number]["label"];
-type Profession = "Lekarz" | "Lekarz dentysta" | "Inne";
+
+// ⬇️ MVP lista zawodów (tu możesz dodać kolejne, bo w DB to TEXT)
+type Profession =
+  | "Lekarz"
+  | "Lekarz dentysta"
+  | "Pielęgniarka"
+  | "Położna"
+  | "Fizjoterapeuta"
+  | "Ratownik medyczny"
+  | "Farmaceuta"
+  | "Diagnosta laboratoryjny"
+  | "Inne";
+
+const PROFESSION_OPTIONS: Profession[] = [
+  "Lekarz",
+  "Lekarz dentysta",
+  "Pielęgniarka",
+  "Położna",
+  "Fizjoterapeuta",
+  "Ratownik medyczny",
+  "Farmaceuta",
+  "Diagnosta laboratoryjny",
+  "Inne",
+];
+
+// ⬇️ MVP domyślne wymagane punkty per zawód (zmienisz jak będziesz mieć źródło)
+const DEFAULT_REQUIRED_POINTS_BY_PROFESSION: Record<Profession, number> = {
+  Lekarz: 200,
+  "Lekarz dentysta": 200,
+  Pielęgniarka: 120,
+  Położna: 120,
+  Fizjoterapeuta: 100,
+  "Ratownik medyczny": 100,
+  Farmaceuta: 100,
+  "Diagnosta laboratoryjny": 100,
+  Inne: 0,
+};
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -91,7 +127,7 @@ function isPeriodLabel(v: unknown): v is PeriodLabel {
   return typeof v === "string" && PERIODS.some((p) => p.label === v);
 }
 function isProfession(v: unknown): v is Profession {
-  return v === "Lekarz" || v === "Lekarz dentysta" || v === "Inne";
+  return typeof v === "string" && (PROFESSION_OPTIONS as readonly string[]).includes(v);
 }
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
@@ -102,6 +138,7 @@ function clamp(n: number, a: number, b: number) {
  * Tu łatwo rozbudujesz potem o kolejne limity/kategorie.
  */
 function rulesForProfession(prof: Profession): CpdRules | undefined {
+  // na start limit demo tylko dla lekarza/dentysty
   if (prof === "Lekarz" || prof === "Lekarz dentysta") {
     return {
       yearlyMaxByType: {
@@ -147,24 +184,34 @@ export default function CalculatorClient() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // żeby nie spamować UPDATE przy każdym znaku + nie nadpisywać DB w trakcie loadProfile()
+  const profileLoadedRef = useRef(false);
+  const saveTimerRef = useRef<number | null>(null);
+
   function clearMessages() {
     setInfo(null);
     setErr(null);
   }
 
   /**
-   * KROK 2: zapis preferencji profilu do Supabase (profiles)
+   * zapis preferencji profilu do Supabase (profiles)
    * - UPDATE po user_id
    * - jeśli update się nie uda (np. brak wiersza) -> INSERT
-   *
-   * Uwaga: nie blokujemy działania kalkulatora; w razie problemu ustawiamy err.
    */
-  async function saveProfilePrefs(patch: { profession?: Profession; required_points?: number }) {
+  async function saveProfilePrefs(patch: {
+    profession?: Profession;
+    required_points?: number;
+    period_start?: number;
+    period_end?: number;
+  }) {
     if (!user) return;
 
     try {
       const { error: updErr } = await supabase.from("profiles").update(patch).eq("user_id", user.id);
 
+      // UWAGA: update na nieistniejącym wierszu nie musi dać errora,
+      // dlatego w docelowej wersji lepiej robić UPSERT.
+      // Tu zostawiamy MVP: próbujemy insert, jeśli update zwrócił błąd.
       if (updErr) {
         const { error: insErr } = await supabase.from("profiles").insert({
           user_id: user.id,
@@ -178,47 +225,7 @@ export default function CalculatorClient() {
     }
   }
 
-  /** ---------------- KROK 4.1: debounce zapisu profilu ---------------- */
-  const saveTimerRef = useRef<number | null>(null);
-  const lastPatchRef = useRef<{ profession?: Profession; required_points?: number }>({});
-
-  function scheduleProfileSave(patch: { profession?: Profession; required_points?: number }) {
-    if (!user) return;
-
-    // scalamy patche, żeby np. szybkie zmiany nie gubiły pól
-    lastPatchRef.current = { ...lastPatchRef.current, ...patch };
-
-    // reset timera
-    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-
-    // odpal zapis po chwili
-    saveTimerRef.current = window.setTimeout(async () => {
-      const toSave = { ...lastPatchRef.current };
-      lastPatchRef.current = {};
-      await saveProfilePrefs(toSave);
-    }, 900);
-  }
-
-  /** KROK 4.1: handlery UI -> state + DB (debounce) */
-  function handleProfessionChange(next: Profession) {
-    setProfession(next);
-    scheduleProfileSave({ profession: next });
-  }
-
-  function handleRequiredPointsChange(next: number) {
-    const val = Math.max(0, Number(next) || 0);
-    setRequiredPoints(val);
-    scheduleProfileSave({ required_points: val });
-  }
-
-  /** sprzątanie timera przy unmount */
-  useEffect(() => {
-    return () => {
-      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-    };
-  }, []);
-
-  /** ---------- localStorage: load (guest) ---------- */
+  /** ---------- localStorage: load (guest draft) ---------- */
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -265,7 +272,7 @@ export default function CalculatorClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** ---------- localStorage: save ---------- */
+  /** ---------- localStorage: save draft ---------- */
   useEffect(() => {
     try {
       const payload = { profession, periodLabel, customStart, customEnd, requiredPoints, activities };
@@ -285,7 +292,7 @@ export default function CalculatorClient() {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("profession, required_points")
+          .select("profession, required_points, period_start, period_end")
           .eq("user_id", user.id)
           .maybeSingle();
 
@@ -294,8 +301,13 @@ export default function CalculatorClient() {
 
         if (data?.profession && isProfession(data.profession)) setProfession(data.profession);
         if (typeof data?.required_points === "number") setRequiredPoints(Math.max(0, data.required_points));
-      } catch {
-        // ignore
+
+        // opcjonalnie: gdy kiedyś zaczniesz trzymać okres w DB
+        // (na screenie masz period_start i period_end)
+        // Na razie NIE zmieniamy UI periodLabel tymi wartościami (żeby nie mieszać),
+        // ale zapisujemy je przy zmianach (krok 4.1/4.3).
+      } finally {
+        if (alive) profileLoadedRef.current = true;
       }
     }
 
@@ -304,6 +316,46 @@ export default function CalculatorClient() {
       alive = false;
     };
   }, [user, supabase]);
+
+  /**
+   * KROK 4.1/4.2/4.3
+   * Auto-zapis profilu do DB po zmianie:
+   * - profession
+   * - requiredPoints
+   * + (opcjonalnie) period_start/end wynikające z wybranego okresu
+   *
+   * Z debouncingiem, żeby nie walić requestów co znak.
+   */
+  const rawPeriod = useMemo(() => {
+    const found = PERIODS.find((p) => p.label === periodLabel);
+    if (!found) return { start: currentYear - 3, end: currentYear };
+    if (found.label !== "Inny") return { start: found.start, end: found.end };
+    return { start: customStart, end: customEnd };
+  }, [periodLabel, customStart, customEnd, currentYear]);
+
+  const period = useMemo(() => normalizePeriod(rawPeriod), [rawPeriod]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (!profileLoadedRef.current) return;
+
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+
+    // debounce 450ms
+    saveTimerRef.current = window.setTimeout(() => {
+      saveProfilePrefs({
+        profession,
+        required_points: requiredPoints,
+        period_start: period.start,
+        period_end: period.end,
+      });
+    }, 450);
+
+    return () => {
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profession, requiredPoints, period.start, period.end, user]);
 
   function clearCalculator() {
     try {
@@ -327,15 +379,6 @@ export default function CalculatorClient() {
     ]);
     clearMessages();
   }
-
-  const rawPeriod = useMemo(() => {
-    const found = PERIODS.find((p) => p.label === periodLabel);
-    if (!found) return { start: currentYear - 3, end: currentYear };
-    if (found.label !== "Inny") return { start: found.start, end: found.end };
-    return { start: customStart, end: customEnd };
-  }, [periodLabel, customStart, customEnd, currentYear]);
-
-  const period = useMemo(() => normalizePeriod(rawPeriod), [rawPeriod]);
 
   const rules = useMemo(() => rulesForProfession(profession), [profession]);
 
@@ -397,6 +440,16 @@ export default function CalculatorClient() {
     setActivities((prev) =>
       prev.map((a) => (a.id === id ? { ...a, points: Math.max(0, points), pointsAuto: false } : a)),
     );
+  }
+
+  // ⬇️ KROK 4.2: zmiana zawodu → ustaw domyślne requiredPoints (MVP)
+  function handleProfessionChange(next: Profession) {
+    setProfession(next);
+
+    // jeśli user sam zmienił requiredPoints (inne niż “domyślne”), nie nadpisujemy agresywnie.
+    // Ale na MVP: gdy zawód się zmienia, ustawiamy nową domyślną wartość.
+    const nextDefault = DEFAULT_REQUIRED_POINTS_BY_PROFESSION[next] ?? 0;
+    setRequiredPoints(nextDefault);
   }
 
   const toneStyles =
@@ -539,14 +592,16 @@ export default function CalculatorClient() {
               <select
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
                 value={profession}
-                onChange={(e) => handleProfessionChange(e.target.value as Profession)} // KROK 4.2
+                onChange={(e) => handleProfessionChange(e.target.value as Profession)}
               >
-                <option>Lekarz</option>
-                <option>Lekarz dentysta</option>
-                <option>Inne</option>
+                {PROFESSION_OPTIONS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
               </select>
 
-              {profession !== "Inne" ? (
+              {(profession === "Lekarz" || profession === "Lekarz dentysta") && (
                 <div className="mt-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
                   <div className="font-semibold">Limity (MVP)</div>
                   <div className="mt-1">
@@ -555,7 +610,7 @@ export default function CalculatorClient() {
                     <span className="font-medium">20 pkt / rok</span>.
                   </div>
                 </div>
-              ) : null}
+              )}
             </div>
 
             <div>
@@ -602,7 +657,7 @@ export default function CalculatorClient() {
                 type="number"
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
                 value={requiredPoints}
-                onChange={(e) => handleRequiredPointsChange(Number(e.target.value || 0))} // KROK 4.3
+                onChange={(e) => setRequiredPoints(Math.max(0, Number(e.target.value || 0)))}
                 min={0}
               />
               <p className="mt-1 text-xs text-slate-500">
@@ -754,20 +809,28 @@ export default function CalculatorClient() {
                 </tr>
               </thead>
               <tbody>
-                {applied.map((a) => {
-                  const rowDisabled = !a.in_period;
+                {applied.map((row) => {
+                  const rowDisabled = !row.in_period;
+
+                  // ⬇️ KROK 4.3: bierzemy fields do edycji z activities (źródło prawdy),
+                  // a z "applied" tylko in_period/warning/applied_points
+                  const src = activities.find((a) => a.id === row.id);
+
+                  const pointsValue = src ? src.points : Math.max(0, Number(row.points) || 0);
+                  const yearValue = src ? src.year : Number(row.year) || currentYear;
+                  const organizerValue = src?.organizer ?? "";
 
                   return (
                     <tr
-                      key={a.id}
+                      key={row.id}
                       className={`text-sm ${rowDisabled ? "opacity-50" : ""}`}
                       title={rowDisabled ? "Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone." : ""}
                     >
                       <td className="border-b px-3 py-3 align-top">
                         <select
                           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
-                          value={a.type}
-                          onChange={(e) => handleTypeChange(a.id, e.target.value as ActivityType)}
+                          value={(src?.type ?? row.type) as ActivityType}
+                          onChange={(e) => handleTypeChange(row.id, e.target.value as ActivityType)}
                           disabled={rowDisabled}
                         >
                           {TYPES.map((t) => (
@@ -777,17 +840,17 @@ export default function CalculatorClient() {
                           ))}
                         </select>
 
-                        {!a.in_period && (
+                        {!row.in_period && (
                           <div className="mt-1 text-xs text-amber-700">
                             Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone.
                           </div>
                         )}
 
-                        {a.warning ? <div className="mt-1 text-xs text-rose-700">{a.warning}</div> : null}
+                        {row.warning ? <div className="mt-1 text-xs text-rose-700">{row.warning}</div> : null}
 
-                        {a.in_period && a.applied_points !== Math.max(0, Number(a.points) || 0) ? (
+                        {row.in_period && row.applied_points !== Math.max(0, pointsValue) ? (
                           <div className="mt-1 text-[11px] text-slate-600">
-                            Zaliczone do sumy: <span className="font-semibold">{a.applied_points}</span> pkt
+                            Zaliczone do sumy: <span className="font-semibold">{row.applied_points}</span> pkt
                           </div>
                         ) : null}
                       </td>
@@ -797,12 +860,12 @@ export default function CalculatorClient() {
                           type="number"
                           min={0}
                           className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
-                          value={Number(a.points) || 0}
-                          onChange={(e) => handlePointsChange(a.id, Number(e.target.value || 0))}
+                          value={pointsValue}
+                          onChange={(e) => handlePointsChange(row.id, Number(e.target.value || 0))}
                           disabled={rowDisabled}
                         />
                         <div className="mt-1 text-[11px] text-slate-500">
-                          {(a as any).pointsAuto ? "Auto (wg rodzaju)" : "Ręcznie (z certyfikatu)"}
+                          {src?.pointsAuto ? "Auto (wg rodzaju)" : "Ręcznie (z certyfikatu)"}
                         </div>
                       </td>
 
@@ -810,8 +873,8 @@ export default function CalculatorClient() {
                         <input
                           type="number"
                           className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2"
-                          value={Number(a.year) || currentYear}
-                          onChange={(e) => updateActivity(a.id, { year: Number(e.target.value || currentYear) })}
+                          value={yearValue}
+                          onChange={(e) => updateActivity(row.id, { year: Number(e.target.value || currentYear) })}
                         />
                       </td>
 
@@ -820,15 +883,15 @@ export default function CalculatorClient() {
                           type="text"
                           placeholder="np. OIL / towarzystwo"
                           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
-                          value={(a as any).organizer ?? ""}
-                          onChange={(e) => updateActivity(a.id, { organizer: e.target.value })}
+                          value={organizerValue}
+                          onChange={(e) => updateActivity(row.id, { organizer: e.target.value })}
                           disabled={rowDisabled}
                         />
                       </td>
 
                       <td className="border-b px-3 py-3 align-top text-right">
                         <button
-                          onClick={() => removeActivity(a.id)}
+                          onClick={() => removeActivity(row.id)}
                           className="rounded-xl border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-50"
                           type="button"
                         >
