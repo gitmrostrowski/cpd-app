@@ -79,7 +79,19 @@ function todayYYYYMMDD() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-// Etykiety do UI (żeby nie pokazywać surowych wartości)
+function daysDiffFromToday(yyyyMmDd: string | null) {
+  if (!yyyyMmDd) return null;
+  const [y, m, d] = yyyyMmDd.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const start = new Date(y, m - 1, d);
+  const today = new Date();
+  start.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  const diffMs = start.getTime() - today.getTime();
+  return Math.round(diffMs / (1000 * 60 * 60 * 24));
+}
+
+// Etykiety do UI
 function labelType(t: TrainingType | null) {
   if (!t) return "—";
   if (t === "online") return "Online / webinar";
@@ -99,8 +111,37 @@ function labelCategory(c: TrainingCategory | null) {
   return c;
 }
 
-// Najważniejsze: mapowanie (category + type) -> Activity.type w tabeli activities
-// Dopasowane do Twoich wartości z Aktywności (z ukośnikiem i spacjami).
+// UI kolory pilli
+function pillToneForType(type: TrainingType | null) {
+  if (type === "online")
+    return "bg-violet-100 text-violet-800 border-violet-200";
+  if (type === "stacjonarne")
+    return "bg-amber-100 text-amber-900 border-amber-200";
+  if (type === "hybrydowe") return "bg-teal-100 text-teal-900 border-teal-200";
+  return "bg-slate-100 text-slate-700 border-slate-200";
+}
+
+function pillToneForCategory(category: TrainingCategory | null) {
+  if (category === "konferencja")
+    return "bg-indigo-100 text-indigo-900 border-indigo-200";
+  if (category === "warsztaty")
+    return "bg-orange-100 text-orange-900 border-orange-200";
+  if (category === "publikacja")
+    return "bg-slate-100 text-slate-900 border-slate-200";
+  if (category === "kurs") return "bg-sky-100 text-sky-900 border-sky-200";
+  if (category === "szkolenie")
+    return "bg-emerald-100 text-emerald-900 border-emerald-200";
+  return "bg-slate-100 text-slate-700 border-slate-200";
+}
+
+function pointsTone(points: number | null) {
+  if (typeof points !== "number") return "bg-slate-100 text-slate-700";
+  if (points >= 11) return "bg-emerald-600 text-white";
+  if (points >= 6) return "bg-blue-600 text-white";
+  return "bg-slate-900 text-white";
+}
+
+// Mapowanie (category + type) -> activities.type
 function mapToActivityType(
   category: TrainingCategory | null,
   delivery: TrainingType | null
@@ -111,14 +152,10 @@ function mapToActivityType(
   | "Warsztaty praktyczne"
   | "Publikacja naukowa"
   | "Samokształcenie" {
-  // kategorie „twarde” niezależne od formy
   if (category === "konferencja") return "Konferencja / kongres";
   if (category === "warsztaty") return "Warsztaty praktyczne";
   if (category === "publikacja") return "Publikacja naukowa";
-
-  // kurs/szkolenie/inne -> zależne od formy
   if (delivery === "stacjonarne") return "Kurs stacjonarny";
-  // online + hybrydowe najbezpieczniej mapować na webinar/online
   return "Kurs online / webinar";
 }
 
@@ -151,18 +188,12 @@ export default function TrainingHubClient() {
       .order("start_date", { ascending: true })
       .limit(200);
 
-    // forma
     if (type !== "all") query = query.eq("type", type);
-
-    // rodzaj
     if (category !== "all") query = query.eq("category", category);
 
     if (organizer !== "all") query = query.ilike("organizer", `%${organizer}%`);
-
     if (minPoints !== "all") query = query.gte("points", Number(minPoints));
-
     if (onlyPartner) query = query.eq("is_partner", true);
-
     if (onlyUpcoming) query = query.gte("start_date", todayStr);
 
     if (q.trim()) {
@@ -191,9 +222,10 @@ export default function TrainingHubClient() {
 
   const visible = useMemo(() => items, [items]);
 
-  const addDraftActivity = async (t: Training) => {
+  // Tworzymy aktywność jako "planned" (zaplanowane), a nie zaliczone
+  const chooseTraining = async (t: Training) => {
     if (!user) {
-      alert("Zaloguj się, żeby dodać aktywność.");
+      alert("Zaloguj się, żeby wybrać szkolenie.");
       return;
     }
 
@@ -207,7 +239,12 @@ export default function TrainingHubClient() {
       points: t.points ?? 0,
       year,
       organizer: t.organizer ?? null,
-      // certyfikaty: puste, bo to szkic
+
+      // NOWE: wymagają kolumn w activities (zrobimy w kolejnym kroku SQL)
+      status: "planned",
+      planned_start_date: t.start_date ?? null,
+      training_id: t.id,
+
       certificate_path: null,
       certificate_name: null,
       certificate_mime: null,
@@ -218,12 +255,12 @@ export default function TrainingHubClient() {
     const { error } = await supabase.from("activities").insert(payload);
 
     if (error) {
-      alert(`Nie udało się dodać aktywności: ${error.message}`);
+      alert(`Nie udało się wybrać szkolenia: ${error.message}`);
       return;
     }
 
     alert(
-      "Dodano szkic aktywności. Przejdź do Aktywności i podepnij certyfikat."
+      "Dodano do planu. Przejdź do Aktywności, aby oznaczyć jako odbyte i dodać certyfikat."
     );
   };
 
@@ -239,23 +276,25 @@ export default function TrainingHubClient() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Baza szkoleń</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Znajdź kursy i webinary z punktami edukacyjnymi. Dodaj szkic
-            aktywności jednym kliknięciem.
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Baza szkoleń
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Znajdź kursy i webinary z punktami edukacyjnymi. Wybierz szkolenie,
+            a trafi do planu (nie zalicza się automatycznie).
           </p>
         </div>
 
         <div className="flex gap-2">
           <Link
             href="/aktywnosci"
-            className="rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
+            className="rounded-xl border px-4 py-2 text-sm hover:bg-slate-50"
           >
             Aktywności
           </Link>
           <button
             onClick={load}
-            className="rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
+            className="rounded-xl border px-4 py-2 text-sm hover:bg-slate-50"
             disabled={fetching}
             type="button"
           >
@@ -265,10 +304,10 @@ export default function TrainingHubClient() {
       </div>
 
       {/* Filtry */}
-      <div className="mt-6 rounded-2xl border bg-white p-4">
+      <div className="mt-6 rounded-2xl border bg-white p-4 shadow-sm">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
           <div className="md:col-span-4">
-            <label className="text-xs text-gray-600">Szukaj</label>
+            <label className="text-xs text-slate-600">Szukaj</label>
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -278,7 +317,7 @@ export default function TrainingHubClient() {
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-xs text-gray-600">Forma</label>
+            <label className="text-xs text-slate-600">Forma</label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value as any)}
@@ -293,7 +332,7 @@ export default function TrainingHubClient() {
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-xs text-gray-600">Kategoria</label>
+            <label className="text-xs text-slate-600">Kategoria</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as any)}
@@ -308,7 +347,7 @@ export default function TrainingHubClient() {
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-xs text-gray-600">Organizator</label>
+            <label className="text-xs text-slate-600">Organizator</label>
             <select
               value={organizer}
               onChange={(e) => setOrganizer(e.target.value)}
@@ -323,7 +362,7 @@ export default function TrainingHubClient() {
           </div>
 
           <div className="md:col-span-1">
-            <label className="text-xs text-gray-600">Punkty</label>
+            <label className="text-xs text-slate-600">Punkty</label>
             <select
               value={minPoints}
               onChange={(e) => setMinPoints(e.target.value)}
@@ -350,7 +389,7 @@ export default function TrainingHubClient() {
         </div>
 
         <div className="mt-3 flex flex-wrap gap-3">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
             <input
               type="checkbox"
               checked={onlyUpcoming}
@@ -359,7 +398,7 @@ export default function TrainingHubClient() {
             Tylko nadchodzące
           </label>
 
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
             <input
               type="checkbox"
               checked={onlyPartner}
@@ -368,9 +407,9 @@ export default function TrainingHubClient() {
             Tylko partnerzy
           </label>
 
-          <div className="ml-auto text-sm text-gray-600">
+          <div className="ml-auto text-sm text-slate-600">
             Wynik:{" "}
-            <span className="font-medium text-gray-900">{visible.length}</span>
+            <span className="font-medium text-slate-900">{visible.length}</span>
           </div>
         </div>
 
@@ -383,85 +422,123 @@ export default function TrainingHubClient() {
 
       {/* Lista */}
       <div className="mt-6 space-y-3">
-        {visible.map((t) => (
-          <div key={t.id} className="rounded-2xl border bg-white p-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="truncate text-base font-semibold">{t.title}</h3>
+        {visible.map((t) => {
+          const dd = daysDiffFromToday(t.start_date);
+          const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
 
-                  {t.is_partner ? (
-                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
-                      Partner
-                    </span>
-                  ) : null}
+          return (
+            <div
+              key={t.id}
+              className="rounded-2xl border bg-white p-4 shadow-sm transition hover:shadow-md"
+            >
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate text-base font-semibold text-slate-900">
+                          {t.title}
+                        </h3>
 
-                  {t.organizer ? (
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-                      {t.organizer}
-                    </span>
-                  ) : null}
+                        {soon ? (
+                          <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                            Wkrótce
+                          </span>
+                        ) : null}
 
-                  {t.type ? (
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-                      {labelType(t.type)}
-                    </span>
-                  ) : null}
+                        {t.is_partner ? (
+                          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                            Partner
+                          </span>
+                        ) : null}
+                      </div>
 
-                  {t.category ? (
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-                      {labelCategory(t.category)}
-                    </span>
-                  ) : null}
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {t.organizer ? (
+                          <span className="rounded-full border bg-slate-50 px-2 py-0.5 text-xs text-slate-700">
+                            {t.organizer}
+                          </span>
+                        ) : null}
 
-                  {typeof t.points === "number" ? (
-                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
-                      {t.points} pkt
-                    </span>
-                  ) : null}
+                        <span
+                          className={[
+                            "rounded-full border px-2 py-0.5 text-xs",
+                            pillToneForType(t.type),
+                          ].join(" ")}
+                        >
+                          {labelType(t.type)}
+                        </span>
+
+                        {t.category ? (
+                          <span
+                            className={[
+                              "rounded-full border px-2 py-0.5 text-xs",
+                              pillToneForCategory(t.category),
+                            ].join(" ")}
+                          >
+                            {labelCategory(t.category)}
+                          </span>
+                        ) : null}
+
+                        <span className="text-xs text-slate-600">
+                          Termin: {formatDate(t.start_date)}
+                          {t.end_date ? ` – ${formatDate(t.end_date)}` : ""}
+                          {t.voivodeship ? ` • ${t.voivodeship}` : ""}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      <span
+                        className={[
+                          "inline-flex items-center rounded-full px-3 py-1 text-sm font-bold",
+                          pointsTone(t.points),
+                        ].join(" ")}
+                        title="Punkty edukacyjne"
+                      >
+                        {typeof t.points === "number" ? `${t.points} pkt` : "—"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="mt-1 text-sm text-gray-600">
-                  Termin: {formatDate(t.start_date)}
-                  {t.end_date ? ` – ${formatDate(t.end_date)}` : ""}
-                  {t.voivodeship ? ` • ${t.voivodeship}` : ""}
-                </div>
-              </div>
+                <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
+                  {/* Secondary */}
+                  {t.external_url ? (
+                    <a
+                      href={t.external_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-xl border px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    >
+                      Zobacz szkolenie
+                    </a>
+                  ) : (
+                    <button
+                      className="cursor-not-allowed rounded-xl border px-3 py-2 text-sm text-slate-400"
+                      disabled
+                      type="button"
+                    >
+                      Brak linku
+                    </button>
+                  )}
 
-              <div className="flex shrink-0 flex-wrap gap-2">
-                {t.external_url ? (
-                  <a
-                    href={t.external_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-xl border px-3 py-2 text-sm hover:bg-gray-50"
-                  >
-                    Zobacz szkolenie
-                  </a>
-                ) : (
+                  {/* Primary */}
                   <button
-                    className="cursor-not-allowed rounded-xl border px-3 py-2 text-sm text-gray-400"
-                    disabled
+                    onClick={() => chooseTraining(t)}
+                    className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     type="button"
                   >
-                    Brak linku
+                    Wybierz szkolenie
                   </button>
-                )}
-
-                <button
-                  onClick={() => addDraftActivity(t)}
-                  className="rounded-xl bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
-                  type="button"
-                >
-                  Dodaj szkic do aktywności
-                </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {!fetching && visible.length === 0 && (
-          <div className="rounded-2xl border bg-white p-6 text-sm text-gray-600">
+          <div className="rounded-2xl border bg-white p-6 text-sm text-slate-600">
             Brak wyników. Zmień filtry albo wyłącz „Tylko nadchodzące”.
           </div>
         )}
