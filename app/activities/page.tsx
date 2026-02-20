@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
+type ActivityStatus = "planned" | "done" | null;
+
 type ActivityRow = {
   id: string;
   user_id: string;
@@ -13,6 +15,11 @@ type ActivityRow = {
   year: number;
   organizer: string | null;
   created_at: string;
+
+  // NEW (planowanie szkoleń)
+  status?: ActivityStatus;
+  planned_start_date?: string | null; // YYYY-MM-DD
+  training_id?: string | null;
 
   certificate_path?: string | null;
   certificate_name?: string | null;
@@ -34,7 +41,12 @@ const TYPES = [
 
 const BUCKET = "certificates";
 const MAX_MB = 10;
-const ALLOWED_MIME = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_MIME = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 
 function extFromMime(mime: string) {
   if (mime === "application/pdf") return "pdf";
@@ -47,7 +59,18 @@ function extFromMime(mime: string) {
 function formatDateShort(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("pl-PL", { year: "numeric", month: "2-digit", day: "2-digit" });
+  return d.toLocaleDateString("pl-PL", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+function formatYMD(d: string | null | undefined) {
+  if (!d) return "—";
+  const [y, m, day] = d.split("-");
+  if (!y || !m || !day) return d;
+  return `${day}.${m}.${y}`;
 }
 
 function shortFileName(name?: string | null) {
@@ -61,13 +84,19 @@ function shortFileName(name?: string | null) {
 }
 
 type StatusKind = "complete" | "missing";
+
+// Dla planned: nie wymagamy certyfikatu (bo szkolenie jeszcze się nie odbyło)
 function getRowStatus(a: ActivityRow): { kind: StatusKind; missing: string[] } {
   const missing: string[] = [];
   const orgOk = Boolean(a.organizer && String(a.organizer).trim());
-  const certOk = Boolean(a.certificate_path);
 
   if (!orgOk) missing.push("Brak organizatora");
-  if (!certOk) missing.push("Brak certyfikatu");
+
+  const isPlanned = a.status === "planned";
+  if (!isPlanned) {
+    const certOk = Boolean(a.certificate_path);
+    if (!certOk) missing.push("Brak certyfikatu");
+  }
 
   return {
     kind: missing.length === 0 ? "complete" : "missing",
@@ -109,7 +138,14 @@ export default function ActivitiesPage() {
   const [filterType, setFilterType] = useState<string>("Wszystkie");
   const [filterYear, setFilterYear] = useState<string>("Wszystkie");
   const [filterCert, setFilterCert] = useState<"all" | "yes" | "no">("all");
-  const [filterStatus, setFilterStatus] = useState<"all" | "complete" | "missing">("all");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "complete" | "missing"
+  >("all");
+
+  // NEW: realizacja (planned/done)
+  const [filterProgress, setFilterProgress] = useState<
+    "all" | "planned" | "done"
+  >("all");
 
   function clearMessages() {
     setInfo(null);
@@ -125,7 +161,8 @@ export default function ActivitiesPage() {
   function validateFile(f: File) {
     if (!ALLOWED_MIME.has(f.type)) return "Dozwolone: PDF, JPG, PNG, WEBP.";
     const sizeMb = f.size / (1024 * 1024);
-    if (sizeMb > MAX_MB) return `Plik jest za duży (${sizeMb.toFixed(1)} MB). Limit: ${MAX_MB} MB.`;
+    if (sizeMb > MAX_MB)
+      return `Plik jest za duży (${sizeMb.toFixed(1)} MB). Limit: ${MAX_MB} MB.`;
     return null;
   }
 
@@ -142,7 +179,8 @@ export default function ActivitiesPage() {
       const { data, error } = await supabase
         .from("activities")
         .select(
-          "id,user_id,type,points,year,organizer,created_at,certificate_path,certificate_name,certificate_mime,certificate_size,certificate_uploaded_at",
+          // NEW: status, planned_start_date, training_id
+          "id,user_id,type,points,year,organizer,created_at,status,planned_start_date,training_id,certificate_path,certificate_name,certificate_mime,certificate_size,certificate_uploaded_at"
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -161,10 +199,11 @@ export default function ActivitiesPage() {
       const withCert = rows.filter((r) => r.certificate_path);
       const nextMap: Record<string, string> = {};
 
-      // Uwaga: celowo sekwencyjnie (łatwiej debuggować). Jak będzie trzeba, zrobimy Promise.all.
       for (const r of withCert) {
         const path = r.certificate_path!;
-        const { data: urlData } = await supabase.storage.from(BUCKET).createSignedUrl(path, 60 * 60); // 1h
+        const { data: urlData } = await supabase.storage
+          .from(BUCKET)
+          .createSignedUrl(path, 60 * 60); // 1h
         if (urlData?.signedUrl) nextMap[r.id] = urlData.signedUrl;
       }
       setCertUrls(nextMap);
@@ -252,11 +291,18 @@ export default function ActivitiesPage() {
       points: p,
       year: y,
       organizer: org.length ? org : null,
+      // manualnie dodana aktywność traktujemy jako odbytą (done)
+      status: "done",
     };
 
     setBusy(true);
     try {
-      const { data, error } = await supabase.from("activities").insert(payload).select("id").single();
+      const { data, error } = await supabase
+        .from("activities")
+        .insert(payload)
+        .select("id")
+        .single();
+
       if (error) {
         setErr(error.message);
         return;
@@ -284,6 +330,35 @@ export default function ActivitiesPage() {
     }
   }
 
+  async function markAsDone(activityId: string) {
+    if (!user) return;
+    if (busy) return;
+
+    clearMessages();
+    setBusy(true);
+    try {
+      const { error } = await supabase
+        .from("activities")
+        .update({
+          status: "done",
+        })
+        .eq("id", activityId)
+        .eq("user_id", user.id);
+
+      if (error) {
+        setErr(error.message);
+        return;
+      }
+
+      setInfo("Oznaczono jako odbyte ✅ (teraz możesz dodać certyfikat)");
+      await load();
+    } catch (e: any) {
+      setErr(e?.message || "Nie udało się zmienić statusu.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function removeActivity(id: string, certPath?: string | null) {
     if (!user) return;
     if (busy) return;
@@ -296,11 +371,21 @@ export default function ActivitiesPage() {
     setBusy(true);
     try {
       if (certPath) {
-        const { error: storErr } = await supabase.storage.from(BUCKET).remove([certPath]);
-        if (storErr) setInfo("Uwaga: nie udało się usunąć pliku certyfikatu (sprawdź polityki).");
+        const { error: storErr } = await supabase.storage
+          .from(BUCKET)
+          .remove([certPath]);
+        if (storErr)
+          setInfo(
+            "Uwaga: nie udało się usunąć pliku certyfikatu (sprawdź polityki)."
+          );
       }
 
-      const { error } = await supabase.from("activities").delete().eq("id", id).eq("user_id", user.id);
+      const { error } = await supabase
+        .from("activities")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
       if (error) {
         setErr(error.message);
         setItems(prev);
@@ -334,7 +419,9 @@ export default function ActivitiesPage() {
     try {
       const path = activity.certificate_path;
 
-      const { error: storErr } = await supabase.storage.from(BUCKET).remove([path]);
+      const { error: storErr } = await supabase.storage
+        .from(BUCKET)
+        .remove([path]);
       if (storErr) {
         setErr(storErr.message);
         return;
@@ -397,7 +484,9 @@ export default function ActivitiesPage() {
   }
 
   const years = useMemo(() => {
-    const ys = Array.from(new Set(items.map((i) => i.year))).sort((a, b) => b - a);
+    const ys = Array.from(new Set(items.map((i) => i.year))).sort(
+      (a, b) => b - a
+    );
     return ys;
   }, [items]);
 
@@ -406,7 +495,12 @@ export default function ActivitiesPage() {
 
     return items.filter((a) => {
       if (filterType !== "Wszystkie" && a.type !== filterType) return false;
-      if (filterYear !== "Wszystkie" && String(a.year) !== filterYear) return false;
+      if (filterYear !== "Wszystkie" && String(a.year) !== filterYear)
+        return false;
+
+      // NEW: planned/done
+      const prog = a.status ?? "done";
+      if (filterProgress !== "all" && prog !== filterProgress) return false;
 
       const hasCert = Boolean(a.certificate_path);
       if (filterCert === "yes" && !hasCert) return false;
@@ -416,12 +510,14 @@ export default function ActivitiesPage() {
       if (filterStatus !== "all" && st !== filterStatus) return false;
 
       if (query) {
-        const hay = `${a.type} ${a.organizer ?? ""} ${a.year} ${a.points}`.toLowerCase();
+        const hay = `${a.type} ${a.organizer ?? ""} ${a.year} ${a.points} ${
+          a.status ?? ""
+        }`.toLowerCase();
         if (!hay.includes(query)) return false;
       }
       return true;
     });
-  }, [items, q, filterType, filterYear, filterCert, filterStatus]);
+  }, [items, q, filterType, filterYear, filterCert, filterStatus, filterProgress]);
 
   if (loading) {
     return (
@@ -436,7 +532,9 @@ export default function ActivitiesPage() {
       <main className="mx-auto max-w-6xl px-4 py-10">
         <div className="rounded-2xl border bg-white p-8">
           <h1 className="text-2xl font-bold text-slate-900">Aktywności</h1>
-          <p className="mt-2 text-slate-600">Zaloguj się, aby zapisywać aktywności do portfolio.</p>
+          <p className="mt-2 text-slate-600">
+            Zaloguj się, aby zapisywać aktywności do portfolio.
+          </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link
               href="/login"
@@ -461,7 +559,9 @@ export default function ActivitiesPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Aktywności</h1>
-          <p className="mt-2 text-slate-600">Logbook CPD: dodawaj aktywności, porządkuj dane i podpinaj certyfikaty.</p>
+          <p className="mt-2 text-slate-600">
+            Logbook CPD: dodawaj aktywności, porządkuj dane i podpinaj certyfikaty.
+          </p>
         </div>
         <div className="flex gap-2">
           <Link
@@ -568,10 +668,13 @@ export default function ActivitiesPage() {
                   setFile(f);
                 }}
               />
-              <div className="mt-1 text-xs text-slate-500">Limit: {MAX_MB} MB. Typy: PDF, JPG, PNG, WEBP.</div>
+              <div className="mt-1 text-xs text-slate-500">
+                Limit: {MAX_MB} MB. Typy: PDF, JPG, PNG, WEBP.
+              </div>
               {file ? (
                 <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                  Wybrano: <span className="font-medium">{file.name}</span> ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                  Wybrano: <span className="font-medium">{file.name}</span> (
+                  {(file.size / (1024 * 1024)).toFixed(2)} MB)
                 </div>
               ) : null}
             </div>
@@ -588,8 +691,12 @@ export default function ActivitiesPage() {
 
           {/* Attach cert to existing */}
           <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="text-sm font-semibold text-slate-900">Podłącz certyfikat do istniejącego wpisu</div>
-            <div className="mt-1 text-xs text-slate-600">Przydatne, gdy dodałeś aktywność wcześniej bez pliku.</div>
+            <div className="text-sm font-semibold text-slate-900">
+              Podłącz certyfikat do istniejącego wpisu
+            </div>
+            <div className="mt-1 text-xs text-slate-600">
+              Przydatne, gdy dodałeś aktywność wcześniej bez pliku.
+            </div>
 
             <div className="mt-3 space-y-2">
               <select
@@ -601,7 +708,9 @@ export default function ActivitiesPage() {
                 <option value="">Wybierz aktywność…</option>
                 {items.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.year} • {a.type} • {a.organizer ? a.organizer : "brak organizatora"} {a.certificate_path ? " • (ma cert)" : ""}
+                    {(a.status ?? "done") === "planned" ? "🗓️ Zaplanowane" : "✅ Odbyte"} • {a.year} • {a.type} •{" "}
+                    {a.organizer ? a.organizer : "brak organizatora"}{" "}
+                    {a.certificate_path ? " • (ma cert)" : ""}
                   </option>
                 ))}
               </select>
@@ -643,7 +752,9 @@ export default function ActivitiesPage() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności</h2>
-              <p className="mt-1 text-sm text-slate-600">Filtruj, sprawdzaj kompletność i otwieraj certyfikaty.</p>
+              <p className="mt-1 text-sm text-slate-600">
+                Zaplanowane nie liczą się do punktów, dopóki nie oznaczysz ich jako odbyte.
+              </p>
             </div>
             <button
               onClick={load}
@@ -699,6 +810,20 @@ export default function ActivitiesPage() {
               </select>
             </div>
 
+            {/* NEW */}
+            <div>
+              <label className="text-xs font-medium text-slate-600">Realizacja</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterProgress}
+                onChange={(e) => setFilterProgress(e.target.value as any)}
+              >
+                <option value="all">Wszystkie</option>
+                <option value="planned">Zaplanowane</option>
+                <option value="done">Odbyte</option>
+              </select>
+            </div>
+
             <div>
               <label className="text-xs font-medium text-slate-600">Certyfikat</label>
               <select
@@ -713,7 +838,7 @@ export default function ActivitiesPage() {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-slate-600">Status</label>
+              <label className="text-xs font-medium text-slate-600">Kompletność</label>
               <select
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
                 value={filterStatus}
@@ -735,12 +860,16 @@ export default function ActivitiesPage() {
                   setFilterYear("Wszystkie");
                   setFilterCert("all");
                   setFilterStatus("all");
+                  setFilterProgress("all");
                 }}
               >
                 Wyczyść filtry
               </button>
               <div className="w-full text-right text-xs text-slate-600">
-                Wynik: <span className="font-semibold text-slate-900">{filtered.length}</span>
+                Wynik:{" "}
+                <span className="font-semibold text-slate-900">
+                  {filtered.length}
+                </span>
               </div>
             </div>
           </div>
@@ -750,7 +879,9 @@ export default function ActivitiesPage() {
           ) : filtered.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-8 text-center">
               <div className="text-lg font-semibold text-slate-900">Brak wyników</div>
-              <div className="mt-2 text-sm text-slate-600">Zmień filtry albo dodaj nową aktywność po lewej.</div>
+              <div className="mt-2 text-sm text-slate-600">
+                Zmień filtry albo dodaj nową aktywność po lewej.
+              </div>
             </div>
           ) : (
             <div className="mt-5 space-y-3">
@@ -758,22 +889,41 @@ export default function ActivitiesPage() {
                 const hasCert = Boolean(a.certificate_path);
                 const certUrl = hasCert ? certUrls[a.id] : null;
 
+                const prog = (a.status ?? "done") as "planned" | "done";
                 const st = getRowStatus(a);
 
                 return (
-                  <div key={a.id} className="rounded-2xl border border-slate-200 p-4">
+                  <div
+                    key={a.id}
+                    className={[
+                      "rounded-2xl border p-4",
+                      prog === "planned"
+                        ? "border-blue-200 bg-blue-50/40"
+                        : "border-slate-200 bg-white",
+                    ].join(" ")}
+                  >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-[260px]">
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="font-semibold text-slate-900">{a.type}</div>
 
+                          {prog === "planned" ? (
+                            <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
+                              🗓️ Zaplanowane
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                              ✅ Odbyte
+                            </span>
+                          )}
+
                           {st.kind === "complete" ? (
                             <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
-                              ✅ Complete
+                              Complete
                             </span>
                           ) : (
                             <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
-                              ⚠️ Missing
+                              Missing
                             </span>
                           )}
 
@@ -790,10 +940,22 @@ export default function ActivitiesPage() {
                           {a.created_at ? (
                             <>
                               {" "}
-                              • Dodano: <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
+                              • Dodano:{" "}
+                              <span className="font-medium text-slate-900">
+                                {formatDateShort(a.created_at)}
+                              </span>
                             </>
                           ) : null}
                         </div>
+
+                        {prog === "planned" ? (
+                          <div className="mt-2 text-sm text-slate-700">
+                            Termin szkolenia:{" "}
+                            <span className="font-semibold">
+                              {formatYMD(a.planned_start_date)}
+                            </span>
+                          </div>
+                        ) : null}
 
                         {st.kind === "missing" ? (
                           <div className="mt-2 flex flex-wrap gap-2">
@@ -825,7 +987,9 @@ export default function ActivitiesPage() {
                               )}
 
                               {a.certificate_name ? (
-                                <span className="text-xs text-slate-500">{shortFileName(a.certificate_name)}</span>
+                                <span className="text-xs text-slate-500">
+                                  {shortFileName(a.certificate_name)}
+                                </span>
                               ) : null}
 
                               <button
@@ -837,25 +1001,45 @@ export default function ActivitiesPage() {
                                 Usuń certyfikat
                               </button>
                             </div>
+                          ) : prog === "planned" ? (
+                            <div className="text-xs text-slate-600">
+                              To szkolenie jest zaplanowane — certyfikat dodasz po odbyciu.
+                            </div>
                           ) : (
-                            <div className="text-xs text-slate-500">Brak certyfikatu (możesz podpiąć po lewej).</div>
+                            <div className="text-xs text-slate-500">
+                              Brak certyfikatu (możesz podpiąć po lewej).
+                            </div>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
                           <span className="text-slate-600">Punkty</span>{" "}
                           <span className="font-semibold text-slate-900">{a.points}</span>
                         </div>
-                        <button
-                          onClick={() => removeActivity(a.id, a.certificate_path ?? null)}
-                          className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                          type="button"
-                          disabled={busy}
-                        >
-                          Usuń
-                        </button>
+
+                        <div className="flex gap-2">
+                          {prog === "planned" ? (
+                            <button
+                              onClick={() => markAsDone(a.id)}
+                              className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                              type="button"
+                              disabled={busy}
+                            >
+                              Oznacz jako odbyte
+                            </button>
+                          ) : null}
+
+                          <button
+                            onClick={() => removeActivity(a.id, a.certificate_path ?? null)}
+                            className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                            type="button"
+                            disabled={busy}
+                          >
+                            Usuń
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
