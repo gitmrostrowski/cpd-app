@@ -1,4 +1,3 @@
-// components/Header.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -19,10 +18,10 @@ type NavItem = {
 };
 
 const NAV: NavItem[] = [
+  { href: "/", label: "Home" },
   { href: "/kalkulator", label: "Kalkulator" },
   { href: "/activities", label: "Aktywności" },
-  // opcjonalnie zostaw na później
-  // { href: "/raporty", label: "Raporty", soon: !REPORTS_READY },
+  { href: "/raporty", label: "Raporty", soon: !REPORTS_READY },
 ];
 
 function cx(...classes: Array<string | false | undefined | null>) {
@@ -60,10 +59,12 @@ export default function Header() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
-  const linkCls = (href: string) =>
+  const linkCls = (href: string, disabled?: boolean) =>
     cx(
       "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors",
-      isActive(href)
+      disabled
+        ? "text-slate-500 cursor-not-allowed opacity-70"
+        : isActive(href)
         ? "bg-slate-100 text-slate-900"
         : "text-slate-900 hover:bg-slate-50"
     );
@@ -96,15 +97,21 @@ export default function Header() {
             <span className="font-semibold text-slate-900">CRPE</span>
           </Link>
 
-          {/* NAV DESKTOP */}
-          <nav className="hidden sm:flex flex-1 items-center justify-center">
+          {/* NAV DESKTOP (przesunięte w prawo) */}
+          <nav className="hidden sm:flex flex-1 items-center justify-end">
             <div className="flex items-center gap-1 rounded-2xl border border-blue-200/60 bg-white px-1 py-1 shadow-sm">
               {NAV.map(({ href, label, soon }) => (
                 <Link
                   key={href}
                   href={href}
-                  className={linkCls(href)}
+                  className={linkCls(href, !!soon)}
                   aria-current={isActive(href) ? "page" : undefined}
+                  aria-disabled={soon ? true : undefined}
+                  tabIndex={soon ? -1 : undefined}
+                  onClick={(e) => {
+                    if (soon) e.preventDefault();
+                  }}
+                  title={soon ? "Wkrótce" : undefined}
                 >
                   <span>{label}</span>
                   {soon ? (
@@ -230,9 +237,18 @@ export default function Header() {
                 <Link
                   key={href}
                   href={href}
-                  className={linkCls(href)}
+                  className={linkCls(href, !!soon)}
                   aria-current={isActive(href) ? "page" : undefined}
-                  onClick={() => setOpenMobile(false)}
+                  aria-disabled={soon ? true : undefined}
+                  tabIndex={soon ? -1 : undefined}
+                  onClick={(e) => {
+                    if (soon) {
+                      e.preventDefault();
+                      return;
+                    }
+                    setOpenMobile(false);
+                  }}
+                  title={soon ? "Wkrótce" : undefined}
                 >
                   <span>{label}</span>
                   {soon ? (
