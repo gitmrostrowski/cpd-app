@@ -11,6 +11,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      // ✅ TABELA: activities
       activities: {
         Row: {
           id: string;
@@ -19,6 +20,11 @@ export type Database = {
           points: number; // numeric w Supabase typuje się często jako number
           year: number;
           organizer: string | null;
+
+          // NEW: planowanie / realizacja
+          status: string | null; // 'planned' | 'done'
+          planned_start_date: string | null; // date -> string (YYYY-MM-DD)
+          training_id: string | null; // uuid -> string
 
           certificate_path: string | null;
           certificate_name: string | null;
@@ -37,6 +43,11 @@ export type Database = {
           year: number;
           organizer?: string | null;
 
+          // NEW
+          status?: string | null;
+          planned_start_date?: string | null;
+          training_id?: string | null;
+
           certificate_path?: string | null;
           certificate_name?: string | null;
           certificate_mime?: string | null;
@@ -54,6 +65,11 @@ export type Database = {
           year?: number;
           organizer?: string | null;
 
+          // NEW
+          status?: string | null;
+          planned_start_date?: string | null;
+          training_id?: string | null;
+
           certificate_path?: string | null;
           certificate_name?: string | null;
           certificate_mime?: string | null;
@@ -69,6 +85,15 @@ export type Database = {
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          // Jeśli NIE masz FK w DB: activities.training_id -> trainings.id
+          // usuń poniższy blok, żeby typy były zgodne ze schematem.
+          {
+            foreignKeyName: "activities_training_id_fkey";
+            columns: ["training_id"];
+            isOneToOne: false;
+            referencedRelation: "trainings";
             referencedColumns: ["id"];
           }
         ];
