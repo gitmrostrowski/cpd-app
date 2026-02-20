@@ -202,8 +202,8 @@ export default function Page() {
               </h1>
 
               <p className="mt-5 max-w-prose text-lg leading-relaxed text-slate-600">
-                Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w aktualnym okresie rozliczeniowym.
-                Prosto. Spokojnie. Bez Excela.
+                Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w
+                aktualnym okresie rozliczeniowym. Prosto. Spokojnie. Bez Excela.
               </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -224,9 +224,18 @@ export default function Page() {
 
               <div className="mt-9 grid gap-3 sm:grid-cols-2">
                 {[
-                  { t: "Porządek bez wysiłku", d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką." },
-                  { t: "Jasny status punktów", d: "Wiesz, ile masz i czego brakuje w aktualnym okresie." },
-                  { t: "Bezpieczne dane", d: "Dostęp masz tylko Ty. Dane są przechowywane w UE." },
+                  {
+                    t: "Porządek bez wysiłku",
+                    d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",
+                  },
+                  {
+                    t: "Jasny status punktów",
+                    d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",
+                  },
+                  {
+                    t: "Bezpieczne dane",
+                    d: "Dostęp masz tylko Ty. Dane są przechowywane w UE.",
+                  },
                   {
                     t: "Start za darmo",
                     d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.",
@@ -240,7 +249,9 @@ export default function Page() {
                       <span className="h-2 w-2 rounded-full bg-blue-600" />
                       {x.t}
                     </div>
-                    <div className="mt-1 text-sm leading-relaxed text-slate-600">{x.d}</div>
+                    <div className="mt-1 text-sm leading-relaxed text-slate-600">
+                      {x.d}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -252,54 +263,81 @@ export default function Page() {
                 <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-b from-blue-100/50 to-white blur-2xl" />
 
                 <div className="relative rounded-[28px] border border-slate-200/80 bg-white/70 p-5 shadow-md backdrop-blur hover:shadow-lg transition-shadow">
-                  <div className="text-sm font-semibold text-slate-900">Podgląd statusu</div>
+                  <div className="text-sm font-semibold text-slate-900">
+                    Podgląd statusu
+                  </div>
                   <div className="mt-1 text-sm text-slate-600">
-                    To przykład. Po zalogowaniu zobaczysz swoje realne punkty i wpisy.
+                    To przykład. Po zalogowaniu zobaczysz swoje realne punkty i
+                    wpisy.
                   </div>
 
                   <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm text-slate-700">
-                        Okres: <span className="font-semibold text-slate-900">{demoPeriod}</span>
+                        Okres:{" "}
+                        <span className="font-semibold text-slate-900">
+                          {demoPeriod}
+                        </span>
                       </div>
                       <div className="text-xs text-slate-500">
-                        Cel: <span className="font-semibold text-slate-700">{demoRequired} pkt</span>
+                        Cel:{" "}
+                        <span className="font-semibold text-slate-700">
+                          {demoRequired} pkt
+                        </span>
                       </div>
                     </div>
 
                     <div className="mt-3 h-2 w-full rounded-full bg-slate-100">
-                      <div className="h-2 rounded-full bg-blue-600" style={{ width: `${demoPct}%` }} />
+                      <div
+                        className="h-2 rounded-full bg-blue-600"
+                        style={{ width: `${demoPct}%` }}
+                      />
                     </div>
 
                     <div className="mt-2 flex items-center justify-between text-sm text-slate-600">
                       <span>
-                        Masz: <span className="font-semibold text-slate-900">{demoHave} pkt</span>
+                        Masz:{" "}
+                        <span className="font-semibold text-slate-900">
+                          {demoHave} pkt
+                        </span>
                       </span>
                       <span>
-                        Brakuje: <span className="font-semibold text-slate-900">{demoMissing} pkt</span>
+                        Brakuje:{" "}
+                        <span className="font-semibold text-slate-900">
+                          {demoMissing} pkt
+                        </span>
                       </span>
                     </div>
 
-                    <div className="mt-2 text-xs text-slate-500">Zaloguj się, aby zobaczyć swój realny status.</div>
+                    <div className="mt-2 text-xs text-slate-500">
+                      Zaloguj się, aby zobaczyć swój realny status.
+                    </div>
                   </div>
 
-<div className="mt-4 relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-b from-blue-50 to-white">
-  <div className="relative aspect-[16/10] w-full">
-    <Image
-      src="/crpe_home.jpg"
-      alt="CRPE — podgląd aplikacji"
-      fill
-      className="object-contain p-2"
-      priority
-    />
-  </div>
-</div>
+                  {/* === OBRAZ: poprawione tło i ramka === */}
+                  <div className="mt-4 overflow-hidden rounded-3xl border border-slate-200/70 bg-gradient-to-br from-blue-50 via-white to-indigo-50 shadow-sm">
+                    <div className="relative aspect-[16/10] w-full">
+                      <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-blue-200/40 blur-2xl" />
+                      <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-indigo-200/35 blur-2xl" />
+
+                      <Image
+                        src="/crpe_home.jpg"
+                        alt="CRPE — podgląd aplikacji"
+                        fill
+                        className="object-contain p-4"
+                        priority
+                      />
+                    </div>
+                  </div>
 
                   <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
                     <div className="text-xs text-slate-500">Wkrótce (PRO)</div>
-                    <div className="mt-1 text-sm font-semibold text-slate-900">Raport PDF i przypomnienia</div>
+                    <div className="mt-1 text-sm font-semibold text-slate-900">
+                      Raport PDF i przypomnienia
+                    </div>
                     <div className="mt-1 text-sm text-slate-600">
-                      Eksport raportu do PDF oraz automatyczne przypomnienia o brakujących punktach.
+                      Eksport raportu do PDF oraz automatyczne przypomnienia o
+                      brakujących punktach.
                     </div>
                   </div>
                 </div>
@@ -312,10 +350,12 @@ export default function Page() {
             <div className="grid gap-8 lg:grid-cols-12 lg:items-stretch">
               {/* LEWA */}
               <div className="lg:col-span-5">
-                <h2 className="text-2xl font-extrabold text-slate-900">Z czym się dziś mierzysz?</h2>
+                <h2 className="text-2xl font-extrabold text-slate-900">
+                  Z czym się dziś mierzysz?
+                </h2>
                 <p className="mt-2 text-slate-600">
-                  Jeśli zbierasz punkty edukacyjne, łatwo o chaos — szczególnie gdy wszystko jest porozrzucane po wielu
-                  miejscach.
+                  Jeśli zbierasz punkty edukacyjne, łatwo o chaos — szczególnie
+                  gdy wszystko jest porozrzucane po wielu miejscach.
                 </p>
 
                 <div className="mt-6 space-y-3">
@@ -324,7 +364,10 @@ export default function Page() {
                     "Widzisz postęp bez liczenia w Excelu.",
                     "Masz certyfikaty przypięte do aktywności.",
                   ].map((t) => (
-                    <div key={t} className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div
+                      key={t}
+                      className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    >
                       <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
                         ✓
                       </span>
@@ -334,11 +377,16 @@ export default function Page() {
                 </div>
 
                 <div className="mt-6 rounded-3xl border border-blue-200 bg-gradient-to-b from-blue-50/70 to-white p-5 shadow-sm">
-                  <div className="text-xs font-medium text-blue-800">Najczęstszy scenariusz</div>
-                  <div className="mt-2 text-sm text-slate-700">
-                    „Dodam to później”. A potem brakuje certyfikatu albo nie wiadomo, z którego roku był kurs.
+                  <div className="text-xs font-medium text-blue-800">
+                    Najczęstszy scenariusz
                   </div>
-                  <div className="mt-2 text-sm font-semibold text-slate-900">CRPE pomaga to ogarnąć spokojnie.</div>
+                  <div className="mt-2 text-sm text-slate-700">
+                    „Dodam to później”. A potem brakuje certyfikatu albo nie
+                    wiadomo, z którego roku był kurs.
+                  </div>
+                  <div className="mt-2 text-sm font-semibold text-slate-900">
+                    CRPE pomaga to ogarnąć spokojnie.
+                  </div>
                 </div>
               </div>
 
@@ -350,25 +398,41 @@ export default function Page() {
 
                   <div className="relative grid gap-3 sm:grid-cols-2">
                     {[
-                      { t: "Certyfikaty w mailach", d: "Trudno je znaleźć, gdy są potrzebne." },
-                      { t: "Zdjęcia w telefonie", d: "Nie wiesz, co było do czego i z którego roku." },
+                      {
+                        t: "Certyfikaty w mailach",
+                        d: "Trudno je znaleźć, gdy są potrzebne.",
+                      },
+                      {
+                        t: "Zdjęcia w telefonie",
+                        d: "Nie wiesz, co było do czego i z którego roku.",
+                      },
                       { t: "Excel i notatki", d: "Wymaga pilnowania i łatwo o braki." },
-                      { t: "Brak pewności", d: "Czy na pewno masz komplet punktów i dokumentów?" },
+                      {
+                        t: "Brak pewności",
+                        d: "Czy na pewno masz komplet punktów i dokumentów?",
+                      },
                     ].map((x) => (
                       <div
                         key={x.t}
                         className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm hover:shadow-md transition-shadow"
                       >
-                        <div className="text-sm font-semibold text-slate-900">{x.t}</div>
-                        <div className="mt-1 text-sm text-slate-600">{x.d}</div>
+                        <div className="text-sm font-semibold text-slate-900">
+                          {x.t}
+                        </div>
+                        <div className="mt-1 text-sm text-slate-600">
+                          {x.d}
+                        </div>
                       </div>
                     ))}
                   </div>
 
                   <div className="relative mt-4 rounded-3xl border border-blue-200 bg-blue-50/70 p-5 shadow-sm">
-                    <div className="text-sm font-semibold text-slate-900">CRPE porządkuje to za Ciebie</div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      CRPE porządkuje to za Ciebie
+                    </div>
                     <div className="mt-1 text-sm text-slate-600">
-                      Wpisy, certyfikaty i status punktów masz w jednym miejscu — spokojnie i czytelnie.
+                      Wpisy, certyfikaty i status punktów masz w jednym miejscu
+                      — spokojnie i czytelnie.
                     </div>
                   </div>
                 </div>
@@ -383,7 +447,9 @@ export default function Page() {
         <div className="rounded-[32px] border border-slate-200 bg-slate-50 p-6 md:p-10 shadow-sm">
           <div className="max-w-2xl">
             <h2 className="text-3xl font-extrabold text-slate-900">Jak to działa</h2>
-            <p className="mt-2 text-slate-600">Trzy proste kroki. Bez długiego wdrożenia.</p>
+            <p className="mt-2 text-slate-600">
+              Trzy proste kroki. Bez długiego wdrożenia.
+            </p>
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -441,7 +507,9 @@ export default function Page() {
           <div className="lg:col-span-6">
             <div className="h-full rounded-[32px] border border-slate-200 bg-white p-6 md:p-10 shadow-md">
               <h2 className="text-3xl font-extrabold text-slate-900">Co zyskujesz</h2>
-              <p className="mt-2 text-slate-600">Bez komplikacji — po prostu porządek i jasny status.</p>
+              <p className="mt-2 text-slate-600">
+                Bez komplikacji — po prostu porządek i jasny status.
+              </p>
 
               <ul className="mt-6 space-y-3 text-slate-700">
                 {[
@@ -450,7 +518,10 @@ export default function Page() {
                   "Przejrzysty podgląd zdobytych punktów",
                   "Gotowość do przygotowania raportu",
                 ].map((t) => (
-                  <li key={t} className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <li
+                    key={t}
+                    className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
                     <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
                       ✓
                     </span>
@@ -461,9 +532,12 @@ export default function Page() {
 
               <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
                 <div className="text-xs text-slate-500">Wkrótce (PRO)</div>
-                <div className="mt-1 text-sm font-semibold text-slate-900">Eksport PDF i przypomnienia</div>
+                <div className="mt-1 text-sm font-semibold text-slate-900">
+                  Eksport PDF i przypomnienia
+                </div>
                 <div className="mt-1 text-sm text-slate-600">
-                  Raport PDF gotowy do wydruku oraz automatyczne przypomnienia o brakach.
+                  Raport PDF gotowy do wydruku oraz automatyczne przypomnienia o
+                  brakach.
                 </div>
               </div>
             </div>
@@ -472,9 +546,12 @@ export default function Page() {
           {/* DLA KOGO */}
           <div className="lg:col-span-6">
             <div className="h-full rounded-[32px] border border-slate-200 bg-white p-6 md:p-10 shadow-md">
-              <h2 className="text-3xl font-extrabold text-slate-900">Dla kogo jest CRPE</h2>
+              <h2 className="text-3xl font-extrabold text-slate-900">
+                Dla kogo jest CRPE
+              </h2>
               <p className="mt-2 text-slate-600">
-                Dla wszystkich zawodów medycznych, które zbierają punkty edukacyjne i chcą mieć porządek w dokumentach.
+                Dla wszystkich zawodów medycznych, które zbierają punkty
+                edukacyjne i chcą mieć porządek w dokumentach.
               </p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -486,7 +563,10 @@ export default function Page() {
                   "Diagności laboratoryjni",
                   "Nowe zawody medyczne",
                 ].map((t) => (
-                  <div key={t} className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  <div
+                    key={t}
+                    className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"
+                  >
                     {t}
                   </div>
                 ))}
@@ -507,7 +587,9 @@ export default function Page() {
           <div className="lg:col-span-12">
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 md:p-10 shadow-md">
               <h2 className="text-3xl font-extrabold text-slate-900">FAQ</h2>
-              <p className="mt-2 text-slate-600">Najczęstsze pytania. Kliknij, aby rozwinąć odpowiedź.</p>
+              <p className="mt-2 text-slate-600">
+                Najczęstsze pytania. Kliknij, aby rozwinąć odpowiedź.
+              </p>
 
               <div className="mt-6">
                 <FaqAccordion items={FAQ_ITEMS} />
