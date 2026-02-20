@@ -7,7 +7,11 @@ import { supabaseClient } from "@/lib/supabase/client";
 
 function isRateLimitError(message?: string) {
   const m = (message ?? "").toLowerCase();
-  return m.includes("rate limit") || m.includes("too many requests") || m.includes("throttle");
+  return (
+    m.includes("rate limit") ||
+    m.includes("too many requests") ||
+    m.includes("throttle")
+  );
 }
 
 export default function LoginPage() {
@@ -16,6 +20,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -35,7 +40,9 @@ export default function LoginPage() {
 
   const now = Date.now();
   const emailCooldownActive = now < emailCooldownUntil;
-  const cooldownSecondsLeft = emailCooldownActive ? Math.ceil((emailCooldownUntil - now) / 1000) : 0;
+  const cooldownSecondsLeft = emailCooldownActive
+    ? Math.ceil((emailCooldownUntil - now) / 1000)
+    : 0;
 
   async function signInWithPassword(e: React.FormEvent) {
     e.preventDefault();
@@ -60,11 +67,13 @@ export default function LoginPage() {
       }
 
       if (!data.session) {
-        setMsg("Brak sesji po logowaniu. Sprawdź czy konto jest potwierdzone e-mailem.");
+        setMsg(
+          "Brak sesji po logowaniu. Sprawdź czy konto jest potwierdzone e-mailem."
+        );
         return;
       }
 
-      router.push("/portfolio");
+      router.replace("/kalkulator");
     } catch (err: any) {
       setMsg(err?.message || "Nie udało się zalogować (błąd połączenia).");
     } finally {
@@ -99,7 +108,9 @@ export default function LoginPage() {
 
       if (error) {
         if (isRateLimitError(error.message)) {
-          setMsg("Za dużo prób wysyłki e-mail. Odczekaj 1–2 minuty i spróbuj ponownie.");
+          setMsg(
+            "Za dużo prób wysyłki e-mail. Odczekaj 1–2 minuty i spróbuj ponownie."
+          );
           setEmailCooldownUntil(Date.now() + 90_000);
           return;
         }
@@ -108,11 +119,13 @@ export default function LoginPage() {
       }
 
       if (data.session) {
-        router.push("/portfolio");
+        router.replace("/kalkulator");
         return;
       }
 
-      setMsg("Konto utworzone. Sprawdź e-mail i kliknij link aktywacyjny, potem zaloguj się.");
+      setMsg(
+        "Konto utworzone. Sprawdź e-mail i kliknij link aktywacyjny, potem zaloguj się."
+      );
       setEmailCooldownUntil(Date.now() + 60_000);
     } catch (err: any) {
       setMsg(err?.message || "Nie udało się utworzyć konta (błąd połączenia).");
@@ -147,7 +160,9 @@ export default function LoginPage() {
 
       if (error) {
         if (isRateLimitError(error.message)) {
-          setMsg("Za dużo prób wysyłki e-mail. Odczekaj 1–2 minuty i spróbuj ponownie.");
+          setMsg(
+            "Za dużo prób wysyłki e-mail. Odczekaj 1–2 minuty i spróbuj ponownie."
+          );
           setEmailCooldownUntil(Date.now() + 90_000);
           return;
         }
@@ -194,7 +209,9 @@ export default function LoginPage() {
 
             <form className="mt-6 space-y-4" onSubmit={signInWithPassword}>
               <div>
-                <label className="text-sm font-semibold text-slate-800">E-mail</label>
+                <label className="text-sm font-semibold text-slate-800">
+                  E-mail
+                </label>
                 <input
                   className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
                   placeholder="np. anna@szpital.pl"
@@ -207,24 +224,43 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-slate-800">Hasło</label>
-                <input
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
-                  placeholder="min. 6 znaków"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  autoComplete="current-password"
-                />
+                <label className="text-sm font-semibold text-slate-800">
+                  Hasło
+                </label>
+
+                <div className="relative">
+                  <input
+                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-16 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                    placeholder="min. 6 znaków"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    autoComplete="current-password"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                    aria-label={showPassword ? "Ukryj hasło" : "Pokaż hasło"}
+                    title={showPassword ? "Ukryj hasło" : "Pokaż hasło"}
+                  >
+                    {showPassword ? "Ukryj" : "Pokaż"}
+                  </button>
+                </div>
               </div>
 
               <button
                 className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
                 disabled={pending || !canPasswordSubmit}
                 type="submit"
-                title={!canPasswordSubmit ? "Wpisz e-mail i hasło (min. 6 znaków)" : undefined}
+                title={
+                  !canPasswordSubmit
+                    ? "Wpisz e-mail i hasło (min. 6 znaków)"
+                    : undefined
+                }
               >
                 {pending ? "Loguję…" : "Zaloguj"}
               </button>
@@ -243,7 +279,9 @@ export default function LoginPage() {
                       : undefined
                   }
                 >
-                  {emailCooldownActive ? `Wyślij link (${cooldownSecondsLeft}s)` : "Wyślij magic link"}
+                  {emailCooldownActive
+                    ? `Wyślij link (${cooldownSecondsLeft}s)`
+                    : "Wyślij magic link"}
                 </button>
 
                 <div className="text-xs text-slate-500">
@@ -256,14 +294,19 @@ export default function LoginPage() {
               </div>
 
               <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-sm font-semibold text-slate-900">Nie masz konta?</div>
+                <div className="text-sm font-semibold text-slate-900">
+                  Nie masz konta?
+                </div>
                 <div className="mt-1 text-sm text-slate-600">
-                  Utwórz konto tym samym e-mailem i hasłem. Potem (jeśli wymagane) potwierdź link w wiadomości.
+                  Utwórz konto tym samym e-mailem i hasłem. Potem (jeśli
+                  wymagane) potwierdź link w wiadomości.
                 </div>
 
                 <button
                   className="mt-3 w-full rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-800 shadow-sm ring-1 ring-slate-200 hover:bg-white/80 disabled:opacity-60"
-                  disabled={pending || !canPasswordSubmit || emailCooldownActive}
+                  disabled={
+                    pending || !canPasswordSubmit || emailCooldownActive
+                  }
                   type="button"
                   onClick={signUp}
                   title={
@@ -274,7 +317,9 @@ export default function LoginPage() {
                       : undefined
                   }
                 >
-                  {emailCooldownActive ? `Utwórz konto (${cooldownSecondsLeft}s)` : "Utwórz konto"}
+                  {emailCooldownActive
+                    ? `Utwórz konto (${cooldownSecondsLeft}s)`
+                    : "Utwórz konto"}
                 </button>
 
                 <div className="mt-3 text-xs text-slate-500">
@@ -292,7 +337,8 @@ export default function LoginPage() {
 
           {/* mała notka pod kartą */}
           <div className="mt-6 text-center text-xs text-slate-500">
-            Logowanie i rejestracja są w jednym miejscu — w menu zostaje tylko „Zaloguj”.
+            Logowanie i rejestracja są w jednym miejscu — w menu zostaje tylko
+            „Zaloguj”.
           </div>
         </div>
       </div>
