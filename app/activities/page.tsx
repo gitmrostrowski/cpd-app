@@ -779,7 +779,7 @@ export default function ActivitiesPage() {
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności</h2>
               <p className="mt-1 text-sm text-slate-600">
-                Zaplanowane nie liczą się do punktów, dopóki nie oznaczysz ich jako odbyte.
+                Zaplanowane nie liczą się do punktów, dopóki nie oznaczysz ich jako ukończone.
               </p>
             </div>
             <button
@@ -1039,7 +1039,7 @@ export default function ActivitiesPage() {
                             </div>
                           ) : prog === "planned" ? (
                             <div className="text-xs text-slate-600">
-                              To szkolenie jest zaplanowane — certyfikat dodasz po odbyciu.
+                              To szkolenie jest zaplanowane — certyfikat dodasz po ukończeniu.
                             </div>
                           ) : (
                             <div className="text-xs text-slate-500">
