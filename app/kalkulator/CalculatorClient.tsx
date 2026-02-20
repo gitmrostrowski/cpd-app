@@ -101,10 +101,8 @@ function clamp(n: number, a: number, b: number) {
 
 /**
  * Reguły na bazie zawodu (MVP).
- * Tu łatwo rozbudujesz potem o kolejne limity/kategorie.
  */
 function rulesForProfession(prof: Profession): CpdRules | undefined {
-  // na start limit demo tylko dla lekarza/dentysty
   if (prof === "Lekarz" || prof === "Lekarz dentysta") {
     return {
       yearlyMaxByType: {
@@ -113,6 +111,14 @@ function rulesForProfession(prof: Profession): CpdRules | undefined {
     };
   }
   return undefined;
+}
+
+function isValueDefaultForSomeOtherProfession(value: number, current: Profession) {
+  const currentDefault = DEFAULT_REQUIRED_POINTS_BY_PROFESSION[current] ?? 0;
+  if (value === currentDefault) return false;
+
+  const defaults = Object.entries(DEFAULT_REQUIRED_POINTS_BY_PROFESSION) as Array<[Profession, number]>;
+  return defaults.some(([prof, def]) => prof !== current && def === value);
 }
 
 export default function CalculatorClient() {
@@ -126,7 +132,7 @@ export default function CalculatorClient() {
   const [customStart, setCustomStart] = useState<number>(currentYear - 1);
   const [customEnd, setCustomEnd] = useState<number>(currentYear + 2);
 
-  // requiredPoints: DB może nadpisać, ale w UI user może też edytować ręcznie.
+  // requiredPoints: domyślne per zawód + możliwość ręcznej edycji
   const [requiredPoints, setRequiredPoints] = useState<number>(
     DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"],
   );
@@ -158,7 +164,10 @@ export default function CalculatorClient() {
   const profileLoadedRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
 
-  // „dirty flag”: true jeśli user ręcznie zmienił requiredPoints (żeby nie nadpisywać automatem)
+  /**
+   * requiredDirty: TRUE jeśli user ręcznie zmienił requiredPoints
+   * WAŻNE: nie ustawiaj tego automatycznie tylko dlatego, że coś było zapisane w storage.
+   */
   const requiredDirtyRef = useRef(false);
 
   function clearMessages() {
@@ -166,10 +175,6 @@ export default function CalculatorClient() {
     setErr(null);
   }
 
-  /**
-   * zapis preferencji profilu do Supabase (profiles)
-   * PRO: robimy UPSERT po user_id (unikalne/PK w tabeli)
-   */
   async function saveProfilePrefs(patch: {
     profession?: Profession;
     required_points?: number;
@@ -210,10 +215,13 @@ export default function CalculatorClient() {
       setCustomStart(safeNumber(parsed?.customStart, currentYear - 1));
       setCustomEnd(safeNumber(parsed?.customEnd, currentYear + 2));
 
-      // requiredPoints: jeśli w local storage jest liczba, traktujemy jak ręcznie ustawione → dirty
-      const rp = safeNumber(parsed?.requiredPoints, DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"]);
+      // requiredDirty - jawnie z storage (nie „na podstawie istnienia requiredPoints”)
+      requiredDirtyRef.current = typeof parsed?.requiredDirty === "boolean" ? parsed.requiredDirty : false;
+
+      // requiredPoints
+      const rpFallback = DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"];
+      const rp = safeNumber(parsed?.requiredPoints, rpFallback);
       setRequiredPoints(Math.max(0, rp));
-      if (typeof parsed?.requiredPoints !== "undefined") requiredDirtyRef.current = true;
 
       const nextActivities = parsed?.activities;
       if (Array.isArray(nextActivities)) {
@@ -247,7 +255,15 @@ export default function CalculatorClient() {
   /** ---------- localStorage: save draft ---------- */
   useEffect(() => {
     try {
-      const payload = { profession, periodLabel, customStart, customEnd, requiredPoints, activities };
+      const payload = {
+        profession,
+        periodLabel,
+        customStart,
+        customEnd,
+        requiredPoints,
+        requiredDirty: requiredDirtyRef.current,
+        activities,
+      };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
       // ignore
@@ -271,14 +287,37 @@ export default function CalculatorClient() {
         if (!alive) return;
         if (error) return;
 
-        if (data?.profession && isProfession(data.profession)) {
-          setProfession(data.profession);
+        const dbProfession =
+          data?.profession && isProfession(data.profession) ? (data.profession as Profession) : null;
+
+        if (dbProfession) {
+          setProfession(dbProfession);
         }
 
-        // jeśli w DB jest required_points → traktujemy jako „ustawione”
         if (typeof data?.required_points === "number") {
-          setRequiredPoints(Math.max(0, data.required_points));
-          requiredDirtyRef.current = true; // DB = źródło prawdy, nie nadpisuj automatem
+          const prof = dbProfession ?? profession;
+          const def = DEFAULT_REQUIRED_POINTS_BY_PROFESSION[prof] ?? 0;
+
+          // jeśli wartość wygląda jak „stara z innego zawodu” (np. 120) → naprawiamy automatem
+          if (isValueDefaultForSomeOtherProfession(data.required_points, prof)) {
+            requiredDirtyRef.current = false;
+            setRequiredPoints(def);
+
+            // od razu korygujemy w DB, żeby nie wracało
+            await saveProfilePrefs({
+              profession: prof,
+              required_points: def,
+            });
+          } else {
+            // normalnie: przyjmujemy z DB jako „ustawione”
+            setRequiredPoints(Math.max(0, data.required_points));
+            requiredDirtyRef.current = true;
+          }
+        } else {
+          // brak w DB → ustaw domyślne dla zawodu
+          const prof = dbProfession ?? profession;
+          requiredDirtyRef.current = false;
+          setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION[prof] ?? 0);
         }
       } finally {
         if (alive) profileLoadedRef.current = true;
@@ -289,6 +328,7 @@ export default function CalculatorClient() {
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, supabase]);
 
   /** ---------- Period ---------- */
@@ -301,13 +341,7 @@ export default function CalculatorClient() {
 
   const period = useMemo(() => normalizePeriod(rawPeriod), [rawPeriod]);
 
-  /**
-   * Auto-zapis profilu do DB po zmianie:
-   * - profession
-   * - requiredPoints
-   * - period_start/end (z wybranego okresu)
-   * z debouncingiem.
-   */
+  /** ---------- Auto-save profile prefs (debounced) ---------- */
   useEffect(() => {
     if (!user) return;
     if (!profileLoadedRef.current) return;
@@ -414,14 +448,15 @@ export default function CalculatorClient() {
     );
   }
 
+  /**
+   * KLUCZ: zmiana zawodu zawsze resetuje wymagane punkty do domyślnych.
+   * Dzięki temu nie zostaje 120 z poprzedniego zawodu.
+   */
   function handleProfessionChange(next: Profession) {
     setProfession(next);
 
-    // PRO: jeśli user/DB nie ustawiły requiredPoints ręcznie → ustawiamy domyślne dla zawodu.
-    if (!requiredDirtyRef.current) {
-      const nextDefault = DEFAULT_REQUIRED_POINTS_BY_PROFESSION[next] ?? 0;
-      setRequiredPoints(nextDefault);
-    }
+    requiredDirtyRef.current = false;
+    setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION[next] ?? 0);
   }
 
   function handleRequiredPointsChange(nextValue: number) {
@@ -490,44 +525,153 @@ export default function CalculatorClient() {
     <div className="grid gap-6 lg:grid-cols-12">
       {/* LEFT */}
       <section className="lg:col-span-4">
-        {/* status */}
-        <div className="mb-6 rounded-2xl border bg-white p-4 shadow-sm">
-          {authLoading ? (
-            <div className="text-sm text-slate-600">Status: sprawdzam sesję…</div>
-          ) : user ? (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-sm text-slate-800">
-                Status: <span className="font-semibold text-emerald-700">✅ Zalogowany</span>
-                <span className="text-slate-500"> • </span>
-                <span className="font-medium">{user.email}</span>
-              </div>
-              <Link
-                href="/portfolio"
-                className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                Portfolio
-              </Link>
+        {/* Konto + Ustawienia (połączone) */}
+        <div className="rounded-2xl border bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-[220px]">
+              {authLoading ? (
+                <div className="text-sm text-slate-600">Status: sprawdzam sesję…</div>
+              ) : user ? (
+                <>
+                  <div className="text-sm text-slate-800">
+                    Status: <span className="font-semibold text-emerald-700">✅ Zalogowany</span>
+                  </div>
+                  <div className="text-sm text-slate-600">{user.email}</div>
+                  <Link href="/profil" className="mt-1 inline-block text-sm text-blue-700 hover:underline">
+                    Ustawienia profilu
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <div className="text-sm text-slate-800">
+                    Status: <span className="font-semibold text-rose-700">❌ Niezalogowany</span>
+                  </div>
+                  <div className="text-sm text-slate-600">Tryb gościa (zapis lokalny)</div>
+                </>
+              )}
             </div>
-          ) : (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-sm text-slate-800">
-                Status: <span className="font-semibold text-rose-700">❌ Niezalogowany</span>
-                <span className="text-slate-500"> • </span>
-                Tryb gościa (zapis lokalny)
-              </div>
-              <Link
-                href="/login"
+
+            <div className="flex flex-wrap gap-2">
+              {user ? (
+                <Link
+                  href="/portfolio"
+                  className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Portfolio
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Zaloguj się
+                </Link>
+              )}
+
+              <button
+                onClick={clearCalculator}
                 className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                title="Czyści zapis lokalny kalkulatora"
+                type="button"
               >
-                Zaloguj się
-              </Link>
+                Wyczyść
+              </button>
             </div>
-          )}
+          </div>
+
+          <div className="mt-4 border-t pt-4">
+            <h2 className="text-base font-semibold text-slate-900">Ustawienia</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              {user ? "Po zalogowaniu ustawienia bierzemy z profilu (DB)." : "W trybie gościa — zapis lokalny."}
+            </p>
+
+            {/* Ustawienia poziomo */}
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <div>
+                <label className="text-sm font-medium text-slate-700">Zawód / status</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
+                  value={profession}
+                  onChange={(e) => handleProfessionChange(e.target.value as Profession)}
+                >
+                  {PROFESSION_OPTIONS.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700">Okres rozliczeniowy</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
+                  value={periodLabel}
+                  onChange={(e) => setPeriodLabel(e.target.value as PeriodLabel)}
+                >
+                  {PERIODS.map((p) => (
+                    <option key={p.label} value={p.label}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+
+                {periodLabel === "Inny" && (
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">Start</label>
+                      <input
+                        type="number"
+                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                        value={customStart}
+                        onChange={(e) => setCustomStart(Number(e.target.value || 0))}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">Koniec</label>
+                      <input
+                        type="number"
+                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                        value={customEnd}
+                        onChange={(e) => setCustomEnd(Number(e.target.value || 0))}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700">Wymagane punkty (łącznie)</label>
+                <input
+                  type="number"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
+                  value={requiredPoints}
+                  onChange={(e) => handleRequiredPointsChange(Number(e.target.value || 0))}
+                  min={0}
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Domyślne dla <span className="font-medium">{profession}</span>:{" "}
+                  {DEFAULT_REQUIRED_POINTS_BY_PROFESSION[profession] ?? 0}
+                </p>
+              </div>
+            </div>
+
+            {(profession === "Lekarz" || profession === "Lekarz dentysta") && (
+              <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
+                <div className="font-semibold">Limity (MVP)</div>
+                <div className="mt-1">
+                  Dla <span className="font-medium">{profession}</span> aktywność{" "}
+                  <span className="font-medium">Samokształcenie</span> ma limit{" "}
+                  <span className="font-medium">20 pkt / rok</span>.
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* messages */}
         {(info || err) && (
-          <div className="mb-6 rounded-2xl border bg-white p-4 text-sm">
+          <div className="mt-6 rounded-2xl border bg-white p-4 text-sm">
             {info ? <div className="text-emerald-700">{info}</div> : null}
             {err ? <div className="text-rose-700">{err}</div> : null}
             {info ? (
@@ -542,107 +686,6 @@ export default function CalculatorClient() {
             ) : null}
           </div>
         )}
-
-        {/* settings */}
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900">Ustawienia</h2>
-              <p className="mt-1 text-sm text-slate-600">
-                {user ? "Po zalogowaniu ustawienia bierzemy z profilu (DB)." : "W trybie gościa zapis lokalny."}
-              </p>
-            </div>
-
-            <button
-              onClick={clearCalculator}
-              className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
-              title="Czyści zapis lokalny kalkulatora"
-              type="button"
-            >
-              Wyczyść
-            </button>
-          </div>
-
-          <div className="mt-5 grid gap-4">
-            <div>
-              <label className="text-sm font-medium text-slate-700">Zawód / status</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
-                value={profession}
-                onChange={(e) => handleProfessionChange(e.target.value as Profession)}
-              >
-                {PROFESSION_OPTIONS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-
-              {(profession === "Lekarz" || profession === "Lekarz dentysta") && (
-                <div className="mt-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
-                  <div className="font-semibold">Limity (MVP)</div>
-                  <div className="mt-1">
-                    Dla <span className="font-medium">{profession}</span> aktywność{" "}
-                    <span className="font-medium">Samokształcenie</span> ma limit{" "}
-                    <span className="font-medium">20 pkt / rok</span>.
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-slate-700">Okres rozliczeniowy</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
-                value={periodLabel}
-                onChange={(e) => setPeriodLabel(e.target.value as PeriodLabel)}
-              >
-                {PERIODS.map((p) => (
-                  <option key={p.label} value={p.label}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-
-              {periodLabel === "Inny" && (
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs font-medium text-slate-600">Start</label>
-                    <input
-                      type="number"
-                      className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-                      value={customStart}
-                      onChange={(e) => setCustomStart(Number(e.target.value || 0))}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-slate-600">Koniec</label>
-                    <input
-                      type="number"
-                      className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-                      value={customEnd}
-                      onChange={(e) => setCustomEnd(Number(e.target.value || 0))}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-slate-700">Wymagane punkty (łącznie)</label>
-              <input
-                type="number"
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
-                value={requiredPoints}
-                onChange={(e) => handleRequiredPointsChange(Number(e.target.value || 0))}
-                min={0}
-              />
-              <p className="mt-1 text-xs text-slate-500">
-                Wartość z profilu (DB) po zalogowaniu. W trybie gościa — lokalnie.
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* result */}
         <div className={`mt-6 rounded-2xl border p-5 ${toneStyles}`}>
@@ -789,8 +832,6 @@ export default function CalculatorClient() {
                 {applied.map((row) => {
                   const rowDisabled = !row.in_period;
 
-                  // bierzemy fields do edycji z activities (źródło prawdy),
-                  // a z "applied" tylko in_period/warning/applied_points
                   const src = activities.find((a) => a.id === row.id);
 
                   const pointsValue = src ? src.points : Math.max(0, Number(row.points) || 0);
