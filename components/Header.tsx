@@ -9,7 +9,6 @@ import { useAuth } from "@/components/AuthProvider";
 const REPORTS_READY = false;
 
 const LOGIN_HREF = "/login";
-const REGISTER_HREF = "/rejestracja";
 
 type NavItem = {
   href: string;
@@ -21,7 +20,6 @@ const NAV: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/kalkulator", label: "Kalkulator" },
   { href: "/aktywnosci", label: "Aktywności" },
-  // jeśli raporty jeszcze niegotowe, możesz łatwo przełączyć na "Wkrótce"
   { href: "/raporty", label: "Raporty", soon: !REPORTS_READY },
   { href: "/baza-szkolen", label: "Baza szkoleń" },
 ];
@@ -100,7 +98,7 @@ export default function Header() {
             <span className="font-semibold text-slate-900">CRPE</span>
           </Link>
 
-          {/* NAV DESKTOP (przesunięte w prawo) */}
+          {/* NAV DESKTOP */}
           <nav className="hidden sm:flex flex-1 items-center justify-end">
             <div className="flex items-center gap-1 rounded-2xl border border-blue-200/60 bg-white px-1 py-1 shadow-sm">
               {NAV.map(({ href, label, soon }) => (
@@ -146,9 +144,7 @@ export default function Header() {
                     onClick={() => setOpenUser((v) => !v)}
                     className={cx(
                       "inline-flex h-10 w-10 items-center justify-center rounded-full border transition",
-                      openUser
-                        ? "border-blue-200 bg-slate-50"
-                        : "border-slate-200 hover:bg-slate-50"
+                      openUser ? "border-blue-200 bg-slate-50" : "border-slate-200 hover:bg-slate-50"
                     )}
                     aria-label="Menu użytkownika"
                     title="Menu"
@@ -160,9 +156,7 @@ export default function Header() {
                     <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-slate-200 bg-white shadow-lg p-2">
                       <div className="px-3 py-2 text-xs text-slate-500">
                         Zalogowany jako
-                        <div className="mt-1 text-sm font-medium text-slate-800">
-                          {user.email}
-                        </div>
+                        <div className="mt-1 text-sm font-medium text-slate-800">{user.email}</div>
                       </div>
 
                       <div className="my-2 h-px bg-slate-100" />
@@ -211,21 +205,12 @@ export default function Header() {
                 </div>
               </>
             ) : (
-              <>
-                <Link
-                  href={REGISTER_HREF}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 transition"
-                >
-                  Rejestracja
-                </Link>
-
-                <Link
-                  href={LOGIN_HREF}
-                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
-                >
-                  Zaloguj
-                </Link>
-              </>
+              <Link
+                href={LOGIN_HREF}
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+              >
+                Zaloguj
+              </Link>
             )}
           </div>
 
@@ -301,23 +286,13 @@ export default function Header() {
                     </button>
                   </>
                 ) : (
-                  <>
-                    <Link
-                      href={REGISTER_HREF}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-center text-sm font-semibold hover:bg-slate-50"
-                      onClick={() => setOpenMobile(false)}
-                    >
-                      Rejestracja
-                    </Link>
-
-                    <Link
-                      href={LOGIN_HREF}
-                      className="rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700"
-                      onClick={() => setOpenMobile(false)}
-                    >
-                      Zaloguj
-                    </Link>
-                  </>
+                  <Link
+                    href={LOGIN_HREF}
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700"
+                    onClick={() => setOpenMobile(false)}
+                  >
+                    Zaloguj
+                  </Link>
                 )}
               </div>
             </div>
