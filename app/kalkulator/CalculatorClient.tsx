@@ -32,6 +32,8 @@ type ActivityType =
   | "Samokształcenie"
   | "Staż / praktyka";
 
+type ActivityStatus = "done" | "planned";
+
 type Activity = {
   id: string;
   type: ActivityType;
@@ -39,6 +41,9 @@ type Activity = {
   year: number;
   organizer?: string;
   pointsAuto?: boolean;
+
+  // ✅ status: done / planned (null -> fallback to done)
+  status?: ActivityStatus | null;
 
   // nowe pola pod edycję
   comment?: string;
@@ -52,6 +57,7 @@ type EditDraft = {
   organizer: string;
   comment: string;
   certificate_name: string | null;
+  status: ActivityStatus;
   certificate_file?: File | null; // tylko w RAM (nie zapisujemy do localStorage)
 };
 
@@ -114,6 +120,10 @@ function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
+function normalizeStatus(v: unknown): ActivityStatus {
+  return v === "planned" ? "planned" : "done";
+}
+
 /**
  * Reguły na bazie zawodu (MVP).
  */
@@ -161,6 +171,7 @@ export default function CalculatorClient() {
       pointsAuto: true,
       comment: "",
       certificate_name: null,
+      status: "done",
     },
     {
       id: uid(),
@@ -171,6 +182,7 @@ export default function CalculatorClient() {
       pointsAuto: true,
       comment: "",
       certificate_name: null,
+      status: "done",
     },
   ]);
 
@@ -234,7 +246,8 @@ export default function CalculatorClient() {
       setCustomStart(safeNumber(parsed?.customStart, currentYear - 1));
       setCustomEnd(safeNumber(parsed?.customEnd, currentYear + 2));
 
-      requiredDirtyRef.current = typeof parsed?.requiredDirty === "boolean" ? parsed.requiredDirty : false;
+      requiredDirtyRef.current =
+        typeof parsed?.requiredDirty === "boolean" ? parsed.requiredDirty : false;
 
       const rpFallback = DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"];
       const rp = safeNumber(parsed?.requiredPoints, rpFallback);
@@ -253,6 +266,9 @@ export default function CalculatorClient() {
             const comment = safeString(a?.comment ?? "", "");
             const certificate_name = typeof a?.certificate_name === "string" ? a.certificate_name : null;
 
+            // ✅ status fallback
+            const status = normalizeStatus(a?.status);
+
             return {
               id: safeString(a?.id, uid()) || uid(),
               type,
@@ -262,6 +278,7 @@ export default function CalculatorClient() {
               pointsAuto,
               comment,
               certificate_name,
+              status,
             };
           })
           .filter((a: Activity) => !!a.id);
@@ -373,6 +390,8 @@ export default function CalculatorClient() {
 
   const period = useMemo(() => normalizePeriod(rawPeriod), [rawPeriod]);
 
+  const isYearInPeriod = (year: number) => year >= period.start && year <= period.end;
+
   /** ---------- Auto-save profile prefs (debounced) ---------- */
   useEffect(() => {
     if (!user) return;
@@ -395,7 +414,7 @@ export default function CalculatorClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profession, requiredPoints, period.start, period.end, user]);
 
-  /** ---------- ✅ HOTFIX: DB activities: load on login (żeby kalkulator widział wpisy z bazy) ---------- */
+  /** ---------- ✅ DB activities: load on login ---------- */
   useEffect(() => {
     let alive = true;
 
@@ -405,7 +424,8 @@ export default function CalculatorClient() {
       try {
         const { data, error } = await supabase
           .from("activities")
-          .select("id,type,points,year,organizer,created_at")
+          // ✅ dodajemy status
+          .select("id,type,points,year,organizer,status,created_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
@@ -427,9 +447,10 @@ export default function CalculatorClient() {
           pointsAuto: false,
           comment: "",
           certificate_name: null,
+          // ✅ fallback jeśli null
+          status: normalizeStatus(r.status),
         }));
 
-        // jeśli DB ma dane — pokazuj DB (to rozwiązuje: “w portfolio jest, w kalkulatorze nie ma”)
         if (mapped.length > 0) setActivities(mapped);
       } catch (e: any) {
         if (!alive) return;
@@ -470,14 +491,36 @@ export default function CalculatorClient() {
         pointsAuto: true,
         comment: "",
         certificate_name: null,
+        status: "done",
       },
     ]);
     clearMessages();
   }
 
+  // ✅ KROK 2: liczymy tylko done (status null -> done)
+  const doneActivities = useMemo(
+    () => activities.filter((a) => normalizeStatus(a.status) === "done"),
+    [activities],
+  );
+
+  const plannedActivities = useMemo(
+    () => activities.filter((a) => normalizeStatus(a.status) === "planned"),
+    [activities],
+  );
+
   const rules = useMemo(() => rulesForProfession(profession), [profession]);
-  const applied = useMemo(() => applyRules(activities, { period, rules }), [activities, period, rules]);
-  const totalPoints = useMemo(() => sumPointsWithRules(activities, { period, rules }), [activities, period, rules]);
+
+  // ✅ applyRules i suma tylko dla DONE
+  const appliedDone = useMemo(
+    () => applyRules(doneActivities, { period, rules }),
+    [doneActivities, period, rules],
+  );
+
+  const totalPoints = useMemo(
+    () => sumPointsWithRules(doneActivities, { period, rules }),
+    [doneActivities, period, rules],
+  );
+
   const missing = useMemo(() => calcMissing(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
 
   const progressRaw = useMemo(() => calcProgress(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
@@ -507,6 +550,7 @@ export default function CalculatorClient() {
         pointsAuto: true,
         comment: "",
         certificate_name: null,
+        status: "done",
       },
     ]);
   }
@@ -548,6 +592,7 @@ export default function CalculatorClient() {
       comment: src.comment ?? "",
       certificate_name: src.certificate_name ?? null,
       certificate_file: null,
+      status: normalizeStatus(src.status),
     });
   }
 
@@ -566,6 +611,7 @@ export default function CalculatorClient() {
       organizer: editDraft.organizer,
       comment: editDraft.comment,
       certificate_name: editDraft.certificate_name,
+      status: editDraft.status,
     });
 
     setEditingId(null);
@@ -590,6 +636,7 @@ export default function CalculatorClient() {
         points: Math.max(0, Number(a.points) || 0),
         year: Number(a.year) || currentYear,
         organizer: (a.organizer ?? "").trim() ? (a.organizer ?? "").trim() : null,
+        status: normalizeStatus(a.status),
       }))
       .filter((a) => a.type && a.year >= 1900 && a.year <= 2100);
 
@@ -604,6 +651,7 @@ export default function CalculatorClient() {
       points: a.points,
       year: a.year,
       organizer: a.organizer,
+      status: a.status, // ✅ zapisujemy status
     }));
 
     setBusy(true);
@@ -686,7 +734,7 @@ export default function CalculatorClient() {
             </div>
           </div>
 
-          {/* ROW 2: ustawienia w pasku (zawód/okres/wymagane) + progress jak w portfolio */}
+          {/* ROW 2: ustawienia w pasku + progress */}
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             {/* ustawienia */}
             <div className="grid gap-3 sm:grid-cols-3 lg:flex lg:flex-wrap lg:items-end">
@@ -759,7 +807,7 @@ export default function CalculatorClient() {
               </div>
             </div>
 
-            {/* progres jak w portfolio */}
+            {/* progres */}
             <div className="min-w-[260px]">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <div className="rounded-xl border bg-white px-4 py-2 text-sm">
@@ -769,7 +817,7 @@ export default function CalculatorClient() {
                   </span>
                 </div>
                 <div className="rounded-xl border bg-white px-4 py-2 text-sm">
-                  <span className="text-slate-600">Masz:</span>{" "}
+                  <span className="text-slate-600">Masz (DONE):</span>{" "}
                   <span className="font-semibold text-slate-900">{formatInt(totalPoints)}</span>
                 </div>
                 <div className="rounded-xl border bg-white px-4 py-2 text-sm">
@@ -789,6 +837,12 @@ export default function CalculatorClient() {
               <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                 <div className={`h-full ${progressBarClass}`} style={{ width: `${progress}%` }} />
               </div>
+
+              {plannedActivities.length > 0 && (
+                <div className="mt-2 text-xs text-slate-600">
+                  Zaplanowane (nie liczone): <span className="font-semibold">{plannedActivities.length}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -823,7 +877,7 @@ export default function CalculatorClient() {
 
       {/* CONTENT GRID */}
       <div className="grid gap-6 lg:grid-cols-12">
-        {/* RIGHT (główna część jak w portfolio) */}
+        {/* RIGHT */}
         <section className="lg:col-span-8">
           <div className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -833,6 +887,9 @@ export default function CalculatorClient() {
                   {user
                     ? "Zalogowany: kalkulator pokazuje Twoje wpisy z bazy (oraz lokalne szkice, jeśli DB jest pusta)."
                     : "Tryb gościa: to tylko szkic lokalny. Zaloguj się, aby zapisać do bazy."}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  ✅ Do sumy liczą się tylko pozycje ze statusem <span className="font-semibold">DONE</span>. Zaplanowane nie są liczone.
                 </p>
               </div>
 
@@ -873,7 +930,15 @@ export default function CalculatorClient() {
               </div>
             </div>
 
+            {/* ===== DONE (LICZONE) ===== */}
             <div className="mt-5">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-slate-900">Zaliczone (DONE)</div>
+                <div className="text-xs text-slate-600">
+                  Liczymy tylko DONE w latach {period.start}–{period.end}
+                </div>
+              </div>
+
               <table className="w-full border-separate border-spacing-0">
                 <thead>
                   <tr className="text-left text-xs font-semibold text-slate-600">
@@ -886,9 +951,11 @@ export default function CalculatorClient() {
                 </thead>
 
                 <tbody>
-                  {applied.map((row) => {
+                  {appliedDone.map((row) => {
                     const rowDisabled = !row.in_period;
-                    const src = activities.find((a) => a.id === row.id);
+
+                    // src bierzemy z DONE (bo appliedDone powstało z doneActivities)
+                    const src = doneActivities.find((a) => a.id === row.id);
                     const isEditing = editingId === row.id;
 
                     const pointsValue = isEditing
@@ -909,11 +976,14 @@ export default function CalculatorClient() {
                       : (src?.type ?? row.type);
 
                     return (
-                      <>
+                      <div key={row.id as string} className="contents">
                         <tr
-                          key={row.id}
                           className={`text-sm ${rowDisabled ? "opacity-50" : ""}`}
-                          title={rowDisabled ? "Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone." : ""}
+                          title={
+                            rowDisabled
+                              ? "Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone."
+                              : ""
+                          }
                         >
                           <td className="border-b px-3 py-3 align-top">
                             <select
@@ -979,7 +1049,9 @@ export default function CalculatorClient() {
                               value={yearValue}
                               onChange={(e) => {
                                 if (!isEditing) return;
-                                setEditDraft((d) => (d ? { ...d, year: Number(e.target.value || currentYear) } : d));
+                                setEditDraft((d) =>
+                                  d ? { ...d, year: Number(e.target.value || currentYear) } : d,
+                                );
                               }}
                               disabled={rowDisabled || !isEditing}
                             />
@@ -1056,16 +1128,50 @@ export default function CalculatorClient() {
 
                         {/* PANEL EDYCJI */}
                         {isEditing && (
-                          <tr key={`${row.id}-edit`}>
+                          <tr>
                             <td className="border-b px-3 py-3" colSpan={5}>
                               <div className="rounded-2xl bg-slate-50 p-4">
+                                <div className="mb-4 grid gap-3 md:grid-cols-2">
+                                  <div>
+                                    <label className="text-sm font-medium text-slate-700">Status</label>
+                                    <select
+                                      className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                                      value={editDraft?.status ?? "done"}
+                                      onChange={(e) => {
+                                        const next = normalizeStatus(e.target.value);
+                                        setEditDraft((d) => (d ? { ...d, status: next } : d));
+                                      }}
+                                    >
+                                      <option value="done">DONE (zaliczone)</option>
+                                      <option value="planned">PLANNED (zaplanowane)</option>
+                                    </select>
+                                    <div className="mt-1 text-xs text-slate-600">
+                                      Jeśli ustawisz <span className="font-semibold">PLANNED</span>, pozycja wypadnie z sumy i trafi do sekcji „Zaplanowane”.
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="text-sm font-medium text-slate-700">Info o okresie</label>
+                                    <div className="mt-2 text-xs text-slate-700">
+                                      Rok <span className="font-semibold">{editDraft?.year ?? currentYear}</span>{" "}
+                                      {isYearInPeriod(editDraft?.year ?? currentYear) ? (
+                                        <span className="text-emerald-700">jest w okresie</span>
+                                      ) : (
+                                        <span className="text-amber-700">jest poza okresem</span>
+                                      )}
+                                      .
+                                    </div>
+                                  </div>
+                                </div>
+
                                 <div className="grid gap-4 md:grid-cols-2">
                                   <div>
                                     <label className="text-sm font-medium text-slate-700">Komentarz</label>
                                     <textarea
                                       className="mt-1 min-h-[88px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
                                       value={editDraft?.comment ?? ""}
-                                      onChange={(e) => setEditDraft((d) => (d ? { ...d, comment: e.target.value } : d))}
+                                      onChange={(e) =>
+                                        setEditDraft((d) => (d ? { ...d, comment: e.target.value } : d))
+                                      }
                                     />
                                   </div>
 
@@ -1128,7 +1234,7 @@ export default function CalculatorClient() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </div>
                     );
                   })}
                 </tbody>
@@ -1145,19 +1251,231 @@ export default function CalculatorClient() {
               </div>
             </div>
 
+            {/* ===== PLANNED (NIE LICZONE) ===== */}
+            {plannedActivities.length > 0 && (
+              <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Zaplanowane (nie liczone)</div>
+                    <div className="mt-1 text-xs text-slate-600">
+                      Te pozycje nie wchodzą do sumy. Zmień status na DONE, gdy zrealizujesz.
+                    </div>
+                  </div>
+                  <div className="text-xs text-slate-700">
+                    Liczba: <span className="font-semibold">{plannedActivities.length}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full border-separate border-spacing-0">
+                    <thead>
+                      <tr className="text-left text-xs font-semibold text-slate-600">
+                        <th className="border-b px-3 py-3">Rodzaj</th>
+                        <th className="border-b px-3 py-3">Punkty</th>
+                        <th className="border-b px-3 py-3">Rok</th>
+                        <th className="border-b px-3 py-3">Organizator</th>
+                        <th className="border-b px-3 py-3 text-right">Akcje</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {plannedActivities.map((a) => {
+                        const isEditing = editingId === a.id;
+                        const rowDisabled = false; // planned można edytować zawsze
+
+                        const pointsValue = isEditing ? editDraft?.points ?? a.points : a.points;
+                        const yearValue = isEditing ? editDraft?.year ?? a.year : a.year;
+                        const organizerValue = isEditing ? editDraft?.organizer ?? (a.organizer ?? "") : (a.organizer ?? "");
+                        const typeValue = isEditing ? editDraft?.type ?? a.type : a.type;
+
+                        return (
+                          <div key={a.id} className="contents">
+                            <tr className={`text-sm ${isYearInPeriod(a.year) ? "" : "opacity-70"}`}>
+                              <td className="border-b px-3 py-3 align-top">
+                                <select
+                                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
+                                  value={typeValue as ActivityType}
+                                  onChange={(e) => {
+                                    if (!isEditing) return;
+                                    const nextType = e.target.value as ActivityType;
+                                    setEditDraft((d) => {
+                                      if (!d) return d;
+                                      const next = { ...d, type: nextType };
+                                      next.points = DEFAULT_POINTS_BY_TYPE[nextType];
+                                      return next;
+                                    });
+                                  }}
+                                  disabled={rowDisabled || !isEditing}
+                                >
+                                  {TYPES.map((t) => (
+                                    <option key={t} value={t}>
+                                      {t}
+                                    </option>
+                                  ))}
+                                </select>
+
+                                {!isYearInPeriod(a.year) && (
+                                  <div className="mt-1 text-xs text-amber-700">
+                                    Rok poza okresem ({period.start}–{period.end}) — ale i tak nie jest liczone (PLANNED).
+                                  </div>
+                                )}
+                              </td>
+
+                              <td className="border-b px-3 py-3 align-top">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
+                                  value={pointsValue}
+                                  onChange={(e) => {
+                                    if (!isEditing) return;
+                                    const val = Number(e.target.value || 0);
+                                    setEditDraft((d) => (d ? { ...d, points: Math.max(0, val) } : d));
+                                  }}
+                                  disabled={rowDisabled || !isEditing}
+                                />
+                                <div className="mt-1 text-[11px] text-slate-500">Plan</div>
+                              </td>
+
+                              <td className="border-b px-3 py-3 align-top">
+                                <input
+                                  type="number"
+                                  className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
+                                  value={yearValue}
+                                  onChange={(e) => {
+                                    if (!isEditing) return;
+                                    setEditDraft((d) => (d ? { ...d, year: Number(e.target.value || currentYear) } : d));
+                                  }}
+                                  disabled={rowDisabled || !isEditing}
+                                />
+                              </td>
+
+                              <td className="border-b px-3 py-3 align-top">
+                                <input
+                                  type="text"
+                                  placeholder="np. OIL / towarzystwo"
+                                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
+                                  value={organizerValue}
+                                  onChange={(e) => {
+                                    if (!isEditing) return;
+                                    setEditDraft((d) => (d ? { ...d, organizer: e.target.value } : d));
+                                  }}
+                                  disabled={rowDisabled || !isEditing}
+                                />
+                              </td>
+
+                              <td className="border-b px-3 py-3 align-top text-right">
+                                <div className="relative inline-block">
+                                  <button
+                                    type="button"
+                                    className="rounded-xl border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-50"
+                                    onClick={() => setOpenMenuId((prev) => (prev === a.id ? null : a.id))}
+                                  >
+                                    ⋯
+                                  </button>
+
+                                  {openMenuId === a.id && (
+                                    <div className="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-xl border bg-white shadow-lg">
+                                      <button
+                                        type="button"
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50"
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          startEdit(a.id);
+                                        }}
+                                      >
+                                        Edytuj
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 disabled:opacity-50"
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          saveEdit();
+                                        }}
+                                        disabled={!isEditing}
+                                        title={!isEditing ? "Najpierw kliknij Edytuj" : "Zapisz zmiany"}
+                                      >
+                                        Zapisz
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        className="w-full px-4 py-2 text-left text-sm text-rose-700 hover:bg-rose-50"
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          removeActivity(a.id);
+                                        }}
+                                      >
+                                        Usuń
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+
+                            {isEditing && (
+                              <tr>
+                                <td className="border-b px-3 py-3" colSpan={5}>
+                                  <div className="rounded-2xl bg-slate-50 p-4">
+                                    <div className="mb-4">
+                                      <label className="text-sm font-medium text-slate-700">Status</label>
+                                      <select
+                                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                                        value={editDraft?.status ?? "planned"}
+                                        onChange={(e) => {
+                                          const next = normalizeStatus(e.target.value);
+                                          setEditDraft((d) => (d ? { ...d, status: next } : d));
+                                        }}
+                                      >
+                                        <option value="done">DONE (zaliczone)</option>
+                                        <option value="planned">PLANNED (zaplanowane)</option>
+                                      </select>
+                                    </div>
+
+                                    <div className="mt-4 flex flex-wrap justify-end gap-2">
+                                      <button
+                                        type="button"
+                                        className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                                        onClick={cancelEdit}
+                                      >
+                                        Anuluj
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                                        onClick={saveEdit}
+                                      >
+                                        Zapisz zmiany
+                                      </button>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             <div className="mt-5 rounded-2xl bg-slate-50 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-slate-900">Podsumowanie</div>
                   <div className="text-sm text-slate-600">
-                    Liczymy tylko aktywności z okresu:{" "}
+                    Liczymy tylko DONE z okresu:{" "}
                     <span className="font-medium text-slate-900">
                       {period.start}–{period.end}
                     </span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-slate-600">Suma punktów w okresie</div>
+                  <div className="text-xs text-slate-600">Suma punktów w okresie (DONE)</div>
                   <div className="text-2xl font-extrabold text-slate-900">{formatInt(totalPoints)}</div>
                 </div>
               </div>
@@ -1206,7 +1524,7 @@ export default function CalculatorClient() {
           </div>
         </section>
 
-        {/* LEFT (tak jak w portfolio: „next steps / do nadrobienia”) */}
+        {/* LEFT */}
         <section className="lg:col-span-4">
           <div className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="text-sm font-semibold text-slate-900">{status.title}</div>
