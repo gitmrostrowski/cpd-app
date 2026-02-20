@@ -12,11 +12,10 @@ const LOGIN_HREF = "/login";
 const REGISTER_HREF = "/rejestracja";
 
 const NAV = [
-  { href: "/", label: "Home" },
   { href: "/kalkulator", label: "Kalkulator" },
-  { href: "/portfolio", label: "Portfolio" },
   { href: "/activities", label: "Aktywności" },
-  { href: "/raporty", label: "Raporty", soon: !REPORTS_READY },
+  // opcjonalnie zostaw na później
+  // { href: "/raporty", label: "Raporty", soon: !REPORTS_READY },
 ];
 
 function cx(...classes: Array<string | false | undefined | null>) {
@@ -51,16 +50,13 @@ export default function Header() {
 
   const isActive = (href: string) => {
     if (!pathname) return false;
-    if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(href + "/");
   };
 
   const linkCls = (href: string) =>
     cx(
       "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors",
-      isActive(href)
-        ? "bg-slate-100 text-slate-900"
-        : "text-slate-900 hover:bg-slate-50"
+      isActive(href) ? "bg-slate-100 text-slate-900" : "text-slate-900 hover:bg-slate-50"
     );
 
   const emailShort = useMemo(() => {
@@ -79,17 +75,19 @@ export default function Header() {
     setOpenUser(false);
   }
 
+  const logoHref = user ? "/kalkulator" : "/";
+
   return (
     <header className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur shadow-sm">
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex h-16 items-center gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
+          <Link href={logoHref} className="flex items-center gap-2 shrink-0">
             <Image src="/logo.svg" alt="Logo" width={28} height={28} />
             <span className="font-semibold text-slate-900">CRPE</span>
           </Link>
 
-          {/* NAV DESKTOP (wycentrowane) */}
+          {/* NAV DESKTOP */}
           <nav className="hidden sm:flex flex-1 items-center justify-center">
             <div className="flex items-center gap-1 rounded-2xl border border-blue-200/60 bg-white px-1 py-1 shadow-sm">
               {NAV.map(({ href, label, soon }) => (
@@ -129,9 +127,7 @@ export default function Header() {
                     onClick={() => setOpenUser((v) => !v)}
                     className={cx(
                       "inline-flex h-10 w-10 items-center justify-center rounded-full border transition",
-                      openUser
-                        ? "border-blue-200 bg-slate-50"
-                        : "border-slate-200 hover:bg-slate-50"
+                      openUser ? "border-blue-200 bg-slate-50" : "border-slate-200 hover:bg-slate-50"
                     )}
                     aria-label="Menu użytkownika"
                     title="Menu"
@@ -143,9 +139,7 @@ export default function Header() {
                     <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-slate-200 bg-white shadow-lg p-2">
                       <div className="px-3 py-2 text-xs text-slate-500">
                         Zalogowany jako
-                        <div className="mt-1 text-sm font-medium text-slate-800">
-                          {user.email}
-                        </div>
+                        <div className="mt-1 text-sm font-medium text-slate-800">{user.email}</div>
                       </div>
 
                       <div className="my-2 h-px bg-slate-100" />
@@ -159,11 +153,19 @@ export default function Header() {
                       </Link>
 
                       <Link
-                        href="/portfolio"
+                        href="/kalkulator"
                         className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                         onClick={() => setOpenUser(false)}
                       >
-                        Portfolio
+                        Kalkulator
+                      </Link>
+
+                      <Link
+                        href="/activities"
+                        className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        onClick={() => setOpenUser(false)}
+                      >
+                        Aktywności
                       </Link>
 
                       <button
@@ -179,7 +181,6 @@ export default function Header() {
               </>
             ) : (
               <>
-                {/* Rejestracja (secondary) */}
                 <Link
                   href={REGISTER_HREF}
                   className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 transition"
@@ -187,7 +188,6 @@ export default function Header() {
                   Rejestracja
                 </Link>
 
-                {/* Logowanie (primary) */}
                 <Link
                   href={LOGIN_HREF}
                   className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
@@ -250,14 +250,6 @@ export default function Header() {
                       onClick={() => setOpenMobile(false)}
                     >
                       Profil
-                    </Link>
-
-                    <Link
-                      href="/portfolio"
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-center text-sm font-semibold hover:bg-slate-50"
-                      onClick={() => setOpenMobile(false)}
-                    >
-                      Portfolio
                     </Link>
 
                     <button
