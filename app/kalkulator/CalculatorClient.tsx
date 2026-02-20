@@ -250,7 +250,8 @@ export default function CalculatorClient() {
             const pointsAuto = typeof a?.pointsAuto === "boolean" ? a.pointsAuto : false;
 
             const comment = safeString(a?.comment ?? "", "");
-            const certificate_name = typeof a?.certificate_name === "string" ? a.certificate_name : null;
+            const certificate_name =
+              typeof a?.certificate_name === "string" ? a.certificate_name : null;
 
             const status = normalizeStatus(a?.status);
 
@@ -552,98 +553,102 @@ export default function CalculatorClient() {
   const progressPill = pillToneForProgress(progress);
 
   return (
-    <div className="relative space-y-6">
-      {/* ===== PAGE BACKDROP TINT (blue + mięta) ===== */}
-      <div className="pointer-events-none absolute inset-x-0 -top-10 -z-10 h-72">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-sky-50/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-teal-50/70 via-transparent to-transparent" />
-        <div className="absolute left-10 top-8 h-56 w-56 rounded-full bg-teal-200/20 blur-3xl" />
-        <div className="absolute right-10 top-10 h-56 w-56 rounded-full bg-blue-200/20 blur-3xl" />
+    <div className="space-y-6 pb-16">
+      {/* ===== PAGE HEADER ===== */}
+      <div>
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Panel CPD</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Podgląd postępu w okresie rozliczeniowym. Dodawanie, edycja i certyfikaty są w{" "}
+          <span className="font-semibold text-slate-900">Aktywnościach</span>.
+        </p>
       </div>
 
-      {/* ===== DASHBOARD HEADER (SaaS) ===== */}
-      <div className="relative overflow-hidden rounded-2xl border bg-white p-6 shadow-sm">
-        {/* miękka tinta: blue + mięta, znika w dół */}
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-1/2 top-0 h-56 w-[980px] -translate-x-1/2 bg-gradient-to-b from-blue-100/70 via-sky-100/35 to-transparent" />
-          <div className="absolute left-1/2 top-0 h-56 w-[980px] -translate-x-1/2 bg-gradient-to-r from-teal-100/30 via-transparent to-transparent" />
-          <div className="absolute -left-24 top-10 h-56 w-56 rounded-full bg-teal-200/25 blur-3xl" />
-          <div className="absolute -right-24 top-12 h-56 w-56 rounded-full bg-blue-200/25 blur-3xl" />
-        </div>
+      {/* ===== STATUS KONTA (FIX tła + delikatna mięta) ===== */}
+      <div className="relative overflow-hidden rounded-2xl border bg-white shadow-sm">
+        {/* tło: niebieski + bardzo delikatna mięta */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50/80 via-white to-emerald-50/40" />
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-200/25 blur-3xl" />
+        <div className="pointer-events-none absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-emerald-200/15 blur-3xl" />
 
-        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="text-xs font-semibold text-slate-600">Status konta</div>
+        <div className="relative p-5 sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="text-xs font-semibold text-slate-600">Status konta</div>
 
-              {authLoading ? (
-                <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
-                  Sprawdzam sesję…
-                </span>
-              ) : user ? (
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-                  ✅ Zalogowany
-                </span>
-              ) : (
-                <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-800">
-                  Tryb gościa
-                </span>
-              )}
-            </div>
-
-            <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              Podgląd postępu w okresie rozliczeniowym. Dodawanie, edycja i certyfikaty są w{" "}
-              <span className="font-medium text-slate-900">Aktywnościach</span>.
-            </p>
-
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-              {user ? (
-                <>
-                  <span className="rounded-full bg-white/90 px-2 py-1 ring-1 ring-slate-200">{user.email}</span>
-                  <span className="text-slate-400">•</span>
-                  <span>Synchronizowane z bazą</span>
-                </>
-              ) : (
-                <>
-                  <span className="rounded-full bg-white/90 px-2 py-1 ring-1 ring-slate-200">
-                    Zapis lokalny na urządzeniu
+                {authLoading ? (
+                  <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                    Sprawdzam sesję…
                   </span>
-                  <span className="text-slate-400">•</span>
-                  <Link className="text-blue-700 hover:underline" href="/login">
-                    Zaloguj się, aby synchronizować
-                  </Link>
-                </>
-              )}
+                ) : user ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                    <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                    Zalogowany
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-800">
+                    <span className="inline-block h-2 w-2 rounded-full bg-rose-500" />
+                    Tryb gościa
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-2 text-sm text-slate-700">
+                Panel pokazuje podsumowanie:{" "}
+                <span className="font-semibold">Ukończone</span> liczy się do punktów,{" "}
+                <span className="font-semibold">Plan</span> jest planem.
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                {user ? (
+                  <>
+                    <span className="truncate rounded-full border border-slate-200 bg-white/80 px-3 py-1">
+                      {user.email}
+                    </span>
+                    <span className="text-slate-400">•</span>
+                    <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
+                      Synchronizowane z bazą
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
+                      Zapis lokalny na urządzeniu
+                    </span>
+                    <span className="text-slate-400">•</span>
+                    <Link className="font-semibold text-blue-700 hover:underline" href="/login">
+                      Zaloguj się
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/aktywnosci?new=1"
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                + Dodaj aktywność
+              </Link>
+              <Link
+                href="/aktywnosci"
+                className="rounded-xl border border-slate-300 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
+              >
+                Zobacz aktywności
+              </Link>
+
+              <button
+                onClick={clearCalculator}
+                className="rounded-xl border border-slate-300 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
+                type="button"
+                title="Czyści zapis lokalny panelu"
+              >
+                Wyczyść
+              </button>
             </div>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/aktywnosci?new=1"
-              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
-            >
-              + Dodaj aktywność
-            </Link>
-
-            <Link
-              href="/aktywnosci"
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Zobacz aktywności
-            </Link>
-
-            <button
-              onClick={clearCalculator}
-              type="button"
-              className="rounded-xl px-3 py-2 text-sm font-medium text-slate-500 hover:bg-white hover:text-slate-700"
-              title="Czyści zapis lokalny panelu"
-            >
-              Wyczyść
-            </button>
-          </div>
         </div>
-
-        <div className="relative mt-5 h-px w-full bg-gradient-to-r from-blue-200/70 via-teal-200/40 to-transparent" />
       </div>
 
       {/* messages */}
@@ -748,7 +753,7 @@ export default function CalculatorClient() {
                 </span>
               </div>
               <div className="rounded-xl border bg-white px-3 py-2 text-sm">
-                <span className="text-slate-600">DONE:</span>{" "}
+                <span className="text-slate-600">Ukończone:</span>{" "}
                 <span className="font-semibold text-slate-900">{formatInt(totalPoints)}</span>
               </div>
               <div className="rounded-xl border bg-white px-3 py-2 text-sm">
@@ -763,16 +768,22 @@ export default function CalculatorClient() {
 
             <div className="mt-3">
               <div className="flex items-center justify-between text-xs text-slate-600">
-                <span>Postęp</span>
+                <span>
+                  Postęp{" "}
+                  <span className="ml-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                    zakres: {period.start}–{period.end}
+                  </span>
+                </span>
                 <span className="font-semibold text-slate-900">{Math.round(progress)}%</span>
               </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+
+              <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
                 <div className={`h-full ${progressBarClass}`} style={{ width: `${progress}%` }} />
               </div>
 
               {plannedActivities.length > 0 && (
                 <div className="mt-2 text-xs text-slate-600">
-                  Zaplanowane: <span className="font-semibold">{plannedActivities.length}</span> (nie liczone)
+                  Plan: <span className="font-semibold">{plannedActivities.length}</span> (nie liczone)
                 </div>
               )}
             </div>
@@ -782,93 +793,108 @@ export default function CalculatorClient() {
 
       {/* ===== KPI / HERO (SaaS) ===== */}
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* HERO: Brakuje */}
+        {/* HERO: Brakuje (mniej „pusty”, czytelniejszy, „węższy” optycznie) */}
         <div className="relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
-          {/* miękka mięta + blue */}
-          <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-teal-100/60 blur-2xl" />
-          <div className="absolute -left-10 -bottom-16 h-44 w-44 rounded-full bg-blue-100 blur-2xl" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50/70 via-white to-emerald-50/30" />
+          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-blue-200/20 blur-2xl" />
+          <div className="pointer-events-none absolute -left-10 -bottom-16 h-44 w-44 rounded-full bg-emerald-200/15 blur-2xl" />
 
-          <div className="relative flex flex-wrap items-start justify-between gap-4">
-            <div>
+          <div className="relative grid gap-4 lg:grid-cols-12 lg:items-center">
+            {/* lewa część (liczba + opis) */}
+            <div className="lg:col-span-7">
               <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
                 Do nadrobienia
               </div>
 
               <div className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900">
-                {formatInt(missing)} pkt
+                {formatInt(missing)} <span className="text-slate-900">pkt</span>
               </div>
 
-              <div className="mt-1 text-sm text-slate-600">
-                Cel: <span className="font-semibold text-slate-900">{formatInt(requiredPoints)}</span> • Masz:{" "}
-                <span className="font-semibold text-slate-900">{formatInt(totalPoints)}</span>
+              <div className="mt-1 text-sm text-slate-700">
+                Cel: <span className="font-semibold text-slate-900">{formatInt(requiredPoints)}</span> •
+                Ukończone: <span className="font-semibold text-slate-900">{formatInt(totalPoints)}</span>
               </div>
 
-              <div className="mt-3 inline-flex flex-wrap items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
                   Okres: {period.start}–{period.end}
                 </span>
                 <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${progressPill}`}>
                   Postęp: {Math.round(progress)}%
                 </span>
-                {plannedActivities.length > 0 && (
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-                    Plan: {plannedActivities.length}
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+                  Plan: {plannedActivities.length}
+                </span>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href="/baza-szkolen"
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Znajdź szkolenie
+                </Link>
+                <Link
+                  href="/aktywnosci?new=1"
+                  className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Dodaj ręcznie
+                </Link>
+              </div>
+            </div>
+
+            {/* prawa część (mini panel postępu – bardziej „wąsko” i konkretnie) */}
+            <div className="lg:col-span-5">
+              <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+                <div className="flex items-center justify-between text-xs text-slate-600">
+                  <span>Postęp w zakresie</span>
+                  <span className="font-semibold text-slate-900">{Math.round(progress)}%</span>
+                </div>
+
+                <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-slate-200">
+                  <div className={`h-full ${progressBarClass}`} style={{ width: `${progress}%` }} />
+                </div>
+
+                <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+                  <span>
+                    {formatInt(totalPoints)} / {formatInt(requiredPoints)} pkt
                   </span>
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-semibold text-slate-700">
+                    {period.start}–{period.end}
+                  </span>
+                </div>
+
+                {missing > 0 ? (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <div className="rounded-xl bg-slate-50 p-2">
+                      <div className="text-[11px] text-slate-600">Na rok</div>
+                      <div className="text-sm font-extrabold text-slate-900">{plan.perYear} pkt</div>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-2">
+                      <div className="text-[11px] text-slate-600">Na kwartał</div>
+                      <div className="text-sm font-extrabold text-slate-900">{plan.perQuarter} pkt</div>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-2">
+                      <div className="text-[11px] text-slate-600">Na miesiąc</div>
+                      <div className="text-sm font-extrabold text-slate-900">{plan.perMonth} pkt</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
+                    Wszystko gra — spełniasz wymagania 🎉
+                  </div>
                 )}
               </div>
             </div>
-
-            <div className="relative min-w-[240px] flex-1">
-              <div className="flex items-center justify-between text-xs text-slate-600">
-                <span>Postęp</span>
-                <span className="font-semibold text-slate-900">{Math.round(progress)}%</span>
-              </div>
-              <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-slate-100">
-                <div className={`h-full ${progressBarClass}`} style={{ width: `${progress}%` }} />
-              </div>
-              <div className="mt-2 text-xs text-slate-600">
-                {formatInt(totalPoints)} / {formatInt(requiredPoints)} pkt
-              </div>
-            </div>
           </div>
-
-          {missing > 0 ? (
-            <div className="relative mt-4 flex flex-wrap gap-2">
-              <Link
-                href="/baza-szkolen"
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                Znajdź szkolenie
-              </Link>
-              <Link
-                href="/aktywnosci?new=1"
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Dodaj ręcznie
-              </Link>
-            </div>
-          ) : (
-            <div className="relative mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
-              Wszystko gra — spełniasz wymagania w tym okresie 🎉
-            </div>
-          )}
         </div>
 
         {/* Zdobyte */}
         <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <div className="text-xs font-semibold text-slate-600">Zdobyte (DONE w okresie)</div>
+          <div className="text-xs font-semibold text-slate-600">Zdobyte (Ukończone w okresie)</div>
           <div className="mt-2 text-3xl font-extrabold text-slate-900">{formatInt(totalPoints)}</div>
           <div className="mt-2 text-sm text-slate-600">
-            Liczymy tylko status <span className="font-semibold">DONE</span> w latach {period.start}–{period.end}.
-          </div>
-        </div>
-
-        {/* Zaplanowane (mobile only, bo prawa kolumna ma to też jako kontekst) */}
-        <div className="rounded-2xl border bg-white p-5 shadow-sm lg:hidden">
-          <div className="text-xs font-semibold text-slate-600">Zaplanowane</div>
-          <div className="mt-2 text-3xl font-extrabold text-slate-900">{plannedActivities.length}</div>
-          <div className="mt-2 text-sm text-slate-600">
-            Po realizacji ustawiasz na <span className="font-semibold">DONE</span> w Aktywnościach.
+            Liczymy tylko status <span className="font-semibold">Ukończone</span> w latach {period.start}–{period.end}.
           </div>
         </div>
       </div>
@@ -876,12 +902,12 @@ export default function CalculatorClient() {
       {/* ===== MAIN GRID ===== */}
       <div className="grid gap-6 lg:grid-cols-12">
         {/* LEFT: lists */}
-        <section className="space-y-6 lg:col-span-8">
+        <section className="lg:col-span-8 space-y-6">
           {/* Recent DONE */}
           <div className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Ostatnie aktywności (DONE)</h2>
+                <h2 className="text-lg font-semibold text-slate-900">Ostatnie aktywności (Ukończone)</h2>
                 <p className="mt-1 text-sm text-slate-600">Podgląd ostatnich wpisów zaliczonych do sumy.</p>
               </div>
               <Link
@@ -915,7 +941,7 @@ export default function CalculatorClient() {
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="font-semibold text-slate-900">{String(row.type)}</div>
                           <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                            DONE
+                            Ukończone
                           </span>
                           {outside && (
                             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
@@ -941,9 +967,7 @@ export default function CalculatorClient() {
                       <div className="flex shrink-0 items-center justify-between gap-4 sm:justify-end">
                         <div className="text-right">
                           <div className="text-xs text-slate-600">Punkty</div>
-                          <div className="text-lg font-extrabold text-slate-900">
-                            {formatInt(Number(row.points) || 0)}
-                          </div>
+                          <div className="text-lg font-extrabold text-slate-900">{formatInt(Number(row.points) || 0)}</div>
                         </div>
                       </div>
                     </div>
@@ -959,7 +983,7 @@ export default function CalculatorClient() {
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Zaplanowane</h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  Te wpisy nie wchodzą do sumy. Zmień status na DONE po realizacji.
+                  Te wpisy nie wchodzą do sumy. Zmień status na Ukończone po realizacji.
                 </p>
               </div>
               <Link
@@ -1030,7 +1054,7 @@ export default function CalculatorClient() {
         </section>
 
         {/* RIGHT: insights (secondary panel) */}
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 lg:col-span-4">
+        <section className="lg:col-span-4 space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
           <div className="rounded-2xl border bg-white p-5">
             <div className="text-sm font-semibold text-slate-900">{status.title}</div>
             {status.desc ? <div className="mt-1 text-sm text-slate-600">{status.desc}</div> : null}
@@ -1054,7 +1078,11 @@ export default function CalculatorClient() {
                 </div>
                 <div className="mt-2 text-xs text-slate-600">Liczone wg lat do końca okresu (do {period.end}).</div>
               </div>
-            ) : null}
+            ) : (
+              <div className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
+                Wygląda dobrze — spełniasz wymagania w tym okresie 🎉
+              </div>
+            )}
           </div>
 
           {recommendations.length > 0 && (
@@ -1089,11 +1117,11 @@ export default function CalculatorClient() {
             <div className="text-sm font-semibold text-slate-900">Jakość danych (MVP)</div>
             <div className="mt-2 space-y-2 text-sm text-slate-700">
               <div className="flex items-center justify-between">
-                <span>Brak organizatora (DONE w okresie)</span>
+                <span>Brak organizatora (Ukończone w okresie)</span>
                 <span className="font-semibold">{missingOrganizerCount}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Brak certyfikatu (DONE w okresie)</span>
+                <span>Brak certyfikatu (Ukończone w okresie)</span>
                 <span className="font-semibold">{missingCertificateCount}</span>
               </div>
             </div>
