@@ -45,8 +45,8 @@ const POINTS_OPTIONS: { value: string; label: string }[] = [
 
 function formatDate(d: string | null) {
   if (!d) return "—";
-  // prosto: YYYY-MM-DD -> DD.MM.YYYY
   const [y, m, day] = d.split("-");
+  if (!y || !m || !day) return d;
   return `${day}.${m}.${y}`;
 }
 
@@ -56,8 +56,19 @@ function guessActivityType(trainingType: TrainingType | null) {
   return "Kurs online / webinar";
 }
 
+function todayYYYYMMDD() {
+  const dt = new Date();
+  const yyyy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function TrainingHubClient() {
   const { user, loading } = useAuth();
+
+  // IMPORTANT: u Ciebie supabaseClient to funkcja -> wywołujemy ją
+  const supabase = useMemo(() => supabaseClient(), []);
 
   const [items, setItems] = useState<Training[]>([]);
   const [fetching, setFetching] = useState(false);
@@ -75,31 +86,27 @@ export default function TrainingHubClient() {
     setFetching(true);
     setError(null);
 
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    const todayStr = `${yyyy}-${mm}-${dd}`;
+    const todayStr = todayYYYYMMDD();
 
-    // baza query
-    let query = supabaseClient
+    let query = supabase
       .from("trainings")
       .select("*")
       .order("start_date", { ascending: true })
       .limit(200);
 
     if (type !== "all") query = query.eq("type", type);
+
     if (organizer !== "all") {
-      // proste dopasowanie — możesz zmienić na ilike jeśli trzymasz np. "NIL / ...".
       query = query.ilike("organizer", `%${organizer}%`);
     }
+
     if (minPoints !== "all") query = query.gte("points", Number(minPoints));
+
     if (onlyPartner) query = query.eq("is_partner", true);
+
     if (onlyUpcoming) query = query.gte("start_date", todayStr);
 
-    // search
     if (q.trim()) {
-      // szukamy po tytule / organizatorze / kategorii
       const qq = q.trim();
       query = query.or(
         `title.ilike.%${qq}%,organizer.ilike.%${qq}%,category.ilike.%${qq}%`
@@ -130,25 +137,33 @@ export default function TrainingHubClient() {
       alert("Zaloguj się, żeby dodać aktywność.");
       return;
     }
-    const year = t.start_date ? Number(t.start_date.slice(0, 4)) : new Date().getFullYear();
+
+    const year = t.start_date
+      ? Number(t.start_date.slice(0, 4))
+      : new Date().getFullYear();
 
     const payload = {
       user_id: user.id,
       type: guessActivityType(t.type),
       points: t.points ?? 0,
       year,
-      organizer: t.organizer ?? "—",
-      // opcjonalnie: możesz dodać pole np. source_training_id jeśli je dodasz w DB
+      organizer: t.organizer ?? null,
+      // certyfikaty: puste, bo to szkic
+      certificate_path: null,
+      certificate_name: null,
+      certificate_mime: null,
+      certificate_size: null,
+      certificate_uploaded_at: null,
     };
 
-    // Uwaga: dopasuj nazwy kolumn do Twojej tabeli activities (u Ciebie: type/points/year/organizer)
-    const { error } = await supabaseClient.from("activities").insert(payload);
+    const { error } = await supabase.from("activities").insert(payload);
 
     if (error) {
       alert(`Nie udało się dodać aktywności: ${error.message}`);
       return;
     }
-    alert("Dodano szkic aktywności. Teraz możesz podpiąć certyfikat w Aktywnościach.");
+
+    alert("Dodano szkic aktywności. Przejdź do Aktywności i podepnij certyfikat.");
   };
 
   if (loading) {
@@ -180,6 +195,7 @@ export default function TrainingHubClient() {
             onClick={load}
             className="rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
             disabled={fetching}
+            type="button"
           >
             {fetching ? "Odświeżam…" : "Odśwież"}
           </button>
@@ -249,6 +265,7 @@ export default function TrainingHubClient() {
               onClick={load}
               className="w-full rounded-xl bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
               disabled={fetching}
+              type="button"
             >
               Filtruj
             </button>
@@ -294,21 +311,25 @@ export default function TrainingHubClient() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="truncate text-base font-semibold">{t.title}</h3>
+
                   {t.is_partner ? (
                     <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
                       Partner
                     </span>
                   ) : null}
+
                   {t.organizer ? (
                     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
                       {t.organizer}
                     </span>
                   ) : null}
+
                   {t.type ? (
                     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
                       {t.type}
                     </span>
                   ) : null}
+
                   {typeof t.points === "number" ? (
                     <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
                       {t.points} pkt
@@ -317,7 +338,8 @@ export default function TrainingHubClient() {
                 </div>
 
                 <div className="mt-1 text-sm text-gray-600">
-                  Termin: {formatDate(t.start_date)}{t.end_date ? ` – ${formatDate(t.end_date)}` : ""}{" "}
+                  Termin: {formatDate(t.start_date)}
+                  {t.end_date ? ` – ${formatDate(t.end_date)}` : ""}
                   {t.category ? ` • ${t.category}` : ""}
                   {t.voivodeship ? ` • ${t.voivodeship}` : ""}
                 </div>
@@ -337,6 +359,7 @@ export default function TrainingHubClient() {
                   <button
                     className="cursor-not-allowed rounded-xl border px-3 py-2 text-sm text-gray-400"
                     disabled
+                    type="button"
                   >
                     Brak linku
                   </button>
@@ -345,6 +368,7 @@ export default function TrainingHubClient() {
                 <button
                   onClick={() => addDraftActivity(t)}
                   className="rounded-xl bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                  type="button"
                 >
                   Dodaj szkic do aktywności
                 </button>
