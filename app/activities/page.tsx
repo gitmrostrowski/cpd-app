@@ -363,7 +363,7 @@ export default function ActivitiesPage() {
         return;
       }
 
-      setInfo("Oznaczono jako odbyte ✅ (teraz możesz dodać certyfikat)");
+      setInfo("Oznaczono jako ukończone ✅ (teraz możesz dodać certyfikat)");
       await load();
     } catch (e: any) {
       setErr(e?.message || "Nie udało się zmienić statusu.");
@@ -733,7 +733,7 @@ export default function ActivitiesPage() {
                   <option key={a.id} value={a.id}>
                     {normalizeStatus(a.status) === "planned"
                       ? "🗓️ Zaplanowane"
-                      : "✅ Odbyte"}{" "}
+                      : "✅ Ukończone"}{" "}
                     • {a.year} • {a.type} •{" "}
                     {a.organizer ? a.organizer : "brak organizatora"}
                     {a.certificate_path ? " • (ma cert)" : ""}
@@ -845,7 +845,7 @@ export default function ActivitiesPage() {
               >
                 <option value="all">Wszystkie</option>
                 <option value="planned">Zaplanowane</option>
-                <option value="done">Odbyte</option>
+                <option value="done">Ukończone</option>
               </select>
             </div>
 
@@ -870,8 +870,8 @@ export default function ActivitiesPage() {
                 onChange={(e) => setFilterStatus(e.target.value as any)}
               >
                 <option value="all">Wszystkie</option>
-                <option value="complete">Complete</option>
-                <option value="missing">Missing</option>
+                <option value="complete">Ukończone</option>
+                <option value="missing">Braki</option>
               </select>
             </div>
 
@@ -942,17 +942,17 @@ export default function ActivitiesPage() {
                             </span>
                           ) : (
                             <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
-                              ✅ Odbyte
+                              ✅ Ukończone
                             </span>
                           )}
 
                           {st.kind === "complete" ? (
                             <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
-                              Complete
+                              Ukończone
                             </span>
                           ) : (
                             <span className="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
-                              Missing
+                              Braki
                             </span>
                           )}
 
@@ -1067,7 +1067,7 @@ export default function ActivitiesPage() {
                                 type="button"
                                 disabled={busy}
                               >
-                                Oznacz jako odbyte
+                                Oczekujące
                               </button>
                             ) : null}
 
