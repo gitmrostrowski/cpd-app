@@ -181,11 +181,11 @@ export default function CalculatorClient() {
   const saveTimerRef = useRef<number | null>(null);
   const requiredDirtyRef = useRef(false);
 
-  // --- NOWE: tryb edycji wiersza + draft ---
+  // --- tryb edycji wiersza + draft ---
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
 
-  // --- NOWE: proste menu akcji (jedno otwarte naraz) ---
+  // --- menu akcji (jedno otwarte naraz) ---
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   function clearMessages() {
@@ -250,8 +250,7 @@ export default function CalculatorClient() {
             const pointsAuto = typeof a?.pointsAuto === "boolean" ? a.pointsAuto : false;
 
             const comment = safeString(a?.comment ?? "", "");
-            const certificate_name =
-              typeof a?.certificate_name === "string" ? a.certificate_name : null;
+            const certificate_name = typeof a?.certificate_name === "string" ? a.certificate_name : null;
 
             return {
               id: safeString(a?.id, uid()) || uid(),
@@ -454,29 +453,11 @@ export default function CalculatorClient() {
   }
 
   function removeActivity(id: string) {
-    // jeśli usuwamy edytowany wiersz -> wyjdź z edycji
     if (editingId === id) {
       setEditingId(null);
       setEditDraft(null);
     }
     setActivities((prev) => prev.filter((a) => a.id !== id));
-  }
-
-  function handleTypeChange(id: string, nextType: ActivityType) {
-    setActivities((prev) =>
-      prev.map((a) => {
-        if (a.id !== id) return a;
-        const next: Activity = { ...a, type: nextType };
-        if (a.pointsAuto) next.points = DEFAULT_POINTS_BY_TYPE[nextType];
-        return next;
-      }),
-    );
-  }
-
-  function handlePointsChange(id: string, points: number) {
-    setActivities((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, points: Math.max(0, points), pointsAuto: false } : a)),
-    );
   }
 
   function handleProfessionChange(next: Profession) {
@@ -522,21 +503,11 @@ export default function CalculatorClient() {
       organizer: editDraft.organizer,
       comment: editDraft.comment,
       certificate_name: editDraft.certificate_name,
-      // certificate_file nie trzymamy w activities (nie serializuje się do localStorage)
     });
 
     setEditingId(null);
     setEditDraft(null);
   }
-
-  const toneStyles =
-    status.tone === "ok"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-      : status.tone === "warn"
-        ? "border-amber-200 bg-amber-50 text-amber-900"
-        : status.tone === "risk"
-          ? "border-rose-200 bg-rose-50 text-rose-900"
-          : "border-slate-200 bg-slate-50 text-slate-900";
 
   const progressBarClass =
     progress >= 100 ? "bg-emerald-600" : progress >= 60 ? "bg-blue-600" : "bg-rose-600";
@@ -556,7 +527,6 @@ export default function CalculatorClient() {
         points: Math.max(0, Number(a.points) || 0),
         year: Number(a.year) || currentYear,
         organizer: (a.organizer ?? "").trim() ? (a.organizer ?? "").trim() : null,
-        // comment/certificate_name w MVP nie wysyłamy do tabeli activities (chyba że masz kolumny)
       }))
       .filter((a) => a.type && a.year >= 1900 && a.year <= 2100);
 
@@ -589,13 +559,12 @@ export default function CalculatorClient() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-12">
-      {/* LEFT */}
-      <section className="lg:col-span-4">
-        {/* Konto + Ustawienia (połączone) */}
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          {/* STATUS — POZIOMO */}
-          <div className="flex items-center justify-between gap-3">
+    <div className="space-y-6">
+      {/* ===== TOP SUMMARY BAR (jak Portfolio) ===== */}
+      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-4">
+          {/* ROW 1: status + akcje */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2 text-sm">
               {authLoading ? (
                 <span className="text-slate-600">Status: sprawdzam sesję…</span>
@@ -606,10 +575,6 @@ export default function CalculatorClient() {
                   </span>
                   <span className="text-slate-500">•</span>
                   <span className="text-slate-700">{user.email}</span>
-                  <span className="text-slate-500">•</span>
-                  <Link href="/profil" className="text-blue-700 hover:underline">
-                    Ustawienia profilu
-                  </Link>
                 </>
               ) : (
                 <>
@@ -622,14 +587,22 @@ export default function CalculatorClient() {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {user ? (
-                <Link
-                  href="/portfolio"
-                  className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
-                  Portfolio
-                </Link>
+                <>
+                  <Link
+                    href="/portfolio"
+                    className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                  >
+                    Portfolio
+                  </Link>
+                  <Link
+                    href="/activities"
+                    className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Aktywności
+                  </Link>
+                </>
               ) : (
                 <Link
                   href="/login"
@@ -642,25 +615,22 @@ export default function CalculatorClient() {
               <button
                 onClick={clearCalculator}
                 className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                title="Czyści zapis lokalny kalkulatora"
                 type="button"
+                title="Czyści zapis lokalny kalkulatora"
               >
                 Wyczyść
               </button>
             </div>
           </div>
 
-          <div className="mt-4 border-t pt-4">
-            <h2 className="text-base font-semibold text-slate-900">Ustawienia</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              {user ? "Po zalogowaniu ustawienia bierzemy z profilu (DB)." : "W trybie gościa — zapis lokalny."}
-            </p>
-
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <div>
-                <label className="text-sm font-medium text-slate-700">Zawód / status</label>
+          {/* ROW 2: ustawienia w pasku (zawód/okres/wymagane) + progress jak w portfolio */}
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            {/* ustawienia */}
+            <div className="grid gap-3 sm:grid-cols-3 lg:flex lg:flex-wrap lg:items-end">
+              <div className="min-w-[220px]">
+                <label className="text-xs font-semibold text-slate-600">Zawód / status</label>
                 <select
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
                   value={profession}
                   onChange={(e) => handleProfessionChange(e.target.value as Profession)}
                 >
@@ -672,10 +642,10 @@ export default function CalculatorClient() {
                 </select>
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-slate-700">Okres rozliczeniowy</label>
+              <div className="min-w-[220px]">
+                <label className="text-xs font-semibold text-slate-600">Okres rozliczeniowy</label>
                 <select
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
                   value={periodLabel}
                   onChange={(e) => setPeriodLabel(e.target.value as PeriodLabel)}
                 >
@@ -689,19 +659,19 @@ export default function CalculatorClient() {
                 {periodLabel === "Inny" && (
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs font-medium text-slate-600">Start</label>
+                      <label className="text-[11px] font-semibold text-slate-600">Start</label>
                       <input
                         type="number"
-                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
                         value={customStart}
                         onChange={(e) => setCustomStart(Number(e.target.value || 0))}
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-slate-600">Koniec</label>
+                      <label className="text-[11px] font-semibold text-slate-600">Koniec</label>
                       <input
                         type="number"
-                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
                         value={customEnd}
                         onChange={(e) => setCustomEnd(Number(e.target.value || 0))}
                       />
@@ -710,502 +680,509 @@ export default function CalculatorClient() {
                 )}
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-slate-700">Wymagane punkty (łącznie)</label>
+              <div className="min-w-[220px]">
+                <label className="text-xs font-semibold text-slate-600">Wymagane punkty (łącznie)</label>
                 <input
                   type="number"
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
+                  min={0}
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
                   value={requiredPoints}
                   onChange={(e) => handleRequiredPointsChange(Number(e.target.value || 0))}
-                  min={0}
                 />
-                <p className="mt-1 text-xs text-slate-500">
+                <div className="mt-1 text-[11px] text-slate-500">
                   Domyślne dla <span className="font-medium">{profession}</span>:{" "}
                   {DEFAULT_REQUIRED_POINTS_BY_PROFESSION[profession] ?? 0}
-                </p>
-              </div>
-            </div>
-
-            {(profession === "Lekarz" || profession === "Lekarz dentysta") && (
-              <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
-                <div className="font-semibold">Limity (MVP)</div>
-                <div className="mt-1">
-                  Dla <span className="font-medium">{profession}</span> aktywność{" "}
-                  <span className="font-medium">Samokształcenie</span> ma limit{" "}
-                  <span className="font-medium">20 pkt / rok</span>.
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-
-        {(info || err) && (
-          <div className="mt-6 rounded-2xl border bg-white p-4 text-sm">
-            {info ? <div className="text-emerald-700">{info}</div> : null}
-            {err ? <div className="text-rose-700">{err}</div> : null}
-            {info ? (
-              <div className="mt-2 flex flex-wrap gap-3">
-                <Link href="/activities" className="text-blue-700 hover:underline">
-                  Zobacz w Aktywnościach →
-                </Link>
-                <Link href="/portfolio" className="text-blue-700 hover:underline">
-                  Przejdź do Portfolio →
-                </Link>
-              </div>
-            ) : null}
-          </div>
-        )}
-
-        <div className={`mt-6 rounded-2xl border p-5 ${toneStyles}`}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h3 className="text-base font-semibold">{status.title}</h3>
-              {status.desc && <p className="mt-1 text-sm opacity-90">{status.desc}</p>}
-            </div>
-            <div className="text-right">
-              <div className="text-xs opacity-80">Okres</div>
-              <div className="text-sm font-semibold">
-                {period.start}–{period.end}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-3 gap-3">
-            <div className="rounded-xl bg-white/60 p-3">
-              <div className="text-xs text-slate-600">Masz</div>
-              <div className="text-lg font-bold text-slate-900">{formatInt(totalPoints)}</div>
-            </div>
-            <div className="rounded-xl bg-white/60 p-3">
-              <div className="text-xs text-slate-600">Wymagane</div>
-              <div className="text-lg font-bold text-slate-900">{formatInt(requiredPoints)}</div>
-            </div>
-            <div className="rounded-xl bg-white/60 p-3">
-              <div className="text-xs text-slate-600">Brakuje</div>
-              <div className="text-lg font-bold text-slate-900">{formatInt(missing)}</div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <div className="flex items-center justify-between text-xs text-slate-600">
-              <span>Postęp</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/60">
-              <div className={`h-full ${progressBarClass}`} style={{ width: `${progress}%` }} />
-            </div>
-            {progress >= 100 ? (
-              <div className="mt-2 text-xs text-emerald-800">✅ Cel osiągnięty — jesteś na 100% lub więcej.</div>
-            ) : null}
-          </div>
-
-          {missing > 0 ? (
-            <div className="mt-5 rounded-xl bg-white/60 p-4">
-              <div className="text-sm font-semibold text-slate-900">Tempo, żeby zdążyć</div>
-              <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
-                <div>
-                  <div className="text-xs text-slate-600">Średnio na rok</div>
-                  <div className="font-bold text-slate-900">{plan.perYear} pkt</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-600">Średnio na kwartał</div>
-                  <div className="font-bold text-slate-900">{plan.perQuarter} pkt</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-600">Średnio na miesiąc</div>
-                  <div className="font-bold text-slate-900">{plan.perMonth} pkt</div>
-                </div>
-              </div>
-              <div className="mt-2 text-xs text-slate-600">Liczone wg lat do końca okresu (do {period.end}).</div>
-            </div>
-          ) : null}
-
-          {recommendations.length > 0 && (
-            <div className="mt-5">
-              <div className="text-sm font-semibold text-slate-900">Szybkie propozycje uzupełnienia</div>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-800">
-                {recommendations.map((r) => (
-                  <li key={r}>{r}</li>
-                ))}
-              </ul>
-              <div className="mt-2 text-xs text-slate-600">
-                *Przykładowe scenariusze na bazie domyślnych punktów dla typów aktywności.
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* RIGHT */}
-      <section className="lg:col-span-8">
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności (kalkulator)</h2>
-              <p className="mt-1 text-sm text-slate-600">
-                {user
-                  ? "Zalogowany: możesz zapisać poniższe wpisy do bazy (Portfolio)."
-                  : "Tryb gościa: to tylko szkic lokalny. Zaloguj się, aby zapisać do bazy."}
-              </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={addActivity}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                type="button"
-              >
-                + Dodaj aktywność
-              </button>
-
-              <button
-                onClick={saveAllToPortfolio}
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                disabled={!user || busy}
-                type="button"
-                title={!user ? "Zaloguj się, żeby zapisać." : "Zapisze wszystkie wiersze do Portfolio."}
-              >
-                {busy ? "Zapisuję…" : "Zapisz do Portfolio"}
-              </button>
-
-              {user ? (
-                <Link
-                  href="/activities"
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Aktywności
-                </Link>
-              ) : (
-                <Link
-                  href="/login"
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Zaloguj i zapisz
-                </Link>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-5">
-            <table className="w-full border-separate border-spacing-0">
-              <thead>
-                <tr className="text-left text-xs font-semibold text-slate-600">
-                  <th className="border-b px-3 py-3">Rodzaj</th>
-                  <th className="border-b px-3 py-3">Punkty</th>
-                  <th className="border-b px-3 py-3">Rok</th>
-                  <th className="border-b px-3 py-3">Organizator</th>
-                  <th className="border-b px-3 py-3 text-right">Akcje</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {applied.map((row) => {
-                  const rowDisabled = !row.in_period;
-                  const src = activities.find((a) => a.id === row.id);
-
-                  const isEditing = editingId === row.id;
-
-                  const pointsValue = isEditing ? editDraft?.points ?? 0 : src ? src.points : Math.max(0, Number(row.points) || 0);
-                  const yearValue = isEditing ? editDraft?.year ?? currentYear : src ? src.year : Number(row.year) || currentYear;
-                  const organizerValue = isEditing ? editDraft?.organizer ?? "" : src?.organizer ?? "";
-                  const typeValue = isEditing ? (editDraft?.type ?? (src?.type ?? row.type)) : (src?.type ?? row.type);
-
-                  return (
-                    <>
-                      <tr
-                        key={row.id}
-                        className={`text-sm ${rowDisabled ? "opacity-50" : ""}`}
-                        title={rowDisabled ? "Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone." : ""}
-                      >
-                        <td className="border-b px-3 py-3 align-top">
-                          <select
-                            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
-                            value={typeValue as ActivityType}
-                            onChange={(e) => {
-                              if (!isEditing) return;
-                              const nextType = e.target.value as ActivityType;
-                              setEditDraft((d) => {
-                                if (!d) return d;
-                                const next = { ...d, type: nextType };
-                                // jeśli punkty były auto (w edycji traktujemy jak auto dopóki user nie zmieni ręcznie)
-                                next.points = DEFAULT_POINTS_BY_TYPE[nextType];
-                                return next;
-                              });
-                            }}
-                            disabled={rowDisabled || !isEditing}
-                          >
-                            {TYPES.map((t) => (
-                              <option key={t} value={t}>
-                                {t}
-                              </option>
-                            ))}
-                          </select>
-
-                          {!row.in_period && (
-                            <div className="mt-1 text-xs text-amber-700">
-                              Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone.
-                            </div>
-                          )}
-
-                          {row.warning ? <div className="mt-1 text-xs text-rose-700">{row.warning}</div> : null}
-
-                          {row.in_period && row.applied_points !== Math.max(0, Number(src?.points ?? row.points) || 0) ? (
-                            <div className="mt-1 text-[11px] text-slate-600">
-                              Zaliczone do sumy: <span className="font-semibold">{row.applied_points}</span> pkt
-                            </div>
-                          ) : null}
-                        </td>
-
-                        <td className="border-b px-3 py-3 align-top">
-                          <input
-                            type="number"
-                            min={0}
-                            className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
-                            value={pointsValue}
-                            onChange={(e) => {
-                              if (!isEditing) return;
-                              const val = Number(e.target.value || 0);
-                              setEditDraft((d) => (d ? { ...d, points: Math.max(0, val) } : d));
-                            }}
-                            disabled={rowDisabled || !isEditing}
-                          />
-                          <div className="mt-1 text-[11px] text-slate-500">
-                            {isEditing ? "Edycja" : (src?.pointsAuto ? "Auto (wg rodzaju)" : "Ręcznie (z certyfikatu)")}
-                          </div>
-                        </td>
-
-                        <td className="border-b px-3 py-3 align-top">
-                          <input
-                            type="number"
-                            className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
-                            value={yearValue}
-                            onChange={(e) => {
-                              if (!isEditing) return;
-                              setEditDraft((d) => (d ? { ...d, year: Number(e.target.value || currentYear) } : d));
-                            }}
-                            disabled={rowDisabled || !isEditing}
-                          />
-                        </td>
-
-                        <td className="border-b px-3 py-3 align-top">
-                          <input
-                            type="text"
-                            placeholder="np. OIL / towarzystwo"
-                            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
-                            value={organizerValue}
-                            onChange={(e) => {
-                              if (!isEditing) return;
-                              setEditDraft((d) => (d ? { ...d, organizer: e.target.value } : d));
-                            }}
-                            disabled={rowDisabled || !isEditing}
-                          />
-                        </td>
-
-                        {/* MENU AKCJI */}
-                        <td className="border-b px-3 py-3 align-top text-right">
-                          <div className="relative inline-block">
-                            <button
-                              type="button"
-                              className="rounded-xl border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-50"
-                              onClick={() => setOpenMenuId((prev) => (prev === row.id ? null : row.id))}
-                            >
-                              ⋯
-                            </button>
-
-                            {openMenuId === row.id && (
-                              <div className="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-xl border bg-white shadow-lg">
-                                <button
-                                  type="button"
-                                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50"
-                                  onClick={() => {
-                                    setOpenMenuId(null);
-                                    startEdit(row.id);
-                                  }}
-                                  disabled={rowDisabled}
-                                  title={rowDisabled ? "Poza okresem — edycja zablokowana." : "Edytuj"}
-                                >
-                                  Edytuj
-                                </button>
-
-                                <button
-                                  type="button"
-                                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 disabled:opacity-50"
-                                  onClick={() => {
-                                    setOpenMenuId(null);
-                                    saveEdit();
-                                  }}
-                                  disabled={!isEditing}
-                                  title={!isEditing ? "Najpierw kliknij Edytuj" : "Zapisz zmiany"}
-                                >
-                                  Zapisz
-                                </button>
-
-                                <button
-                                  type="button"
-                                  className="w-full px-4 py-2 text-left text-sm text-rose-700 hover:bg-rose-50"
-                                  onClick={() => {
-                                    setOpenMenuId(null);
-                                    removeActivity(row.id);
-                                  }}
-                                >
-                                  Usuń
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-
-                      {/* PANEL EDYCJI POD WIERSZEM */}
-                      {isEditing && (
-                        <tr key={`${row.id}-edit`}>
-                          <td className="border-b px-3 py-3" colSpan={5}>
-                            <div className="rounded-2xl bg-slate-50 p-4">
-                              <div className="grid gap-4 md:grid-cols-2">
-                                <div>
-                                  <label className="text-sm font-medium text-slate-700">Komentarz</label>
-                                  <textarea
-                                    className="mt-1 min-h-[88px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
-                                    value={editDraft?.comment ?? ""}
-                                    onChange={(e) => setEditDraft((d) => (d ? { ...d, comment: e.target.value } : d))}
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="text-sm font-medium text-slate-700">Certyfikat</label>
-                                  <input
-                                    type="file"
-                                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-                                    onChange={(e) => {
-                                      const f = e.target.files?.[0] ?? null;
-                                      setEditDraft((d) => {
-                                        if (!d) return d;
-                                        return {
-                                          ...d,
-                                          certificate_file: f,
-                                          certificate_name: f ? f.name : null,
-                                        };
-                                      });
-                                    }}
-                                  />
-                                  <div className="mt-2 text-xs text-slate-600">
-                                    {editDraft?.certificate_name ? (
-                                      <>
-                                        Wybrano: <span className="font-medium">{editDraft.certificate_name}</span>
-                                      </>
-                                    ) : (
-                                      "Opcjonalnie. (W kalkulatorze nazwa pliku zapisze się lokalnie — upload dodamy w Aktywnościach)."
-                                    )}
-                                  </div>
-
-                                  {user ? (
-                                    <div className="mt-2 text-xs">
-                                      Jeśli chcesz realnie podpiąć plik do bazy:{" "}
-                                      <Link className="text-blue-700 hover:underline" href="/activities">
-                                        przejdź do Aktywności
-                                      </Link>
-                                      .
-                                    </div>
-                                  ) : null}
-                                </div>
-                              </div>
-
-                              <div className="mt-4 flex flex-wrap justify-end gap-2">
-                                <button
-                                  type="button"
-                                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                                  onClick={cancelEdit}
-                                >
-                                  Anuluj
-                                </button>
-                                <button
-                                  type="button"
-                                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                                  onClick={saveEdit}
-                                >
-                                  Zapisz zmiany
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={addActivity}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                type="button"
-              >
-                + Dodaj aktywność
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-2xl bg-slate-50 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold text-slate-900">Podsumowanie</div>
-                <div className="text-sm text-slate-600">
-                  Liczymy tylko aktywności z okresu:{" "}
-                  <span className="font-medium text-slate-900">
+            {/* progres jak w portfolio */}
+            <div className="min-w-[260px]">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <div className="rounded-xl border bg-white px-4 py-2 text-sm">
+                  <span className="text-slate-600">Okres:</span>{" "}
+                  <span className="font-semibold text-slate-900">
                     {period.start}–{period.end}
                   </span>
                 </div>
+                <div className="rounded-xl border bg-white px-4 py-2 text-sm">
+                  <span className="text-slate-600">Masz:</span>{" "}
+                  <span className="font-semibold text-slate-900">{formatInt(totalPoints)}</span>
+                </div>
+                <div className="rounded-xl border bg-white px-4 py-2 text-sm">
+                  <span className="text-slate-600">Wymagane:</span>{" "}
+                  <span className="font-semibold text-slate-900">{formatInt(requiredPoints)}</span>
+                </div>
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm">
+                  <span className="text-rose-700">Brakuje:</span>{" "}
+                  <span className="font-semibold text-rose-800">{formatInt(missing)}</span>
+                </div>
               </div>
-              <div className="text-right">
-                <div className="text-xs text-slate-600">Suma punktów w okresie</div>
-                <div className="text-2xl font-extrabold text-slate-900">{formatInt(totalPoints)}</div>
+
+              <div className="flex items-center justify-between text-xs text-slate-600">
+                <span>Postęp</span>
+                <span className="font-semibold text-slate-900">{Math.round(progress)}%</span>
+              </div>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className={`h-full ${progressBarClass}`} style={{ width: `${progress}%` }} />
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Następny krok</h3>
-          <p className="mt-1 text-sm text-slate-600">
-            {user
-              ? "Możesz zapisać wpisy do Portfolio albo przejść do Aktywności i dodać certyfikaty."
-              : "Zaloguj się, żeby zapisać wpisy do bazy i potem podpinać certyfikaty w Aktywnościach."}
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            {user ? (
-              <>
+          {(profession === "Lekarz" || profession === "Lekarz dentysta") && (
+            <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
+              <span className="font-semibold">Limity (MVP):</span> dla{" "}
+              <span className="font-medium">{profession}</span> aktywność{" "}
+              <span className="font-medium">Samokształcenie</span> ma limit{" "}
+              <span className="font-medium">20 pkt / rok</span>.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* messages */}
+      {(info || err) && (
+        <div className="rounded-2xl border bg-white p-4 text-sm">
+          {info ? <div className="text-emerald-700">{info}</div> : null}
+          {err ? <div className="text-rose-700">{err}</div> : null}
+          {info ? (
+            <div className="mt-2 flex flex-wrap gap-3">
+              <Link href="/activities" className="text-blue-700 hover:underline">
+                Zobacz w Aktywnościach →
+              </Link>
+              <Link href="/portfolio" className="text-blue-700 hover:underline">
+                Przejdź do Portfolio →
+              </Link>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {/* CONTENT GRID */}
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* RIGHT (główna część jak w portfolio) */}
+        <section className="lg:col-span-8">
+          <div className="rounded-2xl border bg-white p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności (kalkulator)</h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  {user
+                    ? "Zalogowany: możesz zapisać poniższe wpisy do bazy (Portfolio)."
+                    : "Tryb gościa: to tylko szkic lokalny. Zaloguj się, aby zapisać do bazy."}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={addActivity}
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                  type="button"
+                >
+                  + Dodaj aktywność
+                </button>
+
+                <button
+                  onClick={saveAllToPortfolio}
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  disabled={!user || busy}
+                  type="button"
+                  title={!user ? "Zaloguj się, żeby zapisać." : "Zapisze wszystkie wiersze do Portfolio."}
+                >
+                  {busy ? "Zapisuję…" : "Zapisz do Portfolio"}
+                </button>
+
+                {user ? (
+                  <Link
+                    href="/activities"
+                    className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Aktywności
+                  </Link>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Zaloguj i zapisz
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <table className="w-full border-separate border-spacing-0">
+                <thead>
+                  <tr className="text-left text-xs font-semibold text-slate-600">
+                    <th className="border-b px-3 py-3">Rodzaj</th>
+                    <th className="border-b px-3 py-3">Punkty</th>
+                    <th className="border-b px-3 py-3">Rok</th>
+                    <th className="border-b px-3 py-3">Organizator</th>
+                    <th className="border-b px-3 py-3 text-right">Akcje</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {applied.map((row) => {
+                    const rowDisabled = !row.in_period;
+                    const src = activities.find((a) => a.id === row.id);
+                    const isEditing = editingId === row.id;
+
+                    const pointsValue = isEditing
+                      ? editDraft?.points ?? 0
+                      : src
+                        ? src.points
+                        : Math.max(0, Number(row.points) || 0);
+
+                    const yearValue = isEditing
+                      ? editDraft?.year ?? currentYear
+                      : src
+                        ? src.year
+                        : Number(row.year) || currentYear;
+
+                    const organizerValue = isEditing ? editDraft?.organizer ?? "" : src?.organizer ?? "";
+                    const typeValue = isEditing ? (editDraft?.type ?? (src?.type ?? row.type)) : (src?.type ?? row.type);
+
+                    return (
+                      <>
+                        <tr
+                          key={row.id}
+                          className={`text-sm ${rowDisabled ? "opacity-50" : ""}`}
+                          title={rowDisabled ? "Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone." : ""}
+                        >
+                          <td className="border-b px-3 py-3 align-top">
+                            <select
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
+                              value={typeValue as ActivityType}
+                              onChange={(e) => {
+                                if (!isEditing) return;
+                                const nextType = e.target.value as ActivityType;
+                                setEditDraft((d) => {
+                                  if (!d) return d;
+                                  const next = { ...d, type: nextType };
+                                  next.points = DEFAULT_POINTS_BY_TYPE[nextType];
+                                  return next;
+                                });
+                              }}
+                              disabled={rowDisabled || !isEditing}
+                            >
+                              {TYPES.map((t) => (
+                                <option key={t} value={t}>
+                                  {t}
+                                </option>
+                              ))}
+                            </select>
+
+                            {!row.in_period && (
+                              <div className="mt-1 text-xs text-amber-700">
+                                Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone.
+                              </div>
+                            )}
+
+                            {row.warning ? <div className="mt-1 text-xs text-rose-700">{row.warning}</div> : null}
+
+                            {row.in_period && row.applied_points !== Math.max(0, Number(src?.points ?? row.points) || 0) ? (
+                              <div className="mt-1 text-[11px] text-slate-600">
+                                Zaliczone do sumy: <span className="font-semibold">{row.applied_points}</span> pkt
+                              </div>
+                            ) : null}
+                          </td>
+
+                          <td className="border-b px-3 py-3 align-top">
+                            <input
+                              type="number"
+                              min={0}
+                              className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
+                              value={pointsValue}
+                              onChange={(e) => {
+                                if (!isEditing) return;
+                                const val = Number(e.target.value || 0);
+                                setEditDraft((d) => (d ? { ...d, points: Math.max(0, val) } : d));
+                              }}
+                              disabled={rowDisabled || !isEditing}
+                            />
+                            <div className="mt-1 text-[11px] text-slate-500">
+                              {isEditing ? "Edycja" : (src?.pointsAuto ? "Auto (wg rodzaju)" : "Ręcznie (z certyfikatu)")}
+                            </div>
+                          </td>
+
+                          <td className="border-b px-3 py-3 align-top">
+                            <input
+                              type="number"
+                              className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
+                              value={yearValue}
+                              onChange={(e) => {
+                                if (!isEditing) return;
+                                setEditDraft((d) => (d ? { ...d, year: Number(e.target.value || currentYear) } : d));
+                              }}
+                              disabled={rowDisabled || !isEditing}
+                            />
+                          </td>
+
+                          <td className="border-b px-3 py-3 align-top">
+                            <input
+                              type="text"
+                              placeholder="np. OIL / towarzystwo"
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
+                              value={organizerValue}
+                              onChange={(e) => {
+                                if (!isEditing) return;
+                                setEditDraft((d) => (d ? { ...d, organizer: e.target.value } : d));
+                              }}
+                              disabled={rowDisabled || !isEditing}
+                            />
+                          </td>
+
+                          {/* MENU AKCJI */}
+                          <td className="border-b px-3 py-3 align-top text-right">
+                            <div className="relative inline-block">
+                              <button
+                                type="button"
+                                className="rounded-xl border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-50"
+                                onClick={() => setOpenMenuId((prev) => (prev === row.id ? null : row.id))}
+                              >
+                                ⋯
+                              </button>
+
+                              {openMenuId === row.id && (
+                                <div className="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-xl border bg-white shadow-lg">
+                                  <button
+                                    type="button"
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50"
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      startEdit(row.id);
+                                    }}
+                                    disabled={rowDisabled}
+                                    title={rowDisabled ? "Poza okresem — edycja zablokowana." : "Edytuj"}
+                                  >
+                                    Edytuj
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 disabled:opacity-50"
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      saveEdit();
+                                    }}
+                                    disabled={!isEditing}
+                                    title={!isEditing ? "Najpierw kliknij Edytuj" : "Zapisz zmiany"}
+                                  >
+                                    Zapisz
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className="w-full px-4 py-2 text-left text-sm text-rose-700 hover:bg-rose-50"
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      removeActivity(row.id);
+                                    }}
+                                  >
+                                    Usuń
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* PANEL EDYCJI */}
+                        {isEditing && (
+                          <tr key={`${row.id}-edit`}>
+                            <td className="border-b px-3 py-3" colSpan={5}>
+                              <div className="rounded-2xl bg-slate-50 p-4">
+                                <div className="grid gap-4 md:grid-cols-2">
+                                  <div>
+                                    <label className="text-sm font-medium text-slate-700">Komentarz</label>
+                                    <textarea
+                                      className="mt-1 min-h-[88px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
+                                      value={editDraft?.comment ?? ""}
+                                      onChange={(e) => setEditDraft((d) => (d ? { ...d, comment: e.target.value } : d))}
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="text-sm font-medium text-slate-700">Certyfikat</label>
+                                    <input
+                                      type="file"
+                                      className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                                      onChange={(e) => {
+                                        const f = e.target.files?.[0] ?? null;
+                                        setEditDraft((d) => {
+                                          if (!d) return d;
+                                          return {
+                                            ...d,
+                                            certificate_file: f,
+                                            certificate_name: f ? f.name : null,
+                                          };
+                                        });
+                                      }}
+                                    />
+                                    <div className="mt-2 text-xs text-slate-600">
+                                      {editDraft?.certificate_name ? (
+                                        <>
+                                          Wybrano: <span className="font-medium">{editDraft.certificate_name}</span>
+                                        </>
+                                      ) : (
+                                        "Opcjonalnie. (W kalkulatorze zapisujemy nazwę pliku lokalnie — upload dodamy w Aktywnościach)."
+                                      )}
+                                    </div>
+
+                                    {user ? (
+                                      <div className="mt-2 text-xs">
+                                        Jeśli chcesz realnie podpiąć plik do bazy:{" "}
+                                        <Link className="text-blue-700 hover:underline" href="/activities">
+                                          przejdź do Aktywności
+                                        </Link>
+                                        .
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                </div>
+
+                                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                                    onClick={cancelEdit}
+                                  >
+                                    Anuluj
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                                    onClick={saveEdit}
+                                  >
+                                    Zapisz zmiany
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={addActivity}
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                  type="button"
+                >
+                  + Dodaj aktywność
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-slate-50 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">Podsumowanie</div>
+                  <div className="text-sm text-slate-600">
+                    Liczymy tylko aktywności z okresu:{" "}
+                    <span className="font-medium text-slate-900">
+                      {period.start}–{period.end}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-slate-600">Suma punktów w okresie</div>
+                  <div className="text-2xl font-extrabold text-slate-900">{formatInt(totalPoints)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-900">Następny krok</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              {user
+                ? "Możesz zapisać wpisy do Portfolio albo przejść do Aktywności i dodać certyfikaty."
+                : "Zaloguj się, żeby zapisać wpisy do bazy i potem podpinać certyfikaty w Aktywnościach."}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {user ? (
+                <>
+                  <Link
+                    href="/activities"
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                  >
+                    Przejdź do Aktywności
+                  </Link>
+                  <Link
+                    href="/portfolio"
+                    className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Portfolio
+                  </Link>
+                </>
+              ) : (
                 <Link
-                  href="/activities"
+                  href="/login"
                   className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                 >
-                  Przejdź do Aktywności
+                  Zaloguj się
                 </Link>
-                <Link
-                  href="/portfolio"
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Portfolio
-                </Link>
-              </>
-            ) : (
-              <Link
-                href="/login"
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                Zaloguj się
-              </Link>
-            )}
+              )}
 
-            <Link
-              href="/"
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Wróć na stronę główną
-            </Link>
+              <Link
+                href="/"
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Wróć na stronę główną
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* LEFT (tak jak w portfolio: „next steps / do nadrobienia”) */}
+        <section className="lg:col-span-4">
+          <div className="rounded-2xl border bg-white p-5 shadow-sm">
+            <div className="text-sm font-semibold text-slate-900">{status.title}</div>
+            {status.desc ? <div className="mt-1 text-sm text-slate-600">{status.desc}</div> : null}
+
+            {missing > 0 ? (
+              <div className="mt-4 rounded-xl bg-slate-50 p-4">
+                <div className="text-sm font-semibold text-slate-900">Tempo, żeby zdążyć</div>
+                <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
+                  <div>
+                    <div className="text-xs text-slate-600">Na rok</div>
+                    <div className="font-bold text-slate-900">{plan.perYear} pkt</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-600">Na kwartał</div>
+                    <div className="font-bold text-slate-900">{plan.perQuarter} pkt</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-600">Na miesiąc</div>
+                    <div className="font-bold text-slate-900">{plan.perMonth} pkt</div>
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-slate-600">Liczone wg lat do końca okresu (do {period.end}).</div>
+              </div>
+            ) : null}
+
+            {recommendations.length > 0 && (
+              <div className="mt-4">
+                <div className="text-sm font-semibold text-slate-900">Szybkie propozycje uzupełnienia</div>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-800">
+                  {recommendations.map((r) => (
+                    <li key={r}>{r}</li>
+                  ))}
+                </ul>
+                <div className="mt-2 text-xs text-slate-600">
+                  *Przykładowe scenariusze na bazie domyślnych punktów dla typów aktywności.
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
