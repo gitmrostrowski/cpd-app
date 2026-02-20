@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase/client";
@@ -25,8 +25,11 @@ export default function LoginPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  // cooldown dla maili (otp / signup), żeby nie wpadać w limit
+  // cooldown dla maili (otp / signup / reset), żeby nie wpadać w limit
   const [emailCooldownUntil, setEmailCooldownUntil] = useState<number>(0);
+
+  // ticker do odświeżania UI co 1s (żeby countdown schodził bez refresh)
+  const [tick, setTick] = useState(0);
 
   const redirectTo = useMemo(() => {
     // callback endpoint musi istnieć: app/auth/callback/route.ts
@@ -38,11 +41,26 @@ export default function LoginPage() {
   const canPasswordSubmit = emailTrim.length > 3 && password.length >= 6;
   const canEmailSubmit = emailTrim.length > 3;
 
-  const now = Date.now();
+  // odświeżaj raz na sekundę, tylko gdy cooldown aktywny
+  useEffect(() => {
+    if (!emailCooldownUntil) return;
+    const id = window.setInterval(() => setTick((t) => t + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [emailCooldownUntil]);
+
+  const now = Date.now(); // tick powoduje re-render, więc "now" się zmienia
   const emailCooldownActive = now < emailCooldownUntil;
   const cooldownSecondsLeft = emailCooldownActive
     ? Math.ceil((emailCooldownUntil - now) / 1000)
     : 0;
+
+  // jak cooldown minie, usuń komunikat rate-limit (żeby nie wisiał)
+  useEffect(() => {
+    if (!emailCooldownActive && msg && isRateLimitError(msg)) {
+      setMsg(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emailCooldownActive]);
 
   async function signInWithPassword(e: React.FormEvent) {
     e.preventDefault();
