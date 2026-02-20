@@ -251,7 +251,8 @@ export default function CalculatorClient() {
             const pointsAuto = typeof a?.pointsAuto === "boolean" ? a.pointsAuto : false;
 
             const comment = safeString(a?.comment ?? "", "");
-            const certificate_name = typeof a?.certificate_name === "string" ? a.certificate_name : null;
+            const certificate_name =
+              typeof a?.certificate_name === "string" ? a.certificate_name : null;
 
             const status = normalizeStatus(a?.status);
 
@@ -758,8 +759,80 @@ export default function CalculatorClient() {
         </div>
       </div>
 
-      {/* ===== KPI CARDS ===== */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* ===== KPI / HERO (SaaS) ===== */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* HERO: Brakuje */}
+        <div className="relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
+          <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-rose-100 blur-2xl" />
+          <div className="absolute -left-10 -bottom-16 h-44 w-44 rounded-full bg-blue-100 blur-2xl" />
+
+          <div className="relative flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
+                Do nadrobienia
+              </div>
+
+              <div className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900">
+                {formatInt(missing)} pkt
+              </div>
+
+              <div className="mt-1 text-sm text-slate-600">
+                Cel: <span className="font-semibold text-slate-900">{formatInt(requiredPoints)}</span> • Masz:{" "}
+                <span className="font-semibold text-slate-900">{formatInt(totalPoints)}</span>
+              </div>
+
+              <div className="mt-3 inline-flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                  Okres: {period.start}–{period.end}
+                </span>
+                <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${progressPill}`}>
+                  Postęp: {Math.round(progress)}%
+                </span>
+                {plannedActivities.length > 0 && (
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+                    Plan: {plannedActivities.length}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="relative min-w-[240px] flex-1">
+              <div className="flex items-center justify-between text-xs text-slate-600">
+                <span>Postęp</span>
+                <span className="font-semibold text-slate-900">{Math.round(progress)}%</span>
+              </div>
+              <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className={`h-full ${progressBarClass}`} style={{ width: `${progress}%` }} />
+              </div>
+              <div className="mt-2 text-xs text-slate-600">
+                {formatInt(totalPoints)} / {formatInt(requiredPoints)} pkt
+              </div>
+            </div>
+          </div>
+
+          {missing > 0 ? (
+            <div className="relative mt-4 flex flex-wrap gap-2">
+              <Link
+                href="/baza-szkolen"
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Znajdź szkolenie
+              </Link>
+              <Link
+                href="/aktywnosci?new=1"
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Dodaj ręcznie
+              </Link>
+            </div>
+          ) : (
+            <div className="relative mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
+              Wszystko gra — spełniasz wymagania w tym okresie 🎉
+            </div>
+          )}
+        </div>
+
+        {/* Zdobyte */}
         <div className="rounded-2xl border bg-white p-5 shadow-sm">
           <div className="text-xs font-semibold text-slate-600">Zdobyte (DONE w okresie)</div>
           <div className="mt-2 text-3xl font-extrabold text-slate-900">{formatInt(totalPoints)}</div>
@@ -768,13 +841,8 @@ export default function CalculatorClient() {
           </div>
         </div>
 
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <div className="text-xs font-semibold text-slate-600">Brakuje</div>
-          <div className="mt-2 text-3xl font-extrabold text-slate-900">{formatInt(missing)}</div>
-          <div className="mt-2 text-sm text-slate-600">{status.desc || "Zobacz tempo i propozycje po prawej."}</div>
-        </div>
-
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
+        {/* Zaplanowane */}
+        <div className="rounded-2xl border bg-white p-5 shadow-sm lg:hidden">
           <div className="text-xs font-semibold text-slate-600">Zaplanowane</div>
           <div className="mt-2 text-3xl font-extrabold text-slate-900">{plannedActivities.length}</div>
           <div className="mt-2 text-sm text-slate-600">
@@ -815,10 +883,18 @@ export default function CalculatorClient() {
                 recentDone.map((row) => {
                   const outside = !row.in_period;
                   return (
-                    <div key={String(row.id)} className={`flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between ${outside ? "opacity-60" : ""}`}>
+                    <div
+                      key={String(row.id)}
+                      className={`flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between ${
+                        outside ? "opacity-60" : ""
+                      }`}
+                    >
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="font-semibold text-slate-900">{String(row.type)}</div>
+                          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                            DONE
+                          </span>
                           {outside && (
                             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
                               Poza okresem
@@ -883,7 +959,12 @@ export default function CalculatorClient() {
                 recentPlanned.map((a) => {
                   const outside = !isYearInPeriod(a.year);
                   return (
-                    <div key={a.id} className={`flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between ${outside ? "opacity-70" : ""}`}>
+                    <div
+                      key={a.id}
+                      className={`flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between ${
+                        outside ? "opacity-70" : ""
+                      }`}
+                    >
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="font-semibold text-slate-900">{a.type}</div>
@@ -924,14 +1005,14 @@ export default function CalculatorClient() {
           </div>
         </section>
 
-        {/* RIGHT: insights */}
-        <section className="lg:col-span-4 space-y-6">
-          <div className="rounded-2xl border bg-white p-5 shadow-sm">
+        {/* RIGHT: insights (secondary panel) */}
+        <section className="lg:col-span-4 space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+          <div className="rounded-2xl border bg-white p-5">
             <div className="text-sm font-semibold text-slate-900">{status.title}</div>
             {status.desc ? <div className="mt-1 text-sm text-slate-600">{status.desc}</div> : null}
 
             {missing > 0 ? (
-              <div className="mt-4 rounded-xl bg-slate-50 p-4">
+              <div className="mt-4 rounded-xl bg-white p-4">
                 <div className="text-sm font-semibold text-slate-900">Tempo, żeby zdążyć</div>
                 <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
                   <div>
@@ -951,15 +1032,11 @@ export default function CalculatorClient() {
                   Liczone wg lat do końca okresu (do {period.end}).
                 </div>
               </div>
-            ) : (
-              <div className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
-                Wygląda dobrze — spełniasz wymagania w tym okresie 🎉
-              </div>
-            )}
+            ) : null}
           </div>
 
           {recommendations.length > 0 && (
-            <div className="rounded-2xl border bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border bg-white p-5">
               <div className="text-sm font-semibold text-slate-900">Szybkie propozycje uzupełnienia</div>
               <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-800">
                 {recommendations.map((r) => (
@@ -986,7 +1063,7 @@ export default function CalculatorClient() {
             </div>
           )}
 
-          <div className="rounded-2xl border bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border bg-white p-5">
             <div className="text-sm font-semibold text-slate-900">Jakość danych (MVP)</div>
             <div className="mt-2 space-y-2 text-sm text-slate-700">
               <div className="flex items-center justify-between">
@@ -999,7 +1076,11 @@ export default function CalculatorClient() {
               </div>
             </div>
             <div className="mt-3 text-xs text-slate-600">
-              Uzupełnisz to w <Link className="text-blue-700 hover:underline" href="/aktywnosci">Aktywnościach</Link>.
+              Uzupełnisz to w{" "}
+              <Link className="text-blue-700 hover:underline" href="/aktywnosci">
+                Aktywnościach
+              </Link>
+              .
             </div>
           </div>
         </section>
