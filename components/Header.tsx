@@ -17,11 +17,12 @@ type NavItem = {
   soon?: boolean;
 };
 
-const NAV: NavItem[] = [
+const NAV = [
   { href: "/", label: "Home" },
   { href: "/kalkulator", label: "Kalkulator" },
-  { href: "/activities", label: "Aktywności" },
-  { href: "/raporty", label: "Raporty", soon: !REPORTS_READY },
+  { href: "/aktywnosci", label: "Aktywności" },
+  { href: "/raporty", label: "Raporty" },
+  { href: "/baza-szkolen", label: "Baza szkoleń" },
 ];
 
 function cx(...classes: Array<string | false | undefined | null>) {
