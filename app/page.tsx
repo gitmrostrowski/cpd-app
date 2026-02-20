@@ -10,13 +10,6 @@ import { createBrowserSupabase } from "@/lib/supabaseBrowser";
 import FeatureGrid from "@/components/FeatureGrid";
 import BottomCTA from "@/components/BottomCTA";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-
 type ProfileRow = {
   user_id: string;
   profession: string | null;
@@ -47,6 +40,46 @@ const FAQ_ITEMS = [
     a: "Tak. Podstawowe funkcje są bezpłatne. Wkrótce pojawią się opcje PRO (PDF, przypomnienia).",
   },
 ];
+
+function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-2 md:p-3">
+      <div className="space-y-2">
+        {items.map((item) => (
+          <details
+            key={item.q}
+            className="group rounded-2xl border border-slate-200 bg-white px-4 md:px-5 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-left text-sm font-semibold text-slate-900">
+              <span>{item.q}</span>
+
+              <span className="ml-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-50">
+                <svg
+                  className="h-4 w-4 text-slate-500 transition-transform duration-200 group-open:rotate-180"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M6 9l6 6 6-6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            </summary>
+
+            <div className="pb-4 pt-0 text-sm leading-relaxed text-slate-600">
+              {item.a}
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Page() {
   const supabase = useMemo(() => createBrowserSupabase(), []);
@@ -468,29 +501,14 @@ export default function Page() {
             </div>
           </div>
 
-          {/* FAQ (Accordion) */}
+          {/* FAQ (Details/summary - bez instalacji) */}
           <div className="lg:col-span-12">
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 md:p-10 shadow-md">
               <h2 className="text-3xl font-extrabold text-slate-900">FAQ</h2>
               <p className="mt-2 text-slate-600">Najczęstsze pytania. Kliknij, aby rozwinąć odpowiedź.</p>
 
-              <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-2 md:p-3">
-                <Accordion type="single" collapsible className="w-full">
-                  {FAQ_ITEMS.map((item, idx) => (
-                    <AccordionItem
-                      key={item.q}
-                      value={`faq-${idx}`}
-                      className="rounded-2xl border border-slate-200 bg-white px-4 md:px-5 mb-2 last:mb-0 shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <AccordionTrigger className="text-left text-sm font-semibold text-slate-900">
-                        {item.q}
-                      </AccordionTrigger>
-                      <AccordionContent className="text-sm text-slate-600 leading-relaxed">
-                        {item.a}
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
+              <div className="mt-6">
+                <FaqAccordion items={FAQ_ITEMS} />
               </div>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
