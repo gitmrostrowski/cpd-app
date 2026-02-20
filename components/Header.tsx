@@ -18,7 +18,7 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { href: "/", label: "Home" },
-  { href: "/kalkulator", label: "Kalkulator" },
+  { href: "/kalkulator", label: "Panel CPD" },
   { href: "/aktywnosci", label: "Aktywności" },
   { href: "/raporty", label: "Raporty", soon: !REPORTS_READY },
   { href: "/baza-szkolen", label: "Baza szkoleń" },
