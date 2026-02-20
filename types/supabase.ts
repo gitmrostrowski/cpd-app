@@ -74,7 +74,60 @@ export type Database = {
         ];
       };
 
-      // ✅ NOWA TABELA: profiles
+      // ✅ TABELA: trainings
+      trainings: {
+        Row: {
+          id: string;
+          title: string;
+          organizer: string | null;
+          points: number | null;
+          type: string | null; // 'online' | 'stacjonarne' | 'hybrydowe'
+          start_date: string | null; // date -> string
+          end_date: string | null; // date -> string
+          category: string | null;
+          profession: string | null;
+          voivodeship: string | null;
+          external_url: string | null;
+          is_partner: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          organizer?: string | null;
+          points?: number | null;
+          type?: string | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          category?: string | null;
+          profession?: string | null;
+          voivodeship?: string | null;
+          external_url?: string | null;
+          is_partner?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          organizer?: string | null;
+          points?: number | null;
+          type?: string | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          category?: string | null;
+          profession?: string | null;
+          voivodeship?: string | null;
+          external_url?: string | null;
+          is_partner?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      // ✅ TABELA: profiles
       profiles: {
         Row: {
           user_id: string;
@@ -112,4 +165,3 @@ export type Database = {
     CompositeTypes: {};
   };
 };
-
