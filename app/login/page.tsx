@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase/client";
 
@@ -34,9 +35,7 @@ export default function LoginPage() {
 
   const now = Date.now();
   const emailCooldownActive = now < emailCooldownUntil;
-  const cooldownSecondsLeft = emailCooldownActive
-    ? Math.ceil((emailCooldownUntil - now) / 1000)
-    : 0;
+  const cooldownSecondsLeft = emailCooldownActive ? Math.ceil((emailCooldownUntil - now) / 1000) : 0;
 
   async function signInWithPassword(e: React.FormEvent) {
     e.preventDefault();
@@ -60,8 +59,6 @@ export default function LoginPage() {
         return;
       }
 
-      // jeśli email confirmations włączone, a użytkownik nie potwierdził,
-      // Supabase potrafi nie dać sesji
       if (!data.session) {
         setMsg("Brak sesji po logowaniu. Sprawdź czy konto jest potwierdzone e-mailem.");
         return;
@@ -110,13 +107,11 @@ export default function LoginPage() {
         return;
       }
 
-      // Jeśli potwierdzenia są WYŁĄCZONE, czasem dostaniesz od razu sesję
       if (data.session) {
         router.push("/portfolio");
         return;
       }
 
-      // Jeśli potwierdzenia są WŁĄCZONE — user powstaje, ale bez sesji
       setMsg("Konto utworzone. Sprawdź e-mail i kliknij link aktywacyjny, potem zaloguj się.");
       setEmailCooldownUntil(Date.now() + 60_000);
     } catch (err: any) {
@@ -170,74 +165,137 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-4 p-6">
-      <h1 className="text-2xl font-semibold">Zaloguj się</h1>
+    <section className="relative overflow-hidden">
+      {/* tło spójne z landing */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-blue-50/70 via-white to-white" />
+      <div className="pointer-events-none absolute left-[-10%] top-[-25%] h-[34rem] w-[34rem] rounded-full bg-blue-200/35 blur-3xl" />
+      <div className="pointer-events-none absolute right-[-12%] top-[5%] h-[28rem] w-[28rem] rounded-full bg-indigo-200/25 blur-3xl" />
 
-      <form className="space-y-3" onSubmit={signInWithPassword}>
-        <input
-          className="w-full rounded border p-2"
-          placeholder="e-mail"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          autoComplete="email"
-        />
+      <div className="relative mx-auto max-w-6xl px-4 py-10 md:py-14">
+        <div className="mx-auto max-w-xl">
+          <div className="rounded-[32px] border border-slate-200 bg-white/75 p-6 md:p-10 shadow-md backdrop-blur">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-800 shadow-sm">
+              <span className="h-2 w-2 rounded-full bg-blue-600" />
+              CRPE — logowanie
+            </div>
 
-        <input
-          className="w-full rounded border p-2"
-          placeholder="hasło (min. 6 znaków)"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-          autoComplete="current-password"
-        />
+            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900">
+              Zaloguj się
+            </h1>
+            <p className="mt-2 text-slate-600">
+              Wpisz e-mail i hasło. Jeśli nie masz konta — utworzysz je poniżej.
+            </p>
 
-        <button
-          className="w-full rounded border bg-black p-2 text-white disabled:opacity-60"
-          disabled={pending || !canPasswordSubmit}
-          type="submit"
-          title={!canPasswordSubmit ? "Wpisz e-mail i hasło (min. 6 znaków)" : undefined}
-        >
-          {pending ? "Loguję…" : "Zaloguj (hasło)"}
-        </button>
+            {msg ? (
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                {msg}
+              </div>
+            ) : null}
 
-        <button
-          className="w-full rounded border p-2 disabled:opacity-60"
-          disabled={pending || !canPasswordSubmit || emailCooldownActive}
-          type="button"
-          onClick={signUp}
-          title={
-            emailCooldownActive
-              ? `Odczekaj ${cooldownSecondsLeft}s`
-              : !canPasswordSubmit
-              ? "Wpisz e-mail i hasło (min. 6 znaków)"
-              : undefined
-          }
-        >
-          {emailCooldownActive ? `Załóż konto (${cooldownSecondsLeft}s)` : "Załóż konto"}
-        </button>
+            <form className="mt-6 space-y-4" onSubmit={signInWithPassword}>
+              <div>
+                <label className="text-sm font-semibold text-slate-800">E-mail</label>
+                <input
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                  placeholder="np. anna@szpital.pl"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+              </div>
 
-        <button
-          className="w-full rounded border p-2 disabled:opacity-60"
-          disabled={pending || !canEmailSubmit || emailCooldownActive}
-          type="button"
-          onClick={magicLink}
-          title={
-            emailCooldownActive
-              ? `Odczekaj ${cooldownSecondsLeft}s`
-              : !canEmailSubmit
-              ? "Wpisz e-mail"
-              : undefined
-          }
-        >
-          {emailCooldownActive ? `Magic link (${cooldownSecondsLeft}s)` : "Magic link na e-mail"}
-        </button>
-      </form>
+              <div>
+                <label className="text-sm font-semibold text-slate-800">Hasło</label>
+                <input
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                  placeholder="min. 6 znaków"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  autoComplete="current-password"
+                />
+              </div>
 
-      {msg && <p className="text-sm text-gray-700">{msg}</p>}
-    </div>
+              <button
+                className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
+                disabled={pending || !canPasswordSubmit}
+                type="submit"
+                title={!canPasswordSubmit ? "Wpisz e-mail i hasło (min. 6 znaków)" : undefined}
+              >
+                {pending ? "Loguję…" : "Zaloguj"}
+              </button>
+
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <button
+                  className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-200 hover:bg-blue-50/50 disabled:opacity-60"
+                  disabled={pending || !canEmailSubmit || emailCooldownActive}
+                  type="button"
+                  onClick={magicLink}
+                  title={
+                    emailCooldownActive
+                      ? `Odczekaj ${cooldownSecondsLeft}s`
+                      : !canEmailSubmit
+                      ? "Wpisz e-mail"
+                      : undefined
+                  }
+                >
+                  {emailCooldownActive ? `Wyślij link (${cooldownSecondsLeft}s)` : "Wyślij magic link"}
+                </button>
+
+                <div className="text-xs text-slate-500">
+                  {emailCooldownActive ? (
+                    <>Limit wysyłek: odczekaj {cooldownSecondsLeft}s.</>
+                  ) : (
+                    <>Jeśli nie pamiętasz hasła, użyj magic linku.</>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-sm font-semibold text-slate-900">Nie masz konta?</div>
+                <div className="mt-1 text-sm text-slate-600">
+                  Utwórz konto tym samym e-mailem i hasłem. Potem (jeśli wymagane) potwierdź link w wiadomości.
+                </div>
+
+                <button
+                  className="mt-3 w-full rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-800 shadow-sm ring-1 ring-slate-200 hover:bg-white/80 disabled:opacity-60"
+                  disabled={pending || !canPasswordSubmit || emailCooldownActive}
+                  type="button"
+                  onClick={signUp}
+                  title={
+                    emailCooldownActive
+                      ? `Odczekaj ${cooldownSecondsLeft}s`
+                      : !canPasswordSubmit
+                      ? "Wpisz e-mail i hasło (min. 6 znaków)"
+                      : undefined
+                  }
+                >
+                  {emailCooldownActive ? `Utwórz konto (${cooldownSecondsLeft}s)` : "Utwórz konto"}
+                </button>
+
+                <div className="mt-3 text-xs text-slate-500">
+                  Masz już konto? Po prostu zaloguj się powyżej.
+                </div>
+              </div>
+
+              <div className="pt-2 text-center text-xs text-slate-500">
+                <Link href="/" className="hover:text-slate-700">
+                  ← Wróć na stronę główną
+                </Link>
+              </div>
+            </form>
+          </div>
+
+          {/* mała notka pod kartą */}
+          <div className="mt-6 text-center text-xs text-slate-500">
+            Logowanie i rejestracja są w jednym miejscu — w menu zostaje tylko „Zaloguj”.
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
