@@ -38,6 +38,20 @@ type Activity = {
   year: number;
   organizer?: string;
   pointsAuto?: boolean;
+
+  // nowe pola pod edycję
+  comment?: string;
+  certificate_name?: string | null; // nazwa pliku (sam plik nie jest trzymany w localStorage)
+};
+
+type EditDraft = {
+  type: ActivityType;
+  points: number;
+  year: number;
+  organizer: string;
+  comment: string;
+  certificate_name: string | null;
+  certificate_file?: File | null; // tylko w RAM (nie zapisujemy do localStorage)
 };
 
 const TYPES: ActivityType[] = [
@@ -132,7 +146,6 @@ export default function CalculatorClient() {
   const [customStart, setCustomStart] = useState<number>(currentYear - 1);
   const [customEnd, setCustomEnd] = useState<number>(currentYear + 2);
 
-  // requiredPoints: domyślne per zawód + możliwość ręcznej edycji
   const [requiredPoints, setRequiredPoints] = useState<number>(
     DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"],
   );
@@ -145,6 +158,8 @@ export default function CalculatorClient() {
       year: currentYear,
       organizer: "",
       pointsAuto: true,
+      comment: "",
+      certificate_name: null,
     },
     {
       id: uid(),
@@ -153,6 +168,8 @@ export default function CalculatorClient() {
       year: currentYear,
       organizer: "",
       pointsAuto: true,
+      comment: "",
+      certificate_name: null,
     },
   ]);
 
@@ -160,15 +177,16 @@ export default function CalculatorClient() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // żeby nie spamować UPSERT przy każdym znaku + nie nadpisywać DB w trakcie loadProfile()
   const profileLoadedRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
-
-  /**
-   * requiredDirty: TRUE jeśli user ręcznie zmienił requiredPoints
-   * WAŻNE: nie ustawiaj tego automatycznie tylko dlatego, że coś było zapisane w storage.
-   */
   const requiredDirtyRef = useRef(false);
+
+  // --- NOWE: tryb edycji wiersza + draft ---
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
+
+  // --- NOWE: proste menu akcji (jedno otwarte naraz) ---
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   function clearMessages() {
     setInfo(null);
@@ -215,10 +233,8 @@ export default function CalculatorClient() {
       setCustomStart(safeNumber(parsed?.customStart, currentYear - 1));
       setCustomEnd(safeNumber(parsed?.customEnd, currentYear + 2));
 
-      // requiredDirty - jawnie z storage (nie „na podstawie istnienia requiredPoints”)
       requiredDirtyRef.current = typeof parsed?.requiredDirty === "boolean" ? parsed.requiredDirty : false;
 
-      // requiredPoints
       const rpFallback = DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"];
       const rp = safeNumber(parsed?.requiredPoints, rpFallback);
       setRequiredPoints(Math.max(0, rp));
@@ -233,6 +249,10 @@ export default function CalculatorClient() {
             const organizer = safeString(a?.organizer ?? "", "");
             const pointsAuto = typeof a?.pointsAuto === "boolean" ? a.pointsAuto : false;
 
+            const comment = safeString(a?.comment ?? "", "");
+            const certificate_name =
+              typeof a?.certificate_name === "string" ? a.certificate_name : null;
+
             return {
               id: safeString(a?.id, uid()) || uid(),
               type,
@@ -240,6 +260,8 @@ export default function CalculatorClient() {
               points,
               organizer,
               pointsAuto,
+              comment,
+              certificate_name,
             };
           })
           .filter((a: Activity) => !!a.id);
@@ -298,23 +320,19 @@ export default function CalculatorClient() {
           const prof = dbProfession ?? profession;
           const def = DEFAULT_REQUIRED_POINTS_BY_PROFESSION[prof] ?? 0;
 
-          // jeśli wartość wygląda jak „stara z innego zawodu” (np. 120) → naprawiamy automatem
           if (isValueDefaultForSomeOtherProfession(data.required_points, prof)) {
             requiredDirtyRef.current = false;
             setRequiredPoints(def);
 
-            // od razu korygujemy w DB, żeby nie wracało
             await saveProfilePrefs({
               profession: prof,
               required_points: def,
             });
           } else {
-            // normalnie: przyjmujemy z DB jako „ustawione”
             setRequiredPoints(Math.max(0, data.required_points));
             requiredDirtyRef.current = true;
           }
         } else {
-          // brak w DB → ustaw domyślne dla zawodu
           const prof = dbProfession ?? profession;
           requiredDirtyRef.current = false;
           setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION[prof] ?? 0);
@@ -376,6 +394,10 @@ export default function CalculatorClient() {
     requiredDirtyRef.current = false;
     setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"]);
 
+    setEditingId(null);
+    setEditDraft(null);
+    setOpenMenuId(null);
+
     setActivities([
       {
         id: uid(),
@@ -384,6 +406,8 @@ export default function CalculatorClient() {
         year: currentYear,
         organizer: "",
         pointsAuto: true,
+        comment: "",
+        certificate_name: null,
       },
     ]);
     clearMessages();
@@ -419,6 +443,8 @@ export default function CalculatorClient() {
         year: currentYear,
         organizer: "",
         pointsAuto: true,
+        comment: "",
+        certificate_name: null,
       },
     ]);
   }
@@ -428,6 +454,11 @@ export default function CalculatorClient() {
   }
 
   function removeActivity(id: string) {
+    // jeśli usuwamy edytowany wiersz -> wyjdź z edycji
+    if (editingId === id) {
+      setEditingId(null);
+      setEditDraft(null);
+    }
     setActivities((prev) => prev.filter((a) => a.id !== id));
   }
 
@@ -448,13 +479,8 @@ export default function CalculatorClient() {
     );
   }
 
-  /**
-   * KLUCZ: zmiana zawodu zawsze resetuje wymagane punkty do domyślnych.
-   * Dzięki temu nie zostaje 120 z poprzedniego zawodu.
-   */
   function handleProfessionChange(next: Profession) {
     setProfession(next);
-
     requiredDirtyRef.current = false;
     setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION[next] ?? 0);
   }
@@ -462,6 +488,45 @@ export default function CalculatorClient() {
   function handleRequiredPointsChange(nextValue: number) {
     requiredDirtyRef.current = true;
     setRequiredPoints(Math.max(0, nextValue));
+  }
+
+  // --- EDYCJA WIERSZA ---
+  function startEdit(rowId: string) {
+    const src = activities.find((a) => a.id === rowId);
+    if (!src) return;
+
+    setEditingId(rowId);
+    setEditDraft({
+      type: src.type,
+      points: src.points,
+      year: src.year,
+      organizer: src.organizer ?? "",
+      comment: src.comment ?? "",
+      certificate_name: src.certificate_name ?? null,
+      certificate_file: null,
+    });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditDraft(null);
+  }
+
+  function saveEdit() {
+    if (!editingId || !editDraft) return;
+
+    updateActivity(editingId, {
+      type: editDraft.type,
+      points: Math.max(0, editDraft.points),
+      year: editDraft.year,
+      organizer: editDraft.organizer,
+      comment: editDraft.comment,
+      certificate_name: editDraft.certificate_name,
+      // certificate_file nie trzymamy w activities (nie serializuje się do localStorage)
+    });
+
+    setEditingId(null);
+    setEditDraft(null);
   }
 
   const toneStyles =
@@ -473,7 +538,8 @@ export default function CalculatorClient() {
           ? "border-rose-200 bg-rose-50 text-rose-900"
           : "border-slate-200 bg-slate-50 text-slate-900";
 
-  const progressBarClass = progress >= 100 ? "bg-emerald-600" : progress >= 60 ? "bg-blue-600" : "bg-rose-600";
+  const progressBarClass =
+    progress >= 100 ? "bg-emerald-600" : progress >= 60 ? "bg-blue-600" : "bg-rose-600";
 
   async function saveAllToPortfolio() {
     if (!user) {
@@ -490,6 +556,7 @@ export default function CalculatorClient() {
         points: Math.max(0, Number(a.points) || 0),
         year: Number(a.year) || currentYear,
         organizer: (a.organizer ?? "").trim() ? (a.organizer ?? "").trim() : null,
+        // comment/certificate_name w MVP nie wysyłamy do tabeli activities (chyba że masz kolumny)
       }))
       .filter((a) => a.type && a.year >= 1900 && a.year <= 2100);
 
@@ -527,31 +594,35 @@ export default function CalculatorClient() {
       <section className="lg:col-span-4">
         {/* Konto + Ustawienia (połączone) */}
         <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-[220px]">
+          {/* STATUS — POZIOMO */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
               {authLoading ? (
-                <div className="text-sm text-slate-600">Status: sprawdzam sesję…</div>
+                <span className="text-slate-600">Status: sprawdzam sesję…</span>
               ) : user ? (
                 <>
-                  <div className="text-sm text-slate-800">
+                  <span className="text-slate-700">
                     Status: <span className="font-semibold text-emerald-700">✅ Zalogowany</span>
-                  </div>
-                  <div className="text-sm text-slate-600">{user.email}</div>
-                  <Link href="/profil" className="mt-1 inline-block text-sm text-blue-700 hover:underline">
+                  </span>
+                  <span className="text-slate-500">•</span>
+                  <span className="text-slate-700">{user.email}</span>
+                  <span className="text-slate-500">•</span>
+                  <Link href="/profil" className="text-blue-700 hover:underline">
                     Ustawienia profilu
                   </Link>
                 </>
               ) : (
                 <>
-                  <div className="text-sm text-slate-800">
+                  <span className="text-slate-700">
                     Status: <span className="font-semibold text-rose-700">❌ Niezalogowany</span>
-                  </div>
-                  <div className="text-sm text-slate-600">Tryb gościa (zapis lokalny)</div>
+                  </span>
+                  <span className="text-slate-500">•</span>
+                  <span className="text-slate-600">Tryb gościa (zapis lokalny)</span>
                 </>
               )}
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-2">
               {user ? (
                 <Link
                   href="/portfolio"
@@ -585,7 +656,6 @@ export default function CalculatorClient() {
               {user ? "Po zalogowaniu ustawienia bierzemy z profilu (DB)." : "W trybie gościa — zapis lokalny."}
             </p>
 
-            {/* Ustawienia poziomo */}
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               <div>
                 <label className="text-sm font-medium text-slate-700">Zawód / status</label>
@@ -669,7 +739,6 @@ export default function CalculatorClient() {
           </div>
         </div>
 
-        {/* messages */}
         {(info || err) && (
           <div className="mt-6 rounded-2xl border bg-white p-4 text-sm">
             {info ? <div className="text-emerald-700">{info}</div> : null}
@@ -687,7 +756,6 @@ export default function CalculatorClient() {
           </div>
         )}
 
-        {/* result */}
         <div className={`mt-6 rounded-2xl border p-5 ${toneStyles}`}>
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -828,95 +896,240 @@ export default function CalculatorClient() {
                   <th className="border-b px-3 py-3 text-right">Akcje</th>
                 </tr>
               </thead>
+
               <tbody>
                 {applied.map((row) => {
                   const rowDisabled = !row.in_period;
-
                   const src = activities.find((a) => a.id === row.id);
 
-                  const pointsValue = src ? src.points : Math.max(0, Number(row.points) || 0);
-                  const yearValue = src ? src.year : Number(row.year) || currentYear;
-                  const organizerValue = src?.organizer ?? "";
+                  const isEditing = editingId === row.id;
+
+                  const pointsValue = isEditing ? editDraft?.points ?? 0 : src ? src.points : Math.max(0, Number(row.points) || 0);
+                  const yearValue = isEditing ? editDraft?.year ?? currentYear : src ? src.year : Number(row.year) || currentYear;
+                  const organizerValue = isEditing ? editDraft?.organizer ?? "" : src?.organizer ?? "";
+                  const typeValue = isEditing ? (editDraft?.type ?? (src?.type ?? row.type)) : (src?.type ?? row.type);
 
                   return (
-                    <tr
-                      key={row.id}
-                      className={`text-sm ${rowDisabled ? "opacity-50" : ""}`}
-                      title={rowDisabled ? "Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone." : ""}
-                    >
-                      <td className="border-b px-3 py-3 align-top">
-                        <select
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
-                          value={(src?.type ?? row.type) as ActivityType}
-                          onChange={(e) => handleTypeChange(row.id, e.target.value as ActivityType)}
-                          disabled={rowDisabled}
-                        >
-                          {TYPES.map((t) => (
-                            <option key={t} value={t}>
-                              {t}
-                            </option>
-                          ))}
-                        </select>
+                    <>
+                      <tr
+                        key={row.id}
+                        className={`text-sm ${rowDisabled ? "opacity-50" : ""}`}
+                        title={rowDisabled ? "Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone." : ""}
+                      >
+                        <td className="border-b px-3 py-3 align-top">
+                          <select
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
+                            value={typeValue as ActivityType}
+                            onChange={(e) => {
+                              if (!isEditing) return;
+                              const nextType = e.target.value as ActivityType;
+                              setEditDraft((d) => {
+                                if (!d) return d;
+                                const next = { ...d, type: nextType };
+                                // jeśli punkty były auto (w edycji traktujemy jak auto dopóki user nie zmieni ręcznie)
+                                next.points = DEFAULT_POINTS_BY_TYPE[nextType];
+                                return next;
+                              });
+                            }}
+                            disabled={rowDisabled || !isEditing}
+                          >
+                            {TYPES.map((t) => (
+                              <option key={t} value={t}>
+                                {t}
+                              </option>
+                            ))}
+                          </select>
 
-                        {!row.in_period && (
-                          <div className="mt-1 text-xs text-amber-700">
-                            Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone.
+                          {!row.in_period && (
+                            <div className="mt-1 text-xs text-amber-700">
+                              Ten rok nie należy do wybranego okresu – punkty nie zostaną zaliczone.
+                            </div>
+                          )}
+
+                          {row.warning ? <div className="mt-1 text-xs text-rose-700">{row.warning}</div> : null}
+
+                          {row.in_period && row.applied_points !== Math.max(0, Number(src?.points ?? row.points) || 0) ? (
+                            <div className="mt-1 text-[11px] text-slate-600">
+                              Zaliczone do sumy: <span className="font-semibold">{row.applied_points}</span> pkt
+                            </div>
+                          ) : null}
+                        </td>
+
+                        <td className="border-b px-3 py-3 align-top">
+                          <input
+                            type="number"
+                            min={0}
+                            className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
+                            value={pointsValue}
+                            onChange={(e) => {
+                              if (!isEditing) return;
+                              const val = Number(e.target.value || 0);
+                              setEditDraft((d) => (d ? { ...d, points: Math.max(0, val) } : d));
+                            }}
+                            disabled={rowDisabled || !isEditing}
+                          />
+                          <div className="mt-1 text-[11px] text-slate-500">
+                            {isEditing ? "Edycja" : (src?.pointsAuto ? "Auto (wg rodzaju)" : "Ręcznie (z certyfikatu)")}
                           </div>
-                        )}
+                        </td>
 
-                        {row.warning ? <div className="mt-1 text-xs text-rose-700">{row.warning}</div> : null}
+                        <td className="border-b px-3 py-3 align-top">
+                          <input
+                            type="number"
+                            className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
+                            value={yearValue}
+                            onChange={(e) => {
+                              if (!isEditing) return;
+                              setEditDraft((d) => (d ? { ...d, year: Number(e.target.value || currentYear) } : d));
+                            }}
+                            disabled={rowDisabled || !isEditing}
+                          />
+                        </td>
 
-                        {row.in_period && row.applied_points !== Math.max(0, pointsValue) ? (
-                          <div className="mt-1 text-[11px] text-slate-600">
-                            Zaliczone do sumy: <span className="font-semibold">{row.applied_points}</span> pkt
+                        <td className="border-b px-3 py-3 align-top">
+                          <input
+                            type="text"
+                            placeholder="np. OIL / towarzystwo"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
+                            value={organizerValue}
+                            onChange={(e) => {
+                              if (!isEditing) return;
+                              setEditDraft((d) => (d ? { ...d, organizer: e.target.value } : d));
+                            }}
+                            disabled={rowDisabled || !isEditing}
+                          />
+                        </td>
+
+                        {/* MENU AKCJI */}
+                        <td className="border-b px-3 py-3 align-top text-right">
+                          <div className="relative inline-block">
+                            <button
+                              type="button"
+                              className="rounded-xl border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-50"
+                              onClick={() => setOpenMenuId((prev) => (prev === row.id ? null : row.id))}
+                            >
+                              ⋯
+                            </button>
+
+                            {openMenuId === row.id && (
+                              <div className="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-xl border bg-white shadow-lg">
+                                <button
+                                  type="button"
+                                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    startEdit(row.id);
+                                  }}
+                                  disabled={rowDisabled}
+                                  title={rowDisabled ? "Poza okresem — edycja zablokowana." : "Edytuj"}
+                                >
+                                  Edytuj
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 disabled:opacity-50"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    saveEdit();
+                                  }}
+                                  disabled={!isEditing}
+                                  title={!isEditing ? "Najpierw kliknij Edytuj" : "Zapisz zmiany"}
+                                >
+                                  Zapisz
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="w-full px-4 py-2 text-left text-sm text-rose-700 hover:bg-rose-50"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    removeActivity(row.id);
+                                  }}
+                                >
+                                  Usuń
+                                </button>
+                              </div>
+                            )}
                           </div>
-                        ) : null}
-                      </td>
+                        </td>
+                      </tr>
 
-                      <td className="border-b px-3 py-3 align-top">
-                        <input
-                          type="number"
-                          min={0}
-                          className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
-                          value={pointsValue}
-                          onChange={(e) => handlePointsChange(row.id, Number(e.target.value || 0))}
-                          disabled={rowDisabled}
-                        />
-                        <div className="mt-1 text-[11px] text-slate-500">
-                          {src?.pointsAuto ? "Auto (wg rodzaju)" : "Ręcznie (z certyfikatu)"}
-                        </div>
-                      </td>
+                      {/* PANEL EDYCJI POD WIERSZEM */}
+                      {isEditing && (
+                        <tr key={`${row.id}-edit`}>
+                          <td className="border-b px-3 py-3" colSpan={5}>
+                            <div className="rounded-2xl bg-slate-50 p-4">
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                  <label className="text-sm font-medium text-slate-700">Komentarz</label>
+                                  <textarea
+                                    className="mt-1 min-h-[88px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
+                                    value={editDraft?.comment ?? ""}
+                                    onChange={(e) => setEditDraft((d) => (d ? { ...d, comment: e.target.value } : d))}
+                                  />
+                                </div>
 
-                      <td className="border-b px-3 py-3 align-top">
-                        <input
-                          type="number"
-                          className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2"
-                          value={yearValue}
-                          onChange={(e) => updateActivity(row.id, { year: Number(e.target.value || currentYear) })}
-                        />
-                      </td>
+                                <div>
+                                  <label className="text-sm font-medium text-slate-700">Certyfikat</label>
+                                  <input
+                                    type="file"
+                                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0] ?? null;
+                                      setEditDraft((d) => {
+                                        if (!d) return d;
+                                        return {
+                                          ...d,
+                                          certificate_file: f,
+                                          certificate_name: f ? f.name : null,
+                                        };
+                                      });
+                                    }}
+                                  />
+                                  <div className="mt-2 text-xs text-slate-600">
+                                    {editDraft?.certificate_name ? (
+                                      <>
+                                        Wybrano: <span className="font-medium">{editDraft.certificate_name}</span>
+                                      </>
+                                    ) : (
+                                      "Opcjonalnie. (W kalkulatorze nazwa pliku zapisze się lokalnie — upload dodamy w Aktywnościach)."
+                                    )}
+                                  </div>
 
-                      <td className="border-b px-3 py-3 align-top">
-                        <input
-                          type="text"
-                          placeholder="np. OIL / towarzystwo"
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50"
-                          value={organizerValue}
-                          onChange={(e) => updateActivity(row.id, { organizer: e.target.value })}
-                          disabled={rowDisabled}
-                        />
-                      </td>
+                                  {user ? (
+                                    <div className="mt-2 text-xs">
+                                      Jeśli chcesz realnie podpiąć plik do bazy:{" "}
+                                      <Link className="text-blue-700 hover:underline" href="/activities">
+                                        przejdź do Aktywności
+                                      </Link>
+                                      .
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
 
-                      <td className="border-b px-3 py-3 align-top text-right">
-                        <button
-                          onClick={() => removeActivity(row.id)}
-                          className="rounded-xl border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-50"
-                          type="button"
-                        >
-                          Usuń
-                        </button>
-                      </td>
-                    </tr>
+                              <div className="mt-4 flex flex-wrap justify-end gap-2">
+                                <button
+                                  type="button"
+                                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                                  onClick={cancelEdit}
+                                >
+                                  Anuluj
+                                </button>
+                                <button
+                                  type="button"
+                                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                                  onClick={saveEdit}
+                                >
+                                  Zapisz zmiany
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   );
                 })}
               </tbody>
