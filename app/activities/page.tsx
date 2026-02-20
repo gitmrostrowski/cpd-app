@@ -1,3 +1,4 @@
+// app/activities/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -48,6 +49,10 @@ const ALLOWED_MIME = new Set([
   "image/webp",
 ]);
 
+function normalizeStatus(s: ActivityStatus | undefined): "planned" | "done" {
+  return s === "planned" ? "planned" : "done";
+}
+
 function extFromMime(mime: string) {
   if (mime === "application/pdf") return "pdf";
   if (mime === "image/jpeg") return "jpg";
@@ -92,7 +97,7 @@ function getRowStatus(a: ActivityRow): { kind: StatusKind; missing: string[] } {
 
   if (!orgOk) missing.push("Brak organizatora");
 
-  const isPlanned = a.status === "planned";
+  const isPlanned = normalizeStatus(a.status) === "planned";
   if (!isPlanned) {
     const certOk = Boolean(a.certificate_path);
     if (!certOk) missing.push("Brak certyfikatu");
@@ -138,14 +143,10 @@ export default function ActivitiesPage() {
   const [filterType, setFilterType] = useState<string>("Wszystkie");
   const [filterYear, setFilterYear] = useState<string>("Wszystkie");
   const [filterCert, setFilterCert] = useState<"all" | "yes" | "no">("all");
-  const [filterStatus, setFilterStatus] = useState<
-    "all" | "complete" | "missing"
-  >("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "complete" | "missing">("all");
 
   // NEW: realizacja (planned/done)
-  const [filterProgress, setFilterProgress] = useState<
-    "all" | "planned" | "done"
-  >("all");
+  const [filterProgress, setFilterProgress] = useState<"all" | "planned" | "done">("all");
 
   function clearMessages() {
     setInfo(null);
@@ -161,8 +162,7 @@ export default function ActivitiesPage() {
   function validateFile(f: File) {
     if (!ALLOWED_MIME.has(f.type)) return "Dozwolone: PDF, JPG, PNG, WEBP.";
     const sizeMb = f.size / (1024 * 1024);
-    if (sizeMb > MAX_MB)
-      return `Plik jest za duży (${sizeMb.toFixed(1)} MB). Limit: ${MAX_MB} MB.`;
+    if (sizeMb > MAX_MB) return `Plik jest za duży (${sizeMb.toFixed(1)} MB). Limit: ${MAX_MB} MB.`;
     return null;
   }
 
@@ -179,8 +179,7 @@ export default function ActivitiesPage() {
       const { data, error } = await supabase
         .from("activities")
         .select(
-          // NEW: status, planned_start_date, training_id
-          "id,user_id,type,points,year,organizer,created_at,status,planned_start_date,training_id,certificate_path,certificate_name,certificate_mime,certificate_size,certificate_uploaded_at"
+          "id,user_id,type,points,year,organizer,created_at,status,planned_start_date,training_id,certificate_path,certificate_name,certificate_mime,certificate_size,certificate_uploaded_at",
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -192,19 +191,23 @@ export default function ActivitiesPage() {
         return;
       }
 
-      const rows = (data as ActivityRow[]) ?? [];
+      // ✅ ważne: nie castujemy wprost na ActivityRow[] (supabase potrafi typować jako SelectQueryError[])
+      const rows = ((data ?? []) as unknown as ActivityRow[]) ?? [];
       setItems(rows);
 
       // signed urls dla tych co mają certyfikat
       const withCert = rows.filter((r) => r.certificate_path);
-      const nextMap: Record<string, string> = {};
+      const results = await Promise.all(
+        withCert.map(async (r) => {
+          const path = r.certificate_path!;
+          const { data: urlData } = await supabase.storage.from(BUCKET).createSignedUrl(path, 60 * 60);
+          return { id: r.id, url: urlData?.signedUrl ?? "" };
+        }),
+      );
 
-      for (const r of withCert) {
-        const path = r.certificate_path!;
-        const { data: urlData } = await supabase.storage
-          .from(BUCKET)
-          .createSignedUrl(path, 60 * 60); // 1h
-        if (urlData?.signedUrl) nextMap[r.id] = urlData.signedUrl;
+      const nextMap: Record<string, string> = {};
+      for (const x of results) {
+        if (x.url) nextMap[x.id] = x.url;
       }
       setCertUrls(nextMap);
     } catch (e: any) {
@@ -297,18 +300,14 @@ export default function ActivitiesPage() {
 
     setBusy(true);
     try {
-      const { data, error } = await supabase
-        .from("activities")
-        .insert(payload)
-        .select("id")
-        .single();
+      const { data, error } = await supabase.from("activities").insert(payload).select("id").single();
 
       if (error) {
         setErr(error.message);
         return;
       }
 
-      const newId = data?.id as string | undefined;
+      const newId = (data?.id as string | undefined) ?? undefined;
       if (!newId) {
         setErr("Nie udało się odczytać ID nowej aktywności.");
         return;
@@ -371,20 +370,11 @@ export default function ActivitiesPage() {
     setBusy(true);
     try {
       if (certPath) {
-        const { error: storErr } = await supabase.storage
-          .from(BUCKET)
-          .remove([certPath]);
-        if (storErr)
-          setInfo(
-            "Uwaga: nie udało się usunąć pliku certyfikatu (sprawdź polityki)."
-          );
+        const { error: storErr } = await supabase.storage.from(BUCKET).remove([certPath]);
+        if (storErr) setInfo("Uwaga: nie udało się usunąć pliku certyfikatu (sprawdź polityki).");
       }
 
-      const { error } = await supabase
-        .from("activities")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
+      const { error } = await supabase.from("activities").delete().eq("id", id).eq("user_id", user.id);
 
       if (error) {
         setErr(error.message);
@@ -419,9 +409,7 @@ export default function ActivitiesPage() {
     try {
       const path = activity.certificate_path;
 
-      const { error: storErr } = await supabase.storage
-        .from(BUCKET)
-        .remove([path]);
+      const { error: storErr } = await supabase.storage.from(BUCKET).remove([path]);
       if (storErr) {
         setErr(storErr.message);
         return;
@@ -484,9 +472,7 @@ export default function ActivitiesPage() {
   }
 
   const years = useMemo(() => {
-    const ys = Array.from(new Set(items.map((i) => i.year))).sort(
-      (a, b) => b - a
-    );
+    const ys = Array.from(new Set(items.map((i) => i.year))).sort((a, b) => b - a);
     return ys;
   }, [items]);
 
@@ -495,11 +481,10 @@ export default function ActivitiesPage() {
 
     return items.filter((a) => {
       if (filterType !== "Wszystkie" && a.type !== filterType) return false;
-      if (filterYear !== "Wszystkie" && String(a.year) !== filterYear)
-        return false;
+      if (filterYear !== "Wszystkie" && String(a.year) !== filterYear) return false;
 
-      // NEW: planned/done
-      const prog = a.status ?? "done";
+      // planned/done (null -> done)
+      const prog = normalizeStatus(a.status);
       if (filterProgress !== "all" && prog !== filterProgress) return false;
 
       const hasCert = Boolean(a.certificate_path);
@@ -510,9 +495,7 @@ export default function ActivitiesPage() {
       if (filterStatus !== "all" && st !== filterStatus) return false;
 
       if (query) {
-        const hay = `${a.type} ${a.organizer ?? ""} ${a.year} ${a.points} ${
-          a.status ?? ""
-        }`.toLowerCase();
+        const hay = `${a.type} ${a.organizer ?? ""} ${a.year} ${a.points} ${a.status ?? ""}`.toLowerCase();
         if (!hay.includes(query)) return false;
       }
       return true;
@@ -532,9 +515,7 @@ export default function ActivitiesPage() {
       <main className="mx-auto max-w-6xl px-4 py-10">
         <div className="rounded-2xl border bg-white p-8">
           <h1 className="text-2xl font-bold text-slate-900">Aktywności</h1>
-          <p className="mt-2 text-slate-600">
-            Zaloguj się, aby zapisywać aktywności do portfolio.
-          </p>
+          <p className="mt-2 text-slate-600">Zaloguj się, aby zapisywać aktywności do portfolio.</p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link
               href="/login"
@@ -559,9 +540,7 @@ export default function ActivitiesPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Aktywności</h1>
-          <p className="mt-2 text-slate-600">
-            Logbook CPD: dodawaj aktywności, porządkuj dane i podpinaj certyfikaty.
-          </p>
+          <p className="mt-2 text-slate-600">Logbook CPD: dodawaj aktywności, porządkuj dane i podpinaj certyfikaty.</p>
         </div>
         <div className="flex gap-2">
           <Link
@@ -668,13 +647,10 @@ export default function ActivitiesPage() {
                   setFile(f);
                 }}
               />
-              <div className="mt-1 text-xs text-slate-500">
-                Limit: {MAX_MB} MB. Typy: PDF, JPG, PNG, WEBP.
-              </div>
+              <div className="mt-1 text-xs text-slate-500">Limit: {MAX_MB} MB. Typy: PDF, JPG, PNG, WEBP.</div>
               {file ? (
                 <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                  Wybrano: <span className="font-medium">{file.name}</span> (
-                  {(file.size / (1024 * 1024)).toFixed(2)} MB)
+                  Wybrano: <span className="font-medium">{file.name}</span> ({(file.size / (1024 * 1024)).toFixed(2)} MB)
                 </div>
               ) : null}
             </div>
@@ -691,12 +667,8 @@ export default function ActivitiesPage() {
 
           {/* Attach cert to existing */}
           <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="text-sm font-semibold text-slate-900">
-              Podłącz certyfikat do istniejącego wpisu
-            </div>
-            <div className="mt-1 text-xs text-slate-600">
-              Przydatne, gdy dodałeś aktywność wcześniej bez pliku.
-            </div>
+            <div className="text-sm font-semibold text-slate-900">Podłącz certyfikat do istniejącego wpisu</div>
+            <div className="mt-1 text-xs text-slate-600">Przydatne, gdy dodałeś aktywność wcześniej bez pliku.</div>
 
             <div className="mt-3 space-y-2">
               <select
@@ -708,8 +680,8 @@ export default function ActivitiesPage() {
                 <option value="">Wybierz aktywność…</option>
                 {items.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {(a.status ?? "done") === "planned" ? "🗓️ Zaplanowane" : "✅ Odbyte"} • {a.year} • {a.type} •{" "}
-                    {a.organizer ? a.organizer : "brak organizatora"}{" "}
+                    {normalizeStatus(a.status) === "planned" ? "🗓️ Zaplanowane" : "✅ Odbyte"} • {a.year} • {a.type} •{" "}
+                    {a.organizer ? a.organizer : "brak organizatora"}
                     {a.certificate_path ? " • (ma cert)" : ""}
                   </option>
                 ))}
@@ -810,7 +782,6 @@ export default function ActivitiesPage() {
               </select>
             </div>
 
-            {/* NEW */}
             <div>
               <label className="text-xs font-medium text-slate-600">Realizacja</label>
               <select
@@ -866,10 +837,7 @@ export default function ActivitiesPage() {
                 Wyczyść filtry
               </button>
               <div className="w-full text-right text-xs text-slate-600">
-                Wynik:{" "}
-                <span className="font-semibold text-slate-900">
-                  {filtered.length}
-                </span>
+                Wynik: <span className="font-semibold text-slate-900">{filtered.length}</span>
               </div>
             </div>
           </div>
@@ -879,9 +847,7 @@ export default function ActivitiesPage() {
           ) : filtered.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-8 text-center">
               <div className="text-lg font-semibold text-slate-900">Brak wyników</div>
-              <div className="mt-2 text-sm text-slate-600">
-                Zmień filtry albo dodaj nową aktywność po lewej.
-              </div>
+              <div className="mt-2 text-sm text-slate-600">Zmień filtry albo dodaj nową aktywność po lewej.</div>
             </div>
           ) : (
             <div className="mt-5 space-y-3">
@@ -889,7 +855,7 @@ export default function ActivitiesPage() {
                 const hasCert = Boolean(a.certificate_path);
                 const certUrl = hasCert ? certUrls[a.id] : null;
 
-                const prog = (a.status ?? "done") as "planned" | "done";
+                const prog = normalizeStatus(a.status);
                 const st = getRowStatus(a);
 
                 return (
@@ -897,9 +863,7 @@ export default function ActivitiesPage() {
                     key={a.id}
                     className={[
                       "rounded-2xl border p-4",
-                      prog === "planned"
-                        ? "border-blue-200 bg-blue-50/40"
-                        : "border-slate-200 bg-white",
+                      prog === "planned" ? "border-blue-200 bg-blue-50/40" : "border-slate-200 bg-white",
                     ].join(" ")}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -941,19 +905,14 @@ export default function ActivitiesPage() {
                             <>
                               {" "}
                               • Dodano:{" "}
-                              <span className="font-medium text-slate-900">
-                                {formatDateShort(a.created_at)}
-                              </span>
+                              <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
                             </>
                           ) : null}
                         </div>
 
                         {prog === "planned" ? (
                           <div className="mt-2 text-sm text-slate-700">
-                            Termin szkolenia:{" "}
-                            <span className="font-semibold">
-                              {formatYMD(a.planned_start_date)}
-                            </span>
+                            Termin szkolenia: <span className="font-semibold">{formatYMD(a.planned_start_date)}</span>
                           </div>
                         ) : null}
 
@@ -987,9 +946,7 @@ export default function ActivitiesPage() {
                               )}
 
                               {a.certificate_name ? (
-                                <span className="text-xs text-slate-500">
-                                  {shortFileName(a.certificate_name)}
-                                </span>
+                                <span className="text-xs text-slate-500">{shortFileName(a.certificate_name)}</span>
                               ) : null}
 
                               <button
@@ -1006,9 +963,7 @@ export default function ActivitiesPage() {
                               To szkolenie jest zaplanowane — certyfikat dodasz po odbyciu.
                             </div>
                           ) : (
-                            <div className="text-xs text-slate-500">
-                              Brak certyfikatu (możesz podpiąć po lewej).
-                            </div>
+                            <div className="text-xs text-slate-500">Brak certyfikatu (możesz podpiąć po lewej).</div>
                           )}
                         </div>
                       </div>
