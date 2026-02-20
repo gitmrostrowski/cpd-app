@@ -92,19 +92,19 @@ export default function ActivitiesPage() {
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [organizer, setOrganizer] = useState<string>("");
 
-  // ✅ cert file przy dodawaniu
+  // cert file przy dodawaniu
   const [file, setFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
 
-  // ✅ cert file do podpięcia do istniejącego wiersza
+  // cert file do podpięcia do istniejącego wiersza
   const [attachToId, setAttachToId] = useState<string | null>(null);
   const [attachFile, setAttachFile] = useState<File | null>(null);
   const [attachInputKey, setAttachInputKey] = useState(0);
 
-  // ✅ signed urls (id -> url)
+  // signed urls (id -> url)
   const [certUrls, setCertUrls] = useState<Record<string, string>>({});
 
-  // ✅ filtry
+  // filtry
   const [q, setQ] = useState("");
   const [filterType, setFilterType] = useState<string>("Wszystkie");
   const [filterYear, setFilterYear] = useState<string>("Wszystkie");
@@ -157,9 +157,11 @@ export default function ActivitiesPage() {
       const rows = (data as ActivityRow[]) ?? [];
       setItems(rows);
 
-      // ✅ signed urls dla tych co mają certyfikat
+      // signed urls dla tych co mają certyfikat
       const withCert = rows.filter((r) => r.certificate_path);
       const nextMap: Record<string, string> = {};
+
+      // Uwaga: celowo sekwencyjnie (łatwiej debuggować). Jak będzie trzeba, zrobimy Promise.all.
       for (const r of withCert) {
         const path = r.certificate_path!;
         const { data: urlData } = await supabase.storage.from(BUCKET).createSignedUrl(path, 60 * 60); // 1h
@@ -192,7 +194,7 @@ export default function ActivitiesPage() {
     const ext = extFromMime(mime);
     const safeName = (f.name || `cert.${ext}`).slice(0, 180);
 
-    // ✅ zgodnie z policy: auth.uid() + '/%':
+    // zgodnie z policy: auth.uid() + '/%':
     const path = `${user.id}/${activityId}-${Date.now()}.${ext}`;
 
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, f, {
@@ -305,7 +307,6 @@ export default function ActivitiesPage() {
         return;
       }
       setInfo("Usunięto ✅");
-      // posprzątaj url mapę
       setCertUrls((m) => {
         const next = { ...m };
         delete next[id];
@@ -437,10 +438,16 @@ export default function ActivitiesPage() {
           <h1 className="text-2xl font-bold text-slate-900">Aktywności</h1>
           <p className="mt-2 text-slate-600">Zaloguj się, aby zapisywać aktywności do portfolio.</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/login" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+            <Link
+              href="/login"
+              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
               Zaloguj się
             </Link>
-            <Link href="/kalkulator" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <Link
+              href="/kalkulator"
+              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
               Kalkulator (tryb gościa)
             </Link>
           </div>
@@ -454,15 +461,19 @@ export default function ActivitiesPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Aktywności</h1>
-          <p className="mt-2 text-slate-600">
-            Logbook CPD: dodawaj aktywności, porządkuj dane i podpinaj certyfikaty.
-          </p>
+          <p className="mt-2 text-slate-600">Logbook CPD: dodawaj aktywności, porządkuj dane i podpinaj certyfikaty.</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/portfolio" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <Link
+            href="/portfolio"
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
             Portfolio
           </Link>
-          <Link href="/kalkulator" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <Link
+            href="/kalkulator"
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
             Kalkulator
           </Link>
         </div>
@@ -578,9 +589,7 @@ export default function ActivitiesPage() {
           {/* Attach cert to existing */}
           <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="text-sm font-semibold text-slate-900">Podłącz certyfikat do istniejącego wpisu</div>
-            <div className="mt-1 text-xs text-slate-600">
-              Przydatne, gdy dodałeś aktywność wcześniej bez pliku.
-            </div>
+            <div className="mt-1 text-xs text-slate-600">Przydatne, gdy dodałeś aktywność wcześniej bez pliku.</div>
 
             <div className="mt-3 space-y-2">
               <select
@@ -780,7 +789,8 @@ export default function ActivitiesPage() {
                           <span className="font-medium text-slate-900">{a.year}</span>
                           {a.created_at ? (
                             <>
-                              {" "}• Dodano: <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
+                              {" "}
+                              • Dodano: <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
                             </>
                           ) : null}
                         </div>
@@ -798,7 +808,6 @@ export default function ActivitiesPage() {
                           </div>
                         ) : null}
 
-                        {/* Cert row */}
                         <div className="mt-3 text-sm">
                           {hasCert ? (
                             <div className="flex flex-wrap items-center gap-2">
@@ -814,6 +823,7 @@ export default function ActivitiesPage() {
                               ) : (
                                 <span className="text-slate-500">Generuję link…</span>
                               )}
+
                               {a.certificate_name ? (
                                 <span className="text-xs text-slate-500">{shortFileName(a.certificate_name)}</span>
                               ) : null}
