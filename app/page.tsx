@@ -10,6 +10,13 @@ import { createBrowserSupabase } from "@/lib/supabaseBrowser";
 import FeatureGrid from "@/components/FeatureGrid";
 import BottomCTA from "@/components/BottomCTA";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
 type ProfileRow = {
   user_id: string;
   profession: string | null;
@@ -21,6 +28,25 @@ type ProfileRow = {
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
+
+const FAQ_ITEMS = [
+  {
+    q: "Czy CRPE jest połączone z systemami państwowymi?",
+    a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte.",
+  },
+  {
+    q: "Czy moje certyfikaty są bezpieczne?",
+    a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE.",
+  },
+  {
+    q: "Czy mogę korzystać z telefonu?",
+    a: "Tak. Możesz dodać certyfikat od razu po szkoleniu — nawet jako zdjęcie z telefonu.",
+  },
+  {
+    q: "Czy korzystanie jest darmowe?",
+    a: "Tak. Podstawowe funkcje są bezpłatne. Wkrótce pojawią się opcje PRO (PDF, przypomnienia).",
+  },
+];
 
 export default function Page() {
   const supabase = useMemo(() => createBrowserSupabase(), []);
@@ -143,8 +169,8 @@ export default function Page() {
               </h1>
 
               <p className="mt-5 max-w-prose text-lg leading-relaxed text-slate-600">
-                Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w aktualnym okresie rozliczeniowym. Prosto.
-                Spokojnie. Bez Excela.
+                Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w aktualnym okresie rozliczeniowym.
+                Prosto. Spokojnie. Bez Excela.
               </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -163,7 +189,7 @@ export default function Page() {
                 </a>
               </div>
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              <div className="mt-9 grid gap-3 sm:grid-cols-2">
                 {[
                   { t: "Porządek bez wysiłku", d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką." },
                   { t: "Jasny status punktów", d: "Wiesz, ile masz i czego brakuje w aktualnym okresie." },
@@ -321,7 +347,7 @@ export default function Page() {
       <section id="jak-to-dziala" className="mx-auto max-w-6xl px-4 py-12 md:py-16">
         <div className="rounded-[32px] border border-slate-200 bg-slate-50 p-6 md:p-10 shadow-sm">
           <div className="max-w-2xl">
-            <h2 className="text-2xl font-extrabold text-slate-900">Jak to działa</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900">Jak to działa</h2>
             <p className="mt-2 text-slate-600">Trzy proste kroki. Bez długiego wdrożenia.</p>
           </div>
 
@@ -379,7 +405,7 @@ export default function Page() {
           {/* KORZYŚCI */}
           <div className="lg:col-span-6">
             <div className="h-full rounded-[32px] border border-slate-200 bg-white p-6 md:p-10 shadow-md">
-              <h2 className="text-2xl font-extrabold text-slate-900">Co zyskujesz</h2>
+              <h2 className="text-3xl font-extrabold text-slate-900">Co zyskujesz</h2>
               <p className="mt-2 text-slate-600">Bez komplikacji — po prostu porządek i jasny status.</p>
 
               <ul className="mt-6 space-y-3 text-slate-700">
@@ -411,7 +437,7 @@ export default function Page() {
           {/* DLA KOGO */}
           <div className="lg:col-span-6">
             <div className="h-full rounded-[32px] border border-slate-200 bg-white p-6 md:p-10 shadow-md">
-              <h2 className="text-2xl font-extrabold text-slate-900">Dla kogo jest CRPE</h2>
+              <h2 className="text-3xl font-extrabold text-slate-900">Dla kogo jest CRPE</h2>
               <p className="mt-2 text-slate-600">
                 Dla wszystkich zawodów medycznych, które zbierają punkty edukacyjne i chcą mieć porządek w dokumentach.
               </p>
@@ -442,39 +468,29 @@ export default function Page() {
             </div>
           </div>
 
-          {/* FAQ */}
+          {/* FAQ (Accordion) */}
           <div className="lg:col-span-12">
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 md:p-10 shadow-md">
-              <h2 className="text-2xl font-extrabold text-slate-900">FAQ</h2>
-              <p className="mt-2 text-slate-600">Najczęstsze pytania. Krótko i konkretnie.</p>
+              <h2 className="text-3xl font-extrabold text-slate-900">FAQ</h2>
+              <p className="mt-2 text-slate-600">Najczęstsze pytania. Kliknij, aby rozwinąć odpowiedź.</p>
 
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {[
-                  {
-                    q: "Czy CRPE jest połączone z systemami państwowymi?",
-                    a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte.",
-                  },
-                  {
-                    q: "Czy moje certyfikaty są bezpieczne?",
-                    a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE.",
-                  },
-                  {
-                    q: "Czy mogę korzystać z telefonu?",
-                    a: "Tak. Możesz dodać certyfikat od razu po szkoleniu — nawet jako zdjęcie z telefonu.",
-                  },
-                  {
-                    q: "Czy korzystanie jest darmowe?",
-                    a: "Tak. Podstawowe funkcje są bezpłatne. Wkrótce pojawią się opcje PRO (PDF, przypomnienia).",
-                  },
-                ].map((x) => (
-                  <div
-                    key={x.q}
-                    className="rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <div className="text-sm font-semibold text-slate-900">{x.q}</div>
-                    <div className="mt-1 text-sm text-slate-600">{x.a}</div>
-                  </div>
-                ))}
+              <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-2 md:p-3">
+                <Accordion type="single" collapsible className="w-full">
+                  {FAQ_ITEMS.map((item, idx) => (
+                    <AccordionItem
+                      key={item.q}
+                      value={`faq-${idx}`}
+                      className="rounded-2xl border border-slate-200 bg-white px-4 md:px-5 mb-2 last:mb-0 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      <AccordionTrigger className="text-left text-sm font-semibold text-slate-900">
+                        {item.q}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-slate-600 leading-relaxed">
+                        {item.a}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
               </div>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
