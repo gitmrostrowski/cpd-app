@@ -47,7 +47,6 @@ type Activity = {
   comment?: string;
   certificate_name?: string | null;
 
-  // opcjonalnie — jeśli kiedyś zaczniesz ładować created_at
   created_at?: string;
 };
 
@@ -502,7 +501,10 @@ export default function CalculatorClient() {
 
   const rules = useMemo(() => rulesForProfession(profession), [profession]);
 
-  const appliedDone = useMemo(() => applyRules(doneActivities, { period, rules }), [doneActivities, period, rules]);
+  const appliedDone = useMemo(
+    () => applyRules(doneActivities, { period, rules }),
+    [doneActivities, period, rules],
+  );
 
   const totalPoints = useMemo(
     () => sumPointsWithRules(doneActivities, { period, rules }),
@@ -544,24 +546,35 @@ export default function CalculatorClient() {
     }).length;
   }, [activities, isYearInPeriod]);
 
-  const progressBarClass = progress >= 100 ? "bg-emerald-600" : progress >= 60 ? "bg-blue-600" : "bg-rose-600";
+  const progressBarClass =
+    progress >= 100 ? "bg-emerald-600" : progress >= 60 ? "bg-blue-600" : "bg-rose-600";
+
   const progressPill = pillToneForProgress(progress);
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      {/* ===== PAGE BACKDROP TINT (blue + mięta) ===== */}
+      <div className="pointer-events-none absolute inset-x-0 -top-10 -z-10 h-72">
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-sky-50/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-teal-50/70 via-transparent to-transparent" />
+        <div className="absolute left-10 top-8 h-56 w-56 rounded-full bg-teal-200/20 blur-3xl" />
+        <div className="absolute right-10 top-10 h-56 w-56 rounded-full bg-blue-200/20 blur-3xl" />
+      </div>
+
       {/* ===== DASHBOARD HEADER (SaaS) ===== */}
-      <div className="relative overflow-hidden rounded-2xl border bg-white/80 p-6 shadow-sm backdrop-blur">
-        {/* delikatna “tinta” jak na Home */}
+      <div className="relative overflow-hidden rounded-2xl border bg-white p-6 shadow-sm">
+        {/* miękka tinta: blue + mięta, znika w dół */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-1/2 top-0 h-56 w-[900px] -translate-x-1/2 bg-gradient-to-b from-blue-100/70 via-sky-100/40 to-transparent" />
-          <div className="absolute -left-24 top-10 h-48 w-48 rounded-full bg-blue-200/30 blur-3xl" />
-          <div className="absolute -right-24 top-16 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl" />
+          <div className="absolute left-1/2 top-0 h-56 w-[980px] -translate-x-1/2 bg-gradient-to-b from-blue-100/70 via-sky-100/35 to-transparent" />
+          <div className="absolute left-1/2 top-0 h-56 w-[980px] -translate-x-1/2 bg-gradient-to-r from-teal-100/30 via-transparent to-transparent" />
+          <div className="absolute -left-24 top-10 h-56 w-56 rounded-full bg-teal-200/25 blur-3xl" />
+          <div className="absolute -right-24 top-12 h-56 w-56 rounded-full bg-blue-200/25 blur-3xl" />
         </div>
 
         <div className="relative flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Panel CPD</h1>
+              <div className="text-xs font-semibold text-slate-600">Status konta</div>
 
               {authLoading ? (
                 <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
@@ -586,15 +599,13 @@ export default function CalculatorClient() {
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
               {user ? (
                 <>
-                  <span className="rounded-full bg-white/80 px-2 py-1 ring-1 ring-slate-200">
-                    {user.email}
-                  </span>
+                  <span className="rounded-full bg-white/90 px-2 py-1 ring-1 ring-slate-200">{user.email}</span>
                   <span className="text-slate-400">•</span>
                   <span>Synchronizowane z bazą</span>
                 </>
               ) : (
                 <>
-                  <span className="rounded-full bg-white/80 px-2 py-1 ring-1 ring-slate-200">
+                  <span className="rounded-full bg-white/90 px-2 py-1 ring-1 ring-slate-200">
                     Zapis lokalny na urządzeniu
                   </span>
                   <span className="text-slate-400">•</span>
@@ -632,7 +643,7 @@ export default function CalculatorClient() {
           </div>
         </div>
 
-        <div className="relative mt-5 h-px w-full bg-gradient-to-r from-blue-200/70 via-sky-200/40 to-transparent" />
+        <div className="relative mt-5 h-px w-full bg-gradient-to-r from-blue-200/70 via-teal-200/40 to-transparent" />
       </div>
 
       {/* messages */}
@@ -773,7 +784,8 @@ export default function CalculatorClient() {
       <div className="grid gap-4 lg:grid-cols-3">
         {/* HERO: Brakuje */}
         <div className="relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
-          <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-rose-100 blur-2xl" />
+          {/* miękka mięta + blue */}
+          <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-teal-100/60 blur-2xl" />
           <div className="absolute -left-10 -bottom-16 h-44 w-44 rounded-full bg-blue-100 blur-2xl" />
 
           <div className="relative flex flex-wrap items-start justify-between gap-4">
@@ -851,7 +863,7 @@ export default function CalculatorClient() {
           </div>
         </div>
 
-        {/* Zaplanowane (mobile-only helper) */}
+        {/* Zaplanowane (mobile only, bo prawa kolumna ma to też jako kontekst) */}
         <div className="rounded-2xl border bg-white p-5 shadow-sm lg:hidden">
           <div className="text-xs font-semibold text-slate-600">Zaplanowane</div>
           <div className="mt-2 text-3xl font-extrabold text-slate-900">{plannedActivities.length}</div>
@@ -864,7 +876,7 @@ export default function CalculatorClient() {
       {/* ===== MAIN GRID ===== */}
       <div className="grid gap-6 lg:grid-cols-12">
         {/* LEFT: lists */}
-        <section className="lg:col-span-8 space-y-6">
+        <section className="space-y-6 lg:col-span-8">
           {/* Recent DONE */}
           <div className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1018,7 +1030,7 @@ export default function CalculatorClient() {
         </section>
 
         {/* RIGHT: insights (secondary panel) */}
-        <section className="lg:col-span-4 space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+        <section className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 lg:col-span-4">
           <div className="rounded-2xl border bg-white p-5">
             <div className="text-sm font-semibold text-slate-900">{status.title}</div>
             {status.desc ? <div className="mt-1 text-sm text-slate-600">{status.desc}</div> : null}
@@ -1042,11 +1054,7 @@ export default function CalculatorClient() {
                 </div>
                 <div className="mt-2 text-xs text-slate-600">Liczone wg lat do końca okresu (do {period.end}).</div>
               </div>
-            ) : (
-              <div className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
-                Wygląda dobrze — spełniasz wymagania w tym okresie 🎉
-              </div>
-            )}
+            ) : null}
           </div>
 
           {recommendations.length > 0 && (
