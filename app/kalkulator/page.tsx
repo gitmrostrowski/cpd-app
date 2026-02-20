@@ -1,3 +1,4 @@
+// app/kalkulator/page.tsx
 "use client";
 
 import CalculatorClient from "./CalculatorClient";
