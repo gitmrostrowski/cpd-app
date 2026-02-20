@@ -501,7 +501,7 @@ export default function Page() {
             </div>
           </div>
 
-          {/* FAQ (Details/summary - bez instalacji) */}
+          {/* FAQ (bez Radix) */}
           <div className="lg:col-span-12">
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 md:p-10 shadow-md">
               <h2 className="text-3xl font-extrabold text-slate-900">FAQ</h2>
@@ -530,7 +530,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Twoje istniejące sekcje (mogą zostać jako dodatkowe) */}
       <FeatureGrid />
       <BottomCTA />
     </>
