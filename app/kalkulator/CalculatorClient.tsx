@@ -1,3 +1,4 @@
+// app/kalkulator/CalculatorClient.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -336,6 +337,20 @@ export default function CalculatorClient() {
           requiredDirtyRef.current = false;
           setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION[prof] ?? 0);
         }
+
+        // ✅ HOTFIX: okres z profilu ma ustawić okres w kalkulatorze (żeby in_period nie przygaszało wszystkiego)
+        const ps = Number((data as any)?.period_start);
+        const pe = Number((data as any)?.period_end);
+        if (Number.isFinite(ps) && Number.isFinite(pe) && ps > 1900 && pe > 1900) {
+          const preset = PERIODS.find((p) => p.label !== "Inny" && p.start === ps && p.end === pe);
+          if (preset) {
+            setPeriodLabel(preset.label as PeriodLabel);
+          } else {
+            setPeriodLabel("Inny");
+            setCustomStart(ps);
+            setCustomEnd(pe);
+          }
+        }
       } finally {
         if (alive) profileLoadedRef.current = true;
       }
@@ -379,6 +394,54 @@ export default function CalculatorClient() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profession, requiredPoints, period.start, period.end, user]);
+
+  /** ---------- ✅ HOTFIX: DB activities: load on login (żeby kalkulator widział wpisy z bazy) ---------- */
+  useEffect(() => {
+    let alive = true;
+
+    async function loadActivities() {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("activities")
+          .select("id,type,points,year,organizer,created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+
+        if (!alive) return;
+
+        if (error) {
+          setErr(error.message);
+          return;
+        }
+
+        const rows = (data ?? []) as any[];
+
+        const mapped: Activity[] = rows.map((r) => ({
+          id: String(r.id),
+          type: normalizeActivityType(r.type),
+          points: Math.max(0, Number(r.points) || 0),
+          year: Number(r.year) || currentYear,
+          organizer: r.organizer ?? "",
+          pointsAuto: false,
+          comment: "",
+          certificate_name: null,
+        }));
+
+        // jeśli DB ma dane — pokazuj DB (to rozwiązuje: “w portfolio jest, w kalkulatorze nie ma”)
+        if (mapped.length > 0) setActivities(mapped);
+      } catch (e: any) {
+        if (!alive) return;
+        setErr(e?.message || "Nie udało się pobrać aktywności z bazy.");
+      }
+    }
+
+    loadActivities();
+    return () => {
+      alive = false;
+    };
+  }, [user, supabase, currentYear]);
 
   function clearCalculator() {
     try {
@@ -768,7 +831,7 @@ export default function CalculatorClient() {
                 <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności (kalkulator)</h2>
                 <p className="mt-1 text-sm text-slate-600">
                   {user
-                    ? "Zalogowany: możesz zapisać poniższe wpisy do bazy (Portfolio)."
+                    ? "Zalogowany: kalkulator pokazuje Twoje wpisy z bazy (oraz lokalne szkice, jeśli DB jest pusta)."
                     : "Tryb gościa: to tylko szkic lokalny. Zaloguj się, aby zapisać do bazy."}
                 </p>
               </div>
@@ -841,7 +904,9 @@ export default function CalculatorClient() {
                         : Number(row.year) || currentYear;
 
                     const organizerValue = isEditing ? editDraft?.organizer ?? "" : src?.organizer ?? "";
-                    const typeValue = isEditing ? (editDraft?.type ?? (src?.type ?? row.type)) : (src?.type ?? row.type);
+                    const typeValue = isEditing
+                      ? (editDraft?.type ?? (src?.type ?? row.type))
+                      : (src?.type ?? row.type);
 
                     return (
                       <>
@@ -881,7 +946,8 @@ export default function CalculatorClient() {
 
                             {row.warning ? <div className="mt-1 text-xs text-rose-700">{row.warning}</div> : null}
 
-                            {row.in_period && row.applied_points !== Math.max(0, Number(src?.points ?? row.points) || 0) ? (
+                            {row.in_period &&
+                            row.applied_points !== Math.max(0, Number(src?.points ?? row.points) || 0) ? (
                               <div className="mt-1 text-[11px] text-slate-600">
                                 Zaliczone do sumy: <span className="font-semibold">{row.applied_points}</span> pkt
                               </div>
@@ -1102,7 +1168,7 @@ export default function CalculatorClient() {
             <h3 className="text-lg font-semibold text-slate-900">Następny krok</h3>
             <p className="mt-1 text-sm text-slate-600">
               {user
-                ? "Możesz zapisać wpisy do Portfolio albo przejść do Aktywności i dodać certyfikaty."
+                ? "Możesz przejść do Aktywności i dodać certyfikaty."
                 : "Zaloguj się, żeby zapisać wpisy do bazy i potem podpinać certyfikaty w Aktywnościach."}
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
