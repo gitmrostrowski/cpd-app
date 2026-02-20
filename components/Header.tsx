@@ -17,11 +17,12 @@ type NavItem = {
   soon?: boolean;
 };
 
-const NAV = [
+const NAV: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/kalkulator", label: "Kalkulator" },
   { href: "/aktywnosci", label: "Aktywności" },
-  { href: "/raporty", label: "Raporty" },
+  // jeśli raporty jeszcze niegotowe, możesz łatwo przełączyć na "Wkrótce"
+  { href: "/raporty", label: "Raporty", soon: !REPORTS_READY },
   { href: "/baza-szkolen", label: "Baza szkoleń" },
 ];
 
@@ -57,6 +58,7 @@ export default function Header() {
 
   const isActive = (href: string) => {
     if (!pathname) return false;
+    if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(href + "/");
   };
 
@@ -182,11 +184,19 @@ export default function Header() {
                       </Link>
 
                       <Link
-                        href="/activities"
+                        href="/aktywnosci"
                         className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                         onClick={() => setOpenUser(false)}
                       >
                         Aktywności
+                      </Link>
+
+                      <Link
+                        href="/baza-szkolen"
+                        className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        onClick={() => setOpenUser(false)}
+                      >
+                        Baza szkoleń
                       </Link>
 
                       <button
