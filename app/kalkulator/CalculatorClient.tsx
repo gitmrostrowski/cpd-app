@@ -251,8 +251,7 @@ export default function CalculatorClient() {
             const pointsAuto = typeof a?.pointsAuto === "boolean" ? a.pointsAuto : false;
 
             const comment = safeString(a?.comment ?? "", "");
-            const certificate_name =
-              typeof a?.certificate_name === "string" ? a.certificate_name : null;
+            const certificate_name = typeof a?.certificate_name === "string" ? a.certificate_name : null;
 
             const status = normalizeStatus(a?.status);
 
@@ -503,10 +502,7 @@ export default function CalculatorClient() {
 
   const rules = useMemo(() => rulesForProfession(profession), [profession]);
 
-  const appliedDone = useMemo(
-    () => applyRules(doneActivities, { period, rules }),
-    [doneActivities, period, rules],
-  );
+  const appliedDone = useMemo(() => applyRules(doneActivities, { period, rules }), [doneActivities, period, rules]);
 
   const totalPoints = useMemo(
     () => sumPointsWithRules(doneActivities, { period, rules }),
@@ -548,81 +544,95 @@ export default function CalculatorClient() {
     }).length;
   }, [activities, isYearInPeriod]);
 
-  const progressBarClass =
-    progress >= 100 ? "bg-emerald-600" : progress >= 60 ? "bg-blue-600" : "bg-rose-600";
-
+  const progressBarClass = progress >= 100 ? "bg-emerald-600" : progress >= 60 ? "bg-blue-600" : "bg-rose-600";
   const progressPill = pillToneForProgress(progress);
 
   return (
     <div className="space-y-6">
-      {/* ===== PAGE HEADER ===== */}
-      <div className="rounded-2xl border bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Panel CPD</h1>
-            <p className="mt-2 text-sm text-slate-600">
-              Podgląd Twojego postępu w okresie rozliczeniowym. Dodawanie i edycja wpisów jest w{" "}
+      {/* ===== DASHBOARD HEADER (SaaS) ===== */}
+      <div className="relative overflow-hidden rounded-2xl border bg-white/80 p-6 shadow-sm backdrop-blur">
+        {/* delikatna “tinta” jak na Home */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-0 h-56 w-[900px] -translate-x-1/2 bg-gradient-to-b from-blue-100/70 via-sky-100/40 to-transparent" />
+          <div className="absolute -left-24 top-10 h-48 w-48 rounded-full bg-blue-200/30 blur-3xl" />
+          <div className="absolute -right-24 top-16 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl" />
+        </div>
+
+        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Panel CPD</h1>
+
+              {authLoading ? (
+                <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
+                  Sprawdzam sesję…
+                </span>
+              ) : user ? (
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                  ✅ Zalogowany
+                </span>
+              ) : (
+                <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-800">
+                  Tryb gościa
+                </span>
+              )}
+            </div>
+
+            <p className="mt-2 max-w-2xl text-sm text-slate-600">
+              Podgląd postępu w okresie rozliczeniowym. Dodawanie, edycja i certyfikaty są w{" "}
               <span className="font-medium text-slate-900">Aktywnościach</span>.
             </p>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+              {user ? (
+                <>
+                  <span className="rounded-full bg-white/80 px-2 py-1 ring-1 ring-slate-200">
+                    {user.email}
+                  </span>
+                  <span className="text-slate-400">•</span>
+                  <span>Synchronizowane z bazą</span>
+                </>
+              ) : (
+                <>
+                  <span className="rounded-full bg-white/80 px-2 py-1 ring-1 ring-slate-200">
+                    Zapis lokalny na urządzeniu
+                  </span>
+                  <span className="text-slate-400">•</span>
+                  <Link className="text-blue-700 hover:underline" href="/login">
+                    Zaloguj się, aby synchronizować
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/aktywnosci?new=1"
-              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
             >
               + Dodaj aktywność
             </Link>
+
             <Link
               href="/aktywnosci"
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               Zobacz aktywności
             </Link>
-            {!user && (
-              <Link
-                href="/login"
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Zaloguj się
-              </Link>
-            )}
+
+            <button
+              onClick={clearCalculator}
+              type="button"
+              className="rounded-xl px-3 py-2 text-sm font-medium text-slate-500 hover:bg-white hover:text-slate-700"
+              title="Czyści zapis lokalny panelu"
+            >
+              Wyczyść
+            </button>
           </div>
         </div>
 
-        {/* ===== SESSION STRIP ===== */}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            {authLoading ? (
-              <span className="text-slate-600">Sprawdzam sesję…</span>
-            ) : user ? (
-              <>
-                <span className="text-slate-700">
-                  <span className="font-semibold text-emerald-700">✅ Zalogowany</span>
-                </span>
-                <span className="text-slate-400">•</span>
-                <span className="text-slate-700">{user.email}</span>
-              </>
-            ) : (
-              <>
-                <span className="text-slate-700">
-                  <span className="font-semibold text-rose-700">Tryb gościa</span>
-                </span>
-                <span className="text-slate-400">•</span>
-                <span className="text-slate-600">Zapis lokalny na urządzeniu</span>
-              </>
-            )}
-          </div>
-
-          <button
-            onClick={clearCalculator}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            type="button"
-            title="Czyści zapis lokalny panelu"
-          >
-            Wyczyść
-          </button>
-        </div>
+        <div className="relative mt-5 h-px w-full bg-gradient-to-r from-blue-200/70 via-sky-200/40 to-transparent" />
       </div>
 
       {/* messages */}
@@ -841,7 +851,7 @@ export default function CalculatorClient() {
           </div>
         </div>
 
-        {/* Zaplanowane */}
+        {/* Zaplanowane (mobile-only helper) */}
         <div className="rounded-2xl border bg-white p-5 shadow-sm lg:hidden">
           <div className="text-xs font-semibold text-slate-600">Zaplanowane</div>
           <div className="mt-2 text-3xl font-extrabold text-slate-900">{plannedActivities.length}</div>
@@ -919,7 +929,9 @@ export default function CalculatorClient() {
                       <div className="flex shrink-0 items-center justify-between gap-4 sm:justify-end">
                         <div className="text-right">
                           <div className="text-xs text-slate-600">Punkty</div>
-                          <div className="text-lg font-extrabold text-slate-900">{formatInt(Number(row.points) || 0)}</div>
+                          <div className="text-lg font-extrabold text-slate-900">
+                            {formatInt(Number(row.points) || 0)}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1028,11 +1040,13 @@ export default function CalculatorClient() {
                     <div className="font-extrabold text-slate-900">{plan.perMonth} pkt</div>
                   </div>
                 </div>
-                <div className="mt-2 text-xs text-slate-600">
-                  Liczone wg lat do końca okresu (do {period.end}).
-                </div>
+                <div className="mt-2 text-xs text-slate-600">Liczone wg lat do końca okresu (do {period.end}).</div>
               </div>
-            ) : null}
+            ) : (
+              <div className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
+                Wygląda dobrze — spełniasz wymagania w tym okresie 🎉
+              </div>
+            )}
           </div>
 
           {recommendations.length > 0 && (
