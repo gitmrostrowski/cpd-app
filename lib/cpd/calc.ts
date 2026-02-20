@@ -14,11 +14,26 @@ export type ActivityLike = {
   points: number | string;
   year: number | string;
   type?: string | null;
+
+  /**
+   * Opcjonalnie (jeśli masz w danych):
+   * - created_at pozwoli na stabilne, deterministyczne stosowanie limitów
+   *   przy wielu wpisach w tym samym roku/typie
+   */
+  created_at?: string | null;
 };
 
 export type AppliedActivity<T extends ActivityLike = ActivityLike> = T & {
   in_period: boolean;
-  applied_points: number; // ile realnie liczymy do sumy (po okresie i limitach)
+
+  // ile realnie liczymy do sumy (po okresie i limitach)
+  applied_points: number;
+
+  // dodatkowe pola do UI (nieobowiązkowe, ale ułatwiają raportowanie)
+  raw_points?: number; // ile było "na wejściu" (po sanityzacji)
+  over_points?: number; // ile "spadło" przez limit roczny
+  yearly_cap?: number | null; // jeśli typ ma limit: wartość limitu / rok
+
   warning?: string | null;
 };
 
@@ -67,6 +82,44 @@ export function sumPoints(activities: ActivityLike[], period?: Period): number {
 }
 
 /**
+ * Wewnętrzne: stabilne sortowanie do deterministycznego nakładania limitów.
+ * Dzięki temu limit roczny nie zależy od „kolejności z bazy/UI”.
+ */
+function stableSortForRules<T extends ActivityLike>(activities: T[]): T[] {
+  // Kopia, nie mutujemy wejścia
+  const arr = [...activities];
+
+  // Sort:
+  // 1) rok rosnąco
+  // 2) typ alfabetycznie
+  // 3) created_at rosnąco (jeśli jest)
+  // 4) punkty rosnąco (ostateczny tie-breaker)
+  arr.sort((a, b) => {
+    const ya = Number(a.year);
+    const yb = Number(b.year);
+    if (Number.isFinite(ya) && Number.isFinite(yb) && ya !== yb) return ya - yb;
+
+    const ta = String(a.type ?? "");
+    const tb = String(b.type ?? "");
+    if (ta !== tb) return ta.localeCompare(tb, "pl");
+
+    const ca = a.created_at ? Date.parse(a.created_at) : NaN;
+    const cb = b.created_at ? Date.parse(b.created_at) : NaN;
+    if (Number.isFinite(ca) && Number.isFinite(cb) && ca !== cb) return ca - cb;
+    if (Number.isFinite(ca) && !Number.isFinite(cb)) return -1;
+    if (!Number.isFinite(ca) && Number.isFinite(cb)) return 1;
+
+    const pa = Number(a.points);
+    const pb = Number(b.points);
+    if (Number.isFinite(pa) && Number.isFinite(pb) && pa !== pb) return pa - pb;
+
+    return 0;
+  });
+
+  return arr;
+}
+
+/**
  * Nowe: zastosuj okres + limity i zwróć listę „applied” do UI / raportów.
  * Deterministyczne: te same wejścia => te same wyniki.
  */
@@ -78,10 +131,13 @@ export function applyRules<T extends ActivityLike>(
   const rules = opts?.rules;
   const yearlyMaxByType = rules?.yearlyMaxByType ?? {};
 
+  // Stabilna kolejność = stabilne limitowanie
+  const ordered = stableSortForRules(activities);
+
   // użyte punkty per (type, year) do limitu rocznego
   const usedByTypeYear = new Map<string, number>();
 
-  return activities.map((a) => {
+  return ordered.map((a) => {
     const pts = Number(a.points);
     const yr = Number(a.year);
     const type = (a.type ?? "") as string;
@@ -95,6 +151,9 @@ export function applyRules<T extends ActivityLike>(
         ...a,
         in_period: false,
         applied_points: 0,
+        raw_points: ptsSafe,
+        over_points: 0,
+        yearly_cap: null,
         warning: "Niepoprawny rok — pozycja nie zostanie policzona.",
       };
     }
@@ -107,6 +166,9 @@ export function applyRules<T extends ActivityLike>(
         ...a,
         in_period,
         applied_points: 0,
+        raw_points: ptsSafe,
+        over_points: 0,
+        yearly_cap: null,
         warning: p ? `Poza okresem ${p.start}–${p.end} — punkty nie zostaną zaliczone.` : null,
       };
     }
@@ -121,7 +183,7 @@ export function applyRules<T extends ActivityLike>(
       const applied = Math.min(ptsSafe, remaining);
       usedByTypeYear.set(key, used + applied);
 
-      const over = ptsSafe - applied;
+      const over = Math.max(0, ptsSafe - applied);
       const warning =
         over > 0
           ? `Limit roczny dla „${type}”: ${yearlyMax} pkt. Ta pozycja zaliczy ${applied} pkt (nadwyżka ${over} pkt nie zwiększy sumy).`
@@ -131,6 +193,9 @@ export function applyRules<T extends ActivityLike>(
         ...a,
         in_period,
         applied_points: applied,
+        raw_points: ptsSafe,
+        over_points: over,
+        yearly_cap: yearlyMax,
         warning,
       };
     }
@@ -140,6 +205,9 @@ export function applyRules<T extends ActivityLike>(
       ...a,
       in_period,
       applied_points: ptsSafe,
+      raw_points: ptsSafe,
+      over_points: 0,
+      yearly_cap: null,
       warning: null,
     };
   });
@@ -155,6 +223,130 @@ export function sumPointsWithRules(
 ): number {
   const applied = applyRules(activities, opts);
   return applied.reduce((sum, a) => sum + (a.applied_points || 0), 0);
+}
+
+/**
+ * NOWE: gotowe dane do sekcji „Limity cząstkowe” i „Punkty wg kategorii”.
+ *
+ * Zwraca:
+ * - perType: suma raw/applied/over w kategorii
+ * - perTypeCapInPeriod: ile maksymalnie może się zaliczyć w okresie (jeśli jest limit roczny)
+ * - perTypeYear: szczegóły roczne (dla tooltipów / rozwijania)
+ */
+export type LimitSummary = {
+  period?: Period | null;
+  yearsInPeriod: number;
+
+  perType: Array<{
+    type: string;
+    raw: number; // suma punktów wpisanych (w okresie)
+    applied: number; // suma zaliczona (po limitach)
+    over: number; // suma nadwyżki (raw - applied)
+    yearlyCap: number | null; // limit / rok dla typu
+    capInPeriod: number | null; // limit w całym okresie (yearlyCap * yearsInPeriod)
+    usedPct: number | null; // applied / capInPeriod
+  }>;
+
+  perTypeYear: Array<{
+    type: string;
+    year: number;
+    raw: number;
+    applied: number;
+    over: number;
+    yearlyCap: number | null;
+    usedPct: number | null; // applied / yearlyCap
+  }>;
+};
+
+export function summarizeLimits(
+  activities: ActivityLike[],
+  opts?: { period?: Period; rules?: CpdRules },
+): LimitSummary {
+  const p = opts?.period ? normalizePeriod(opts.period) : null;
+  const rules = opts?.rules;
+  const yearlyMaxByType = rules?.yearlyMaxByType ?? {};
+
+  const applied = applyRules(activities, { period: p ?? undefined, rules });
+
+  const yearsInPeriod =
+    p && Number.isFinite(p.start) && Number.isFinite(p.end)
+      ? Math.max(1, p.end - p.start + 1)
+      : 1;
+
+  // per (type, year)
+  const mapTY = new Map<string, { type: string; year: number; raw: number; applied: number; over: number }>();
+
+  for (const a of applied) {
+    if (!a.in_period) continue;
+
+    const type = String(a.type ?? "");
+    const year = Number(a.year);
+    if (!Number.isFinite(year)) continue;
+
+    const raw = Number(a.raw_points ?? 0) || 0;
+    const ap = Number(a.applied_points ?? 0) || 0;
+    const over = Math.max(0, Number(a.over_points ?? Math.max(0, raw - ap)) || 0);
+
+    const key = `${type}__${year}`;
+    const cur = mapTY.get(key);
+    if (!cur) {
+      mapTY.set(key, { type, year, raw, applied: ap, over });
+    } else {
+      cur.raw += raw;
+      cur.applied += ap;
+      cur.over += over;
+    }
+  }
+
+  const perTypeYear = Array.from(mapTY.values())
+    .sort((a, b) => (a.type === b.type ? a.year - b.year : a.type.localeCompare(b.type, "pl")))
+    .map((r) => {
+      const cap = Number(yearlyMaxByType[r.type]);
+      const yearlyCap = Number.isFinite(cap) && cap > 0 ? cap : null;
+      const usedPct = yearlyCap ? Math.max(0, Math.min(100, (r.applied / yearlyCap) * 100)) : null;
+      return { ...r, yearlyCap, usedPct };
+    });
+
+  // per type aggregate
+  const mapT = new Map<string, { type: string; raw: number; applied: number; over: number }>();
+  for (const r of perTypeYear) {
+    const cur = mapT.get(r.type);
+    if (!cur) mapT.set(r.type, { type: r.type, raw: r.raw, applied: r.applied, over: r.over });
+    else {
+      cur.raw += r.raw;
+      cur.applied += r.applied;
+      cur.over += r.over;
+    }
+  }
+
+  const perType = Array.from(mapT.values())
+    .map((r) => {
+      const cap = Number(yearlyMaxByType[r.type]);
+      const yearlyCap = Number.isFinite(cap) && cap > 0 ? cap : null;
+      const capInPeriod = yearlyCap ? yearlyCap * yearsInPeriod : null;
+      const usedPct = capInPeriod ? Math.max(0, Math.min(100, (r.applied / capInPeriod) * 100)) : null;
+
+      return { ...r, yearlyCap, capInPeriod, usedPct };
+    })
+    .sort((a, b) => {
+      // najpierw kategorie z limitami i najbardziej „zapełnione”
+      const al = a.capInPeriod ? 1 : 0;
+      const bl = b.capInPeriod ? 1 : 0;
+      if (al !== bl) return bl - al;
+
+      const ap = a.usedPct ?? -1;
+      const bp = b.usedPct ?? -1;
+      if (ap !== bp) return bp - ap;
+
+      return b.applied - a.applied;
+    });
+
+  return {
+    period: p,
+    yearsInPeriod,
+    perType,
+    perTypeYear,
+  };
 }
 
 export function calcMissing(total: number, required: number): number {
@@ -206,7 +398,7 @@ export function getStatus(total: number, required: number): CpdStatus {
   return {
     tone: "risk",
     title: "Do nadrobienia 🔴",
-    desc: "Brakuje sporo punktów — rozważ plan uzupełnień na najbliższe miesiące.",
+      desc: "Brakuje sporo punktów — rozważ plan uzupełnień na najbliższe miesiące.",
   };
 }
 
