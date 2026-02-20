@@ -14,6 +14,12 @@ import {
 } from "@/lib/cpd/calc";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
+import {
+  type Profession,
+  PROFESSION_OPTIONS,
+  DEFAULT_REQUIRED_POINTS_BY_PROFESSION,
+  isProfession,
+} from "@/lib/cpd/professions";
 
 type ActivityType =
   | "Kurs stacjonarny"
@@ -65,43 +71,6 @@ const PERIODS = [
 
 type PeriodLabel = (typeof PERIODS)[number]["label"];
 
-// ⬇️ MVP lista zawodów (tu możesz dodać kolejne, bo w DB to TEXT)
-type Profession =
-  | "Lekarz"
-  | "Lekarz dentysta"
-  | "Pielęgniarka"
-  | "Położna"
-  | "Fizjoterapeuta"
-  | "Ratownik medyczny"
-  | "Farmaceuta"
-  | "Diagnosta laboratoryjny"
-  | "Inne";
-
-const PROFESSION_OPTIONS: Profession[] = [
-  "Lekarz",
-  "Lekarz dentysta",
-  "Pielęgniarka",
-  "Położna",
-  "Fizjoterapeuta",
-  "Ratownik medyczny",
-  "Farmaceuta",
-  "Diagnosta laboratoryjny",
-  "Inne",
-];
-
-// ⬇️ MVP domyślne wymagane punkty per zawód (zmienisz jak będziesz mieć źródło)
-const DEFAULT_REQUIRED_POINTS_BY_PROFESSION: Record<Profession, number> = {
-  Lekarz: 200,
-  "Lekarz dentysta": 200,
-  Pielęgniarka: 120,
-  Położna: 120,
-  Fizjoterapeuta: 100,
-  "Ratownik medyczny": 100,
-  Farmaceuta: 100,
-  "Diagnosta laboratoryjny": 100,
-  Inne: 0,
-};
-
 function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
@@ -125,9 +94,6 @@ function normalizeActivityType(v: unknown): ActivityType {
 }
 function isPeriodLabel(v: unknown): v is PeriodLabel {
   return typeof v === "string" && PERIODS.some((p) => p.label === v);
-}
-function isProfession(v: unknown): v is Profession {
-  return typeof v === "string" && (PROFESSION_OPTIONS as readonly string[]).includes(v);
 }
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
@@ -159,7 +125,11 @@ export default function CalculatorClient() {
   const [periodLabel, setPeriodLabel] = useState<PeriodLabel>("2023–2026");
   const [customStart, setCustomStart] = useState<number>(currentYear - 1);
   const [customEnd, setCustomEnd] = useState<number>(currentYear + 2);
-  const [requiredPoints, setRequiredPoints] = useState<number>(200);
+
+  // requiredPoints: DB może nadpisać, ale w UI user może też edytować ręcznie.
+  const [requiredPoints, setRequiredPoints] = useState<number>(
+    DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"],
+  );
 
   const [activities, setActivities] = useState<Activity[]>([
     {
@@ -184,9 +154,12 @@ export default function CalculatorClient() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // żeby nie spamować UPDATE przy każdym znaku + nie nadpisywać DB w trakcie loadProfile()
+  // żeby nie spamować UPSERT przy każdym znaku + nie nadpisywać DB w trakcie loadProfile()
   const profileLoadedRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
+
+  // „dirty flag”: true jeśli user ręcznie zmienił requiredPoints (żeby nie nadpisywać automatem)
+  const requiredDirtyRef = useRef(false);
 
   function clearMessages() {
     setInfo(null);
@@ -195,8 +168,7 @@ export default function CalculatorClient() {
 
   /**
    * zapis preferencji profilu do Supabase (profiles)
-   * - UPDATE po user_id
-   * - jeśli update się nie uda (np. brak wiersza) -> INSERT
+   * PRO: robimy UPSERT po user_id (unikalne/PK w tabeli)
    */
   async function saveProfilePrefs(patch: {
     profession?: Profession;
@@ -207,19 +179,15 @@ export default function CalculatorClient() {
     if (!user) return;
 
     try {
-      const { error: updErr } = await supabase.from("profiles").update(patch).eq("user_id", user.id);
-
-      // UWAGA: update na nieistniejącym wierszu nie musi dać errora,
-      // dlatego w docelowej wersji lepiej robić UPSERT.
-      // Tu zostawiamy MVP: próbujemy insert, jeśli update zwrócił błąd.
-      if (updErr) {
-        const { error: insErr } = await supabase.from("profiles").insert({
+      const { error } = await supabase.from("profiles").upsert(
+        {
           user_id: user.id,
           ...patch,
-        });
+        },
+        { onConflict: "user_id" },
+      );
 
-        if (insErr) throw insErr;
-      }
+      if (error) throw error;
     } catch (e: any) {
       setErr(e?.message || "Nie udało się zapisać ustawień profilu.");
     }
@@ -241,7 +209,11 @@ export default function CalculatorClient() {
 
       setCustomStart(safeNumber(parsed?.customStart, currentYear - 1));
       setCustomEnd(safeNumber(parsed?.customEnd, currentYear + 2));
-      setRequiredPoints(Math.max(0, safeNumber(parsed?.requiredPoints, 200)));
+
+      // requiredPoints: jeśli w local storage jest liczba, traktujemy jak ręcznie ustawione → dirty
+      const rp = safeNumber(parsed?.requiredPoints, DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"]);
+      setRequiredPoints(Math.max(0, rp));
+      if (typeof parsed?.requiredPoints !== "undefined") requiredDirtyRef.current = true;
 
       const nextActivities = parsed?.activities;
       if (Array.isArray(nextActivities)) {
@@ -299,13 +271,15 @@ export default function CalculatorClient() {
         if (!alive) return;
         if (error) return;
 
-        if (data?.profession && isProfession(data.profession)) setProfession(data.profession);
-        if (typeof data?.required_points === "number") setRequiredPoints(Math.max(0, data.required_points));
+        if (data?.profession && isProfession(data.profession)) {
+          setProfession(data.profession);
+        }
 
-        // opcjonalnie: gdy kiedyś zaczniesz trzymać okres w DB
-        // (na screenie masz period_start i period_end)
-        // Na razie NIE zmieniamy UI periodLabel tymi wartościami (żeby nie mieszać),
-        // ale zapisujemy je przy zmianach (krok 4.1/4.3).
+        // jeśli w DB jest required_points → traktujemy jako „ustawione”
+        if (typeof data?.required_points === "number") {
+          setRequiredPoints(Math.max(0, data.required_points));
+          requiredDirtyRef.current = true; // DB = źródło prawdy, nie nadpisuj automatem
+        }
       } finally {
         if (alive) profileLoadedRef.current = true;
       }
@@ -317,15 +291,7 @@ export default function CalculatorClient() {
     };
   }, [user, supabase]);
 
-  /**
-   * KROK 4.1/4.2/4.3
-   * Auto-zapis profilu do DB po zmianie:
-   * - profession
-   * - requiredPoints
-   * + (opcjonalnie) period_start/end wynikające z wybranego okresu
-   *
-   * Z debouncingiem, żeby nie walić requestów co znak.
-   */
+  /** ---------- Period ---------- */
   const rawPeriod = useMemo(() => {
     const found = PERIODS.find((p) => p.label === periodLabel);
     if (!found) return { start: currentYear - 3, end: currentYear };
@@ -335,13 +301,19 @@ export default function CalculatorClient() {
 
   const period = useMemo(() => normalizePeriod(rawPeriod), [rawPeriod]);
 
+  /**
+   * Auto-zapis profilu do DB po zmianie:
+   * - profession
+   * - requiredPoints
+   * - period_start/end (z wybranego okresu)
+   * z debouncingiem.
+   */
   useEffect(() => {
     if (!user) return;
     if (!profileLoadedRef.current) return;
 
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
 
-    // debounce 450ms
     saveTimerRef.current = window.setTimeout(() => {
       saveProfilePrefs({
         profession,
@@ -366,7 +338,10 @@ export default function CalculatorClient() {
     setPeriodLabel("2023–2026");
     setCustomStart(currentYear - 1);
     setCustomEnd(currentYear + 2);
-    setRequiredPoints(200);
+
+    requiredDirtyRef.current = false;
+    setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"]);
+
     setActivities([
       {
         id: uid(),
@@ -381,11 +356,8 @@ export default function CalculatorClient() {
   }
 
   const rules = useMemo(() => rulesForProfession(profession), [profession]);
-
   const applied = useMemo(() => applyRules(activities, { period, rules }), [activities, period, rules]);
-
   const totalPoints = useMemo(() => sumPointsWithRules(activities, { period, rules }), [activities, period, rules]);
-
   const missing = useMemo(() => calcMissing(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
 
   const progressRaw = useMemo(() => calcProgress(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
@@ -442,14 +414,19 @@ export default function CalculatorClient() {
     );
   }
 
-  // ⬇️ KROK 4.2: zmiana zawodu → ustaw domyślne requiredPoints (MVP)
   function handleProfessionChange(next: Profession) {
     setProfession(next);
 
-    // jeśli user sam zmienił requiredPoints (inne niż “domyślne”), nie nadpisujemy agresywnie.
-    // Ale na MVP: gdy zawód się zmienia, ustawiamy nową domyślną wartość.
-    const nextDefault = DEFAULT_REQUIRED_POINTS_BY_PROFESSION[next] ?? 0;
-    setRequiredPoints(nextDefault);
+    // PRO: jeśli user/DB nie ustawiły requiredPoints ręcznie → ustawiamy domyślne dla zawodu.
+    if (!requiredDirtyRef.current) {
+      const nextDefault = DEFAULT_REQUIRED_POINTS_BY_PROFESSION[next] ?? 0;
+      setRequiredPoints(nextDefault);
+    }
+  }
+
+  function handleRequiredPointsChange(nextValue: number) {
+    requiredDirtyRef.current = true;
+    setRequiredPoints(Math.max(0, nextValue));
   }
 
   const toneStyles =
@@ -657,7 +634,7 @@ export default function CalculatorClient() {
                 type="number"
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900"
                 value={requiredPoints}
-                onChange={(e) => setRequiredPoints(Math.max(0, Number(e.target.value || 0)))}
+                onChange={(e) => handleRequiredPointsChange(Number(e.target.value || 0))}
                 min={0}
               />
               <p className="mt-1 text-xs text-slate-500">
@@ -812,7 +789,7 @@ export default function CalculatorClient() {
                 {applied.map((row) => {
                   const rowDisabled = !row.in_period;
 
-                  // ⬇️ KROK 4.3: bierzemy fields do edycji z activities (źródło prawdy),
+                  // bierzemy fields do edycji z activities (źródło prawdy),
                   // a z "applied" tylko in_period/warning/applied_points
                   const src = activities.find((a) => a.id === row.id);
 
