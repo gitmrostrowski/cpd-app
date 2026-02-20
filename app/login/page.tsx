@@ -179,6 +179,48 @@ export default function LoginPage() {
     }
   }
 
+  async function resetPassword(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+
+    if (!canEmailSubmit) {
+      setMsg("Wpisz poprawny e-mail.");
+      return;
+    }
+
+    if (emailCooldownActive) {
+      setMsg(`Odczekaj ${cooldownSecondsLeft}s przed kolejną wysyłką e-mail.`);
+      return;
+    }
+
+    setPending(true);
+    setMsg(null);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(emailTrim, {
+        redirectTo: `${window.location.origin}/reset-hasla`,
+      });
+
+      if (error) {
+        if (isRateLimitError(error.message)) {
+          setMsg(
+            "Za dużo prób wysyłki e-mail. Odczekaj 1–2 minuty i spróbuj ponownie."
+          );
+          setEmailCooldownUntil(Date.now() + 90_000);
+          return;
+        }
+        setMsg(error.message || "Nie udało się wysłać linku resetującego.");
+        return;
+      }
+
+      setMsg("Wysłaliśmy e-mail do resetu hasła. Sprawdź skrzynkę.");
+      setEmailCooldownUntil(Date.now() + 60_000);
+    } catch (err: any) {
+      setMsg(err?.message || "Nie udało się wysłać linku (błąd połączenia).");
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <section className="relative overflow-hidden">
       {/* tło spójne z landing */}
@@ -253,6 +295,22 @@ export default function LoginPage() {
               </div>
 
               <button
+                type="button"
+                onClick={resetPassword}
+                disabled={pending || !canEmailSubmit || emailCooldownActive}
+                className="text-left text-xs font-semibold text-blue-700 hover:underline disabled:opacity-60"
+                title={
+                  emailCooldownActive
+                    ? `Odczekaj ${cooldownSecondsLeft}s`
+                    : !canEmailSubmit
+                    ? "Wpisz e-mail"
+                    : undefined
+                }
+              >
+                Nie pamiętasz hasła? Zresetuj je
+              </button>
+
+              <button
                 className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
                 disabled={pending || !canPasswordSubmit}
                 type="submit"
@@ -304,9 +362,7 @@ export default function LoginPage() {
 
                 <button
                   className="mt-3 w-full rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-800 shadow-sm ring-1 ring-slate-200 hover:bg-white/80 disabled:opacity-60"
-                  disabled={
-                    pending || !canPasswordSubmit || emailCooldownActive
-                  }
+                  disabled={pending || !canPasswordSubmit || emailCooldownActive}
                   type="button"
                   onClick={signUp}
                   title={
