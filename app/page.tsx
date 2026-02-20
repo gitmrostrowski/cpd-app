@@ -283,15 +283,15 @@ export default function Page() {
                     <div className="mt-2 text-xs text-slate-500">Zaloguj się, aby zobaczyć swój realny status.</div>
                   </div>
 
-                  <div className="mt-4 relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                    <Image
-                      src="/illustration.svg"
-                      alt="Ilustracja CRPE"
-                      fill
-                      className="object-contain p-4"
-                      priority
-                    />
-                  </div>
+  <div className="mt-4 relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white">
+  <Image
+    src="/crpe_home.jpg"
+    alt="CRPE — podgląd aplikacji"
+    fill
+    className="object-cover"
+    priority
+  />
+</div>
 
                   <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
                     <div className="text-xs text-slate-500">Wkrótce (PRO)</div>
