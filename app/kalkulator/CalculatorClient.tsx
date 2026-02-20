@@ -1,1140 +1,730 @@
 // app/kalkulator/CalculatorClient.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  normalizePeriod,
-  calcMissing,
-  calcProgress,
-  getStatus,
-  getQuickRecommendations,
-  applyRules,
-  sumPointsWithRules,
-  type CpdRules,
-} from "@/lib/cpd/calc";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
+
+// Jeśli masz te rzeczy w projekcie – zostaw jak jest.
+// Jeśli nazwy różnią się u Ciebie, dopasuj importy (tylko ścieżki / nazwy).
 import {
   type Profession,
   PROFESSION_OPTIONS,
   DEFAULT_REQUIRED_POINTS_BY_PROFESSION,
-  isProfession,
 } from "@/lib/cpd/professions";
 
-type ActivityType =
-  | "Kurs stacjonarny"
-  | "Kurs online / webinar"
-  | "Konferencja / kongres"
-  | "Warsztaty praktyczne"
-  | "Publikacja naukowa"
-  | "Prowadzenie szkolenia"
-  | "Samokształcenie"
-  | "Staż / praktyka";
+type ActivityStatus = "planned" | "done" | null;
 
-type ActivityStatus = "done" | "planned";
-
-type Activity = {
+type ActivityRow = {
   id: string;
-  type: ActivityType;
+  user_id: string;
+  type: string;
   points: number;
   year: number;
-  organizer?: string;
-  pointsAuto?: boolean;
+  organizer: string | null;
+  created_at: string;
 
-  status?: ActivityStatus | null;
+  status?: ActivityStatus;
+  planned_start_date?: string | null; // YYYY-MM-DD
+  training_id?: string | null;
 
-  comment?: string;
+  certificate_path?: string | null;
   certificate_name?: string | null;
-
-  created_at?: string;
+  certificate_mime?: string | null;
+  certificate_size?: number | null;
+  certificate_uploaded_at?: string | null;
 };
 
-const TYPES: ActivityType[] = [
-  "Kurs stacjonarny",
-  "Kurs online / webinar",
-  "Konferencja / kongres",
-  "Warsztaty praktyczne",
-  "Publikacja naukowa",
-  "Prowadzenie szkolenia",
-  "Samokształcenie",
-  "Staż / praktyka",
-];
-
-const DEFAULT_POINTS_BY_TYPE: Record<ActivityType, number> = {
-  "Kurs stacjonarny": 15,
-  "Kurs online / webinar": 10,
-  "Konferencja / kongres": 20,
-  "Warsztaty praktyczne": 15,
-  "Publikacja naukowa": 25,
-  "Prowadzenie szkolenia": 20,
-  "Samokształcenie": 5,
-  "Staż / praktyka": 10,
+type ProfileRow = {
+  user_id: string;
+  profession: Profession | null;
+  period_start: number | null;
+  period_end: number | null;
+  required_points: number | null;
 };
 
-const PERIODS = [
-  { label: "2023–2026", start: 2023, end: 2026 },
-  { label: "2022–2025", start: 2022, end: 2025 },
-  { label: "2021–2024", start: 2021, end: 2024 },
-  { label: "Inny", start: 0, end: 0 },
-] as const;
-
-type PeriodLabel = (typeof PERIODS)[number]["label"];
-
-function uid() {
-  return Math.random().toString(36).slice(2, 10);
-}
-function formatInt(n: number) {
-  return Number.isFinite(n) ? Math.round(n).toString() : "0";
-}
-const STORAGE_KEY = "crpe_calculator_v1";
-
-function safeNumber(v: unknown, fallback: number) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-}
-function safeString(v: unknown, fallback = "") {
-  return typeof v === "string" ? v : fallback;
-}
-function isActivityType(v: unknown): v is ActivityType {
-  return typeof v === "string" && (TYPES as readonly string[]).includes(v);
-}
-function normalizeActivityType(v: unknown): ActivityType {
-  return isActivityType(v) ? v : "Kurs online / webinar";
-}
-function isPeriodLabel(v: unknown): v is PeriodLabel {
-  return typeof v === "string" && PERIODS.some((p) => p.label === v);
-}
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
-function normalizeStatus(v: unknown): ActivityStatus {
-  return v === "planned" ? "planned" : "done";
+
+function fmtPct(n: number) {
+  const p = Math.round(n);
+  return `${p}%`;
 }
 
-/**
- * Reguły na bazie zawodu (MVP).
- */
-function rulesForProfession(prof: Profession): CpdRules | undefined {
-  if (prof === "Lekarz" || prof === "Lekarz dentysta") {
-    return {
-      yearlyMaxByType: {
-        Samokształcenie: 20,
-      },
-    };
-  }
-  return undefined;
-}
+// Delikatna "miękka mięta" (bardziej pastel, mniej „miętowa miętowa”)
+const SOFT_MINT_BG = "bg-teal-50/60";
+const SOFT_MINT_BORDER = "border-teal-100";
+const SOFT_MINT_TEXT = "text-teal-900";
+const SOFT_MINT_MUTED = "text-teal-700";
 
-function isValueDefaultForSomeOtherProfession(value: number, current: Profession) {
-  const currentDefault = DEFAULT_REQUIRED_POINTS_BY_PROFESSION[current] ?? 0;
-  if (value === currentDefault) return false;
+// Minimalny system limitów cząstkowych – możesz rozbudować.
+// Na start pokazujemy najbardziej typowy przykład: Samokształcenie ma limit / rok.
+type PartialLimit = {
+  label: string;
+  perYear?: number; // limit roczny
+  perPeriod?: number; // limit na cały okres
+};
 
-  const defaults = Object.entries(DEFAULT_REQUIRED_POINTS_BY_PROFESSION) as Array<[Profession, number]>;
-  return defaults.some(([prof, def]) => prof !== current && def === value);
-}
-
-function pillToneForProgress(progress: number) {
-  if (progress >= 100) return "border-emerald-200 bg-emerald-50 text-emerald-800";
-  if (progress >= 60) return "border-blue-200 bg-blue-50 text-blue-800";
-  return "border-rose-200 bg-rose-50 text-rose-800";
-}
+type PartialLimitsByProfession = Record<string, PartialLimit>;
+const PARTIAL_LIMITS: Record<Profession, PartialLimitsByProfession> = {
+  Lekarz: {
+    "Samokształcenie": { label: "Samokształcenie", perYear: 20 },
+  },
+  "Lekarz dentysta": {
+    "Samokształcenie": { label: "Samokształcenie", perYear: 20 },
+  },
+  Farmaceuta: {
+    "Samokształcenie": { label: "Samokształcenie", perYear: 20 },
+  },
+  Pielęgniarka: {
+    "Samokształcenie": { label: "Samokształcenie", perYear: 20 },
+  },
+  Położna: {
+    "Samokształcenie": { label: "Samokształcenie", perYear: 20 },
+  },
+  Fizjoterapeuta: {
+    "Samokształcenie": { label: "Samokształcenie", perYear: 20 },
+  },
+  Diagnosta: {
+    "Samokształcenie": { label: "Samokształcenie", perYear: 20 },
+  },
+};
 
 export default function CalculatorClient() {
   const { user, loading: authLoading } = useAuth();
-  const supabase = useMemo(() => supabaseClient(), []);
 
-  const currentYear = new Date().getFullYear();
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [activities, setActivities] = useState<ActivityRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [profession, setProfession] = useState<Profession>("Lekarz");
-  const [periodLabel, setPeriodLabel] = useState<PeriodLabel>("2023–2026");
-  const [customStart, setCustomStart] = useState<number>(currentYear - 1);
-  const [customEnd, setCustomEnd] = useState<number>(currentYear + 2);
-
+  const [periodStart, setPeriodStart] = useState<number>(2023);
+  const [periodEnd, setPeriodEnd] = useState<number>(2026);
   const [requiredPoints, setRequiredPoints] = useState<number>(
-    DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"],
+    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
   );
 
-  const [activities, setActivities] = useState<Activity[]>([
-    {
-      id: uid(),
-      type: "Kurs online / webinar",
-      points: DEFAULT_POINTS_BY_TYPE["Kurs online / webinar"],
-      year: currentYear,
-      organizer: "",
-      pointsAuto: true,
-      comment: "",
-      certificate_name: null,
-      status: "done",
-    },
-    {
-      id: uid(),
-      type: "Konferencja / kongres",
-      points: DEFAULT_POINTS_BY_TYPE["Konferencja / kongres"],
-      year: currentYear,
-      organizer: "",
-      pointsAuto: true,
-      comment: "",
-      certificate_name: null,
-      status: "done",
-    },
-  ]);
-
-  const [info, setInfo] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-
-  const profileLoadedRef = useRef(false);
-  const saveTimerRef = useRef<number | null>(null);
-  const requiredDirtyRef = useRef(false);
-
-  function clearMessages() {
-    setInfo(null);
-    setErr(null);
-  }
-
-  async function saveProfilePrefs(patch: {
-    profession?: Profession;
-    required_points?: number;
-    period_start?: number;
-    period_end?: number;
-  }) {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase.from("profiles").upsert(
-        {
-          user_id: user.id,
-          ...patch,
-        },
-        { onConflict: "user_id" },
-      );
-
-      if (error) throw error;
-    } catch (e: any) {
-      setErr(e?.message || "Nie udało się zapisać ustawień profilu.");
-    }
-  }
-
-  /** ---------- localStorage: load (guest draft) ---------- */
+  // --- LOAD PROFILE + ACTIVITIES ---
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+    let cancelled = false;
 
-      const parsed: any = JSON.parse(raw);
+    async function run() {
+      if (!user?.id) return;
+      setLoading(true);
 
-      const nextProfession = parsed?.profession;
-      const nextPeriodLabel = parsed?.periodLabel;
+      // profile
+      const { data: p, error: pErr } = await supabaseClient
+        .from("profiles")
+        .select("user_id, profession, period_start, period_end, required_points")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      if (isProfession(nextProfession)) setProfession(nextProfession);
-      if (isPeriodLabel(nextPeriodLabel)) setPeriodLabel(nextPeriodLabel);
+      if (!cancelled) {
+        if (!pErr && p) {
+          setProfile(p as ProfileRow);
 
-      setCustomStart(safeNumber(parsed?.customStart, currentYear - 1));
-      setCustomEnd(safeNumber(parsed?.customEnd, currentYear + 2));
+          const prof = (p.profession ?? "Lekarz") as Profession;
+          setProfession(prof);
 
-      requiredDirtyRef.current =
-        typeof parsed?.requiredDirty === "boolean" ? parsed.requiredDirty : false;
+          const ps = p.period_start ?? 2023;
+          const pe = p.period_end ?? 2026;
+          setPeriodStart(ps);
+          setPeriodEnd(pe);
 
-      const rpFallback = DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"];
-      const rp = safeNumber(parsed?.requiredPoints, rpFallback);
-      setRequiredPoints(Math.max(0, rp));
-
-      const nextActivities = parsed?.activities;
-      if (Array.isArray(nextActivities)) {
-        const cleaned: Activity[] = nextActivities
-          .map((a: any) => {
-            const type: ActivityType = normalizeActivityType(a?.type);
-            const year = safeNumber(a?.year, currentYear);
-            const points = Math.max(0, safeNumber(a?.points, DEFAULT_POINTS_BY_TYPE[type]));
-            const organizer = safeString(a?.organizer ?? "", "");
-            const pointsAuto = typeof a?.pointsAuto === "boolean" ? a.pointsAuto : false;
-
-            const comment = safeString(a?.comment ?? "", "");
-            const certificate_name =
-              typeof a?.certificate_name === "string" ? a.certificate_name : null;
-
-            const status = normalizeStatus(a?.status);
-
-            return {
-              id: safeString(a?.id, uid()) || uid(),
-              type,
-              year,
-              points,
-              organizer,
-              pointsAuto,
-              comment,
-              certificate_name,
-              status,
-              created_at: typeof a?.created_at === "string" ? a.created_at : undefined,
-            };
-          })
-          .filter((a: Activity) => !!a.id);
-
-        if (cleaned.length) setActivities(cleaned);
-      }
-    } catch {
-      // ignore
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  /** ---------- localStorage: save draft ---------- */
-  useEffect(() => {
-    try {
-      const payload = {
-        profession,
-        periodLabel,
-        customStart,
-        customEnd,
-        requiredPoints,
-        requiredDirty: requiredDirtyRef.current,
-        activities,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    } catch {
-      // ignore
-    }
-  }, [profession, periodLabel, customStart, customEnd, requiredPoints, activities]);
-
-  /** ---------- DB profile: load on login ---------- */
-  useEffect(() => {
-    let alive = true;
-
-    async function loadProfile() {
-      if (!user) return;
-
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("profession, required_points, period_start, period_end")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (!alive) return;
-        if (error) return;
-
-        const dbProfession =
-          data?.profession && isProfession(data.profession) ? (data.profession as Profession) : null;
-
-        if (dbProfession) {
-          setProfession(dbProfession);
-        }
-
-        if (typeof data?.required_points === "number") {
-          const prof = dbProfession ?? profession;
-          const def = DEFAULT_REQUIRED_POINTS_BY_PROFESSION[prof] ?? 0;
-
-          if (isValueDefaultForSomeOtherProfession(data.required_points, prof)) {
-            requiredDirtyRef.current = false;
-            setRequiredPoints(def);
-
-            await saveProfilePrefs({
-              profession: prof,
-              required_points: def,
-            });
-          } else {
-            setRequiredPoints(Math.max(0, data.required_points));
-            requiredDirtyRef.current = true;
-          }
+          const rp =
+            p.required_points ??
+            DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ??
+            200;
+          setRequiredPoints(rp);
         } else {
-          const prof = dbProfession ?? profession;
-          requiredDirtyRef.current = false;
-          setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION[prof] ?? 0);
+          // fallback jeśli nie ma profilu
+          const prof: Profession = "Lekarz";
+          setProfession(prof);
+          setPeriodStart(2023);
+          setPeriodEnd(2026);
+          setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
         }
+      }
 
-        const ps = Number((data as any)?.period_start);
-        const pe = Number((data as any)?.period_end);
-        if (Number.isFinite(ps) && Number.isFinite(pe) && ps > 1900 && pe > 1900) {
-          const preset = PERIODS.find((p) => p.label !== "Inny" && p.start === ps && p.end === pe);
-          if (preset) {
-            setPeriodLabel(preset.label as PeriodLabel);
-          } else {
-            setPeriodLabel("Inny");
-            setCustomStart(ps);
-            setCustomEnd(pe);
-          }
-        }
-      } finally {
-        if (alive) profileLoadedRef.current = true;
+      // activities
+      const { data: a, error: aErr } = await supabaseClient
+        .from("activities")
+        .select(
+          "id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at"
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (!cancelled) {
+        if (!aErr && a) setActivities(a as ActivityRow[]);
+        else setActivities([]);
+        setLoading(false);
       }
     }
 
-    loadProfile();
+    run();
     return () => {
-      alive = false;
+      cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, supabase]);
+  }, [user?.id]);
 
-  /** ---------- Period ---------- */
-  const rawPeriod = useMemo(() => {
-    const found = PERIODS.find((p) => p.label === periodLabel);
-    if (!found) return { start: currentYear - 3, end: currentYear };
-    if (found.label !== "Inny") return { start: found.start, end: found.end };
-    return { start: customStart, end: customEnd };
-  }, [periodLabel, customStart, customEnd, currentYear]);
+  // --- DERIVED ---
+  const periodLabel = `${periodStart}-${periodEnd}`;
 
-  const period = useMemo(() => normalizePeriod(rawPeriod), [rawPeriod]);
+  const inPeriodDone = useMemo(() => {
+    return activities.filter((x) => {
+      const st = x.status ?? "done"; // kompatybilność wstecz
+      return st === "done" && x.year >= periodStart && x.year <= periodEnd;
+    });
+  }, [activities, periodStart, periodEnd]);
 
-  const isYearInPeriod = (year: number) => year >= period.start && year <= period.end;
+  const inPeriodPlanned = useMemo(() => {
+    return activities.filter((x) => {
+      const st = x.status ?? null;
+      // planujemy w oparciu o status planned (albo planned_start_date)
+      const isPlanned = st === "planned" || (!!x.planned_start_date && st !== "done");
+      const y = x.planned_start_date
+        ? Number(String(x.planned_start_date).slice(0, 4))
+        : x.year;
+      return isPlanned && y >= periodStart && y <= periodEnd;
+    });
+  }, [activities, periodStart, periodEnd]);
 
-  /** ---------- Auto-save profile prefs (debounced) ---------- */
-  useEffect(() => {
-    if (!user) return;
-    if (!profileLoadedRef.current) return;
+  const donePoints = useMemo(() => {
+    return inPeriodDone.reduce((sum, a) => sum + (Number(a.points) || 0), 0);
+  }, [inPeriodDone]);
 
-    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+  const missingPoints = useMemo(() => {
+    return Math.max(0, (Number(requiredPoints) || 0) - donePoints);
+  }, [requiredPoints, donePoints]);
 
-    saveTimerRef.current = window.setTimeout(() => {
-      saveProfilePrefs({
-        profession,
-        required_points: requiredPoints,
-        period_start: period.start,
-        period_end: period.end,
-      });
-    }, 450);
+  const progress = useMemo(() => {
+    const req = Number(requiredPoints) || 0;
+    if (req <= 0) return 0;
+    return clamp((donePoints / req) * 100, 0, 100);
+  }, [requiredPoints, donePoints]);
 
-    return () => {
-      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profession, requiredPoints, period.start, period.end, user]);
-
-  /** ---------- ✅ DB activities: load on login ---------- */
-  useEffect(() => {
-    let alive = true;
-
-    async function loadActivities() {
-      if (!user) return;
-
-      try {
-        const { data, error } = await supabase
-          .from("activities")
-          .select("id,type,points,year,organizer,status,created_at")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-
-        if (!alive) return;
-
-        if (error) {
-          setErr(error.message);
-          return;
-        }
-
-        const rows = (data ?? []) as any[];
-
-        const mapped: Activity[] = rows.map((r) => ({
-          id: String(r.id),
-          type: normalizeActivityType(r.type),
-          points: Math.max(0, Number(r.points) || 0),
-          year: Number(r.year) || currentYear,
-          organizer: r.organizer ?? "",
-          pointsAuto: false,
-          comment: "",
-          certificate_name: null,
-          status: normalizeStatus(r.status),
-          created_at: typeof r.created_at === "string" ? r.created_at : undefined,
-        }));
-
-        if (mapped.length > 0) setActivities(mapped);
-      } catch (e: any) {
-        if (!alive) return;
-        setErr(e?.message || "Nie udało się pobrać aktywności z bazy.");
-      }
+  // Breakdown per type (done only, in period)
+  const pointsByType = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const a of inPeriodDone) {
+      const key = a.type || "Inne";
+      map.set(key, (map.get(key) || 0) + (Number(a.points) || 0));
     }
+    return Array.from(map.entries())
+      .map(([type, pts]) => ({ type, pts }))
+      .sort((a, b) => b.pts - a.pts);
+  }, [inPeriodDone]);
 
-    loadActivities();
-    return () => {
-      alive = false;
-    };
-  }, [user, supabase, currentYear]);
+  // Partial limits – show for profession, and show achieved in those categories
+  const partialLimits = useMemo(() => {
+    const limits = PARTIAL_LIMITS[profession] ?? {};
+    const yearsInPeriod = Math.max(1, periodEnd - periodStart + 1);
 
-  function clearCalculator() {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {}
+    const rows = Object.entries(limits).map(([type, lim]) => {
+      const earned = pointsByType.find((x) => x.type === type)?.pts ?? 0;
 
-    setProfession("Lekarz");
-    setPeriodLabel("2023–2026");
-    setCustomStart(currentYear - 1);
-    setCustomEnd(currentYear + 2);
+      let cap = 0;
+      let capLabel = "";
 
-    requiredDirtyRef.current = false;
-    setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION["Lekarz"]);
+      if (typeof lim.perPeriod === "number") {
+        cap = lim.perPeriod;
+        capLabel = `${cap} pkt / okres`;
+      } else if (typeof lim.perYear === "number") {
+        cap = lim.perYear * yearsInPeriod;
+        capLabel = `${lim.perYear} pkt / rok (≈ ${cap} pkt / okres)`;
+      } else {
+        cap = 0;
+        capLabel = "—";
+      }
 
-    setActivities([
-      {
-        id: uid(),
-        type: "Kurs online / webinar",
-        points: DEFAULT_POINTS_BY_TYPE["Kurs online / webinar"],
-        year: currentYear,
-        organizer: "",
-        pointsAuto: true,
-        comment: "",
-        certificate_name: null,
-        status: "done",
-      },
-    ]);
-    clearMessages();
+      const usedPct = cap > 0 ? clamp((earned / cap) * 100, 0, 100) : 0;
+      const remaining = cap > 0 ? Math.max(0, cap - earned) : 0;
+
+      return {
+        type,
+        label: lim.label ?? type,
+        earned,
+        cap,
+        capLabel,
+        usedPct,
+        remaining,
+      };
+    });
+
+    // sort: najbardziej „zapełnione” limity na górze
+    rows.sort((a, b) => b.usedPct - a.usedPct);
+    return rows;
+  }, [profession, periodStart, periodEnd, pointsByType]);
+
+  // --- UI STATES ---
+  const isBusy = authLoading || loading;
+
+  // --- ACTIONS ---
+  async function saveProfilePatch(patch: Partial<ProfileRow>) {
+    if (!user?.id) return;
+    // Upsert: jeśli nie ma profilu, tworzymy
+    await supabaseClient.from("profiles").upsert({
+      user_id: user.id,
+      profession,
+      period_start: periodStart,
+      period_end: periodEnd,
+      required_points: requiredPoints,
+      ...patch,
+    });
   }
 
-  function handleProfessionChange(next: Profession) {
-    setProfession(next);
-    requiredDirtyRef.current = false;
-    setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION[next] ?? 0);
-  }
-
-  function handleRequiredPointsChange(nextValue: number) {
-    requiredDirtyRef.current = true;
-    setRequiredPoints(Math.max(0, nextValue));
-  }
-
-  // ✅ liczymy tylko done
-  const doneActivities = useMemo(
-    () => activities.filter((a) => normalizeStatus(a.status) === "done"),
-    [activities],
-  );
-
-  const plannedActivities = useMemo(
-    () => activities.filter((a) => normalizeStatus(a.status) === "planned"),
-    [activities],
-  );
-
-  const rules = useMemo(() => rulesForProfession(profession), [profession]);
-
-  const appliedDone = useMemo(
-    () => applyRules(doneActivities, { period, rules }),
-    [doneActivities, period, rules],
-  );
-
-  const totalPoints = useMemo(
-    () => sumPointsWithRules(doneActivities, { period, rules }),
-    [doneActivities, period, rules],
-  );
-
-  const missing = useMemo(() => calcMissing(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
-
-  const progressRaw = useMemo(() => calcProgress(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
-  const progress = useMemo(() => clamp(progressRaw, 0, 100), [progressRaw]);
-
-  const status = useMemo(() => getStatus(totalPoints, requiredPoints), [totalPoints, requiredPoints]);
-  const recommendations = useMemo(() => getQuickRecommendations(missing), [missing]);
-
-  const plan = useMemo(() => {
-    const yearsLeft = Math.max(1, period.end - currentYear + 1);
-    const perYear = missing > 0 ? Math.ceil(missing / yearsLeft) : 0;
-    const perMonth = missing > 0 ? Math.ceil(perYear / 12) : 0;
-    const perQuarter = missing > 0 ? Math.ceil(perYear / 4) : 0;
-    return { yearsLeft, perYear, perQuarter, perMonth };
-  }, [missing, period.end, currentYear]);
-
-  // --- dashboard lists ---
-  const recentDone = useMemo(() => appliedDone.slice(0, 5), [appliedDone]);
-  const recentPlanned = useMemo(() => plannedActivities.slice(0, 3), [plannedActivities]);
-
-  // --- quality signals (MVP) ---
-  const missingOrganizerCount = useMemo(() => {
-    return activities.filter((a) => {
-      const org = (a.organizer ?? "").trim();
-      return normalizeStatus(a.status) === "done" && isYearInPeriod(a.year) && !org;
-    }).length;
-  }, [activities, isYearInPeriod]);
-
-  const missingCertificateCount = useMemo(() => {
-    return activities.filter((a) => {
-      const hasCert = typeof a.certificate_name === "string" && a.certificate_name.trim().length > 0;
-      return normalizeStatus(a.status) === "done" && isYearInPeriod(a.year) && !hasCert;
-    }).length;
-  }, [activities, isYearInPeriod]);
-
-  const progressBarClass =
-    progress >= 100 ? "bg-emerald-600" : progress >= 60 ? "bg-blue-600" : "bg-rose-600";
-
-  const progressPill = pillToneForProgress(progress);
-
+  // --- RENDER ---
   return (
-    <div className="space-y-6 pb-16">
-      {/* ===== PAGE HEADER ===== */}
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Panel CPD</h1>
-        <p className="mt-2 text-sm text-slate-600">
+    <div className="mx-auto w-full max-w-6xl px-4 pt-8 pb-16">
+      {/* 1) JEDEN tytuł – bez duplikatu */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          Panel CPD
+        </h1>
+        <p className="mt-2 text-slate-600">
           Podgląd postępu w okresie rozliczeniowym. Dodawanie, edycja i certyfikaty są w{" "}
-          <span className="font-semibold text-slate-900">Aktywnościach</span>.
+          <Link href="/aktywnosci" className="font-semibold text-slate-900 underline underline-offset-2">
+            Aktywnościach
+          </Link>
+          .
         </p>
       </div>
 
-      {/* ===== STATUS KONTA (FIX tła + delikatna mięta) ===== */}
-      <div className="relative overflow-hidden rounded-2xl border bg-white shadow-sm">
-        {/* tło: niebieski + bardzo delikatna mięta */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50/80 via-white to-emerald-50/40" />
-        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-200/25 blur-3xl" />
-        <div className="pointer-events-none absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-emerald-200/15 blur-3xl" />
+      {/* 2) STATUS KONTA – krótko, czytelnie, poprawione zdanie */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-slate-800">
+                Status konta
+              </span>
 
-        <div className="relative p-5 sm:p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="text-xs font-semibold text-slate-600">Status konta</div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Zalogowany
+              </span>
 
-                {authLoading ? (
-                  <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-                    Sprawdzam sesję…
-                  </span>
-                ) : user ? (
-                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-                    <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                    Zalogowany
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-800">
-                    <span className="inline-block h-2 w-2 rounded-full bg-rose-500" />
-                    Tryb gościa
-                  </span>
-                )}
+              {isBusy ? (
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                  Synchronizacja…
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                  Zsynchronizowane z bazą
+                </span>
+              )}
+            </div>
+
+            <p className="mt-2 text-sm text-slate-700">
+              <span className="font-semibold">
+                Panel pokazuje podsumowanie uzyskanych punktów edukacyjnych.
+              </span>{" "}
+              Ukończone liczy się do punktów, Plan jest planem.
+            </p>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
+                {user?.email ?? "—"}
+              </span>
+              {profile?.profession ? (
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
+                  Profil: {profile.profession}
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 md:justify-end">
+            <Link
+              href="/aktywnosci?new=1"
+              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+            >
+              + Dodaj aktywność
+            </Link>
+
+            <Link
+              href="/aktywnosci"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+            >
+              Zobacz aktywności
+            </Link>
+
+            <button
+              type="button"
+              onClick={async () => {
+                // reset tylko UI (bez kasowania w bazie)
+                const prof: Profession = "Lekarz";
+                setProfession(prof);
+                setPeriodStart(2023);
+                setPeriodEnd(2026);
+                setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
+                await saveProfilePatch({
+                  profession: prof,
+                  period_start: 2023,
+                  period_end: 2026,
+                  required_points: DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200,
+                });
+              }}
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+            >
+              Wyczyść
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3) USTAWIENIA – bez powtarzania okresu / wymaganych w kolejnych kafelkach */}
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-700">
+                Zawód
+              </label>
+              <select
+                value={profession}
+                onChange={async (e) => {
+                  const v = e.target.value as Profession;
+                  setProfession(v);
+                  const rp = DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
+                  setRequiredPoints(rp);
+                  await saveProfilePatch({ profession: v, required_points: rp });
+                }}
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              >
+                {PROFESSION_OPTIONS?.map((p: Profession) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700">
+                Okres rozliczeniowy
+              </label>
+              <select
+                value={periodLabel}
+                onChange={async (e) => {
+                  const [a, b] = e.target.value.split("-").map((x) => Number(x));
+                  setPeriodStart(a);
+                  setPeriodEnd(b);
+                  await saveProfilePatch({ period_start: a, period_end: b });
+                }}
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              >
+                <option value="2019-2022">2019-2022</option>
+                <option value="2023-2026">2023-2026</option>
+                <option value="2027-2030">2027-2030</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700">
+                Wymagane punkty (łącznie)
+              </label>
+              <input
+                value={requiredPoints}
+                onChange={(e) => setRequiredPoints(Number(e.target.value || 0))}
+                onBlur={async () => {
+                  await saveProfilePatch({ required_points: requiredPoints });
+                }}
+                type="number"
+                min={0}
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Domyślnie dla {profession}:{" "}
+                {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? 200}
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full lg:w-auto">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="text-xs font-semibold text-slate-700">
+                Informacja
+              </div>
+              <div className="mt-1 text-sm text-slate-700">
+                W części kategorii obowiązują limity cząstkowe. Poniżej zobaczysz,
+                ile już masz i ile maksymalnie może się liczyć.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4) GŁÓWNY KAFEL – połączone „Do nadrobienia” + „Zdobyte” */}
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div className={`rounded-2xl border ${SOFT_MINT_BORDER} ${SOFT_MINT_BG} p-5 shadow-sm lg:col-span-2`}>
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div className={`text-xs font-semibold ${SOFT_MINT_MUTED}`}>
+                Podsumowanie w okresie {periodLabel}
               </div>
 
-              <div className="mt-2 text-sm text-slate-700">
-                Panel pokazuje podsumowanie:{" "}
-                <span className="font-semibold">Ukończone</span> liczy się do punktów,{" "}
-                <span className="font-semibold">Plan</span> jest planem.
+              <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-2">
+                <div className="text-3xl font-extrabold text-slate-900">
+                  {donePoints}/{requiredPoints}
+                </div>
+                <div className="text-sm font-semibold text-slate-700">
+                  brakuje{" "}
+                  <span className="rounded-lg bg-rose-50 px-2 py-1 text-rose-700">
+                    {missingPoints} pkt
+                  </span>
+                </div>
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                {user ? (
-                  <>
-                    <span className="truncate rounded-full border border-slate-200 bg-white/80 px-3 py-1">
-                      {user.email}
-                    </span>
-                    <span className="text-slate-400">•</span>
-                    <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
-                      Synchronizowane z bazą
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1">
-                      Zapis lokalny na urządzeniu
-                    </span>
-                    <span className="text-slate-400">•</span>
-                    <Link className="font-semibold text-blue-700 hover:underline" href="/login">
-                      Zaloguj się
-                    </Link>
-                  </>
-                )}
+              <div className="mt-3 text-sm text-slate-700">
+                Ukończone:{" "}
+                <span className="font-semibold text-slate-900">
+                  {inPeriodDone.length}
+                </span>{" "}
+                • Plan:{" "}
+                <span className="font-semibold text-slate-900">
+                  {inPeriodPlanned.length}
+                </span>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap gap-2">
               <Link
                 href="/aktywnosci?new=1"
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
               >
-                + Dodaj aktywność
+                Znajdź szkolenie
               </Link>
               <Link
-                href="/aktywnosci"
-                className="rounded-xl border border-slate-300 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
+                href="/aktywnosci?new=1"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
               >
-                Zobacz aktywności
+                Dodaj ręcznie
               </Link>
-
-              <button
-                onClick={clearCalculator}
-                className="rounded-xl border border-slate-300 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
-                type="button"
-                title="Czyści zapis lokalny panelu"
-              >
-                Wyczyść
-              </button>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* messages */}
-      {(info || err) && (
-        <div className="rounded-2xl border bg-white p-4 text-sm">
-          {info ? <div className="text-emerald-700">{info}</div> : null}
-          {err ? <div className="text-rose-700">{err}</div> : null}
-        </div>
-      )}
-
-      {/* ===== SUMMARY BAR ===== */}
-      <div className="rounded-2xl border bg-white p-5 shadow-sm">
-        <div className="grid gap-4 lg:grid-cols-12 lg:items-end">
-          <div className="lg:col-span-8">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Zawód</label>
-                <select
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-                  value={profession}
-                  onChange={(e) => handleProfessionChange(e.target.value as Profession)}
-                >
-                  {PROFESSION_OPTIONS.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
+          {/* Pasek postępu – bardziej widoczny zakres */}
+          <div className="mt-5">
+            <div className="flex items-center justify-between">
+              <div className={`text-xs font-semibold ${SOFT_MINT_TEXT}`}>
+                Postęp
               </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Okres rozliczeniowy</label>
-                <select
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-                  value={periodLabel}
-                  onChange={(e) => setPeriodLabel(e.target.value as PeriodLabel)}
-                >
-                  {PERIODS.map((p) => (
-                    <option key={p.label} value={p.label}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
-
-                {periodLabel === "Inny" && (
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[11px] font-semibold text-slate-600">Start</label>
-                      <input
-                        type="number"
-                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                        value={customStart}
-                        onChange={(e) => setCustomStart(Number(e.target.value || 0))}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-semibold text-slate-600">Koniec</label>
-                      <input
-                        type="number"
-                        className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                        value={customEnd}
-                        onChange={(e) => setCustomEnd(Number(e.target.value || 0))}
-                      />
-                    </div>
-                  </div>
-                )}
+              <div className="text-xs font-semibold text-slate-700">
+                {fmtPct(progress)}
               </div>
+            </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Wymagane punkty (łącznie)</label>
-                <input
-                  type="number"
-                  min={0}
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-                  value={requiredPoints}
-                  onChange={(e) => handleRequiredPointsChange(Number(e.target.value || 0))}
+            <div className="mt-2 rounded-full bg-white/70 p-1">
+              <div className="h-3 rounded-full bg-slate-200">
+                <div
+                  className="h-3 rounded-full bg-blue-600"
+                  style={{ width: `${progress}%` }}
                 />
-                <div className="mt-1 text-[11px] text-slate-500">
-                  Domyślne dla <span className="font-medium">{profession}</span>:{" "}
-                  {DEFAULT_REQUIRED_POINTS_BY_PROFESSION[profession] ?? 0}
-                </div>
               </div>
             </div>
 
-            {(profession === "Lekarz" || profession === "Lekarz dentysta") && (
-              <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
-                <span className="font-semibold">Limity (MVP):</span> dla{" "}
-                <span className="font-medium">{profession}</span> aktywność{" "}
-                <span className="font-medium">Samokształcenie</span> ma limit{" "}
-                <span className="font-medium">20 pkt / rok</span>.
-              </div>
-            )}
-          </div>
-
-          {/* pills */}
-          <div className="lg:col-span-4">
-            <div className="flex flex-wrap items-center justify-start gap-2 lg:justify-end">
-              <div className="rounded-xl border bg-white px-3 py-2 text-sm">
-                <span className="text-slate-600">Okres:</span>{" "}
-                <span className="font-semibold text-slate-900">
-                  {period.start}–{period.end}
-                </span>
-              </div>
-              <div className="rounded-xl border bg-white px-3 py-2 text-sm">
-                <span className="text-slate-600">Ukończone:</span>{" "}
-                <span className="font-semibold text-slate-900">{formatInt(totalPoints)}</span>
-              </div>
-              <div className="rounded-xl border bg-white px-3 py-2 text-sm">
-                <span className="text-slate-600">Wymagane:</span>{" "}
-                <span className="font-semibold text-slate-900">{formatInt(requiredPoints)}</span>
-              </div>
-              <div className={`rounded-xl border px-3 py-2 text-sm ${progressPill}`}>
-                <span className="opacity-80">Brakuje:</span>{" "}
-                <span className="font-semibold">{formatInt(missing)}</span>
-              </div>
-            </div>
-
-            <div className="mt-3">
-              <div className="flex items-center justify-between text-xs text-slate-600">
-                <span>
-                  Postęp{" "}
-                  <span className="ml-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
-                    zakres: {period.start}–{period.end}
-                  </span>
-                </span>
-                <span className="font-semibold text-slate-900">{Math.round(progress)}%</span>
-              </div>
-
-              <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
-                <div className={`h-full ${progressBarClass}`} style={{ width: `${progress}%` }} />
-              </div>
-
-              {plannedActivities.length > 0 && (
-                <div className="mt-2 text-xs text-slate-600">
-                  Plan: <span className="font-semibold">{plannedActivities.length}</span> (nie liczone)
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ===== KPI / HERO (SaaS) ===== */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* HERO: Brakuje (mniej „pusty”, czytelniejszy, „węższy” optycznie) */}
-        <div className="relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50/70 via-white to-emerald-50/30" />
-          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-blue-200/20 blur-2xl" />
-          <div className="pointer-events-none absolute -left-10 -bottom-16 h-44 w-44 rounded-full bg-emerald-200/15 blur-2xl" />
-
-          <div className="relative grid gap-4 lg:grid-cols-12 lg:items-center">
-            {/* lewa część (liczba + opis) */}
-            <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
-                Do nadrobienia
-              </div>
-
-              <div className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900">
-                {formatInt(missing)} <span className="text-slate-900">pkt</span>
-              </div>
-
-              <div className="mt-1 text-sm text-slate-700">
-                Cel: <span className="font-semibold text-slate-900">{formatInt(requiredPoints)}</span> •
-                Ukończone: <span className="font-semibold text-slate-900">{formatInt(totalPoints)}</span>
-              </div>
-
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-                  Okres: {period.start}–{period.end}
-                </span>
-                <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${progressPill}`}>
-                  Postęp: {Math.round(progress)}%
-                </span>
-                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-                  Plan: {plannedActivities.length}
-                </span>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Link
-                  href="/baza-szkolen"
-                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
-                  Znajdź szkolenie
-                </Link>
-                <Link
-                  href="/aktywnosci?new=1"
-                  className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Dodaj ręcznie
-                </Link>
-              </div>
-            </div>
-
-            {/* prawa część (mini panel postępu – bardziej „wąsko” i konkretnie) */}
-            <div className="lg:col-span-5">
-              <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-                <div className="flex items-center justify-between text-xs text-slate-600">
-                  <span>Postęp w zakresie</span>
-                  <span className="font-semibold text-slate-900">{Math.round(progress)}%</span>
-                </div>
-
-                <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-slate-200">
-                  <div className={`h-full ${progressBarClass}`} style={{ width: `${progress}%` }} />
-                </div>
-
-                <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
-                  <span>
-                    {formatInt(totalPoints)} / {formatInt(requiredPoints)} pkt
-                  </span>
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-semibold text-slate-700">
-                    {period.start}–{period.end}
-                  </span>
-                </div>
-
-                {missing > 0 ? (
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    <div className="rounded-xl bg-slate-50 p-2">
-                      <div className="text-[11px] text-slate-600">Na rok</div>
-                      <div className="text-sm font-extrabold text-slate-900">{plan.perYear} pkt</div>
-                    </div>
-                    <div className="rounded-xl bg-slate-50 p-2">
-                      <div className="text-[11px] text-slate-600">Na kwartał</div>
-                      <div className="text-sm font-extrabold text-slate-900">{plan.perQuarter} pkt</div>
-                    </div>
-                    <div className="rounded-xl bg-slate-50 p-2">
-                      <div className="text-[11px] text-slate-600">Na miesiąc</div>
-                      <div className="text-sm font-extrabold text-slate-900">{plan.perMonth} pkt</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
-                    Wszystko gra — spełniasz wymagania 🎉
-                  </div>
-                )}
-              </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-700">
+              <span className="rounded-full bg-white/70 px-3 py-1 font-semibold text-slate-800">
+                Okres: {periodLabel}
+              </span>
+              <span className="rounded-full bg-white/70 px-3 py-1 font-medium">
+                Ukończone: {donePoints} pkt
+              </span>
+              <span className="rounded-full bg-white/70 px-3 py-1 font-medium">
+                Wymagane: {requiredPoints} pkt
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Zdobyte */}
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
-          <div className="text-xs font-semibold text-slate-600">Zdobyte (Ukończone w okresie)</div>
-          <div className="mt-2 text-3xl font-extrabold text-slate-900">{formatInt(totalPoints)}</div>
-          <div className="mt-2 text-sm text-slate-600">
-            Liczymy tylko status <span className="font-semibold">Ukończone</span> w latach {period.start}–{period.end}.
-          </div>
-        </div>
-      </div>
-
-      {/* ===== MAIN GRID ===== */}
-      <div className="grid gap-6 lg:grid-cols-12">
-        {/* LEFT: lists */}
-        <section className="lg:col-span-8 space-y-6">
-          {/* Recent DONE */}
-          <div className="rounded-2xl border bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">Ostatnie aktywności (Ukończone)</h2>
-                <p className="mt-1 text-sm text-slate-600">Podgląd ostatnich wpisów zaliczonych do sumy.</p>
-              </div>
-              <Link
-                href="/aktywnosci"
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Przejdź do Aktywności →
-              </Link>
+        {/* Szybki podgląd: ostatnie ukończone */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-extrabold text-slate-900">
+              Ostatnie aktywności
             </div>
-
-            <div className="mt-4 divide-y rounded-xl border">
-              {recentDone.length === 0 ? (
-                <div className="p-4 text-sm text-slate-600">
-                  Brak zaliczonych wpisów. Dodaj aktywność w{" "}
-                  <Link className="text-blue-700 hover:underline" href="/aktywnosci?new=1">
-                    Aktywnościach
-                  </Link>
-                  .
-                </div>
-              ) : (
-                recentDone.map((row) => {
-                  const outside = !row.in_period;
-                  return (
-                    <div
-                      key={String(row.id)}
-                      className={`flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between ${
-                        outside ? "opacity-60" : ""
-                      }`}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="font-semibold text-slate-900">{String(row.type)}</div>
-                          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                            Ukończone
-                          </span>
-                          {outside && (
-                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
-                              Poza okresem
-                            </span>
-                          )}
-                          {row.warning ? (
-                            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-800">
-                              Limit / reguła
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="mt-1 truncate text-sm text-slate-600">
-                          {row.year} • {(row as any).organizer ? String((row as any).organizer) : "Brak organizatora"}
-                        </div>
-                        {row.in_period && row.applied_points !== Math.max(0, Number(row.points) || 0) ? (
-                          <div className="mt-1 text-xs text-slate-600">
-                            Zaliczone do sumy: <span className="font-semibold">{row.applied_points}</span> pkt
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className="flex shrink-0 items-center justify-between gap-4 sm:justify-end">
-                        <div className="text-right">
-                          <div className="text-xs text-slate-600">Punkty</div>
-                          <div className="text-lg font-extrabold text-slate-900">{formatInt(Number(row.points) || 0)}</div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+            <Link
+              href="/aktywnosci"
+              className="text-sm font-semibold text-blue-700 hover:text-blue-800"
+            >
+              Przejdź →
+            </Link>
           </div>
 
-          {/* Planned */}
-          <div className="rounded-2xl border bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">Zaplanowane</h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  Te wpisy nie wchodzą do sumy. Zmień status na Ukończone po realizacji.
-                </p>
-              </div>
-              <Link
-                href="/aktywnosci"
-                className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Zarządzaj planem →
-              </Link>
-            </div>
-
-            <div className="mt-4 divide-y rounded-xl border">
-              {recentPlanned.length === 0 ? (
-                <div className="p-4 text-sm text-slate-600">
-                  Brak zaplanowanych. Możesz dodać plan w{" "}
-                  <Link className="text-blue-700 hover:underline" href="/baza-szkolen">
-                    Bazie szkoleń
-                  </Link>{" "}
-                  albo w Aktywnościach.
-                </div>
-              ) : (
-                recentPlanned.map((a) => {
-                  const outside = !isYearInPeriod(a.year);
-                  return (
-                    <div
-                      key={a.id}
-                      className={`flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between ${
-                        outside ? "opacity-70" : ""
-                      }`}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="font-semibold text-slate-900">{a.type}</div>
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
-                            Plan
-                          </span>
-                          {outside && (
-                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
-                              Rok poza okresem
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-1 truncate text-sm text-slate-600">
-                          {a.year} • {(a.organizer ?? "").trim() ? a.organizer : "Brak organizatora"}
-                        </div>
-                      </div>
-
-                      <div className="flex shrink-0 items-center justify-between gap-4 sm:justify-end">
-                        <div className="text-right">
-                          <div className="text-xs text-slate-600">Punkty</div>
-                          <div className="text-lg font-extrabold text-slate-900">{formatInt(a.points)}</div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {plannedActivities.length > recentPlanned.length && (
-              <div className="mt-3 text-xs text-slate-600">
-                Pokazuję {recentPlanned.length} z {plannedActivities.length}.{" "}
-                <Link className="text-blue-700 hover:underline" href="/aktywnosci">
-                  Zobacz wszystkie →
-                </Link>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* RIGHT: insights (secondary panel) */}
-        <section className="lg:col-span-4 space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-          <div className="rounded-2xl border bg-white p-5">
-            <div className="text-sm font-semibold text-slate-900">{status.title}</div>
-            {status.desc ? <div className="mt-1 text-sm text-slate-600">{status.desc}</div> : null}
-
-            {missing > 0 ? (
-              <div className="mt-4 rounded-xl bg-white p-4">
-                <div className="text-sm font-semibold text-slate-900">Tempo, żeby zdążyć</div>
-                <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
-                  <div>
-                    <div className="text-xs text-slate-600">Na rok</div>
-                    <div className="font-extrabold text-slate-900">{plan.perYear} pkt</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-slate-600">Na kwartał</div>
-                    <div className="font-extrabold text-slate-900">{plan.perQuarter} pkt</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-slate-600">Na miesiąc</div>
-                    <div className="font-extrabold text-slate-900">{plan.perMonth} pkt</div>
-                  </div>
-                </div>
-                <div className="mt-2 text-xs text-slate-600">Liczone wg lat do końca okresu (do {period.end}).</div>
+          <div className="mt-3 space-y-3">
+            {isBusy ? (
+              <div className="text-sm text-slate-600">Wczytuję…</div>
+            ) : inPeriodDone.slice(0, 5).length === 0 ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                Brak ukończonych aktywności w okresie {periodLabel}.
               </div>
             ) : (
-              <div className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
-                Wygląda dobrze — spełniasz wymagania w tym okresie 🎉
+              inPeriodDone.slice(0, 5).map((a) => (
+                <div
+                  key={a.id}
+                  className="rounded-xl border border-slate-200 bg-white p-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-slate-900">
+                        {a.type}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-600">
+                        {a.organizer ? `${a.organizer} • ` : ""}
+                        {a.year}
+                      </div>
+                    </div>
+                    <div className="shrink-0 rounded-lg bg-emerald-50 px-2 py-1 text-xs font-extrabold text-emerald-700">
+                      +{a.points} pkt
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 5) LIMITY CZĄSTKOWE + „ile już mam w kategorii” */}
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-lg font-extrabold text-slate-900">
+              Limity cząstkowe (kategorie)
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Jeśli dana kategoria ma limit, pokażemy go oraz ile już masz zdobyte w tej kategorii.
+            </p>
+          </div>
+
+          <div className="text-sm text-slate-700">
+            Razem w okresie:{" "}
+            <span className="font-extrabold text-slate-900">
+              {donePoints} pkt
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {/* Limity (jeśli są) */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="text-sm font-bold text-slate-900">
+              Kategorie z limitami
+            </div>
+
+            {partialLimits.length === 0 ? (
+              <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                Dla zawodu <span className="font-semibold">{profession}</span>{" "}
+                nie ustawiono jeszcze limitów w aplikacji.
+              </div>
+            ) : (
+              <div className="mt-3 space-y-3">
+                {partialLimits.map((r) => (
+                  <div
+                    key={r.type}
+                    className="rounded-xl border border-slate-200 bg-white p-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-slate-900">
+                          {r.label}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-600">
+                          Limit: {r.capLabel}
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 text-right">
+                        <div className="text-sm font-extrabold text-slate-900">
+                          {r.earned}/{r.cap || "—"}
+                        </div>
+                        {r.cap > 0 ? (
+                          <div className="text-xs font-semibold text-slate-600">
+                            zostało {r.remaining} pkt
+                          </div>
+                        ) : (
+                          <div className="text-xs font-semibold text-slate-500">
+                            —
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {r.cap > 0 ? (
+                      <div className="mt-3">
+                        <div className="h-2 rounded-full bg-slate-200">
+                          <div
+                            className="h-2 rounded-full bg-blue-600"
+                            style={{ width: `${r.usedPct}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {recommendations.length > 0 && (
-            <div className="rounded-2xl border bg-white p-5">
-              <div className="text-sm font-semibold text-slate-900">Szybkie propozycje uzupełnienia</div>
-              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-800">
-                {recommendations.map((r) => (
-                  <li key={r}>{r}</li>
-                ))}
-              </ul>
-              <div className="mt-2 text-xs text-slate-600">
-                *Scenariusze na bazie domyślnych punktów dla typów aktywności.
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Link
-                  href="/baza-szkolen"
-                  className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
-                  Znajdź szkolenie
-                </Link>
-                <Link
-                  href="/aktywnosci?new=1"
-                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Dodaj ręcznie
-                </Link>
-              </div>
+          {/* Punkty w kategoriach (top) */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="text-sm font-bold text-slate-900">
+              Punkty wg kategorii (ukończone)
             </div>
-          )}
 
-          <div className="rounded-2xl border bg-white p-5">
-            <div className="text-sm font-semibold text-slate-900">Jakość danych (MVP)</div>
-            <div className="mt-2 space-y-2 text-sm text-slate-700">
-              <div className="flex items-center justify-between">
-                <span>Brak organizatora (Ukończone w okresie)</span>
-                <span className="font-semibold">{missingOrganizerCount}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Brak certyfikatu (Ukończone w okresie)</span>
-                <span className="font-semibold">{missingCertificateCount}</span>
-              </div>
+            <div className="mt-3 space-y-2">
+              {pointsByType.length === 0 ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                  Brak danych w okresie {periodLabel}.
+                </div>
+              ) : (
+                pointsByType.slice(0, 8).map((row) => {
+                  const capInfo =
+                    (PARTIAL_LIMITS[profession]?.[row.type]?.perPeriod ||
+                      PARTIAL_LIMITS[profession]?.[row.type]?.perYear) ??
+                    null;
+
+                  return (
+                    <div
+                      key={row.type}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-slate-900">
+                          {row.type}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-600">
+                          {capInfo ? "Ma limit cząstkowy" : "Bez limitu w aplikacji"}
+                        </div>
+                      </div>
+                      <div className="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-sm font-extrabold text-slate-900">
+                        {row.pts} pkt
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
-            <div className="mt-3 text-xs text-slate-600">
-              Uzupełnisz to w{" "}
-              <Link className="text-blue-700 hover:underline" href="/aktywnosci">
-                Aktywnościach
-              </Link>
-              .
-            </div>
+
+            {pointsByType.length > 8 ? (
+              <div className="mt-3 text-sm">
+                <Link
+                  href="/aktywnosci"
+                  className="font-semibold text-blue-700 hover:text-blue-800"
+                >
+                  Zobacz wszystkie kategorie w Aktywnościach →
+                </Link>
+              </div>
+            ) : null}
           </div>
-        </section>
+        </div>
       </div>
+
+      {/* odstęp od stopki już jest dzięki pb-16 na wrapperze */}
     </div>
   );
 }
