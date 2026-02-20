@@ -1,3 +1,4 @@
+// components/Header.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,7 +12,13 @@ const REPORTS_READY = false;
 const LOGIN_HREF = "/login";
 const REGISTER_HREF = "/rejestracja";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  soon?: boolean;
+};
+
+const NAV: NavItem[] = [
   { href: "/kalkulator", label: "Kalkulator" },
   { href: "/activities", label: "Aktywności" },
   // opcjonalnie zostaw na później
@@ -56,7 +63,9 @@ export default function Header() {
   const linkCls = (href: string) =>
     cx(
       "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors",
-      isActive(href) ? "bg-slate-100 text-slate-900" : "text-slate-900 hover:bg-slate-50"
+      isActive(href)
+        ? "bg-slate-100 text-slate-900"
+        : "text-slate-900 hover:bg-slate-50"
     );
 
   const emailShort = useMemo(() => {
@@ -127,7 +136,9 @@ export default function Header() {
                     onClick={() => setOpenUser((v) => !v)}
                     className={cx(
                       "inline-flex h-10 w-10 items-center justify-center rounded-full border transition",
-                      openUser ? "border-blue-200 bg-slate-50" : "border-slate-200 hover:bg-slate-50"
+                      openUser
+                        ? "border-blue-200 bg-slate-50"
+                        : "border-slate-200 hover:bg-slate-50"
                     )}
                     aria-label="Menu użytkownika"
                     title="Menu"
@@ -139,7 +150,9 @@ export default function Header() {
                     <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-slate-200 bg-white shadow-lg p-2">
                       <div className="px-3 py-2 text-xs text-slate-500">
                         Zalogowany jako
-                        <div className="mt-1 text-sm font-medium text-slate-800">{user.email}</div>
+                        <div className="mt-1 text-sm font-medium text-slate-800">
+                          {user.email}
+                        </div>
                       </div>
 
                       <div className="my-2 h-px bg-slate-100" />
