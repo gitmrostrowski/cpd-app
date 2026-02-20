@@ -1,3 +1,4 @@
+// app/baza-szkolen/TrainingHubClient.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -6,16 +7,23 @@ import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
 type TrainingType = "online" | "stacjonarne" | "hybrydowe";
+type TrainingCategory =
+  | "kurs"
+  | "konferencja"
+  | "warsztaty"
+  | "publikacja"
+  | "szkolenie"
+  | "inne";
 
 type Training = {
   id: string;
   title: string;
   organizer: string | null;
   points: number | null;
-  type: TrainingType | null;
+  type: TrainingType | null; // forma: online/stacjonarne/hybrydowe
   start_date: string | null; // YYYY-MM-DD
   end_date: string | null;
-  category: string | null;
+  category: TrainingCategory | null; // rodzaj: kurs/konferencja/...
   profession: string | null;
   voivodeship: string | null;
   external_url: string | null;
@@ -23,11 +31,24 @@ type Training = {
   created_at: string;
 };
 
-const TYPE_OPTIONS: { value: string; label: string }[] = [
+// --- Opcje filtrów ---
+// Forma (type)
+const TYPE_OPTIONS: { value: "all" | TrainingType; label: string }[] = [
   { value: "all", label: "Wszystkie" },
-  { value: "online", label: "Online" },
+  { value: "online", label: "Online / webinar" },
   { value: "stacjonarne", label: "Stacjonarne" },
   { value: "hybrydowe", label: "Hybrydowe" },
+];
+
+// Rodzaj (category)
+const CATEGORY_OPTIONS: { value: "all" | TrainingCategory; label: string }[] = [
+  { value: "all", label: "Wszystkie" },
+  { value: "kurs", label: "Kurs" },
+  { value: "szkolenie", label: "Szkolenie" },
+  { value: "konferencja", label: "Konferencja / kongres" },
+  { value: "warsztaty", label: "Warsztaty" },
+  { value: "publikacja", label: "Publikacja" },
+  { value: "inne", label: "Inne" },
 ];
 
 const ORGANIZER_QUICK: { value: string; label: string }[] = [
@@ -50,12 +71,6 @@ function formatDate(d: string | null) {
   return `${day}.${m}.${y}`;
 }
 
-function guessActivityType(trainingType: TrainingType | null) {
-  if (trainingType === "online") return "Kurs online / webinar";
-  if (trainingType === "stacjonarne") return "Kurs stacjonarny";
-  return "Kurs online / webinar";
-}
-
 function todayYYYYMMDD() {
   const dt = new Date();
   const yyyy = dt.getFullYear();
@@ -64,10 +79,51 @@ function todayYYYYMMDD() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// Etykiety do UI (żeby nie pokazywać surowych wartości)
+function labelType(t: TrainingType | null) {
+  if (!t) return "—";
+  if (t === "online") return "Online / webinar";
+  if (t === "stacjonarne") return "Stacjonarne";
+  if (t === "hybrydowe") return "Hybrydowe";
+  return t;
+}
+
+function labelCategory(c: TrainingCategory | null) {
+  if (!c) return "—";
+  if (c === "kurs") return "Kurs";
+  if (c === "szkolenie") return "Szkolenie";
+  if (c === "konferencja") return "Konferencja / kongres";
+  if (c === "warsztaty") return "Warsztaty";
+  if (c === "publikacja") return "Publikacja";
+  if (c === "inne") return "Inne";
+  return c;
+}
+
+// Najważniejsze: mapowanie (category + type) -> Activity.type w tabeli activities
+// Dopasowane do Twoich wartości z Aktywności (z ukośnikiem i spacjami).
+function mapToActivityType(
+  category: TrainingCategory | null,
+  delivery: TrainingType | null
+):
+  | "Kurs stacjonarny"
+  | "Kurs online / webinar"
+  | "Konferencja / kongres"
+  | "Warsztaty praktyczne"
+  | "Publikacja naukowa"
+  | "Samokształcenie" {
+  // kategorie „twarde” niezależne od formy
+  if (category === "konferencja") return "Konferencja / kongres";
+  if (category === "warsztaty") return "Warsztaty praktyczne";
+  if (category === "publikacja") return "Publikacja naukowa";
+
+  // kurs/szkolenie/inne -> zależne od formy
+  if (delivery === "stacjonarne") return "Kurs stacjonarny";
+  // online + hybrydowe najbezpieczniej mapować na webinar/online
+  return "Kurs online / webinar";
+}
+
 export default function TrainingHubClient() {
   const { user, loading } = useAuth();
-
-  // IMPORTANT: u Ciebie supabaseClient to funkcja -> wywołujemy ją
   const supabase = useMemo(() => supabaseClient(), []);
 
   const [items, setItems] = useState<Training[]>([]);
@@ -76,7 +132,8 @@ export default function TrainingHubClient() {
 
   // filtry
   const [q, setQ] = useState("");
-  const [type, setType] = useState("all");
+  const [type, setType] = useState<"all" | TrainingType>("all"); // forma
+  const [category, setCategory] = useState<"all" | TrainingCategory>("all"); // rodzaj
   const [organizer, setOrganizer] = useState("all");
   const [minPoints, setMinPoints] = useState("all");
   const [onlyPartner, setOnlyPartner] = useState(false);
@@ -94,11 +151,13 @@ export default function TrainingHubClient() {
       .order("start_date", { ascending: true })
       .limit(200);
 
+    // forma
     if (type !== "all") query = query.eq("type", type);
 
-    if (organizer !== "all") {
-      query = query.ilike("organizer", `%${organizer}%`);
-    }
+    // rodzaj
+    if (category !== "all") query = query.eq("category", category);
+
+    if (organizer !== "all") query = query.ilike("organizer", `%${organizer}%`);
 
     if (minPoints !== "all") query = query.gte("points", Number(minPoints));
 
@@ -144,7 +203,7 @@ export default function TrainingHubClient() {
 
     const payload = {
       user_id: user.id,
-      type: guessActivityType(t.type),
+      type: mapToActivityType(t.category, t.type),
       points: t.points ?? 0,
       year,
       organizer: t.organizer ?? null,
@@ -163,7 +222,9 @@ export default function TrainingHubClient() {
       return;
     }
 
-    alert("Dodano szkic aktywności. Przejdź do Aktywności i podepnij certyfikat.");
+    alert(
+      "Dodano szkic aktywności. Przejdź do Aktywności i podepnij certyfikat."
+    );
   };
 
   if (loading) {
@@ -180,7 +241,8 @@ export default function TrainingHubClient() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Baza szkoleń</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Znajdź kursy i webinary z punktami edukacyjnymi. Dodaj szkic aktywności jednym kliknięciem.
+            Znajdź kursy i webinary z punktami edukacyjnymi. Dodaj szkic
+            aktywności jednym kliknięciem.
           </p>
         </div>
 
@@ -205,7 +267,7 @@ export default function TrainingHubClient() {
       {/* Filtry */}
       <div className="mt-6 rounded-2xl border bg-white p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-          <div className="md:col-span-5">
+          <div className="md:col-span-4">
             <label className="text-xs text-gray-600">Szukaj</label>
             <input
               value={q}
@@ -216,13 +278,28 @@ export default function TrainingHubClient() {
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-xs text-gray-600">Typ</label>
+            <label className="text-xs text-gray-600">Forma</label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value)}
+              onChange={(e) => setType(e.target.value as any)}
               className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
             >
               {TYPE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="text-xs text-gray-600">Kategoria</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as any)}
+              className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
+            >
+              {CATEGORY_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
@@ -245,7 +322,7 @@ export default function TrainingHubClient() {
             </select>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-1">
             <label className="text-xs text-gray-600">Punkty</label>
             <select
               value={minPoints}
@@ -292,7 +369,8 @@ export default function TrainingHubClient() {
           </label>
 
           <div className="ml-auto text-sm text-gray-600">
-            Wynik: <span className="font-medium text-gray-900">{visible.length}</span>
+            Wynik:{" "}
+            <span className="font-medium text-gray-900">{visible.length}</span>
           </div>
         </div>
 
@@ -326,7 +404,13 @@ export default function TrainingHubClient() {
 
                   {t.type ? (
                     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-                      {t.type}
+                      {labelType(t.type)}
+                    </span>
+                  ) : null}
+
+                  {t.category ? (
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+                      {labelCategory(t.category)}
                     </span>
                   ) : null}
 
@@ -340,7 +424,6 @@ export default function TrainingHubClient() {
                 <div className="mt-1 text-sm text-gray-600">
                   Termin: {formatDate(t.start_date)}
                   {t.end_date ? ` – ${formatDate(t.end_date)}` : ""}
-                  {t.category ? ` • ${t.category}` : ""}
                   {t.voivodeship ? ` • ${t.voivodeship}` : ""}
                 </div>
               </div>
