@@ -10,16 +10,7 @@ import {
   type Profession,
   PROFESSION_OPTIONS,
   DEFAULT_REQUIRED_POINTS_BY_PROFESSION,
-  rulesForProfession,
 } from "@/lib/cpd/professions";
-
-import {
-  sumPointsWithRules,
-  summarizeLimits,
-  type Period,
-  calcMissing,
-  calcProgress,
-} from "@/lib/cpd/calc";
 
 type ActivityStatus = "planned" | "done" | null;
 
@@ -51,16 +42,181 @@ type ProfileRow = {
   required_points: number | null;
 };
 
-function fmtPct(n: number) {
-  const p = Math.round(n);
-  return `${p}%`;
+function clamp(n: number, a: number, b: number) {
+  return Math.max(a, Math.min(b, n));
 }
 
-// Delikatna "miękka mięta"
-const SOFT_MINT_BG = "bg-teal-50/60";
+function fmtPct(n: number) {
+  return `${Math.round(n)}%`;
+}
+
+// Delikatna mięta
+const SOFT_MINT_BG = "bg-teal-50/50";
 const SOFT_MINT_BORDER = "border-teal-100";
 const SOFT_MINT_TEXT = "text-teal-900";
 const SOFT_MINT_MUTED = "text-teal-700";
+
+/**
+ * MVP: registry reguł i limitów.
+ * Docelowo przenieś do lib/cpd/rulesRegistry.ts
+ */
+type RuleLimit = {
+  key: string;
+  label: string;
+  mode: "per_period" | "per_year" | "per_item";
+  maxPoints: number; // dla per_year: na rok, per_period: na okres, per_item: na wpis
+  note?: string;
+};
+
+type ProfessionRules = {
+  periodMonths: number;
+  requiredPoints: number;
+  limits: RuleLimit[];
+};
+
+const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
+  Lekarz: {
+    periodMonths: 48,
+    requiredPoints: 200,
+    limits: [
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_item",
+        maxPoints: 6,
+        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_period",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
+      },
+      {
+        key: "SCIENTIFIC_SOCIETY",
+        label: "Towarzystwo/Kolegium",
+        mode: "per_period",
+        maxPoints: 20,
+        note: "5 pkt, maks. 20 pkt w okresie",
+      },
+    ],
+  },
+  "Lekarz dentysta": {
+    periodMonths: 48,
+    requiredPoints: 200,
+    limits: [
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_item",
+        maxPoints: 6,
+        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_period",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
+      },
+      {
+        key: "SCIENTIFIC_SOCIETY",
+        label: "Towarzystwo/Kolegium",
+        mode: "per_period",
+        maxPoints: 20,
+        note: "5 pkt, maks. 20 pkt w okresie",
+      },
+    ],
+  },
+  Pielęgniarka: {
+    periodMonths: 60,
+    requiredPoints: 100,
+    limits: [
+      {
+        key: "WEBINAR",
+        label: "Webinary",
+        mode: "per_period",
+        maxPoints: 50,
+        note: "5 pkt/wydarzenie, maks. 50 pkt w okresie",
+      },
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_period",
+        maxPoints: 50,
+        note: "2 lub 5 pkt/wydarzenie, maks. 50 pkt w okresie",
+      },
+      {
+        key: "COMMITTEES",
+        label: "Komisje/Zespoły",
+        mode: "per_period",
+        maxPoints: 30,
+        note: "3 pkt/posiedzenie, maks. 30 pkt w okresie",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_year",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt/rok",
+      },
+    ],
+  },
+  Położna: {
+    periodMonths: 60,
+    requiredPoints: 100,
+    limits: [
+      {
+        key: "WEBINAR",
+        label: "Webinary",
+        mode: "per_period",
+        maxPoints: 50,
+        note: "5 pkt/wydarzenie, maks. 50 pkt w okresie",
+      },
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_period",
+        maxPoints: 50,
+        note: "2 lub 5 pkt/wydarzenie, maks. 50 pkt w okresie",
+      },
+      {
+        key: "COMMITTEES",
+        label: "Komisje/Zespoły",
+        mode: "per_period",
+        maxPoints: 30,
+        note: "3 pkt/posiedzenie, maks. 30 pkt w okresie",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_year",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt/rok",
+      },
+    ],
+  },
+};
+
+/**
+ * MVP mapowanie typu aktywności (UI label) -> reguła
+ * Docelowo: kolumna kind w DB.
+ */
+function mapTypeToRuleKey(type: string): string | null {
+  const t = (type || "").toLowerCase();
+
+  if (t.includes("webinar")) return "WEBINAR";
+  if (t.includes("szkolenie wewn")) return "INTERNAL_TRAINING";
+  if (t.includes("prenumer")) return "JOURNAL_SUBSCRIPTION";
+  if (t.includes("towarzyst") || t.includes("kolegium")) return "SCIENTIFIC_SOCIETY";
+  if (t.includes("komisj") || t.includes("zesp")) return "COMMITTEES";
+
+  // często „Kurs online / webinar” – potraktuj jako WEBINAR (MVP)
+  if (t.includes("kurs online")) return "WEBINAR";
+
+  return null;
+}
 
 export default function CalculatorClient() {
   const { user, loading: authLoading } = useAuth();
@@ -73,13 +229,11 @@ export default function CalculatorClient() {
   const [periodStart, setPeriodStart] = useState<number>(2023);
   const [periodEnd, setPeriodEnd] = useState<number>(2026);
   const [requiredPoints, setRequiredPoints] = useState<number>(
-    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
+    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200,
   );
 
-  // ✅ U CIEBIE supabaseClient jest funkcją → tu tworzymy instancję
-  const sb = useMemo(() => supabaseClient(), []);
+  const supabase = useMemo(() => supabaseClient(), []);
 
-  // --- LOAD PROFILE + ACTIVITIES ---
   useEffect(() => {
     let cancelled = false;
 
@@ -87,7 +241,7 @@ export default function CalculatorClient() {
       if (!user?.id) return;
       setLoading(true);
 
-      const { data: p, error: pErr } = await sb
+      const { data: p, error: pErr } = await supabase
         .from("profiles")
         .select("user_id, profession, period_start, period_end, required_points")
         .eq("user_id", user.id)
@@ -119,10 +273,10 @@ export default function CalculatorClient() {
         }
       }
 
-      const { data: a, error: aErr } = await sb
+      const { data: a, error: aErr } = await supabase
         .from("activities")
         .select(
-          "id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at"
+          "id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at",
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -138,16 +292,13 @@ export default function CalculatorClient() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, sb]);
+  }, [user?.id, supabase]);
 
-  // --- DERIVED ---
   const periodLabel = `${periodStart}-${periodEnd}`;
-  const period: Period = useMemo(() => ({ start: periodStart, end: periodEnd }), [periodStart, periodEnd]);
-  const rules = useMemo(() => rulesForProfession(profession), [profession]);
 
   const inPeriodDone = useMemo(() => {
     return activities.filter((x) => {
-      const st = x.status ?? "done";
+      const st = (x.status ?? "done") as ActivityStatus;
       return st === "done" && x.year >= periodStart && x.year <= periodEnd;
     });
   }, [activities, periodStart, periodEnd]);
@@ -156,40 +307,60 @@ export default function CalculatorClient() {
     return activities.filter((x) => {
       const st = x.status ?? null;
       const isPlanned = st === "planned" || (!!x.planned_start_date && st !== "done");
-      const y = x.planned_start_date ? Number(String(x.planned_start_date).slice(0, 4)) : x.year;
+      const y = x.planned_start_date
+        ? Number(String(x.planned_start_date).slice(0, 4))
+        : x.year;
       return isPlanned && y >= periodStart && y <= periodEnd;
     });
   }, [activities, periodStart, periodEnd]);
 
-  const doneAppliedPoints = useMemo(() => {
-    return sumPointsWithRules(inPeriodDone, { period, rules });
-  }, [inPeriodDone, period, rules]);
+  const donePoints = useMemo(() => {
+    return inPeriodDone.reduce((sum, a) => sum + (Number(a.points) || 0), 0);
+  }, [inPeriodDone]);
 
-  const missingPoints = useMemo(() => calcMissing(doneAppliedPoints, requiredPoints), [doneAppliedPoints, requiredPoints]);
-  const progress = useMemo(() => calcProgress(doneAppliedPoints, requiredPoints), [doneAppliedPoints, requiredPoints]);
+  const missingPoints = useMemo(() => {
+    return Math.max(0, (Number(requiredPoints) || 0) - donePoints);
+  }, [requiredPoints, donePoints]);
 
-  const limitsSummary = useMemo(() => {
-    return summarizeLimits(inPeriodDone, { period, rules });
-  }, [inPeriodDone, period, rules]);
+  const progress = useMemo(() => {
+    const req = Number(requiredPoints) || 0;
+    if (req <= 0) return 0;
+    return clamp((donePoints / req) * 100, 0, 100);
+  }, [requiredPoints, donePoints]);
 
-  const pointsByTypeApplied = useMemo(() => {
-    return limitsSummary.perType
-      .filter((x) => x.applied > 0 || x.raw > 0)
-      .map((x) => ({
-        type: x.type || "Inne",
-        applied: Math.round(x.applied),
-        raw: Math.round(x.raw),
-        over: Math.round(x.over),
-        capInPeriod: x.capInPeriod,
-        usedPct: x.usedPct,
-      }));
-  }, [limitsSummary]);
+  // Zużycie limitów wg rulesKey (MVP: sumujemy punkty wpisów zmapowanych do danej reguły)
+  const limitsUsage = useMemo(() => {
+    const rules = RULES_BY_PROFESSION[profession];
+    const limits = rules?.limits ?? [];
+    const usage = new Map<string, number>();
+
+    for (const a of inPeriodDone) {
+      const key = mapTypeToRuleKey(a.type);
+      if (!key) continue;
+      usage.set(key, (usage.get(key) || 0) + (Number(a.points) || 0));
+    }
+
+    return limits.map((l) => {
+      const used = usage.get(l.key) || 0;
+
+      // per_year: przeliczamy „ile lat” w okresie (MVP)
+      const yearsInPeriod = Math.max(1, periodEnd - periodStart + 1);
+      const cap =
+        l.mode === "per_year" ? l.maxPoints * yearsInPeriod : l.maxPoints;
+
+      const remaining = Math.max(0, cap - used);
+      const usedPct = cap > 0 ? clamp((used / cap) * 100, 0, 100) : 0;
+
+      return { ...l, cap, used, remaining, usedPct, yearsInPeriod };
+    });
+  }, [profession, inPeriodDone, periodStart, periodEnd]);
 
   const isBusy = authLoading || loading;
 
   async function saveProfilePatch(patch: Partial<ProfileRow>) {
     if (!user?.id) return;
-    await sb.from("profiles").upsert({
+
+    await supabase.from("profiles").upsert({
       user_id: user.id,
       profession,
       period_start: periodStart,
@@ -200,24 +371,15 @@ export default function CalculatorClient() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pt-8 pb-16">
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Panel CPD</h1>
-        <p className="mt-2 text-slate-600">
-          Podgląd postępu w okresie rozliczeniowym. Dodawanie, edycja i certyfikaty są w{" "}
-          <Link href="/aktywnosci" className="font-semibold text-slate-900 underline underline-offset-2">
-            Aktywnościach
-          </Link>
-          .
-        </p>
-      </div>
-
-      {/* STATUS */}
+    <div className="space-y-5">
+      {/* STATUS KONTA */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-semibold text-slate-800">Status konta</span>
+              <span className="text-sm font-semibold text-slate-800">
+                Status konta
+              </span>
 
               <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -236,7 +398,9 @@ export default function CalculatorClient() {
             </div>
 
             <p className="mt-2 text-sm text-slate-700">
-              <span className="font-semibold">Panel pokazuje podsumowanie uzyskanych punktów edukacyjnych.</span>{" "}
+              <span className="font-semibold">
+                Panel pokazuje podsumowanie uzyskanych punktów edukacyjnych.
+              </span>{" "}
               Ukończone liczy się do punktów, Plan jest planem.
             </p>
 
@@ -291,104 +455,110 @@ export default function CalculatorClient() {
       </div>
 
       {/* USTAWIENIA */}
-      <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-700">Zawód</label>
-              <select
-                value={profession}
-                onChange={async (e) => {
-                  const v = e.target.value as Profession;
-                  setProfession(v);
-                  const rp = DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
-                  setRequiredPoints(rp);
-                  await saveProfilePatch({ profession: v, required_points: rp });
-                }}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              >
-                {PROFESSION_OPTIONS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div>
+            <label className="text-xs font-semibold text-slate-700">Zawód</label>
+            <select
+              value={profession}
+              onChange={async (e) => {
+                const v = e.target.value as Profession;
+                setProfession(v);
 
-            <div>
-              <label className="text-xs font-semibold text-slate-700">Okres rozliczeniowy</label>
-              <select
-                value={periodLabel}
-                onChange={async (e) => {
-                  const [a, b] = e.target.value.split("-").map((x) => Number(x));
-                  setPeriodStart(a);
-                  setPeriodEnd(b);
-                  await saveProfilePatch({ period_start: a, period_end: b });
-                }}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              >
-                <option value="2019-2022">2019-2022</option>
-                <option value="2023-2026">2023-2026</option>
-                <option value="2027-2030">2027-2030</option>
-              </select>
-            </div>
+                const rules = RULES_BY_PROFESSION[v];
+                const rp =
+                  rules?.requiredPoints ??
+                  DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ??
+                  200;
 
-            <div>
-              <label className="text-xs font-semibold text-slate-700">Wymagane punkty (łącznie)</label>
-              <input
-                value={requiredPoints}
-                onChange={(e) => setRequiredPoints(Number(e.target.value || 0))}
-                onBlur={async () => {
-                  await saveProfilePatch({ required_points: requiredPoints });
-                }}
-                type="number"
-                min={0}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              />
-              <p className="mt-1 text-xs text-slate-500">
-                Domyślnie dla {profession}: {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? 200}
-              </p>
-            </div>
+                setRequiredPoints(rp);
+                await saveProfilePatch({ profession: v, required_points: rp });
+              }}
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              {PROFESSION_OPTIONS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <div className="w-full lg:w-auto">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <div className="text-xs font-semibold text-slate-700">Informacja</div>
-              <div className="mt-1 text-sm text-slate-700">
-                W części kategorii obowiązują limity cząstkowe — do postępu liczą się punkty zaliczone (po limitach).
-              </div>
-            </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-700">
+              Okres rozliczeniowy
+            </label>
+            <select
+              value={periodLabel}
+              onChange={async (e) => {
+                const [a, b] = e.target.value.split("-").map((x) => Number(x));
+                setPeriodStart(a);
+                setPeriodEnd(b);
+                await saveProfilePatch({ period_start: a, period_end: b });
+              }}
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="2019-2022">2019-2022</option>
+              <option value="2023-2026">2023-2026</option>
+              <option value="2027-2030">2027-2030</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-slate-700">
+              Wymagane punkty (łącznie)
+            </label>
+            <input
+              value={requiredPoints}
+              onChange={(e) => setRequiredPoints(Number(e.target.value || 0))}
+              onBlur={async () => {
+                await saveProfilePatch({ required_points: requiredPoints });
+              }}
+              type="number"
+              min={0}
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              Domyślnie dla {profession}:{" "}
+              {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? 200}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* PODSUMOWANIE */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className={`rounded-2xl border ${SOFT_MINT_BORDER} ${SOFT_MINT_BG} p-5 shadow-sm lg:col-span-2`}>
+      {/* PODSUMOWANIE (połączone: zdobyte + brakuje) */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div
+          className={`rounded-2xl border ${SOFT_MINT_BORDER} ${SOFT_MINT_BG} p-5 shadow-sm lg:col-span-2`}
+        >
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <div className={`text-xs font-semibold ${SOFT_MINT_MUTED}`}>Podsumowanie w okresie {periodLabel}</div>
+              <div className={`text-xs font-semibold ${SOFT_MINT_MUTED}`}>
+                Podsumowanie w okresie {periodLabel}
+              </div>
 
               <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-2">
                 <div className="text-3xl font-extrabold text-slate-900">
-                  {Math.round(doneAppliedPoints)}/{requiredPoints}
+                  {donePoints}/{requiredPoints}
                 </div>
                 <div className="text-sm font-semibold text-slate-700">
                   brakuje{" "}
-                  <span className="rounded-lg bg-rose-50 px-2 py-1 text-rose-700">{Math.round(missingPoints)} pkt</span>
+                  <span className="rounded-lg bg-rose-50 px-2 py-1 text-rose-700">
+                    {missingPoints} pkt
+                  </span>
                 </div>
               </div>
 
               <div className="mt-3 text-sm text-slate-700">
-                Ukończone: <span className="font-semibold text-slate-900">{inPeriodDone.length}</span> • Plan:{" "}
-                <span className="font-semibold text-slate-900">{inPeriodPlanned.length}</span>
+                Ukończone:{" "}
+                <span className="font-semibold text-slate-900">
+                  {inPeriodDone.length}
+                </span>{" "}
+                • Plan:{" "}
+                <span className="font-semibold text-slate-900">
+                  {inPeriodPlanned.length}
+                </span>
               </div>
-
-              {limitsSummary.perType.some((x) => (x.over || 0) > 0) ? (
-                <div className="mt-2 text-xs text-slate-700">
-                  <span className="font-semibold">Uwaga:</span> część punktów to nadwyżki ponad limity cząstkowe.
-                </div>
-              ) : null}
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -410,30 +580,32 @@ export default function CalculatorClient() {
           <div className="mt-5">
             <div className="flex items-center justify-between">
               <div className={`text-xs font-semibold ${SOFT_MINT_TEXT}`}>Postęp</div>
-              <div className="text-xs font-semibold text-slate-700">{fmtPct(progress)}</div>
+              <div className="text-xs font-semibold text-slate-700">
+                {fmtPct(progress)}
+              </div>
             </div>
 
             <div className="mt-2 rounded-full bg-white/70 p-1">
               <div className="h-3 rounded-full bg-slate-200">
-                <div className="h-3 rounded-full bg-blue-600" style={{ width: `${progress}%` }} />
+                <div
+                  className="h-3 rounded-full bg-blue-600"
+                  style={{ width: `${progress}%` }}
+                />
               </div>
-            </div>
-
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-700">
-              <span className="rounded-full bg-white/70 px-3 py-1 font-semibold text-slate-800">Okres: {periodLabel}</span>
-              <span className="rounded-full bg-white/70 px-3 py-1 font-medium">
-                Zaliczone: {Math.round(doneAppliedPoints)} pkt
-              </span>
-              <span className="rounded-full bg-white/70 px-3 py-1 font-medium">Wymagane: {requiredPoints} pkt</span>
             </div>
           </div>
         </div>
 
-        {/* Ostatnie */}
+        {/* Ostatnie aktywności */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-extrabold text-slate-900">Ostatnie aktywności</div>
-            <Link href="/aktywnosci" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
+            <div className="text-sm font-extrabold text-slate-900">
+              Ostatnie aktywności
+            </div>
+            <Link
+              href="/aktywnosci"
+              className="text-sm font-semibold text-blue-700 hover:text-blue-800"
+            >
               Przejdź →
             </Link>
           </div>
@@ -447,10 +619,15 @@ export default function CalculatorClient() {
               </div>
             ) : (
               inPeriodDone.slice(0, 5).map((a) => (
-                <div key={a.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                <div
+                  key={a.id}
+                  className="rounded-xl border border-slate-200 bg-white p-3"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-slate-900">{a.type}</div>
+                      <div className="truncate text-sm font-semibold text-slate-900">
+                        {a.type}
+                      </div>
                       <div className="mt-1 text-xs text-slate-600">
                         {a.organizer ? `${a.organizer} • ` : ""}
                         {a.year}
@@ -460,6 +637,10 @@ export default function CalculatorClient() {
                       ukończone
                     </div>
                   </div>
+
+                  <div className="mt-2 text-right text-sm font-extrabold text-slate-900">
+                    +{a.points} pkt
+                  </div>
                 </div>
               ))
             )}
@@ -467,126 +648,108 @@ export default function CalculatorClient() {
         </div>
       </div>
 
-      {/* LIMITY */}
-      <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      {/* REGUŁY I LIMITY */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-lg font-extrabold text-slate-900">Limity cząstkowe (kategorie)</h2>
-            <p className="mt-1 text-sm text-slate-600">Jeśli dana kategoria ma limit, pokażemy: wpisane / zaliczone / nadwyżkę.</p>
+            <h2 className="text-lg font-extrabold text-slate-900">
+              Reguły i limity (dla: {profession})
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Część punktów ma limity cząstkowe (np. max w okresie / w roku / za jedno wydarzenie).
+              Poniżej widzisz wykorzystanie limitów na podstawie Twoich wpisów.
+            </p>
           </div>
-
           <div className="text-sm text-slate-700">
-            Zaliczone w okresie: <span className="font-extrabold text-slate-900">{Math.round(doneAppliedPoints)} pkt</span>
+            Zaliczone w okresie:{" "}
+            <span className="font-extrabold text-slate-900">{donePoints} pkt</span>
           </div>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* Kategorie z limitami */}
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="text-sm font-bold text-slate-900">Kategorie z limitami</div>
+            <div className="text-sm font-bold text-slate-900">Limity cząstkowe</div>
 
-            {limitsSummary.perType.filter((x) => !!x.capInPeriod).length === 0 ? (
+            {limitsUsage.length === 0 ? (
               <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700">
-                Dla zawodu <span className="font-semibold">{profession}</span> nie ma ustawionych limitów (MVP).
+                Dla zawodu <span className="font-semibold">{profession}</span> nie mamy jeszcze
+                wpisanych reguł w aplikacji.
               </div>
             ) : (
               <div className="mt-3 space-y-3">
-                {limitsSummary.perType
-                  .filter((x) => !!x.capInPeriod)
-                  .map((r) => {
-                    const cap = r.capInPeriod ?? 0;
-                    const usedPct = r.usedPct ?? 0;
-
-                    return (
-                      <div key={r.type} className="rounded-xl border border-slate-200 bg-white p-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold text-slate-900">{r.type || "Inne"}</div>
-                            <div className="mt-1 text-xs text-slate-600">
-                              Limit: {r.yearlyCap} pkt/rok (≈ {cap} pkt/okres)
-                            </div>
-                          </div>
-
-                          <div className="shrink-0 text-right">
-                            <div className="text-sm font-extrabold text-slate-900">
-                              {Math.round(r.applied)}/{cap}
-                            </div>
-                            <div className="text-xs font-semibold text-slate-600">
-                              {Math.max(0, cap - r.applied) > 0
-                                ? `zostało ${Math.round(Math.max(0, cap - r.applied))} pkt`
-                                : "limit wykorzystany"}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-3">
-                          <div className="h-2 rounded-full bg-slate-200">
-                            <div className="h-2 rounded-full bg-blue-600" style={{ width: `${usedPct}%` }} />
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                          <span className="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
-                            wpisane: {Math.round(r.raw)} pkt
-                          </span>
-                          <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
-                            zaliczone: {Math.round(r.applied)} pkt
-                          </span>
-                          {r.over > 0 ? (
-                            <span className="rounded-full bg-rose-50 px-3 py-1 font-semibold text-rose-700">
-                              nadwyżka: {Math.round(r.over)} pkt
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
-
-          {/* Punkty wg kategorii */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="text-sm font-bold text-slate-900">Punkty wg kategorii (ukończone)</div>
-
-            <div className="mt-3 space-y-2">
-              {pointsByTypeApplied.length === 0 ? (
-                <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700">
-                  Brak danych w okresie {periodLabel}.
-                </div>
-              ) : (
-                pointsByTypeApplied.slice(0, 10).map((row) => {
-                  const hasLimit = !!row.capInPeriod;
-
-                  return (
-                    <div key={row.type} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                {limitsUsage.map((r) => (
+                  <div
+                    key={r.key}
+                    className="rounded-xl border border-slate-200 bg-white p-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold text-slate-900">{row.type}</div>
+                        <div className="truncate text-sm font-semibold text-slate-900">
+                          {r.label}
+                        </div>
                         <div className="mt-1 text-xs text-slate-600">
-                          {hasLimit ? `Limit w okresie: ${row.capInPeriod} pkt` : "Bez limitu w aplikacji"}
-                          {row.over > 0 ? ` • nadwyżka: ${row.over} pkt` : ""}
+                          {r.note ?? ""}
+                          {r.mode === "per_year" ? ` (przeliczone ×${r.yearsInPeriod} lat)` : ""}
                         </div>
                       </div>
 
                       <div className="shrink-0 text-right">
-                        <div className="rounded-lg bg-slate-100 px-2 py-1 text-sm font-extrabold text-slate-900">
-                          {row.applied} pkt
+                        <div className="text-sm font-extrabold text-slate-900">
+                          {r.used}/{r.cap}
                         </div>
-                        {hasLimit ? <div className="mt-1 text-xs font-semibold text-slate-600">{fmtPct(row.usedPct ?? 0)}</div> : null}
+                        <div className="text-xs font-semibold text-slate-600">
+                          zostało {r.remaining} pkt
+                        </div>
                       </div>
                     </div>
-                  );
-                })
-              )}
+
+                    <div className="mt-3">
+                      <div className="h-2 rounded-full bg-slate-200">
+                        <div
+                          className="h-2 rounded-full bg-blue-600"
+                          style={{ width: `${r.usedPct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {r.mode === "per_item" ? (
+                      <div className="mt-2 text-xs text-slate-600">
+                        Ten limit działa „na jeden wpis/wydarzenie” – UI pokaże pełny efekt dopiero,
+                        gdy będziemy mieli w bazie pole <span className="font-mono">kind</span> i
+                        np. <span className="font-mono">hours</span>.
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="text-sm font-bold text-slate-900">Co dalej (proponowana zmiana DB)</div>
+            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700">
+              Żeby liczyć limity poprawnie (np. „max 6 pkt za jedno szkolenie”), potrzebujesz w tabeli{" "}
+              <span className="font-mono">activities</span> przynajmniej:
+              <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
+                <li><span className="font-mono">kind</span> (enum: WEBINAR, INTERNAL_TRAINING, …)</li>
+                <li><span className="font-mono">hours</span> (opcjonalnie)</li>
+                <li><span className="font-mono">role</span> (uczestnik/prowadzący – dla części zawodów)</li>
+                <li><span className="font-mono">count</span> (gdy „za posiedzenie/za tytuł”)</li>
+              </ul>
+              <div className="mt-2">
+                Wtedy w <span className="font-mono">lib/cpd/calc.ts</span> możesz realnie „ucinać”
+                punkty do limitów i pokazywać: <b>zaliczone / nadwyżka</b>.
+              </div>
             </div>
 
-            {pointsByTypeApplied.length > 10 ? (
-              <div className="mt-3 text-sm">
-                <Link href="/aktywnosci" className="font-semibold text-blue-700 hover:text-blue-800">
-                  Zobacz wszystkie w Aktywnościach →
-                </Link>
-              </div>
-            ) : null}
+            <div className="mt-3 text-sm">
+              <Link
+                href="/aktywnosci"
+                className="font-semibold text-blue-700 hover:text-blue-800"
+              >
+                Przejdź do Aktywności, żeby dodać/edytować wpisy →
+              </Link>
+            </div>
           </div>
         </div>
       </div>
