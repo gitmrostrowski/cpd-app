@@ -39,19 +39,14 @@ type ActivityRow = {
 type ProfileRow = {
   user_id: string;
   profession: Profession | null;
-  period_start: number | null; // rok (UI: dowolny)
-  period_end: number | null; // rok (UI: dowolny)
+  period_start: number | null;
+  period_end: number | null;
   required_points: number | null;
 };
 
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
-
-const CARD_BG = "bg-slate-50/70";
-const CARD_BORDER = "border-slate-200";
-const CARD_TEXT = "text-slate-900";
-const CARD_MUTED = "text-slate-600";
 
 type RuleLimit = {
   key: string;
@@ -72,54 +67,18 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
     periodMonths: 48,
     requiredPoints: 200,
     limits: [
-      {
-        key: "INTERNAL_TRAINING",
-        label: "Szkolenie wewnętrzne",
-        mode: "per_item",
-        maxPoints: 6,
-        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
-      },
-      {
-        key: "JOURNAL_SUBSCRIPTION",
-        label: "Prenumerata czasopisma",
-        mode: "per_period",
-        maxPoints: 10,
-        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
-      },
-      {
-        key: "SCIENTIFIC_SOCIETY",
-        label: "Towarzystwo/Kolegium",
-        mode: "per_period",
-        maxPoints: 20,
-        note: "5 pkt, maks. 20 pkt w okresie",
-      },
+      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_item", maxPoints: 6, note: "1 pkt/h, maks. 6 pkt za jedno szkolenie" },
+      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_period", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt w okresie" },
+      { key: "SCIENTIFIC_SOCIETY", label: "Towarzystwo/Kolegium", mode: "per_period", maxPoints: 20, note: "5 pkt, maks. 20 pkt w okresie" },
     ],
   },
   "Lekarz dentysta": {
     periodMonths: 48,
     requiredPoints: 200,
     limits: [
-      {
-        key: "INTERNAL_TRAINING",
-        label: "Szkolenie wewnętrzne",
-        mode: "per_item",
-        maxPoints: 6,
-        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
-      },
-      {
-        key: "JOURNAL_SUBSCRIPTION",
-        label: "Prenumerata czasopisma",
-        mode: "per_period",
-        maxPoints: 10,
-        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
-      },
-      {
-        key: "SCIENTIFIC_SOCIETY",
-        label: "Towarzystwo/Kolegium",
-        mode: "per_period",
-        maxPoints: 20,
-        note: "5 pkt, maks. 20 pkt w okresie",
-      },
+      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_item", maxPoints: 6, note: "1 pkt/h, maks. 6 pkt za jedno szkolenie" },
+      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_period", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt w okresie" },
+      { key: "SCIENTIFIC_SOCIETY", label: "Towarzystwo/Kolegium", mode: "per_period", maxPoints: 20, note: "5 pkt, maks. 20 pkt w okresie" },
     ],
   },
   Pielęgniarka: {
@@ -383,14 +342,14 @@ export default function CalculatorClient() {
 
   return (
     <div className="space-y-5">
-      {/* USTAWIENIA NA GÓRZE */}
-      <div className={`rounded-2xl border ${CARD_BORDER} ${CARD_BG} p-4 shadow-sm`}>
+      {/* USTAWIENIA (dopieścione: mniej formularzowo, bardziej „dashboard”) */}
+      <div className="rounded-3xl border border-slate-200/70 bg-white/65 p-4 shadow-sm backdrop-blur">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
-            <div className={`text-sm font-extrabold ${CARD_TEXT}`}>Ustawienia okresu i zawodu</div>
-            <div className={`mt-1 text-xs ${CARD_MUTED}`}>
-              Zmiany zapisujemy w profilu.
-              <span className="ml-2 inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+            <div className="text-sm font-extrabold text-slate-900">Ustawienia okresu i zawodu</div>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+              <span>Zmiany zapisujemy w profilu.</span>
+              <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
                 {savingProfile ? "Zapisywanie…" : savedAt ? "Zapisano" : "—"}
               </span>
             </div>
@@ -412,7 +371,7 @@ export default function CalculatorClient() {
                 required_points: DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200,
               });
             }}
-            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
           >
             Przywróć domyślne
           </button>
@@ -420,7 +379,7 @@ export default function CalculatorClient() {
 
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
           <div>
-            <label className={`text-xs font-semibold ${CARD_MUTED}`}>Zawód</label>
+            <label className="text-xs font-semibold text-slate-600">Zawód</label>
             <select
               value={profession}
               onChange={async (e) => {
@@ -435,7 +394,7 @@ export default function CalculatorClient() {
                 setRequiredPoints(rp);
                 await saveProfilePatch({ profession: v, required_points: rp });
               }}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               {PROFESSION_OPTIONS.map((p) => (
                 <option key={p} value={p}>
@@ -446,23 +405,23 @@ export default function CalculatorClient() {
           </div>
 
           <div>
-            <label className={`text-xs font-semibold ${CARD_MUTED}`}>Tryb okresu</label>
+            <label className="text-xs font-semibold text-slate-600">Tryb okresu</label>
             <select
               value={periodMode}
               onChange={(e) => setPeriodMode(e.target.value as "preset" | "custom")}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               <option value="preset">Preset (najczęstszy)</option>
               <option value="custom">Indywidualny</option>
             </select>
             <p className="mt-1 text-[11px] text-slate-500">
-              W praktyce okres bywa liczony indywidualnie (np. od uzyskania PWZ). Jeśli masz inny zakres, wybierz „Indywidualny”.
+              Jeśli masz inny zakres (np. start od uzyskania PWZ), wybierz „Indywidualny”.
             </p>
           </div>
 
           {periodMode === "preset" ? (
-            <div className="md:col-span-1">
-              <label className={`text-xs font-semibold ${CARD_MUTED}`}>Okres (preset)</label>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Okres (preset)</label>
               <select
                 value={periodLabel}
                 onChange={async (e) => {
@@ -471,7 +430,7 @@ export default function CalculatorClient() {
                   setPeriodEnd(b);
                   await saveProfilePatch({ period_start: a, period_end: b });
                 }}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
                 <option value="2019-2022">2019-2022</option>
                 <option value="2023-2026">2023-2026</option>
@@ -479,8 +438,8 @@ export default function CalculatorClient() {
               </select>
             </div>
           ) : (
-            <div className="md:col-span-1">
-              <label className={`text-xs font-semibold ${CARD_MUTED}`}>Okres (indywidualny)</label>
+            <div>
+              <label className="text-xs font-semibold text-slate-600">Okres (indywidualny)</label>
               <div className="mt-1 grid grid-cols-2 gap-2">
                 <input
                   value={periodStart}
@@ -493,7 +452,7 @@ export default function CalculatorClient() {
                     });
                   }}
                   type="number"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   placeholder="Start"
                 />
                 <input
@@ -505,7 +464,7 @@ export default function CalculatorClient() {
                     await saveProfilePatch({ period_end: pe });
                   }}
                   type="number"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   placeholder="Koniec"
                 />
               </div>
@@ -513,7 +472,7 @@ export default function CalculatorClient() {
           )}
 
           <div>
-            <label className={`text-xs font-semibold ${CARD_MUTED}`}>Wymagane punkty</label>
+            <label className="text-xs font-semibold text-slate-600">Wymagane punkty</label>
             <input
               value={requiredPoints}
               onChange={(e) => setRequiredPoints(Number(e.target.value || 0))}
@@ -522,7 +481,7 @@ export default function CalculatorClient() {
               }}
               type="number"
               min={0}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
             <p className="mt-1 text-[11px] text-slate-500">
               Domyślnie: {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? requiredPoints}
@@ -552,7 +511,7 @@ export default function CalculatorClient() {
         portfolioHref="/portfolio"
       />
 
-      {/* Reszta strony */}
+      {/* Reszta strony bez zmian */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
           <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
@@ -567,44 +526,38 @@ export default function CalculatorClient() {
             </div>
           </div>
 
-          {limitsUsage.length === 0 ? (
-            <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-              Dla zawodu <span className="font-semibold">{profession}</span> nie mamy jeszcze wpisanych limitów.
-            </div>
-          ) : (
-            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-              {limitsUsage.map((r) => (
-                <div key={r.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-bold text-slate-900">{r.label}</div>
-                      {r.note ? (
-                        <div className="mt-1 text-xs text-slate-600">
-                          {r.note}
-                          {r.mode === "per_year" ? ` (×${r.yearsInPeriod} lat)` : ""}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="shrink-0 text-right">
-                      <div className="text-sm font-extrabold text-slate-900">
-                        Wykorzystano: {Math.round(r.used)} / {Math.round(r.cap)}
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {limitsUsage.map((r) => (
+              <div key={r.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-bold text-slate-900">{r.label}</div>
+                    {r.note ? (
+                      <div className="mt-1 text-xs text-slate-600">
+                        {r.note}
+                        {r.mode === "per_year" ? ` (×${r.yearsInPeriod} lat)` : ""}
                       </div>
-                      <div className="text-xs font-semibold text-slate-600">
-                        Pozostało: {Math.round(r.remaining)} pkt
-                      </div>
-                    </div>
+                    ) : null}
                   </div>
 
-                  <div className="mt-3">
-                    <div className="h-2 rounded-full bg-slate-200">
-                      <div className="h-2 rounded-full bg-emerald-600" style={{ width: `${r.usedPct}%` }} />
+                  <div className="shrink-0 text-right">
+                    <div className="text-sm font-extrabold text-slate-900">
+                      Wykorzystano: {Math.round(r.used)} / {Math.round(r.cap)}
+                    </div>
+                    <div className="text-xs font-semibold text-slate-600">
+                      Pozostało: {Math.round(r.remaining)} pkt
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+
+                <div className="mt-3">
+                  <div className="h-2 rounded-full bg-slate-200">
+                    <div className="h-2 rounded-full bg-emerald-600" style={{ width: `${r.usedPct}%` }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
 
           <div className="mt-4 text-sm">
             <Link href="/aktywnosci" className="font-semibold text-blue-700 hover:text-blue-800">
