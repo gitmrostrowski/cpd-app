@@ -62,10 +62,12 @@ function fmtPct(n: number) {
   return `${Math.round(n)}%`;
 }
 
+const BTN_BASE =
+  "inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold transition-colors";
 const PRIMARY_BTN = "bg-blue-600 hover:bg-blue-700 text-white shadow-sm";
+const DANGER_BTN = "bg-rose-600 hover:bg-rose-700 text-white shadow-sm";
 const OUTLINE_BTN =
   "border border-slate-200/70 bg-white/80 text-slate-800 hover:bg-white backdrop-blur";
-const BTN_BASE = "inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold";
 
 const PRIMARY_BAR = "bg-blue-600";
 const PRIMARY_DOT = "bg-blue-700";
@@ -77,7 +79,6 @@ function statusFromCompleteness(pointsPct: number, evidencePct: number, doneCoun
   const p = clamp(pointsPct, 0, 100);
   const e = clamp(evidencePct, 0, 100);
 
-  // Brak danych → neutralny „wymaga uzupełnienia”
   if (doneCount <= 0) {
     return {
       label: "Wymaga uzupełnienia",
@@ -87,7 +88,6 @@ function statusFromCompleteness(pointsPct: number, evidencePct: number, doneCoun
     };
   }
 
-  // Komplet
   if (p >= 85 && e >= 90) {
     return {
       label: "Dokumentacja kompletna",
@@ -97,7 +97,6 @@ function statusFromCompleteness(pointsPct: number, evidencePct: number, doneCoun
     };
   }
 
-  // Czerwony tylko wtedy, gdy jest bardzo słabo (albo punkty, albo dowody) i jest już co oceniać
   if (p < 35 || e < 50) {
     return {
       label: "Dokumentacja niekompletna",
@@ -107,7 +106,6 @@ function statusFromCompleteness(pointsPct: number, evidencePct: number, doneCoun
     };
   }
 
-  // Domyślnie: warn
   return {
     label: "Wymaga uzupełnienia",
     tone: "warn" as const,
@@ -116,7 +114,17 @@ function statusFromCompleteness(pointsPct: number, evidencePct: number, doneCoun
   };
 }
 
-function ToneBadge({ tone, label, reason }: { tone: DocTone; label: string; reason: string }) {
+function ToneBadge({
+  tone,
+  label,
+  reason,
+  attention,
+}: {
+  tone: DocTone;
+  label: string;
+  reason: string;
+  attention?: boolean;
+}) {
   const map = {
     ok: {
       wrap: "border-blue-200/70 bg-blue-50/70 text-blue-950",
@@ -133,10 +141,18 @@ function ToneBadge({ tone, label, reason }: { tone: DocTone; label: string; reas
   }[tone];
 
   return (
-    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${map.wrap}`}>
+    <span
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${map.wrap}`}
+    >
       <span className={`h-2 w-2 rounded-full ${map.dot}`} />
       {label}
       <span className="text-[11px] font-semibold opacity-80">• {reason}</span>
+
+      {attention ? (
+        <span className="ml-1 inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700">
+          Wymaga uwagi
+        </span>
+      ) : null}
     </span>
   );
 }
@@ -162,7 +178,6 @@ function MiniCta({ href, label }: { href: string; label: string }) {
 }
 
 function limitTone(used: number, usedPct: number) {
-  // ✅ 0 użycia to nie „Brak” jako błąd — tylko „Nie rozpoczęto”
   if (used <= 0) return { badge: "Nie rozpoczęto", tone: "ok" as const };
   if (usedPct >= 100) return { badge: "Limit", tone: "bad" as const };
   if (usedPct >= 80) return { badge: "Uwaga", tone: "warn" as const };
@@ -177,7 +192,11 @@ function LimitBadge({ tone, text }: { tone: "ok" | "warn" | "bad"; text: string 
       ? "bg-amber-50 text-amber-950"
       : "bg-rose-50 text-rose-900";
 
-  return <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${cls}`}>{text}</span>;
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${cls}`}>
+      {text}
+    </span>
+  );
 }
 
 function MiniLimitCard({ item }: { item: TopLimitItem }) {
@@ -204,8 +223,8 @@ function MiniLimitCard({ item }: { item: TopLimitItem }) {
       </div>
 
       <div className="mt-2">
-        <div className="h-2 rounded-full bg-slate-200/70">
-          <div className={`h-2 rounded-full ${PRIMARY_BAR}`} style={{ width: `${pct}%` }} />
+        <div className="h-3 rounded-full bg-slate-200/70">
+          <div className={`h-3 rounded-full ${PRIMARY_BAR}`} style={{ width: `${pct}%` }} />
         </div>
       </div>
 
@@ -243,28 +262,46 @@ export default function CpdStatusPanel({
 
   const status = statusFromCompleteness(pointsPct, docsPct, doneCount);
 
+  const docsActionNeeded = missingEvidenceCount > 0;
+
   // ✅ CTA priorytet: dokumenty > aktywność > pdf
   const primary =
-    missingEvidenceCount > 0
+    docsActionNeeded
       ? { href: "/aktywnosci", label: "Uzupełnij dokumenty" }
       : missingPoints > 0
       ? { href: primaryCtaHref, label: "+ Dodaj aktywność" }
       : { href: portfolioHref, label: "Zestawienie PDF" };
 
   const secondary =
-    missingEvidenceCount > 0
+    docsActionNeeded
       ? { href: primaryCtaHref, label: "+ Dodaj aktywność" }
       : { href: "/aktywnosci", label: "Aktywności" };
 
+  // ✅ „Najbliższy krok” ma czerwony ton, jeśli dotyczy dokumentów
+  const nextStepWrapCls = docsActionNeeded
+    ? "rounded-2xl border border-rose-200/70 bg-rose-50/60 p-4 shadow-sm"
+    : "rounded-2xl border border-slate-200/70 bg-slate-50/60 p-4 shadow-sm";
+
+  const nextStepBtnCls = docsActionNeeded ? `${BTN_BASE} ${DANGER_BTN}` : `${BTN_BASE} ${PRIMARY_BTN}`;
+
+  // ✅ kropka progress nie wychodzi poza pasek
+  const dotLeft = clamp(pointsPct, 0, 100);
+
   return (
     <div className="space-y-4">
-      <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
+      {/* GŁÓWNY PANEL — więcej „głębi” */}
+      <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-5 shadow-lg ring-1 ring-slate-200/50 backdrop-blur">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <div className="text-xs font-semibold text-slate-600">Panel CPD</div>
 
-              <ToneBadge tone={status.tone} label={status.label} reason={status.reason} />
+              <ToneBadge
+                tone={status.tone}
+                label={status.label}
+                reason={status.reason}
+                attention={docsActionNeeded}
+              />
 
               {isBusy ? (
                 <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600 backdrop-blur">
@@ -304,14 +341,17 @@ export default function CpdStatusPanel({
                 <div className="text-xs font-semibold text-slate-700">{fmtPct(pointsPct)}</div>
               </div>
 
+              {/* ✅ grubszy pasek + ticki 25/50/75 */}
               <div className="mt-2">
-                <div className="relative h-4 rounded-full bg-slate-200/70">
-                  <div className={`h-4 rounded-full ${PRIMARY_BAR}`} style={{ width: `${pointsPct}%` }} />
+                <div className="relative h-5 rounded-full bg-slate-200/70">
+                  <div className={`h-5 rounded-full ${PRIMARY_BAR}`} style={{ width: `${pointsPct}%` }} />
+
                   <div
-                    className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white ${PRIMARY_DOT} shadow`}
-                    style={{ left: `calc(${pointsPct}% - 8px)` }}
+                    className={`absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 border-white ${PRIMARY_DOT} shadow`}
+                    style={{ left: `calc(${dotLeft}% - 10px)` }}
                     aria-hidden
                   />
+
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-[25%]">
                     <span className="h-3 w-px bg-white/60" />
                     <span className="h-3 w-px bg-white/60" />
@@ -373,23 +413,39 @@ export default function CpdStatusPanel({
               <StatPill label="Wymagane" value={`${requiredPoints} pkt`} />
             </div>
 
-            <div className="rounded-2xl border border-slate-200/70 bg-slate-50/60 p-4 shadow-sm">
-              <div className="text-[11px] font-semibold text-slate-600">Najbliższy krok</div>
+            <div className={nextStepWrapCls}>
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-semibold text-slate-600">Najbliższy krok</div>
+
+                {/* ✅ czerwony wyróżnik sugerowanej akcji */}
+                {docsActionNeeded ? (
+                  <span className="inline-flex items-center gap-2 text-[11px] font-bold text-rose-700">
+                    <span className="h-2 w-2 rounded-full bg-rose-500" />
+                    Do zrobienia
+                  </span>
+                ) : null}
+              </div>
+
               <div className="mt-1 text-sm font-extrabold text-slate-900">{nextStep.title}</div>
               <div className="mt-1 text-sm text-slate-700">{nextStep.description}</div>
 
               {nextStep.ctaHref && nextStep.ctaLabel ? (
-                <Link href={nextStep.ctaHref} className={`${BTN_BASE} ${PRIMARY_BTN} mt-3 w-full`}>
+                <Link href={nextStep.ctaHref} className={`${nextStepBtnCls} mt-3 w-full`}>
                   {nextStep.ctaLabel}
                 </Link>
               ) : null}
             </div>
 
             <div className="grid grid-cols-1 gap-2">
-              <Link href={primary.href} className={`${BTN_BASE} ${PRIMARY_BTN} w-full`}>
+              {/* ✅ PRIMARY (dokumenty/aktywność/pdf) */}
+              <Link
+                href={primary.href}
+                className={`${BTN_BASE} ${docsActionNeeded ? DANGER_BTN : PRIMARY_BTN} w-full`}
+              >
                 {primary.label}
               </Link>
 
+              {/* ✅ brak dublowania „Uzupełnij dokumenty” — secondary + PDF */}
               <div className="grid grid-cols-2 gap-2">
                 <Link href={secondary.href} className={`${BTN_BASE} ${OUTLINE_BTN}`}>
                   {secondary.label}
@@ -401,17 +457,26 @@ export default function CpdStatusPanel({
         </div>
       </div>
 
+      {/* DOLNE KAFLE */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
+        <div
+          className={
+            docsActionNeeded
+              ? "rounded-3xl border border-rose-200/70 bg-rose-50/60 p-5 shadow-sm backdrop-blur"
+              : "rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur"
+          }
+        >
           <div className="text-xs font-semibold text-slate-600">Do uzupełnienia</div>
           <div className="mt-2 text-lg font-extrabold text-slate-900">
-            {missingEvidenceCount > 0 ? `${missingEvidenceCount} wpisów bez certyfikatu` : "Wszystkie wpisy mają dokumenty ✅"}
+            {missingEvidenceCount > 0
+              ? `${missingEvidenceCount} wpisów bez certyfikatu`
+              : "Wszystkie wpisy mają dokumenty ✅"}
           </div>
           <div className="mt-1 text-sm text-slate-700">
             Dodaj zdjęcie/PDF certyfikatu, żeby zestawienie było zawsze kompletne.
           </div>
           <div className="mt-4">
-            <Link href="/aktywnosci" className={`${BTN_BASE} ${OUTLINE_BTN}`}>
+            <Link href="/aktywnosci" className={`${BTN_BASE} ${docsActionNeeded ? DANGER_BTN : OUTLINE_BTN}`}>
               Uzupełnij dokumenty
             </Link>
           </div>
