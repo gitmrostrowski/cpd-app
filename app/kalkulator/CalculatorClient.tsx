@@ -39,8 +39,8 @@ type ActivityRow = {
 type ProfileRow = {
   user_id: string;
   profession: Profession | null;
-  period_start: number | null;
-  period_end: number | null;
+  period_start: number | null; // rok (UI: dowolny)
+  period_end: number | null;   // rok (UI: dowolny)
   required_points: number | null;
 };
 
@@ -72,54 +72,18 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
     periodMonths: 48,
     requiredPoints: 200,
     limits: [
-      {
-        key: "INTERNAL_TRAINING",
-        label: "Szkolenie wewnętrzne",
-        mode: "per_item",
-        maxPoints: 6,
-        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
-      },
-      {
-        key: "JOURNAL_SUBSCRIPTION",
-        label: "Prenumerata czasopisma",
-        mode: "per_period",
-        maxPoints: 10,
-        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
-      },
-      {
-        key: "SCIENTIFIC_SOCIETY",
-        label: "Towarzystwo/Kolegium",
-        mode: "per_period",
-        maxPoints: 20,
-        note: "5 pkt, maks. 20 pkt w okresie",
-      },
+      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_item", maxPoints: 6, note: "1 pkt/h, maks. 6 pkt za jedno szkolenie" },
+      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_period", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt w okresie" },
+      { key: "SCIENTIFIC_SOCIETY", label: "Towarzystwo/Kolegium", mode: "per_period", maxPoints: 20, note: "5 pkt, maks. 20 pkt w okresie" },
     ],
   },
   "Lekarz dentysta": {
     periodMonths: 48,
     requiredPoints: 200,
     limits: [
-      {
-        key: "INTERNAL_TRAINING",
-        label: "Szkolenie wewnętrzne",
-        mode: "per_item",
-        maxPoints: 6,
-        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
-      },
-      {
-        key: "JOURNAL_SUBSCRIPTION",
-        label: "Prenumerata czasopisma",
-        mode: "per_period",
-        maxPoints: 10,
-        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
-      },
-      {
-        key: "SCIENTIFIC_SOCIETY",
-        label: "Towarzystwo/Kolegium",
-        mode: "per_period",
-        maxPoints: 20,
-        note: "5 pkt, maks. 20 pkt w okresie",
-      },
+      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_item", maxPoints: 6, note: "1 pkt/h, maks. 6 pkt za jedno szkolenie" },
+      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_period", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt w okresie" },
+      { key: "SCIENTIFIC_SOCIETY", label: "Towarzystwo/Kolegium", mode: "per_period", maxPoints: 20, note: "5 pkt, maks. 20 pkt w okresie" },
     ],
   },
   Pielęgniarka: {
@@ -146,14 +110,12 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
 
 function mapTypeToRuleKey(type: string): string | null {
   const t = (type || "").toLowerCase();
-
   if (t.includes("webinar")) return "WEBINAR";
   if (t.includes("kurs online")) return "WEBINAR";
   if (t.includes("szkolenie wewn")) return "INTERNAL_TRAINING";
   if (t.includes("prenumer")) return "JOURNAL_SUBSCRIPTION";
   if (t.includes("towarzyst") || t.includes("kolegium")) return "SCIENTIFIC_SOCIETY";
   if (t.includes("komisj") || t.includes("zesp")) return "COMMITTEES";
-
   return null;
 }
 
@@ -166,7 +128,6 @@ function buildNextStep(missingPoints: number, missingEvidenceCount: number, limi
       ctaHref: "/aktywnosci",
     };
   }
-
   if (missingPoints <= 0) {
     return {
       title: "Wygeneruj portfolio",
@@ -175,7 +136,6 @@ function buildNextStep(missingPoints: number, missingEvidenceCount: number, limi
       ctaHref: "/portfolio",
     };
   }
-
   if (limitWarning) {
     return {
       title: "Dobierz inną formę aktywności",
@@ -184,21 +144,9 @@ function buildNextStep(missingPoints: number, missingEvidenceCount: number, limi
       ctaHref: "/aktywnosci?new=1",
     };
   }
-
-  const big = 15;
-  const small = 5;
-  const bigCount = Math.floor(missingPoints / big);
-  const rest = missingPoints - bigCount * big;
-  const smallCount = Math.ceil(rest / small);
-
-  const planTxt =
-    bigCount > 0
-      ? `Propozycja: ${Math.min(bigCount, 4)}× aktywność ~${big} pkt + ${smallCount}× aktywność ~${small} pkt.`
-      : `Propozycja: ${smallCount}× aktywność ~${small} pkt.`;
-
   return {
     title: "Ustal krótki plan",
-    description: `${planTxt} Dodaj wpisy jako „plan”, a potem uzupełniaj certyfikaty.`,
+    description: "Dodaj wpisy jako „plan”, a potem uzupełniaj certyfikaty.",
     ctaLabel: "+ Dodaj aktywność",
     ctaHref: "/aktywnosci?new=1",
   };
@@ -217,6 +165,9 @@ export default function CalculatorClient() {
   const [requiredPoints, setRequiredPoints] = useState<number>(
     DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
   );
+
+  // NEW: preset vs indywidualny
+  const [periodMode, setPeriodMode] = useState<"preset" | "custom">("preset");
 
   const [savingProfile, setSavingProfile] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -248,6 +199,11 @@ export default function CalculatorClient() {
           setPeriodStart(ps);
           setPeriodEnd(pe);
 
+          // jeśli okres nie pasuje do presetów → ustaw custom
+          const presetLabel = `${ps}-${pe}`;
+          const isPreset = presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
+          setPeriodMode(isPreset ? "preset" : "custom");
+
           const rp =
             p.required_points ??
             DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ??
@@ -260,6 +216,7 @@ export default function CalculatorClient() {
           setPeriodStart(2023);
           setPeriodEnd(2026);
           setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
+          setPeriodMode("preset");
         }
       }
 
@@ -320,7 +277,6 @@ export default function CalculatorClient() {
     return inPeriodDone.filter((a) => !a.certificate_path).length;
   }, [inPeriodDone]);
 
-  // Limity
   const limitsUsage = useMemo(() => {
     const rules = RULES_BY_PROFESSION[profession];
     const limits = rules?.limits ?? [];
@@ -345,7 +301,6 @@ export default function CalculatorClient() {
     });
   }, [profession, inPeriodDone, periodStart, periodEnd]);
 
-  // TOP mini-limity (top 3 po wykorzystaniu)
   const topLimits = useMemo<TopLimitItem[]>(() => {
     return [...limitsUsage]
       .sort((a, b) => (b.usedPct ?? 0) - (a.usedPct ?? 0))
@@ -362,7 +317,6 @@ export default function CalculatorClient() {
       }));
   }, [limitsUsage]);
 
-  // Ostrzeżenie, jeśli któryś limit osiągnięty (z top albo z całości)
   const limitWarning = useMemo(() => {
     const hit = limitsUsage.find((x) => (x.usedPct ?? 0) >= 100);
     if (!hit) return null;
@@ -394,34 +348,14 @@ export default function CalculatorClient() {
 
   return (
     <div className="space-y-5">
-      <CpdStatusPanel
-        isBusy={isBusy}
-        userEmail={user?.email ?? null}
-        profileProfession={profile?.profession ?? null}
-        periodLabel={periodLabel}
-        donePoints={donePoints}
-        requiredPoints={requiredPoints}
-        missingPoints={missingPoints}
-        progressPct={progress}
-        doneCount={inPeriodDone.length}
-        plannedCount={inPeriodPlanned.length}
-        missingEvidenceCount={missingEvidenceCount}
-        nextStep={nextStep}
-        topLimits={topLimits}
-        limitWarning={limitWarning}
-        primaryCtaHref="/aktywnosci?new=1"
-        secondaryCtaHref="/aktywnosci"
-        portfolioHref="/portfolio"
-      />
-
-      {/* USTAWIENIA */}
-      <div className={`rounded-2xl border ${CARD_BORDER} ${CARD_BG} p-5 shadow-sm`}>
+      {/* ✅ 1) USTAWIENIA NA GÓRZE – cieńsze i lżejsze */}
+      <div className={`rounded-2xl border ${CARD_BORDER} ${CARD_BG} p-4 shadow-sm`}>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
+          <div className="min-w-0">
             <div className={`text-sm font-extrabold ${CARD_TEXT}`}>Ustawienia okresu i zawodu</div>
-            <div className={`mt-1 text-sm ${CARD_MUTED}`}>
-              Zmiany zapisujemy w profilu.{" "}
-              <span className="ml-2 inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+            <div className={`mt-1 text-xs ${CARD_MUTED}`}>
+              Zmiany zapisujemy w profilu.
+              <span className="ml-2 inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700">
                 {savingProfile ? "Zapisywanie…" : savedAt ? "Zapisano" : "—"}
               </span>
             </div>
@@ -435,6 +369,7 @@ export default function CalculatorClient() {
               setPeriodStart(2023);
               setPeriodEnd(2026);
               setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
+              setPeriodMode("preset");
               await saveProfilePatch({
                 profession: prof,
                 period_start: 2023,
@@ -448,7 +383,7 @@ export default function CalculatorClient() {
           </button>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
           <div>
             <label className={`text-xs font-semibold ${CARD_MUTED}`}>Zawód</label>
             <select
@@ -476,25 +411,71 @@ export default function CalculatorClient() {
           </div>
 
           <div>
-            <label className={`text-xs font-semibold ${CARD_MUTED}`}>Okres rozliczeniowy</label>
+            <label className={`text-xs font-semibold ${CARD_MUTED}`}>Tryb okresu</label>
             <select
-              value={periodLabel}
-              onChange={async (e) => {
-                const [a, b] = e.target.value.split("-").map((x) => Number(x));
-                setPeriodStart(a);
-                setPeriodEnd(b);
-                await saveProfilePatch({ period_start: a, period_end: b });
-              }}
+              value={periodMode}
+              onChange={(e) => setPeriodMode(e.target.value as "preset" | "custom")}
               className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
-              <option value="2019-2022">2019-2022</option>
-              <option value="2023-2026">2023-2026</option>
-              <option value="2027-2030">2027-2030</option>
+              <option value="preset">Preset (najczęstszy)</option>
+              <option value="custom">Indywidualny</option>
             </select>
+            <p className="mt-1 text-[11px] text-slate-500">
+              U lekarzy/dentystów okres bywa liczony od daty PWZ (48 miesięcy). :contentReference[oaicite:3]{index=3}
+            </p>
           </div>
 
+          {periodMode === "preset" ? (
+            <div className="md:col-span-1">
+              <label className={`text-xs font-semibold ${CARD_MUTED}`}>Okres (preset)</label>
+              <select
+                value={periodLabel}
+                onChange={async (e) => {
+                  const [a, b] = e.target.value.split("-").map((x) => Number(x));
+                  setPeriodStart(a);
+                  setPeriodEnd(b);
+                  await saveProfilePatch({ period_start: a, period_end: b });
+                }}
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              >
+                <option value="2019-2022">2019-2022</option>
+                <option value="2023-2026">2023-2026</option>
+                <option value="2027-2030">2027-2030</option>
+              </select>
+            </div>
+          ) : (
+            <div className="md:col-span-1">
+              <label className={`text-xs font-semibold ${CARD_MUTED}`}>Okres (indywidualny)</label>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                <input
+                  value={periodStart}
+                  onChange={(e) => setPeriodStart(Number(e.target.value || 0))}
+                  onBlur={async () => {
+                    if (periodEnd < periodStart) setPeriodEnd(periodStart);
+                    await saveProfilePatch({ period_start: periodStart, period_end: Math.max(periodEnd, periodStart) });
+                  }}
+                  type="number"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="Start"
+                />
+                <input
+                  value={periodEnd}
+                  onChange={(e) => setPeriodEnd(Number(e.target.value || 0))}
+                  onBlur={async () => {
+                    const pe = Math.max(periodEnd, periodStart);
+                    setPeriodEnd(pe);
+                    await saveProfilePatch({ period_end: pe });
+                  }}
+                  type="number"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="Koniec"
+                />
+              </div>
+            </div>
+          )}
+
           <div>
-            <label className={`text-xs font-semibold ${CARD_MUTED}`}>Wymagane punkty (łącznie)</label>
+            <label className={`text-xs font-semibold ${CARD_MUTED}`}>Wymagane punkty</label>
             <input
               value={requiredPoints}
               onChange={(e) => setRequiredPoints(Number(e.target.value || 0))}
@@ -505,17 +486,36 @@ export default function CalculatorClient() {
               min={0}
               className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
-            <p className="mt-1 text-xs text-slate-500">
-              Domyślnie dla {profession}:{" "}
-              {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? requiredPoints}
+            <p className="mt-1 text-[11px] text-slate-500">
+              Domyślnie: {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? requiredPoints}
             </p>
           </div>
         </div>
       </div>
 
-      {/* LIMITY + OSTATNIE */}
+      {/* 2) PANEL STATUSU */}
+      <CpdStatusPanel
+        isBusy={isBusy}
+        userEmail={user?.email ?? null}
+        profileProfession={profile?.profession ?? null}
+        periodLabel={periodLabel}
+        donePoints={donePoints}
+        requiredPoints={requiredPoints}
+        missingPoints={missingPoints}
+        progressPct={progress}
+        doneCount={inPeriodDone.length}
+        plannedCount={inPeriodPlanned.length}
+        missingEvidenceCount={missingEvidenceCount}
+        nextStep={nextStep}
+        topLimits={topLimits}
+        limitWarning={limitWarning}
+        primaryCtaHref="/aktywnosci?new=1"
+        secondaryCtaHref="/aktywnosci"
+        portfolioHref="/portfolio"
+      />
+
+      {/* 3) Reszta jak było */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {/* LIMITY */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
           <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
             <div>
@@ -560,10 +560,7 @@ export default function CalculatorClient() {
 
                   <div className="mt-3">
                     <div className="h-2 rounded-full bg-slate-200">
-                      <div
-                        className="h-2 rounded-full bg-emerald-600"
-                        style={{ width: `${r.usedPct}%` }}
-                      />
+                      <div className="h-2 rounded-full bg-emerald-600" style={{ width: `${r.usedPct}%` }} />
                     </div>
                   </div>
                 </div>
@@ -578,7 +575,6 @@ export default function CalculatorClient() {
           </div>
         </div>
 
-        {/* OSTATNIE */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="text-sm font-extrabold text-slate-900">Ostatnie aktywności</div>
@@ -595,43 +591,26 @@ export default function CalculatorClient() {
                 Brak ukończonych aktywności w okresie {periodLabel}.
               </div>
             ) : (
-              inPeriodDone.slice(0, 5).map((a) => {
-                const hasCert = !!a.certificate_path;
-
-                return (
-                  <div key={a.id} className="rounded-xl border border-slate-200 bg-white p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold text-slate-900">{a.type}</div>
-                        <div className="mt-1 text-xs text-slate-600">
-                          {a.organizer ? `${a.organizer} • ` : ""}
-                          {a.year}
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800">
-                            ukończone
-                          </span>
-
-                          {hasCert ? (
-                            <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-900">
-                              certyfikat OK
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-900">
-                              brak certyfikatu
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="shrink-0 text-right">
-                        <div className="text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
+              inPeriodDone.slice(0, 5).map((a) => (
+                <div key={a.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-slate-900">{a.type}</div>
+                      <div className="mt-1 text-xs text-slate-600">
+                        {a.organizer ? `${a.organizer} • ` : ""}
+                        {a.year}
                       </div>
                     </div>
+                    <div className="shrink-0 rounded-lg bg-emerald-50 px-2 py-1 text-xs font-extrabold text-emerald-700">
+                      ukończone
+                    </div>
                   </div>
-                );
-              })
+
+                  <div className="mt-2 text-right text-sm font-extrabold text-slate-900">
+                    +{a.points} pkt
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>
