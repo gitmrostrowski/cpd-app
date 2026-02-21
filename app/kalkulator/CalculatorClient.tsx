@@ -12,6 +12,9 @@ import {
   type Profession,
   PROFESSION_OPTIONS,
   DEFAULT_REQUIRED_POINTS_BY_PROFESSION,
+  displayProfession,
+  isOtherProfession,
+  normalizeOtherProfession,
 } from "@/lib/cpd/professions";
 
 type ActivityStatus = "planned" | "done" | null;
@@ -39,6 +42,7 @@ type ActivityRow = {
 type ProfileRow = {
   user_id: string;
   profession: Profession | null;
+  profession_other?: string | null; // ✅ NOWE
   period_start: number | null;
   period_end: number | null;
   required_points: number | null;
@@ -67,18 +71,54 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
     periodMonths: 48,
     requiredPoints: 200,
     limits: [
-      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_item", maxPoints: 6, note: "1 pkt/h, maks. 6 pkt za jedno szkolenie" },
-      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_period", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt w okresie" },
-      { key: "SCIENTIFIC_SOCIETY", label: "Towarzystwo/Kolegium", mode: "per_period", maxPoints: 20, note: "5 pkt, maks. 20 pkt w okresie" },
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_item",
+        maxPoints: 6,
+        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_period",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
+      },
+      {
+        key: "SCIENTIFIC_SOCIETY",
+        label: "Towarzystwo/Kolegium",
+        mode: "per_period",
+        maxPoints: 20,
+        note: "5 pkt, maks. 20 pkt w okresie",
+      },
     ],
   },
   "Lekarz dentysta": {
     periodMonths: 48,
     requiredPoints: 200,
     limits: [
-      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_item", maxPoints: 6, note: "1 pkt/h, maks. 6 pkt za jedno szkolenie" },
-      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_period", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt w okresie" },
-      { key: "SCIENTIFIC_SOCIETY", label: "Towarzystwo/Kolegium", mode: "per_period", maxPoints: 20, note: "5 pkt, maks. 20 pkt w okresie" },
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_item",
+        maxPoints: 6,
+        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_period",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
+      },
+      {
+        key: "SCIENTIFIC_SOCIETY",
+        label: "Towarzystwo/Kolegium",
+        mode: "per_period",
+        maxPoints: 20,
+        note: "5 pkt, maks. 20 pkt w okresie",
+      },
     ],
   },
   Pielęgniarka: {
@@ -148,8 +188,7 @@ function buildNextStep(missingPoints: number, missingEvidenceCount: number, limi
 }
 
 function daysUntilEndOfYear(yearEnd: number) {
-  // Traktujemy koniec okresu jako 31.12 roku periodEnd (bez wejścia w daty PWZ).
-  const end = new Date(yearEnd, 11, 31, 23, 59, 59); // lokalnie
+  const end = new Date(yearEnd, 11, 31, 23, 59, 59);
   const now = new Date();
   const diff = end.getTime() - now.getTime();
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
@@ -164,11 +203,10 @@ export default function CalculatorClient() {
   const [loading, setLoading] = useState(true);
 
   const [profession, setProfession] = useState<Profession>("Lekarz");
+  const [professionOther, setProfessionOther] = useState<string>(""); // ✅ NOWE
   const [periodStart, setPeriodStart] = useState<number>(2023);
   const [periodEnd, setPeriodEnd] = useState<number>(2026);
-  const [requiredPoints, setRequiredPoints] = useState<number>(
-    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
-  );
+  const [requiredPoints, setRequiredPoints] = useState<number>(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200);
 
   const [periodMode, setPeriodMode] = useState<"preset" | "custom">("preset");
 
@@ -186,7 +224,7 @@ export default function CalculatorClient() {
 
       const { data: p, error: pErr } = await supabase
         .from("profiles")
-        .select("user_id, profession, period_start, period_end, required_points")
+        .select("user_id, profession, profession_other, period_start, period_end, required_points")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -197,16 +235,16 @@ export default function CalculatorClient() {
           const prof = (p.profession ?? "Lekarz") as Profession;
           setProfession(prof);
 
+          const po = normalizeOtherProfession((p as any).profession_other);
+          setProfessionOther(po);
+
           const ps = p.period_start ?? 2023;
           const pe = p.period_end ?? 2026;
           setPeriodStart(ps);
           setPeriodEnd(pe);
 
           const presetLabel = `${ps}-${pe}`;
-          const isPreset =
-            presetLabel === "2019-2022" ||
-            presetLabel === "2023-2026" ||
-            presetLabel === "2027-2030";
+          const isPreset = presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
           setPeriodMode(isPreset ? "preset" : "custom");
 
           const rp =
@@ -214,10 +252,12 @@ export default function CalculatorClient() {
             DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ??
             RULES_BY_PROFESSION[prof]?.requiredPoints ??
             200;
+
           setRequiredPoints(rp);
         } else {
           const prof: Profession = "Lekarz";
           setProfession(prof);
+          setProfessionOther("");
           setPeriodStart(2023);
           setPeriodEnd(2026);
           setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
@@ -282,7 +322,6 @@ export default function CalculatorClient() {
     return inPeriodDone.filter((a) => !a.certificate_path).length;
   }, [inPeriodDone]);
 
-  // ✅ NOWE: % kompletności dowodów (tylko ukończone w okresie)
   const evidencePct = useMemo(() => {
     const total = inPeriodDone.length;
     if (total <= 0) return 0;
@@ -290,7 +329,6 @@ export default function CalculatorClient() {
     return clamp((withProof / total) * 100, 0, 100);
   }, [inPeriodDone.length, missingEvidenceCount]);
 
-  // ✅ NOWE: dni do końca (bazowo: 31.12 periodEnd)
   const daysLeft = useMemo(() => {
     return daysUntilEndOfYear(periodEnd);
   }, [periodEnd]);
@@ -345,13 +383,24 @@ export default function CalculatorClient() {
 
   const isBusy = authLoading || loading;
 
-  async function saveProfilePatch(patch: Partial<ProfileRow>) {
+  const otherRequired = isOtherProfession(profession);
+  const otherValid = !otherRequired || normalizeOtherProfession(professionOther).length >= 2;
+
+  async function saveProfilePatch(patch: Partial<ProfileRow> & { profession_other?: string | null }) {
     if (!user?.id) return;
     setSavingProfile(true);
+
+    const po =
+      (patch as any).profession_other !== undefined
+        ? (patch as any).profession_other
+        : otherRequired
+        ? normalizeOtherProfession(professionOther) || null
+        : null;
 
     await supabase.from("profiles").upsert({
       user_id: user.id,
       profession,
+      profession_other: po,
       period_start: periodStart,
       period_end: periodEnd,
       required_points: requiredPoints,
@@ -361,6 +410,10 @@ export default function CalculatorClient() {
     setSavingProfile(false);
     setSavedAt(Date.now());
   }
+
+  const profileLabelForPanel = useMemo(() => {
+    return displayProfession(profession, professionOther);
+  }, [profession, professionOther]);
 
   return (
     <div className="space-y-5">
@@ -382,12 +435,14 @@ export default function CalculatorClient() {
             onClick={async () => {
               const prof: Profession = "Lekarz";
               setProfession(prof);
+              setProfessionOther("");
               setPeriodStart(2023);
               setPeriodEnd(2026);
               setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
               setPeriodMode("preset");
               await saveProfilePatch({
                 profession: prof,
+                profession_other: null,
                 period_start: 2023,
                 period_end: 2026,
                 required_points: DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200,
@@ -408,13 +463,17 @@ export default function CalculatorClient() {
                 const v = e.target.value as Profession;
                 setProfession(v);
 
-                const rp =
-                  RULES_BY_PROFESSION[v]?.requiredPoints ??
-                  DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ??
-                  200;
+                // reset doprecyzowania, gdy ktoś wychodzi z "Inne"
+                if (!isOtherProfession(v)) setProfessionOther("");
 
+                const rp = RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
                 setRequiredPoints(rp);
-                await saveProfilePatch({ profession: v, required_points: rp });
+
+                await saveProfilePatch({
+                  profession: v,
+                  required_points: rp,
+                  profession_other: isOtherProfession(v) ? normalizeOtherProfession(professionOther) || null : null,
+                });
               }}
               className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
@@ -424,6 +483,32 @@ export default function CalculatorClient() {
                 </option>
               ))}
             </select>
+
+            {otherRequired ? (
+              <div className="mt-2">
+                <label className="text-xs font-semibold text-slate-600">Jaki zawód?</label>
+                <input
+                  value={professionOther}
+                  onChange={(e) => setProfessionOther(e.target.value)}
+                  onBlur={async () => {
+                    const norm = normalizeOtherProfession(professionOther);
+                    setProfessionOther(norm);
+
+                    // zapisujemy doprecyzowanie; jeśli puste -> null (ale UI pokaże ostrzeżenie)
+                    await saveProfilePatch({ profession_other: norm || null });
+                  }}
+                  placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
+                  className={`mt-1 w-full rounded-2xl border bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 ${
+                    otherValid ? "border-slate-200/70 focus:ring-blue-200" : "border-rose-200/70 focus:ring-rose-200"
+                  }`}
+                />
+                <p className={`mt-1 text-[11px] ${otherValid ? "text-slate-500" : "text-rose-700"}`}>
+                  {otherValid
+                    ? "Doprecyzowanie pomaga dopasować zasady i raporty."
+                    : "Wpisz nazwę zawodu (min. 2 znaki), żeby profil był kompletny."}
+                </p>
+              </div>
+            ) : null}
           </div>
 
           <div>
@@ -512,11 +597,11 @@ export default function CalculatorClient() {
         </div>
       </div>
 
-      {/* PANEL STATUSU (A: status kompletności) */}
+      {/* PANEL STATUSU */}
       <CpdStatusPanel
         isBusy={isBusy}
         userEmail={user?.email ?? null}
-        profileProfession={profile?.profession ?? null}
+        profileProfession={profileLabelForPanel} // ✅ "Inne (…)" zamiast gołego "Inne"
         periodLabel={periodLabel}
         donePoints={donePoints}
         requiredPoints={requiredPoints}
@@ -621,9 +706,7 @@ export default function CalculatorClient() {
                     </div>
                   </div>
 
-                  <div className="mt-2 text-right text-sm font-extrabold text-slate-900">
-                    +{a.points} pkt
-                  </div>
+                  <div className="mt-2 text-right text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
                 </div>
               ))
             )}
