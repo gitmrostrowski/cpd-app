@@ -621,7 +621,8 @@ export default function CalculatorClient() {
 
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div>
-            <label className="text-xs font-semibold text-slate-600">Zawód</label>
+            {/* ✅ niebieskie label */}
+            <label className="text-xs font-semibold text-blue-700">Zawód</label>
             <select
               value={profession}
               onChange={async (e) => {
@@ -643,7 +644,7 @@ export default function CalculatorClient() {
                   profession_other: isOtherProfession(v) ? professionOther : null,
                 });
               }}
-              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               {PROFESSION_OPTIONS.map((p) => (
                 <option key={p} value={p}>
@@ -654,11 +655,12 @@ export default function CalculatorClient() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-600">Tryb okresu</label>
+            {/* ✅ niebieskie label */}
+            <label className="text-xs font-semibold text-blue-700">Tryb okresu</label>
             <select
               value={periodMode}
               onChange={(e) => setPeriodMode(e.target.value as "preset" | "custom")}
-              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               <option value="preset">Preset (najczęstszy)</option>
               <option value="custom">Indywidualny</option>
@@ -670,7 +672,8 @@ export default function CalculatorClient() {
 
           {periodMode === "preset" ? (
             <div>
-              <label className="text-xs font-semibold text-slate-600">Okres (preset)</label>
+              {/* ✅ niebieskie label */}
+              <label className="text-xs font-semibold text-blue-700">Okres (preset)</label>
               <select
                 value={periodLabel}
                 onChange={async (e) => {
@@ -679,7 +682,7 @@ export default function CalculatorClient() {
                   setPeriodEnd(b);
                   await saveProfilePatch({ period_start: a, period_end: b });
                 }}
-                className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
                 <option value="2019-2022">2019-2022</option>
                 <option value="2023-2026">2023-2026</option>
@@ -688,7 +691,8 @@ export default function CalculatorClient() {
             </div>
           ) : (
             <div>
-              <label className="text-xs font-semibold text-slate-600">Okres (indywidualny)</label>
+              {/* ✅ niebieskie label */}
+              <label className="text-xs font-semibold text-blue-700">Okres (indywidualny)</label>
               <div className="mt-1 grid grid-cols-2 gap-2">
                 <input
                   value={periodStart}
@@ -701,7 +705,7 @@ export default function CalculatorClient() {
                     });
                   }}
                   type="number"
-                  className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   placeholder="Start"
                 />
                 <input
@@ -713,7 +717,7 @@ export default function CalculatorClient() {
                     await saveProfilePatch({ period_end: pe });
                   }}
                   type="number"
-                  className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   placeholder="Koniec"
                 />
               </div>
@@ -721,7 +725,8 @@ export default function CalculatorClient() {
           )}
 
           <div>
-            <label className="text-xs font-semibold text-slate-600">Wymagane punkty</label>
+            {/* ✅ niebieskie label */}
+            <label className="text-xs font-semibold text-blue-700">Wymagane punkty</label>
             <input
               value={requiredPoints}
               onChange={(e) => setRequiredPoints(Number(e.target.value || 0))}
@@ -730,7 +735,7 @@ export default function CalculatorClient() {
               }}
               type="number"
               min={0}
-              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
             <p className="mt-1 text-[11px] text-slate-500">
               Domyślnie: {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? requiredPoints}
@@ -739,7 +744,8 @@ export default function CalculatorClient() {
 
           {otherRequired ? (
             <div className="md:col-span-2 xl:col-span-4">
-              <label className="text-xs font-semibold text-slate-600">Jaki zawód?</label>
+              {/* ✅ niebieskie label */}
+              <label className="text-xs font-semibold text-blue-700">Jaki zawód?</label>
               <input
                 value={professionOther}
                 onChange={(e) => setProfessionOther(e.target.value)}
@@ -749,7 +755,7 @@ export default function CalculatorClient() {
                   await saveProfilePatch({ profession_other: norm || null });
                 }}
                 placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
-                className={`mt-1 w-full rounded-2xl border bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 ${
+                className={`mt-1 w-full rounded-2xl border bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
                   otherValid
                     ? "border-slate-200/70 focus:ring-blue-200"
                     : "border-rose-200/70 focus:ring-rose-200"
@@ -793,7 +799,8 @@ export default function CalculatorClient() {
       {/* NOWY UKŁAD */}
       <div className="space-y-5">
         {/* REGUŁY I LIMITY — FULL */}
-        <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
+        {/* ✅ tło sekcji */}
+        <div className="rounded-3xl border border-slate-200/70 bg-slate-50/80 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <div className="text-sm font-extrabold text-slate-900">Reguły i limity</div>
