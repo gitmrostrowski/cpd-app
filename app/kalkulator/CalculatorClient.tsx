@@ -288,9 +288,7 @@ export default function CalculatorClient() {
   const [professionOther, setProfessionOther] = useState<string>("");
   const [periodStart, setPeriodStart] = useState<number>(2023);
   const [periodEnd, setPeriodEnd] = useState<number>(2026);
-  const [requiredPoints, setRequiredPoints] = useState<number>(
-    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
-  );
+  const [requiredPoints, setRequiredPoints] = useState<number>(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200);
 
   const [periodMode, setPeriodMode] = useState<"preset" | "custom">("preset");
 
@@ -308,7 +306,7 @@ export default function CalculatorClient() {
     const { data: a, error: aErr } = await supabase
       .from("activities")
       .select(
-        "id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at"
+        "id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at",
       )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
@@ -346,8 +344,7 @@ export default function CalculatorClient() {
           setPeriodEnd(pe);
 
           const presetLabel = `${ps}-${pe}`;
-          const isPreset =
-            presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
+          const isPreset = presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
           setPeriodMode(isPreset ? "preset" : "custom");
 
           const rp =
@@ -371,7 +368,7 @@ export default function CalculatorClient() {
       const { data: a, error: aErr } = await supabase
         .from("activities")
         .select(
-          "id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at"
+          "id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at",
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -497,8 +494,7 @@ export default function CalculatorClient() {
 
     const nextPeriodStart = patch.period_start !== undefined ? patch.period_start : periodStart;
     const nextPeriodEnd = patch.period_end !== undefined ? patch.period_end : periodEnd;
-    const nextRequiredPoints =
-      patch.required_points !== undefined ? patch.required_points : requiredPoints;
+    const nextRequiredPoints = patch.required_points !== undefined ? patch.required_points : requiredPoints;
 
     const otherReq = isOtherProfession(nextProfession);
 
@@ -570,14 +566,18 @@ export default function CalculatorClient() {
     const rows = activities.filter((a) => {
       const prog = normalizeStatus(a.status);
       const y =
-        prog === "planned" && a.planned_start_date
-          ? Number(String(a.planned_start_date).slice(0, 4))
-          : a.year;
+        prog === "planned" && a.planned_start_date ? Number(String(a.planned_start_date).slice(0, 4)) : a.year;
       return y >= periodStart && y <= periodEnd;
     });
 
     return rows.slice(0, 10);
   }, [activities, periodStart, periodEnd]);
+
+  const chip = (value: string) => (
+    <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+      {value}
+    </span>
+  );
 
   return (
     <div className="space-y-6">
@@ -585,7 +585,12 @@ export default function CalculatorClient() {
       <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-4 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
-            <div className="text-sm font-extrabold text-slate-900">Ustawienia okresu i zawodu</div>
+            <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 text-base">
+                ⚙️
+              </span>
+              Ustawienia okresu i zawodu
+            </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
               <span>Zmiany zapisujemy w profilu.</span>
               <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
@@ -615,14 +620,22 @@ export default function CalculatorClient() {
             }}
             className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
           >
-            Przywróć domyślne
+            ↩️ Przywróć domyślne
           </button>
         </div>
 
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div>
-            {/* ✅ niebieskie label */}
-            <label className="text-xs font-semibold text-blue-700">Zawód</label>
+            <div className="flex items-center justify-between">
+              <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl border border-slate-200/70 bg-white/80 text-sm">
+                  🧑‍⚕️
+                </span>
+                Zawód
+              </label>
+              {chip(profession)}
+            </div>
+
             <select
               value={profession}
               onChange={async (e) => {
@@ -631,10 +644,7 @@ export default function CalculatorClient() {
                 setProfession(v);
                 if (!isOtherProfession(v)) setProfessionOther("");
 
-                const rp =
-                  RULES_BY_PROFESSION[v]?.requiredPoints ??
-                  DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ??
-                  200;
+                const rp = RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
 
                 setRequiredPoints(rp);
 
@@ -644,7 +654,7 @@ export default function CalculatorClient() {
                   profession_other: isOtherProfession(v) ? professionOther : null,
                 });
               }}
-              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-slate-50/70 px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               {PROFESSION_OPTIONS.map((p) => (
                 <option key={p} value={p}>
@@ -655,16 +665,25 @@ export default function CalculatorClient() {
           </div>
 
           <div>
-            {/* ✅ niebieskie label */}
-            <label className="text-xs font-semibold text-blue-700">Tryb okresu</label>
+            <div className="flex items-center justify-between">
+              <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl border border-slate-200/70 bg-white/80 text-sm">
+                  🧭
+                </span>
+                Tryb okresu
+              </label>
+              {chip(periodMode === "preset" ? "Preset" : "Indywidualny")}
+            </div>
+
             <select
               value={periodMode}
               onChange={(e) => setPeriodMode(e.target.value as "preset" | "custom")}
-              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-slate-50/70 px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               <option value="preset">Preset (najczęstszy)</option>
               <option value="custom">Indywidualny</option>
             </select>
+
             <p className="mt-1 text-[11px] text-slate-500">
               Jeśli masz inny zakres (np. start od uzyskania PWZ), wybierz „Indywidualny”.
             </p>
@@ -672,8 +691,16 @@ export default function CalculatorClient() {
 
           {periodMode === "preset" ? (
             <div>
-              {/* ✅ niebieskie label */}
-              <label className="text-xs font-semibold text-blue-700">Okres (preset)</label>
+              <div className="flex items-center justify-between">
+                <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl border border-slate-200/70 bg-white/80 text-sm">
+                    🗓️
+                  </span>
+                  Okres (preset)
+                </label>
+                {chip(periodLabel)}
+              </div>
+
               <select
                 value={periodLabel}
                 onChange={async (e) => {
@@ -682,7 +709,7 @@ export default function CalculatorClient() {
                   setPeriodEnd(b);
                   await saveProfilePatch({ period_start: a, period_end: b });
                 }}
-                className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-slate-50/70 px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
                 <option value="2019-2022">2019-2022</option>
                 <option value="2023-2026">2023-2026</option>
@@ -691,8 +718,16 @@ export default function CalculatorClient() {
             </div>
           ) : (
             <div>
-              {/* ✅ niebieskie label */}
-              <label className="text-xs font-semibold text-blue-700">Okres (indywidualny)</label>
+              <div className="flex items-center justify-between">
+                <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl border border-slate-200/70 bg-white/80 text-sm">
+                    📅
+                  </span>
+                  Okres (indywidualny)
+                </label>
+                {chip(`${periodStart}–${periodEnd}`)}
+              </div>
+
               <div className="mt-1 grid grid-cols-2 gap-2">
                 <input
                   value={periodStart}
@@ -705,7 +740,7 @@ export default function CalculatorClient() {
                     });
                   }}
                   type="number"
-                  className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full rounded-2xl border border-slate-200/70 bg-slate-50/70 px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
                   placeholder="Start"
                 />
                 <input
@@ -717,7 +752,7 @@ export default function CalculatorClient() {
                     await saveProfilePatch({ period_end: pe });
                   }}
                   type="number"
-                  className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full rounded-2xl border border-slate-200/70 bg-slate-50/70 px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
                   placeholder="Koniec"
                 />
               </div>
@@ -725,8 +760,16 @@ export default function CalculatorClient() {
           )}
 
           <div>
-            {/* ✅ niebieskie label */}
-            <label className="text-xs font-semibold text-blue-700">Wymagane punkty</label>
+            <div className="flex items-center justify-between">
+              <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl border border-slate-200/70 bg-white/80 text-sm">
+                  🎯
+                </span>
+                Wymagane punkty
+              </label>
+              {chip(String(requiredPoints))}
+            </div>
+
             <input
               value={requiredPoints}
               onChange={(e) => setRequiredPoints(Number(e.target.value || 0))}
@@ -735,7 +778,7 @@ export default function CalculatorClient() {
               }}
               type="number"
               min={0}
-              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-slate-50/70 px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
             <p className="mt-1 text-[11px] text-slate-500">
               Domyślnie: {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? requiredPoints}
@@ -744,8 +787,16 @@ export default function CalculatorClient() {
 
           {otherRequired ? (
             <div className="md:col-span-2 xl:col-span-4">
-              {/* ✅ niebieskie label */}
-              <label className="text-xs font-semibold text-blue-700">Jaki zawód?</label>
+              <div className="flex items-center justify-between">
+                <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl border border-slate-200/70 bg-white/80 text-sm">
+                    ✍️
+                  </span>
+                  Jaki zawód?
+                </label>
+                {chip(normalizeOtherProfession(professionOther) ? normalizeOtherProfession(professionOther) : "—")}
+              </div>
+
               <input
                 value={professionOther}
                 onChange={(e) => setProfessionOther(e.target.value)}
@@ -755,10 +806,8 @@ export default function CalculatorClient() {
                   await saveProfilePatch({ profession_other: norm || null });
                 }}
                 placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
-                className={`mt-1 w-full rounded-2xl border bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
-                  otherValid
-                    ? "border-slate-200/70 focus:ring-blue-200"
-                    : "border-rose-200/70 focus:ring-rose-200"
+                className={`mt-1 w-full rounded-2xl border px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm focus:outline-none focus:ring-2 ${
+                  otherValid ? "border-slate-200/70 bg-slate-50/70 focus:ring-blue-200" : "border-rose-200/70 bg-rose-50/50 focus:ring-rose-200"
                 }`}
               />
               <p className={`mt-1 text-[11px] ${otherValid ? "text-slate-500" : "text-rose-700"}`}>
@@ -799,7 +848,6 @@ export default function CalculatorClient() {
       {/* NOWY UKŁAD */}
       <div className="space-y-5">
         {/* REGUŁY I LIMITY — FULL */}
-        {/* ✅ tło sekcji */}
         <div className="rounded-3xl border border-slate-200/70 bg-slate-50/80 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
@@ -821,8 +869,7 @@ export default function CalculatorClient() {
                 <>
                   <span className="text-slate-300">•</span>
                   <div className="text-slate-700">
-                    Bez certyfikatu:{" "}
-                    <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
+                    Bez certyfikatu: <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
                   </div>
                 </>
               ) : null}
@@ -836,7 +883,6 @@ export default function CalculatorClient() {
             </div>
           ) : null}
 
-          {/* ✅ KAFELKI FULL WIDTH + THIN LAYOUT (button higher, remaining on the right of bar) */}
           <div className="mt-4 space-y-3">
             {limitsUsage.length === 0 ? (
               <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-700">
@@ -851,7 +897,6 @@ export default function CalculatorClient() {
                     key={r.key}
                     className="w-full rounded-2xl border border-slate-200/70 bg-white/80 p-4 ring-1 ring-slate-100"
                   >
-                    {/* TOP: name + note inline + CTA on the right */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -898,7 +943,6 @@ export default function CalculatorClient() {
                       </div>
                     </div>
 
-                    {/* BOTTOM: bar + remaining on the right (same line) */}
                     <div className="mt-3 flex items-center gap-3">
                       <div className="flex-1">
                         <div className="h-3 rounded-full bg-slate-200/80">
