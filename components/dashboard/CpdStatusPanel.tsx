@@ -60,8 +60,7 @@ function fmtPct(n: number) {
 }
 
 // Spójny „activity blue”
-const PRIMARY_BTN =
-  "bg-blue-600 hover:bg-blue-700 text-white shadow-sm";
+const PRIMARY_BTN = "bg-blue-600 hover:bg-blue-700 text-white shadow-sm";
 const PRIMARY_BTN_BASE =
   "inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold";
 const PRIMARY_BAR = "bg-blue-600";
@@ -154,13 +153,9 @@ function MiniCta({ href, label }: { href: string; label: string }) {
 }
 
 function limitTone(used: number, usedPct: number) {
-  // jeśli 0 → ostrzeżenie (czerwony), bo użytkownik jeszcze „nie zaczął”
   if (used <= 0) return { badge: "Brak", tone: "bad" as const };
-
   if (usedPct >= 100) return { badge: "Limit", tone: "bad" as const };
   if (usedPct >= 80) return { badge: "Uwaga", tone: "warn" as const };
-
-  // neutralnie/niebiesko (miękko, a nie zielono)
   return { badge: "W trakcie", tone: "ok" as const };
 }
 
@@ -183,7 +178,6 @@ function MiniLimitCard({ item }: { item: TopLimitItem }) {
   const pct = clamp(item.usedPct, 0, 100);
   const t = limitTone(item.used, pct);
 
-  // jeśli 0 → delikatny czerwony akcent na obrysie (miękko)
   const wrapCls =
     item.used <= 0
       ? "rounded-2xl border border-rose-200 bg-white p-3 shadow-sm"
@@ -201,7 +195,6 @@ function MiniLimitCard({ item }: { item: TopLimitItem }) {
         <LimitBadge tone={t.tone} text={t.badge} />
       </div>
 
-      {/* mini bar – czytelny, nieprzygnębiający */}
       <div className="mt-2">
         <div className="h-2 rounded-full border border-slate-200 bg-slate-100">
           <div className={`h-2 rounded-full ${PRIMARY_BAR}`} style={{ width: `${pct}%` }} />
@@ -240,14 +233,11 @@ export default function CpdStatusPanel({
 
   return (
     <div className="space-y-4">
-      {/* GŁÓWNA KARTA */}
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          {/* LEFT */}
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <div className="text-xs font-semibold text-slate-600">Panel CPD</div>
-
               <ToneBadge tone={status.tone} label={status.label} reason={status.reason} />
 
               {isBusy ? (
@@ -266,7 +256,6 @@ export default function CpdStatusPanel({
               <div className="mt-1 text-sm text-slate-700">{status.hint}</div>
             </div>
 
-            {/* Big numbers */}
             <div className="mt-4 flex flex-wrap items-end gap-x-4 gap-y-2">
               <div className="text-4xl font-extrabold text-slate-900">
                 {donePoints}/{requiredPoints}
@@ -274,7 +263,7 @@ export default function CpdStatusPanel({
               </div>
 
               {missingPoints > 0 ? (
-                <div className="text-2xl font-extrabold text-rose-700">
+                <div className="text-2xl font-extrabold text-rose-600">
                   brakuje {missingPoints}
                   <span className="ml-2 text-base font-semibold text-rose-600">pkt</span>
                 </div>
@@ -283,7 +272,6 @@ export default function CpdStatusPanel({
               )}
             </div>
 
-            {/* PROGRESS – niebieski jak w Aktywnościach */}
             <div className="mt-4">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-semibold text-slate-700">Postęp w okresie {periodLabel}</div>
@@ -298,7 +286,6 @@ export default function CpdStatusPanel({
                     style={{ left: `calc(${safeProgress}% - 8px)` }}
                     aria-hidden
                   />
-                  {/* ticks 25/50/75 */}
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-[25%]">
                     <span className="h-3 w-px bg-slate-200/80" />
                     <span className="h-3 w-px bg-slate-200/80" />
@@ -313,7 +300,6 @@ export default function CpdStatusPanel({
               </div>
             </div>
 
-            {/* MINI-LIMITY POD PASKIEM */}
             {topLimits?.length ? (
               <div className="mt-4">
                 <div className="text-xs font-extrabold text-slate-900">Limity w tym okresie</div>
@@ -335,7 +321,6 @@ export default function CpdStatusPanel({
               </div>
             ) : null}
 
-            {/* Identity pills */}
             <div className="mt-4 flex flex-wrap gap-2">
               {userEmail ? (
                 <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
@@ -351,7 +336,6 @@ export default function CpdStatusPanel({
             </div>
           </div>
 
-          {/* RIGHT */}
           <div className="flex w-full flex-col gap-3 md:w-[360px]">
             <div className="grid grid-cols-2 gap-3">
               <StatPill label="Okres" value={periodLabel} />
@@ -364,21 +348,14 @@ export default function CpdStatusPanel({
               <div className="mt-1 text-sm text-slate-700">{nextStep.description}</div>
 
               {nextStep.ctaHref && nextStep.ctaLabel ? (
-                <Link
-                  href={nextStep.ctaHref}
-                  className={`${PRIMARY_BTN_BASE} ${PRIMARY_BTN} mt-3 w-full`}
-                >
+                <Link href={nextStep.ctaHref} className={`${PRIMARY_BTN_BASE} ${PRIMARY_BTN} mt-3 w-full`}>
                   {nextStep.ctaLabel}
                 </Link>
               ) : null}
             </div>
 
-            {/* CTA — symetria: ten sam rozmiar/klasa */}
             <div className="grid grid-cols-1 gap-2">
-              <Link
-                href={primaryCtaHref}
-                className={`${PRIMARY_BTN_BASE} ${PRIMARY_BTN} w-full`}
-              >
+              <Link href={primaryCtaHref} className={`${PRIMARY_BTN_BASE} ${PRIMARY_BTN} w-full`}>
                 + Dodaj aktywność
               </Link>
 
@@ -391,7 +368,7 @@ export default function CpdStatusPanel({
         </div>
       </div>
 
-      {/* DWA KAFLE */}
+      {/* kafle dolne zostawiam jak były (OK) */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="text-xs font-semibold text-slate-600">Do uzupełnienia</div>
@@ -420,10 +397,7 @@ export default function CpdStatusPanel({
             Ustal krótką ścieżkę: kilka mniejszych aktywności + 1 większa daje najlepszy efekt.
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link
-              href="/aktywnosci?new=1"
-              className={`${PRIMARY_BTN_BASE} ${PRIMARY_BTN}`}
-            >
+            <Link href="/aktywnosci?new=1" className={`${PRIMARY_BTN_BASE} ${PRIMARY_BTN}`}>
               Dodaj do planu
             </Link>
             <Link
