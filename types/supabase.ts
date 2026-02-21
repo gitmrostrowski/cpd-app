@@ -22,7 +22,7 @@ export type Database = {
           organizer: string | null;
 
           // NEW: planowanie / realizacja
-          status: string | null; // 'planned' | 'done'
+          status: "planned" | "done" | null;
           planned_start_date: string | null; // date -> string (YYYY-MM-DD)
           training_id: string | null; // uuid -> string
 
@@ -44,7 +44,7 @@ export type Database = {
           organizer?: string | null;
 
           // NEW
-          status?: string | null;
+          status?: "planned" | "done" | null;
           planned_start_date?: string | null;
           training_id?: string | null;
 
@@ -66,7 +66,7 @@ export type Database = {
           organizer?: string | null;
 
           // NEW
-          status?: string | null;
+          status?: "planned" | "done" | null;
           planned_start_date?: string | null;
           training_id?: string | null;
 
@@ -157,27 +157,42 @@ export type Database = {
         Row: {
           user_id: string;
           profession: string | null;
+
+          // ✅ NOWE: doprecyzowanie gdy profession = "Inne"
+          profession_other: string | null;
+
           period_start: number | null;
           period_end: number | null;
           required_points: number | null;
+
           created_at: string | null;
           updated_at: string | null;
         };
         Insert: {
           user_id: string;
           profession?: string | null;
+
+          // ✅ NOWE
+          profession_other?: string | null;
+
           period_start?: number | null;
           period_end?: number | null;
           required_points?: number | null;
+
           created_at?: string | null;
           updated_at?: string | null;
         };
         Update: {
           user_id?: string;
           profession?: string | null;
+
+          // ✅ NOWE
+          profession_other?: string | null;
+
           period_start?: number | null;
           period_end?: number | null;
           required_points?: number | null;
+
           created_at?: string | null;
           updated_at?: string | null;
         };
