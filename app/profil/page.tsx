@@ -1,3 +1,4 @@
+// app/profil/page.tsx
 "use client";
 
 import Link from "next/link";
@@ -13,6 +14,8 @@ type ProfileRow = {
   period_start: number;
   period_end: number;
   required_points: number;
+  pwz_number?: string | null;
+  pwz_issue_date?: string | null; // YYYY-MM-DD
 };
 
 function safeInt(n: any, fallback: number) {
@@ -32,12 +35,56 @@ function makePeriodLabel(start: number, end: number) {
   return `${start}–${end}`;
 }
 
-const PREDEFINED = ["2023–2026", "2022–2025", "2021–2024"] as const;
-type PredefinedLabel = (typeof PREDEFINED)[number];
-
 function isProfession(v: any): v is Profession {
   return v === "Lekarz" || v === "Lekarz dentysta" || v === "Inne";
 }
+
+function isDoctorLike(p: Profession) {
+  return p === "Lekarz" || p === "Lekarz dentysta";
+}
+
+function normalizePwz(input: string) {
+  // miękka normalizacja: usuń spacje, zostaw znaki i cyfry (PWZ bywa różnie zapisywane)
+  return String(input || "").trim().replace(/\s+/g, "");
+}
+
+function isValidISODate(d: string | null | undefined) {
+  if (!d) return false;
+  return /^\d{4}-\d{2}-\d{2}$/.test(d);
+}
+
+function addMonthsUTC(isoDate: string, months: number) {
+  // isoDate: YYYY-MM-DD (traktujemy jako UTC, bez stref)
+  const [y, m, d] = isoDate.split("-").map((x) => Number(x));
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const targetMonth = dt.getUTCMonth() + months;
+  dt.setUTCMonth(targetMonth);
+
+  // korekta dla miesięcy o mniejszej liczbie dni (JS przesuwa)
+  // chcemy zachować "ten sam dzień miesiąca" o ile się da, inaczej ostatni dzień miesiąca
+  const expectedMonth = ((m - 1 + months) % 12 + 12) % 12;
+  if (dt.getUTCMonth() !== expectedMonth) {
+    // cofnij do ostatniego dnia poprzedniego miesiąca
+    dt.setUTCDate(0);
+  }
+  return dt;
+}
+
+function formatPLDateUTC(dt: Date) {
+  const y = dt.getUTCFullYear();
+  const m = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(dt.getUTCDate()).padStart(2, "0");
+  return `${d}.${m}.${y}`;
+}
+
+function toISOFromUTCDate(dt: Date) {
+  const y = dt.getUTCFullYear();
+  const m = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(dt.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+const PREDEFINED = ["2023–2026", "2022–2025", "2021–2024"] as const;
 
 export default function ProfilePage() {
   const { user, loading, signOut } = useAuth();
@@ -56,12 +103,43 @@ export default function ProfilePage() {
   const [customStart, setCustomStart] = useState<number>(2023);
   const [customEnd, setCustomEnd] = useState<number>(2026);
 
+  // PWZ (CRPE PRO)
+  const [pwzNumber, setPwzNumber] = useState<string>("");
+  const [pwzIssueDate, setPwzIssueDate] = useState<string>(""); // YYYY-MM-DD
+
   const [profileLoading, setProfileLoading] = useState(false);
 
   function clearMessages() {
     setInfo(null);
     setErr(null);
   }
+
+  // Wyliczenie okresu "48 miesięcy od PWZ" (dokładne daty do UI + lata do kompatybilności)
+  const pwzPeriod = useMemo(() => {
+    if (!isDoctorLike(profession)) return null;
+    if (!isValidISODate(pwzIssueDate)) return null;
+
+    const startISO = pwzIssueDate;
+    const startDt = new Date(Date.UTC(...startISO.split("-").map(Number) as any));
+    // +48 miesięcy, minus 1 dzień
+    const endPlus = addMonthsUTC(startISO, 48);
+    const endDt = new Date(endPlus.getTime());
+    endDt.setUTCDate(endDt.getUTCDate() - 1);
+
+    const startYear = startDt.getUTCFullYear();
+    const endYear = endDt.getUTCFullYear();
+
+    return {
+      startISO,
+      endISO: toISOFromUTCDate(endDt),
+      startDt,
+      endDt,
+      startYear,
+      endYear,
+      labelYears: makePeriodLabel(startYear, endYear),
+      labelPretty: `${formatPLDateUTC(startDt)} – ${formatPLDateUTC(endDt)} (48 mies.)`,
+    };
+  }, [profession, pwzIssueDate]);
 
   // 1) LOAD profilu z DB (z fallback do localStorage)
   useEffect(() => {
@@ -90,6 +168,9 @@ export default function ProfilePage() {
             setCustomStart(start);
             setCustomEnd(end);
           }
+
+          if (typeof p?.pwzNumber === "string") setPwzNumber(p.pwzNumber);
+          if (typeof p?.pwzIssueDate === "string") setPwzIssueDate(p.pwzIssueDate);
         } catch {}
       };
 
@@ -97,20 +178,19 @@ export default function ProfilePage() {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("user_id, profession, period_start, period_end, required_points")
+          .select("user_id, profession, period_start, period_end, required_points, pwz_number, pwz_issue_date")
           .eq("user_id", user.id)
           .maybeSingle();
 
         if (!alive) return;
 
-        // Jeśli DB krzyczy (np. brak kolumn) -> fallback do localStorage i kończymy
         if (error) {
           setErr(`Profil (DB): ${error.message}`);
           loadFromLocal();
           return;
         }
 
-        // brak profilu -> utwórz domyślny (tylko jeśli tabela ma te kolumny)
+        // brak profilu -> utwórz domyślny
         if (!data) {
           const defaults: ProfileRow = {
             user_id: user.id,
@@ -118,6 +198,8 @@ export default function ProfilePage() {
             period_start: 2023,
             period_end: 2026,
             required_points: 200,
+            pwz_number: null,
+            pwz_issue_date: null,
           };
 
           const { error: upErr } = await supabase.from("profiles").upsert(defaults, { onConflict: "user_id" });
@@ -135,6 +217,8 @@ export default function ProfilePage() {
           setPeriodLabel(makePeriodLabel(defaults.period_start, defaults.period_end));
           setCustomStart(defaults.period_start);
           setCustomEnd(defaults.period_end);
+          setPwzNumber("");
+          setPwzIssueDate("");
 
           try {
             localStorage.setItem(
@@ -143,6 +227,8 @@ export default function ProfilePage() {
                 profession: defaults.profession,
                 requiredPoints: defaults.required_points,
                 periodLabel: makePeriodLabel(defaults.period_start, defaults.period_end),
+                pwzNumber: "",
+                pwzIssueDate: "",
               }),
             );
           } catch {}
@@ -150,7 +236,6 @@ export default function ProfilePage() {
           return;
         }
 
-        // data istnieje
         const row = data as any;
 
         const prof: Profession = isProfession(row.profession) ? row.profession : "Lekarz";
@@ -158,11 +243,16 @@ export default function ProfilePage() {
         const pe = safeInt(row.period_end, 2026);
         const rp = safeInt(row.required_points, 200);
 
+        const dbPwzNumber = typeof row.pwz_number === "string" ? row.pwz_number : "";
+        const dbPwzIssueDate = typeof row.pwz_issue_date === "string" ? row.pwz_issue_date : "";
+
         setProfession(prof);
         setRequiredPoints(Math.max(0, rp));
         setPeriodLabel(makePeriodLabel(ps, pe));
         setCustomStart(ps);
         setCustomEnd(pe);
+        setPwzNumber(dbPwzNumber || "");
+        setPwzIssueDate(dbPwzIssueDate || "");
 
         try {
           localStorage.setItem(
@@ -171,29 +261,15 @@ export default function ProfilePage() {
               profession: prof,
               requiredPoints: Math.max(0, rp),
               periodLabel: makePeriodLabel(ps, pe),
+              pwzNumber: dbPwzNumber || "",
+              pwzIssueDate: dbPwzIssueDate || "",
             }),
           );
         } catch {}
       } catch (e: any) {
         if (!alive) return;
         setErr(`Profil (DB): ${e?.message || "Nie udało się pobrać profilu."}`);
-
-        // fallback
-        try {
-          const raw = localStorage.getItem("crpe_profile_prefs_v1");
-          if (!raw) return;
-          const p = JSON.parse(raw);
-          if (!alive) return;
-
-          if (isProfession(p?.profession)) setProfession(p.profession);
-          if (typeof p?.requiredPoints === "number") setRequiredPoints(Math.max(0, p.requiredPoints));
-          if (typeof p?.periodLabel === "string") {
-            setPeriodLabel(p.periodLabel);
-            const { start, end } = parsePeriodLabel(p.periodLabel);
-            setCustomStart(start);
-            setCustomEnd(end);
-          }
-        } catch {}
+        loadFromLocal();
       } finally {
         if (!alive) return;
         setProfileLoading(false);
@@ -215,6 +291,14 @@ export default function ProfilePage() {
     }
   }, [periodLabel]);
 
+  // PRO UX: jeśli ktoś zmieni zawód na "Inne" — czyścimy PWZ (żeby nie mieszać)
+  useEffect(() => {
+    if (!isDoctorLike(profession)) {
+      setPwzNumber("");
+      setPwzIssueDate("");
+    }
+  }, [profession]);
+
   async function saveProfile() {
     if (!user) return;
     if (busy) return;
@@ -223,16 +307,28 @@ export default function ProfilePage() {
     setBusy(true);
 
     try {
-      const startEnd =
-        periodLabel === "Inny"
-          ? {
-              start: safeInt(customStart, 2023),
-              end: safeInt(customEnd, safeInt(customStart, 2023) + 3),
-            }
-          : parsePeriodLabel(periodLabel);
+      const normalizedPwz = isDoctorLike(profession) ? normalizePwz(pwzNumber) : "";
+      const isoPwz = isDoctorLike(profession) && isValidISODate(pwzIssueDate) ? pwzIssueDate : "";
 
-      const start = Math.max(1900, Math.min(2100, startEnd.start));
-      const end = Math.max(start, Math.min(2100, startEnd.end));
+      // Jeśli mamy datę PWZ i to lekarz/dentysta -> okres liczony od PWZ (48 miesięcy)
+      let start: number;
+      let end: number;
+
+      if (pwzPeriod) {
+        start = pwzPeriod.startYear;
+        end = pwzPeriod.endYear;
+      } else {
+        const startEnd =
+          periodLabel === "Inny"
+            ? {
+                start: safeInt(customStart, 2023),
+                end: safeInt(customEnd, safeInt(customStart, 2023) + 3),
+              }
+            : parsePeriodLabel(periodLabel);
+
+        start = Math.max(1900, Math.min(2100, startEnd.start));
+        end = Math.max(start, Math.min(2100, startEnd.end));
+      }
 
       const payload: ProfileRow = {
         user_id: user.id,
@@ -240,6 +336,8 @@ export default function ProfilePage() {
         period_start: start,
         period_end: end,
         required_points: Math.max(0, safeInt(requiredPoints, 200)),
+        pwz_number: isDoctorLike(profession) ? (normalizedPwz || null) : null,
+        pwz_issue_date: isDoctorLike(profession) ? (isoPwz || null) : null,
       };
 
       const { error } = await supabase.from("profiles").upsert(payload, { onConflict: "user_id" });
@@ -248,15 +346,26 @@ export default function ProfilePage() {
         return;
       }
 
-      // Ujednolić label w UI (jeśli Inny -> pokaż faktyczny zakres)
-      const label = periodLabel === "Inny" ? makePeriodLabel(start, end) : periodLabel;
-      setPeriodLabel(label);
+      // Ujednolić label w UI:
+      // - jeśli okres z PWZ -> pokazujemy lata wynikowe jako label
+      // - jeśli Inny -> label z liczb
+      const label =
+        pwzPeriod ? pwzPeriod.labelYears : periodLabel === "Inny" ? makePeriodLabel(start, end) : periodLabel;
 
-      // MVP kompatybilność
+      setPeriodLabel(label);
+      setCustomStart(start);
+      setCustomEnd(end);
+
       try {
         localStorage.setItem(
           "crpe_profile_prefs_v1",
-          JSON.stringify({ profession, requiredPoints: payload.required_points, periodLabel: label }),
+          JSON.stringify({
+            profession,
+            requiredPoints: payload.required_points,
+            periodLabel: label,
+            pwzNumber: isDoctorLike(profession) ? normalizedPwz : "",
+            pwzIssueDate: isDoctorLike(profession) ? isoPwz : "",
+          }),
         );
       } catch {}
 
@@ -339,8 +448,12 @@ export default function ProfilePage() {
     );
   }
 
-  const previewLabel =
-    (PREDEFINED as readonly string[]).includes(periodLabel) ? periodLabel : makePeriodLabel(customStart, customEnd);
+  // podgląd zakresu lat (dla UI spójności)
+  const previewYearsLabel = pwzPeriod
+    ? pwzPeriod.labelYears
+    : (PREDEFINED as readonly string[]).includes(periodLabel)
+      ? periodLabel
+      : makePeriodLabel(customStart, customEnd);
 
   // ZALOGOWANY
   return (
@@ -388,7 +501,7 @@ export default function ProfilePage() {
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Preferencje CPD</h2>
             <p className="mt-1 text-sm text-slate-600">
-              Teraz zapisujemy to w Supabase (tabela <span className="font-mono">profiles</span>).
+              Zapis do Supabase (tabela <span className="font-mono">profiles</span>).
             </p>
           </div>
 
@@ -417,12 +530,21 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700">Okres domyślny</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-700">Okres domyślny</label>
+              {pwzPeriod ? (
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  liczone od PWZ
+                </span>
+              ) : null}
+            </div>
+
             <select
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 disabled:bg-slate-50 disabled:text-slate-500"
               value={(PREDEFINED as readonly string[]).includes(periodLabel) ? periodLabel : "Inny"}
               onChange={(e) => setPeriodLabel(e.target.value)}
-              disabled={busy}
+              disabled={busy || !!pwzPeriod}
+              title={pwzPeriod ? "Okres jest liczony automatycznie od daty PWZ (48 miesięcy)." : ""}
             >
               <option>2023–2026</option>
               <option>2022–2025</option>
@@ -430,7 +552,13 @@ export default function ProfilePage() {
               <option>Inny</option>
             </select>
 
-            {periodLabel === "Inny" && (
+            {pwzPeriod ? (
+              <p className="mt-1 text-xs text-slate-500">
+                Okres CPD liczony automatycznie: <span className="font-semibold">{pwzPeriod.labelPretty}</span>
+              </p>
+            ) : null}
+
+            {periodLabel === "Inny" && !pwzPeriod && (
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-xs text-slate-600">Start</label>
@@ -469,12 +597,71 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* PWZ PRO */}
+        {isDoctorLike(profession) && (
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="font-semibold text-slate-900">PWZ (wymagane dla lekarzy)</div>
+                <div className="mt-1 text-sm text-slate-600">
+                  Na tej podstawie możemy liczyć pierwszy okres rozliczeniowy (48 miesięcy).
+                </div>
+              </div>
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                CRPE PRO
+              </span>
+            </div>
+
+            <div className="mt-3 grid gap-4 sm:grid-cols-3">
+              <div className="sm:col-span-1">
+                <label className="text-sm font-medium text-slate-700">Numer PWZ</label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                  value={pwzNumber}
+                  onChange={(e) => setPwzNumber(e.target.value)}
+                  disabled={busy}
+                  placeholder="Np. 1234567"
+                />
+                <p className="mt-1 text-xs text-slate-500">Wpisz bez spacji (zostaną automatycznie usunięte).</p>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="text-sm font-medium text-slate-700">Data uzyskania PWZ</label>
+                <input
+                  type="date"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+                  value={pwzIssueDate}
+                  onChange={(e) => setPwzIssueDate(e.target.value)}
+                  disabled={busy}
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Jeśli podasz datę, okres CPD zostanie policzony automatycznie jako 48 miesięcy od PWZ.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
           <div className="font-semibold text-slate-900">Podgląd (co zobaczy Portfolio)</div>
+
           <div className="mt-1">
-            {profession} • Okres: <span className="font-semibold">{previewLabel}</span> • Cel:{" "}
+            {profession} • Okres (lata): <span className="font-semibold">{previewYearsLabel}</span> • Cel:{" "}
             <span className="font-semibold">{requiredPoints}</span> pkt
           </div>
+
+          {pwzPeriod ? (
+            <div className="mt-2 text-sm">
+              Okres liczony od PWZ: <span className="font-semibold">{pwzPeriod.labelPretty}</span>
+            </div>
+          ) : null}
+
+          {isDoctorLike(profession) && pwzNumber.trim() ? (
+            <div className="mt-2 text-sm">
+              PWZ: <span className="font-semibold">{normalizePwz(pwzNumber)}</span>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -506,7 +693,7 @@ export default function ProfilePage() {
       <div className="rounded-2xl border bg-white p-6">
         <h2 className="text-lg font-semibold text-slate-900">Co dalej w portalu?</h2>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
-          <li>Dodamy pola do profilu: imię/nazwisko, nr PWZ, specjalizacja (opcjonalnie).</li>
+          <li>Dodamy pola do profilu: imię/nazwisko, specjalizacja (opcjonalnie).</li>
           <li>Raporty: eksport PDF/CSV + historia raportów.</li>
           <li>Powiadomienia: przypomnienia o brakujących punktach i terminach.</li>
           <li>Tryb „audyt” danych: brak organizatora, brak certyfikatu, duplikaty.</li>
