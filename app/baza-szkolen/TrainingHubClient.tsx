@@ -5,6 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
+import type { Database } from "@/types/supabase";
+
+type ActivityInsert = Database["public"]["Tables"]["activities"]["Insert"];
 
 type TrainingType = "online" | "stacjonarne" | "hybrydowe";
 type TrainingCategory =
@@ -233,14 +236,14 @@ export default function TrainingHubClient() {
       ? Number(t.start_date.slice(0, 4))
       : new Date().getFullYear();
 
-    const payload = {
+    const payload: ActivityInsert = {
       user_id: user.id,
       type: mapToActivityType(t.category, t.type),
-      points: t.points ?? 0,
+      points: typeof t.points === "number" ? t.points : 0,
       year,
       organizer: t.organizer ?? null,
 
-      // NOWE: wymagają kolumn w activities (zrobimy w kolejnym kroku SQL)
+      // ✅ literal union (nie string)
       status: "planned",
       planned_start_date: t.start_date ?? null,
       training_id: t.id,
