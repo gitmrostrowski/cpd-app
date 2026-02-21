@@ -161,6 +161,10 @@ export type Database = {
           // ✅ NOWE: doprecyzowanie gdy profession = "Inne"
           profession_other: string | null;
 
+          // ✅ CRPE PRO: PWZ
+          pwz_number: string | null;
+          pwz_issue_date: string | null; // date -> string (YYYY-MM-DD)
+
           period_start: number | null;
           period_end: number | null;
           required_points: number | null;
@@ -175,6 +179,10 @@ export type Database = {
           // ✅ NOWE
           profession_other?: string | null;
 
+          // ✅ CRPE PRO: PWZ
+          pwz_number?: string | null;
+          pwz_issue_date?: string | null;
+
           period_start?: number | null;
           period_end?: number | null;
           required_points?: number | null;
@@ -188,6 +196,10 @@ export type Database = {
 
           // ✅ NOWE
           profession_other?: string | null;
+
+          // ✅ CRPE PRO: PWZ
+          pwz_number?: string | null;
+          pwz_issue_date?: string | null;
 
           period_start?: number | null;
           period_end?: number | null;
