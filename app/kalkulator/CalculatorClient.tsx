@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
+import CpdStatusPanel from "@/components/dashboard/CpdStatusPanel";
+
 import {
   type Profession,
   PROFESSION_OPTIONS,
@@ -44,10 +46,6 @@ type ProfileRow = {
 
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
-}
-
-function fmtPct(n: number) {
-  return `${Math.round(n)}%`;
 }
 
 /**
@@ -103,7 +101,6 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
         maxPoints: 20,
         note: "5 pkt, maks. 20 pkt w okresie",
       },
-      // jeśli chcesz dopisać: PROGRAM_TEST_BASED max 100 / okres
     ],
   },
   "Lekarz dentysta": {
@@ -319,87 +316,54 @@ export default function CalculatorClient() {
 
   return (
     <div className="space-y-5">
-      {/* STATUS KONTA */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-semibold text-slate-800">Status konta</span>
-
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Zalogowany
-              </span>
-
-              {isBusy ? (
-                <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-                  Synchronizacja…
-                </span>
-              ) : (
-                <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-                  Zsynchronizowane z bazą
-                </span>
-              )}
-            </div>
-
-            <p className="mt-2 text-sm text-slate-700">
-              <span className="font-semibold">Panel pokazuje podsumowanie uzyskanych punktów edukacyjnych.</span>{" "}
-              Ukończone liczy się do punktów, Plan jest planem.
-            </p>
-
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
-                {user?.email ?? "—"}
-              </span>
-              {profile?.profession ? (
-                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
-                  Profil: {profile.profession}
-                </span>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2 md:justify-end">
-            <Link
-              href="/aktywnosci?new=1"
-              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-            >
-              + Dodaj aktywność
-            </Link>
-
-            <Link
-              href="/aktywnosci"
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              Zobacz aktywności
-            </Link>
-
-            <button
-              type="button"
-              onClick={async () => {
-                const prof: Profession = "Lekarz";
-                setProfession(prof);
-                setPeriodStart(2023);
-                setPeriodEnd(2026);
-                setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
-                await saveProfilePatch({
-                  profession: prof,
-                  period_start: 2023,
-                  period_end: 2026,
-                  required_points: DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200,
-                });
-              }}
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              Wyczyść
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* NOWY PANEL CPD (Opcja B) */}
+      <CpdStatusPanel
+        isBusy={isBusy}
+        userEmail={user?.email ?? null}
+        profileProfession={profile?.profession ?? null}
+        periodLabel={periodLabel}
+        donePoints={donePoints}
+        requiredPoints={requiredPoints}
+        missingPoints={missingPoints}
+        progressPct={progress}
+        doneCount={inPeriodDone.length}
+        plannedCount={inPeriodPlanned.length}
+        primaryCtaHref="/aktywnosci?new=1"
+        secondaryCtaHref="/aktywnosci"
+      />
 
       {/* USTAWIENIA – teraz z tłem jak w Home */}
       <div className={`rounded-2xl border ${CARD_BORDER} ${CARD_BG} p-5 shadow-sm`}>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className={`text-sm font-extrabold ${CARD_TEXT}`}>Ustawienia okresu i zawodu</div>
+            <div className={`mt-1 text-sm ${CARD_MUTED}`}>
+              Zmień zawód, okres rozliczeniowy i wymagane punkty — zapisujemy w profilu.
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={async () => {
+              const prof: Profession = "Lekarz";
+              setProfession(prof);
+              setPeriodStart(2023);
+              setPeriodEnd(2026);
+              setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
+              await saveProfilePatch({
+                profession: prof,
+                period_start: 2023,
+                period_end: 2026,
+                required_points: DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200,
+              });
+            }}
+            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+          >
+            Przywróć domyślne
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
           <div>
             <label className={`text-xs font-semibold ${CARD_MUTED}`}>Zawód</label>
             <select
@@ -464,135 +428,76 @@ export default function CalculatorClient() {
         </div>
       </div>
 
-      {/* PODSUMOWANIE – bez tła, ale z wypełnieniem (limity/reguły) */}
+      {/* DALSZA CZĘŚĆ: limity + ostatnie */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {/* duży kafel */}
+        {/* LIMITY */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
             <div>
-              <div className="text-xs font-semibold text-slate-600">
-                Podsumowanie w okresie {periodLabel}
-              </div>
-
-              {/* 28/200 i brakuje 172 pkt — oba duże */}
-              <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-2">
-                <div className="text-3xl font-extrabold text-slate-900">
-                  {donePoints}/{requiredPoints}
-                </div>
-
-                <div className="text-3xl font-extrabold text-rose-700">
-                  brakuje {missingPoints} pkt
-                </div>
-              </div>
-
-              <div className="mt-3 text-sm text-slate-700">
-                Ukończone:{" "}
-                <span className="font-semibold text-slate-900">{inPeriodDone.length}</span>{" "}
-                • Plan:{" "}
-                <span className="font-semibold text-slate-900">{inPeriodPlanned.length}</span>
+              <div className="text-sm font-extrabold text-slate-900">Reguły i limity (MVP)</div>
+              <div className="mt-1 text-sm text-slate-600">
+                Limity cząstkowe i wykorzystanie na podstawie Twoich wpisów (ukończone w okresie {periodLabel}).
               </div>
             </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/aktywnosci?new=1"
-                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-              >
-                Znajdź szkolenie
-              </Link>
-              <Link
-                href="/aktywnosci?new=1"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                Dodaj ręcznie
-              </Link>
+            <div className="text-sm text-slate-700">
+              Zaliczone w okresie: <span className="font-extrabold text-slate-900">{donePoints} pkt</span>
             </div>
           </div>
 
-          {/* Postęp */}
-          <div className="mt-5">
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-semibold text-slate-700">Postęp</div>
-              <div className="text-xs font-semibold text-slate-700">{fmtPct(progress)}</div>
+          {limitsUsage.length === 0 ? (
+            <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+              Dla zawodu <span className="font-semibold">{profession}</span> nie mamy jeszcze wpisanych limitów w aplikacji.
             </div>
-
-            <div className="mt-2 rounded-full bg-slate-100 p-1">
-              <div className="h-3 rounded-full bg-slate-200">
-                <div className="h-3 rounded-full bg-blue-600" style={{ width: `${progress}%` }} />
-              </div>
-            </div>
-          </div>
-
-          {/* 🔥 TU WYPEŁNIAMY PUSTE MIEJSCE: reguły i limity */}
-          <div className="mt-5">
-            <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
-              <div>
-                <div className="text-sm font-extrabold text-slate-900">Reguły i limity (MVP)</div>
-                <div className="mt-1 text-sm text-slate-600">
-                  Poniżej masz limity cząstkowe i wykorzystanie na podstawie Twoich wpisów.
-                </div>
-              </div>
-              <div className="text-sm text-slate-700">
-                Zaliczone w okresie: <span className="font-extrabold text-slate-900">{donePoints} pkt</span>
-              </div>
-            </div>
-
-            {limitsUsage.length === 0 ? (
-              <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                Dla zawodu <span className="font-semibold">{profession}</span> nie mamy jeszcze wpisanych limitów w aplikacji.
-              </div>
-            ) : (
-              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                {limitsUsage.map((r) => (
-                  <div key={r.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-bold text-slate-900">{r.label}</div>
-                        {r.note ? (
-                          <div className="mt-1 text-xs text-slate-600">
-                            {r.note}
-                            {r.mode === "per_year" ? ` (×${r.yearsInPeriod} lat)` : ""}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className="shrink-0 text-right">
-                        <div className="text-sm font-extrabold text-slate-900">
-                          {Math.round(r.used)}/{Math.round(r.cap)}
+          ) : (
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+              {limitsUsage.map((r) => (
+                <div key={r.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-bold text-slate-900">{r.label}</div>
+                      {r.note ? (
+                        <div className="mt-1 text-xs text-slate-600">
+                          {r.note}
+                          {r.mode === "per_year" ? ` (×${r.yearsInPeriod} lat)` : ""}
                         </div>
-                        <div className="text-xs font-semibold text-slate-600">
-                          zostało {Math.round(r.remaining)} pkt
-                        </div>
-                      </div>
+                      ) : null}
                     </div>
 
-                    {/* zielony pasek (cząstkowy) */}
-                    <div className="mt-3">
-                      <div className="h-2 rounded-full bg-slate-200">
-                        <div
-                          className="h-2 rounded-full bg-emerald-600"
-                          style={{ width: `${r.usedPct}%` }}
-                        />
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-extrabold text-slate-900">
+                        {Math.round(r.used)}/{Math.round(r.cap)}
+                      </div>
+                      <div className="text-xs font-semibold text-slate-600">
+                        zostało {Math.round(r.remaining)} pkt
                       </div>
                     </div>
-
-                    {r.mode === "per_item" ? (
-                      <div className="mt-2 text-xs text-slate-600">
-                        Limit „na wydarzenie” – pełna poprawność wymaga w DB pola{" "}
-                        <span className="font-mono">kind</span> i np.{" "}
-                        <span className="font-mono">hours</span>.
-                      </div>
-                    ) : null}
                   </div>
-                ))}
-              </div>
-            )}
 
-            <div className="mt-4 text-sm">
-              <Link href="/aktywnosci" className="font-semibold text-blue-700 hover:text-blue-800">
-                Przejdź do Aktywności, żeby dodać/edytować wpisy →
-              </Link>
+                  <div className="mt-3">
+                    <div className="h-2 rounded-full bg-slate-200">
+                      <div
+                        className="h-2 rounded-full bg-emerald-600"
+                        style={{ width: `${r.usedPct}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {r.mode === "per_item" ? (
+                    <div className="mt-2 text-xs text-slate-600">
+                      Limit „na wydarzenie” – pełna poprawność wymaga w DB pola{" "}
+                      <span className="font-mono">kind</span> i np.{" "}
+                      <span className="font-mono">hours</span>.
+                    </div>
+                  ) : null}
+                </div>
+              ))}
             </div>
+          )}
+
+          <div className="mt-4 text-sm">
+            <Link href="/aktywnosci" className="font-semibold text-blue-700 hover:text-blue-800">
+              Przejdź do Aktywności, żeby dodać/edytować wpisy →
+            </Link>
           </div>
         </div>
 
