@@ -36,7 +36,6 @@ type Props = {
   missingPoints: number;
   progressPct: number; // % punktów
 
-  // ✅ NOWE: kompletność dokumentów i czas
   evidencePct: number; // % ukończonych z certyfikatem
   daysLeft: number; // dni do końca
 
@@ -63,54 +62,61 @@ function fmtPct(n: number) {
   return `${Math.round(n)}%`;
 }
 
-// Spójny „activity blue”
 const PRIMARY_BTN = "bg-blue-600 hover:bg-blue-700 text-white shadow-sm";
-const PRIMARY_BTN_BASE =
-  "inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold";
+const OUTLINE_BTN =
+  "border border-slate-200/70 bg-white/80 text-slate-800 hover:bg-white backdrop-blur";
+const BTN_BASE = "inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold";
+
 const PRIMARY_BAR = "bg-blue-600";
 const PRIMARY_DOT = "bg-blue-700";
 
-// ✅ A: status KOMPLETNOŚCI (bez „alarmów”)
 type DocTone = "ok" | "warn" | "bad";
 
-function statusFromCompleteness(pointsPct: number, evidencePct: number) {
-  // progi łatwe do dostrojenia
+// ✅ mniej „straszenia”: czerwony tylko przy realnie złej kompletności
+function statusFromCompleteness(pointsPct: number, evidencePct: number, doneCount: number) {
   const p = clamp(pointsPct, 0, 100);
   const e = clamp(evidencePct, 0, 100);
 
+  // Brak danych → neutralny „wymaga uzupełnienia”
+  if (doneCount <= 0) {
+    return {
+      label: "Wymaga uzupełnienia",
+      tone: "warn" as const,
+      reason: "brak wpisów",
+      hint: "Dodaj pierwszą aktywność i dokument (certyfikat), aby zacząć budować archiwum.",
+    };
+  }
+
+  // Komplet
   if (p >= 85 && e >= 90) {
     return {
       label: "Dokumentacja kompletna",
       tone: "ok" as const,
       reason: "wysoka kompletność",
-      hint: "Masz dobrą kompletność punktów i dokumentów w okresie. Zestawienie możesz pobrać w każdej chwili.",
+      hint: "Masz dobrą kompletność punktów i dokumentów. Zestawienie możesz pobrać w każdej chwili.",
     };
   }
-  if (p < 60 || e < 70) {
+
+  // Czerwony tylko wtedy, gdy jest bardzo słabo (albo punkty, albo dowody) i jest już co oceniać
+  if (p < 35 || e < 50) {
     return {
       label: "Dokumentacja niekompletna",
       tone: "bad" as const,
-      reason: "braki w danych",
-      hint: "Uzupełnij brakujące punkty lub dokumenty, aby archiwum było spójne i gotowe do wykorzystania.",
+      reason: "niska kompletność",
+      hint: "Uzupełnij dokumenty i zaplanuj aktywności, aby archiwum było spójne i gotowe do wykorzystania.",
     };
   }
+
+  // Domyślnie: warn
   return {
     label: "Wymaga uzupełnienia",
     tone: "warn" as const,
     reason: "częściowe braki",
-    hint: "Jesteś blisko — uzupełnij dokumenty i/lub zaplanuj aktywności, żeby domknąć okres bez stresu.",
+    hint: "Uzupełnij dokumenty i zaplanuj aktywności, żeby domknąć okres bez stresu.",
   };
 }
 
-function ToneBadge({
-  tone,
-  label,
-  reason,
-}: {
-  tone: DocTone;
-  label: string;
-  reason: string;
-}) {
+function ToneBadge({ tone, label, reason }: { tone: DocTone; label: string; reason: string }) {
   const map = {
     ok: {
       wrap: "border-blue-200/70 bg-blue-50/70 text-blue-950",
@@ -156,7 +162,8 @@ function MiniCta({ href, label }: { href: string; label: string }) {
 }
 
 function limitTone(used: number, usedPct: number) {
-  if (used <= 0) return { badge: "Brak", tone: "bad" as const };
+  // ✅ 0 użycia to nie „Brak” jako błąd — tylko „Nie rozpoczęto”
+  if (used <= 0) return { badge: "Nie rozpoczęto", tone: "ok" as const };
   if (usedPct >= 100) return { badge: "Limit", tone: "bad" as const };
   if (usedPct >= 80) return { badge: "Uwaga", tone: "warn" as const };
   return { badge: "W trakcie", tone: "ok" as const };
@@ -170,11 +177,7 @@ function LimitBadge({ tone, text }: { tone: "ok" | "warn" | "bad"; text: string 
       ? "bg-amber-50 text-amber-950"
       : "bg-rose-50 text-rose-900";
 
-  return (
-    <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${cls}`}>
-      {text}
-    </span>
-  );
+  return <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${cls}`}>{text}</span>;
 }
 
 function MiniLimitCard({ item }: { item: TopLimitItem }) {
@@ -237,7 +240,21 @@ export default function CpdStatusPanel({
 }: Props) {
   const pointsPct = clamp(progressPct, 0, 100);
   const docsPct = clamp(evidencePct, 0, 100);
-  const status = statusFromCompleteness(pointsPct, docsPct);
+
+  const status = statusFromCompleteness(pointsPct, docsPct, doneCount);
+
+  // ✅ CTA priorytet: dokumenty > aktywność > pdf
+  const primary =
+    missingEvidenceCount > 0
+      ? { href: "/aktywnosci", label: "Uzupełnij dokumenty" }
+      : missingPoints > 0
+      ? { href: primaryCtaHref, label: "+ Dodaj aktywność" }
+      : { href: portfolioHref, label: "Zestawienie PDF" };
+
+  const secondary =
+    missingEvidenceCount > 0
+      ? { href: primaryCtaHref, label: "+ Dodaj aktywność" }
+      : { href: "/aktywnosci", label: "Aktywności" };
 
   return (
     <div className="space-y-4">
@@ -281,7 +298,6 @@ export default function CpdStatusPanel({
               )}
             </div>
 
-            {/* Postęp punktów */}
             <div className="mt-4">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-semibold text-slate-700">Punkty w okresie {periodLabel}</div>
@@ -346,7 +362,6 @@ export default function CpdStatusPanel({
             </div>
           </div>
 
-          {/* prawa kolumna */}
           <div className="flex w-full flex-col gap-3 md:w-[360px]">
             <div className="grid grid-cols-2 gap-3">
               <StatPill label="Okres" value={periodLabel} />
@@ -364,19 +379,21 @@ export default function CpdStatusPanel({
               <div className="mt-1 text-sm text-slate-700">{nextStep.description}</div>
 
               {nextStep.ctaHref && nextStep.ctaLabel ? (
-                <Link href={nextStep.ctaHref} className={`${PRIMARY_BTN_BASE} ${PRIMARY_BTN} mt-3 w-full`}>
+                <Link href={nextStep.ctaHref} className={`${BTN_BASE} ${PRIMARY_BTN} mt-3 w-full`}>
                   {nextStep.ctaLabel}
                 </Link>
               ) : null}
             </div>
 
             <div className="grid grid-cols-1 gap-2">
-              <Link href={primaryCtaHref} className={`${PRIMARY_BTN_BASE} ${PRIMARY_BTN} w-full`}>
-                + Dodaj aktywność
+              <Link href={primary.href} className={`${BTN_BASE} ${PRIMARY_BTN} w-full`}>
+                {primary.label}
               </Link>
 
               <div className="grid grid-cols-2 gap-2">
-                <MiniCta href={secondaryCtaHref} label="Aktywności" />
+                <Link href={secondary.href} className={`${BTN_BASE} ${OUTLINE_BTN}`}>
+                  {secondary.label}
+                </Link>
                 <MiniCta href={portfolioHref} label="Zestawienie PDF" />
               </div>
             </div>
@@ -384,7 +401,6 @@ export default function CpdStatusPanel({
         </div>
       </div>
 
-      {/* dolne kafle */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
           <div className="text-xs font-semibold text-slate-600">Do uzupełnienia</div>
@@ -395,10 +411,7 @@ export default function CpdStatusPanel({
             Dodaj zdjęcie/PDF certyfikatu, żeby zestawienie było zawsze kompletne.
           </div>
           <div className="mt-4">
-            <Link
-              href="/aktywnosci"
-              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-white backdrop-blur"
-            >
+            <Link href="/aktywnosci" className={`${BTN_BASE} ${OUTLINE_BTN}`}>
               Uzupełnij dokumenty
             </Link>
           </div>
@@ -413,13 +426,10 @@ export default function CpdStatusPanel({
             Najlepsza praktyka: kilka mniejszych aktywności + jedna większa daje najlepszy efekt.
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link href="/aktywnosci?new=1" className={`${PRIMARY_BTN_BASE} ${PRIMARY_BTN}`}>
+            <Link href="/aktywnosci?new=1" className={`${BTN_BASE} ${PRIMARY_BTN}`}>
               Dodaj do planu
             </Link>
-            <Link
-              href="/aktywnosci"
-              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-white backdrop-blur"
-            >
+            <Link href="/aktywnosci" className={`${BTN_BASE} ${OUTLINE_BTN}`}>
               Zobacz wpisy
             </Link>
           </div>
