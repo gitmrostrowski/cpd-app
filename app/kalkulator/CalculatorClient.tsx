@@ -40,7 +40,7 @@ type ProfileRow = {
   user_id: string;
   profession: Profession | null;
   period_start: number | null; // rok (UI: dowolny)
-  period_end: number | null;   // rok (UI: dowolny)
+  period_end: number | null; // rok (UI: dowolny)
   required_points: number | null;
 };
 
@@ -72,18 +72,54 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
     periodMonths: 48,
     requiredPoints: 200,
     limits: [
-      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_item", maxPoints: 6, note: "1 pkt/h, maks. 6 pkt za jedno szkolenie" },
-      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_period", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt w okresie" },
-      { key: "SCIENTIFIC_SOCIETY", label: "Towarzystwo/Kolegium", mode: "per_period", maxPoints: 20, note: "5 pkt, maks. 20 pkt w okresie" },
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_item",
+        maxPoints: 6,
+        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_period",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
+      },
+      {
+        key: "SCIENTIFIC_SOCIETY",
+        label: "Towarzystwo/Kolegium",
+        mode: "per_period",
+        maxPoints: 20,
+        note: "5 pkt, maks. 20 pkt w okresie",
+      },
     ],
   },
   "Lekarz dentysta": {
     periodMonths: 48,
     requiredPoints: 200,
     limits: [
-      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_item", maxPoints: 6, note: "1 pkt/h, maks. 6 pkt za jedno szkolenie" },
-      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_period", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt w okresie" },
-      { key: "SCIENTIFIC_SOCIETY", label: "Towarzystwo/Kolegium", mode: "per_period", maxPoints: 20, note: "5 pkt, maks. 20 pkt w okresie" },
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_item",
+        maxPoints: 6,
+        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_period",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
+      },
+      {
+        key: "SCIENTIFIC_SOCIETY",
+        label: "Towarzystwo/Kolegium",
+        mode: "per_period",
+        maxPoints: 20,
+        note: "5 pkt, maks. 20 pkt w okresie",
+      },
     ],
   },
   Pielęgniarka: {
@@ -166,7 +202,6 @@ export default function CalculatorClient() {
     DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
   );
 
-  // NEW: preset vs indywidualny
   const [periodMode, setPeriodMode] = useState<"preset" | "custom">("preset");
 
   const [savingProfile, setSavingProfile] = useState(false);
@@ -199,9 +234,11 @@ export default function CalculatorClient() {
           setPeriodStart(ps);
           setPeriodEnd(pe);
 
-          // jeśli okres nie pasuje do presetów → ustaw custom
           const presetLabel = `${ps}-${pe}`;
-          const isPreset = presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
+          const isPreset =
+            presetLabel === "2019-2022" ||
+            presetLabel === "2023-2026" ||
+            presetLabel === "2027-2030";
           setPeriodMode(isPreset ? "preset" : "custom");
 
           const rp =
@@ -293,10 +330,8 @@ export default function CalculatorClient() {
     return limits.map((l) => {
       const used = usage.get(l.key) || 0;
       const cap = l.mode === "per_year" ? l.maxPoints * yearsInPeriod : l.maxPoints;
-
       const remaining = Math.max(0, cap - used);
       const usedPct = cap > 0 ? clamp((used / cap) * 100, 0, 100) : 0;
-
       return { ...l, used, cap, remaining, usedPct, yearsInPeriod };
     });
   }, [profession, inPeriodDone, periodStart, periodEnd]);
@@ -348,7 +383,7 @@ export default function CalculatorClient() {
 
   return (
     <div className="space-y-5">
-      {/* ✅ 1) USTAWIENIA NA GÓRZE – cieńsze i lżejsze */}
+      {/* USTAWIENIA NA GÓRZE */}
       <div className={`rounded-2xl border ${CARD_BORDER} ${CARD_BG} p-4 shadow-sm`}>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
@@ -421,7 +456,7 @@ export default function CalculatorClient() {
               <option value="custom">Indywidualny</option>
             </select>
             <p className="mt-1 text-[11px] text-slate-500">
-              U lekarzy/dentystów okres bywa liczony od daty PWZ (48 miesięcy). :contentReference[oaicite:3]{index=3}
+              W praktyce okres bywa liczony indywidualnie (np. od uzyskania PWZ). Jeśli masz inny zakres, wybierz „Indywidualny”.
             </p>
           </div>
 
@@ -452,7 +487,10 @@ export default function CalculatorClient() {
                   onChange={(e) => setPeriodStart(Number(e.target.value || 0))}
                   onBlur={async () => {
                     if (periodEnd < periodStart) setPeriodEnd(periodStart);
-                    await saveProfilePatch({ period_start: periodStart, period_end: Math.max(periodEnd, periodStart) });
+                    await saveProfilePatch({
+                      period_start: periodStart,
+                      period_end: Math.max(periodEnd, periodStart),
+                    });
                   }}
                   type="number"
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -493,7 +531,7 @@ export default function CalculatorClient() {
         </div>
       </div>
 
-      {/* 2) PANEL STATUSU */}
+      {/* PANEL STATUSU */}
       <CpdStatusPanel
         isBusy={isBusy}
         userEmail={user?.email ?? null}
@@ -514,7 +552,7 @@ export default function CalculatorClient() {
         portfolioHref="/portfolio"
       />
 
-      {/* 3) Reszta jak było */}
+      {/* Reszta strony */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
           <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
