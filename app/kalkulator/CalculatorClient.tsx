@@ -49,8 +49,7 @@ function clamp(n: number, a: number, b: number) {
 }
 
 /**
- * STYLE – zgodnie z Home (miękkie tło kafli)
- * Jeśli w Home masz inne kolory, podmień tylko te 4 stałe.
+ * STYLE – zgodnie z Home
  */
 const CARD_BG = "bg-slate-50/70";
 const CARD_BORDER = "border-slate-200";
@@ -59,13 +58,12 @@ const CARD_MUTED = "text-slate-600";
 
 /**
  * MVP: registry reguł i limitów.
- * Docelowo przenieś do lib/cpd/rulesRegistry.ts
  */
 type RuleLimit = {
   key: string;
   label: string;
   mode: "per_period" | "per_year" | "per_item";
-  maxPoints: number; // per_year: na rok; per_period: na okres; per_item: na wpis
+  maxPoints: number;
   note?: string;
 };
 
@@ -165,6 +163,44 @@ function mapTypeToRuleKey(type: string): string | null {
   return null;
 }
 
+function buildNextStep(missingPoints: number, missingEvidenceCount: number) {
+  if (missingEvidenceCount > 0) {
+    return {
+      title: "Uzupełnij dowody",
+      description: `Masz ${missingEvidenceCount} wpisów bez certyfikatu. Dodaj zdjęcia/PDF-y, żeby raport był gotowy w każdej chwili.`,
+      ctaLabel: "Dodaj dowody",
+      ctaHref: "/aktywnosci",
+    };
+  }
+  if (missingPoints <= 0) {
+    return {
+      title: "Wygeneruj portfolio",
+      description: "Masz komplet punktów i dowodów. Wygeneruj PDF gotowy do kontroli.",
+      ctaLabel: "Portfolio (PDF do kontroli)",
+      ctaHref: "/portfolio",
+    };
+  }
+
+  // Prosty, czytelny plan: 1 większa aktywność + kilka mniejszych
+  const big = 15;
+  const small = 5;
+  const bigCount = Math.floor(missingPoints / big);
+  const rest = missingPoints - bigCount * big;
+  const smallCount = Math.ceil(rest / small);
+
+  const planTxt =
+    bigCount > 0
+      ? `Propozycja: ${Math.min(bigCount, 4)}× aktywność ~${big} pkt + ${smallCount}× aktywność ~${small} pkt.`
+      : `Propozycja: ${smallCount}× aktywność ~${small} pkt.`;
+
+  return {
+    title: "Ustal krótki plan",
+    description: `${planTxt} Dodaj wpisy jako „plan”, a potem uzupełniaj certyfikaty.`,
+    ctaLabel: "+ Dodaj aktywność",
+    ctaHref: "/aktywnosci?new=1",
+  };
+}
+
 export default function CalculatorClient() {
   const { user, loading: authLoading } = useAuth();
 
@@ -178,6 +214,10 @@ export default function CalculatorClient() {
   const [requiredPoints, setRequiredPoints] = useState<number>(
     DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
   );
+
+  // mini-status zapisu w ustawieniach
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
 
   const supabase = useMemo(() => supabaseClient(), []);
 
@@ -274,7 +314,15 @@ export default function CalculatorClient() {
     return clamp((donePoints / req) * 100, 0, 100);
   }, [requiredPoints, donePoints]);
 
-  // Limity — wyświetlamy w podsumowaniu, z zielonymi paskami.
+  const missingEvidenceCount = useMemo(() => {
+    return inPeriodDone.filter((a) => !a.certificate_path).length;
+  }, [inPeriodDone]);
+
+  const nextStep = useMemo(() => {
+    return buildNextStep(missingPoints, missingEvidenceCount);
+  }, [missingPoints, missingEvidenceCount]);
+
+  // Limity
   const limitsUsage = useMemo(() => {
     const rules = RULES_BY_PROFESSION[profession];
     const limits = rules?.limits ?? [];
@@ -303,6 +351,7 @@ export default function CalculatorClient() {
 
   async function saveProfilePatch(patch: Partial<ProfileRow>) {
     if (!user?.id) return;
+    setSavingProfile(true);
 
     await supabase.from("profiles").upsert({
       user_id: user.id,
@@ -312,11 +361,14 @@ export default function CalculatorClient() {
       required_points: requiredPoints,
       ...patch,
     });
+
+    setSavingProfile(false);
+    setSavedAt(Date.now());
   }
 
   return (
     <div className="space-y-5">
-      {/* NOWY PANEL CPD (Opcja B) */}
+      {/* PANEL CPD – nowy, premium + next step + todo */}
       <CpdStatusPanel
         isBusy={isBusy}
         userEmail={user?.email ?? null}
@@ -328,17 +380,23 @@ export default function CalculatorClient() {
         progressPct={progress}
         doneCount={inPeriodDone.length}
         plannedCount={inPeriodPlanned.length}
+        missingEvidenceCount={missingEvidenceCount}
+        nextStep={nextStep}
         primaryCtaHref="/aktywnosci?new=1"
         secondaryCtaHref="/aktywnosci"
+        portfolioHref="/portfolio"
       />
 
-      {/* USTAWIENIA – teraz z tłem jak w Home */}
+      {/* USTAWIENIA */}
       <div className={`rounded-2xl border ${CARD_BORDER} ${CARD_BG} p-5 shadow-sm`}>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <div className={`text-sm font-extrabold ${CARD_TEXT}`}>Ustawienia okresu i zawodu</div>
             <div className={`mt-1 text-sm ${CARD_MUTED}`}>
-              Zmień zawód, okres rozliczeniowy i wymagane punkty — zapisujemy w profilu.
+              Zmiany zapisujemy w profilu.{" "}
+              <span className="ml-2 inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                {savingProfile ? "Zapisywanie…" : savedAt ? "Zapisano" : "—"}
+              </span>
             </div>
           </div>
 
@@ -428,25 +486,25 @@ export default function CalculatorClient() {
         </div>
       </div>
 
-      {/* DALSZA CZĘŚĆ: limity + ostatnie */}
+      {/* LIMITY + OSTATNIE */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* LIMITY */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
           <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
             <div>
-              <div className="text-sm font-extrabold text-slate-900">Reguły i limity (MVP)</div>
+              <div className="text-sm font-extrabold text-slate-900">Reguły i limity</div>
               <div className="mt-1 text-sm text-slate-600">
-                Limity cząstkowe i wykorzystanie na podstawie Twoich wpisów (ukończone w okresie {periodLabel}).
+                Limity cząstkowe i wykorzystanie na podstawie ukończonych wpisów w okresie {periodLabel}.
               </div>
             </div>
             <div className="text-sm text-slate-700">
-              Zaliczone w okresie: <span className="font-extrabold text-slate-900">{donePoints} pkt</span>
+              Zaliczone: <span className="font-extrabold text-slate-900">{donePoints} pkt</span>
             </div>
           </div>
 
           {limitsUsage.length === 0 ? (
             <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-              Dla zawodu <span className="font-semibold">{profession}</span> nie mamy jeszcze wpisanych limitów w aplikacji.
+              Dla zawodu <span className="font-semibold">{profession}</span> nie mamy jeszcze wpisanych limitów.
             </div>
           ) : (
             <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -465,10 +523,10 @@ export default function CalculatorClient() {
 
                     <div className="shrink-0 text-right">
                       <div className="text-sm font-extrabold text-slate-900">
-                        {Math.round(r.used)}/{Math.round(r.cap)}
+                        Wykorzystano: {Math.round(r.used)} / {Math.round(r.cap)}
                       </div>
                       <div className="text-xs font-semibold text-slate-600">
-                        zostało {Math.round(r.remaining)} pkt
+                        Pozostało: {Math.round(r.remaining)} pkt
                       </div>
                     </div>
                   </div>
@@ -481,14 +539,6 @@ export default function CalculatorClient() {
                       />
                     </div>
                   </div>
-
-                  {r.mode === "per_item" ? (
-                    <div className="mt-2 text-xs text-slate-600">
-                      Limit „na wydarzenie” – pełna poprawność wymaga w DB pola{" "}
-                      <span className="font-mono">kind</span> i np.{" "}
-                      <span className="font-mono">hours</span>.
-                    </div>
-                  ) : null}
                 </div>
               ))}
             </div>
@@ -518,26 +568,43 @@ export default function CalculatorClient() {
                 Brak ukończonych aktywności w okresie {periodLabel}.
               </div>
             ) : (
-              inPeriodDone.slice(0, 5).map((a) => (
-                <div key={a.id} className="rounded-xl border border-slate-200 bg-white p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-slate-900">{a.type}</div>
-                      <div className="mt-1 text-xs text-slate-600">
-                        {a.organizer ? `${a.organizer} • ` : ""}
-                        {a.year}
+              inPeriodDone.slice(0, 5).map((a) => {
+                const hasCert = !!a.certificate_path;
+
+                return (
+                  <div key={a.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-slate-900">{a.type}</div>
+                        <div className="mt-1 text-xs text-slate-600">
+                          {a.organizer ? `${a.organizer} • ` : ""}
+                          {a.year}
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800">
+                            ukończone
+                          </span>
+
+                          {hasCert ? (
+                            <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-900">
+                              certyfikat OK
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-900">
+                              brak certyfikatu
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 text-right">
+                        <div className="text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
                       </div>
                     </div>
-                    <div className="shrink-0 rounded-lg bg-emerald-50 px-2 py-1 text-xs font-extrabold text-emerald-700">
-                      ukończone
-                    </div>
                   </div>
-
-                  <div className="mt-2 text-right text-sm font-extrabold text-slate-900">
-                    +{a.points} pkt
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
