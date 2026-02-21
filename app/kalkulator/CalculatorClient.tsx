@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
-import CpdStatusPanel from "@/components/dashboard/CpdStatusPanel";
+import CpdStatusPanel, { type TopLimitItem } from "@/components/dashboard/CpdStatusPanel";
 
 import {
   type Profession,
@@ -48,17 +48,11 @@ function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
-/**
- * STYLE – zgodnie z Home
- */
 const CARD_BG = "bg-slate-50/70";
 const CARD_BORDER = "border-slate-200";
 const CARD_TEXT = "text-slate-900";
 const CARD_MUTED = "text-slate-600";
 
-/**
- * MVP: registry reguł i limitów.
- */
 type RuleLimit = {
   key: string;
   label: string;
@@ -163,7 +157,7 @@ function mapTypeToRuleKey(type: string): string | null {
   return null;
 }
 
-function buildNextStep(missingPoints: number, missingEvidenceCount: number) {
+function buildNextStep(missingPoints: number, missingEvidenceCount: number, limitWarning: string | null) {
   if (missingEvidenceCount > 0) {
     return {
       title: "Uzupełnij dowody",
@@ -172,16 +166,25 @@ function buildNextStep(missingPoints: number, missingEvidenceCount: number) {
       ctaHref: "/aktywnosci",
     };
   }
+
   if (missingPoints <= 0) {
     return {
       title: "Wygeneruj portfolio",
-      description: "Masz komplet punktów i dowodów. Wygeneruj PDF gotowy do kontroli.",
+      description: "Masz komplet punktów. Wygeneruj PDF gotowy do kontroli.",
       ctaLabel: "Portfolio (PDF do kontroli)",
       ctaHref: "/portfolio",
     };
   }
 
-  // Prosty, czytelny plan: 1 większa aktywność + kilka mniejszych
+  if (limitWarning) {
+    return {
+      title: "Dobierz inną formę aktywności",
+      description: `${limitWarning} Wybierz inną kategorię, żeby punkty na pewno się zaliczyły.`,
+      ctaLabel: "+ Dodaj aktywność",
+      ctaHref: "/aktywnosci?new=1",
+    };
+  }
+
   const big = 15;
   const small = 5;
   const bigCount = Math.floor(missingPoints / big);
@@ -215,7 +218,6 @@ export default function CalculatorClient() {
     DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
   );
 
-  // mini-status zapisu w ustawieniach
   const [savingProfile, setSavingProfile] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
@@ -318,10 +320,6 @@ export default function CalculatorClient() {
     return inPeriodDone.filter((a) => !a.certificate_path).length;
   }, [inPeriodDone]);
 
-  const nextStep = useMemo(() => {
-    return buildNextStep(missingPoints, missingEvidenceCount);
-  }, [missingPoints, missingEvidenceCount]);
-
   // Limity
   const limitsUsage = useMemo(() => {
     const rules = RULES_BY_PROFESSION[profession];
@@ -347,6 +345,34 @@ export default function CalculatorClient() {
     });
   }, [profession, inPeriodDone, periodStart, periodEnd]);
 
+  // TOP mini-limity (top 3 po wykorzystaniu)
+  const topLimits = useMemo<TopLimitItem[]>(() => {
+    return [...limitsUsage]
+      .sort((a, b) => (b.usedPct ?? 0) - (a.usedPct ?? 0))
+      .slice(0, 3)
+      .map((x) => ({
+        key: x.key,
+        label: x.label,
+        used: x.used,
+        cap: x.cap,
+        remaining: x.remaining,
+        usedPct: x.usedPct,
+        note: x.note,
+        mode: x.mode,
+      }));
+  }, [limitsUsage]);
+
+  // Ostrzeżenie, jeśli któryś limit osiągnięty (z top albo z całości)
+  const limitWarning = useMemo(() => {
+    const hit = limitsUsage.find((x) => (x.usedPct ?? 0) >= 100);
+    if (!hit) return null;
+    return `Limit „${hit.label}” jest osiągnięty — kolejne podobne aktywności mogą nie zwiększyć punktów w tym okresie.`;
+  }, [limitsUsage]);
+
+  const nextStep = useMemo(() => {
+    return buildNextStep(missingPoints, missingEvidenceCount, limitWarning);
+  }, [missingPoints, missingEvidenceCount, limitWarning]);
+
   const isBusy = authLoading || loading;
 
   async function saveProfilePatch(patch: Partial<ProfileRow>) {
@@ -368,7 +394,6 @@ export default function CalculatorClient() {
 
   return (
     <div className="space-y-5">
-      {/* PANEL CPD – nowy, premium + next step + todo */}
       <CpdStatusPanel
         isBusy={isBusy}
         userEmail={user?.email ?? null}
@@ -382,6 +407,8 @@ export default function CalculatorClient() {
         plannedCount={inPeriodPlanned.length}
         missingEvidenceCount={missingEvidenceCount}
         nextStep={nextStep}
+        topLimits={topLimits}
+        limitWarning={limitWarning}
         primaryCtaHref="/aktywnosci?new=1"
         secondaryCtaHref="/aktywnosci"
         portfolioHref="/portfolio"
