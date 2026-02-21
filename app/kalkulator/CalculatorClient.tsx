@@ -470,7 +470,7 @@ export default function CalculatorClient() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <div className={`text-xs font-semibold ${SOFT_MINT_MUTED}`}>
+              <div className="text-xs font-semibold text-slate-600">
                 Podsumowanie w okresie {periodLabel}
               </div>
 
