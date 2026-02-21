@@ -44,7 +44,6 @@ function isDoctorLike(p: Profession) {
 }
 
 function normalizePwz(input: string) {
-  // miękka normalizacja: usuń spacje, zostaw znaki i cyfry (PWZ bywa różnie zapisywane)
   return String(input || "").trim().replace(/\s+/g, "");
 }
 
@@ -53,18 +52,27 @@ function isValidISODate(d: string | null | undefined) {
   return /^\d{4}-\d{2}-\d{2}$/.test(d);
 }
 
+function parseISODateParts(iso: string) {
+  const [ys, ms, ds] = String(iso).split("-");
+  const y = safeInt(ys, NaN);
+  const m = safeInt(ms, NaN);
+  const d = safeInt(ds, NaN);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+  return { y, m, d };
+}
+
 function addMonthsUTC(isoDate: string, months: number) {
-  // isoDate: YYYY-MM-DD (traktujemy jako UTC, bez stref)
-  const [y, m, d] = isoDate.split("-").map((x) => Number(x));
+  const parts = parseISODateParts(isoDate);
+  if (!parts) return new Date(Date.UTC(2023, 0, 1));
+  const { y, m, d } = parts;
+
   const dt = new Date(Date.UTC(y, m - 1, d));
   const targetMonth = dt.getUTCMonth() + months;
   dt.setUTCMonth(targetMonth);
 
-  // korekta dla miesięcy o mniejszej liczbie dni (JS przesuwa)
-  // chcemy zachować "ten sam dzień miesiąca" o ile się da, inaczej ostatni dzień miesiąca
+  // korekta dla miesięcy o mniejszej liczbie dni
   const expectedMonth = ((m - 1 + months) % 12 + 12) % 12;
   if (dt.getUTCMonth() !== expectedMonth) {
-    // cofnij do ostatniego dnia poprzedniego miesiąca
     dt.setUTCDate(0);
   }
   return dt;
@@ -114,13 +122,17 @@ export default function ProfilePage() {
     setErr(null);
   }
 
-  // Wyliczenie okresu "48 miesięcy od PWZ" (dokładne daty do UI + lata do kompatybilności)
+  // Wyliczenie okresu "48 miesięcy od PWZ"
   const pwzPeriod = useMemo(() => {
     if (!isDoctorLike(profession)) return null;
     if (!isValidISODate(pwzIssueDate)) return null;
 
     const startISO = pwzIssueDate;
-    const startDt = new Date(Date.UTC(...startISO.split("-").map(Number) as any));
+    const parts = parseISODateParts(startISO);
+    if (!parts) return null;
+
+    const startDt = new Date(Date.UTC(parts.y, parts.m - 1, parts.d));
+
     // +48 miesięcy, minus 1 dzień
     const endPlus = addMonthsUTC(startISO, 48);
     const endDt = new Date(endPlus.getTime());
@@ -151,7 +163,6 @@ export default function ProfilePage() {
       setProfileLoading(true);
       clearMessages();
 
-      // helper: localStorage
       const loadFromLocal = () => {
         try {
           const raw = localStorage.getItem("crpe_profile_prefs_v1");
@@ -174,7 +185,6 @@ export default function ProfilePage() {
         } catch {}
       };
 
-      // 1a) DB
       try {
         const { data, error } = await supabase
           .from("profiles")
@@ -190,7 +200,6 @@ export default function ProfilePage() {
           return;
         }
 
-        // brak profilu -> utwórz domyślny
         if (!data) {
           const defaults: ProfileRow = {
             user_id: user.id,
@@ -269,7 +278,24 @@ export default function ProfilePage() {
       } catch (e: any) {
         if (!alive) return;
         setErr(`Profil (DB): ${e?.message || "Nie udało się pobrać profilu."}`);
-        loadFromLocal();
+        try {
+          const raw = localStorage.getItem("crpe_profile_prefs_v1");
+          if (!raw) return;
+          const p = JSON.parse(raw);
+          if (!alive) return;
+
+          if (isProfession(p?.profession)) setProfession(p.profession);
+          if (typeof p?.requiredPoints === "number") setRequiredPoints(Math.max(0, p.requiredPoints));
+          if (typeof p?.periodLabel === "string") {
+            setPeriodLabel(p.periodLabel);
+            const { start, end } = parsePeriodLabel(p.periodLabel);
+            setCustomStart(start);
+            setCustomEnd(end);
+          }
+
+          if (typeof p?.pwzNumber === "string") setPwzNumber(p.pwzNumber);
+          if (typeof p?.pwzIssueDate === "string") setPwzIssueDate(p.pwzIssueDate);
+        } catch {}
       } finally {
         if (!alive) return;
         setProfileLoading(false);
@@ -282,7 +308,6 @@ export default function ProfilePage() {
     };
   }, [user, supabase]);
 
-  // UI: gdy zmienisz dropdown na predefiniowany okres, ustaw customStart/End też
   useEffect(() => {
     if ((PREDEFINED as readonly string[]).includes(periodLabel)) {
       const { start, end } = parsePeriodLabel(periodLabel);
@@ -291,7 +316,6 @@ export default function ProfilePage() {
     }
   }, [periodLabel]);
 
-  // PRO UX: jeśli ktoś zmieni zawód na "Inne" — czyścimy PWZ (żeby nie mieszać)
   useEffect(() => {
     if (!isDoctorLike(profession)) {
       setPwzNumber("");
@@ -310,7 +334,6 @@ export default function ProfilePage() {
       const normalizedPwz = isDoctorLike(profession) ? normalizePwz(pwzNumber) : "";
       const isoPwz = isDoctorLike(profession) && isValidISODate(pwzIssueDate) ? pwzIssueDate : "";
 
-      // Jeśli mamy datę PWZ i to lekarz/dentysta -> okres liczony od PWZ (48 miesięcy)
       let start: number;
       let end: number;
 
@@ -346,9 +369,6 @@ export default function ProfilePage() {
         return;
       }
 
-      // Ujednolić label w UI:
-      // - jeśli okres z PWZ -> pokazujemy lata wynikowe jako label
-      // - jeśli Inny -> label z liczb
       const label =
         pwzPeriod ? pwzPeriod.labelYears : periodLabel === "Inny" ? makePeriodLabel(start, end) : periodLabel;
 
@@ -421,7 +441,6 @@ export default function ProfilePage() {
     );
   }
 
-  // NIEZALOGOWANY
   if (!user) {
     return (
       <div className="mx-auto w-full max-w-4xl p-6">
@@ -448,14 +467,12 @@ export default function ProfilePage() {
     );
   }
 
-  // podgląd zakresu lat (dla UI spójności)
   const previewYearsLabel = pwzPeriod
     ? pwzPeriod.labelYears
     : (PREDEFINED as readonly string[]).includes(periodLabel)
       ? periodLabel
       : makePeriodLabel(customStart, customEnd);
 
-  // ZALOGOWANY
   return (
     <div className="mx-auto w-full max-w-4xl p-6 space-y-6">
       {/* Header */}
