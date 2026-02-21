@@ -243,6 +243,40 @@ function daysUntilEndOfYear(yearEnd: number) {
   return Math.max(0, days);
 }
 
+function normalizeStatus(s: ActivityStatus | undefined): "planned" | "done" {
+  return s === "planned" ? "planned" : "done";
+}
+
+function formatYMD(d: string | null | undefined) {
+  if (!d) return "—";
+  const [y, m, day] = d.split("-");
+  if (!y || !m || !day) return d;
+  return `${day}.${m}.${y}`;
+}
+
+function getRowMissing(a: ActivityRow) {
+  const missing: string[] = [];
+  const orgOk = Boolean(a.organizer && String(a.organizer).trim());
+  if (!orgOk) missing.push("Brak organizatora");
+
+  const prog = normalizeStatus(a.status);
+  if (prog === "planned") {
+    if (!a.planned_start_date) missing.push("Brak daty");
+  } else {
+    if (!a.certificate_path) missing.push("Brak certyfikatu");
+  }
+
+  return missing;
+}
+
+function suggestPlannedPoints(rule: { mode: "per_period" | "per_year" | "per_item"; remaining: number }) {
+  const rem = Math.max(0, Number(rule.remaining) || 0);
+  if (rem <= 0) return 0;
+
+  const step = rule.mode === "per_item" ? 2 : rule.mode === "per_year" ? 5 : 5;
+  return Math.max(1, Math.min(rem, step));
+}
+
 export default function CalculatorClient() {
   const { user, loading: authLoading } = useAuth();
 
@@ -252,27 +286,37 @@ export default function CalculatorClient() {
 
   const [profession, setProfession] = useState<Profession>("Lekarz");
   const [professionOther, setProfessionOther] = useState<string>("");
-  const [professionOtherCache, setProfessionOtherCache] = useState<string>("");
-
   const [periodStart, setPeriodStart] = useState<number>(2023);
   const [periodEnd, setPeriodEnd] = useState<number>(2026);
-  const [requiredPoints, setRequiredPoints] = useState<number>(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200);
+  const [requiredPoints, setRequiredPoints] = useState<number>(
+    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
+  );
 
   const [periodMode, setPeriodMode] = useState<"preset" | "custom">("preset");
 
   const [savingProfile, setSavingProfile] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
-  const [savedSnapshot, setSavedSnapshot] = useState<{
-    profession: Profession;
-    profession_other: string;
-    period_start: number;
-    period_end: number;
-    required_points: number;
-    period_mode: "preset" | "custom";
-  } | null>(null);
+  // feedback dla planowania
+  const [planInfo, setPlanInfo] = useState<string | null>(null);
+  const [planErr, setPlanErr] = useState<string | null>(null);
+  const [planningKey, setPlanningKey] = useState<string | null>(null);
 
   const supabase = useMemo(() => supabaseClient(), []);
+
+  async function reloadActivities() {
+    if (!user?.id) return;
+    const { data: a, error: aErr } = await supabase
+      .from("activities")
+      .select(
+        "id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at"
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (!aErr && a) setActivities(a as ActivityRow[]);
+    else setActivities([]);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -296,7 +340,6 @@ export default function CalculatorClient() {
 
           const po = normalizeOtherProfession((p as any).profession_other);
           setProfessionOther(po);
-          setProfessionOtherCache(po);
 
           const ps = p.period_start ?? 2023;
           const pe = p.period_end ?? 2026;
@@ -306,8 +349,7 @@ export default function CalculatorClient() {
           const presetLabel = `${ps}-${pe}`;
           const isPreset =
             presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
-          const pm = isPreset ? "preset" : "custom";
-          setPeriodMode(pm);
+          setPeriodMode(isPreset ? "preset" : "custom");
 
           const rp =
             p.required_points ??
@@ -316,34 +358,14 @@ export default function CalculatorClient() {
             200;
 
           setRequiredPoints(rp);
-
-          setSavedSnapshot({
-            profession: prof,
-            profession_other: po || "",
-            period_start: ps,
-            period_end: pe,
-            required_points: rp,
-            period_mode: pm,
-          });
         } else {
           const prof: Profession = "Lekarz";
-          const rp0 = DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200;
           setProfession(prof);
           setProfessionOther("");
-          setProfessionOtherCache("");
           setPeriodStart(2023);
           setPeriodEnd(2026);
-          setRequiredPoints(rp0);
+          setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
           setPeriodMode("preset");
-
-          setSavedSnapshot({
-            profession: prof,
-            profession_other: "",
-            period_start: 2023,
-            period_end: 2026,
-            required_points: rp0,
-            period_mode: "preset",
-          });
         }
       }
 
@@ -466,12 +488,7 @@ export default function CalculatorClient() {
   const isBusy = authLoading || loading;
 
   const otherRequired = isOtherProfession(profession);
-
-  const effectiveOther = useMemo(() => {
-    return normalizeOtherProfession(otherRequired ? professionOther : professionOtherCache);
-  }, [otherRequired, professionOther, professionOtherCache]);
-
-  const otherValid = !otherRequired || effectiveOther.length >= 2;
+  const otherValid = !otherRequired || normalizeOtherProfession(professionOther).length >= 2;
 
   async function saveProfilePatch(patch: Partial<ProfileRow> & { profession_other?: string | null }) {
     if (!user?.id) return;
@@ -481,11 +498,12 @@ export default function CalculatorClient() {
 
     const nextPeriodStart = patch.period_start !== undefined ? patch.period_start : periodStart;
     const nextPeriodEnd = patch.period_end !== undefined ? patch.period_end : periodEnd;
-    const nextRequiredPoints = patch.required_points !== undefined ? patch.required_points : requiredPoints;
+    const nextRequiredPoints =
+      patch.required_points !== undefined ? patch.required_points : requiredPoints;
 
     const otherReq = isOtherProfession(nextProfession);
 
-    const rawOther = patch.profession_other !== undefined ? patch.profession_other : effectiveOther;
+    const rawOther = patch.profession_other !== undefined ? patch.profession_other : professionOther;
     const nextOther = otherReq ? normalizeOtherProfession(rawOther) || null : null;
 
     const payload: ProfileRow = {
@@ -503,51 +521,64 @@ export default function CalculatorClient() {
     if (!error) setSavedAt(Date.now());
   }
 
-  const isDirty = useMemo(() => {
-    if (!savedSnapshot) return false;
-    return (
-      savedSnapshot.profession !== profession ||
-      normalizeOtherProfession(savedSnapshot.profession_other) !== normalizeOtherProfession(effectiveOther) ||
-      savedSnapshot.period_start !== periodStart ||
-      savedSnapshot.period_end !== periodEnd ||
-      savedSnapshot.required_points !== requiredPoints ||
-      savedSnapshot.period_mode !== periodMode
-    );
-  }, [savedSnapshot, profession, effectiveOther, periodStart, periodEnd, requiredPoints, periodMode]);
+  const profileLabelForPanel = useMemo(() => {
+    return displayProfession(profession, professionOther);
+  }, [profession, professionOther]);
 
-  const canSave = useMemo(() => {
-    if (savingProfile) return false;
-    if (!isDirty) return false;
-    if (otherRequired && normalizeOtherProfession(effectiveOther).length < 2) return false;
-    return true;
-  }, [savingProfile, isDirty, otherRequired, effectiveOther]);
+  async function planForRule(r: (typeof limitsUsage)[number]) {
+    if (!user?.id) return;
 
-  async function handleSaveSettings() {
-    const nextProfession = profession;
-    const otherReq = isOtherProfession(nextProfession);
-    const nextOther = otherReq ? normalizeOtherProfession(effectiveOther) || null : null;
+    setPlanInfo(null);
+    setPlanErr(null);
 
-    await saveProfilePatch({
-      profession: nextProfession,
-      profession_other: nextOther,
-      period_start: periodStart,
-      period_end: periodEnd,
-      required_points: requiredPoints,
-    });
+    if ((Number(r.remaining) || 0) <= 0) return;
 
-    setSavedSnapshot({
-      profession: nextProfession,
-      profession_other: nextOther ?? "",
-      period_start: periodStart,
-      period_end: periodEnd,
-      required_points: requiredPoints,
-      period_mode: periodMode,
-    });
+    const nowY = new Date().getFullYear();
+    const y = clamp(nowY, periodStart, periodEnd);
+
+    const pts = suggestPlannedPoints({ mode: r.mode, remaining: r.remaining });
+    if (pts <= 0) return;
+
+    setPlanningKey(r.key);
+    try {
+      const payload = {
+        user_id: user.id,
+        type: r.label,
+        points: pts,
+        year: y,
+        organizer: null,
+        status: "planned" as const,
+        planned_start_date: null as string | null,
+      };
+
+      const { error } = await supabase.from("activities").insert(payload);
+
+      if (error) {
+        setPlanErr(error.message);
+        return;
+      }
+
+      setPlanInfo(`Dodano do planu: ${r.label} (+${pts} pkt) ✅`);
+      await reloadActivities();
+    } catch (e: any) {
+      setPlanErr(e?.message || "Nie udało się dodać planu.");
+    } finally {
+      setPlanningKey(null);
+    }
   }
 
-  const profileLabelForPanel = useMemo(() => {
-    return displayProfession(profession, effectiveOther);
-  }, [profession, effectiveOther]);
+  const recentRows = useMemo(() => {
+    const rows = activities.filter((a) => {
+      const prog = normalizeStatus(a.status);
+      const y =
+        prog === "planned" && a.planned_start_date
+          ? Number(String(a.planned_start_date).slice(0, 4))
+          : a.year;
+      return y >= periodStart && y <= periodEnd;
+    });
+
+    return rows.slice(0, 10);
+  }, [activities, periodStart, periodEnd]);
 
   return (
     <div className="space-y-6">
@@ -557,100 +588,61 @@ export default function CalculatorClient() {
           <div className="min-w-0">
             <div className="text-sm font-extrabold text-slate-900">Ustawienia okresu i zawodu</div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-              <span>Zmiany zapisujesz przyciskiem.</span>
+              <span>Zmiany zapisujemy w profilu.</span>
               <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
                 {savingProfile ? "Zapisywanie…" : savedAt ? "Zapisano" : "—"}
               </span>
-              {isDirty ? (
-                <span className="inline-flex items-center gap-2 rounded-full border border-amber-200/70 bg-amber-50/70 px-2.5 py-1 text-[11px] font-semibold text-amber-900">
-                  <span className="h-2 w-2 rounded-full bg-amber-500" />
-                  Niezapisane zmiany
-                </span>
-              ) : null}
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <button
-              type="button"
-              onClick={async () => {
-                const prof: Profession = "Lekarz";
-                const rp0 = DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200;
+          <button
+            type="button"
+            onClick={async () => {
+              const prof: Profession = "Lekarz";
+              setProfession(prof);
+              setProfessionOther("");
+              setPeriodStart(2023);
+              setPeriodEnd(2026);
+              setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
+              setPeriodMode("preset");
 
-                setProfession(prof);
-                setProfessionOther("");
-                setProfessionOtherCache("");
-                setPeriodStart(2023);
-                setPeriodEnd(2026);
-                setRequiredPoints(rp0);
-                setPeriodMode("preset");
-
-                await saveProfilePatch({
-                  profession: prof,
-                  profession_other: null,
-                  period_start: 2023,
-                  period_end: 2026,
-                  required_points: rp0,
-                });
-
-                setSavedSnapshot({
-                  profession: prof,
-                  profession_other: "",
-                  period_start: 2023,
-                  period_end: 2026,
-                  required_points: rp0,
-                  period_mode: "preset",
-                });
-              }}
-              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
-            >
-              Przywróć domyślne
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSaveSettings}
-              disabled={!canSave}
-              className={
-                "inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-extrabold transition " +
-                (canSave ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm" : "bg-slate-100 text-slate-400 cursor-not-allowed")
-              }
-            >
-              Zapisz zmiany
-            </button>
-          </div>
+              await saveProfilePatch({
+                profession: prof,
+                profession_other: null,
+                period_start: 2023,
+                period_end: 2026,
+                required_points: DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200,
+              });
+            }}
+            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+          >
+            Przywróć domyślne
+          </button>
         </div>
 
-        {/* ✅ grid stabilny + "Inne" w osobnym wierszu */}
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="text-xs font-semibold text-slate-600">Zawód</label>
             <select
               value={profession}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const v = e.target.value as Profession;
 
-                // cache "Inne" zanim wyjdziesz
-                if (isOtherProfession(profession)) {
-                  setProfessionOtherCache(normalizeOtherProfession(professionOther));
-                }
-
                 setProfession(v);
-
-                // jeśli przechodzisz na "Inne" – przywróć z cache (jeśli puste)
-                if (isOtherProfession(v)) {
-                  const restored = normalizeOtherProfession(professionOtherCache);
-                  if (!normalizeOtherProfession(professionOther).length && restored.length) {
-                    setProfessionOther(restored);
-                  }
-                } else {
-                  // przy „nie-Inne” nie kasujemy cache, ale czyścimy pole
-                  setProfessionOther("");
-                }
+                if (!isOtherProfession(v)) setProfessionOther("");
 
                 const rp =
-                  RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
+                  RULES_BY_PROFESSION[v]?.requiredPoints ??
+                  DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ??
+                  200;
+
                 setRequiredPoints(rp);
+
+                await saveProfilePatch({
+                  profession: v,
+                  required_points: rp,
+                  profession_other: isOtherProfession(v) ? professionOther : null,
+                });
               }}
               className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
@@ -682,10 +674,11 @@ export default function CalculatorClient() {
               <label className="text-xs font-semibold text-slate-600">Okres (preset)</label>
               <select
                 value={periodLabel}
-                onChange={(e) => {
+                onChange={async (e) => {
                   const [a, b] = e.target.value.split("-").map((x) => Number(x));
                   setPeriodStart(a);
                   setPeriodEnd(b);
+                  await saveProfilePatch({ period_start: a, period_end: b });
                 }}
                 className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
@@ -701,8 +694,12 @@ export default function CalculatorClient() {
                 <input
                   value={periodStart}
                   onChange={(e) => setPeriodStart(Number(e.target.value || 0))}
-                  onBlur={() => {
+                  onBlur={async () => {
                     if (periodEnd < periodStart) setPeriodEnd(periodStart);
+                    await saveProfilePatch({
+                      period_start: periodStart,
+                      period_end: Math.max(periodEnd, periodStart),
+                    });
                   }}
                   type="number"
                   className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -711,9 +708,10 @@ export default function CalculatorClient() {
                 <input
                   value={periodEnd}
                   onChange={(e) => setPeriodEnd(Number(e.target.value || 0))}
-                  onBlur={() => {
+                  onBlur={async () => {
                     const pe = Math.max(periodEnd, periodStart);
                     setPeriodEnd(pe);
+                    await saveProfilePatch({ period_end: pe });
                   }}
                   type="number"
                   className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -728,6 +726,9 @@ export default function CalculatorClient() {
             <input
               value={requiredPoints}
               onChange={(e) => setRequiredPoints(Number(e.target.value || 0))}
+              onBlur={async () => {
+                await saveProfilePatch({ required_points: requiredPoints });
+              }}
               type="number"
               min={0}
               className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -743,15 +744,22 @@ export default function CalculatorClient() {
               <input
                 value={professionOther}
                 onChange={(e) => setProfessionOther(e.target.value)}
+                onBlur={async () => {
+                  const norm = normalizeOtherProfession(professionOther);
+                  setProfessionOther(norm);
+                  await saveProfilePatch({ profession_other: norm || null });
+                }}
                 placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
                 className={`mt-1 w-full rounded-2xl border bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 ${
-                  otherValid ? "border-slate-200/70 focus:ring-blue-200" : "border-rose-200/70 focus:ring-rose-200"
+                  otherValid
+                    ? "border-slate-200/70 focus:ring-blue-200"
+                    : "border-rose-200/70 focus:ring-rose-200"
                 }`}
               />
               <p className={`mt-1 text-[11px] ${otherValid ? "text-slate-500" : "text-rose-700"}`}>
                 {otherValid
                   ? "Doprecyzowanie pomaga dopasować zasady i raporty."
-                  : "Wpisz nazwę zawodu (min. 2 znaki), żeby profil był kompletny. (Zapisz zmiany przyciskiem powyżej)"}
+                  : "Wpisz nazwę zawodu (min. 2 znaki), żeby profil był kompletny."}
               </p>
             </div>
           ) : null}
@@ -783,96 +791,265 @@ export default function CalculatorClient() {
         />
       </div>
 
-      {/* Reszta strony */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur lg:col-span-2">
-          <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+      {/* NOWY UKŁAD: Reguły FULL width + Ostatnie FULL width */}
+      <div className="space-y-5">
+        {/* REGUŁY I LIMITY — FULL */}
+        <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <div className="text-sm font-extrabold text-slate-900">Reguły i limity</div>
               <div className="mt-1 text-sm text-slate-600">
                 Limity cząstkowe i wykorzystanie na podstawie ukończonych wpisów w okresie {periodLabel}.
               </div>
             </div>
-            <div className="text-sm text-slate-700">
-              Zaliczone: <span className="font-extrabold text-slate-900">{donePoints} pkt</span>
+
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <div className="text-slate-700">
+                Zaliczone: <span className="font-extrabold text-slate-900">{donePoints} pkt</span>
+              </div>
+              <span className="text-slate-300">•</span>
+              <div className="text-slate-700">
+                Brakuje: <span className="font-extrabold text-slate-900">{missingPoints} pkt</span>
+              </div>
+              {missingEvidenceCount > 0 ? (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <div className="text-slate-700">
+                    Bez certyfikatu: <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-            {limitsUsage.map((r) => (
-              <div key={r.key} className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 ring-1 ring-slate-100">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-bold text-slate-900">{r.label}</div>
-                    {r.note ? (
-                      <div className="mt-1 text-xs text-slate-600">
-                        {r.note}
-                        {r.mode === "per_year" ? ` (×${r.yearsInPeriod} lat)` : ""}
-                      </div>
-                    ) : null}
-                  </div>
+          {(planInfo || planErr) ? (
+            <div className="mt-4 rounded-2xl border bg-white/70 p-3 text-sm">
+              {planInfo ? <div className="text-emerald-700 font-semibold">{planInfo}</div> : null}
+              {planErr ? <div className="text-rose-700 font-semibold">{planErr}</div> : null}
+            </div>
+          ) : null}
 
-                  <div className="shrink-0 text-right">
-                    <div className="text-sm font-extrabold text-slate-900">
-                      {Math.round(r.used)} / {Math.round(r.cap)}
-                    </div>
-                    <div className="text-xs font-semibold text-slate-600">Pozostało: {Math.round(r.remaining)} pkt</div>
-                  </div>
-                </div>
-
-                <div className="mt-3">
-                  <div className="h-3 rounded-full bg-slate-200/80">
-                    <div
-                      className="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600"
-                      style={{ width: `${r.usedPct}%` }}
-                    />
-                  </div>
-                </div>
+          <div className="mt-4 space-y-3">
+            {limitsUsage.length === 0 ? (
+              <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-700">
+                Brak zdefiniowanych limitów dla tego zawodu.
               </div>
-            ))}
+            ) : (
+              limitsUsage.map((r) => {
+                const isMax = (r.usedPct ?? 0) >= 100 || (Number(r.remaining) || 0) <= 0;
+
+                return (
+                  <div key={r.key} className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 ring-1 ring-slate-100">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="truncate text-sm font-extrabold text-slate-900">{r.label}</div>
+
+                          {isMax ? (
+                            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                              <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                              W pełni zrealizowane
+                            </span>
+                          ) : null}
+                        </div>
+
+                        {r.note ? (
+                          <div className="mt-1 text-xs text-slate-600">
+                            {r.note}
+                            {r.mode === "per_year" ? ` (×${r.yearsInPeriod} lat)` : ""}
+                          </div>
+                        ) : null}
+
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
+                            <div>
+                              {Math.round(r.used)} / {Math.round(r.cap)} pkt
+                            </div>
+                            <div>{Math.round(r.usedPct)}%</div>
+                          </div>
+
+                          <div className="mt-2 h-3 rounded-full bg-slate-200/80">
+                            <div
+                              className="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600"
+                              style={{ width: `${r.usedPct}%` }}
+                            />
+                          </div>
+
+                          <div className="mt-2 text-xs font-semibold text-slate-700">
+                            Pozostało: <span className="font-extrabold">{Math.round(r.remaining)}</span> pkt
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        {isMax ? (
+                          <Link
+                            href="/aktywnosci"
+                            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+                          >
+                            Zobacz wpisy
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={isBusy || planningKey === r.key}
+                            onClick={() => planForRule(r)}
+                            className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                          >
+                            {planningKey === r.key ? "Dodaję…" : "Zaplanuj aktywność"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
-          <div className="mt-4 text-sm">
-            <Link href="/aktywnosci" className="font-semibold text-blue-700 hover:text-blue-800">
-              Przejdź do Aktywności, żeby dodać/edytować wpisy →
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link
+              href="/aktywnosci"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+            >
+              Przejdź do Aktywności →
+            </Link>
+            <Link
+              href="/aktywnosci?new=1"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+            >
+              + Dodaj aktywność
+            </Link>
+            <Link
+              href="/portfolio"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+            >
+              Raport / PDF →
             </Link>
           </div>
         </div>
 
+        {/* OSTATNIE AKTYWNOŚCI — FULL */}
         <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-extrabold text-slate-900">Ostatnie aktywności</div>
-            <Link href="/aktywnosci" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
-              Przejdź →
-            </Link>
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="text-sm font-extrabold text-slate-900">Ostatnie aktywności</div>
+              <div className="mt-1 text-sm text-slate-600">
+                Ostatnio dodane wpisy w okresie {periodLabel} (z sygnalizacją braków).
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/aktywnosci"
+                className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+              >
+                Aktywności
+              </Link>
+              <Link
+                href="/portfolio"
+                className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+              >
+                Raporty / PDF
+              </Link>
+              <Link
+                href="/baza-szkolen"
+                className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+              >
+                Baza szkoleń
+              </Link>
+            </div>
           </div>
 
-          <div className="mt-3 space-y-3">
+          <div className="mt-4 space-y-3">
             {isBusy ? (
               <div className="text-sm text-slate-600">Wczytuję…</div>
-            ) : inPeriodDone.slice(0, 5).length === 0 ? (
-              <div className="rounded-xl border border-slate-200 bg-white/70 p-3 text-sm text-slate-700">
-                Brak ukończonych aktywności w okresie {periodLabel}.
+            ) : recentRows.length === 0 ? (
+              <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-700">
+                Brak wpisów w okresie {periodLabel}.
               </div>
             ) : (
-              inPeriodDone.slice(0, 5).map((a) => (
-                <div key={a.id} className="rounded-2xl border border-slate-200/70 bg-white/80 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-slate-900">{a.type}</div>
-                      <div className="mt-1 text-xs text-slate-600">
-                        {a.organizer ? `${a.organizer} • ` : ""}
-                        {a.year}
+              recentRows.map((a) => {
+                const prog = normalizeStatus(a.status);
+                const missing = getRowMissing(a);
+
+                return (
+                  <div
+                    key={a.id}
+                    className={[
+                      "rounded-2xl border p-4",
+                      prog === "planned"
+                        ? "border-blue-200 bg-blue-50/40"
+                        : missing.length
+                        ? "border-amber-200 bg-amber-50/30"
+                        : "border-slate-200 bg-white/80",
+                    ].join(" ")}
+                  >
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="min-w-0 truncate text-sm font-semibold text-slate-900">{a.type}</div>
+
+                          {prog === "planned" ? (
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
+                              🗓️ Zaplanowane
+                            </span>
+                          ) : (
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                              ✅ Ukończone
+                            </span>
+                          )}
+
+                          {missing.length === 0 ? (
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                              Kompletne
+                            </span>
+                          ) : (
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
+                              Braki
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-1 text-xs text-slate-600">
+                          {a.organizer ? `${a.organizer} • ` : ""}
+                          Rok: <span className="font-semibold text-slate-900">{a.year}</span>
+                          {prog === "planned" ? (
+                            <>
+                              {" "}
+                              • Termin:{" "}
+                              <span className="font-semibold text-slate-900">{formatYMD(a.planned_start_date)}</span>
+                            </>
+                          ) : null}
+                        </div>
+
+                        {missing.length ? (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {missing.map((m) => (
+                              <span
+                                key={m}
+                                className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
+                              >
+                                {m}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="shrink-0 text-right">
+                        <div className="text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
+                        <Link
+                          href="/aktywnosci"
+                          className="mt-2 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white"
+                        >
+                          Otwórz w Aktywnościach →
+                        </Link>
                       </div>
                     </div>
-                    <div className="shrink-0 rounded-lg bg-emerald-50 px-2 py-1 text-xs font-extrabold text-emerald-700">
-                      ukończone
-                    </div>
                   </div>
-
-                  <div className="mt-2 text-right text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
