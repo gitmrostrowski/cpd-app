@@ -110,15 +110,15 @@ function ToneBadge({
 }) {
   const map = {
     ok: {
-      wrap: "border-blue-200 bg-blue-50 text-blue-900",
+      wrap: "border-blue-200/70 bg-blue-50/70 text-blue-950",
       dot: "bg-blue-600",
     },
     warn: {
-      wrap: "border-amber-200 bg-amber-50 text-amber-900",
+      wrap: "border-amber-200/70 bg-amber-50/70 text-amber-950",
       dot: "bg-amber-500",
     },
     bad: {
-      wrap: "border-rose-200 bg-rose-50 text-rose-800",
+      wrap: "border-rose-200/70 bg-rose-50/70 text-rose-900",
       dot: "bg-rose-500",
     },
   }[tone];
@@ -134,7 +134,7 @@ function ToneBadge({
 
 function StatPill({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-3 shadow-sm backdrop-blur">
       <div className="text-[11px] font-semibold text-slate-600">{label}</div>
       <div className="mt-1 text-sm font-extrabold text-slate-900">{value}</div>
     </div>
@@ -145,7 +145,7 @@ function MiniCta({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+      className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-white backdrop-blur"
     >
       {label}
     </Link>
@@ -162,10 +162,10 @@ function limitTone(used: number, usedPct: number) {
 function LimitBadge({ tone, text }: { tone: "ok" | "warn" | "bad"; text: string }) {
   const cls =
     tone === "ok"
-      ? "bg-blue-50 text-blue-900"
+      ? "bg-blue-50 text-blue-950"
       : tone === "warn"
-      ? "bg-amber-50 text-amber-900"
-      : "bg-rose-50 text-rose-800";
+      ? "bg-amber-50 text-amber-950"
+      : "bg-rose-50 text-rose-900";
 
   return (
     <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${cls}`}>
@@ -178,10 +178,13 @@ function MiniLimitCard({ item }: { item: TopLimitItem }) {
   const pct = clamp(item.usedPct, 0, 100);
   const t = limitTone(item.used, pct);
 
+  // mniej „krzyczące” – soft alert, bez czerwonej ramy 24/7
   const wrapCls =
-    item.used <= 0
-      ? "rounded-2xl border border-rose-200 bg-white p-3 shadow-sm"
-      : "rounded-2xl border border-slate-200 bg-white p-3 shadow-sm";
+    t.tone === "bad"
+      ? "rounded-2xl border border-rose-200/70 bg-rose-50/40 p-3 shadow-sm"
+      : t.tone === "warn"
+      ? "rounded-2xl border border-amber-200/70 bg-amber-50/40 p-3 shadow-sm"
+      : "rounded-2xl border border-slate-200/70 bg-white/70 p-3 shadow-sm";
 
   return (
     <div className={wrapCls}>
@@ -196,7 +199,7 @@ function MiniLimitCard({ item }: { item: TopLimitItem }) {
       </div>
 
       <div className="mt-2">
-        <div className="h-2 rounded-full border border-slate-200 bg-slate-100">
+        <div className="h-2 rounded-full bg-slate-200/70">
           <div className={`h-2 rounded-full ${PRIMARY_BAR}`} style={{ width: `${pct}%` }} />
         </div>
       </div>
@@ -233,19 +236,21 @@ export default function CpdStatusPanel({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      {/* główny panel: delikatnie „premium” – półprzezroczysta biel + blur */}
+      <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <div className="text-xs font-semibold text-slate-600">Panel CPD</div>
+
               <ToneBadge tone={status.tone} label={status.label} reason={status.reason} />
 
               {isBusy ? (
-                <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600 backdrop-blur">
                   Synchronizacja…
                 </span>
               ) : (
-                <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600 backdrop-blur">
                   Zsynchronizowane
                 </span>
               )}
@@ -272,6 +277,7 @@ export default function CpdStatusPanel({
               )}
             </div>
 
+            {/* Postęp – uproszczony (bez podwójnych ramek) */}
             <div className="mt-4">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-semibold text-slate-700">Postęp w okresie {periodLabel}</div>
@@ -279,17 +285,17 @@ export default function CpdStatusPanel({
               </div>
 
               <div className="mt-2">
-                <div className="relative h-5 rounded-full border border-slate-200 bg-slate-100">
-                  <div className={`h-5 rounded-full ${PRIMARY_BAR}`} style={{ width: `${safeProgress}%` }} />
+                <div className="relative h-4 rounded-full bg-slate-200/70">
+                  <div className={`h-4 rounded-full ${PRIMARY_BAR}`} style={{ width: `${safeProgress}%` }} />
                   <div
-                    className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border border-white ${PRIMARY_DOT} shadow`}
+                    className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white ${PRIMARY_DOT} shadow`}
                     style={{ left: `calc(${safeProgress}% - 8px)` }}
                     aria-hidden
                   />
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-[25%]">
-                    <span className="h-3 w-px bg-slate-200/80" />
-                    <span className="h-3 w-px bg-slate-200/80" />
-                    <span className="h-3 w-px bg-slate-200/80" />
+                    <span className="h-3 w-px bg-white/60" />
+                    <span className="h-3 w-px bg-white/60" />
+                    <span className="h-3 w-px bg-white/60" />
                   </div>
                 </div>
               </div>
@@ -314,7 +320,7 @@ export default function CpdStatusPanel({
                 </div>
 
                 {limitWarning ? (
-                  <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+                  <div className="mt-3 rounded-2xl border border-rose-200/70 bg-rose-50/60 p-3 text-sm text-rose-900">
                     <span className="font-extrabold">Uwaga:</span> {limitWarning}
                   </div>
                 ) : null}
@@ -323,26 +329,27 @@ export default function CpdStatusPanel({
 
             <div className="mt-4 flex flex-wrap gap-2">
               {userEmail ? (
-                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
+                <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/80 px-3 py-1 text-xs font-medium text-slate-700 backdrop-blur">
                   {userEmail}
                 </span>
               ) : null}
 
               {profileProfession ? (
-                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
+                <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/80 px-3 py-1 text-xs font-medium text-slate-700 backdrop-blur">
                   Profil: {profileProfession}
                 </span>
               ) : null}
             </div>
           </div>
 
+          {/* prawa kolumna */}
           <div className="flex w-full flex-col gap-3 md:w-[360px]">
             <div className="grid grid-cols-2 gap-3">
               <StatPill label="Okres" value={periodLabel} />
               <StatPill label="Wymagane" value={`${requiredPoints} pkt`} />
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-2xl border border-slate-200/70 bg-slate-50/60 p-4 shadow-sm">
               <div className="text-[11px] font-semibold text-slate-600">Najbliższy krok</div>
               <div className="mt-1 text-sm font-extrabold text-slate-900">{nextStep.title}</div>
               <div className="mt-1 text-sm text-slate-700">{nextStep.description}</div>
@@ -368,9 +375,9 @@ export default function CpdStatusPanel({
         </div>
       </div>
 
-      {/* kafle dolne zostawiam jak były (OK) */}
+      {/* dolne kafle – też lekko (white/blur) */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
           <div className="text-xs font-semibold text-slate-600">Do uzupełnienia</div>
           <div className="mt-2 text-lg font-extrabold text-slate-900">
             {missingEvidenceCount > 0 ? `${missingEvidenceCount} wpisów bez certyfikatu` : "Wszystkie wpisy mają dowody ✅"}
@@ -381,14 +388,14 @@ export default function CpdStatusPanel({
           <div className="mt-4">
             <Link
               href="/aktywnosci"
-              className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-white backdrop-blur"
             >
               Dodaj dowody
             </Link>
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
           <div className="text-xs font-semibold text-slate-600">Plan domknięcia limitu</div>
           <div className="mt-2 text-lg font-extrabold text-slate-900">
             {missingPoints > 0 ? `Brakuje ${missingPoints} pkt` : "Limit domknięty ✅"}
@@ -402,7 +409,7 @@ export default function CpdStatusPanel({
             </Link>
             <Link
               href="/aktywnosci"
-              className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-white backdrop-blur"
             >
               Zobacz wpisy
             </Link>
