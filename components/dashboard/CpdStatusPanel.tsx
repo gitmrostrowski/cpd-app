@@ -65,7 +65,6 @@ function fmtPct(n: number) {
 const BTN_BASE =
   "inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold transition-colors";
 const PRIMARY_BTN = "bg-blue-600 hover:bg-blue-700 text-white shadow-sm";
-const DANGER_BTN = "bg-rose-600 hover:bg-rose-700 text-white shadow-sm";
 const OUTLINE_BTN =
   "border border-slate-200/70 bg-white/80 text-slate-800 hover:bg-white backdrop-blur";
 
@@ -141,15 +140,15 @@ function ToneBadge({
   }[tone];
 
   return (
-    <span
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${map.wrap}`}
-    >
+    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${map.wrap}`}>
       <span className={`h-2 w-2 rounded-full ${map.dot}`} />
       {label}
       <span className="text-[11px] font-semibold opacity-80">• {reason}</span>
 
+      {/* ✅ tylko badge/kropka, bez czerwonego CTA */}
       {attention ? (
-        <span className="ml-1 inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700">
+        <span className="ml-1 inline-flex items-center gap-2 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700">
+          <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
           Wymaga uwagi
         </span>
       ) : null}
@@ -192,11 +191,7 @@ function LimitBadge({ tone, text }: { tone: "ok" | "warn" | "bad"; text: string 
       ? "bg-amber-50 text-amber-950"
       : "bg-rose-50 text-rose-900";
 
-  return (
-    <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${cls}`}>
-      {text}
-    </span>
-  );
+  return <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${cls}`}>{text}</span>;
 }
 
 function MiniLimitCard({ item }: { item: TopLimitItem }) {
@@ -277,31 +272,24 @@ export default function CpdStatusPanel({
       ? { href: primaryCtaHref, label: "+ Dodaj aktywność" }
       : { href: "/aktywnosci", label: "Aktywności" };
 
-  // ✅ „Najbliższy krok” ma czerwony ton, jeśli dotyczy dokumentów
-  const nextStepWrapCls = docsActionNeeded
-    ? "rounded-2xl border border-rose-200/70 bg-rose-50/60 p-4 shadow-sm"
-    : "rounded-2xl border border-slate-200/70 bg-slate-50/60 p-4 shadow-sm";
-
-  const nextStepBtnCls = docsActionNeeded ? `${BTN_BASE} ${DANGER_BTN}` : `${BTN_BASE} ${PRIMARY_BTN}`;
+  // ✅ „Najbliższy krok” ma tylko wyróżnik (bez CTA), gdy brakuje dokumentów
+  const showNextStepCta =
+    !!nextStep.ctaHref &&
+    !!nextStep.ctaLabel &&
+    !(docsActionNeeded && nextStep.ctaHref === primary.href);
 
   // ✅ kropka progress nie wychodzi poza pasek
   const dotLeft = clamp(pointsPct, 0, 100);
 
   return (
     <div className="space-y-4">
-      {/* GŁÓWNY PANEL — więcej „głębi” */}
       <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-5 shadow-lg ring-1 ring-slate-200/50 backdrop-blur">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <div className="text-xs font-semibold text-slate-600">Panel CPD</div>
 
-              <ToneBadge
-                tone={status.tone}
-                label={status.label}
-                reason={status.reason}
-                attention={docsActionNeeded}
-              />
+              <ToneBadge tone={status.tone} label={status.label} reason={status.reason} attention={docsActionNeeded} />
 
               {isBusy ? (
                 <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600 backdrop-blur">
@@ -341,17 +329,14 @@ export default function CpdStatusPanel({
                 <div className="text-xs font-semibold text-slate-700">{fmtPct(pointsPct)}</div>
               </div>
 
-              {/* ✅ grubszy pasek + ticki 25/50/75 */}
               <div className="mt-2">
                 <div className="relative h-5 rounded-full bg-slate-200/70">
                   <div className={`h-5 rounded-full ${PRIMARY_BAR}`} style={{ width: `${pointsPct}%` }} />
-
                   <div
                     className={`absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 border-white ${PRIMARY_DOT} shadow`}
                     style={{ left: `calc(${dotLeft}% - 10px)` }}
                     aria-hidden
                   />
-
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-[25%]">
                     <span className="h-3 w-px bg-white/60" />
                     <span className="h-3 w-px bg-white/60" />
@@ -413,11 +398,16 @@ export default function CpdStatusPanel({
               <StatPill label="Wymagane" value={`${requiredPoints} pkt`} />
             </div>
 
-            <div className={nextStepWrapCls}>
+            <div
+              className={
+                docsActionNeeded
+                  ? "rounded-2xl border border-rose-200/70 bg-rose-50/60 p-4 shadow-sm"
+                  : "rounded-2xl border border-slate-200/70 bg-slate-50/60 p-4 shadow-sm"
+              }
+            >
               <div className="flex items-center justify-between">
                 <div className="text-[11px] font-semibold text-slate-600">Najbliższy krok</div>
 
-                {/* ✅ czerwony wyróżnik sugerowanej akcji */}
                 {docsActionNeeded ? (
                   <span className="inline-flex items-center gap-2 text-[11px] font-bold text-rose-700">
                     <span className="h-2 w-2 rounded-full bg-rose-500" />
@@ -429,23 +419,20 @@ export default function CpdStatusPanel({
               <div className="mt-1 text-sm font-extrabold text-slate-900">{nextStep.title}</div>
               <div className="mt-1 text-sm text-slate-700">{nextStep.description}</div>
 
-              {nextStep.ctaHref && nextStep.ctaLabel ? (
-                <Link href={nextStep.ctaHref} className={`${nextStepBtnCls} mt-3 w-full`}>
+              {/* ✅ NIE pokazujemy CTA, gdy byłoby identyczne jak główne */}
+              {showNextStepCta ? (
+                <Link href={nextStep.ctaHref!} className={`${BTN_BASE} ${OUTLINE_BTN} mt-3 w-full`}>
                   {nextStep.ctaLabel}
                 </Link>
               ) : null}
             </div>
 
             <div className="grid grid-cols-1 gap-2">
-              {/* ✅ PRIMARY (dokumenty/aktywność/pdf) */}
-              <Link
-                href={primary.href}
-                className={`${BTN_BASE} ${docsActionNeeded ? DANGER_BTN : PRIMARY_BTN} w-full`}
-              >
+              {/* ✅ główne CTA wraca na niebieskie (zamiast czerwonego) */}
+              <Link href={primary.href} className={`${BTN_BASE} ${PRIMARY_BTN} w-full`}>
                 {primary.label}
               </Link>
 
-              {/* ✅ brak dublowania „Uzupełnij dokumenty” — secondary + PDF */}
               <div className="grid grid-cols-2 gap-2">
                 <Link href={secondary.href} className={`${BTN_BASE} ${OUTLINE_BTN}`}>
                   {secondary.label}
@@ -457,7 +444,6 @@ export default function CpdStatusPanel({
         </div>
       </div>
 
-      {/* DOLNE KAFLE */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div
           className={
@@ -466,17 +452,20 @@ export default function CpdStatusPanel({
               : "rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur"
           }
         >
-          <div className="text-xs font-semibold text-slate-600">Do uzupełnienia</div>
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-semibold text-slate-600">Do uzupełnienia</div>
+            {docsActionNeeded ? <span className="h-2 w-2 rounded-full bg-rose-500" /> : null}
+          </div>
+
           <div className="mt-2 text-lg font-extrabold text-slate-900">
-            {missingEvidenceCount > 0
-              ? `${missingEvidenceCount} wpisów bez certyfikatu`
-              : "Wszystkie wpisy mają dokumenty ✅"}
+            {missingEvidenceCount > 0 ? `${missingEvidenceCount} wpisów bez certyfikatu` : "Wszystkie wpisy mają dokumenty ✅"}
           </div>
           <div className="mt-1 text-sm text-slate-700">
             Dodaj zdjęcie/PDF certyfikatu, żeby zestawienie było zawsze kompletne.
           </div>
           <div className="mt-4">
-            <Link href="/aktywnosci" className={`${BTN_BASE} ${docsActionNeeded ? DANGER_BTN : OUTLINE_BTN}`}>
+            {/* ✅ przycisk nie krzyczy na czerwono */}
+            <Link href="/aktywnosci" className={`${BTN_BASE} ${OUTLINE_BTN}`}>
               Uzupełnij dokumenty
             </Link>
           </div>
