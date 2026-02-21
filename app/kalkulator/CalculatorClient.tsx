@@ -6,9 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
-import CpdStatusPanel, {
-  type TopLimitItem,
-} from "@/components/dashboard/CpdStatusPanel";
+import CpdStatusPanel, { type TopLimitItem } from "@/components/dashboard/CpdStatusPanel";
 
 import {
   type Profession,
@@ -204,16 +202,11 @@ function mapTypeToRuleKey(type: string): string | null {
   return null;
 }
 
-function buildNextStep(
-  missingPoints: number,
-  missingEvidenceCount: number,
-  limitWarning: string | null
-) {
+function buildNextStep(missingPoints: number, missingEvidenceCount: number, limitWarning: string | null) {
   if (missingEvidenceCount > 0) {
     return {
       title: "Uzupełnij dokumenty",
       description: `Masz ${missingEvidenceCount} wpisów bez certyfikatu. Dodaj zdjęcia/PDF-y, aby zestawienie było gotowe w każdej chwili.`,
-      // ✅ jednoznacznie: nie "Dodaj dokumenty" (żeby nie robić dubla w UI)
       ctaLabel: "Uzupełnij dokumenty",
       ctaHref: "/aktywnosci",
     };
@@ -259,16 +252,25 @@ export default function CalculatorClient() {
 
   const [profession, setProfession] = useState<Profession>("Lekarz");
   const [professionOther, setProfessionOther] = useState<string>("");
+  const [professionOtherCache, setProfessionOtherCache] = useState<string>("");
+
   const [periodStart, setPeriodStart] = useState<number>(2023);
   const [periodEnd, setPeriodEnd] = useState<number>(2026);
-  const [requiredPoints, setRequiredPoints] = useState<number>(
-    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
-  );
+  const [requiredPoints, setRequiredPoints] = useState<number>(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200);
 
   const [periodMode, setPeriodMode] = useState<"preset" | "custom">("preset");
 
   const [savingProfile, setSavingProfile] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+
+  const [savedSnapshot, setSavedSnapshot] = useState<{
+    profession: Profession;
+    profession_other: string;
+    period_start: number;
+    period_end: number;
+    required_points: number;
+    period_mode: "preset" | "custom";
+  } | null>(null);
 
   const supabase = useMemo(() => supabaseClient(), []);
 
@@ -294,6 +296,7 @@ export default function CalculatorClient() {
 
           const po = normalizeOtherProfession((p as any).profession_other);
           setProfessionOther(po);
+          setProfessionOtherCache(po);
 
           const ps = p.period_start ?? 2023;
           const pe = p.period_end ?? 2026;
@@ -303,7 +306,8 @@ export default function CalculatorClient() {
           const presetLabel = `${ps}-${pe}`;
           const isPreset =
             presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
-          setPeriodMode(isPreset ? "preset" : "custom");
+          const pm = isPreset ? "preset" : "custom";
+          setPeriodMode(pm);
 
           const rp =
             p.required_points ??
@@ -312,14 +316,34 @@ export default function CalculatorClient() {
             200;
 
           setRequiredPoints(rp);
+
+          setSavedSnapshot({
+            profession: prof,
+            profession_other: po || "",
+            period_start: ps,
+            period_end: pe,
+            required_points: rp,
+            period_mode: pm,
+          });
         } else {
           const prof: Profession = "Lekarz";
+          const rp0 = DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200;
           setProfession(prof);
           setProfessionOther("");
+          setProfessionOtherCache("");
           setPeriodStart(2023);
           setPeriodEnd(2026);
-          setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
+          setRequiredPoints(rp0);
           setPeriodMode("preset");
+
+          setSavedSnapshot({
+            profession: prof,
+            profession_other: "",
+            period_start: 2023,
+            period_end: 2026,
+            required_points: rp0,
+            period_mode: "preset",
+          });
         }
       }
 
@@ -442,27 +466,26 @@ export default function CalculatorClient() {
   const isBusy = authLoading || loading;
 
   const otherRequired = isOtherProfession(profession);
-  const otherValid = !otherRequired || normalizeOtherProfession(professionOther).length >= 2;
 
-  async function saveProfilePatch(
-    patch: Partial<ProfileRow> & { profession_other?: string | null }
-  ) {
+  const effectiveOther = useMemo(() => {
+    return normalizeOtherProfession(otherRequired ? professionOther : professionOtherCache);
+  }, [otherRequired, professionOther, professionOtherCache]);
+
+  const otherValid = !otherRequired || effectiveOther.length >= 2;
+
+  async function saveProfilePatch(patch: Partial<ProfileRow> & { profession_other?: string | null }) {
     if (!user?.id) return;
     setSavingProfile(true);
 
     const nextProfession = (patch.profession ?? profession) as Profession;
 
-    const nextPeriodStart =
-      patch.period_start !== undefined ? patch.period_start : periodStart;
-    const nextPeriodEnd =
-      patch.period_end !== undefined ? patch.period_end : periodEnd;
-    const nextRequiredPoints =
-      patch.required_points !== undefined ? patch.required_points : requiredPoints;
+    const nextPeriodStart = patch.period_start !== undefined ? patch.period_start : periodStart;
+    const nextPeriodEnd = patch.period_end !== undefined ? patch.period_end : periodEnd;
+    const nextRequiredPoints = patch.required_points !== undefined ? patch.required_points : requiredPoints;
 
     const otherReq = isOtherProfession(nextProfession);
 
-    const rawOther =
-      patch.profession_other !== undefined ? patch.profession_other : professionOther;
+    const rawOther = patch.profession_other !== undefined ? patch.profession_other : effectiveOther;
     const nextOther = otherReq ? normalizeOtherProfession(rawOther) || null : null;
 
     const payload: ProfileRow = {
@@ -480,9 +503,51 @@ export default function CalculatorClient() {
     if (!error) setSavedAt(Date.now());
   }
 
+  const isDirty = useMemo(() => {
+    if (!savedSnapshot) return false;
+    return (
+      savedSnapshot.profession !== profession ||
+      normalizeOtherProfession(savedSnapshot.profession_other) !== normalizeOtherProfession(effectiveOther) ||
+      savedSnapshot.period_start !== periodStart ||
+      savedSnapshot.period_end !== periodEnd ||
+      savedSnapshot.required_points !== requiredPoints ||
+      savedSnapshot.period_mode !== periodMode
+    );
+  }, [savedSnapshot, profession, effectiveOther, periodStart, periodEnd, requiredPoints, periodMode]);
+
+  const canSave = useMemo(() => {
+    if (savingProfile) return false;
+    if (!isDirty) return false;
+    if (otherRequired && normalizeOtherProfession(effectiveOther).length < 2) return false;
+    return true;
+  }, [savingProfile, isDirty, otherRequired, effectiveOther]);
+
+  async function handleSaveSettings() {
+    const nextProfession = profession;
+    const otherReq = isOtherProfession(nextProfession);
+    const nextOther = otherReq ? normalizeOtherProfession(effectiveOther) || null : null;
+
+    await saveProfilePatch({
+      profession: nextProfession,
+      profession_other: nextOther,
+      period_start: periodStart,
+      period_end: periodEnd,
+      required_points: requiredPoints,
+    });
+
+    setSavedSnapshot({
+      profession: nextProfession,
+      profession_other: nextOther ?? "",
+      period_start: periodStart,
+      period_end: periodEnd,
+      required_points: requiredPoints,
+      period_mode: periodMode,
+    });
+  }
+
   const profileLabelForPanel = useMemo(() => {
-    return displayProfession(profession, professionOther);
-  }, [profession, professionOther]);
+    return displayProfession(profession, effectiveOther);
+  }, [profession, effectiveOther]);
 
   return (
     <div className="space-y-6">
@@ -490,66 +555,102 @@ export default function CalculatorClient() {
       <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-4 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
-            <div className="text-sm font-extrabold text-slate-900">
-              Ustawienia okresu i zawodu
-            </div>
+            <div className="text-sm font-extrabold text-slate-900">Ustawienia okresu i zawodu</div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-              <span>Zmiany zapisujemy w profilu.</span>
+              <span>Zmiany zapisujesz przyciskiem.</span>
               <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
                 {savingProfile ? "Zapisywanie…" : savedAt ? "Zapisano" : "—"}
               </span>
+              {isDirty ? (
+                <span className="inline-flex items-center gap-2 rounded-full border border-amber-200/70 bg-amber-50/70 px-2.5 py-1 text-[11px] font-semibold text-amber-900">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  Niezapisane zmiany
+                </span>
+              ) : null}
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={async () => {
-              const prof: Profession = "Lekarz";
-              setProfession(prof);
-              setProfessionOther("");
-              setPeriodStart(2023);
-              setPeriodEnd(2026);
-              setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
-              setPeriodMode("preset");
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <button
+              type="button"
+              onClick={async () => {
+                const prof: Profession = "Lekarz";
+                const rp0 = DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200;
 
-              await saveProfilePatch({
-                profession: prof,
-                profession_other: null,
-                period_start: 2023,
-                period_end: 2026,
-                required_points: DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200,
-              });
-            }}
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
-          >
-            Przywróć domyślne
-          </button>
+                setProfession(prof);
+                setProfessionOther("");
+                setProfessionOtherCache("");
+                setPeriodStart(2023);
+                setPeriodEnd(2026);
+                setRequiredPoints(rp0);
+                setPeriodMode("preset");
+
+                await saveProfilePatch({
+                  profession: prof,
+                  profession_other: null,
+                  period_start: 2023,
+                  period_end: 2026,
+                  required_points: rp0,
+                });
+
+                setSavedSnapshot({
+                  profession: prof,
+                  profession_other: "",
+                  period_start: 2023,
+                  period_end: 2026,
+                  required_points: rp0,
+                  period_mode: "preset",
+                });
+              }}
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+            >
+              Przywróć domyślne
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSaveSettings}
+              disabled={!canSave}
+              className={
+                "inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-extrabold transition " +
+                (canSave ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm" : "bg-slate-100 text-slate-400 cursor-not-allowed")
+              }
+            >
+              Zapisz zmiany
+            </button>
+          </div>
         </div>
 
-        {/* ✅ grid stabilny + "Inne" przeniesione do osobnego wiersza */}
+        {/* ✅ grid stabilny + "Inne" w osobnym wierszu */}
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="text-xs font-semibold text-slate-600">Zawód</label>
             <select
               value={profession}
-              onChange={async (e) => {
+              onChange={(e) => {
                 const v = e.target.value as Profession;
 
+                // cache "Inne" zanim wyjdziesz
+                if (isOtherProfession(profession)) {
+                  setProfessionOtherCache(normalizeOtherProfession(professionOther));
+                }
+
                 setProfession(v);
-                if (!isOtherProfession(v)) setProfessionOther("");
+
+                // jeśli przechodzisz na "Inne" – przywróć z cache (jeśli puste)
+                if (isOtherProfession(v)) {
+                  const restored = normalizeOtherProfession(professionOtherCache);
+                  if (!normalizeOtherProfession(professionOther).length && restored.length) {
+                    setProfessionOther(restored);
+                  }
+                } else {
+                  // przy „nie-Inne” nie kasujemy cache, ale czyścimy pole
+                  setProfessionOther("");
+                }
 
                 const rp =
-                  RULES_BY_PROFESSION[v]?.requiredPoints ??
-                  DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ??
-                  200;
-
+                  RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
                 setRequiredPoints(rp);
-
-                await saveProfilePatch({
-                  profession: v,
-                  required_points: rp,
-                  profession_other: isOtherProfession(v) ? professionOther : null,
-                });
               }}
               className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
@@ -581,11 +682,10 @@ export default function CalculatorClient() {
               <label className="text-xs font-semibold text-slate-600">Okres (preset)</label>
               <select
                 value={periodLabel}
-                onChange={async (e) => {
+                onChange={(e) => {
                   const [a, b] = e.target.value.split("-").map((x) => Number(x));
                   setPeriodStart(a);
                   setPeriodEnd(b);
-                  await saveProfilePatch({ period_start: a, period_end: b });
                 }}
                 className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
@@ -601,12 +701,8 @@ export default function CalculatorClient() {
                 <input
                   value={periodStart}
                   onChange={(e) => setPeriodStart(Number(e.target.value || 0))}
-                  onBlur={async () => {
+                  onBlur={() => {
                     if (periodEnd < periodStart) setPeriodEnd(periodStart);
-                    await saveProfilePatch({
-                      period_start: periodStart,
-                      period_end: Math.max(periodEnd, periodStart),
-                    });
                   }}
                   type="number"
                   className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -615,10 +711,9 @@ export default function CalculatorClient() {
                 <input
                   value={periodEnd}
                   onChange={(e) => setPeriodEnd(Number(e.target.value || 0))}
-                  onBlur={async () => {
+                  onBlur={() => {
                     const pe = Math.max(periodEnd, periodStart);
                     setPeriodEnd(pe);
-                    await saveProfilePatch({ period_end: pe });
                   }}
                   type="number"
                   className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -633,9 +728,6 @@ export default function CalculatorClient() {
             <input
               value={requiredPoints}
               onChange={(e) => setRequiredPoints(Number(e.target.value || 0))}
-              onBlur={async () => {
-                await saveProfilePatch({ required_points: requiredPoints });
-              }}
               type="number"
               min={0}
               className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -645,36 +737,28 @@ export default function CalculatorClient() {
             </p>
           </div>
 
-          {/* ✅ osobny wiersz na "Jaki zawód?" — nie psuje szerokości kafla */}
           {otherRequired ? (
             <div className="md:col-span-2 xl:col-span-4">
               <label className="text-xs font-semibold text-slate-600">Jaki zawód?</label>
               <input
                 value={professionOther}
                 onChange={(e) => setProfessionOther(e.target.value)}
-                onBlur={async () => {
-                  const norm = normalizeOtherProfession(professionOther);
-                  setProfessionOther(norm);
-                  await saveProfilePatch({ profession_other: norm || null });
-                }}
                 placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
                 className={`mt-1 w-full rounded-2xl border bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 ${
-                  otherValid
-                    ? "border-slate-200/70 focus:ring-blue-200"
-                    : "border-rose-200/70 focus:ring-rose-200"
+                  otherValid ? "border-slate-200/70 focus:ring-blue-200" : "border-rose-200/70 focus:ring-rose-200"
                 }`}
               />
               <p className={`mt-1 text-[11px] ${otherValid ? "text-slate-500" : "text-rose-700"}`}>
                 {otherValid
                   ? "Doprecyzowanie pomaga dopasować zasady i raporty."
-                  : "Wpisz nazwę zawodu (min. 2 znaki), żeby profil był kompletny."}
+                  : "Wpisz nazwę zawodu (min. 2 znaki), żeby profil był kompletny. (Zapisz zmiany przyciskiem powyżej)"}
               </p>
             </div>
           ) : null}
         </div>
       </div>
 
-      {/* PANEL STATUSU (owijka daje „głębię”, nawet jeśli panel ma swoje tło) */}
+      {/* PANEL STATUSU */}
       <div className="rounded-3xl ring-1 ring-slate-200/60 shadow-lg bg-white/40 backdrop-blur">
         <CpdStatusPanel
           isBusy={isBusy}
@@ -716,10 +800,7 @@ export default function CalculatorClient() {
 
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
             {limitsUsage.map((r) => (
-              <div
-                key={r.key}
-                className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 ring-1 ring-slate-100"
-              >
+              <div key={r.key} className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 ring-1 ring-slate-100">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-bold text-slate-900">{r.label}</div>
@@ -735,14 +816,11 @@ export default function CalculatorClient() {
                     <div className="text-sm font-extrabold text-slate-900">
                       {Math.round(r.used)} / {Math.round(r.cap)}
                     </div>
-                    <div className="text-xs font-semibold text-slate-600">
-                      Pozostało: {Math.round(r.remaining)} pkt
-                    </div>
+                    <div className="text-xs font-semibold text-slate-600">Pozostało: {Math.round(r.remaining)} pkt</div>
                   </div>
                 </div>
 
                 <div className="mt-3">
-                  {/* ✅ grubszy, czytelniejszy pasek */}
                   <div className="h-3 rounded-full bg-slate-200/80">
                     <div
                       className="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600"
@@ -792,9 +870,7 @@ export default function CalculatorClient() {
                     </div>
                   </div>
 
-                  <div className="mt-2 text-right text-sm font-extrabold text-slate-900">
-                    +{a.points} pkt
-                  </div>
+                  <div className="mt-2 text-right text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
                 </div>
               ))
             )}
