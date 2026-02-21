@@ -117,17 +117,17 @@ function mapTypeToRuleKey(type: string): string | null {
 function buildNextStep(missingPoints: number, missingEvidenceCount: number, limitWarning: string | null) {
   if (missingEvidenceCount > 0) {
     return {
-      title: "Uzupełnij dowody",
-      description: `Masz ${missingEvidenceCount} wpisów bez certyfikatu. Dodaj zdjęcia/PDF-y, żeby raport był gotowy w każdej chwili.`,
-      ctaLabel: "Dodaj dowody",
+      title: "Uzupełnij dokumenty",
+      description: `Masz ${missingEvidenceCount} wpisów bez certyfikatu. Dodaj zdjęcia/PDF-y, aby zestawienie było gotowe w każdej chwili.`,
+      ctaLabel: "Dodaj dokumenty",
       ctaHref: "/aktywnosci",
     };
   }
   if (missingPoints <= 0) {
     return {
-      title: "Wygeneruj portfolio",
-      description: "Masz komplet punktów. Wygeneruj PDF gotowy do kontroli.",
-      ctaLabel: "Portfolio (PDF do kontroli)",
+      title: "Wygeneruj zestawienie",
+      description: "Masz komplet punktów. Wygeneruj uporządkowane zestawienie PDF.",
+      ctaLabel: "Zestawienie PDF",
       ctaHref: "/portfolio",
     };
   }
@@ -145,6 +145,15 @@ function buildNextStep(missingPoints: number, missingEvidenceCount: number, limi
     ctaLabel: "+ Dodaj aktywność",
     ctaHref: "/aktywnosci?new=1",
   };
+}
+
+function daysUntilEndOfYear(yearEnd: number) {
+  // Traktujemy koniec okresu jako 31.12 roku periodEnd (bez wejścia w daty PWZ).
+  const end = new Date(yearEnd, 11, 31, 23, 59, 59); // lokalnie
+  const now = new Date();
+  const diff = end.getTime() - now.getTime();
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return Math.max(0, days);
 }
 
 export default function CalculatorClient() {
@@ -273,6 +282,19 @@ export default function CalculatorClient() {
     return inPeriodDone.filter((a) => !a.certificate_path).length;
   }, [inPeriodDone]);
 
+  // ✅ NOWE: % kompletności dowodów (tylko ukończone w okresie)
+  const evidencePct = useMemo(() => {
+    const total = inPeriodDone.length;
+    if (total <= 0) return 0;
+    const withProof = total - missingEvidenceCount;
+    return clamp((withProof / total) * 100, 0, 100);
+  }, [inPeriodDone.length, missingEvidenceCount]);
+
+  // ✅ NOWE: dni do końca (bazowo: 31.12 periodEnd)
+  const daysLeft = useMemo(() => {
+    return daysUntilEndOfYear(periodEnd);
+  }, [periodEnd]);
+
   const limitsUsage = useMemo(() => {
     const rules = RULES_BY_PROFESSION[profession];
     const limits = rules?.limits ?? [];
@@ -342,7 +364,7 @@ export default function CalculatorClient() {
 
   return (
     <div className="space-y-5">
-      {/* USTAWIENIA (dopieścione: mniej formularzowo, bardziej „dashboard”) */}
+      {/* USTAWIENIA */}
       <div className="rounded-3xl border border-slate-200/70 bg-white/65 p-4 shadow-sm backdrop-blur">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
@@ -490,7 +512,7 @@ export default function CalculatorClient() {
         </div>
       </div>
 
-      {/* PANEL STATUSU */}
+      {/* PANEL STATUSU (A: status kompletności) */}
       <CpdStatusPanel
         isBusy={isBusy}
         userEmail={user?.email ?? null}
@@ -500,6 +522,8 @@ export default function CalculatorClient() {
         requiredPoints={requiredPoints}
         missingPoints={missingPoints}
         progressPct={progress}
+        evidencePct={evidencePct}
+        daysLeft={daysLeft}
         doneCount={inPeriodDone.length}
         plannedCount={inPeriodPlanned.length}
         missingEvidenceCount={missingEvidenceCount}
