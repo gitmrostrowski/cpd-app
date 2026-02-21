@@ -34,7 +34,11 @@ type Props = {
   donePoints: number;
   requiredPoints: number;
   missingPoints: number;
-  progressPct: number;
+  progressPct: number; // % punktów
+
+  // ✅ NOWE: kompletność dokumentów i czas
+  evidencePct: number; // % ukończonych z certyfikatem
+  daysLeft: number; // dni do końca
 
   doneCount: number;
   plannedCount: number;
@@ -66,36 +70,35 @@ const PRIMARY_BTN_BASE =
 const PRIMARY_BAR = "bg-blue-600";
 const PRIMARY_DOT = "bg-blue-700";
 
-function statusFromProgress(progressPct: number, missingPoints: number) {
-  if (missingPoints <= 0) {
+// ✅ A: status KOMPLETNOŚCI (bez „alarmów”)
+type DocTone = "ok" | "warn" | "bad";
+
+function statusFromCompleteness(pointsPct: number, evidencePct: number) {
+  // progi łatwe do dostrojenia
+  const p = clamp(pointsPct, 0, 100);
+  const e = clamp(evidencePct, 0, 100);
+
+  if (p >= 85 && e >= 90) {
     return {
-      label: "Bezpiecznie",
+      label: "Dokumentacja kompletna",
       tone: "ok" as const,
-      reason: "komplet punktów",
-      hint: "Masz komplet punktów w tym okresie. Portfolio możesz wygenerować w 1 kliknięcie.",
+      reason: "wysoka kompletność",
+      hint: "Masz dobrą kompletność punktów i dokumentów w okresie. Zestawienie możesz pobrać w każdej chwili.",
     };
   }
-  if (progressPct >= 70) {
+  if (p < 60 || e < 70) {
     return {
-      label: "Na dobrej drodze",
-      tone: "ok" as const,
-      reason: "wysoki postęp",
-      hint: "Utrzymaj tempo, a domkniesz okres bez stresu.",
-    };
-  }
-  if (progressPct >= 35) {
-    return {
-      label: "Ryzyko",
-      tone: "warn" as const,
-      reason: "średni postęp",
-      hint: "Warto zaplanować 1–2 aktywności i uzupełnić dowody.",
+      label: "Dokumentacja niekompletna",
+      tone: "bad" as const,
+      reason: "braki w danych",
+      hint: "Uzupełnij brakujące punkty lub dokumenty, aby archiwum było spójne i gotowe do wykorzystania.",
     };
   }
   return {
-    label: "Alarm",
-    tone: "bad" as const,
-    reason: "niski postęp",
-    hint: "Masz dużo do nadrobienia — dodaj plan i dowody, żeby być gotowym „na kontrolę”.",
+    label: "Wymaga uzupełnienia",
+    tone: "warn" as const,
+    reason: "częściowe braki",
+    hint: "Jesteś blisko — uzupełnij dokumenty i/lub zaplanuj aktywności, żeby domknąć okres bez stresu.",
   };
 }
 
@@ -104,7 +107,7 @@ function ToneBadge({
   label,
   reason,
 }: {
-  tone: "ok" | "warn" | "bad";
+  tone: DocTone;
   label: string;
   reason: string;
 }) {
@@ -178,7 +181,6 @@ function MiniLimitCard({ item }: { item: TopLimitItem }) {
   const pct = clamp(item.usedPct, 0, 100);
   const t = limitTone(item.used, pct);
 
-  // mniej „krzyczące” – soft alert, bez czerwonej ramy 24/7
   const wrapCls =
     t.tone === "bad"
       ? "rounded-2xl border border-rose-200/70 bg-rose-50/40 p-3 shadow-sm"
@@ -212,7 +214,7 @@ function MiniLimitCard({ item }: { item: TopLimitItem }) {
 }
 
 export default function CpdStatusPanel({
-  title = "Twój status CPD",
+  title = "Status dokumentacji",
   userEmail,
   profileProfession,
   isBusy,
@@ -221,6 +223,8 @@ export default function CpdStatusPanel({
   requiredPoints,
   missingPoints,
   progressPct,
+  evidencePct,
+  daysLeft,
   doneCount,
   plannedCount,
   missingEvidenceCount,
@@ -231,12 +235,12 @@ export default function CpdStatusPanel({
   secondaryCtaHref = "/aktywnosci",
   portfolioHref = "/portfolio",
 }: Props) {
-  const safeProgress = clamp(progressPct, 0, 100);
-  const status = statusFromProgress(safeProgress, missingPoints);
+  const pointsPct = clamp(progressPct, 0, 100);
+  const docsPct = clamp(evidencePct, 0, 100);
+  const status = statusFromCompleteness(pointsPct, docsPct);
 
   return (
     <div className="space-y-4">
-      {/* główny panel: delikatnie „premium” – półprzezroczysta biel + blur */}
       <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
@@ -277,19 +281,19 @@ export default function CpdStatusPanel({
               )}
             </div>
 
-            {/* Postęp – uproszczony (bez podwójnych ramek) */}
+            {/* Postęp punktów */}
             <div className="mt-4">
               <div className="flex items-center justify-between">
-                <div className="text-xs font-semibold text-slate-700">Postęp w okresie {periodLabel}</div>
-                <div className="text-xs font-semibold text-slate-700">{fmtPct(safeProgress)}</div>
+                <div className="text-xs font-semibold text-slate-700">Punkty w okresie {periodLabel}</div>
+                <div className="text-xs font-semibold text-slate-700">{fmtPct(pointsPct)}</div>
               </div>
 
               <div className="mt-2">
                 <div className="relative h-4 rounded-full bg-slate-200/70">
-                  <div className={`h-4 rounded-full ${PRIMARY_BAR}`} style={{ width: `${safeProgress}%` }} />
+                  <div className={`h-4 rounded-full ${PRIMARY_BAR}`} style={{ width: `${pointsPct}%` }} />
                   <div
                     className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white ${PRIMARY_DOT} shadow`}
-                    style={{ left: `calc(${safeProgress}% - 8px)` }}
+                    style={{ left: `calc(${pointsPct}% - 8px)` }}
                     aria-hidden
                   />
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-[25%]">
@@ -346,6 +350,11 @@ export default function CpdStatusPanel({
           <div className="flex w-full flex-col gap-3 md:w-[360px]">
             <div className="grid grid-cols-2 gap-3">
               <StatPill label="Okres" value={periodLabel} />
+              <StatPill label="Dni do końca" value={`${daysLeft}`} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <StatPill label="Dowody" value={fmtPct(docsPct)} />
               <StatPill label="Wymagane" value={`${requiredPoints} pkt`} />
             </div>
 
@@ -368,29 +377,29 @@ export default function CpdStatusPanel({
 
               <div className="grid grid-cols-2 gap-2">
                 <MiniCta href={secondaryCtaHref} label="Aktywności" />
-                <MiniCta href={portfolioHref} label="Portfolio (PDF do kontroli)" />
+                <MiniCta href={portfolioHref} label="Zestawienie PDF" />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* dolne kafle – też lekko (white/blur) */}
+      {/* dolne kafle */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
           <div className="text-xs font-semibold text-slate-600">Do uzupełnienia</div>
           <div className="mt-2 text-lg font-extrabold text-slate-900">
-            {missingEvidenceCount > 0 ? `${missingEvidenceCount} wpisów bez certyfikatu` : "Wszystkie wpisy mają dowody ✅"}
+            {missingEvidenceCount > 0 ? `${missingEvidenceCount} wpisów bez certyfikatu` : "Wszystkie wpisy mają dokumenty ✅"}
           </div>
           <div className="mt-1 text-sm text-slate-700">
-            Dodaj zdjęcie/PDF certyfikatu, żeby portfolio było zawsze gotowe.
+            Dodaj zdjęcie/PDF certyfikatu, żeby zestawienie było zawsze kompletne.
           </div>
           <div className="mt-4">
             <Link
               href="/aktywnosci"
               className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-white backdrop-blur"
             >
-              Dodaj dowody
+              Uzupełnij dokumenty
             </Link>
           </div>
         </div>
@@ -401,7 +410,7 @@ export default function CpdStatusPanel({
             {missingPoints > 0 ? `Brakuje ${missingPoints} pkt` : "Limit domknięty ✅"}
           </div>
           <div className="mt-1 text-sm text-slate-700">
-            Ustal krótką ścieżkę: kilka mniejszych aktywności + 1 większa daje najlepszy efekt.
+            Najlepsza praktyka: kilka mniejszych aktywności + jedna większa daje najlepszy efekt.
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <Link href="/aktywnosci?new=1" className={`${PRIMARY_BTN_BASE} ${PRIMARY_BTN}`}>
