@@ -11,6 +11,17 @@ type NextStep = {
   ctaHref?: string;
 };
 
+export type TopLimitItem = {
+  key: string;
+  label: string;
+  used: number;
+  cap: number;
+  remaining: number;
+  usedPct: number; // 0..100
+  note?: string;
+  mode?: "per_period" | "per_year" | "per_item";
+};
+
 type Props = {
   title?: string;
 
@@ -31,6 +42,10 @@ type Props = {
   missingEvidenceCount: number;
 
   nextStep: NextStep;
+
+  // NEW: mini-limity pod paskiem
+  topLimits: TopLimitItem[];
+  limitWarning?: string | null;
 
   primaryCtaHref?: string;
   secondaryCtaHref?: string;
@@ -120,13 +135,7 @@ function StatPill({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function MiniCta({
-  href,
-  label,
-}: {
-  href: string;
-  label: string;
-}) {
+function MiniCta({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
@@ -134,6 +143,57 @@ function MiniCta({
     >
       {label}
     </Link>
+  );
+}
+
+function LimitTone(usedPct: number) {
+  if (usedPct >= 100) return { badge: "Limit osiągnięty", tone: "bad" as const };
+  if (usedPct >= 80) return { badge: "Uwaga", tone: "warn" as const };
+  return { badge: "OK", tone: "ok" as const };
+}
+
+function LimitBadge({ tone, text }: { tone: "ok" | "warn" | "bad"; text: string }) {
+  const cls =
+    tone === "ok"
+      ? "bg-emerald-50 text-emerald-800"
+      : tone === "warn"
+      ? "bg-amber-50 text-amber-900"
+      : "bg-rose-50 text-rose-800";
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${cls}`}>
+      {text}
+    </span>
+  );
+}
+
+function MiniLimitCard({ item }: { item: TopLimitItem }) {
+  const pct = clamp(item.usedPct, 0, 100);
+  const toneInfo = LimitTone(pct);
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="truncate text-xs font-extrabold text-slate-900">{item.label}</div>
+          <div className="mt-0.5 text-[11px] font-semibold text-slate-600">
+            {Math.round(item.used)}/{Math.round(item.cap)} pkt
+          </div>
+        </div>
+        <LimitBadge tone={toneInfo.tone} text={toneInfo.badge} />
+      </div>
+
+      {/* mini bar – bardzo czytelny (jak w Aktywnościach) */}
+      <div className="mt-2">
+        <div className="h-2 rounded-full border border-slate-200 bg-slate-100">
+          <div className="h-2 rounded-full bg-blue-800" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+
+      <div className="mt-1 text-[11px] text-slate-600">
+        Pozostało: <span className="font-semibold text-slate-900">{Math.round(item.remaining)} pkt</span>
+      </div>
+    </div>
   );
 }
 
@@ -151,6 +211,8 @@ export default function CpdStatusPanel({
   plannedCount,
   missingEvidenceCount,
   nextStep,
+  topLimits,
+  limitWarning,
   primaryCtaHref = "/aktywnosci?new=1",
   secondaryCtaHref = "/aktywnosci",
   portfolioHref = "/portfolio",
@@ -203,25 +265,31 @@ export default function CpdStatusPanel({
               )}
             </div>
 
-            {/* Progress (grubszy, premium, z kropką końcową) */}
+            {/* PROGRESS – jaśniej, czytelniej, styl jak w Aktywnościach */}
             <div className="mt-4">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-semibold text-slate-700">Postęp w okresie {periodLabel}</div>
                 <div className="text-xs font-semibold text-slate-700">{fmtPct(safeProgress)}</div>
               </div>
 
-              <div className="mt-2 rounded-full bg-slate-100 p-1.5">
-                <div className="relative h-4 rounded-full bg-slate-200">
+              <div className="mt-2">
+                <div className="relative h-5 rounded-full border border-slate-200 bg-slate-100">
                   <div
-                    className="h-4 rounded-full bg-blue-800"
+                    className="h-5 rounded-full bg-blue-800"
                     style={{ width: `${safeProgress}%` }}
                   />
-                  {/* Kropka końcowa */}
+                  {/* końcówka – jasna i czytelna */}
                   <div
-                    className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border border-white bg-blue-900 shadow-sm"
-                    style={{ left: `calc(${safeProgress}% - 6px)` }}
+                    className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border border-white bg-blue-900 shadow"
+                    style={{ left: `calc(${safeProgress}% - 8px)` }}
                     aria-hidden
                   />
+                  {/* milestone ticks 25/50/75 */}
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-[25%]">
+                    <span className="h-3 w-px bg-slate-200/80" />
+                    <span className="h-3 w-px bg-slate-200/80" />
+                    <span className="h-3 w-px bg-slate-200/80" />
+                  </div>
                 </div>
               </div>
 
@@ -230,6 +298,32 @@ export default function CpdStatusPanel({
                 <span className="font-semibold text-slate-900">{plannedCount}</span>
               </div>
             </div>
+
+            {/* MINI-LIMITY POD PASKIEM (top 3) */}
+            {topLimits?.length ? (
+              <div className="mt-4">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <div className="text-xs font-extrabold text-slate-900">Limity w tym okresie</div>
+                    <div className="text-xs text-slate-600">
+                      To najważniejsze limity dla Twojego zawodu — jeśli limit jest osiągnięty, kolejne podobne aktywności mogą nie zwiększyć punktów.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+                  {topLimits.map((x) => (
+                    <MiniLimitCard key={x.key} item={x} />
+                  ))}
+                </div>
+
+                {limitWarning ? (
+                  <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                    <span className="font-extrabold">Uwaga:</span> {limitWarning}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             {/* Identity pills */}
             <div className="mt-4 flex flex-wrap gap-2">
@@ -247,14 +341,14 @@ export default function CpdStatusPanel({
             </div>
           </div>
 
-          {/* RIGHT (mniej dublowania: 2 staty + Next step) */}
+          {/* RIGHT (2 staty + Next step) */}
           <div className="flex w-full flex-col gap-3 md:w-[360px]">
             <div className="grid grid-cols-2 gap-3">
               <StatPill label="Okres" value={periodLabel} />
               <StatPill label="Wymagane" value={`${requiredPoints} pkt`} />
             </div>
 
-            {/* NEXT STEP */}
+            {/* NEXT STEP (jaśniejsze tło) */}
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="text-[11px] font-semibold text-slate-600">Najbliższy krok</div>
               <div className="mt-1 text-sm font-extrabold text-slate-900">{nextStep.title}</div>
@@ -290,7 +384,6 @@ export default function CpdStatusPanel({
 
       {/* DWA KAFLE „DO ZROBIENIA” */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {/* Do uzupełnienia */}
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="text-xs font-semibold text-slate-600">Do uzupełnienia</div>
           <div className="mt-2 text-lg font-extrabold text-slate-900">
@@ -309,7 +402,6 @@ export default function CpdStatusPanel({
           </div>
         </div>
 
-        {/* Plan domknięcia */}
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="text-xs font-semibold text-slate-600">Plan domknięcia limitu</div>
           <div className="mt-2 text-lg font-extrabold text-slate-900">
