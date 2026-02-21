@@ -6,7 +6,9 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
-import CpdStatusPanel, { type TopLimitItem } from "@/components/dashboard/CpdStatusPanel";
+import CpdStatusPanel, {
+  type TopLimitItem,
+} from "@/components/dashboard/CpdStatusPanel";
 
 import {
   type Profession,
@@ -125,20 +127,68 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
     periodMonths: 60,
     requiredPoints: 100,
     limits: [
-      { key: "WEBINAR", label: "Webinary", mode: "per_period", maxPoints: 50, note: "5 pkt/wydarzenie, maks. 50 pkt" },
-      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_period", maxPoints: 50, note: "2/5 pkt, maks. 50 pkt" },
-      { key: "COMMITTEES", label: "Komisje/Zespoły", mode: "per_period", maxPoints: 30, note: "3 pkt/posiedzenie, maks. 30 pkt" },
-      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_year", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt/rok" },
+      {
+        key: "WEBINAR",
+        label: "Webinary",
+        mode: "per_period",
+        maxPoints: 50,
+        note: "5 pkt/wydarzenie, maks. 50 pkt",
+      },
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_period",
+        maxPoints: 50,
+        note: "2/5 pkt, maks. 50 pkt",
+      },
+      {
+        key: "COMMITTEES",
+        label: "Komisje/Zespoły",
+        mode: "per_period",
+        maxPoints: 30,
+        note: "3 pkt/posiedzenie, maks. 30 pkt",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_year",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt/rok",
+      },
     ],
   },
   Położna: {
     periodMonths: 60,
     requiredPoints: 100,
     limits: [
-      { key: "WEBINAR", label: "Webinary", mode: "per_period", maxPoints: 50, note: "5 pkt/wydarzenie, maks. 50 pkt" },
-      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_period", maxPoints: 50, note: "2/5 pkt, maks. 50 pkt" },
-      { key: "COMMITTEES", label: "Komisje/Zespoły", mode: "per_period", maxPoints: 30, note: "3 pkt/posiedzenie, maks. 30 pkt" },
-      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_year", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt/rok" },
+      {
+        key: "WEBINAR",
+        label: "Webinary",
+        mode: "per_period",
+        maxPoints: 50,
+        note: "5 pkt/wydarzenie, maks. 50 pkt",
+      },
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_period",
+        maxPoints: 50,
+        note: "2/5 pkt, maks. 50 pkt",
+      },
+      {
+        key: "COMMITTEES",
+        label: "Komisje/Zespoły",
+        mode: "per_period",
+        maxPoints: 30,
+        note: "3 pkt/posiedzenie, maks. 30 pkt",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_year",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt/rok",
+      },
     ],
   },
 };
@@ -149,12 +199,17 @@ function mapTypeToRuleKey(type: string): string | null {
   if (t.includes("kurs online")) return "WEBINAR";
   if (t.includes("szkolenie wewn")) return "INTERNAL_TRAINING";
   if (t.includes("prenumer")) return "JOURNAL_SUBSCRIPTION";
-  if (t.includes("towarzyst") || t.includes("kolegium")) return "SCIENTIFIC_SOCIETY";
+  if (t.includes("towarzyst") || t.includes("kolegium"))
+    return "SCIENTIFIC_SOCIETY";
   if (t.includes("komisj") || t.includes("zesp")) return "COMMITTEES";
   return null;
 }
 
-function buildNextStep(missingPoints: number, missingEvidenceCount: number, limitWarning: string | null) {
+function buildNextStep(
+  missingPoints: number,
+  missingEvidenceCount: number,
+  limitWarning: string | null
+) {
   if (missingEvidenceCount > 0) {
     return {
       title: "Uzupełnij dokumenty",
@@ -206,7 +261,9 @@ export default function CalculatorClient() {
   const [professionOther, setProfessionOther] = useState<string>(""); // ✅ NOWE
   const [periodStart, setPeriodStart] = useState<number>(2023);
   const [periodEnd, setPeriodEnd] = useState<number>(2026);
-  const [requiredPoints, setRequiredPoints] = useState<number>(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200);
+  const [requiredPoints, setRequiredPoints] = useState<number>(
+    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
+  );
 
   const [periodMode, setPeriodMode] = useState<"preset" | "custom">("preset");
 
@@ -224,7 +281,9 @@ export default function CalculatorClient() {
 
       const { data: p, error: pErr } = await supabase
         .from("profiles")
-        .select("user_id, profession, profession_other, period_start, period_end, required_points")
+        .select(
+          "user_id, profession, profession_other, period_start, period_end, required_points"
+        )
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -244,7 +303,10 @@ export default function CalculatorClient() {
           setPeriodEnd(pe);
 
           const presetLabel = `${ps}-${pe}`;
-          const isPreset = presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
+          const isPreset =
+            presetLabel === "2019-2022" ||
+            presetLabel === "2023-2026" ||
+            presetLabel === "2027-2030";
           setPeriodMode(isPreset ? "preset" : "custom");
 
           const rp =
@@ -298,8 +360,11 @@ export default function CalculatorClient() {
   const inPeriodPlanned = useMemo(() => {
     return activities.filter((x) => {
       const st = x.status ?? null;
-      const isPlanned = st === "planned" || (!!x.planned_start_date && st !== "done");
-      const y = x.planned_start_date ? Number(String(x.planned_start_date).slice(0, 4)) : x.year;
+      const isPlanned =
+        st === "planned" || (!!x.planned_start_date && st !== "done");
+      const y = x.planned_start_date
+        ? Number(String(x.planned_start_date).slice(0, 4))
+        : x.year;
       return isPlanned && y >= periodStart && y <= periodEnd;
     });
   }, [activities, periodStart, periodEnd]);
@@ -386,29 +451,41 @@ export default function CalculatorClient() {
   const otherRequired = isOtherProfession(profession);
   const otherValid = !otherRequired || normalizeOtherProfession(professionOther).length >= 2;
 
-  async function saveProfilePatch(patch: Partial<ProfileRow> & { profession_other?: string | null }) {
+  // ✅ FIX: stabilny zapis (bez nadpisywania profession_other i bez "starego state")
+  async function saveProfilePatch(
+    patch: Partial<ProfileRow> & { profession_other?: string | null }
+  ) {
     if (!user?.id) return;
     setSavingProfile(true);
 
-    const po =
-      (patch as any).profession_other !== undefined
-        ? (patch as any).profession_other
-        : otherRequired
-        ? normalizeOtherProfession(professionOther) || null
-        : null;
+    const nextProfession = (patch.profession ?? profession) as Profession;
 
-    await supabase.from("profiles").upsert({
+    const nextPeriodStart =
+      patch.period_start !== undefined ? patch.period_start : periodStart;
+    const nextPeriodEnd =
+      patch.period_end !== undefined ? patch.period_end : periodEnd;
+    const nextRequiredPoints =
+      patch.required_points !== undefined ? patch.required_points : requiredPoints;
+
+    const otherReq = isOtherProfession(nextProfession);
+
+    const rawOther =
+      patch.profession_other !== undefined ? patch.profession_other : professionOther;
+    const nextOther = otherReq ? normalizeOtherProfession(rawOther) || null : null;
+
+    const payload: ProfileRow = {
       user_id: user.id,
-      profession,
-      profession_other: po,
-      period_start: periodStart,
-      period_end: periodEnd,
-      required_points: requiredPoints,
-      ...patch,
-    });
+      profession: nextProfession,
+      profession_other: nextOther,
+      period_start: nextPeriodStart,
+      period_end: nextPeriodEnd,
+      required_points: nextRequiredPoints,
+    };
+
+    const { error } = await supabase.from("profiles").upsert(payload);
 
     setSavingProfile(false);
-    setSavedAt(Date.now());
+    if (!error) setSavedAt(Date.now());
   }
 
   const profileLabelForPanel = useMemo(() => {
@@ -421,7 +498,9 @@ export default function CalculatorClient() {
       <div className="rounded-3xl border border-slate-200/70 bg-white/65 p-4 shadow-sm backdrop-blur">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
-            <div className="text-sm font-extrabold text-slate-900">Ustawienia okresu i zawodu</div>
+            <div className="text-sm font-extrabold text-slate-900">
+              Ustawienia okresu i zawodu
+            </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
               <span>Zmiany zapisujemy w profilu.</span>
               <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
@@ -440,6 +519,7 @@ export default function CalculatorClient() {
               setPeriodEnd(2026);
               setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
               setPeriodMode("preset");
+
               await saveProfilePatch({
                 profession: prof,
                 profession_other: null,
@@ -461,18 +541,21 @@ export default function CalculatorClient() {
               value={profession}
               onChange={async (e) => {
                 const v = e.target.value as Profession;
-                setProfession(v);
 
-                // reset doprecyzowania, gdy ktoś wychodzi z "Inne"
+                setProfession(v);
                 if (!isOtherProfession(v)) setProfessionOther("");
 
-                const rp = RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
+                const rp =
+                  RULES_BY_PROFESSION[v]?.requiredPoints ??
+                  DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ??
+                  200;
+
                 setRequiredPoints(rp);
 
                 await saveProfilePatch({
                   profession: v,
                   required_points: rp,
-                  profession_other: isOtherProfession(v) ? normalizeOtherProfession(professionOther) || null : null,
+                  profession_other: isOtherProfession(v) ? professionOther : null,
                 });
               }}
               className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -486,20 +569,22 @@ export default function CalculatorClient() {
 
             {otherRequired ? (
               <div className="mt-2">
-                <label className="text-xs font-semibold text-slate-600">Jaki zawód?</label>
+                <label className="text-xs font-semibold text-slate-600">
+                  Jaki zawód?
+                </label>
                 <input
                   value={professionOther}
                   onChange={(e) => setProfessionOther(e.target.value)}
                   onBlur={async () => {
                     const norm = normalizeOtherProfession(professionOther);
                     setProfessionOther(norm);
-
-                    // zapisujemy doprecyzowanie; jeśli puste -> null (ale UI pokaże ostrzeżenie)
                     await saveProfilePatch({ profession_other: norm || null });
                   }}
                   placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
                   className={`mt-1 w-full rounded-2xl border bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 ${
-                    otherValid ? "border-slate-200/70 focus:ring-blue-200" : "border-rose-200/70 focus:ring-rose-200"
+                    otherValid
+                      ? "border-slate-200/70 focus:ring-blue-200"
+                      : "border-rose-200/70 focus:ring-rose-200"
                   }`}
                 />
                 <p className={`mt-1 text-[11px] ${otherValid ? "text-slate-500" : "text-rose-700"}`}>
@@ -661,7 +746,10 @@ export default function CalculatorClient() {
 
                 <div className="mt-3">
                   <div className="h-2 rounded-full bg-slate-200">
-                    <div className="h-2 rounded-full bg-emerald-600" style={{ width: `${r.usedPct}%` }} />
+                    <div
+                      className="h-2 rounded-full bg-emerald-600"
+                      style={{ width: `${r.usedPct}%` }}
+                    />
                   </div>
                 </div>
               </div>
@@ -706,7 +794,9 @@ export default function CalculatorClient() {
                     </div>
                   </div>
 
-                  <div className="mt-2 text-right text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
+                  <div className="mt-2 text-right text-sm font-extrabold text-slate-900">
+                    +{a.points} pkt
+                  </div>
                 </div>
               ))
             )}
