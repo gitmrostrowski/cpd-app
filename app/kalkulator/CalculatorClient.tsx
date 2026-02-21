@@ -512,7 +512,7 @@ export default function CalculatorClient() {
           {/* Postęp */}
           <div className="mt-5">
             <div className="flex items-center justify-between">
-              <div className={`text-xs font-semibold ${SOFT_MINT_TEXT}`}>Postęp</div>
+              <div className="text-xs font-semibold text-slate-700">Postęp</div>
               <div className="text-xs font-semibold text-slate-700">{fmtPct(progress)}</div>
             </div>
 
