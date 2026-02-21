@@ -44,7 +44,7 @@ type ActivityRow = {
 type ProfileRow = {
   user_id: string;
   profession: Profession | null;
-  profession_other?: string | null; // ✅ NOWE
+  profession_other?: string | null;
   period_start: number | null;
   period_end: number | null;
   required_points: number | null;
@@ -199,8 +199,7 @@ function mapTypeToRuleKey(type: string): string | null {
   if (t.includes("kurs online")) return "WEBINAR";
   if (t.includes("szkolenie wewn")) return "INTERNAL_TRAINING";
   if (t.includes("prenumer")) return "JOURNAL_SUBSCRIPTION";
-  if (t.includes("towarzyst") || t.includes("kolegium"))
-    return "SCIENTIFIC_SOCIETY";
+  if (t.includes("towarzyst") || t.includes("kolegium")) return "SCIENTIFIC_SOCIETY";
   if (t.includes("komisj") || t.includes("zesp")) return "COMMITTEES";
   return null;
 }
@@ -214,7 +213,8 @@ function buildNextStep(
     return {
       title: "Uzupełnij dokumenty",
       description: `Masz ${missingEvidenceCount} wpisów bez certyfikatu. Dodaj zdjęcia/PDF-y, aby zestawienie było gotowe w każdej chwili.`,
-      ctaLabel: "Dodaj dokumenty",
+      // ✅ jednoznacznie: nie "Dodaj dokumenty" (żeby nie robić dubla w UI)
+      ctaLabel: "Uzupełnij dokumenty",
       ctaHref: "/aktywnosci",
     };
   }
@@ -258,7 +258,7 @@ export default function CalculatorClient() {
   const [loading, setLoading] = useState(true);
 
   const [profession, setProfession] = useState<Profession>("Lekarz");
-  const [professionOther, setProfessionOther] = useState<string>(""); // ✅ NOWE
+  const [professionOther, setProfessionOther] = useState<string>("");
   const [periodStart, setPeriodStart] = useState<number>(2023);
   const [periodEnd, setPeriodEnd] = useState<number>(2026);
   const [requiredPoints, setRequiredPoints] = useState<number>(
@@ -281,9 +281,7 @@ export default function CalculatorClient() {
 
       const { data: p, error: pErr } = await supabase
         .from("profiles")
-        .select(
-          "user_id, profession, profession_other, period_start, period_end, required_points"
-        )
+        .select("user_id, profession, profession_other, period_start, period_end, required_points")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -304,9 +302,7 @@ export default function CalculatorClient() {
 
           const presetLabel = `${ps}-${pe}`;
           const isPreset =
-            presetLabel === "2019-2022" ||
-            presetLabel === "2023-2026" ||
-            presetLabel === "2027-2030";
+            presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
           setPeriodMode(isPreset ? "preset" : "custom");
 
           const rp =
@@ -360,11 +356,8 @@ export default function CalculatorClient() {
   const inPeriodPlanned = useMemo(() => {
     return activities.filter((x) => {
       const st = x.status ?? null;
-      const isPlanned =
-        st === "planned" || (!!x.planned_start_date && st !== "done");
-      const y = x.planned_start_date
-        ? Number(String(x.planned_start_date).slice(0, 4))
-        : x.year;
+      const isPlanned = st === "planned" || (!!x.planned_start_date && st !== "done");
+      const y = x.planned_start_date ? Number(String(x.planned_start_date).slice(0, 4)) : x.year;
       return isPlanned && y >= periodStart && y <= periodEnd;
     });
   }, [activities, periodStart, periodEnd]);
@@ -451,7 +444,6 @@ export default function CalculatorClient() {
   const otherRequired = isOtherProfession(profession);
   const otherValid = !otherRequired || normalizeOtherProfession(professionOther).length >= 2;
 
-  // ✅ FIX: stabilny zapis (bez nadpisywania profession_other i bez "starego state")
   async function saveProfilePatch(
     patch: Partial<ProfileRow> & { profession_other?: string | null }
   ) {
@@ -493,9 +485,9 @@ export default function CalculatorClient() {
   }, [profession, professionOther]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* USTAWIENIA */}
-      <div className="rounded-3xl border border-slate-200/70 bg-white/65 p-4 shadow-sm backdrop-blur">
+      <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-4 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
             <div className="text-sm font-extrabold text-slate-900">
@@ -503,7 +495,7 @@ export default function CalculatorClient() {
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
               <span>Zmiany zapisujemy w profilu.</span>
-              <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+              <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
                 {savingProfile ? "Zapisywanie…" : savedAt ? "Zapisano" : "—"}
               </span>
             </div>
@@ -534,7 +526,8 @@ export default function CalculatorClient() {
           </button>
         </div>
 
-        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
+        {/* ✅ grid stabilny + "Inne" przeniesione do osobnego wiersza */}
+        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="text-xs font-semibold text-slate-600">Zawód</label>
             <select
@@ -566,34 +559,6 @@ export default function CalculatorClient() {
                 </option>
               ))}
             </select>
-
-            {otherRequired ? (
-              <div className="mt-2">
-                <label className="text-xs font-semibold text-slate-600">
-                  Jaki zawód?
-                </label>
-                <input
-                  value={professionOther}
-                  onChange={(e) => setProfessionOther(e.target.value)}
-                  onBlur={async () => {
-                    const norm = normalizeOtherProfession(professionOther);
-                    setProfessionOther(norm);
-                    await saveProfilePatch({ profession_other: norm || null });
-                  }}
-                  placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
-                  className={`mt-1 w-full rounded-2xl border bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 ${
-                    otherValid
-                      ? "border-slate-200/70 focus:ring-blue-200"
-                      : "border-rose-200/70 focus:ring-rose-200"
-                  }`}
-                />
-                <p className={`mt-1 text-[11px] ${otherValid ? "text-slate-500" : "text-rose-700"}`}>
-                  {otherValid
-                    ? "Doprecyzowanie pomaga dopasować zasady i raporty."
-                    : "Wpisz nazwę zawodu (min. 2 znaki), żeby profil był kompletny."}
-                </p>
-              </div>
-            ) : null}
           </div>
 
           <div>
@@ -679,35 +644,64 @@ export default function CalculatorClient() {
               Domyślnie: {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? requiredPoints}
             </p>
           </div>
+
+          {/* ✅ osobny wiersz na "Jaki zawód?" — nie psuje szerokości kafla */}
+          {otherRequired ? (
+            <div className="md:col-span-2 xl:col-span-4">
+              <label className="text-xs font-semibold text-slate-600">Jaki zawód?</label>
+              <input
+                value={professionOther}
+                onChange={(e) => setProfessionOther(e.target.value)}
+                onBlur={async () => {
+                  const norm = normalizeOtherProfession(professionOther);
+                  setProfessionOther(norm);
+                  await saveProfilePatch({ profession_other: norm || null });
+                }}
+                placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
+                className={`mt-1 w-full rounded-2xl border bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 ${
+                  otherValid
+                    ? "border-slate-200/70 focus:ring-blue-200"
+                    : "border-rose-200/70 focus:ring-rose-200"
+                }`}
+              />
+              <p className={`mt-1 text-[11px] ${otherValid ? "text-slate-500" : "text-rose-700"}`}>
+                {otherValid
+                  ? "Doprecyzowanie pomaga dopasować zasady i raporty."
+                  : "Wpisz nazwę zawodu (min. 2 znaki), żeby profil był kompletny."}
+              </p>
+            </div>
+          ) : null}
         </div>
       </div>
 
-      {/* PANEL STATUSU */}
-      <CpdStatusPanel
-        isBusy={isBusy}
-        userEmail={user?.email ?? null}
-        profileProfession={profileLabelForPanel} // ✅ "Inne (…)" zamiast gołego "Inne"
-        periodLabel={periodLabel}
-        donePoints={donePoints}
-        requiredPoints={requiredPoints}
-        missingPoints={missingPoints}
-        progressPct={progress}
-        evidencePct={evidencePct}
-        daysLeft={daysLeft}
-        doneCount={inPeriodDone.length}
-        plannedCount={inPeriodPlanned.length}
-        missingEvidenceCount={missingEvidenceCount}
-        nextStep={nextStep}
-        topLimits={topLimits}
-        limitWarning={limitWarning}
-        primaryCtaHref="/aktywnosci?new=1"
-        secondaryCtaHref="/aktywnosci"
-        portfolioHref="/portfolio"
-      />
+      {/* PANEL STATUSU (owijka daje „głębię”, nawet jeśli panel ma swoje tło) */}
+      <div className="rounded-3xl ring-1 ring-slate-200/60 shadow-lg bg-white/40 backdrop-blur">
+        <CpdStatusPanel
+          isBusy={isBusy}
+          userEmail={user?.email ?? null}
+          profileProfession={profileLabelForPanel}
+          periodLabel={periodLabel}
+          donePoints={donePoints}
+          requiredPoints={requiredPoints}
+          missingPoints={missingPoints}
+          progressPct={progress}
+          evidencePct={evidencePct}
+          daysLeft={daysLeft}
+          doneCount={inPeriodDone.length}
+          plannedCount={inPeriodPlanned.length}
+          missingEvidenceCount={missingEvidenceCount}
+          nextStep={nextStep}
+          topLimits={topLimits}
+          limitWarning={limitWarning}
+          primaryCtaHref="/aktywnosci?new=1"
+          secondaryCtaHref="/aktywnosci"
+          portfolioHref="/portfolio"
+        />
+      </div>
 
-      {/* Reszta strony bez zmian */}
+      {/* Reszta strony */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
+        <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur lg:col-span-2">
           <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
             <div>
               <div className="text-sm font-extrabold text-slate-900">Reguły i limity</div>
@@ -722,7 +716,10 @@ export default function CalculatorClient() {
 
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
             {limitsUsage.map((r) => (
-              <div key={r.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div
+                key={r.key}
+                className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 ring-1 ring-slate-100"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-bold text-slate-900">{r.label}</div>
@@ -736,7 +733,7 @@ export default function CalculatorClient() {
 
                   <div className="shrink-0 text-right">
                     <div className="text-sm font-extrabold text-slate-900">
-                      Wykorzystano: {Math.round(r.used)} / {Math.round(r.cap)}
+                      {Math.round(r.used)} / {Math.round(r.cap)}
                     </div>
                     <div className="text-xs font-semibold text-slate-600">
                       Pozostało: {Math.round(r.remaining)} pkt
@@ -745,9 +742,10 @@ export default function CalculatorClient() {
                 </div>
 
                 <div className="mt-3">
-                  <div className="h-2 rounded-full bg-slate-200">
+                  {/* ✅ grubszy, czytelniejszy pasek */}
+                  <div className="h-3 rounded-full bg-slate-200/80">
                     <div
-                      className="h-2 rounded-full bg-emerald-600"
+                      className="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600"
                       style={{ width: `${r.usedPct}%` }}
                     />
                   </div>
@@ -763,7 +761,7 @@ export default function CalculatorClient() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
           <div className="flex items-center justify-between">
             <div className="text-sm font-extrabold text-slate-900">Ostatnie aktywności</div>
             <Link href="/aktywnosci" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
@@ -775,12 +773,12 @@ export default function CalculatorClient() {
             {isBusy ? (
               <div className="text-sm text-slate-600">Wczytuję…</div>
             ) : inPeriodDone.slice(0, 5).length === 0 ? (
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+              <div className="rounded-xl border border-slate-200 bg-white/70 p-3 text-sm text-slate-700">
                 Brak ukończonych aktywności w okresie {periodLabel}.
               </div>
             ) : (
               inPeriodDone.slice(0, 5).map((a) => (
-                <div key={a.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                <div key={a.id} className="rounded-2xl border border-slate-200/70 bg-white/80 p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold text-slate-900">{a.type}</div>
