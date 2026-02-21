@@ -5,13 +5,12 @@ import CalculatorClient from "./CalculatorClient";
 
 export default function KalkulatorPage() {
   return (
-    <div className="relative">
-      {/* TŁO jak na Home */}
+    <div className="relative min-h-[calc(100vh-4rem)]">
+      {/* TŁO jak na Home (odrobina większej głębi) */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-white" />
-        {/* delikatny „medyczny” gradient + plamy światła */}
-        <div className="absolute inset-0 bg-[radial-gradient(60rem_30rem_at_20%_10%,rgba(37,99,235,0.10),transparent_60%),radial-gradient(55rem_30rem_at_85%_15%,rgba(14,165,233,0.08),transparent_55%),radial-gradient(40rem_25rem_at_50%_95%,rgba(99,102,241,0.06),transparent_60%)]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/70 via-white to-white" />
+        <div className="absolute inset-0 bg-[radial-gradient(60rem_30rem_at_18%_6%,rgba(37,99,235,0.12),transparent_60%),radial-gradient(55rem_30rem_at_86%_10%,rgba(14,165,233,0.10),transparent_55%),radial-gradient(42rem_26rem_at_55%_96%,rgba(99,102,241,0.08),transparent_60%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-white to-slate-50/60" />
       </div>
 
       <div className="mx-auto w-full max-w-6xl px-4 py-8">
@@ -26,6 +25,9 @@ export default function KalkulatorPage() {
         </div>
 
         <CalculatorClient />
+
+        {/* żeby dół strony nie kleił się ze stopką */}
+        <div className="h-10" />
       </div>
     </div>
   );
