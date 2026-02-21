@@ -189,7 +189,11 @@ function LimitBadge({ tone, text }: { tone: "ok" | "warn" | "bad"; text: string 
       ? "bg-amber-50 text-amber-950"
       : "bg-rose-50 text-rose-900";
 
-  return <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${cls}`}>{text}</span>;
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${cls}`}>
+      {text}
+    </span>
+  );
 }
 
 function MiniLimitCard({ item }: { item: TopLimitItem }) {
@@ -265,7 +269,9 @@ export default function CpdStatusPanel({
       : { href: portfolioHref, label: "Zestawienie PDF" };
 
   const secondary =
-    docsActionNeeded ? { href: primaryCtaHref, label: "+ Dodaj aktywność" } : { href: "/aktywnosci", label: "Aktywności" };
+    docsActionNeeded
+      ? { href: primaryCtaHref, label: "+ Dodaj aktywność" }
+      : { href: "/aktywnosci", label: "Aktywności" };
 
   const showNextStepCta =
     !!nextStep.ctaHref &&
@@ -275,7 +281,6 @@ export default function CpdStatusPanel({
   const dotLeft = clamp(pointsPct, 0, 100);
 
   return (
-    // ✅ większy odstęp między głównym panelem a kaflami (żeby nie „łączyło” ramek)
     <div className="space-y-6">
       <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-5 shadow-lg ring-1 ring-slate-200/50 backdrop-blur">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -436,53 +441,7 @@ export default function CpdStatusPanel({
         </div>
       </div>
 
-      {/* ✅ dolne kafle: bez dublowania czerwonej kropki + bez „łączenia ramek” */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div
-          className={
-            docsActionNeeded
-              ? "relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm ring-1 ring-rose-200/60 backdrop-blur"
-              : "relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur"
-          }
-        >
-          {/* ✅ delikatny akcent zamiast kropki (nie dubluje sygnału z prawej) */}
-          {docsActionNeeded ? <div className="absolute inset-x-0 top-0 h-1 bg-rose-500/50" /> : null}
-
-          <div className="text-xs font-semibold text-slate-600">Do uzupełnienia</div>
-
-          <div className="mt-2 text-lg font-extrabold text-slate-900">
-            {missingEvidenceCount > 0 ? `${missingEvidenceCount} wpisów bez certyfikatu` : "Wszystkie wpisy mają dokumenty ✅"}
-          </div>
-
-          <div className="mt-1 text-sm text-slate-700">
-            Dodaj zdjęcie/PDF certyfikatu, żeby zestawienie było zawsze kompletne.
-          </div>
-
-          <div className="mt-4">
-            <Link href="/aktywnosci" className={`${BTN_BASE} ${OUTLINE_BTN}`}>
-              Uzupełnij dokumenty
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
-          <div className="text-xs font-semibold text-slate-600">Plan domknięcia limitu</div>
-          <div className="mt-2 text-lg font-extrabold text-slate-900">
-            {missingPoints > 0 ? `Brakuje ${missingPoints} pkt` : "Limit domknięty ✅"}
-          </div>
-          <div className="mt-1 text-sm text-slate-700">
-            Najlepsza praktyka: kilka mniejszych aktywności + jedna większa daje najlepszy efekt.
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link href="/aktywnosci?new=1" className={`${BTN_BASE} ${PRIMARY_BTN}`}>
-              Dodaj do planu
-            </Link>
-            <Link href="/aktywnosci" className={`${BTN_BASE} ${OUTLINE_BTN}`}>
-              Zobacz wpisy
-            </Link>
-          </div>
-        </div>
-      </div>
+      {/* ✅ usunięto dolne kafle “Do uzupełnienia” i “Plan domknięcia limitu” (dublowały informacje) */}
     </div>
   );
 }
