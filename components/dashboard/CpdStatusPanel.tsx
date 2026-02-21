@@ -68,6 +68,9 @@ const PRIMARY_BTN = "bg-blue-600 hover:bg-blue-700 text-white shadow-sm";
 const OUTLINE_BTN =
   "border border-slate-200/70 bg-white/80 text-slate-800 hover:bg-white backdrop-blur";
 
+// Jasny niebieski PRO (wymagany)
+const PRO_BTN = "border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100";
+
 const PRIMARY_BAR = "bg-blue-600";
 const PRIMARY_DOT = "bg-blue-700";
 
@@ -163,17 +166,6 @@ function StatPill({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function MiniCta({ href, label }: { href: string; label: string }) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-white backdrop-blur"
-    >
-      {label}
-    </Link>
-  );
-}
-
 function limitTone(used: number, usedPct: number) {
   if (used <= 0) return { badge: "Nie rozpoczęto", tone: "ok" as const };
   if (usedPct >= 100) return { badge: "Limit", tone: "bad" as const };
@@ -212,11 +204,17 @@ function MiniLimitCard({ item }: { item: TopLimitItem }) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="truncate text-xs font-extrabold text-slate-900">{item.label}</div>
-          <div className="mt-0.5 text-[11px] font-semibold text-slate-600">
-            {Math.round(item.used)}/{Math.round(item.cap)} pkt
+
+          {/* ✅ 0/6 pkt + status w jednej linii, ta sama wysokość */}
+          <div className="mt-0.5 flex items-center justify-between gap-2">
+            <div className="text-[11px] font-semibold text-slate-600 whitespace-nowrap">
+              {Math.round(item.used)}/{Math.round(item.cap)} pkt
+            </div>
+            <div className="shrink-0">
+              <LimitBadge tone={t.tone} text={t.badge} />
+            </div>
           </div>
         </div>
-        <LimitBadge tone={t.tone} text={t.badge} />
       </div>
 
       <div className="mt-2">
@@ -268,11 +266,7 @@ export default function CpdStatusPanel({
       ? { href: primaryCtaHref, label: "+ Dodaj aktywność" }
       : { href: portfolioHref, label: "Zestawienie PDF" };
 
-  const secondary =
-    docsActionNeeded
-      ? { href: primaryCtaHref, label: "+ Dodaj aktywność" }
-      : { href: "/aktywnosci", label: "Aktywności" };
-
+  // Secondary już NIE będzie renderowany pod "Uzupełnij dokumenty"
   const showNextStepCta =
     !!nextStep.ctaHref &&
     !!nextStep.ctaLabel &&
@@ -430,18 +424,22 @@ export default function CpdStatusPanel({
                 {primary.label}
               </Link>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Link href={secondary.href} className={`${BTN_BASE} ${OUTLINE_BTN}`}>
-                  {secondary.label}
-                </Link>
-                <MiniCta href={portfolioHref} label="Zestawienie PDF" />
-              </div>
+              {/* ✅ pod primary zostaje tylko 1 przycisk: Zestawienie PDF - PRO */}
+              <Link href={portfolioHref} className={`${BTN_BASE} ${PRO_BTN} w-full`}>
+                Zestawienie PDF – PRO
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ✅ usunięto dolne kafle “Do uzupełnienia” i “Plan domknięcia limitu” (dublowały informacje) */}
+      {/* ✅ DODATEK (CRPE PRO): wrapper dla sekcji "Reguły i limity"
+          W miejscu, gdzie renderujesz sekcję "Reguły i limity" (już poza tym komponentem),
+          owiń ją w taki kontener:
+          <div className="rounded-3xl border border-slate-200/70 bg-slate-50/80 p-5 shadow-sm ring-1 ring-slate-200/50">
+            ...Reguły i limity...
+          </div>
+      */}
     </div>
   );
 }
