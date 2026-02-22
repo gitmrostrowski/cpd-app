@@ -21,7 +21,7 @@ type ActivityRow = {
   planned_start_date?: string | null; // YYYY-MM-DD
   training_id?: string | null;
 
-  // legacy single cert fields (zostawiamy kompatybilność)
+  // legacy single cert fields (kompatybilność)
   certificate_path?: string | null;
   certificate_name?: string | null;
   certificate_mime?: string | null;
@@ -95,7 +95,7 @@ function formatYMD(d: string | null | undefined) {
 function shortFileName(name?: string | null) {
   const n = (name ?? "").trim();
   if (!n) return "";
-  if (n.length <= 26) return n;
+  if (n.length <= 30) return n;
   const ext = n.includes(".") ? "." + n.split(".").pop() : "";
   const base = ext ? n.slice(0, -(ext.length)) : n;
   const cut = base.slice(0, 18);
@@ -118,7 +118,6 @@ function daysUntil(ymd: string | null | undefined) {
 
 type StatusKind = "complete" | "missing";
 
-// planned: nie wymagamy certyfikatu (bo szkolenie jeszcze się nie odbyło)
 function getRowStatus(a: ActivityRow, docsForActivity: ActivityDocRow[]): { kind: StatusKind; missing: string[] } {
   const missing: string[] = [];
   const orgOk = Boolean(a.organizer && String(a.organizer).trim());
@@ -126,7 +125,6 @@ function getRowStatus(a: ActivityRow, docsForActivity: ActivityDocRow[]): { kind
 
   const prog = normalizeStatus(a.status);
   if (prog === "done") {
-    // cert ok: legacy cert albo nowy cert w docs
     const hasLegacy = Boolean(a.certificate_path);
     const hasDocCert = docsForActivity.some((d) => d.kind === "certificate");
     if (!hasLegacy && !hasDocCert) missing.push("Brak certyfikatu");
@@ -178,7 +176,7 @@ export default function ActivitiesPage() {
   const [file, setFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
 
-  // attach docs/certs
+  // attach file (prawy panel)
   const [attachToId, setAttachToId] = useState<string | null>(null);
   const [attachKind, setAttachKind] = useState<DocKind>("certificate");
   const [attachFile, setAttachFile] = useState<File | null>(null);
@@ -192,17 +190,20 @@ export default function ActivitiesPage() {
   const [editOrganizer, setEditOrganizer] = useState<string>("");
   const [editPlannedDate, setEditPlannedDate] = useState<string>(""); // YYYY-MM-DD
 
+  // upload inside EDIT
+  const [editUploadKind, setEditUploadKind] = useState<DocKind>("certificate");
+  const [editUploadFile, setEditUploadFile] = useState<File | null>(null);
+  const [editUploadKey, setEditUploadKey] = useState(0);
+
   // docs
   const [docs, setDocs] = useState<ActivityDocRow[]>([]);
   const docsByActivity = useMemo(() => {
     const map: Record<string, ActivityDocRow[]> = {};
-    for (const d of docs) {
-      (map[d.activity_id] ||= []).push(d);
-    }
+    for (const d of docs) (map[d.activity_id] ||= []).push(d);
     return map;
   }, [docs]);
 
-  // signed urls (docId -> url) + legacy cert urls (activityId -> url)
+  // signed urls
   const [docUrls, setDocUrls] = useState<Record<string, string>>({});
   const [legacyCertUrls, setLegacyCertUrls] = useState<Record<string, string>>({});
 
@@ -264,12 +265,11 @@ export default function ActivitiesPage() {
       const rows = ((data ?? []) as unknown as ActivityRow[]) ?? [];
       setItems(rows);
 
-      // legacy cert signed urls (activityId -> url)
-      const withLegacyCert = rows.filter((r) => r.certificate_path);
+      // legacy cert signed urls
+      const withLegacy = rows.filter((r) => r.certificate_path);
       const legacyResults = await Promise.all(
-        withLegacyCert.map(async (r) => {
-          const path = r.certificate_path!;
-          const { data: urlData } = await supabase.storage.from(BUCKET).createSignedUrl(path, 60 * 60);
+        withLegacy.map(async (r) => {
+          const { data: urlData } = await supabase.storage.from(BUCKET).createSignedUrl(r.certificate_path!, 60 * 60);
           return { activityId: r.id, url: urlData?.signedUrl ?? "" };
         }),
       );
@@ -277,15 +277,14 @@ export default function ActivitiesPage() {
       for (const x of legacyResults) if (x.url) legacyMap[x.activityId] = x.url;
       setLegacyCertUrls(legacyMap);
 
-      // docs (multi)
+      // docs
       const ids = rows.map((r) => r.id);
-      if (ids.length === 0) {
+      if (!ids.length) {
         setDocs([]);
         setDocUrls({});
         return;
       }
 
-      // jeśli tabela nie istnieje jeszcze, to select wywali błąd – pokażemy miękko komunikat
       const { data: docsData, error: docsErr } = await supabase
         .from("activity_documents")
         .select("id,user_id,activity_id,kind,path,name,mime,size,uploaded_at")
@@ -294,21 +293,20 @@ export default function ActivitiesPage() {
         .order("uploaded_at", { ascending: false });
 
       if (docsErr) {
-        // nie przerywamy działania strony
         setDocs([]);
         setDocUrls({});
       } else {
         const docRows = ((docsData ?? []) as unknown as ActivityDocRow[]) ?? [];
         setDocs(docRows);
 
-        const docUrlResults = await Promise.all(
+        const urlResults = await Promise.all(
           docRows.map(async (d) => {
             const { data: urlData } = await supabase.storage.from(BUCKET).createSignedUrl(d.path, 60 * 60);
             return { docId: d.id, url: urlData?.signedUrl ?? "" };
           }),
         );
         const docMap: Record<string, string> = {};
-        for (const x of docUrlResults) if (x.url) docMap[x.docId] = x.url;
+        for (const x of urlResults) if (x.url) docMap[x.docId] = x.url;
         setDocUrls(docMap);
       }
     } catch (e: any) {
@@ -341,7 +339,6 @@ export default function ActivitiesPage() {
     const ext = extFromMime(mime);
     const safeName = (f.name || `file.${ext}`).slice(0, 180);
 
-    // auth.uid() + '/%': zachowujemy prefix user.id
     const path = `${user.id}/${activityId}/${kind}-${Date.now()}.${ext}`;
 
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, f, {
@@ -364,20 +361,18 @@ export default function ActivitiesPage() {
   }
 
   async function addActivity() {
-    if (!user) return;
-    if (busy) return;
-
+    if (!user || busy) return;
     clearMessages();
 
     const p = Number(points);
     const y = Number(year);
 
     if (!Number.isFinite(p) || p < 0) return setErr("Punkty muszą być liczbą ≥ 0.");
-    if (!Number.isFinite(y) || y < 1900 || y > 2100) return setErr("Rok wygląda na nieprawidłowy (podaj np. 2024).");
+    if (!Number.isFinite(y) || y < 1900 || y > 2100) return setErr("Rok wygląda na nieprawidłowy.");
 
     if (file) {
-      const fileErr = validateFile(file);
-      if (fileErr) return setErr(fileErr);
+      const fe = validateFile(file);
+      if (fe) return setErr(fe);
     }
 
     const org = organizer.trim();
@@ -399,15 +394,9 @@ export default function ActivitiesPage() {
       const newId = (data?.id as string | undefined) ?? undefined;
       if (!newId) return setErr("Nie udało się odczytać ID nowej aktywności.");
 
-      // jeśli załączono plik w formularzu dodawania → traktujemy jako certyfikat
       if (file) {
-        try {
-          await uploadDoc(newId, "certificate", file);
-          setInfo("Dodano aktywność + certyfikat ✅");
-        } catch {
-          // fallback: legacy (żeby nie blokować jeśli tabela docs jeszcze nie jest wdrożona)
-          setInfo("Dodano aktywność ✅ (plik dodasz w sekcji dokumentów)");
-        }
+        await uploadDoc(newId, "certificate", file);
+        setInfo("Dodano aktywność + certyfikat ✅");
       } else {
         setInfo("Dodano aktywność ✅");
       }
@@ -422,9 +411,7 @@ export default function ActivitiesPage() {
   }
 
   async function markAsDone(activityId: string) {
-    if (!user) return;
-    if (busy) return;
-
+    if (!user || busy) return;
     clearMessages();
     setBusy(true);
     try {
@@ -446,26 +433,19 @@ export default function ActivitiesPage() {
   }
 
   async function removeActivity(id: string, legacyCertPath?: string | null) {
-    if (!user) return;
-    if (busy) return;
+    if (!user || busy) return;
 
     clearMessages();
-
     const prev = items;
     setItems((cur) => cur.filter((x) => x.id !== id));
 
     setBusy(true);
     try {
-      // usuń legacy cert jeśli był
-      if (legacyCertPath) {
-        await supabase.storage.from(BUCKET).remove([legacyCertPath]);
-      }
+      if (legacyCertPath) await supabase.storage.from(BUCKET).remove([legacyCertPath]);
 
-      // usuń docs + pliki (jeśli tabela istnieje)
       const myDocs = docs.filter((d) => d.activity_id === id);
       if (myDocs.length) {
-        const paths = myDocs.map((d) => d.path);
-        await supabase.storage.from(BUCKET).remove(paths);
+        await supabase.storage.from(BUCKET).remove(myDocs.map((d) => d.path));
         await supabase.from("activity_documents").delete().eq("activity_id", id).eq("user_id", user.id);
       }
 
@@ -487,8 +467,7 @@ export default function ActivitiesPage() {
   }
 
   async function removeDoc(doc: ActivityDocRow) {
-    if (!user) return;
-    if (busy) return;
+    if (!user || busy) return;
 
     clearMessages();
     setBusy(true);
@@ -509,12 +488,12 @@ export default function ActivitiesPage() {
   }
 
   async function attachFileToExisting() {
-    if (!user) return;
+    if (!user || busy) return;
     if (!attachToId) return;
     if (!attachFile) return setErr("Wybierz plik.");
-    const fileErr = validateFile(attachFile);
-    if (fileErr) return setErr(fileErr);
-    if (busy) return;
+
+    const fe = validateFile(attachFile);
+    if (fe) return setErr(fe);
 
     clearMessages();
     setBusy(true);
@@ -525,7 +504,7 @@ export default function ActivitiesPage() {
       setAttachInputKey((k) => k + 1);
       await load();
     } catch (e: any) {
-      setErr(e?.message || "Nie udało się dodać pliku. (Sprawdź czy tabela activity_documents istnieje)");
+      setErr(e?.message || "Nie udało się dodać pliku.");
     } finally {
       setBusy(false);
     }
@@ -539,20 +518,24 @@ export default function ActivitiesPage() {
     setEditYear(Number(a.year ?? new Date().getFullYear()));
     setEditOrganizer(a.organizer ?? "");
     setEditPlannedDate(a.planned_start_date ?? "");
+
+    setEditUploadKind("certificate");
+    setEditUploadFile(null);
+    setEditUploadKey((k) => k + 1);
   }
 
   function cancelEdit() {
     setEditId(null);
+    setEditUploadFile(null);
   }
 
   async function saveEdit(activityId: string) {
-    if (!user) return;
-    if (busy) return;
+    if (!user || busy) return;
 
     clearMessages();
-
     const p = Number(editPoints);
     const y = Number(editYear);
+
     if (!Number.isFinite(p) || p < 0) return setErr("Punkty muszą być liczbą ≥ 0.");
     if (!Number.isFinite(y) || y < 1900 || y > 2100) return setErr("Rok wygląda na nieprawidłowy.");
 
@@ -578,6 +561,27 @@ export default function ActivitiesPage() {
       await load();
     } catch (e: any) {
       setErr(e?.message || "Nie udało się zapisać zmian.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function uploadInsideEdit(activityId: string) {
+    if (!user || busy) return;
+    if (!editUploadFile) return setErr("Wybierz plik.");
+    const fe = validateFile(editUploadFile);
+    if (fe) return setErr(fe);
+
+    clearMessages();
+    setBusy(true);
+    try {
+      await uploadDoc(activityId, editUploadKind, editUploadFile);
+      setInfo(editUploadKind === "certificate" ? "Dodano certyfikat ✅" : "Dodano dokument ✅");
+      setEditUploadFile(null);
+      setEditUploadKey((k) => k + 1);
+      await load();
+    } catch (e: any) {
+      setErr(e?.message || "Nie udało się dodać pliku.");
     } finally {
       setBusy(false);
     }
@@ -674,9 +678,7 @@ export default function ActivitiesPage() {
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h2 className="text-base font-semibold text-slate-900">Twoje aktywności</h2>
-              <p className="mt-1 text-[13px] text-slate-600">
-                Zaplanowane nie liczą się do punktów, dopóki nie oznaczysz ich jako ukończone.
-              </p>
+              <p className="mt-1 text-[13px] text-slate-600">Zaplanowane nie liczą się do punktów, dopóki nie oznaczysz ich jako ukończone.</p>
             </div>
             <button
               onClick={load}
@@ -702,11 +704,7 @@ export default function ActivitiesPage() {
 
             <div>
               <label className="text-[11px] font-medium text-slate-600">Typ</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-              >
+              <select className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
                 <option>Wszystkie</option>
                 {TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -718,11 +716,7 @@ export default function ActivitiesPage() {
 
             <div>
               <label className="text-[11px] font-medium text-slate-600">Rok</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterYear}
-                onChange={(e) => setFilterYear(e.target.value)}
-              >
+              <select className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
                 <option>Wszystkie</option>
                 {years.map((y) => (
                   <option key={y} value={String(y)}>
@@ -734,11 +728,7 @@ export default function ActivitiesPage() {
 
             <div>
               <label className="text-[11px] font-medium text-slate-600">Realizacja</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterProgress}
-                onChange={(e) => setFilterProgress(e.target.value as any)}
-              >
+              <select className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={filterProgress} onChange={(e) => setFilterProgress(e.target.value as any)}>
                 <option value="all">Wszystkie</option>
                 <option value="planned">Zaplanowane</option>
                 <option value="done">Ukończone</option>
@@ -747,11 +737,7 @@ export default function ActivitiesPage() {
 
             <div>
               <label className="text-[11px] font-medium text-slate-600">Certyfikat</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterCert}
-                onChange={(e) => setFilterCert(e.target.value as any)}
-              >
+              <select className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={filterCert} onChange={(e) => setFilterCert(e.target.value as any)}>
                 <option value="all">Wszystkie</option>
                 <option value="yes">Tylko z</option>
                 <option value="no">Tylko bez</option>
@@ -760,11 +746,7 @@ export default function ActivitiesPage() {
 
             <div>
               <label className="text-[11px] font-medium text-slate-600">Kompletność</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
-              >
+              <select className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)}>
                 <option value="all">Wszystkie</option>
                 <option value="complete">OK</option>
                 <option value="missing">Braki</option>
@@ -811,19 +793,14 @@ export default function ActivitiesPage() {
                 const otherDocs = docsFor.filter((d) => d.kind === "document");
 
                 const dleft = prog === "planned" ? daysUntil(a.planned_start_date) : null;
-
                 const inEdit = editId === a.id;
 
                 return (
-                  <div
-                    key={a.id}
-                    className={[
-                      "rounded-2xl border px-4 py-3",
-                      prog === "planned" ? "border-blue-200 bg-blue-50/30" : "border-slate-200 bg-white",
-                    ].join(" ")}
-                  >
-                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div className="min-w-0 flex-1">
+                  <div key={a.id} className={["rounded-2xl border px-4 py-3", prog === "planned" ? "border-blue-200 bg-blue-50/30" : "border-slate-200 bg-white"].join(" ")}>
+                    {/* ====== KOMPAKT: 2 WIERSZE ====== */}
+                    <div className="flex items-start justify-between gap-3">
+                      {/* Left top row */}
+                      <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="min-w-0 truncate font-semibold text-slate-900">{a.type}</div>
 
@@ -844,6 +821,7 @@ export default function ActivitiesPage() {
                           {otherDocs.length > 0 ? <Badge tone="slate">📄 Dok: {otherDocs.length}</Badge> : null}
                         </div>
 
+                        {/* Left second row */}
                         <div className="mt-1 text-[13px] text-slate-600">
                           <span className="break-words">{a.organizer ? a.organizer : "Brak organizatora"}</span> •{" "}
                           <span className="font-medium text-slate-900">{a.year}</span>
@@ -854,231 +832,277 @@ export default function ActivitiesPage() {
                               <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
                             </>
                           ) : null}
+                          {prog === "planned" ? (
+                            <>
+                              {" "}
+                              • <span className="text-slate-500">Termin</span>{" "}
+                              <span className="font-medium text-slate-900">{formatYMD(a.planned_start_date)}</span>
+                            </>
+                          ) : null}
                         </div>
-
-                        {prog === "planned" ? (
-                          <div className="mt-1 text-[13px] text-slate-700">
-                            Termin: <span className="font-semibold">{formatYMD(a.planned_start_date)}</span>
-                          </div>
-                        ) : null}
 
                         {st.kind === "missing" ? (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {st.missing.map((m) => (
-                              <span
-                                key={m}
-                                className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-800"
-                              >
+                              <span key={m} className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
                                 {m}
                               </span>
                             ))}
                           </div>
                         ) : null}
-
-                        {/* FILES */}
-                        <div className="mt-2 space-y-1 text-[13px]">
-                          {/* legacy cert */}
-                          {a.certificate_path ? (
-                            <div className="flex flex-wrap items-center gap-2">
-                              {legacyCertUrl ? (
-                                <a href={legacyCertUrl} target="_blank" rel="noreferrer" className="font-medium text-blue-700 hover:underline">
-                                  Otwórz certyfikat
-                                </a>
-                              ) : (
-                                <span className="text-slate-500">Generuję link…</span>
-                              )}
-                              {a.certificate_name ? <span className="text-[11px] text-slate-500">{shortFileName(a.certificate_name)}</span> : null}
-                            </div>
-                          ) : null}
-
-                          {/* docs certs */}
-                          {certDocs.map((d) => (
-                            <div key={d.id} className="flex flex-wrap items-center gap-2">
-                              {docUrls[d.id] ? (
-                                <a href={docUrls[d.id]} target="_blank" rel="noreferrer" className="font-medium text-blue-700 hover:underline">
-                                  Otwórz certyfikat
-                                </a>
-                              ) : (
-                                <span className="text-slate-500">Generuję link…</span>
-                              )}
-                              <span className="text-[11px] text-slate-500">{shortFileName(d.name)}</span>
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() => removeDoc(d)}
-                                className="ml-auto rounded-xl border border-slate-300 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                              >
-                                Usuń
-                              </button>
-                            </div>
-                          ))}
-
-                          {/* other docs */}
-                          {otherDocs.length ? (
-                            <div className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-2">
-                              <div className="text-[11px] font-semibold text-slate-700">Dokumenty</div>
-                              <div className="mt-1 space-y-1">
-                                {otherDocs.map((d) => (
-                                  <div key={d.id} className="flex items-center gap-2">
-                                    {docUrls[d.id] ? (
-                                      <a href={docUrls[d.id]} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline">
-                                        {shortFileName(d.name) || "Otwórz dokument"}
-                                      </a>
-                                    ) : (
-                                      <span className="text-slate-500">Generuję link…</span>
-                                    )}
-                                    <button
-                                      type="button"
-                                      disabled={busy}
-                                      onClick={() => removeDoc(d)}
-                                      className="ml-auto rounded-xl border border-slate-300 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                                    >
-                                      Usuń
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ) : null}
-
-                          {prog === "planned" && !a.certificate_path && certDocs.length === 0 ? (
-                            <div className="text-[11px] text-slate-600">Certyfikat dodasz po ukończeniu (albo już teraz jako dokument).</div>
-                          ) : null}
-                        </div>
-
-                        {/* EDIT */}
-                        {inEdit ? (
-                          <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                            <div className="text-[12px] font-semibold text-slate-900">Edycja</div>
-
-                            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                              <div className="sm:col-span-2">
-                                <label className="text-[11px] font-medium text-slate-600">Rodzaj</label>
-                                <select
-                                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                                  value={editType}
-                                  onChange={(e) => setEditType(e.target.value as any)}
-                                  disabled={busy}
-                                >
-                                  {TYPES.map((t) => (
-                                    <option key={t} value={t}>
-                                      {t}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-
-                              <div>
-                                <label className="text-[11px] font-medium text-slate-600">Punkty</label>
-                                <input
-                                  type="number"
-                                  min={0}
-                                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                                  value={editPoints}
-                                  onChange={(e) => setEditPoints(Math.max(0, Number(e.target.value || 0)))}
-                                  disabled={busy}
-                                />
-                              </div>
-
-                              <div>
-                                <label className="text-[11px] font-medium text-slate-600">Rok</label>
-                                <input
-                                  type="number"
-                                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                                  value={editYear}
-                                  onChange={(e) => setEditYear(Number(e.target.value || new Date().getFullYear()))}
-                                  disabled={busy}
-                                />
-                              </div>
-
-                              <div className="sm:col-span-2">
-                                <label className="text-[11px] font-medium text-slate-600">Organizator</label>
-                                <input
-                                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                                  value={editOrganizer}
-                                  onChange={(e) => setEditOrganizer(e.target.value)}
-                                  placeholder="np. OIL / towarzystwo"
-                                  disabled={busy}
-                                />
-                              </div>
-
-                              {prog === "planned" ? (
-                                <div className="sm:col-span-2">
-                                  <label className="text-[11px] font-medium text-slate-600">Termin szkolenia</label>
-                                  <input
-                                    type="date"
-                                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                                    value={editPlannedDate}
-                                    onChange={(e) => setEditPlannedDate(e.target.value)}
-                                    disabled={busy}
-                                  />
-                                </div>
-                              ) : null}
-                            </div>
-
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                onClick={() => saveEdit(a.id)}
-                                disabled={busy}
-                                className="rounded-xl bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-                              >
-                                {busy ? "Zapisuję…" : "Zapisz"}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={cancelEdit}
-                                disabled={busy}
-                                className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                              >
-                                Anuluj
-                              </button>
-                            </div>
-                          </div>
-                        ) : null}
                       </div>
 
-                      {/* RIGHT actions */}
+                      {/* Right side compact */}
                       <div className="shrink-0">
-                        <div className="flex flex-row items-center gap-2 md:flex-col md:items-end">
+                        <div className="flex items-center gap-2">
                           <div className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm">
                             <span className="text-slate-600">Pkt</span>{" "}
                             <span className="font-semibold text-slate-900">{a.points}</span>
                           </div>
 
-                          <div className="flex flex-wrap justify-end gap-2">
+                          <button
+                            onClick={() => (inEdit ? cancelEdit() : startEdit(a))}
+                            className="rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                            type="button"
+                            disabled={busy}
+                          >
+                            Edytuj
+                          </button>
+
+                          {prog === "planned" ? (
                             <button
-                              onClick={() => (inEdit ? cancelEdit() : startEdit(a))}
-                              className="rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                              onClick={() => markAsDone(a.id)}
+                              className="rounded-xl bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
                               type="button"
                               disabled={busy}
                             >
-                              Edytuj
+                              Ukończ
                             </button>
+                          ) : null}
 
-                            {prog === "planned" ? (
-                              <button
-                                onClick={() => markAsDone(a.id)}
-                                className="rounded-xl bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-                                type="button"
-                                disabled={busy}
-                              >
-                                Ukończ
-                              </button>
-                            ) : null}
-
-                            <button
-                              onClick={() => removeActivity(a.id, a.certificate_path ?? null)}
-                              className="rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                              type="button"
-                              disabled={busy}
-                            >
-                              Usuń
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => removeActivity(a.id, a.certificate_path ?? null)}
+                            className="rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                            type="button"
+                            disabled={busy}
+                          >
+                            Usuń
+                          </button>
                         </div>
                       </div>
                     </div>
+
+                    {/* FILES (zwięźle) */}
+                    <div className="mt-2 space-y-1 text-[13px]">
+                      {a.certificate_path ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          {legacyCertUrl ? (
+                            <a href={legacyCertUrl} target="_blank" rel="noreferrer" className="font-medium text-blue-700 hover:underline">
+                              Otwórz certyfikat
+                            </a>
+                          ) : (
+                            <span className="text-slate-500">Generuję link…</span>
+                          )}
+                          {a.certificate_name ? <span className="text-[11px] text-slate-500">{shortFileName(a.certificate_name)}</span> : null}
+                        </div>
+                      ) : null}
+
+                      {certDocs.map((d) => (
+                        <div key={d.id} className="flex flex-wrap items-center gap-2">
+                          {docUrls[d.id] ? (
+                            <a href={docUrls[d.id]} target="_blank" rel="noreferrer" className="font-medium text-blue-700 hover:underline">
+                              Otwórz certyfikat
+                            </a>
+                          ) : (
+                            <span className="text-slate-500">Generuję link…</span>
+                          )}
+                          <span className="text-[11px] text-slate-500">{shortFileName(d.name)}</span>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => removeDoc(d)}
+                            className="ml-auto rounded-xl border border-slate-300 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                          >
+                            Usuń
+                          </button>
+                        </div>
+                      ))}
+
+                      {otherDocs.length ? (
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-2">
+                          <div className="text-[11px] font-semibold text-slate-700">Dokumenty</div>
+                          <div className="mt-1 space-y-1">
+                            {otherDocs.map((d) => (
+                              <div key={d.id} className="flex items-center gap-2">
+                                {docUrls[d.id] ? (
+                                  <a href={docUrls[d.id]} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline">
+                                    {shortFileName(d.name) || "Otwórz dokument"}
+                                  </a>
+                                ) : (
+                                  <span className="text-slate-500">Generuję link…</span>
+                                )}
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => removeDoc(d)}
+                                  className="ml-auto rounded-xl border border-slate-300 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                                >
+                                  Usuń
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {/* EDIT (z uploadem plików) */}
+                    {inEdit ? (
+                      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="text-[12px] font-semibold text-slate-900">Edycja</div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveEdit(a.id)}
+                              disabled={busy}
+                              className="rounded-xl bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                            >
+                              {busy ? "Zapisuję…" : "Zapisz"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelEdit}
+                              disabled={busy}
+                              className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                            >
+                              Anuluj
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                          <div className="sm:col-span-2">
+                            <label className="text-[11px] font-medium text-slate-600">Rodzaj</label>
+                            <select
+                              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                              value={editType}
+                              onChange={(e) => setEditType(e.target.value as any)}
+                              disabled={busy}
+                            >
+                              {TYPES.map((t) => (
+                                <option key={t} value={t}>
+                                  {t}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-medium text-slate-600">Punkty</label>
+                            <input
+                              type="number"
+                              min={0}
+                              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                              value={editPoints}
+                              onChange={(e) => setEditPoints(Math.max(0, Number(e.target.value || 0)))}
+                              disabled={busy}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-medium text-slate-600">Rok</label>
+                            <input
+                              type="number"
+                              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                              value={editYear}
+                              onChange={(e) => setEditYear(Number(e.target.value || new Date().getFullYear()))}
+                              disabled={busy}
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="text-[11px] font-medium text-slate-600">Organizator</label>
+                            <input
+                              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                              value={editOrganizer}
+                              onChange={(e) => setEditOrganizer(e.target.value)}
+                              placeholder="np. OIL / towarzystwo"
+                              disabled={busy}
+                            />
+                          </div>
+
+                          {prog === "planned" ? (
+                            <div className="sm:col-span-2">
+                              <label className="text-[11px] font-medium text-slate-600">Termin szkolenia</label>
+                              <input
+                                type="date"
+                                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                                value={editPlannedDate}
+                                onChange={(e) => setEditPlannedDate(e.target.value)}
+                                disabled={busy}
+                              />
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {/* Upload file inside edit */}
+                        <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
+                          <div className="text-[12px] font-semibold text-slate-900">Pliki do tego wpisu</div>
+                          <div className="mt-1 text-[11px] text-slate-600">Dodaj certyfikat lub dokument bez wychodzenia z edycji.</div>
+
+                          <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                            <div className="sm:col-span-1">
+                              <label className="text-[11px] font-medium text-slate-600">Typ pliku</label>
+                              <select
+                                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                                value={editUploadKind}
+                                onChange={(e) => setEditUploadKind(e.target.value as DocKind)}
+                                disabled={busy}
+                              >
+                                <option value="certificate">Certyfikat</option>
+                                <option value="document">Dokument</option>
+                              </select>
+                            </div>
+
+                            <div className="sm:col-span-2">
+                              <label className="text-[11px] font-medium text-slate-600">Plik</label>
+                              <input
+                                key={editUploadKey}
+                                type="file"
+                                accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                                disabled={busy}
+                                onChange={(e) => {
+                                  clearMessages();
+                                  const f = e.target.files?.[0] || null;
+                                  if (!f) return setEditUploadFile(null);
+                                  const ve = validateFile(f);
+                                  if (ve) {
+                                    setErr(ve);
+                                    setEditUploadFile(null);
+                                    return;
+                                  }
+                                  setEditUploadFile(f);
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-2 flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => uploadInsideEdit(a.id)}
+                              disabled={busy || !editUploadFile}
+                              className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                            >
+                              {busy ? "Dodaję…" : "Dodaj plik"}
+                            </button>
+                            <div className="text-[11px] text-slate-500">Limit {MAX_MB} MB. PDF/JPG/PNG/WEBP.</div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
@@ -1096,12 +1120,7 @@ export default function ActivitiesPage() {
           <div className="mt-3 space-y-2">
             <div>
               <label className="text-[11px] font-medium text-slate-600">Rodzaj</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={type}
-                onChange={(e) => setType(e.target.value as any)}
-                disabled={busy}
-              >
+              <select className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={type} onChange={(e) => setType(e.target.value as any)} disabled={busy}>
                 {TYPES.map((t) => (
                   <option key={t} value={t}>
                     {t}
@@ -1113,36 +1132,17 @@ export default function ActivitiesPage() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[11px] font-medium text-slate-600">Punkty</label>
-                <input
-                  type="number"
-                  min={0}
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                  value={points}
-                  onChange={(e) => setPoints(Math.max(0, Number(e.target.value || 0)))}
-                  disabled={busy}
-                />
+                <input type="number" min={0} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={points} onChange={(e) => setPoints(Math.max(0, Number(e.target.value || 0)))} disabled={busy} />
               </div>
               <div>
                 <label className="text-[11px] font-medium text-slate-600">Rok</label>
-                <input
-                  type="number"
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                  value={year}
-                  onChange={(e) => setYear(Number(e.target.value || new Date().getFullYear()))}
-                  disabled={busy}
-                />
+                <input type="number" className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={year} onChange={(e) => setYear(Number(e.target.value || new Date().getFullYear()))} disabled={busy} />
               </div>
             </div>
 
             <div>
               <label className="text-[11px] font-medium text-slate-600">Organizator</label>
-              <input
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={organizer}
-                onChange={(e) => setOrganizer(e.target.value)}
-                placeholder="np. OIL / towarzystwo"
-                disabled={busy}
-              />
+              <input className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={organizer} onChange={(e) => setOrganizer(e.target.value)} placeholder="np. OIL / towarzystwo" disabled={busy} />
               <div className="mt-1 text-[11px] text-slate-500">Ważne w raportach.</div>
             </div>
 
@@ -1170,30 +1170,18 @@ export default function ActivitiesPage() {
               <div className="mt-1 text-[11px] text-slate-500">Limit: {MAX_MB} MB. PDF/JPG/PNG/WEBP.</div>
             </div>
 
-            <button
-              onClick={addActivity}
-              className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-              type="button"
-              disabled={busy}
-            >
+            <button onClick={addActivity} className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60" type="button" disabled={busy}>
               {busy ? "Zapisuję…" : "+ Zapisz aktywność"}
             </button>
           </div>
 
-          {/* Attach file */}
+          {/* Attach file global */}
           <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
             <div className="text-sm font-semibold text-slate-900">Dodaj plik do wpisu</div>
-            <div className="mt-1 text-[11px] text-slate-600">
-              Możesz dodać <span className="font-semibold">wiele</span> plików: certyfikaty i dokumenty (np. agenda).
-            </div>
+            <div className="mt-1 text-[11px] text-slate-600">Możesz dodać wiele plików: certyfikaty i dokumenty (np. agenda).</div>
 
             <div className="mt-2 space-y-2">
-              <select
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={attachToId ?? ""}
-                onChange={(e) => setAttachToId(e.target.value || null)}
-                disabled={busy}
-              >
+              <select className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={attachToId ?? ""} onChange={(e) => setAttachToId(e.target.value || null)} disabled={busy}>
                 <option value="">Wybierz aktywność…</option>
                 {items.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -1203,12 +1191,7 @@ export default function ActivitiesPage() {
                 ))}
               </select>
 
-              <select
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={attachKind}
-                onChange={(e) => setAttachKind(e.target.value as DocKind)}
-                disabled={busy}
-              >
+              <select className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={attachKind} onChange={(e) => setAttachKind(e.target.value as DocKind)} disabled={busy}>
                 <option value="certificate">Certyfikat</option>
                 <option value="document">Dokument</option>
               </select>
