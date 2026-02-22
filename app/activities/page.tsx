@@ -35,7 +35,7 @@ type ActivityDocRow = {
   id: string;
   user_id: string;
   activity_id: string;
-  kind: DocKind;
+  kind: string; // <-- celowo string, żeby UI było odporne na różne wartości w DB
   path: string;
   name: string | null;
   mime: string | null;
@@ -118,16 +118,24 @@ function daysUntil(ymd: string | null | undefined) {
 
 type StatusKind = "complete" | "missing";
 
+// Uwaga: traktujemy wszystko co nie jest "certificate" jako dokument (odporność na dane z DB)
+function splitDocs(docsForActivity: ActivityDocRow[]) {
+  const certDocs = docsForActivity.filter((d) => String(d.kind).toLowerCase() === "certificate");
+  const otherDocs = docsForActivity.filter((d) => String(d.kind).toLowerCase() !== "certificate");
+  return { certDocs, otherDocs };
+}
+
 function getRowStatus(a: ActivityRow, docsForActivity: ActivityDocRow[]): { kind: StatusKind; missing: string[] } {
   const missing: string[] = [];
   const orgOk = Boolean(a.organizer && String(a.organizer).trim());
   if (!orgOk) missing.push("Brak organizatora");
 
   const prog = normalizeStatus(a.status);
+
   if (prog === "done") {
-    const hasLegacy = Boolean(a.certificate_path);
-    const hasDocCert = docsForActivity.some((d) => d.kind === "certificate");
-    if (!hasLegacy && !hasDocCert) missing.push("Brak certyfikatu");
+    const { certDocs } = splitDocs(docsForActivity);
+    const hasCert = Boolean(a.certificate_path) || certDocs.length > 0;
+    if (!hasCert) missing.push("Brak certyfikatu");
   }
 
   return { kind: missing.length === 0 ? "complete" : "missing", missing };
@@ -350,7 +358,7 @@ export default function ActivitiesPage() {
     const { error: insErr } = await supabase.from("activity_documents").insert({
       user_id: user.id,
       activity_id: activityId,
-      kind,
+      kind, // "certificate" | "document"
       path,
       name: safeName,
       mime,
@@ -475,7 +483,12 @@ export default function ActivitiesPage() {
       const { error: storErr } = await supabase.storage.from(BUCKET).remove([doc.path]);
       if (storErr) return setErr(storErr.message);
 
-      const { error: delErr } = await supabase.from("activity_documents").delete().eq("id", doc.id).eq("user_id", user.id);
+      const { error: delErr } = await supabase
+        .from("activity_documents")
+        .delete()
+        .eq("id", doc.id)
+        .eq("user_id", user.id);
+
       if (delErr) return setErr(delErr.message);
 
       setInfo("Usunięto plik ✅");
@@ -602,7 +615,8 @@ export default function ActivitiesPage() {
       if (filterProgress !== "all" && prog !== filterProgress) return false;
 
       const docsFor = docsByActivity[a.id] ?? [];
-      const hasCert = Boolean(a.certificate_path) || docsFor.some((d) => d.kind === "certificate");
+      const { certDocs } = splitDocs(docsFor);
+      const hasCert = Boolean(a.certificate_path) || certDocs.length > 0;
 
       if (filterCert === "yes" && !hasCert) return false;
       if (filterCert === "no" && hasCert) return false;
@@ -690,9 +704,10 @@ export default function ActivitiesPage() {
             </button>
           </div>
 
-          {/* Filters */}
-          <div className="mt-3 grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-4">
-            <div className="sm:col-span-2">
+          {/* Filters — WYMUSZONE 2 WIERSZE (12 kolumn) */}
+          <div className="mt-3 grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-12">
+            {/* ROW 1 */}
+            <div className="sm:col-span-6">
               <label className="text-[11px] font-medium text-slate-600">Szukaj</label>
               <input
                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
@@ -702,9 +717,13 @@ export default function ActivitiesPage() {
               />
             </div>
 
-            <div>
+            <div className="sm:col-span-3">
               <label className="text-[11px] font-medium text-slate-600">Typ</label>
-              <select className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
                 <option>Wszystkie</option>
                 {TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -714,9 +733,13 @@ export default function ActivitiesPage() {
               </select>
             </div>
 
-            <div>
+            <div className="sm:col-span-3">
               <label className="text-[11px] font-medium text-slate-600">Rok</label>
-              <select className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+              >
                 <option>Wszystkie</option>
                 {years.map((y) => (
                   <option key={y} value={String(y)}>
@@ -726,34 +749,47 @@ export default function ActivitiesPage() {
               </select>
             </div>
 
-            <div>
+            {/* ROW 2 */}
+            <div className="sm:col-span-3">
               <label className="text-[11px] font-medium text-slate-600">Realizacja</label>
-              <select className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={filterProgress} onChange={(e) => setFilterProgress(e.target.value as any)}>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterProgress}
+                onChange={(e) => setFilterProgress(e.target.value as any)}
+              >
                 <option value="all">Wszystkie</option>
                 <option value="planned">Zaplanowane</option>
                 <option value="done">Ukończone</option>
               </select>
             </div>
 
-            <div>
+            <div className="sm:col-span-3">
               <label className="text-[11px] font-medium text-slate-600">Certyfikat</label>
-              <select className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={filterCert} onChange={(e) => setFilterCert(e.target.value as any)}>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterCert}
+                onChange={(e) => setFilterCert(e.target.value as any)}
+              >
                 <option value="all">Wszystkie</option>
                 <option value="yes">Tylko z</option>
                 <option value="no">Tylko bez</option>
               </select>
             </div>
 
-            <div>
+            <div className="sm:col-span-3">
               <label className="text-[11px] font-medium text-slate-600">Kompletność</label>
-              <select className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)}>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as any)}
+              >
                 <option value="all">Wszystkie</option>
                 <option value="complete">OK</option>
                 <option value="missing">Braki</option>
               </select>
             </div>
 
-            <div className="sm:col-span-2 flex items-end gap-2">
+            <div className="sm:col-span-3 flex items-end gap-2">
               <button
                 type="button"
                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
@@ -786,20 +822,24 @@ export default function ActivitiesPage() {
               {filtered.map((a) => {
                 const prog = normalizeStatus(a.status);
                 const docsFor = docsByActivity[a.id] ?? [];
+                const { certDocs, otherDocs } = splitDocs(docsFor);
                 const st = getRowStatus(a, docsFor);
 
                 const legacyCertUrl = a.certificate_path ? legacyCertUrls[a.id] : null;
-                const certDocs = docsFor.filter((d) => d.kind === "certificate");
-                const otherDocs = docsFor.filter((d) => d.kind === "document");
-
                 const dleft = prog === "planned" ? daysUntil(a.planned_start_date) : null;
                 const inEdit = editId === a.id;
 
+                const attachCount = docsFor.length + (a.certificate_path ? 1 : 0);
+
                 return (
-                  <div key={a.id} className={["rounded-2xl border px-4 py-3", prog === "planned" ? "border-blue-200 bg-blue-50/30" : "border-slate-200 bg-white"].join(" ")}>
-                    {/* ====== KOMPAKT: 2 WIERSZE ====== */}
+                  <div
+                    key={a.id}
+                    className={[
+                      "rounded-2xl border px-4 py-3",
+                      prog === "planned" ? "border-blue-200 bg-blue-50/30" : "border-slate-200 bg-white",
+                    ].join(" ")}
+                  >
                     <div className="flex items-start justify-between gap-3">
-                      {/* Left top row */}
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="min-w-0 truncate font-semibold text-slate-900">{a.type}</div>
@@ -817,11 +857,9 @@ export default function ActivitiesPage() {
                             )
                           ) : null}
 
-                          {(Boolean(a.certificate_path) || certDocs.length > 0) ? <Badge tone="slate">📎 Cert</Badge> : null}
-                          {otherDocs.length > 0 ? <Badge tone="slate">📄 Dok: {otherDocs.length}</Badge> : null}
+                          {attachCount > 0 ? <Badge tone="slate">📎 Załączniki: {attachCount}</Badge> : null}
                         </div>
 
-                        {/* Left second row */}
                         <div className="mt-1 text-[13px] text-slate-600">
                           <span className="break-words">{a.organizer ? a.organizer : "Brak organizatora"}</span> •{" "}
                           <span className="font-medium text-slate-900">{a.year}</span>
@@ -844,7 +882,10 @@ export default function ActivitiesPage() {
                         {st.kind === "missing" ? (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {st.missing.map((m) => (
-                              <span key={m} className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
+                              <span
+                                key={m}
+                                className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-800"
+                              >
                                 {m}
                               </span>
                             ))}
@@ -852,7 +893,6 @@ export default function ActivitiesPage() {
                         ) : null}
                       </div>
 
-                      {/* Right side compact */}
                       <div className="shrink-0">
                         <div className="flex items-center gap-2">
                           <div className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm">
@@ -892,7 +932,7 @@ export default function ActivitiesPage() {
                       </div>
                     </div>
 
-                    {/* FILES (zwięźle) */}
+                    {/* FILES */}
                     <div className="mt-2 space-y-1 text-[13px]">
                       {a.certificate_path ? (
                         <div className="flex flex-wrap items-center gap-2">
@@ -928,6 +968,7 @@ export default function ActivitiesPage() {
                         </div>
                       ))}
 
+                      {/* Dokumenty — zawsze pokaż sekcję jeśli są jakiekolwiek "inne" załączniki */}
                       {otherDocs.length ? (
                         <div className="rounded-xl border border-slate-200 bg-slate-50 p-2">
                           <div className="text-[11px] font-semibold text-slate-700">Dokumenty</div>
@@ -956,7 +997,7 @@ export default function ActivitiesPage() {
                       ) : null}
                     </div>
 
-                    {/* EDIT (z uploadem plików) */}
+                    {/* EDIT */}
                     {inEdit ? (
                       <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1046,14 +1087,13 @@ export default function ActivitiesPage() {
                           ) : null}
                         </div>
 
-                        {/* Upload file inside edit */}
+                        {/* Upload inside edit */}
                         <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
-                          <div className="text-[12px] font-semibold text-slate-900">Pliki do tego wpisu</div>
-                          <div className="mt-1 text-[11px] text-slate-600">Dodaj certyfikat lub dokument bez wychodzenia z edycji.</div>
+                          <div className="text-[12px] font-semibold text-slate-900">Dodaj załącznik</div>
 
                           <div className="mt-2 grid gap-2 sm:grid-cols-3">
                             <div className="sm:col-span-1">
-                              <label className="text-[11px] font-medium text-slate-600">Typ pliku</label>
+                              <label className="text-[11px] font-medium text-slate-600">Typ</label>
                               <select
                                 className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
                                 value={editUploadKind}
@@ -1096,7 +1136,7 @@ export default function ActivitiesPage() {
                               disabled={busy || !editUploadFile}
                               className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                             >
-                              {busy ? "Dodaję…" : "Dodaj plik"}
+                              {busy ? "Dodaję…" : "Dodaj"}
                             </button>
                             <div className="text-[11px] text-slate-500">Limit {MAX_MB} MB. PDF/JPG/PNG/WEBP.</div>
                           </div>
@@ -1120,7 +1160,12 @@ export default function ActivitiesPage() {
           <div className="mt-3 space-y-2">
             <div>
               <label className="text-[11px] font-medium text-slate-600">Rodzaj</label>
-              <select className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={type} onChange={(e) => setType(e.target.value as any)} disabled={busy}>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={type}
+                onChange={(e) => setType(e.target.value as any)}
+                disabled={busy}
+              >
                 {TYPES.map((t) => (
                   <option key={t} value={t}>
                     {t}
@@ -1132,17 +1177,36 @@ export default function ActivitiesPage() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[11px] font-medium text-slate-600">Punkty</label>
-                <input type="number" min={0} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={points} onChange={(e) => setPoints(Math.max(0, Number(e.target.value || 0)))} disabled={busy} />
+                <input
+                  type="number"
+                  min={0}
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                  value={points}
+                  onChange={(e) => setPoints(Math.max(0, Number(e.target.value || 0)))}
+                  disabled={busy}
+                />
               </div>
               <div>
                 <label className="text-[11px] font-medium text-slate-600">Rok</label>
-                <input type="number" className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={year} onChange={(e) => setYear(Number(e.target.value || new Date().getFullYear()))} disabled={busy} />
+                <input
+                  type="number"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                  value={year}
+                  onChange={(e) => setYear(Number(e.target.value || new Date().getFullYear()))}
+                  disabled={busy}
+                />
               </div>
             </div>
 
             <div>
               <label className="text-[11px] font-medium text-slate-600">Organizator</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={organizer} onChange={(e) => setOrganizer(e.target.value)} placeholder="np. OIL / towarzystwo" disabled={busy} />
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={organizer}
+                onChange={(e) => setOrganizer(e.target.value)}
+                placeholder="np. OIL / towarzystwo"
+                disabled={busy}
+              />
               <div className="mt-1 text-[11px] text-slate-500">Ważne w raportach.</div>
             </div>
 
@@ -1170,7 +1234,12 @@ export default function ActivitiesPage() {
               <div className="mt-1 text-[11px] text-slate-500">Limit: {MAX_MB} MB. PDF/JPG/PNG/WEBP.</div>
             </div>
 
-            <button onClick={addActivity} className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60" type="button" disabled={busy}>
+            <button
+              onClick={addActivity}
+              className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+              type="button"
+              disabled={busy}
+            >
               {busy ? "Zapisuję…" : "+ Zapisz aktywność"}
             </button>
           </div>
@@ -1178,10 +1247,15 @@ export default function ActivitiesPage() {
           {/* Attach file global */}
           <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
             <div className="text-sm font-semibold text-slate-900">Dodaj plik do wpisu</div>
-            <div className="mt-1 text-[11px] text-slate-600">Możesz dodać wiele plików: certyfikaty i dokumenty (np. agenda).</div>
+            <div className="mt-1 text-[11px] text-slate-600">Możesz dodać wiele plików: certyfikaty i dokumenty.</div>
 
             <div className="mt-2 space-y-2">
-              <select className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={attachToId ?? ""} onChange={(e) => setAttachToId(e.target.value || null)} disabled={busy}>
+              <select
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={attachToId ?? ""}
+                onChange={(e) => setAttachToId(e.target.value || null)}
+                disabled={busy}
+              >
                 <option value="">Wybierz aktywność…</option>
                 {items.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -1191,7 +1265,12 @@ export default function ActivitiesPage() {
                 ))}
               </select>
 
-              <select className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={attachKind} onChange={(e) => setAttachKind(e.target.value as DocKind)} disabled={busy}>
+              <select
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={attachKind}
+                onChange={(e) => setAttachKind(e.target.value as DocKind)}
+                disabled={busy}
+              >
                 <option value="certificate">Certyfikat</option>
                 <option value="document">Dokument</option>
               </select>
@@ -1228,7 +1307,7 @@ export default function ActivitiesPage() {
           </div>
 
           <div className="mt-3 text-[11px] text-slate-500">
-            Jeśli planujesz OCR: rozdzielenie na <span className="font-medium">Dokumenty</span> i <span className="font-medium">Certyfikat</span> jest najlepsze.
+            OCR: rozdzielenie na <span className="font-medium">Dokumenty</span> i <span className="font-medium">Certyfikat</span> jest najlepsze.
           </div>
         </section>
       </div>
