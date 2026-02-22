@@ -99,6 +99,53 @@ export type Database = {
         ];
       };
 
+      // ✅ TABELA: activity_documents (wiele plików do jednej aktywności)
+      activity_documents: {
+        Row: {
+          id: string;
+          user_id: string;
+          activity_id: string;
+
+          // rodzaj pliku
+          kind: "certificate" | "document";
+
+          path: string;
+          name: string | null;
+          mime: string | null;
+          size: number | null; // bigint -> number
+          uploaded_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          activity_id: string;
+
+          kind: "certificate" | "document";
+
+          path: string;
+          name?: string | null;
+          mime?: string | null;
+          size?: number | null;
+          uploaded_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          activity_id?: string;
+
+          kind?: "certificate" | "document";
+
+          path?: string;
+          name?: string | null;
+          mime?: string | null;
+          size?: number | null;
+          uploaded_at?: string;
+        };
+
+        // ✅ Bezpiecznie zostawiamy puste, żeby nie wywaliło kompilacji jeśli nazwy FK są inne w DB
+        Relationships: [];
+      };
+
       // ✅ TABELA: trainings
       trainings: {
         Row: {
