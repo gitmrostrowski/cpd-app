@@ -285,6 +285,10 @@ function ValuePill({ children }: { children: React.ReactNode }) {
   );
 }
 
+const FIELD =
+  "mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200";
+const FIELD_HINT = "mt-1 text-[11px] text-slate-500";
+
 export default function CalculatorClient() {
   const { user, loading: authLoading } = useAuth();
 
@@ -592,7 +596,7 @@ export default function CalculatorClient() {
   return (
     <div className="space-y-6">
       {/* USTAWIENIA */}
-      <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-4 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
+      <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-6 md:p-7 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900">
@@ -638,18 +642,19 @@ export default function CalculatorClient() {
           </button>
         </div>
 
-        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div>
-            <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-4">
+          <div className="min-w-0">
+            <label className="text-xs font-semibold text-slate-900">
               <span className="inline-flex items-center gap-2">
-                {/* ✅ jedna ikonka (główka) */}
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                   🧑‍⚕️
                 </span>
                 Zawód
               </span>
-              <ValuePill>{profession}</ValuePill>
             </label>
+            <div className="mt-1">
+              <ValuePill>{profession}</ValuePill>
+            </div>
 
             <select
               value={profession}
@@ -672,7 +677,7 @@ export default function CalculatorClient() {
                   profession_other: isOtherProfession(v) ? professionOther : null,
                 });
               }}
-              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className={FIELD}
             >
               {PROFESSION_OPTIONS.map((p) => (
                 <option key={p} value={p}>
@@ -682,42 +687,46 @@ export default function CalculatorClient() {
             </select>
           </div>
 
-          <div>
-            <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+          <div className="min-w-0">
+            <label className="text-xs font-semibold text-slate-900">
               <span className="inline-flex items-center gap-2">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                   ⏱️
                 </span>
                 Tryb okresu
               </span>
-              <ValuePill>{periodMode === "preset" ? "Preset" : "Indywidualny"}</ValuePill>
             </label>
+            <div className="mt-1">
+              <ValuePill>{periodMode === "preset" ? "Preset" : "Indywidualny"}</ValuePill>
+            </div>
 
             <select
               value={periodMode}
               onChange={(e) => setPeriodMode(e.target.value as "preset" | "custom")}
-              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className={FIELD}
             >
               <option value="preset">Preset (najczęstszy)</option>
               <option value="custom">Indywidualny</option>
             </select>
 
-            <p className="mt-1 text-[11px] text-slate-500">
+            <p className={FIELD_HINT}>
               Jeśli masz inny zakres (np. start od uzyskania PWZ), wybierz „Indywidualny”.
             </p>
           </div>
 
           {periodMode === "preset" ? (
-            <div>
-              <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+            <div className="min-w-0">
+              <label className="text-xs font-semibold text-slate-900">
                 <span className="inline-flex items-center gap-2">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                     🗓️
                   </span>
                   Okres (preset)
                 </span>
-                <ValuePill>{periodLabel}</ValuePill>
               </label>
+              <div className="mt-1">
+                <ValuePill>{periodLabel}</ValuePill>
+              </div>
 
               <select
                 value={periodLabel}
@@ -727,7 +736,7 @@ export default function CalculatorClient() {
                   setPeriodEnd(b);
                   await saveProfilePatch({ period_start: a, period_end: b });
                 }}
-                className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className={FIELD}
               >
                 <option value="2019-2022">2019-2022</option>
                 <option value="2023-2026">2023-2026</option>
@@ -735,20 +744,22 @@ export default function CalculatorClient() {
               </select>
             </div>
           ) : (
-            <div>
-              <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+            <div className="min-w-0">
+              <label className="text-xs font-semibold text-slate-900">
                 <span className="inline-flex items-center gap-2">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                     📅
                   </span>
                   Okres (indywidualny)
                 </span>
+              </label>
+              <div className="mt-1">
                 <ValuePill>
                   {periodStart}-{periodEnd}
                 </ValuePill>
-              </label>
+              </div>
 
-              <div className="mt-1 grid grid-cols-2 gap-2">
+              <div className="mt-2 grid grid-cols-2 gap-2">
                 <input
                   value={periodStart}
                   onChange={(e) => setPeriodStart(Number(e.target.value || 0))}
@@ -760,7 +771,7 @@ export default function CalculatorClient() {
                     });
                   }}
                   type="number"
-                  className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className={FIELD}
                   placeholder="Start"
                 />
                 <input
@@ -772,23 +783,25 @@ export default function CalculatorClient() {
                     await saveProfilePatch({ period_end: pe });
                   }}
                   type="number"
-                  className="w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className={FIELD}
                   placeholder="Koniec"
                 />
               </div>
             </div>
           )}
 
-          <div>
-            <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+          <div className="min-w-0">
+            <label className="text-xs font-semibold text-slate-900">
               <span className="inline-flex items-center gap-2">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                   🎯
                 </span>
                 Wymagane punkty
               </span>
-              <ValuePill>{requiredPoints}</ValuePill>
             </label>
+            <div className="mt-1">
+              <ValuePill>{requiredPoints}</ValuePill>
+            </div>
 
             <input
               value={requiredPoints}
@@ -798,25 +811,27 @@ export default function CalculatorClient() {
               }}
               type="number"
               min={0}
-              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className={FIELD}
             />
 
-            <p className="mt-1 text-[11px] text-slate-500">
+            <p className={FIELD_HINT}>
               Domyślnie: {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? requiredPoints}
             </p>
           </div>
 
           {otherRequired ? (
             <div className="md:col-span-2 xl:col-span-4">
-              <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+              <label className="text-xs font-semibold text-slate-900">
                 <span className="inline-flex items-center gap-2">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                     ✍️
                   </span>
                   Jaki zawód?
                 </span>
-                <ValuePill>{normalizeOtherProfession(professionOther) || "—"}</ValuePill>
               </label>
+              <div className="mt-1">
+                <ValuePill>{normalizeOtherProfession(professionOther) || "—"}</ValuePill>
+              </div>
 
               <input
                 value={professionOther}
@@ -827,7 +842,7 @@ export default function CalculatorClient() {
                   await saveProfilePatch({ profession_other: norm || null });
                 }}
                 placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
-                className={`mt-1 w-full rounded-2xl border bg-white/80 px-3 py-2 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
+                className={`mt-2 h-11 w-full rounded-2xl border bg-white/80 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
                   otherValid
                     ? "border-slate-200/70 focus:ring-blue-200"
                     : "border-rose-200/70 focus:ring-rose-200"
@@ -898,7 +913,7 @@ export default function CalculatorClient() {
           </div>
         </div>
 
-        {(planInfo || planErr) ? (
+        {planInfo || planErr ? (
           <div className="mt-4 rounded-2xl border bg-white/70 p-3 text-sm">
             {planInfo ? <div className="text-emerald-700 font-semibold">{planInfo}</div> : null}
             {planErr ? <div className="text-rose-700 font-semibold">{planErr}</div> : null}
