@@ -174,6 +174,19 @@ function formatYMD(d: string | null | undefined) {
   return `${day}.${m}.${y}`;
 }
 
+// ✅ okres z PWZ (pwz_issue_date)
+function getPeriodFromPwzIssueDate(prof: Profession, pwzIssueDate: string | null | undefined) {
+  if (!pwzIssueDate) return null;
+  const y = Number(String(pwzIssueDate).slice(0, 4));
+  if (!y || Number.isNaN(y)) return null;
+
+  const months = RULES_BY_PROFESSION[prof]?.periodMonths ?? 48;
+  const years = Math.max(1, Math.round(months / 12)); // 48=>4, 60=>5
+  const start = y;
+  const end = y + (years - 1);
+  return { start, end };
+}
+
 function getRowMissing(a: ActivityRow) {
   const missing: string[] = [];
   const orgOk = Boolean(a.organizer && String(a.organizer).trim());
@@ -197,52 +210,12 @@ function suggestPlannedPoints(rule: { mode: "per_period" | "per_year" | "per_ite
   return Math.max(1, Math.min(rem, step));
 }
 
-// ✅ okres z PWZ (pwz_issue_date)
-function getPeriodFromPwzIssueDate(prof: Profession, pwzIssueDate: string | null | undefined) {
-  if (!pwzIssueDate) return null;
-  const y = Number(String(pwzIssueDate).slice(0, 4));
-  if (!y || Number.isNaN(y)) return null;
-
-  const months = RULES_BY_PROFESSION[prof]?.periodMonths ?? 48;
-  const years = Math.max(1, Math.round(months / 12)); // 48=>4, 60=>5
-  const start = y;
-  const end = y + (years - 1);
-  return { start, end };
-}
-
-/** ✅ mini SVG icon (bez zewn. paczek, bez emoji) */
-function Icon({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+/** ✅ niebieska ikonka jak przyciski */
+function IconBlue({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex h-8 w-8 items-center justify-center rounded-2xl border border-slate-200 bg-white/80 text-slate-700">
+    <span className="inline-flex h-8 w-8 items-center justify-center rounded-2xl border border-blue-200 bg-blue-50 text-blue-700">
       {children}
     </span>
-  );
-}
-
-function Svg({
-  d,
-  filled,
-}: {
-  d: string;
-  filled?: boolean;
-}) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill={filled ? "currentColor" : "none"}
-      stroke="currentColor"
-      strokeWidth={filled ? 0 : 2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d={d} />
-    </svg>
   );
 }
 
@@ -322,7 +295,8 @@ export default function CalculatorClient() {
           const po = normalizeOtherProfession((p as any).profession_other);
           setProfessionOther(po);
 
-          const derived = getPeriodFromPwzIssueDate(prof, (p as any).pwz_issue_date);
+          const pwzIssue = (p as any).pwz_issue_date as string | null;
+          const derived = getPeriodFromPwzIssueDate(prof, pwzIssue);
 
           const ps = p.period_start ?? null;
           const pe = p.period_end ?? null;
@@ -333,6 +307,7 @@ export default function CalculatorClient() {
           setPeriodStart(start);
           setPeriodEnd(end);
 
+          // jeśli jest PWZ -> okres "custom" (liczony)
           if (derived) {
             setPeriodMode("custom");
           } else {
@@ -597,6 +572,13 @@ export default function CalculatorClient() {
     return rows.slice(0, 10);
   }, [activities, periodStart, periodEnd]);
 
+  const trybLabel = pwzIssueDate ? "Tryb okresu — zgodny z PWZ" : "Tryb okresu";
+  const okresLabel = pwzIssueDate
+    ? `Okres liczony z PWZ (${formatYMD(pwzIssueDate)})`
+    : periodMode === "preset"
+    ? "Okres (preset)"
+    : "Okres (indywidualny)";
+
   return (
     <div className="space-y-6">
       {/* USTAWIENIA */}
@@ -604,10 +586,12 @@ export default function CalculatorClient() {
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900">
-              <Icon>
-                <Svg d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-                <Svg d="M19.4 15a7.97 7.97 0 0 0 .1-1 7.97 7.97 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a8.1 8.1 0 0 0-1.7-1l-.4-2.6H9.1l-.4 2.6a8.1 8.1 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7.97 7.97 0 0 0-.1 1c0 .34.03.67.1 1l-2 1.5 2 3.5 2.4-1a8.1 8.1 0 0 0 1.7 1l.4 2.6h5.8l.4-2.6a8.1 8.1 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5Z" />
-              </Icon>
+              <IconBlue>
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                  <path d="M19.4 15a7.97 7.97 0 0 0 .1-1 7.97 7.97 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a8.1 8.1 0 0 0-1.7-1l-.4-2.6H9.1l-.4 2.6a8.1 8.1 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7.97 7.97 0 0 0-.1 1c0 .34.03.67.1 1l-2 1.5 2 3.5 2.4-1a8.1 8.1 0 0 0 1.7 1l.4 2.6h5.8l.4-2.6a8.1 8.1 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5Z" />
+                </svg>
+              </IconBlue>
               Ustawienia okresu i zawodu
             </div>
 
@@ -622,16 +606,8 @@ export default function CalculatorClient() {
             </div>
           </div>
 
+          {/* ✅ kolejność: Przywróć, potem Zapisz (Zapisz skrajnie po prawej) */}
           <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center md:justify-end">
-            <button
-              type="button"
-              onClick={saveAllSettings}
-              disabled={isBusy || savingProfile || !dirty || !otherValid}
-              className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-            >
-              {savingProfile ? "Zapisuję…" : "Zapisz zmiany"}
-            </button>
-
             <button
               type="button"
               onClick={() => {
@@ -662,6 +638,15 @@ export default function CalculatorClient() {
               </span>
               Przywróć domyślne
             </button>
+
+            <button
+              type="button"
+              onClick={saveAllSettings}
+              disabled={isBusy || savingProfile || !dirty || !otherValid}
+              className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {savingProfile ? "Zapisuję…" : "Zapisz zmiany"}
+            </button>
           </div>
         </div>
 
@@ -670,7 +655,7 @@ export default function CalculatorClient() {
           <div>
             <FieldLabel
               icon={
-                <Icon>
+                <IconBlue>
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M8 21h8" />
                     <path d="M12 17v4" />
@@ -678,7 +663,7 @@ export default function CalculatorClient() {
                     <path d="M7 4c0 5 2 6 5 8 3-2 5-3 5-8" />
                     <path d="M9 12h6" />
                   </svg>
-                </Icon>
+                </IconBlue>
               }
               title="Zawód"
             />
@@ -721,14 +706,14 @@ export default function CalculatorClient() {
           <div>
             <FieldLabel
               icon={
-                <Icon>
+                <IconBlue>
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 8v4l3 2" />
                     <path d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10Z" />
                   </svg>
-                </Icon>
+                </IconBlue>
               }
-              title="Tryb okresu"
+              title={trybLabel}
             />
             <select
               value={periodMode}
@@ -752,38 +737,24 @@ export default function CalculatorClient() {
               <option value="custom">Indywidualny</option>
             </select>
 
-            {/* ✅ info + pod spodem komórka z PWZ */}
-            {pwzIssueDate ? (
-              <div className="mt-2 space-y-2">
-                <p className="text-[11px] text-slate-500">
-                  Masz ustawioną datę PWZ, więc indywidualny okres liczymy automatycznie.
-                </p>
-                <div className="inline-flex items-center rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-1 text-[11px] font-semibold text-slate-700">
-                  Okres liczony z PWZ ({formatYMD(pwzIssueDate)})
-                </div>
-              </div>
-            ) : (
-              <p className="mt-2 text-[11px] text-slate-500">
-                Jeśli masz inny zakres (np. start od uzyskania PWZ), wybierz „Indywidualny”.
-              </p>
-            )}
+            {/* ✅ brak tekstu o automatycznym liczeniu */}
           </div>
 
           {/* Okres */}
-          {periodMode === "preset" ? (
+          {periodMode === "preset" && !pwzIssueDate ? (
             <div>
               <FieldLabel
                 icon={
-                  <Icon>
+                  <IconBlue>
                     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M8 2v4" />
                       <path d="M16 2v4" />
                       <path d="M3 10h18" />
                       <path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
                     </svg>
-                  </Icon>
+                  </IconBlue>
                 }
-                title="Okres (preset)"
+                title={okresLabel}
               />
               <select
                 value={periodLabel}
@@ -801,19 +772,19 @@ export default function CalculatorClient() {
               </select>
             </div>
           ) : (
-            <div>
+            <div className="xl:col-span-1">
               <FieldLabel
                 icon={
-                  <Icon>
+                  <IconBlue>
                     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M8 2v4" />
                       <path d="M16 2v4" />
                       <path d="M3 10h18" />
                       <path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
                     </svg>
-                  </Icon>
+                  </IconBlue>
                 }
-                title="Okres (indywidualny)"
+                title={okresLabel}
               />
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <input
@@ -825,6 +796,7 @@ export default function CalculatorClient() {
                   type="number"
                   className="h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   placeholder="Start"
+                  disabled={Boolean(pwzIssueDate)}
                 />
                 <input
                   value={periodEnd}
@@ -835,6 +807,7 @@ export default function CalculatorClient() {
                   type="number"
                   className="h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   placeholder="Koniec"
+                  disabled={Boolean(pwzIssueDate)}
                 />
               </div>
             </div>
@@ -844,13 +817,13 @@ export default function CalculatorClient() {
           <div>
             <FieldLabel
               icon={
-                <Icon>
+                <IconBlue>
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2l3 7h7l-5.5 4.2L18.5 21 12 16.8 5.5 21l2-7.8L2 9h7l3-7Z" />
                   </svg>
-                </Icon>
+                </IconBlue>
               }
-              title="Wymagane punkty"
+              title="Wymagane punkty — domyślne"
             />
             <input
               value={requiredPoints}
@@ -862,10 +835,6 @@ export default function CalculatorClient() {
               min={0}
               className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
-
-            <p className="mt-2 text-[11px] text-slate-500">
-              Domyślnie: {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? requiredPoints}
-            </p>
           </div>
 
           {/* Inny zawód */}
@@ -873,12 +842,12 @@ export default function CalculatorClient() {
             <div className="md:col-span-2 xl:col-span-4">
               <FieldLabel
                 icon={
-                  <Icon>
+                  <IconBlue>
                     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 20h9" />
                       <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
                     </svg>
-                  </Icon>
+                  </IconBlue>
                 }
                 title="Jaki zawód?"
               />
@@ -906,10 +875,10 @@ export default function CalculatorClient() {
       {/* PANEL STATUSU */}
       <div className="rounded-3xl ring-1 ring-slate-200/60 shadow-lg bg-white/40 backdrop-blur">
         <CpdStatusPanel
-          isBusy={isBusy}
+          isBusy={authLoading || loading}
           userEmail={user?.email ?? null}
-          profileProfession={profileLabelForPanel}
-          periodLabel={periodLabel}
+          profileProfession={displayProfession(profession, professionOther)}
+          periodLabel={`${periodStart}-${periodEnd}`}
           donePoints={donePoints}
           requiredPoints={requiredPoints}
           missingPoints={missingPoints}
@@ -934,7 +903,7 @@ export default function CalculatorClient() {
           <div>
             <div className="text-sm font-extrabold text-slate-900">Reguły i limity</div>
             <div className="mt-1 text-sm text-slate-600">
-              Limity cząstkowe i wykorzystanie na podstawie ukończonych wpisów w okresie {periodLabel}.
+              Limity cząstkowe i wykorzystanie na podstawie ukończonych wpisów w okresie {periodStart}-{periodEnd}.
             </div>
           </div>
 
@@ -1070,7 +1039,7 @@ export default function CalculatorClient() {
           <div>
             <div className="text-sm font-extrabold text-slate-900">Ostatnie aktywności</div>
             <div className="mt-1 text-sm text-slate-600">
-              Ostatnio dodane wpisy w okresie {periodLabel} (z sygnalizacją braków).
+              Ostatnio dodane wpisy w okresie {periodStart}-{periodEnd} (z sygnalizacją braków).
             </div>
           </div>
 
@@ -1097,11 +1066,11 @@ export default function CalculatorClient() {
         </div>
 
         <div className="mt-4 space-y-3">
-          {isBusy ? (
+          {authLoading || loading ? (
             <div className="text-sm text-slate-600">Wczytuję…</div>
           ) : recentRows.length === 0 ? (
             <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-700">
-              Brak wpisów w okresie {periodLabel}.
+              Brak wpisów w okresie {periodStart}-{periodEnd}.
             </div>
           ) : (
             recentRows.map((a) => {
