@@ -46,6 +46,10 @@ type ProfileRow = {
   period_start: number | null;
   period_end: number | null;
   required_points: number | null;
+
+  // ✅ opcjonalnie – jeśli masz to w tabeli profiles
+  pwz_date?: string | null; // YYYY-MM-DD
+  pwz_granted_at?: string | null; // YYYY-MM-DD
 };
 
 function clamp(n: number, a: number, b: number) {
@@ -71,122 +75,38 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
     periodMonths: 48,
     requiredPoints: 200,
     limits: [
-      {
-        key: "INTERNAL_TRAINING",
-        label: "Szkolenie wewnętrzne",
-        mode: "per_item",
-        maxPoints: 6,
-        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
-      },
-      {
-        key: "JOURNAL_SUBSCRIPTION",
-        label: "Prenumerata czasopisma",
-        mode: "per_period",
-        maxPoints: 10,
-        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
-      },
-      {
-        key: "SCIENTIFIC_SOCIETY",
-        label: "Towarzystwo/Kolegium",
-        mode: "per_period",
-        maxPoints: 20,
-        note: "5 pkt, maks. 20 pkt w okresie",
-      },
+      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_item", maxPoints: 6, note: "1 pkt/h, maks. 6 pkt za jedno szkolenie" },
+      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_period", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt w okresie" },
+      { key: "SCIENTIFIC_SOCIETY", label: "Towarzystwo/Kolegium", mode: "per_period", maxPoints: 20, note: "5 pkt, maks. 20 pkt w okresie" },
     ],
   },
   "Lekarz dentysta": {
     periodMonths: 48,
     requiredPoints: 200,
     limits: [
-      {
-        key: "INTERNAL_TRAINING",
-        label: "Szkolenie wewnętrzne",
-        mode: "per_item",
-        maxPoints: 6,
-        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
-      },
-      {
-        key: "JOURNAL_SUBSCRIPTION",
-        label: "Prenumerata czasopisma",
-        mode: "per_period",
-        maxPoints: 10,
-        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
-      },
-      {
-        key: "SCIENTIFIC_SOCIETY",
-        label: "Towarzystwo/Kolegium",
-        mode: "per_period",
-        maxPoints: 20,
-        note: "5 pkt, maks. 20 pkt w okresie",
-      },
+      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_item", maxPoints: 6, note: "1 pkt/h, maks. 6 pkt za jedno szkolenie" },
+      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_period", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt w okresie" },
+      { key: "SCIENTIFIC_SOCIETY", label: "Towarzystwo/Kolegium", mode: "per_period", maxPoints: 20, note: "5 pkt, maks. 20 pkt w okresie" },
     ],
   },
   Pielęgniarka: {
     periodMonths: 60,
     requiredPoints: 100,
     limits: [
-      {
-        key: "WEBINAR",
-        label: "Webinary",
-        mode: "per_period",
-        maxPoints: 50,
-        note: "5 pkt/wydarzenie, maks. 50 pkt",
-      },
-      {
-        key: "INTERNAL_TRAINING",
-        label: "Szkolenie wewnętrzne",
-        mode: "per_period",
-        maxPoints: 50,
-        note: "2/5 pkt, maks. 50 pkt",
-      },
-      {
-        key: "COMMITTEES",
-        label: "Komisje/Zespoły",
-        mode: "per_period",
-        maxPoints: 30,
-        note: "3 pkt/posiedzenie, maks. 30 pkt",
-      },
-      {
-        key: "JOURNAL_SUBSCRIPTION",
-        label: "Prenumerata czasopisma",
-        mode: "per_year",
-        maxPoints: 10,
-        note: "5 pkt/tytuł, maks. 10 pkt/rok",
-      },
+      { key: "WEBINAR", label: "Webinary", mode: "per_period", maxPoints: 50, note: "5 pkt/wydarzenie, maks. 50 pkt" },
+      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_period", maxPoints: 50, note: "2/5 pkt, maks. 50 pkt" },
+      { key: "COMMITTEES", label: "Komisje/Zespoły", mode: "per_period", maxPoints: 30, note: "3 pkt/posiedzenie, maks. 30 pkt" },
+      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_year", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt/rok" },
     ],
   },
   Położna: {
     periodMonths: 60,
     requiredPoints: 100,
     limits: [
-      {
-        key: "WEBINAR",
-        label: "Webinary",
-        mode: "per_period",
-        maxPoints: 50,
-        note: "5 pkt/wydarzenie, maks. 50 pkt",
-      },
-      {
-        key: "INTERNAL_TRAINING",
-        label: "Szkolenie wewnętrzne",
-        mode: "per_period",
-        maxPoints: 50,
-        note: "2/5 pkt, maks. 50 pkt",
-      },
-      {
-        key: "COMMITTEES",
-        label: "Komisje/Zespoły",
-        mode: "per_period",
-        maxPoints: 30,
-        note: "3 pkt/posiedzenie, maks. 30 pkt",
-      },
-      {
-        key: "JOURNAL_SUBSCRIPTION",
-        label: "Prenumerata czasopisma",
-        mode: "per_year",
-        maxPoints: 10,
-        note: "5 pkt/tytuł, maks. 10 pkt/rok",
-      },
+      { key: "WEBINAR", label: "Webinary", mode: "per_period", maxPoints: 50, note: "5 pkt/wydarzenie, maks. 50 pkt" },
+      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_period", maxPoints: 50, note: "2/5 pkt, maks. 50 pkt" },
+      { key: "COMMITTEES", label: "Komisje/Zespoły", mode: "per_period", maxPoints: 30, note: "3 pkt/posiedzenie, maks. 30 pkt" },
+      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_year", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt/rok" },
     ],
   },
 };
@@ -277,11 +197,26 @@ function suggestPlannedPoints(rule: { mode: "per_period" | "per_year" | "per_ite
   return Math.max(1, Math.min(rem, step));
 }
 
-const FIELD =
-  "mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200";
-const FIELD_HINT = "mt-1 text-[11px] text-slate-500";
-const LABEL = "text-xs font-semibold text-slate-900";
-const META = "mt-1 text-[11px] font-semibold text-slate-600";
+function ValuePill({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+      {children}
+    </span>
+  );
+}
+
+// ✅ wylicz okres z PWZ (lata) na bazie długości okresu w miesiącach (np. 48 => 4 lata => end = start+3)
+function getPeriodFromPwz(prof: Profession, pwz: string | null | undefined) {
+  if (!pwz) return null;
+  const y = Number(String(pwz).slice(0, 4));
+  if (!y || Number.isNaN(y)) return null;
+
+  const months = RULES_BY_PROFESSION[prof]?.periodMonths ?? 48;
+  const years = Math.max(1, Math.round(months / 12));
+  const start = y;
+  const end = y + (years - 1);
+  return { start, end };
+}
 
 export default function CalculatorClient() {
   const { user, loading: authLoading } = useAuth();
@@ -309,6 +244,8 @@ export default function CalculatorClient() {
   const [planErr, setPlanErr] = useState<string | null>(null);
   const [planningKey, setPlanningKey] = useState<string | null>(null);
 
+  const [dirty, setDirty] = useState(false);
+
   const supabase = useMemo(() => supabaseClient(), []);
 
   async function reloadActivities() {
@@ -334,7 +271,7 @@ export default function CalculatorClient() {
 
       const { data: p, error: pErr } = await supabase
         .from("profiles")
-        .select("user_id, profession, profession_other, period_start, period_end, required_points")
+        .select("user_id, profession, profession_other, period_start, period_end, required_points, pwz_date, pwz_granted_at")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -348,15 +285,28 @@ export default function CalculatorClient() {
           const po = normalizeOtherProfession((p as any).profession_other);
           setProfessionOther(po);
 
-          const ps = p.period_start ?? 2023;
-          const pe = p.period_end ?? 2026;
-          setPeriodStart(ps);
-          setPeriodEnd(pe);
+          // ✅ jeśli jest PWZ: domyślnie licz okres z PWZ
+          const pwz = (p as any).pwz_date ?? (p as any).pwz_granted_at ?? null;
+          const derived = getPeriodFromPwz(prof, pwz);
 
-          const presetLabel = `${ps}-${pe}`;
-          const isPreset =
-            presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
-          setPeriodMode(isPreset ? "preset" : "custom");
+          const ps = (p.period_start ?? null) as number | null;
+          const pe = (p.period_end ?? null) as number | null;
+
+          const start = derived?.start ?? ps ?? 2023;
+          const end = derived?.end ?? pe ?? 2026;
+
+          setPeriodStart(start);
+          setPeriodEnd(end);
+
+          // ✅ tryb: jeśli wyliczyliśmy z PWZ -> custom, inaczej preset jeśli pasuje
+          if (derived) {
+            setPeriodMode("custom");
+          } else {
+            const presetLabel = `${start}-${end}`;
+            const isPreset =
+              presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
+            setPeriodMode(isPreset ? "preset" : "custom");
+          }
 
           const rp =
             p.required_points ??
@@ -365,6 +315,8 @@ export default function CalculatorClient() {
             200;
 
           setRequiredPoints(rp);
+
+          setDirty(false);
         } else {
           const prof: Profession = "Lekarz";
           setProfession(prof);
@@ -373,6 +325,7 @@ export default function CalculatorClient() {
           setPeriodEnd(2026);
           setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
           setPeriodMode("preset");
+          setDirty(false);
         }
       }
 
@@ -415,13 +368,9 @@ export default function CalculatorClient() {
     });
   }, [activities, periodStart, periodEnd]);
 
-  const donePoints = useMemo(() => {
-    return inPeriodDone.reduce((sum, a) => sum + (Number(a.points) || 0), 0);
-  }, [inPeriodDone]);
+  const donePoints = useMemo(() => inPeriodDone.reduce((sum, a) => sum + (Number(a.points) || 0), 0), [inPeriodDone]);
 
-  const missingPoints = useMemo(() => {
-    return Math.max(0, (Number(requiredPoints) || 0) - donePoints);
-  }, [requiredPoints, donePoints]);
+  const missingPoints = useMemo(() => Math.max(0, (Number(requiredPoints) || 0) - donePoints), [requiredPoints, donePoints]);
 
   const progress = useMemo(() => {
     const req = Number(requiredPoints) || 0;
@@ -429,9 +378,7 @@ export default function CalculatorClient() {
     return clamp((donePoints / req) * 100, 0, 100);
   }, [requiredPoints, donePoints]);
 
-  const missingEvidenceCount = useMemo(() => {
-    return inPeriodDone.filter((a) => !a.certificate_path).length;
-  }, [inPeriodDone]);
+  const missingEvidenceCount = useMemo(() => inPeriodDone.filter((a) => !a.certificate_path).length, [inPeriodDone]);
 
   const evidencePct = useMemo(() => {
     const total = inPeriodDone.length;
@@ -440,9 +387,7 @@ export default function CalculatorClient() {
     return clamp((withProof / total) * 100, 0, 100);
   }, [inPeriodDone.length, missingEvidenceCount]);
 
-  const daysLeft = useMemo(() => {
-    return daysUntilEndOfYear(periodEnd);
-  }, [periodEnd]);
+  const daysLeft = useMemo(() => daysUntilEndOfYear(periodEnd), [periodEnd]);
 
   const limitsUsage = useMemo(() => {
     const rules = RULES_BY_PROFESSION[profession];
@@ -488,9 +433,7 @@ export default function CalculatorClient() {
     return `Limit „${hit.label}” jest osiągnięty — kolejne podobne aktywności mogą nie zwiększyć punktów w tym okresie.`;
   }, [limitsUsage]);
 
-  const nextStep = useMemo(() => {
-    return buildNextStep(missingPoints, missingEvidenceCount, limitWarning);
-  }, [missingPoints, missingEvidenceCount, limitWarning]);
+  const nextStep = useMemo(() => buildNextStep(missingPoints, missingEvidenceCount, limitWarning), [missingPoints, missingEvidenceCount, limitWarning]);
 
   const isBusy = authLoading || loading;
 
@@ -505,11 +448,9 @@ export default function CalculatorClient() {
 
     const nextPeriodStart = patch.period_start !== undefined ? patch.period_start : periodStart;
     const nextPeriodEnd = patch.period_end !== undefined ? patch.period_end : periodEnd;
-    const nextRequiredPoints =
-      patch.required_points !== undefined ? patch.required_points : requiredPoints;
+    const nextRequiredPoints = patch.required_points !== undefined ? patch.required_points : requiredPoints;
 
     const otherReq = isOtherProfession(nextProfession);
-
     const rawOther = patch.profession_other !== undefined ? patch.profession_other : professionOther;
     const nextOther = otherReq ? normalizeOtherProfession(rawOther) || null : null;
 
@@ -525,33 +466,34 @@ export default function CalculatorClient() {
     const { error } = await supabase.from("profiles").upsert(payload);
 
     setSavingProfile(false);
-    if (!error) setSavedAt(Date.now());
+    if (!error) {
+      setSavedAt(Date.now());
+      setDirty(false);
+    }
   }
 
-  // ✅ Jawny zapis całego bloku ustawień (ważne dla "Inny zawód")
   async function saveAllSettings() {
     if (!user?.id) return;
-
-    // walidacja "inny zawód"
-    if (isOtherProfession(profession)) {
-      const norm = normalizeOtherProfession(professionOther);
-      if (norm.length < 2) return;
-    }
+    if (!otherValid) return;
 
     const other = isOtherProfession(profession) ? normalizeOtherProfession(professionOther) || null : null;
+
+    // sanity
+    const ps = Number(periodStart) || 0;
+    const pe = Math.max(Number(periodEnd) || 0, ps);
+
+    if (pe !== periodEnd) setPeriodEnd(pe);
 
     await saveProfilePatch({
       profession,
       profession_other: other,
-      period_start: periodStart,
-      period_end: periodEnd,
+      period_start: ps,
+      period_end: pe,
       required_points: requiredPoints,
     });
   }
 
-  const profileLabelForPanel = useMemo(() => {
-    return displayProfession(profession, professionOther);
-  }, [profession, professionOther]);
+  const profileLabelForPanel = useMemo(() => displayProfession(profession, professionOther), [profession, professionOther]);
 
   async function planForRule(r: (typeof limitsUsage)[number]) {
     if (!user?.id) return;
@@ -598,23 +540,19 @@ export default function CalculatorClient() {
   const recentRows = useMemo(() => {
     const rows = activities.filter((a) => {
       const prog = normalizeStatus(a.status);
-      const y =
-        prog === "planned" && a.planned_start_date
-          ? Number(String(a.planned_start_date).slice(0, 4))
-          : a.year;
+      const y = prog === "planned" && a.planned_start_date ? Number(String(a.planned_start_date).slice(0, 4)) : a.year;
       return y >= periodStart && y <= periodEnd;
     });
-
     return rows.slice(0, 10);
   }, [activities, periodStart, periodEnd]);
 
-  const canSave = !isBusy && !savingProfile && otherValid;
+  const pwzInProfile = (profile as any)?.pwz_date ?? (profile as any)?.pwz_granted_at ?? null;
 
   return (
     <div className="space-y-6">
       {/* USTAWIENIA */}
-      <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-6 md:p-7 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900">
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-2xl border border-slate-200 bg-white/80">
@@ -625,28 +563,42 @@ export default function CalculatorClient() {
 
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
               <span>Zmiany zapisujemy w profilu.</span>
-              <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
-                {savingProfile ? "Zapisywanie…" : savedAt ? "Zapisano" : "—"}
-              </span>
+
+              {savingProfile ? (
+                <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+                  Zapisywanie…
+                </span>
+              ) : savedAt ? (
+                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                  Zapisano
+                </span>
+              ) : null}
+
+              {pwzInProfile ? (
+                <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+                  Okres liczony z PWZ
+                </span>
+              ) : null}
 
               {!otherValid ? (
-                <span className="inline-flex items-center rounded-full border border-rose-200/70 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700">
+                <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700">
                   Uzupełnij „Inny zawód”
                 </span>
               ) : null}
             </div>
           </div>
 
-          {/* ✅ Przyciski po prawej (Zapisz + Przywróć) */}
           <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center md:justify-end">
-            <button
-              type="button"
-              onClick={saveAllSettings}
-              disabled={!canSave}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-            >
-              {savingProfile ? "Zapisywanie…" : "Zapisz zmiany"}
-            </button>
+            {dirty ? (
+              <button
+                type="button"
+                onClick={saveAllSettings}
+                disabled={isBusy || savingProfile || !otherValid}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+              >
+                Zapisz zmiany
+              </button>
+            ) : null}
 
             <button
               type="button"
@@ -654,17 +606,27 @@ export default function CalculatorClient() {
                 const prof: Profession = "Lekarz";
                 setProfession(prof);
                 setProfessionOther("");
-                setPeriodStart(2023);
-                setPeriodEnd(2026);
-                setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
-                setPeriodMode("preset");
+
+                // jeśli masz PWZ, to i tak licz okres z PWZ
+                const derived = getPeriodFromPwz(prof, pwzInProfile);
+                const ps = derived?.start ?? 2023;
+                const pe = derived?.end ?? 2026;
+
+                setPeriodStart(ps);
+                setPeriodEnd(pe);
+
+                const rp = DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200;
+                setRequiredPoints(rp);
+
+                setPeriodMode(derived ? "custom" : "preset");
+                setDirty(true);
 
                 await saveProfilePatch({
                   profession: prof,
                   profession_other: null,
-                  period_start: 2023,
-                  period_end: 2026,
-                  required_points: DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200,
+                  period_start: ps,
+                  period_end: pe,
+                  required_points: rp,
                 });
               }}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
@@ -677,28 +639,42 @@ export default function CalculatorClient() {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {/* Zawód */}
-          <div className="min-w-0 space-y-2">
-            <label className={LABEL}>Zawód</label>
-            <div className={META}>Aktualnie: {profession}</div>
+          <div>
+            <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
+                  🧑‍⚕️
+                </span>
+                Zawód
+              </span>
+              <ValuePill>{profession}</ValuePill>
+            </label>
 
             <select
               value={profession}
               onChange={(e) => {
                 const v = e.target.value as Profession;
                 setProfession(v);
-
                 if (!isOtherProfession(v)) setProfessionOther("");
 
-                const rp =
-                  RULES_BY_PROFESSION[v]?.requiredPoints ??
-                  DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ??
-                  200;
-
+                const rp = RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
                 setRequiredPoints(rp);
+
+                // jeśli mamy PWZ, to po zmianie zawodu też przelicz okres
+                if (pwzInProfile) {
+                  const derived = getPeriodFromPwz(v, pwzInProfile);
+                  if (derived) {
+                    setPeriodMode("custom");
+                    setPeriodStart(derived.start);
+                    setPeriodEnd(derived.end);
+                  }
+                }
+
+                setDirty(true);
               }}
-              className={FIELD}
+              className="mt-1 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               {PROFESSION_OPTIONS.map((p) => (
                 <option key={p} value={p}>
@@ -709,27 +685,65 @@ export default function CalculatorClient() {
           </div>
 
           {/* Tryb okresu */}
-          <div className="min-w-0 space-y-2">
-            <label className={LABEL}>Tryb okresu</label>
-            <div className={META}>Aktualnie: {periodMode === "preset" ? "Preset" : "Indywidualny"}</div>
+          <div>
+            <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
+                  ⏱️
+                </span>
+                Tryb okresu
+              </span>
+              <ValuePill>
+                {periodMode === "preset" ? "Preset" : pwzInProfile ? "Indywidualny (PWZ)" : "Indywidualny"}
+              </ValuePill>
+            </label>
 
             <select
               value={periodMode}
-              onChange={(e) => setPeriodMode(e.target.value as "preset" | "custom")}
-              className={FIELD}
+              onChange={(e) => {
+                const v = e.target.value as "preset" | "custom";
+                setPeriodMode(v);
+
+                // jeśli przełączasz na custom i masz PWZ – przelicz automatycznie
+                if (v === "custom" && pwzInProfile) {
+                  const derived = getPeriodFromPwz(profession, pwzInProfile);
+                  if (derived) {
+                    setPeriodStart(derived.start);
+                    setPeriodEnd(derived.end);
+                  }
+                }
+
+                setDirty(true);
+              }}
+              className="mt-1 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               <option value="preset">Preset (najczęstszy)</option>
               <option value="custom">Indywidualny</option>
             </select>
 
-            <p className={FIELD_HINT}>Jeśli masz inny zakres (np. start od uzyskania PWZ), wybierz „Indywidualny”.</p>
+            {pwzInProfile ? (
+              <p className="mt-1 text-[11px] text-slate-500">
+                Masz ustawioną datę PWZ, więc okres liczymy automatycznie. Możesz zmienić ręcznie, jeśli potrzebujesz.
+              </p>
+            ) : (
+              <p className="mt-1 text-[11px] text-slate-500">
+                Jeśli masz inny zakres (np. start od uzyskania PWZ), wybierz „Indywidualny”.
+              </p>
+            )}
           </div>
 
           {/* Okres */}
           {periodMode === "preset" ? (
-            <div className="min-w-0 space-y-2">
-              <label className={LABEL}>Okres (preset)</label>
-              <div className={META}>Aktualnie: {periodLabel}</div>
+            <div>
+              <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+                <span className="inline-flex items-center gap-2">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
+                    🗓️
+                  </span>
+                  Okres (preset)
+                </span>
+                <ValuePill>{periodLabel}</ValuePill>
+              </label>
 
               <select
                 value={periodLabel}
@@ -737,8 +751,9 @@ export default function CalculatorClient() {
                   const [a, b] = e.target.value.split("-").map((x) => Number(x));
                   setPeriodStart(a);
                   setPeriodEnd(b);
+                  setDirty(true);
                 }}
-                className={FIELD}
+                className="mt-1 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
                 <option value="2019-2022">2019-2022</option>
                 <option value="2023-2026">2023-2026</option>
@@ -746,65 +761,96 @@ export default function CalculatorClient() {
               </select>
             </div>
           ) : (
-            <div className="min-w-0 space-y-2">
-              <label className={LABEL}>Okres (indywidualny)</label>
-              <div className={META}>
-                Aktualnie: {periodStart}-{periodEnd}
-              </div>
+            <div>
+              <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+                <span className="inline-flex items-center gap-2">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
+                    📅
+                  </span>
+                  Okres (indywidualny)
+                </span>
+                <ValuePill>
+                  {periodStart}-{periodEnd}
+                </ValuePill>
+              </label>
 
-              <div className="mt-2 grid grid-cols-2 gap-3">
+              <div className="mt-1 grid grid-cols-2 gap-2">
                 <input
                   value={periodStart}
-                  onChange={(e) => setPeriodStart(Number(e.target.value || 0))}
+                  onChange={(e) => {
+                    setPeriodStart(Number(e.target.value || 0));
+                    setDirty(true);
+                  }}
                   type="number"
-                  className={FIELD}
+                  className="h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   placeholder="Start"
                 />
                 <input
                   value={periodEnd}
-                  onChange={(e) => setPeriodEnd(Number(e.target.value || 0))}
+                  onChange={(e) => {
+                    setPeriodEnd(Number(e.target.value || 0));
+                    setDirty(true);
+                  }}
                   type="number"
-                  className={FIELD}
+                  className="h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   placeholder="Koniec"
                 />
               </div>
-
-              <p className={FIELD_HINT}>Jeśli koniec jest mniejszy niż start, popraw wartości przed zapisem.</p>
             </div>
           )}
 
           {/* Wymagane punkty */}
-          <div className="min-w-0 space-y-2">
-            <label className={LABEL}>Wymagane punkty</label>
-            <div className={META}>Aktualnie: {requiredPoints}</div>
+          <div>
+            <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
+                  🎯
+                </span>
+                Wymagane punkty
+              </span>
+              <ValuePill>{requiredPoints}</ValuePill>
+            </label>
 
             <input
               value={requiredPoints}
-              onChange={(e) => setRequiredPoints(Number(e.target.value || 0))}
+              onChange={(e) => {
+                setRequiredPoints(Number(e.target.value || 0));
+                setDirty(true);
+              }}
               type="number"
               min={0}
-              className={FIELD}
+              className="mt-1 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
 
-            <p className={FIELD_HINT}>Domyślnie: {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? requiredPoints}</p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              Domyślnie: {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? requiredPoints}
+            </p>
           </div>
 
           {/* Inny zawód */}
           {otherRequired ? (
-            <div className="md:col-span-2 xl:col-span-4 space-y-2">
-              <label className={LABEL}>Jaki zawód?</label>
-              <div className={META}>Wpisz nazwę zawodu (min. 2 znaki), potem kliknij „Zapisz zmiany”.</div>
+            <div className="md:col-span-2 xl:col-span-4">
+              <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+                <span className="inline-flex items-center gap-2">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
+                    ✍️
+                  </span>
+                  Jaki zawód?
+                </span>
+                <ValuePill>{normalizeOtherProfession(professionOther) || "—"}</ValuePill>
+              </label>
 
               <input
                 value={professionOther}
-                onChange={(e) => setProfessionOther(e.target.value)}
+                onChange={(e) => {
+                  setProfessionOther(e.target.value);
+                  setDirty(true);
+                }}
                 placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
-                className={[
-                  "mt-2 h-11 w-full rounded-2xl border bg-white/80 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2",
-                  otherValid ? "border-slate-200/70 focus:ring-blue-200" : "border-rose-200/70 focus:ring-rose-200",
-                ].join(" ")}
+                className={`mt-1 h-11 w-full rounded-2xl border bg-white/80 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
+                  otherValid ? "border-slate-200/70 focus:ring-blue-200" : "border-rose-200/70 focus:ring-rose-200"
+                }`}
               />
-
               <p className={`mt-1 text-[11px] ${otherValid ? "text-slate-500" : "text-rose-700"}`}>
                 {otherValid
                   ? "Doprecyzowanie pomaga dopasować zasady i raporty."
@@ -813,6 +859,23 @@ export default function CalculatorClient() {
             </div>
           ) : null}
         </div>
+
+        {/* ✅ jeśli user coś zmienił, a przycisk jest poza widokiem (mobile), dajemy subtelny pasek */}
+        {dirty ? (
+          <div className="mt-4 flex items-center justify-between rounded-2xl border border-blue-200/60 bg-blue-50/40 px-4 py-3 text-sm">
+            <div className="text-slate-700">
+              Masz <span className="font-extrabold">niezapisane zmiany</span>.
+            </div>
+            <button
+              type="button"
+              onClick={saveAllSettings}
+              disabled={isBusy || savingProfile || !otherValid}
+              className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              Zapisz
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {/* PANEL STATUSU */}
@@ -862,14 +925,15 @@ export default function CalculatorClient() {
               <>
                 <span className="text-slate-300">•</span>
                 <div className="text-slate-700">
-                  Bez certyfikatu: <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
+                  Bez certyfikatu:{" "}
+                  <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
                 </div>
               </>
             ) : null}
           </div>
         </div>
 
-        {planInfo || planErr ? (
+        {(planInfo || planErr) ? (
           <div className="mt-4 rounded-2xl border bg-white/70 p-3 text-sm">
             {planInfo ? <div className="text-emerald-700 font-semibold">{planInfo}</div> : null}
             {planErr ? <div className="text-rose-700 font-semibold">{planErr}</div> : null}
