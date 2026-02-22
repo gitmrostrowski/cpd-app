@@ -68,7 +68,7 @@ const PRIMARY_BTN = "bg-blue-600 hover:bg-blue-700 text-white shadow-sm";
 const OUTLINE_BTN =
   "border border-slate-200/70 bg-white/80 text-slate-800 hover:bg-white backdrop-blur";
 
-// Jasny niebieski PRO (wymagany)
+// jasny niebieski dla PRO
 const PRO_BTN = "border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100";
 
 const PRIMARY_BAR = "bg-blue-600";
@@ -166,6 +166,17 @@ function StatPill({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+function MiniCta({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-white backdrop-blur"
+    >
+      {label}
+    </Link>
+  );
+}
+
 function limitTone(used: number, usedPct: number) {
   if (used <= 0) return { badge: "Nie rozpoczęto", tone: "ok" as const };
   if (usedPct >= 100) return { badge: "Limit", tone: "bad" as const };
@@ -201,18 +212,16 @@ function MiniLimitCard({ item }: { item: TopLimitItem }) {
 
   return (
     <div className={wrapCls}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="truncate text-xs font-extrabold text-slate-900">{item.label}</div>
+      <div className="min-w-0">
+        <div className="truncate text-xs font-extrabold text-slate-900">{item.label}</div>
 
-          {/* ✅ 0/6 pkt + status w jednej linii, ta sama wysokość */}
-          <div className="mt-0.5 flex items-center justify-between gap-2">
-            <div className="text-[11px] font-semibold text-slate-600 whitespace-nowrap">
-              {Math.round(item.used)}/{Math.round(item.cap)} pkt
-            </div>
-            <div className="shrink-0">
-              <LimitBadge tone={t.tone} text={t.badge} />
-            </div>
+        {/* ✅ 0/6 pkt + status w jednej linii, status po PRAWEJ */}
+        <div className="mt-0.5 flex items-center justify-between gap-2">
+          <div className="text-[11px] font-semibold text-slate-600 whitespace-nowrap">
+            {Math.round(item.used)}/{Math.round(item.cap)} pkt
+          </div>
+          <div className="shrink-0">
+            <LimitBadge tone={t.tone} text={t.badge} />
           </div>
         </div>
       </div>
@@ -256,7 +265,6 @@ export default function CpdStatusPanel({
   const docsPct = clamp(evidencePct, 0, 100);
 
   const status = statusFromCompleteness(pointsPct, docsPct, doneCount);
-
   const docsActionNeeded = missingEvidenceCount > 0;
 
   const primary =
@@ -266,7 +274,11 @@ export default function CpdStatusPanel({
       ? { href: primaryCtaHref, label: "+ Dodaj aktywność" }
       : { href: portfolioHref, label: "Zestawienie PDF" };
 
-  // Secondary już NIE będzie renderowany pod "Uzupełnij dokumenty"
+  const secondary =
+    docsActionNeeded
+      ? { href: primaryCtaHref, label: "+ Dodaj aktywność" }
+      : { href: secondaryCtaHref, label: "Aktywności" };
+
   const showNextStepCta =
     !!nextStep.ctaHref &&
     !!nextStep.ctaLabel &&
@@ -424,22 +436,21 @@ export default function CpdStatusPanel({
                 {primary.label}
               </Link>
 
-              {/* ✅ pod primary zostaje tylko 1 przycisk: Zestawienie PDF - PRO */}
+              {/* ✅ tylko 1 przycisk pod primary */}
               <Link href={portfolioHref} className={`${BTN_BASE} ${PRO_BTN} w-full`}>
                 Zestawienie PDF – PRO
               </Link>
+
+              {/* (opcjonalnie) jeśli chcesz jednak zostawić też "Aktywności" gdy NIE brakuje dokumentów: */}
+              {!docsActionNeeded ? (
+                <Link href={secondary.href} className={`${BTN_BASE} ${OUTLINE_BTN} w-full`}>
+                  {secondary.label}
+                </Link>
+              ) : null}
             </div>
           </div>
         </div>
       </div>
-
-      {/* ✅ DODATEK (CRPE PRO): wrapper dla sekcji "Reguły i limity"
-          W miejscu, gdzie renderujesz sekcję "Reguły i limity" (już poza tym komponentem),
-          owiń ją w taki kontener:
-          <div className="rounded-3xl border border-slate-200/70 bg-slate-50/80 p-5 shadow-sm ring-1 ring-slate-200/50">
-            ...Reguły i limity...
-          </div>
-      */}
     </div>
   );
 }
