@@ -277,17 +277,11 @@ function suggestPlannedPoints(rule: { mode: "per_period" | "per_year" | "per_ite
   return Math.max(1, Math.min(rem, step));
 }
 
-function ValuePill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
-      {children}
-    </span>
-  );
-}
-
 const FIELD =
   "mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200";
 const FIELD_HINT = "mt-1 text-[11px] text-slate-500";
+const LABEL = "text-xs font-semibold text-slate-900";
+const META = "mt-1 text-[11px] font-semibold text-slate-600";
 
 export default function CalculatorClient() {
   const { user, loading: authLoading } = useAuth();
@@ -534,6 +528,27 @@ export default function CalculatorClient() {
     if (!error) setSavedAt(Date.now());
   }
 
+  // ✅ Jawny zapis całego bloku ustawień (ważne dla "Inny zawód")
+  async function saveAllSettings() {
+    if (!user?.id) return;
+
+    // walidacja "inny zawód"
+    if (isOtherProfession(profession)) {
+      const norm = normalizeOtherProfession(professionOther);
+      if (norm.length < 2) return;
+    }
+
+    const other = isOtherProfession(profession) ? normalizeOtherProfession(professionOther) || null : null;
+
+    await saveProfilePatch({
+      profession,
+      profession_other: other,
+      period_start: periodStart,
+      period_end: periodEnd,
+      required_points: requiredPoints,
+    });
+  }
+
   const profileLabelForPanel = useMemo(() => {
     return displayProfession(profession, professionOther);
   }, [profession, professionOther]);
@@ -593,11 +608,13 @@ export default function CalculatorClient() {
     return rows.slice(0, 10);
   }, [activities, periodStart, periodEnd]);
 
+  const canSave = !isBusy && !savingProfile && otherValid;
+
   return (
     <div className="space-y-6">
       {/* USTAWIENIA */}
       <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-6 md:p-7 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900">
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-2xl border border-slate-200 bg-white/80">
@@ -611,57 +628,67 @@ export default function CalculatorClient() {
               <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
                 {savingProfile ? "Zapisywanie…" : savedAt ? "Zapisano" : "—"}
               </span>
+
+              {!otherValid ? (
+                <span className="inline-flex items-center rounded-full border border-rose-200/70 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700">
+                  Uzupełnij „Inny zawód”
+                </span>
+              ) : null}
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={async () => {
-              const prof: Profession = "Lekarz";
-              setProfession(prof);
-              setProfessionOther("");
-              setPeriodStart(2023);
-              setPeriodEnd(2026);
-              setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
-              setPeriodMode("preset");
+          {/* ✅ Przyciski po prawej (Zapisz + Przywróć) */}
+          <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center md:justify-end">
+            <button
+              type="button"
+              onClick={saveAllSettings}
+              disabled={!canSave}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {savingProfile ? "Zapisywanie…" : "Zapisz zmiany"}
+            </button>
 
-              await saveProfilePatch({
-                profession: prof,
-                profession_other: null,
-                period_start: 2023,
-                period_end: 2026,
-                required_points: DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200,
-              });
-            }}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
-          >
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-              ↺
-            </span>
-            Przywróć domyślne
-          </button>
+            <button
+              type="button"
+              onClick={async () => {
+                const prof: Profession = "Lekarz";
+                setProfession(prof);
+                setProfessionOther("");
+                setPeriodStart(2023);
+                setPeriodEnd(2026);
+                setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
+                setPeriodMode("preset");
+
+                await saveProfilePatch({
+                  profession: prof,
+                  profession_other: null,
+                  period_start: 2023,
+                  period_end: 2026,
+                  required_points: DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200,
+                });
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+            >
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                ↺
+              </span>
+              Przywróć domyślne
+            </button>
+          </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-4">
-          <div className="min-w-0">
-            <label className="text-xs font-semibold text-slate-900">
-              <span className="inline-flex items-center gap-2">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
-                  🧑‍⚕️
-                </span>
-                Zawód
-              </span>
-            </label>
-            <div className="mt-1">
-              <ValuePill>{profession}</ValuePill>
-            </div>
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {/* Zawód */}
+          <div className="min-w-0 space-y-2">
+            <label className={LABEL}>Zawód</label>
+            <div className={META}>Aktualnie: {profession}</div>
 
             <select
               value={profession}
-              onChange={async (e) => {
+              onChange={(e) => {
                 const v = e.target.value as Profession;
-
                 setProfession(v);
+
                 if (!isOtherProfession(v)) setProfessionOther("");
 
                 const rp =
@@ -670,12 +697,6 @@ export default function CalculatorClient() {
                   200;
 
                 setRequiredPoints(rp);
-
-                await saveProfilePatch({
-                  profession: v,
-                  required_points: rp,
-                  profession_other: isOtherProfession(v) ? professionOther : null,
-                });
               }}
               className={FIELD}
             >
@@ -687,18 +708,10 @@ export default function CalculatorClient() {
             </select>
           </div>
 
-          <div className="min-w-0">
-            <label className="text-xs font-semibold text-slate-900">
-              <span className="inline-flex items-center gap-2">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
-                  ⏱️
-                </span>
-                Tryb okresu
-              </span>
-            </label>
-            <div className="mt-1">
-              <ValuePill>{periodMode === "preset" ? "Preset" : "Indywidualny"}</ValuePill>
-            </div>
+          {/* Tryb okresu */}
+          <div className="min-w-0 space-y-2">
+            <label className={LABEL}>Tryb okresu</label>
+            <div className={META}>Aktualnie: {periodMode === "preset" ? "Preset" : "Indywidualny"}</div>
 
             <select
               value={periodMode}
@@ -709,32 +722,21 @@ export default function CalculatorClient() {
               <option value="custom">Indywidualny</option>
             </select>
 
-            <p className={FIELD_HINT}>
-              Jeśli masz inny zakres (np. start od uzyskania PWZ), wybierz „Indywidualny”.
-            </p>
+            <p className={FIELD_HINT}>Jeśli masz inny zakres (np. start od uzyskania PWZ), wybierz „Indywidualny”.</p>
           </div>
 
+          {/* Okres */}
           {periodMode === "preset" ? (
-            <div className="min-w-0">
-              <label className="text-xs font-semibold text-slate-900">
-                <span className="inline-flex items-center gap-2">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
-                    🗓️
-                  </span>
-                  Okres (preset)
-                </span>
-              </label>
-              <div className="mt-1">
-                <ValuePill>{periodLabel}</ValuePill>
-              </div>
+            <div className="min-w-0 space-y-2">
+              <label className={LABEL}>Okres (preset)</label>
+              <div className={META}>Aktualnie: {periodLabel}</div>
 
               <select
                 value={periodLabel}
-                onChange={async (e) => {
+                onChange={(e) => {
                   const [a, b] = e.target.value.split("-").map((x) => Number(x));
                   setPeriodStart(a);
                   setPeriodEnd(b);
-                  await saveProfilePatch({ period_start: a, period_end: b });
                 }}
                 className={FIELD}
               >
@@ -744,32 +746,16 @@ export default function CalculatorClient() {
               </select>
             </div>
           ) : (
-            <div className="min-w-0">
-              <label className="text-xs font-semibold text-slate-900">
-                <span className="inline-flex items-center gap-2">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
-                    📅
-                  </span>
-                  Okres (indywidualny)
-                </span>
-              </label>
-              <div className="mt-1">
-                <ValuePill>
-                  {periodStart}-{periodEnd}
-                </ValuePill>
+            <div className="min-w-0 space-y-2">
+              <label className={LABEL}>Okres (indywidualny)</label>
+              <div className={META}>
+                Aktualnie: {periodStart}-{periodEnd}
               </div>
 
-              <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="mt-2 grid grid-cols-2 gap-3">
                 <input
                   value={periodStart}
                   onChange={(e) => setPeriodStart(Number(e.target.value || 0))}
-                  onBlur={async () => {
-                    if (periodEnd < periodStart) setPeriodEnd(periodStart);
-                    await saveProfilePatch({
-                      period_start: periodStart,
-                      period_end: Math.max(periodEnd, periodStart),
-                    });
-                  }}
                   type="number"
                   className={FIELD}
                   placeholder="Start"
@@ -777,77 +763,48 @@ export default function CalculatorClient() {
                 <input
                   value={periodEnd}
                   onChange={(e) => setPeriodEnd(Number(e.target.value || 0))}
-                  onBlur={async () => {
-                    const pe = Math.max(periodEnd, periodStart);
-                    setPeriodEnd(pe);
-                    await saveProfilePatch({ period_end: pe });
-                  }}
                   type="number"
                   className={FIELD}
                   placeholder="Koniec"
                 />
               </div>
+
+              <p className={FIELD_HINT}>Jeśli koniec jest mniejszy niż start, popraw wartości przed zapisem.</p>
             </div>
           )}
 
-          <div className="min-w-0">
-            <label className="text-xs font-semibold text-slate-900">
-              <span className="inline-flex items-center gap-2">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
-                  🎯
-                </span>
-                Wymagane punkty
-              </span>
-            </label>
-            <div className="mt-1">
-              <ValuePill>{requiredPoints}</ValuePill>
-            </div>
+          {/* Wymagane punkty */}
+          <div className="min-w-0 space-y-2">
+            <label className={LABEL}>Wymagane punkty</label>
+            <div className={META}>Aktualnie: {requiredPoints}</div>
 
             <input
               value={requiredPoints}
               onChange={(e) => setRequiredPoints(Number(e.target.value || 0))}
-              onBlur={async () => {
-                await saveProfilePatch({ required_points: requiredPoints });
-              }}
               type="number"
               min={0}
               className={FIELD}
             />
 
-            <p className={FIELD_HINT}>
-              Domyślnie: {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? requiredPoints}
-            </p>
+            <p className={FIELD_HINT}>Domyślnie: {DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[profession] ?? requiredPoints}</p>
           </div>
 
+          {/* Inny zawód */}
           {otherRequired ? (
-            <div className="md:col-span-2 xl:col-span-4">
-              <label className="text-xs font-semibold text-slate-900">
-                <span className="inline-flex items-center gap-2">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
-                    ✍️
-                  </span>
-                  Jaki zawód?
-                </span>
-              </label>
-              <div className="mt-1">
-                <ValuePill>{normalizeOtherProfession(professionOther) || "—"}</ValuePill>
-              </div>
+            <div className="md:col-span-2 xl:col-span-4 space-y-2">
+              <label className={LABEL}>Jaki zawód?</label>
+              <div className={META}>Wpisz nazwę zawodu (min. 2 znaki), potem kliknij „Zapisz zmiany”.</div>
 
               <input
                 value={professionOther}
                 onChange={(e) => setProfessionOther(e.target.value)}
-                onBlur={async () => {
-                  const norm = normalizeOtherProfession(professionOther);
-                  setProfessionOther(norm);
-                  await saveProfilePatch({ profession_other: norm || null });
-                }}
                 placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
-                className={`mt-2 h-11 w-full rounded-2xl border bg-white/80 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
-                  otherValid
-                    ? "border-slate-200/70 focus:ring-blue-200"
-                    : "border-rose-200/70 focus:ring-rose-200"
-                }`}
+                className={[
+                  "mt-2 h-11 w-full rounded-2xl border bg-white/80 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2",
+                  otherValid ? "border-slate-200/70 focus:ring-blue-200" : "border-rose-200/70 focus:ring-rose-200",
+                ].join(" ")}
               />
+
               <p className={`mt-1 text-[11px] ${otherValid ? "text-slate-500" : "text-rose-700"}`}>
                 {otherValid
                   ? "Doprecyzowanie pomaga dopasować zasady i raporty."
@@ -905,8 +862,7 @@ export default function CalculatorClient() {
               <>
                 <span className="text-slate-300">•</span>
                 <div className="text-slate-700">
-                  Bez certyfikatu:{" "}
-                  <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
+                  Bez certyfikatu: <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
                 </div>
               </>
             ) : null}
