@@ -294,8 +294,10 @@ export default function CalculatorClient() {
 
   const [profession, setProfession] = useState<Profession>("Lekarz");
   const [professionOther, setProfessionOther] = useState<string>("");
+
   const [periodStart, setPeriodStart] = useState<number>(2023);
   const [periodEnd, setPeriodEnd] = useState<number>(2026);
+
   const [requiredPoints, setRequiredPoints] = useState<number>(
     DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
   );
@@ -640,6 +642,7 @@ export default function CalculatorClient() {
           <div>
             <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
               <span className="inline-flex items-center gap-2">
+                {/* ✅ jedna ikonka (główka) */}
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                   🧑‍⚕️
                 </span>
@@ -865,720 +868,266 @@ export default function CalculatorClient() {
         />
       </div>
 
-      {/* NOWY UKŁAD */}
-      <div className="space-y-5">
-        {/* REGUŁY I LIMITY */}
-        <div className="rounded-3xl border border-slate-200/70 bg-slate-50/80 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <div className="text-sm font-extrabold text-slate-900">Reguły i limity</div>
-              <div className="mt-1 text-sm text-slate-600">
-                Limity cząstkowe i wykorzystanie na podstawie ukończonych wpisów w okresie {periodLabel}.
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <div className="text-slate-700">
-                Zaliczone: <span className="font-extrabold text-slate-900">{donePoints} pkt</span>
-              </div>
-              <span className="text-slate-300">•</span>
-              <div className="text-slate-700">
-                Brakuje: <span className="font-extrabold text-slate-900">{missingPoints} pkt</span>
-              </div>
-              {missingEvidenceCount > 0 ? (
-                <>
-                  <span className="text-slate-300">•</span>
-                  <div className="text-slate-700">
-                    Bez certyfikatu:{" "}
-                    <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
-                  </div>
-                </>
-              ) : null}
+      {/* REGUŁY I LIMITY */}
+      <div className="rounded-3xl border border-slate-200/70 bg-slate-50/80 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="text-sm font-extrabold text-slate-900">Reguły i limity</div>
+            <div className="mt-1 text-sm text-slate-600">
+              Limity cząstkowe i wykorzystanie na podstawie ukończonych wpisów w okresie {periodLabel}.
             </div>
           </div>
 
-          {(planInfo || planErr) ? (
-            <div className="mt-4 rounded-2xl border bg-white/70 p-3 text-sm">
-              {planInfo ? <div className="text-emerald-700 font-semibold">{planInfo}</div> : null}
-              {planErr ? <div className="text-rose-700 font-semibold">{planErr}</div> : null}
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <div className="text-slate-700">
+              Zaliczone: <span className="font-extrabold text-slate-900">{donePoints} pkt</span>
             </div>
-          ) : null}
+            <span className="text-slate-300">•</span>
+            <div className="text-slate-700">
+              Brakuje: <span className="font-extrabold text-slate-900">{missingPoints} pkt</span>
+            </div>
+            {missingEvidenceCount > 0 ? (
+              <>
+                <span className="text-slate-300">•</span>
+                <div className="text-slate-700">
+                  Bez certyfikatu:{" "}
+                  <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
 
-          <div className="mt-4 space-y-3">
-            {limitsUsage.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-700">
-                Brak zdefiniowanych limitów dla tego zawodu.
-              </div>
-            ) : (
-              limitsUsage.map((r) => {
-                const isMax = (r.usedPct ?? 0) >= 100 || (Number(r.remaining) || 0) <= 0;
+        {(planInfo || planErr) ? (
+          <div className="mt-4 rounded-2xl border bg-white/70 p-3 text-sm">
+            {planInfo ? <div className="text-emerald-700 font-semibold">{planInfo}</div> : null}
+            {planErr ? <div className="text-rose-700 font-semibold">{planErr}</div> : null}
+          </div>
+        ) : null}
 
-                return (
-                  <div
-                    key={r.key}
-                    className="w-full rounded-2xl border border-slate-200/70 bg-white/80 p-4 ring-1 ring-slate-100"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                          <div className="text-sm font-extrabold text-slate-900">{r.label}</div>
+        <div className="mt-4 space-y-3">
+          {limitsUsage.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-700">
+              Brak zdefiniowanych limitów dla tego zawodu.
+            </div>
+          ) : (
+            limitsUsage.map((r) => {
+              const isMax = (r.usedPct ?? 0) >= 100 || (Number(r.remaining) || 0) <= 0;
 
-                          {r.note ? (
-                            <div className="text-xs font-semibold text-slate-600">
-                              {r.note}
-                              {r.mode === "per_year" ? ` (×${r.yearsInPeriod} lat)` : ""}
-                            </div>
-                          ) : null}
+              return (
+                <div
+                  key={r.key}
+                  className="w-full rounded-2xl border border-slate-200/70 bg-white/80 p-4 ring-1 ring-slate-100"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <div className="text-sm font-extrabold text-slate-900">{r.label}</div>
 
-                          {isMax ? (
-                            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                              <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                              W pełni zrealizowane
-                            </span>
-                          ) : null}
-                        </div>
+                        {r.note ? (
+                          <div className="text-xs font-semibold text-slate-600">
+                            {r.note}
+                            {r.mode === "per_year" ? ` (×${r.yearsInPeriod} lat)` : ""}
+                          </div>
+                        ) : null}
 
-                        <div className="mt-1 text-xs font-semibold text-slate-600">
-                          {Math.round(r.used)} / {Math.round(r.cap)} pkt • {Math.round(r.usedPct)}%
-                        </div>
-                      </div>
-
-                      <div className="shrink-0">
                         {isMax ? (
-                          <Link
-                            href="/aktywnosci"
-                            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
-                          >
-                            Zobacz wpisy
-                          </Link>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={isBusy || planningKey === r.key}
-                            onClick={() => planForRule(r)}
-                            className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-                          >
-                            {planningKey === r.key ? "Dodaję…" : "Zaplanuj aktywność"}
-                          </button>
-                        )}
+                          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                            <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                            W pełni zrealizowane
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-1 text-xs font-semibold text-slate-600">
+                        {Math.round(r.used)} / {Math.round(r.cap)} pkt • {Math.round(r.usedPct)}%
                       </div>
                     </div>
 
-                    <div className="mt-3 flex items-center gap-3">
-                      <div className="flex-1">
-                        <div className="h-3 rounded-full bg-slate-200/80">
-                          <div
-                            className="h-3 rounded-full bg-blue-600"
-                            style={{ width: `${r.usedPct}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="shrink-0 text-xs font-semibold text-slate-700">
-                        Pozostało: <span className="font-extrabold">{Math.round(r.remaining)}</span> pkt
-                      </div>
+                    <div className="shrink-0">
+                      {isMax ? (
+                        <Link
+                          href="/aktywnosci"
+                          className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+                        >
+                          Zobacz wpisy
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={isBusy || planningKey === r.key}
+                          onClick={() => planForRule(r)}
+                          className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                        >
+                          {planningKey === r.key ? "Dodaję…" : "Zaplanuj aktywność"}
+                        </button>
+                      )}
                     </div>
                   </div>
-                );
-              })
-            )}
+
+                  <div className="mt-3 flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="h-3 rounded-full bg-slate-200/80">
+                        <div className="h-3 rounded-full bg-blue-600" style={{ width: `${r.usedPct}%` }} />
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 text-xs font-semibold text-slate-700">
+                      Pozostało: <span className="font-extrabold">{Math.round(r.remaining)}</span> pkt
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href="/aktywnosci"
+            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+          >
+            Przejdź do Aktywności →
+          </Link>
+          <Link
+            href="/aktywnosci?new=1"
+            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+          >
+            + Dodaj aktywność
+          </Link>
+          <Link
+            href="/portfolio"
+            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+          >
+            Raport / PDF →
+          </Link>
+        </div>
+      </div>
+
+      {/* OSTATNIE AKTYWNOŚCI */}
+      <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-sm font-extrabold text-slate-900">Ostatnie aktywności</div>
+            <div className="mt-1 text-sm text-slate-600">
+              Ostatnio dodane wpisy w okresie {periodLabel} (z sygnalizacją braków).
+            </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link
               href="/aktywnosci"
               className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
             >
-              Przejdź do Aktywności →
-            </Link>
-            <Link
-              href="/aktywnosci?new=1"
-              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
-            >
-              + Dodaj aktywność
+              Aktywności
             </Link>
             <Link
               href="/portfolio"
               className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
             >
-              Raport / PDF →
+              Raporty / PDF
+            </Link>
+            <Link
+              href="/baza-szkolen"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+            >
+              Baza szkoleń
             </Link>
           </div>
         </div>
 
-        {/* OSTATNIE AKTYWNOŚCI */}
-        <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="text-sm font-extrabold text-slate-900">Ostatnie aktywności</div>
-              <div className="mt-1 text-sm text-slate-600">
-                Ostatnio dodane wpisy w okresie {periodLabel} (z sygnalizacją braków).
-              </div>
+        <div className="mt-4 space-y-3">
+          {isBusy ? (
+            <div className="text-sm text-slate-600">Wczytuję…</div>
+          ) : recentRows.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-700">
+              Brak wpisów w okresie {periodLabel}.
             </div>
+          ) : (
+            recentRows.map((a) => {
+              const prog = normalizeStatus(a.status);
+              const missing = getRowMissing(a);
 
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/aktywnosci"
-                className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
-              >
-                Aktywności
-              </Link>
-              <Link
-                href="/portfolio"
-                className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
-              >
-                Raporty / PDF
-              </Link>
-              <Link
-                href="/baza-szkolen"
-                className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
-              >
-                Baza szkoleń
-              </Link>
-            </div>
-          </div>
+              return (
+                <div
+                  key={a.id}
+                  className={[
+                    "rounded-2xl border p-4",
+                    prog === "planned"
+                      ? "border-blue-200 bg-blue-50/40"
+                      : missing.length
+                      ? "border-amber-200 bg-amber-50/30"
+                      : "border-slate-200 bg-white/80",
+                  ].join(" ")}
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="min-w-0 truncate text-sm font-semibold text-slate-900">{a.type}</div>
 
-          <div className="mt-4 space-y-3">
-            {isBusy ? (
-              <div className="text-sm text-slate-600">Wczytuję…</div>
-            ) : recentRows.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-700">
-                Brak wpisów w okresie {periodLabel}.
-              </div>
-            ) : (
-              recentRows.map((a) => {
-                const prog = normalizeStatus(a.status);
-                const missing = getRowMissing(a);
+                        {prog === "planned" ? (
+                          <span className="inline-flex shrink-0 items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
+                            🗓️ Zaplanowane
+                          </span>
+                        ) : (
+                          <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                            ✅ Ukończone
+                          </span>
+                        )}
 
-                return (
-                  <div
-                    key={a.id}
-                    className={[
-                      "rounded-2xl border p-4",
-                      prog === "planned"
-                        ? "border-blue-200 bg-blue-50/40"
-                        : missing.length
-                        ? "border-amber-200 bg-amber-50/30"
-                        : "border-slate-200 bg-white/80",
-                    ].join(" ")}
-                  >
-                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="min-w-0 truncate text-sm font-semibold text-slate-900">{a.type}</div>
+                        {missing.length === 0 ? (
+                          <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                            Kompletne
+                          </span>
+                        ) : (
+                          <span className="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
+                            Braki
+                          </span>
+                        )}
+                      </div>
 
-                          {prog === "planned" ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
-                              🗓️ Zaplanowane
-                            </span>
-                          ) : (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
-                              ✅ Ukończone
-                            </span>
-                          )}
-
-                          {missing.length === 0 ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
-                              Kompletne
-                            </span>
-                          ) : (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
-                              Braki
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="mt-1 text-xs text-slate-600">
-                          {a.organizer ? `${a.organizer} • ` : ""}
-                          Rok: <span className="font-semibold text-slate-900">{a.year}</span>
-                          {prog === "planned" ? (
-                            <>
-                              {" "}
-                              • Termin:{" "}
-                              <span className="font-semibold text-slate-900">{formatYMD(a.planned_start_date)}</span>
-                            </>
-                          ) : null}
-                        </div>
-
-                        {missing.length ? (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {missing.map((m) => (
-                              <span
-                                key={m}
-                                className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
-                              >
-                                {m}
-                              </span>
-                            ))}
-                          </div>
+                      <div className="mt-1 text-xs text-slate-600">
+                        {a.organizer ? `${a.organizer} • ` : ""}
+                        Rok: <span className="font-semibold text-slate-900">{a.year}</span>
+                        {prog === "planned" ? (
+                          <>
+                            {" "}
+                            • Termin:{" "}
+                            <span className="font-semibold text-slate-900">{formatYMD(a.planned_start_date)}</span>
+                          </>
                         ) : null}
                       </div>
 
-                      <div className="shrink-0 text-right">
-                        <div className="text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
-                        <Link
-                          href="/aktywnosci"
-                          className="mt-2 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white"
-                        >
-                          Otwórz w Aktywnościach →
-                        </Link>
-                      </div>
+                      {missing.length ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {missing.map((m) => (
+                            <span
+                              key={m}
+                              className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
+                            >
+                              {m}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
+                      <Link
+                        href="/aktywnosci"
+                        className="mt-2 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white"
+                      >
+                        Otwórz w Aktywnościach →
+                      </Link>
                     </div>
                   </div>
-                );
-              })
-            )}
-          </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
-    </div>
-  );
-}// components/dashboard/CpdStatusPanel.tsx
-"use client";
-
-import Link from "next/link";
-import React from "react";
-
-type NextStep = {
-  title: string;
-  description: string;
-  ctaLabel?: string;
-  ctaHref?: string;
-};
-
-export type TopLimitItem = {
-  key: string;
-  label: string;
-  used: number;
-  cap: number;
-  remaining: number;
-  usedPct: number; // 0..100
-  note?: string;
-  mode?: "per_period" | "per_year" | "per_item";
-};
-
-type Props = {
-  title?: string;
-
-  userEmail?: string | null;
-  profileProfession?: string | null;
-
-  isBusy: boolean;
-
-  periodLabel: string;
-  donePoints: number;
-  requiredPoints: number;
-  missingPoints: number;
-  progressPct: number; // % punktów
-
-  evidencePct: number; // % ukończonych z certyfikatem
-  daysLeft: number; // dni do końca
-
-  doneCount: number;
-  plannedCount: number;
-
-  missingEvidenceCount: number;
-
-  nextStep: NextStep;
-
-  topLimits: TopLimitItem[];
-  limitWarning?: string | null;
-
-  primaryCtaHref?: string;
-  secondaryCtaHref?: string;
-  portfolioHref?: string;
-};
-
-function clamp(n: number, a: number, b: number) {
-  return Math.max(a, Math.min(b, n));
-}
-
-function fmtPct(n: number) {
-  return `${Math.round(n)}%`;
-}
-
-const BTN_BASE =
-  "inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold transition-colors";
-const PRIMARY_BTN = "bg-blue-600 hover:bg-blue-700 text-white shadow-sm";
-const OUTLINE_BTN =
-  "border border-slate-200/70 bg-white/80 text-slate-800 hover:bg-white backdrop-blur";
-
-const PRIMARY_BAR = "bg-blue-600";
-const PRIMARY_DOT = "bg-blue-700";
-
-type DocTone = "ok" | "warn" | "bad";
-
-function statusFromCompleteness(pointsPct: number, evidencePct: number, doneCount: number) {
-  const p = clamp(pointsPct, 0, 100);
-  const e = clamp(evidencePct, 0, 100);
-
-  if (doneCount <= 0) {
-    return {
-      label: "Wymaga uzupełnienia",
-      tone: "warn" as const,
-      reason: "brak wpisów",
-      hint: "Dodaj pierwszą aktywność i dokument (certyfikat), aby zacząć budować archiwum.",
-    };
-  }
-
-  if (p >= 85 && e >= 90) {
-    return {
-      label: "Dokumentacja kompletna",
-      tone: "ok" as const,
-      reason: "wysoka kompletność",
-      hint: "Masz dobrą kompletność punktów i dokumentów. Zestawienie możesz pobrać w każdej chwili.",
-    };
-  }
-
-  if (p < 35 || e < 50) {
-    return {
-      label: "Dokumentacja niekompletna",
-      tone: "bad" as const,
-      reason: "niska kompletność",
-      hint: "Uzupełnij dokumenty i zaplanuj aktywności, aby archiwum było spójne i gotowe do wykorzystania.",
-    };
-  }
-
-  return {
-    label: "Wymaga uzupełnienia",
-    tone: "warn" as const,
-    reason: "częściowe braki",
-    hint: "Uzupełnij dokumenty i zaplanuj aktywności, żeby domknąć okres bez stresu.",
-  };
-}
-
-function ToneBadge({
-  tone,
-  label,
-  reason,
-  attention,
-}: {
-  tone: DocTone;
-  label: string;
-  reason: string;
-  attention?: boolean;
-}) {
-  const map = {
-    ok: {
-      wrap: "border-blue-200/70 bg-blue-50/70 text-blue-950",
-      dot: "bg-blue-600",
-    },
-    warn: {
-      wrap: "border-amber-200/70 bg-amber-50/70 text-amber-950",
-      dot: "bg-amber-500",
-    },
-    bad: {
-      wrap: "border-rose-200/70 bg-rose-50/70 text-rose-900",
-      dot: "bg-rose-500",
-    },
-  }[tone];
-
-  return (
-    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${map.wrap}`}>
-      <span className={`h-2 w-2 rounded-full ${map.dot}`} />
-      {label}
-      <span className="text-[11px] font-semibold opacity-80">• {reason}</span>
-
-      {attention ? (
-        <span className="ml-1 inline-flex items-center gap-2 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700">
-          <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-          Wymaga uwagi
-        </span>
-      ) : null}
-    </span>
-  );
-}
-
-function StatPill({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-3 shadow-sm backdrop-blur">
-      <div className="text-[11px] font-semibold text-slate-600">{label}</div>
-      <div className="mt-1 text-sm font-extrabold text-slate-900">{value}</div>
-    </div>
-  );
-}
-
-function MiniCta({ href, label }: { href: string; label: string }) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-white backdrop-blur"
-    >
-      {label}
-    </Link>
-  );
-}
-
-function limitTone(used: number, usedPct: number) {
-  if (used <= 0) return { badge: "Nie rozpoczęto", tone: "ok" as const };
-  if (usedPct >= 100) return { badge: "Limit", tone: "bad" as const };
-  if (usedPct >= 80) return { badge: "Uwaga", tone: "warn" as const };
-  return { badge: "W trakcie", tone: "ok" as const };
-}
-
-function LimitBadge({ tone, text }: { tone: "ok" | "warn" | "bad"; text: string }) {
-  const cls =
-    tone === "ok"
-      ? "bg-blue-50 text-blue-950"
-      : tone === "warn"
-      ? "bg-amber-50 text-amber-950"
-      : "bg-rose-50 text-rose-900";
-
-  return (
-    <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${cls}`}>
-      {text}
-    </span>
-  );
-}
-
-function MiniLimitCard({ item }: { item: TopLimitItem }) {
-  const pct = clamp(item.usedPct, 0, 100);
-  const t = limitTone(item.used, pct);
-
-  const wrapCls =
-    t.tone === "bad"
-      ? "rounded-2xl border border-rose-200/70 bg-rose-50/40 p-3 shadow-sm"
-      : t.tone === "warn"
-      ? "rounded-2xl border border-amber-200/70 bg-amber-50/40 p-3 shadow-sm"
-      : "rounded-2xl border border-slate-200/70 bg-white/70 p-3 shadow-sm";
-
-  return (
-    <div className={wrapCls}>
-      {/* ✅ badge przeniesione na linię z 0/6 pkt i wyrównane do prawej */}
-      <div className="min-w-0">
-        <div className="truncate text-xs font-extrabold text-slate-900">{item.label}</div>
-
-        <div className="mt-0.5 flex items-center justify-between gap-2">
-          <div className="text-[11px] font-semibold text-slate-600">
-            {Math.round(item.used)}/{Math.round(item.cap)} pkt
-          </div>
-          <LimitBadge tone={t.tone} text={t.badge} />
-        </div>
-      </div>
-
-      <div className="mt-2">
-        <div className="h-3 rounded-full bg-slate-200/70">
-          <div className={`h-3 rounded-full ${PRIMARY_BAR}`} style={{ width: `${pct}%` }} />
-        </div>
-      </div>
-
-      <div className="mt-1 text-[11px] text-slate-600">
-        Pozostało: <span className="font-semibold text-slate-900">{Math.round(item.remaining)} pkt</span>
-      </div>
-    </div>
-  );
-}
-
-export default function CpdStatusPanel({
-  title = "Status dokumentacji",
-  userEmail,
-  profileProfession,
-  isBusy,
-  periodLabel,
-  donePoints,
-  requiredPoints,
-  missingPoints,
-  progressPct,
-  evidencePct,
-  daysLeft,
-  doneCount,
-  plannedCount,
-  missingEvidenceCount,
-  nextStep,
-  topLimits,
-  limitWarning,
-  primaryCtaHref = "/aktywnosci?new=1",
-  secondaryCtaHref = "/aktywnosci",
-  portfolioHref = "/portfolio",
-}: Props) {
-  const pointsPct = clamp(progressPct, 0, 100);
-  const docsPct = clamp(evidencePct, 0, 100);
-
-  const status = statusFromCompleteness(pointsPct, docsPct, doneCount);
-
-  const docsActionNeeded = missingEvidenceCount > 0;
-
-  const primary =
-    docsActionNeeded
-      ? { href: "/aktywnosci", label: "Uzupełnij dokumenty" }
-      : missingPoints > 0
-      ? { href: primaryCtaHref, label: "+ Dodaj aktywność" }
-      : { href: portfolioHref, label: "Zestawienie PDF" };
-
-  const secondary =
-    docsActionNeeded
-      ? { href: primaryCtaHref, label: "+ Dodaj aktywność" }
-      : { href: "/aktywnosci", label: "Aktywności" };
-
-  const showNextStepCta =
-    !!nextStep.ctaHref &&
-    !!nextStep.ctaLabel &&
-    !(docsActionNeeded && nextStep.ctaHref === primary.href);
-
-  const dotLeft = clamp(pointsPct, 0, 100);
-
-  return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-5 shadow-lg ring-1 ring-slate-200/50 backdrop-blur">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="text-xs font-semibold text-slate-600">Panel CPD</div>
-
-              <ToneBadge tone={status.tone} label={status.label} reason={status.reason} attention={docsActionNeeded} />
-
-              {isBusy ? (
-                <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600 backdrop-blur">
-                  Synchronizacja…
-                </span>
-              ) : (
-                <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600 backdrop-blur">
-                  Zsynchronizowane
-                </span>
-              )}
-            </div>
-
-            <div className="mt-2">
-              <div className="text-2xl font-extrabold tracking-tight text-slate-900">{title}</div>
-              <div className="mt-1 text-sm text-slate-700">{status.hint}</div>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-end gap-x-4 gap-y-2">
-              <div className="text-4xl font-extrabold text-slate-900">
-                {donePoints}/{requiredPoints}
-                <span className="ml-2 text-base font-semibold text-slate-600">pkt</span>
-              </div>
-
-              {missingPoints > 0 ? (
-                <div className="text-2xl font-extrabold text-rose-600">
-                  brakuje {missingPoints}
-                  <span className="ml-2 text-base font-semibold text-rose-600">pkt</span>
-                </div>
-              ) : (
-                <div className="text-2xl font-extrabold text-emerald-700">komplet ✅</div>
-              )}
-            </div>
-
-            <div className="mt-4">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-semibold text-slate-700">Punkty w okresie {periodLabel}</div>
-                <div className="text-xs font-semibold text-slate-700">{fmtPct(pointsPct)}</div>
-              </div>
-
-              <div className="mt-2">
-                <div className="relative h-5 rounded-full bg-slate-200/70">
-                  <div className={`h-5 rounded-full ${PRIMARY_BAR}`} style={{ width: `${pointsPct}%` }} />
-                  <div
-                    className={`absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 border-white ${PRIMARY_DOT} shadow`}
-                    style={{ left: `calc(${dotLeft}% - 10px)` }}
-                    aria-hidden
-                  />
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-[25%]">
-                    <span className="h-3 w-px bg-white/60" />
-                    <span className="h-3 w-px bg-white/60" />
-                    <span className="h-3 w-px bg-white/60" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-2 text-xs text-slate-600">
-                Ukończone: <span className="font-semibold text-slate-900">{doneCount}</span> • Plan:{" "}
-                <span className="font-semibold text-slate-900">{plannedCount}</span>
-              </div>
-            </div>
-
-            {topLimits?.length ? (
-              <div className="mt-4">
-                <div className="text-xs font-extrabold text-slate-900">Limity w tym okresie</div>
-                <div className="mt-1 text-xs text-slate-600">
-                  Jeśli limit jest osiągnięty, kolejne podobne aktywności mogą nie zwiększyć punktów.
-                </div>
-
-                <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
-                  {topLimits.map((x) => (
-                    <MiniLimitCard key={x.key} item={x} />
-                  ))}
-                </div>
-
-                {limitWarning ? (
-                  <div className="mt-3 rounded-2xl border border-rose-200/70 bg-rose-50/60 p-3 text-sm text-rose-900">
-                    <span className="font-extrabold">Uwaga:</span> {limitWarning}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              {userEmail ? (
-                <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/80 px-3 py-1 text-xs font-medium text-slate-700 backdrop-blur">
-                  {userEmail}
-                </span>
-              ) : null}
-
-              {profileProfession ? (
-                <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/80 px-3 py-1 text-xs font-medium text-slate-700 backdrop-blur">
-                  Profil: {profileProfession}
-                </span>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="flex w-full flex-col gap-3 md:w-[360px]">
-            <div className="grid grid-cols-2 gap-3">
-              <StatPill label="Okres" value={periodLabel} />
-              <StatPill label="Dni do końca" value={`${daysLeft}`} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <StatPill label="Dowody" value={fmtPct(docsPct)} />
-              <StatPill label="Wymagane" value={`${requiredPoints} pkt`} />
-            </div>
-
-            <div
-              className={
-                docsActionNeeded
-                  ? "rounded-2xl border border-rose-200/70 bg-rose-50/60 p-4 shadow-sm"
-                  : "rounded-2xl border border-slate-200/70 bg-slate-50/60 p-4 shadow-sm"
-              }
-            >
-              <div className="flex items-center justify-between">
-                <div className="text-[11px] font-semibold text-slate-600">Najbliższy krok</div>
-
-                {docsActionNeeded ? (
-                  <span className="inline-flex items-center gap-2 text-[11px] font-bold text-rose-700">
-                    <span className="h-2 w-2 rounded-full bg-rose-500" />
-                    Do zrobienia
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="mt-1 text-sm font-extrabold text-slate-900">{nextStep.title}</div>
-              <div className="mt-1 text-sm text-slate-700">{nextStep.description}</div>
-
-              {showNextStepCta ? (
-                <Link href={nextStep.ctaHref!} className={`${BTN_BASE} ${OUTLINE_BTN} mt-3 w-full`}>
-                  {nextStep.ctaLabel}
-                </Link>
-              ) : null}
-            </div>
-
-            <div className="grid grid-cols-1 gap-2">
-              <Link href={primary.href} className={`${BTN_BASE} ${PRIMARY_BTN} w-full`}>
-                {primary.label}
-              </Link>
-
-              <div className="grid grid-cols-2 gap-2">
-                <Link href={secondary.href} className={`${BTN_BASE} ${OUTLINE_BTN}`}>
-                  {secondary.label}
-                </Link>
-                <MiniCta href={portfolioHref} label="Zestawienie PDF" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ✅ usunięto dolne kafle “Do uzupełnienia” i “Plan domknięcia limitu” (dublowały informacje) */}
     </div>
   );
 }
