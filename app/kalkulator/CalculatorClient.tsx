@@ -43,13 +43,14 @@ type ProfileRow = {
   user_id: string;
   profession: Profession | null;
   profession_other?: string | null;
+
+  // ✅ wg Twojego schematu Supabase
+  pwz_number?: string | null;
+  pwz_issue_date?: string | null; // YYYY-MM-DD
+
   period_start: number | null;
   period_end: number | null;
   required_points: number | null;
-
-  // ✅ opcjonalnie – jeśli masz to w tabeli profiles
-  pwz_date?: string | null; // YYYY-MM-DD
-  pwz_granted_at?: string | null; // YYYY-MM-DD
 };
 
 function clamp(n: number, a: number, b: number) {
@@ -205,14 +206,14 @@ function ValuePill({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ✅ wylicz okres z PWZ (lata) na bazie długości okresu w miesiącach (np. 48 => 4 lata => end = start+3)
-function getPeriodFromPwz(prof: Profession, pwz: string | null | undefined) {
-  if (!pwz) return null;
-  const y = Number(String(pwz).slice(0, 4));
+// ✅ okres z PWZ (pwz_issue_date)
+function getPeriodFromPwzIssueDate(prof: Profession, pwzIssueDate: string | null | undefined) {
+  if (!pwzIssueDate) return null;
+  const y = Number(String(pwzIssueDate).slice(0, 4));
   if (!y || Number.isNaN(y)) return null;
 
   const months = RULES_BY_PROFESSION[prof]?.periodMonths ?? 48;
-  const years = Math.max(1, Math.round(months / 12));
+  const years = Math.max(1, Math.round(months / 12)); // 48=>4, 60=>5
   const start = y;
   const end = y + (years - 1);
   return { start, end };
@@ -244,6 +245,7 @@ export default function CalculatorClient() {
   const [planErr, setPlanErr] = useState<string | null>(null);
   const [planningKey, setPlanningKey] = useState<string | null>(null);
 
+  // ✅ wraca przycisk "Zapisz"
   const [dirty, setDirty] = useState(false);
 
   const supabase = useMemo(() => supabaseClient(), []);
@@ -271,7 +273,7 @@ export default function CalculatorClient() {
 
       const { data: p, error: pErr } = await supabase
         .from("profiles")
-        .select("user_id, profession, profession_other, period_start, period_end, required_points, pwz_date, pwz_granted_at")
+        .select("user_id, profession, profession_other, pwz_number, pwz_issue_date, period_start, period_end, required_points")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -285,12 +287,11 @@ export default function CalculatorClient() {
           const po = normalizeOtherProfession((p as any).profession_other);
           setProfessionOther(po);
 
-          // ✅ jeśli jest PWZ: domyślnie licz okres z PWZ
-          const pwz = (p as any).pwz_date ?? (p as any).pwz_granted_at ?? null;
-          const derived = getPeriodFromPwz(prof, pwz);
+          // ✅ DOMYŚLNY OKRES Z PWZ (jeśli jest ustawione)
+          const derived = getPeriodFromPwzIssueDate(prof, (p as any).pwz_issue_date);
 
-          const ps = (p.period_start ?? null) as number | null;
-          const pe = (p.period_end ?? null) as number | null;
+          const ps = p.period_start ?? null;
+          const pe = p.period_end ?? null;
 
           const start = derived?.start ?? ps ?? 2023;
           const end = derived?.end ?? pe ?? 2026;
@@ -298,7 +299,6 @@ export default function CalculatorClient() {
           setPeriodStart(start);
           setPeriodEnd(end);
 
-          // ✅ tryb: jeśli wyliczyliśmy z PWZ -> custom, inaczej preset jeśli pasuje
           if (derived) {
             setPeriodMode("custom");
           } else {
@@ -368,9 +368,13 @@ export default function CalculatorClient() {
     });
   }, [activities, periodStart, periodEnd]);
 
-  const donePoints = useMemo(() => inPeriodDone.reduce((sum, a) => sum + (Number(a.points) || 0), 0), [inPeriodDone]);
+  const donePoints = useMemo(() => {
+    return inPeriodDone.reduce((sum, a) => sum + (Number(a.points) || 0), 0);
+  }, [inPeriodDone]);
 
-  const missingPoints = useMemo(() => Math.max(0, (Number(requiredPoints) || 0) - donePoints), [requiredPoints, donePoints]);
+  const missingPoints = useMemo(() => {
+    return Math.max(0, (Number(requiredPoints) || 0) - donePoints);
+  }, [requiredPoints, donePoints]);
 
   const progress = useMemo(() => {
     const req = Number(requiredPoints) || 0;
@@ -378,7 +382,9 @@ export default function CalculatorClient() {
     return clamp((donePoints / req) * 100, 0, 100);
   }, [requiredPoints, donePoints]);
 
-  const missingEvidenceCount = useMemo(() => inPeriodDone.filter((a) => !a.certificate_path).length, [inPeriodDone]);
+  const missingEvidenceCount = useMemo(() => {
+    return inPeriodDone.filter((a) => !a.certificate_path).length;
+  }, [inPeriodDone]);
 
   const evidencePct = useMemo(() => {
     const total = inPeriodDone.length;
@@ -387,7 +393,9 @@ export default function CalculatorClient() {
     return clamp((withProof / total) * 100, 0, 100);
   }, [inPeriodDone.length, missingEvidenceCount]);
 
-  const daysLeft = useMemo(() => daysUntilEndOfYear(periodEnd), [periodEnd]);
+  const daysLeft = useMemo(() => {
+    return daysUntilEndOfYear(periodEnd);
+  }, [periodEnd]);
 
   const limitsUsage = useMemo(() => {
     const rules = RULES_BY_PROFESSION[profession];
@@ -433,7 +441,9 @@ export default function CalculatorClient() {
     return `Limit „${hit.label}” jest osiągnięty — kolejne podobne aktywności mogą nie zwiększyć punktów w tym okresie.`;
   }, [limitsUsage]);
 
-  const nextStep = useMemo(() => buildNextStep(missingPoints, missingEvidenceCount, limitWarning), [missingPoints, missingEvidenceCount, limitWarning]);
+  const nextStep = useMemo(() => {
+    return buildNextStep(missingPoints, missingEvidenceCount, limitWarning);
+  }, [missingPoints, missingEvidenceCount, limitWarning]);
 
   const isBusy = authLoading || loading;
 
@@ -445,7 +455,6 @@ export default function CalculatorClient() {
     setSavingProfile(true);
 
     const nextProfession = (patch.profession ?? profession) as Profession;
-
     const nextPeriodStart = patch.period_start !== undefined ? patch.period_start : periodStart;
     const nextPeriodEnd = patch.period_end !== undefined ? patch.period_end : periodEnd;
     const nextRequiredPoints = patch.required_points !== undefined ? patch.required_points : requiredPoints;
@@ -458,6 +467,8 @@ export default function CalculatorClient() {
       user_id: user.id,
       profession: nextProfession,
       profession_other: nextOther,
+      pwz_number: (profile as any)?.pwz_number ?? null,
+      pwz_issue_date: (profile as any)?.pwz_issue_date ?? null,
       period_start: nextPeriodStart,
       period_end: nextPeriodEnd,
       required_points: nextRequiredPoints,
@@ -478,11 +489,10 @@ export default function CalculatorClient() {
 
     const other = isOtherProfession(profession) ? normalizeOtherProfession(professionOther) || null : null;
 
-    // sanity
     const ps = Number(periodStart) || 0;
     const pe = Math.max(Number(periodEnd) || 0, ps);
 
-    if (pe !== periodEnd) setPeriodEnd(pe);
+    setPeriodEnd(pe);
 
     await saveProfilePatch({
       profession,
@@ -493,7 +503,9 @@ export default function CalculatorClient() {
     });
   }
 
-  const profileLabelForPanel = useMemo(() => displayProfession(profession, professionOther), [profession, professionOther]);
+  const profileLabelForPanel = useMemo(() => {
+    return displayProfession(profession, professionOther);
+  }, [profession, professionOther]);
 
   async function planForRule(r: (typeof limitsUsage)[number]) {
     if (!user?.id) return;
@@ -540,13 +552,17 @@ export default function CalculatorClient() {
   const recentRows = useMemo(() => {
     const rows = activities.filter((a) => {
       const prog = normalizeStatus(a.status);
-      const y = prog === "planned" && a.planned_start_date ? Number(String(a.planned_start_date).slice(0, 4)) : a.year;
+      const y =
+        prog === "planned" && a.planned_start_date
+          ? Number(String(a.planned_start_date).slice(0, 4))
+          : a.year;
       return y >= periodStart && y <= periodEnd;
     });
+
     return rows.slice(0, 10);
   }, [activities, periodStart, periodEnd]);
 
-  const pwzInProfile = (profile as any)?.pwz_date ?? (profile as any)?.pwz_granted_at ?? null;
+  const pwzIssueDate = (profile as any)?.pwz_issue_date ?? null;
 
   return (
     <div className="space-y-6">
@@ -562,43 +578,34 @@ export default function CalculatorClient() {
             </div>
 
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-              <span>Zmiany zapisujemy w profilu.</span>
-
-              {savingProfile ? (
-                <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
-                  Zapisywanie…
-                </span>
-              ) : savedAt ? (
-                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                  Zapisano
-                </span>
-              ) : null}
-
-              {pwzInProfile ? (
+              <span>Zmiany zapisujesz przyciskiem po prawej.</span>
+              {pwzIssueDate ? (
                 <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
-                  Okres liczony z PWZ
+                  Okres liczony z PWZ ({formatYMD(pwzIssueDate)})
                 </span>
               ) : null}
-
               {!otherValid ? (
                 <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700">
                   Uzupełnij „Inny zawód”
+                </span>
+              ) : null}
+              {savedAt && !dirty && !savingProfile ? (
+                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                  Zapisano
                 </span>
               ) : null}
             </div>
           </div>
 
           <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center md:justify-end">
-            {dirty ? (
-              <button
-                type="button"
-                onClick={saveAllSettings}
-                disabled={isBusy || savingProfile || !otherValid}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-              >
-                Zapisz zmiany
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={saveAllSettings}
+              disabled={isBusy || savingProfile || !dirty || !otherValid}
+              className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {savingProfile ? "Zapisuję…" : "Zapisz zmiany"}
+            </button>
 
             <button
               type="button"
@@ -607,8 +614,7 @@ export default function CalculatorClient() {
                 setProfession(prof);
                 setProfessionOther("");
 
-                // jeśli masz PWZ, to i tak licz okres z PWZ
-                const derived = getPeriodFromPwz(prof, pwzInProfile);
+                const derived = getPeriodFromPwzIssueDate(prof, pwzIssueDate);
                 const ps = derived?.start ?? 2023;
                 const pe = derived?.end ?? 2026;
 
@@ -620,14 +626,6 @@ export default function CalculatorClient() {
 
                 setPeriodMode(derived ? "custom" : "preset");
                 setDirty(true);
-
-                await saveProfilePatch({
-                  profession: prof,
-                  profession_other: null,
-                  period_start: ps,
-                  period_end: pe,
-                  required_points: rp,
-                });
               }}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
             >
@@ -642,14 +640,16 @@ export default function CalculatorClient() {
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {/* Zawód */}
           <div>
-            <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+            <label className="block text-xs font-semibold text-slate-900">
               <span className="inline-flex items-center gap-2">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                   🧑‍⚕️
                 </span>
                 Zawód
               </span>
-              <ValuePill>{profession}</ValuePill>
+              <div className="mt-1">
+                <ValuePill>{profession}</ValuePill>
+              </div>
             </label>
 
             <select
@@ -659,12 +659,15 @@ export default function CalculatorClient() {
                 setProfession(v);
                 if (!isOtherProfession(v)) setProfessionOther("");
 
-                const rp = RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
+                const rp =
+                  RULES_BY_PROFESSION[v]?.requiredPoints ??
+                  DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ??
+                  200;
                 setRequiredPoints(rp);
 
-                // jeśli mamy PWZ, to po zmianie zawodu też przelicz okres
-                if (pwzInProfile) {
-                  const derived = getPeriodFromPwz(v, pwzInProfile);
+                // ✅ jeśli jest PWZ, przelicz okres automatycznie
+                if (pwzIssueDate) {
+                  const derived = getPeriodFromPwzIssueDate(v, pwzIssueDate);
                   if (derived) {
                     setPeriodMode("custom");
                     setPeriodStart(derived.start);
@@ -674,7 +677,7 @@ export default function CalculatorClient() {
 
                 setDirty(true);
               }}
-              className="mt-1 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               {PROFESSION_OPTIONS.map((p) => (
                 <option key={p} value={p}>
@@ -686,16 +689,16 @@ export default function CalculatorClient() {
 
           {/* Tryb okresu */}
           <div>
-            <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+            <label className="block text-xs font-semibold text-slate-900">
               <span className="inline-flex items-center gap-2">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                   ⏱️
                 </span>
                 Tryb okresu
               </span>
-              <ValuePill>
-                {periodMode === "preset" ? "Preset" : pwzInProfile ? "Indywidualny (PWZ)" : "Indywidualny"}
-              </ValuePill>
+              <div className="mt-1">
+                <ValuePill>{periodMode === "preset" ? "Preset" : "Indywidualny"}</ValuePill>
+              </div>
             </label>
 
             <select
@@ -704,9 +707,9 @@ export default function CalculatorClient() {
                 const v = e.target.value as "preset" | "custom";
                 setPeriodMode(v);
 
-                // jeśli przełączasz na custom i masz PWZ – przelicz automatycznie
-                if (v === "custom" && pwzInProfile) {
-                  const derived = getPeriodFromPwz(profession, pwzInProfile);
+                // jeśli przechodzisz na custom i masz PWZ → ustaw z PWZ
+                if (v === "custom" && pwzIssueDate) {
+                  const derived = getPeriodFromPwzIssueDate(profession, pwzIssueDate);
                   if (derived) {
                     setPeriodStart(derived.start);
                     setPeriodEnd(derived.end);
@@ -715,15 +718,15 @@ export default function CalculatorClient() {
 
                 setDirty(true);
               }}
-              className="mt-1 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
               <option value="preset">Preset (najczęstszy)</option>
               <option value="custom">Indywidualny</option>
             </select>
 
-            {pwzInProfile ? (
+            {pwzIssueDate ? (
               <p className="mt-1 text-[11px] text-slate-500">
-                Masz ustawioną datę PWZ, więc okres liczymy automatycznie. Możesz zmienić ręcznie, jeśli potrzebujesz.
+                Masz ustawioną datę PWZ, więc indywidualny okres liczymy automatycznie.
               </p>
             ) : (
               <p className="mt-1 text-[11px] text-slate-500">
@@ -735,14 +738,16 @@ export default function CalculatorClient() {
           {/* Okres */}
           {periodMode === "preset" ? (
             <div>
-              <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+              <label className="block text-xs font-semibold text-slate-900">
                 <span className="inline-flex items-center gap-2">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                     🗓️
                   </span>
                   Okres (preset)
                 </span>
-                <ValuePill>{periodLabel}</ValuePill>
+                <div className="mt-1">
+                  <ValuePill>{periodLabel}</ValuePill>
+                </div>
               </label>
 
               <select
@@ -753,7 +758,7 @@ export default function CalculatorClient() {
                   setPeriodEnd(b);
                   setDirty(true);
                 }}
-                className="mt-1 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
                 <option value="2019-2022">2019-2022</option>
                 <option value="2023-2026">2023-2026</option>
@@ -762,19 +767,21 @@ export default function CalculatorClient() {
             </div>
           ) : (
             <div>
-              <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+              <label className="block text-xs font-semibold text-slate-900">
                 <span className="inline-flex items-center gap-2">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                     📅
                   </span>
                   Okres (indywidualny)
                 </span>
-                <ValuePill>
-                  {periodStart}-{periodEnd}
-                </ValuePill>
+                <div className="mt-1">
+                  <ValuePill>
+                    {periodStart}-{periodEnd}
+                  </ValuePill>
+                </div>
               </label>
 
-              <div className="mt-1 grid grid-cols-2 gap-2">
+              <div className="mt-2 grid grid-cols-2 gap-2">
                 <input
                   value={periodStart}
                   onChange={(e) => {
@@ -801,14 +808,16 @@ export default function CalculatorClient() {
 
           {/* Wymagane punkty */}
           <div>
-            <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+            <label className="block text-xs font-semibold text-slate-900">
               <span className="inline-flex items-center gap-2">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                   🎯
                 </span>
                 Wymagane punkty
               </span>
-              <ValuePill>{requiredPoints}</ValuePill>
+              <div className="mt-1">
+                <ValuePill>{requiredPoints}</ValuePill>
+              </div>
             </label>
 
             <input
@@ -819,7 +828,7 @@ export default function CalculatorClient() {
               }}
               type="number"
               min={0}
-              className="mt-1 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
 
             <p className="mt-1 text-[11px] text-slate-500">
@@ -830,14 +839,16 @@ export default function CalculatorClient() {
           {/* Inny zawód */}
           {otherRequired ? (
             <div className="md:col-span-2 xl:col-span-4">
-              <label className="flex items-center justify-between text-xs font-semibold text-slate-900">
+              <label className="block text-xs font-semibold text-slate-900">
                 <span className="inline-flex items-center gap-2">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-slate-50 border border-slate-200">
                     ✍️
                   </span>
                   Jaki zawód?
                 </span>
-                <ValuePill>{normalizeOtherProfession(professionOther) || "—"}</ValuePill>
+                <div className="mt-1">
+                  <ValuePill>{normalizeOtherProfession(professionOther) || "—"}</ValuePill>
+                </div>
               </label>
 
               <input
@@ -847,7 +858,7 @@ export default function CalculatorClient() {
                   setDirty(true);
                 }}
                 placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
-                className={`mt-1 h-11 w-full rounded-2xl border bg-white/80 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
+                className={`mt-2 h-11 w-full rounded-2xl border bg-white/80 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
                   otherValid ? "border-slate-200/70 focus:ring-blue-200" : "border-rose-200/70 focus:ring-rose-200"
                 }`}
               />
@@ -859,23 +870,6 @@ export default function CalculatorClient() {
             </div>
           ) : null}
         </div>
-
-        {/* ✅ jeśli user coś zmienił, a przycisk jest poza widokiem (mobile), dajemy subtelny pasek */}
-        {dirty ? (
-          <div className="mt-4 flex items-center justify-between rounded-2xl border border-blue-200/60 bg-blue-50/40 px-4 py-3 text-sm">
-            <div className="text-slate-700">
-              Masz <span className="font-extrabold">niezapisane zmiany</span>.
-            </div>
-            <button
-              type="button"
-              onClick={saveAllSettings}
-              disabled={isBusy || savingProfile || !otherValid}
-              className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-            >
-              Zapisz
-            </button>
-          </div>
-        ) : null}
       </div>
 
       {/* PANEL STATUSU */}
