@@ -109,6 +109,34 @@ function getRowStatus(a: ActivityRow): { kind: StatusKind; missing: string[] } {
   };
 }
 
+function Badge({
+  tone,
+  children,
+}: {
+  tone: "blue" | "emerald" | "amber" | "slate";
+  children: React.ReactNode;
+}) {
+  const styles =
+    tone === "blue"
+      ? "border-blue-200 bg-blue-50 text-blue-700"
+      : tone === "emerald"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+        : tone === "amber"
+          ? "border-amber-200 bg-amber-50 text-amber-800"
+          : "border-slate-200 bg-slate-50 text-slate-700";
+
+  return (
+    <span
+      className={[
+        "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-xs",
+        styles,
+      ].join(" ")}
+    >
+      {children}
+    </span>
+  );
+}
+
 export default function ActivitiesPage() {
   const { user, loading } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
@@ -120,7 +148,7 @@ export default function ActivitiesPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  // form
+  // form (dodaj)
   const [type, setType] = useState<(typeof TYPES)[number]>(TYPES[1]);
   const [points, setPoints] = useState<number>(10);
   const [year, setYear] = useState<number>(new Date().getFullYear());
@@ -135,6 +163,14 @@ export default function ActivitiesPage() {
   const [attachFile, setAttachFile] = useState<File | null>(null);
   const [attachInputKey, setAttachInputKey] = useState(0);
 
+  // EDIT (inline)
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editType, setEditType] = useState<(typeof TYPES)[number]>(TYPES[1]);
+  const [editPoints, setEditPoints] = useState<number>(0);
+  const [editYear, setEditYear] = useState<number>(new Date().getFullYear());
+  const [editOrganizer, setEditOrganizer] = useState<string>("");
+  const [editPlannedDate, setEditPlannedDate] = useState<string>(""); // YYYY-MM-DD
+
   // signed urls (id -> url)
   const [certUrls, setCertUrls] = useState<Record<string, string>>({});
 
@@ -145,7 +181,7 @@ export default function ActivitiesPage() {
   const [filterCert, setFilterCert] = useState<"all" | "yes" | "no">("all");
   const [filterStatus, setFilterStatus] = useState<"all" | "complete" | "missing">("all");
 
-  // NEW: realizacja (planned/done)
+  // realizacja (planned/done)
   const [filterProgress, setFilterProgress] = useState<"all" | "planned" | "done">("all");
 
   function clearMessages() {
@@ -192,11 +228,9 @@ export default function ActivitiesPage() {
         return;
       }
 
-      // ✅ ważne: nie castujemy wprost na ActivityRow[] (supabase potrafi typować jako SelectQueryError[])
       const rows = ((data ?? []) as unknown as ActivityRow[]) ?? [];
       setItems(rows);
 
-      // signed urls dla tych co mają certyfikat (równolegle)
       const withCert = rows.filter((r) => r.certificate_path);
 
       const results = await Promise.all(
@@ -238,7 +272,6 @@ export default function ActivitiesPage() {
     const ext = extFromMime(mime);
     const safeName = (f.name || `cert.${ext}`).slice(0, 180);
 
-    // zgodnie z policy: auth.uid() + '/%':
     const path = `${user.id}/${activityId}-${Date.now()}.${ext}`;
 
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, f, {
@@ -291,14 +324,12 @@ export default function ActivitiesPage() {
 
     const org = organizer.trim();
 
-    // ✅ KLUCZOWE: status jako literal (nie "string"), żeby pasował do typów Supabase
     const payload = {
       user_id: user.id,
-      type, // nie String(type) — niepotrzebnie poszerza typy
+      type,
       points: p,
       year: y,
       organizer: org.length ? org : null,
-      // manualnie dodana aktywność traktujemy jako odbytą (done)
       status: "done" as const,
     };
 
@@ -475,6 +506,77 @@ export default function ActivitiesPage() {
     }
   }
 
+  function startEdit(a: ActivityRow) {
+    clearMessages();
+    setEditId(a.id);
+    setEditType((a.type as any) ?? TYPES[1]);
+    setEditPoints(Number(a.points ?? 0));
+    setEditYear(Number(a.year ?? new Date().getFullYear()));
+    setEditOrganizer(a.organizer ?? "");
+    setEditPlannedDate(a.planned_start_date ?? "");
+  }
+
+  function cancelEdit() {
+    setEditId(null);
+  }
+
+  async function saveEdit(activityId: string) {
+    if (!user) return;
+    if (busy) return;
+
+    clearMessages();
+
+    const p = Number(editPoints);
+    const y = Number(editYear);
+    if (!Number.isFinite(p) || p < 0) {
+      setErr("Punkty muszą być liczbą ≥ 0.");
+      return;
+    }
+    if (!Number.isFinite(y) || y < 1900 || y > 2100) {
+      setErr("Rok wygląda na nieprawidłowy (podaj np. 2024).");
+      return;
+    }
+
+    // planned_start_date tylko jeśli wpis jest planned (w DB może być też na done, ale UI tego nie potrzebuje)
+    const current = items.find((x) => x.id === activityId);
+    const prog = current ? normalizeStatus(current.status) : "done";
+
+    const org = editOrganizer.trim();
+    const upd: any = {
+      type: editType,
+      points: p,
+      year: y,
+      organizer: org.length ? org : null,
+    };
+
+    if (prog === "planned") {
+      // dopuszczamy pustą wartość
+      upd.planned_start_date = editPlannedDate ? editPlannedDate : null;
+    }
+
+    setBusy(true);
+    try {
+      const { error } = await supabase
+        .from("activities")
+        .update(upd)
+        .eq("id", activityId)
+        .eq("user_id", user.id);
+
+      if (error) {
+        setErr(error.message);
+        return;
+      }
+
+      setInfo("Zapisano zmiany ✅");
+      setEditId(null);
+      await load();
+    } catch (e: any) {
+      setErr(e?.message || "Nie udało się zapisać zmian.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const years = useMemo(() => {
     const ys = Array.from(new Set(items.map((i) => i.year))).sort((a, b) => b - a);
     return ys;
@@ -487,7 +589,6 @@ export default function ActivitiesPage() {
       if (filterType !== "Wszystkie" && a.type !== filterType) return false;
       if (filterYear !== "Wszystkie" && String(a.year) !== filterYear) return false;
 
-      // planned/done (null -> done)
       const prog = normalizeStatus(a.status);
       if (filterProgress !== "all" && prog !== filterProgress) return false;
 
@@ -569,12 +670,393 @@ export default function ActivitiesPage() {
         </div>
       )}
 
+      {/* ✅ Optymalny układ: lista (lewa) + formularz (prawa) na desktopie */}
       <div className="mt-6 grid gap-6 lg:grid-cols-12">
-        {/* LEFT: FORM */}
-        <section className="rounded-2xl border bg-white p-6 lg:col-span-4">
+        {/* LEFT: LIST */}
+        <section className="order-2 rounded-2xl border bg-white p-6 lg:order-1 lg:col-span-8">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Zaplanowane nie liczą się do punktów, dopóki nie oznaczysz ich jako ukończone.
+              </p>
+            </div>
+            <button
+              onClick={load}
+              type="button"
+              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              disabled={busy || fetching}
+            >
+              {fetching ? "Odświeżam…" : "Odśwież"}
+            </button>
+          </div>
+
+          {/* Filters */}
+          <div className="mt-4 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-4">
+            <div className="sm:col-span-2">
+              <label className="text-xs font-medium text-slate-600">Szukaj</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                placeholder="np. kongres, OIL, 2025…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600">Typ</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option>Wszystkie</option>
+                {TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600">Rok</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+              >
+                <option>Wszystkie</option>
+                {years.map((y) => (
+                  <option key={y} value={String(y)}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600">Realizacja</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterProgress}
+                onChange={(e) => setFilterProgress(e.target.value as any)}
+              >
+                <option value="all">Wszystkie</option>
+                <option value="planned">Zaplanowane</option>
+                <option value="done">Ukończone</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600">Certyfikat</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterCert}
+                onChange={(e) => setFilterCert(e.target.value as any)}
+              >
+                <option value="all">Wszystkie</option>
+                <option value="yes">Tylko z certyfikatem</option>
+                <option value="no">Tylko bez certyfikatu</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600">Kompletność</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as any)}
+              >
+                <option value="all">Wszystkie</option>
+                <option value="complete">OK</option>
+                <option value="missing">Braki</option>
+              </select>
+            </div>
+
+            <div className="sm:col-span-2 flex items-end gap-2">
+              <button
+                type="button"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                onClick={() => {
+                  setQ("");
+                  setFilterType("Wszystkie");
+                  setFilterYear("Wszystkie");
+                  setFilterCert("all");
+                  setFilterStatus("all");
+                  setFilterProgress("all");
+                }}
+              >
+                Wyczyść filtry
+              </button>
+              <div className="w-full text-right text-xs text-slate-600">
+                Wynik: <span className="font-semibold text-slate-900">{filtered.length}</span>
+              </div>
+            </div>
+          </div>
+
+          {fetching ? (
+            <div className="mt-4 text-sm text-slate-500">Pobieram…</div>
+          ) : filtered.length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-8 text-center">
+              <div className="text-lg font-semibold text-slate-900">Brak wyników</div>
+              <div className="mt-2 text-sm text-slate-600">Zmień filtry albo dodaj nową aktywność po prawej.</div>
+            </div>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {filtered.map((a) => {
+                const hasCert = Boolean(a.certificate_path);
+                const certUrl = hasCert ? certUrls[a.id] : null;
+
+                const prog = normalizeStatus(a.status);
+                const st = getRowStatus(a);
+
+                const inEdit = editId === a.id;
+
+                return (
+                  <div
+                    key={a.id}
+                    className={[
+                      "rounded-2xl border p-4",
+                      prog === "planned" ? "border-blue-200 bg-blue-50/40" : "border-slate-200 bg-white",
+                    ].join(" ")}
+                  >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      {/* LEFT */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="min-w-0 truncate font-semibold text-slate-900">{a.type}</div>
+
+                          {/* ✅ tylko jeden badge realizacji */}
+                          {prog === "planned" ? (
+                            <Badge tone="blue">🗓️ Zaplanowane</Badge>
+                          ) : (
+                            <Badge tone="emerald">✓ Ukończone</Badge>
+                          )}
+
+                          {/* ✅ kompletność nie nazywa się "Ukończone" */}
+                          {st.kind === "complete" ? <Badge tone="emerald">OK</Badge> : <Badge tone="amber">Braki</Badge>}
+
+                          {hasCert ? <Badge tone="slate">📎 Cert</Badge> : null}
+                        </div>
+
+                        <div className="mt-1 text-sm text-slate-600">
+                          <span className="break-words">{a.organizer ? a.organizer : "Brak organizatora"}</span> • Rok:{" "}
+                          <span className="font-medium text-slate-900">{a.year}</span>
+                          {a.created_at ? (
+                            <>
+                              {" "}
+                              • Dodano: <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
+                            </>
+                          ) : null}
+                        </div>
+
+                        {prog === "planned" ? (
+                          <div className="mt-2 text-sm text-slate-700">
+                            Termin szkolenia: <span className="font-semibold">{formatYMD(a.planned_start_date)}</span>
+                          </div>
+                        ) : null}
+
+                        {st.kind === "missing" ? (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {st.missing.map((m) => (
+                              <span
+                                key={m}
+                                className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
+                              >
+                                {m}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        <div className="mt-3 text-sm">
+                          {hasCert ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                              {certUrl ? (
+                                <a
+                                  href={certUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="font-medium text-blue-700 hover:underline"
+                                >
+                                  Otwórz certyfikat
+                                </a>
+                              ) : (
+                                <span className="text-slate-500">Generuję link…</span>
+                              )}
+
+                              {a.certificate_name ? (
+                                <span className="text-xs text-slate-500">{shortFileName(a.certificate_name)}</span>
+                              ) : null}
+
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => removeCertificate(a)}
+                                className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60 md:ml-auto"
+                              >
+                                Usuń certyfikat
+                              </button>
+                            </div>
+                          ) : prog === "planned" ? (
+                            <div className="text-xs text-slate-600">
+                              To szkolenie jest zaplanowane — certyfikat dodasz po ukończeniu.
+                            </div>
+                          ) : (
+                            <div className="text-xs text-slate-500">Brak certyfikatu (możesz podpiąć po prawej).</div>
+                          )}
+                        </div>
+
+                        {/* ✅ INLINE EDIT */}
+                        {inEdit ? (
+                          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <div className="text-sm font-semibold text-slate-900">Edycja wpisu</div>
+
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                              <div className="sm:col-span-2">
+                                <label className="text-xs font-medium text-slate-600">Rodzaj</label>
+                                <select
+                                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                                  value={editType}
+                                  onChange={(e) => setEditType(e.target.value as any)}
+                                  disabled={busy}
+                                >
+                                  {TYPES.map((t) => (
+                                    <option key={t} value={t}>
+                                      {t}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div>
+                                <label className="text-xs font-medium text-slate-600">Punkty</label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                                  value={editPoints}
+                                  onChange={(e) => setEditPoints(Math.max(0, Number(e.target.value || 0)))}
+                                  disabled={busy}
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-xs font-medium text-slate-600">Rok</label>
+                                <input
+                                  type="number"
+                                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                                  value={editYear}
+                                  onChange={(e) => setEditYear(Number(e.target.value || new Date().getFullYear()))}
+                                  disabled={busy}
+                                />
+                              </div>
+
+                              <div className="sm:col-span-2">
+                                <label className="text-xs font-medium text-slate-600">Organizator</label>
+                                <input
+                                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                                  value={editOrganizer}
+                                  onChange={(e) => setEditOrganizer(e.target.value)}
+                                  placeholder="np. OIL / towarzystwo"
+                                  disabled={busy}
+                                />
+                              </div>
+
+                              {prog === "planned" ? (
+                                <div className="sm:col-span-2">
+                                  <label className="text-xs font-medium text-slate-600">Termin szkolenia</label>
+                                  <input
+                                    type="date"
+                                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                                    value={editPlannedDate}
+                                    onChange={(e) => setEditPlannedDate(e.target.value)}
+                                    disabled={busy}
+                                  />
+                                  <div className="mt-1 text-xs text-slate-500">
+                                    Zostaw puste, jeśli nie chcesz podawać daty.
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => saveEdit(a.id)}
+                                disabled={busy}
+                                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                              >
+                                {busy ? "Zapisuję…" : "Zapisz zmiany"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={cancelEdit}
+                                disabled={busy}
+                                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                              >
+                                Anuluj
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      {/* RIGHT */}
+                      <div className="shrink-0">
+                        <div className="flex flex-row items-center gap-2 md:flex-col md:items-end">
+                          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                            <span className="text-slate-600">Punkty</span>{" "}
+                            <span className="font-semibold text-slate-900">{a.points}</span>
+                          </div>
+
+                          <div className="flex flex-wrap justify-end gap-2">
+                            {/* ✅ Edycja wraca */}
+                            <button
+                              onClick={() => (inEdit ? cancelEdit() : startEdit(a))}
+                              className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                              type="button"
+                              disabled={busy}
+                            >
+                              {inEdit ? "Zamknij" : "Edytuj"}
+                            </button>
+
+                            {prog === "planned" ? (
+                              <button
+                                onClick={() => markAsDone(a.id)}
+                                className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                                type="button"
+                                disabled={busy}
+                              >
+                                Oznacz jako ukończone
+                              </button>
+                            ) : null}
+
+                            <button
+                              onClick={() => removeActivity(a.id, a.certificate_path ?? null)}
+                              className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                              type="button"
+                              disabled={busy}
+                            >
+                              Usuń
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* RIGHT: FORM */}
+        <section className="order-1 rounded-2xl border bg-white p-6 lg:order-2 lg:col-span-4">
           <h2 className="text-lg font-semibold text-slate-900">Dodaj aktywność</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Zapis trafia do Supabase. Certyfikat zapisuje się do Storage (prywatnie – link signed).
+            Certyfikat zapisuje się do Storage (prywatnie – link signed). Dodana ręcznie aktywność jest domyślnie „ukończona”.
           </p>
 
           <div className="mt-4 space-y-3">
@@ -671,7 +1153,7 @@ export default function ActivitiesPage() {
 
           {/* Attach cert to existing */}
           <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="text-sm font-semibold text-slate-900">Podłącz certyfikat do istniejącego wpisu</div>
+            <div className="text-sm font-semibold text-slate-900">Podłącz certyfikat do wpisu</div>
             <div className="mt-1 text-xs text-slate-600">Przydatne, gdy dodałeś aktywność wcześniej bez pliku.</div>
 
             <div className="mt-3 space-y-2">
@@ -684,9 +1166,9 @@ export default function ActivitiesPage() {
                 <option value="">Wybierz aktywność…</option>
                 {items.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {normalizeStatus(a.status) === "planned" ? "🗓️ Zaplanowane" : "✅ Ukończone"} • {a.year} • {a.type} •{" "}
+                    {normalizeStatus(a.status) === "planned" ? "🗓️ Zaplanowane" : "✓ Ukończone"} • {a.year} • {a.type} •{" "}
                     {a.organizer ? a.organizer : "brak organizatora"}
-                    {a.certificate_path ? " • (ma cert)" : ""}
+                    {a.certificate_path ? " • (ma cert)" : ""} {/* to jest ok */}
                   </option>
                 ))}
               </select>
@@ -721,295 +1203,6 @@ export default function ActivitiesPage() {
               </button>
             </div>
           </div>
-        </section>
-
-        {/* RIGHT: LIST */}
-        <section className="rounded-2xl border bg-white p-6 lg:col-span-8">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900">Twoje aktywności</h2>
-              <p className="mt-1 text-sm text-slate-600">
-                Zaplanowane nie liczą się do punktów, dopóki nie oznaczysz ich jako ukończone.
-              </p>
-            </div>
-            <button
-              onClick={load}
-              type="button"
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-              disabled={busy || fetching}
-            >
-              {fetching ? "Odświeżam…" : "Odśwież"}
-            </button>
-          </div>
-
-          {/* Filters */}
-          <div className="mt-4 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-4">
-            <div className="sm:col-span-2">
-              <label className="text-xs font-medium text-slate-600">Szukaj</label>
-              <input
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                placeholder="np. kongres, OIL, 2025…"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-slate-600">Typ</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-              >
-                <option>Wszystkie</option>
-                {TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-slate-600">Rok</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterYear}
-                onChange={(e) => setFilterYear(e.target.value)}
-              >
-                <option>Wszystkie</option>
-                {years.map((y) => (
-                  <option key={y} value={String(y)}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-slate-600">Realizacja</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterProgress}
-                onChange={(e) => setFilterProgress(e.target.value as any)}
-              >
-                <option value="all">Wszystkie</option>
-                <option value="planned">Zaplanowane</option>
-                <option value="done">Ukończone</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-slate-600">Certyfikat</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterCert}
-                onChange={(e) => setFilterCert(e.target.value as any)}
-              >
-                <option value="all">Wszystkie</option>
-                <option value="yes">Tylko z certyfikatem</option>
-                <option value="no">Tylko bez certyfikatu</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-slate-600">Kompletność</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
-              >
-                <option value="all">Wszystkie</option>
-                <option value="complete">Ukończone</option>
-                <option value="missing">Braki</option>
-              </select>
-            </div>
-
-            <div className="sm:col-span-2 flex items-end gap-2">
-              <button
-                type="button"
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                onClick={() => {
-                  setQ("");
-                  setFilterType("Wszystkie");
-                  setFilterYear("Wszystkie");
-                  setFilterCert("all");
-                  setFilterStatus("all");
-                  setFilterProgress("all");
-                }}
-              >
-                Wyczyść filtry
-              </button>
-              <div className="w-full text-right text-xs text-slate-600">
-                Wynik: <span className="font-semibold text-slate-900">{filtered.length}</span>
-              </div>
-            </div>
-          </div>
-
-          {fetching ? (
-            <div className="mt-4 text-sm text-slate-500">Pobieram…</div>
-          ) : filtered.length === 0 ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-8 text-center">
-              <div className="text-lg font-semibold text-slate-900">Brak wyników</div>
-              <div className="mt-2 text-sm text-slate-600">Zmień filtry albo dodaj nową aktywność po lewej.</div>
-            </div>
-          ) : (
-            <div className="mt-5 space-y-3">
-              {filtered.map((a) => {
-                const hasCert = Boolean(a.certificate_path);
-                const certUrl = hasCert ? certUrls[a.id] : null;
-
-                const prog = normalizeStatus(a.status);
-                const st = getRowStatus(a);
-
-                return (
-                  <div
-                    key={a.id}
-                    className={[
-                      "rounded-2xl border p-4",
-                      prog === "planned" ? "border-blue-200 bg-blue-50/40" : "border-slate-200 bg-white",
-                    ].join(" ")}
-                  >
-                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                      {/* LEFT */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="min-w-0 truncate font-semibold text-slate-900">{a.type}</div>
-
-                          {prog === "planned" ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
-                              🗓️ Zaplanowane
-                            </span>
-                          ) : (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
-                              ✅ Ukończone
-                            </span>
-                          )}
-
-                          {st.kind === "complete" ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
-                              Ukończone
-                            </span>
-                          ) : (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
-                              Braki
-                            </span>
-                          )}
-
-                          {hasCert ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700">
-                              📎 Cert
-                            </span>
-                          ) : null}
-                        </div>
-
-                        <div className="mt-1 text-sm text-slate-600">
-                          <span className="break-words">{a.organizer ? a.organizer : "Brak organizatora"}</span> • Rok:{" "}
-                          <span className="font-medium text-slate-900">{a.year}</span>
-                          {a.created_at ? (
-                            <>
-                              {" "}
-                              • Dodano:{" "}
-                              <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
-                            </>
-                          ) : null}
-                        </div>
-
-                        {prog === "planned" ? (
-                          <div className="mt-2 text-sm text-slate-700">
-                            Termin szkolenia: <span className="font-semibold">{formatYMD(a.planned_start_date)}</span>
-                          </div>
-                        ) : null}
-
-                        {st.kind === "missing" ? (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {st.missing.map((m) => (
-                              <span
-                                key={m}
-                                className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
-                              >
-                                {m}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
-
-                        <div className="mt-3 text-sm">
-                          {hasCert ? (
-                            <div className="flex flex-wrap items-center gap-2">
-                              {certUrl ? (
-                                <a
-                                  href={certUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="font-medium text-blue-700 hover:underline"
-                                >
-                                  Otwórz certyfikat
-                                </a>
-                              ) : (
-                                <span className="text-slate-500">Generuję link…</span>
-                              )}
-
-                              {a.certificate_name ? (
-                                <span className="text-xs text-slate-500">{shortFileName(a.certificate_name)}</span>
-                              ) : null}
-
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() => removeCertificate(a)}
-                                className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60 md:ml-auto"
-                              >
-                                Usuń certyfikat
-                              </button>
-                            </div>
-                          ) : prog === "planned" ? (
-                            <div className="text-xs text-slate-600">
-                              To szkolenie jest zaplanowane — certyfikat dodasz po ukończeniu.
-                            </div>
-                          ) : (
-                            <div className="text-xs text-slate-500">Brak certyfikatu (możesz podpiąć po lewej).</div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* RIGHT */}
-                      <div className="shrink-0">
-                        <div className="flex flex-row items-center gap-2 md:flex-col md:items-end">
-                          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
-                            <span className="text-slate-600">Punkty</span>{" "}
-                            <span className="font-semibold text-slate-900">{a.points}</span>
-                          </div>
-
-                          <div className="flex flex-wrap justify-end gap-2">
-                            {prog === "planned" ? (
-                              <button
-                                onClick={() => markAsDone(a.id)}
-                                className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-                                type="button"
-                                disabled={busy}
-                              >
-                                Oznacz jako ukończone
-                              </button>
-                            ) : null}
-
-                            <button
-                              onClick={() => removeActivity(a.id, a.certificate_path ?? null)}
-                              className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                              type="button"
-                              disabled={busy}
-                            >
-                              Usuń
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </section>
       </div>
     </main>
