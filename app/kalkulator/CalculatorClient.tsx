@@ -17,16 +17,6 @@ import {
   normalizeOtherProfession,
 } from "@/lib/cpd/professions";
 
-import {
-  Settings2,
-  RotateCcw,
-  Stethoscope,
-  Timer,
-  CalendarDays,
-  Target,
-  PenLine,
-} from "lucide-react";
-
 type ActivityStatus = "planned" | "done" | null;
 
 type ActivityRow = {
@@ -220,18 +210,46 @@ function getPeriodFromPwzIssueDate(prof: Profession, pwzIssueDate: string | null
   return { start, end };
 }
 
-function FieldLabel({
-  icon,
-  title,
+/** ✅ mini SVG icon (bez zewn. paczek, bez emoji) */
+function Icon({
+  children,
 }: {
-  icon: React.ReactNode;
-  title: string;
+  children: React.ReactNode;
 }) {
   return (
+    <span className="inline-flex h-8 w-8 items-center justify-center rounded-2xl border border-slate-200 bg-white/80 text-slate-700">
+      {children}
+    </span>
+  );
+}
+
+function Svg({
+  d,
+  filled,
+}: {
+  d: string;
+  filled?: boolean;
+}) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={filled ? 0 : 2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={d} />
+    </svg>
+  );
+}
+
+function FieldLabel({ icon, title }: { icon: React.ReactNode; title: string }) {
+  return (
     <div className="flex items-center gap-2 text-xs font-semibold text-slate-900">
-      <span className="inline-flex h-7 w-7 items-center justify-center rounded-2xl border border-slate-200 bg-white/80 text-slate-700">
-        {icon}
-      </span>
+      {icon}
       {title}
     </div>
   );
@@ -586,9 +604,10 @@ export default function CalculatorClient() {
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-2xl border border-slate-200 bg-white/80 text-slate-700">
-                <Settings2 className="h-4 w-4" />
-              </span>
+              <Icon>
+                <Svg d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                <Svg d="M19.4 15a7.97 7.97 0 0 0 .1-1 7.97 7.97 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a8.1 8.1 0 0 0-1.7-1l-.4-2.6H9.1l-.4 2.6a8.1 8.1 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7.97 7.97 0 0 0-.1 1c0 .34.03.67.1 1l-2 1.5 2 3.5 2.4-1a8.1 8.1 0 0 0 1.7 1l.4 2.6h5.8l.4-2.6a8.1 8.1 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5Z" />
+              </Icon>
               Ustawienia okresu i zawodu
             </div>
 
@@ -615,7 +634,7 @@ export default function CalculatorClient() {
 
             <button
               type="button"
-              onClick={async () => {
+              onClick={() => {
                 const prof: Profession = "Lekarz";
                 setProfession(prof);
                 setProfessionOther("");
@@ -635,8 +654,11 @@ export default function CalculatorClient() {
               }}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
             >
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                <RotateCcw className="h-4 w-4" />
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 3-6.7" />
+                  <path d="M3 4v6h6" />
+                </svg>
               </span>
               Przywróć domyślne
             </button>
@@ -646,7 +668,20 @@ export default function CalculatorClient() {
         <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
           {/* Zawód */}
           <div>
-            <FieldLabel icon={<Stethoscope className="h-4 w-4" />} title="Zawód" />
+            <FieldLabel
+              icon={
+                <Icon>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M8 21h8" />
+                    <path d="M12 17v4" />
+                    <path d="M7 4h10" />
+                    <path d="M7 4c0 5 2 6 5 8 3-2 5-3 5-8" />
+                    <path d="M9 12h6" />
+                  </svg>
+                </Icon>
+              }
+              title="Zawód"
+            />
             <select
               value={profession}
               onChange={(e) => {
@@ -684,7 +719,17 @@ export default function CalculatorClient() {
 
           {/* Tryb okresu */}
           <div>
-            <FieldLabel icon={<Timer className="h-4 w-4" />} title="Tryb okresu" />
+            <FieldLabel
+              icon={
+                <Icon>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 8v4l3 2" />
+                    <path d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10Z" />
+                  </svg>
+                </Icon>
+              }
+              title="Tryb okresu"
+            />
             <select
               value={periodMode}
               onChange={(e) => {
@@ -707,7 +752,7 @@ export default function CalculatorClient() {
               <option value="custom">Indywidualny</option>
             </select>
 
-            {/* ✅ dokładnie jak chcesz: info + pod spodem komórka z PWZ */}
+            {/* ✅ info + pod spodem komórka z PWZ */}
             {pwzIssueDate ? (
               <div className="mt-2 space-y-2">
                 <p className="text-[11px] text-slate-500">
@@ -727,7 +772,19 @@ export default function CalculatorClient() {
           {/* Okres */}
           {periodMode === "preset" ? (
             <div>
-              <FieldLabel icon={<CalendarDays className="h-4 w-4" />} title="Okres (preset)" />
+              <FieldLabel
+                icon={
+                  <Icon>
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 2v4" />
+                      <path d="M16 2v4" />
+                      <path d="M3 10h18" />
+                      <path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
+                    </svg>
+                  </Icon>
+                }
+                title="Okres (preset)"
+              />
               <select
                 value={periodLabel}
                 onChange={(e) => {
@@ -745,7 +802,19 @@ export default function CalculatorClient() {
             </div>
           ) : (
             <div>
-              <FieldLabel icon={<CalendarDays className="h-4 w-4" />} title="Okres (indywidualny)" />
+              <FieldLabel
+                icon={
+                  <Icon>
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 2v4" />
+                      <path d="M16 2v4" />
+                      <path d="M3 10h18" />
+                      <path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
+                    </svg>
+                  </Icon>
+                }
+                title="Okres (indywidualny)"
+              />
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <input
                   value={periodStart}
@@ -773,7 +842,16 @@ export default function CalculatorClient() {
 
           {/* Wymagane punkty */}
           <div>
-            <FieldLabel icon={<Target className="h-4 w-4" />} title="Wymagane punkty" />
+            <FieldLabel
+              icon={
+                <Icon>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2l3 7h7l-5.5 4.2L18.5 21 12 16.8 5.5 21l2-7.8L2 9h7l3-7Z" />
+                  </svg>
+                </Icon>
+              }
+              title="Wymagane punkty"
+            />
             <input
               value={requiredPoints}
               onChange={(e) => {
@@ -793,7 +871,17 @@ export default function CalculatorClient() {
           {/* Inny zawód */}
           {otherRequired ? (
             <div className="md:col-span-2 xl:col-span-4">
-              <FieldLabel icon={<PenLine className="h-4 w-4" />} title="Jaki zawód?" />
+              <FieldLabel
+                icon={
+                  <Icon>
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+                    </svg>
+                  </Icon>
+                }
+                title="Jaki zawód?"
+              />
               <input
                 value={professionOther}
                 onChange={(e) => {
