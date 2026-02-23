@@ -1,3 +1,4 @@
+// app/baza-szkolen/page.tsx
 import TrainingHubClient from "./TrainingHubClient";
 
 export const metadata = {
