@@ -23,10 +23,10 @@ type Training = {
   title: string;
   organizer: string | null;
   points: number | null;
-  type: TrainingType | null; // forma: online/stacjonarne/hybrydowe
-  start_date: string | null; // YYYY-MM-DD
+  type: TrainingType | null;
+  start_date: string | null;
   end_date: string | null;
-  category: TrainingCategory | null; // rodzaj: kurs/konferencja/...
+  category: TrainingCategory | null;
   profession: string | null;
   voivodeship: string | null;
   external_url: string | null;
@@ -34,8 +34,6 @@ type Training = {
   created_at: string;
 };
 
-// --- Opcje filtrów ---
-// Forma (type)
 const TYPE_OPTIONS: { value: "all" | TrainingType; label: string }[] = [
   { value: "all", label: "Wszystkie" },
   { value: "online", label: "Online / webinar" },
@@ -43,7 +41,6 @@ const TYPE_OPTIONS: { value: "all" | TrainingType; label: string }[] = [
   { value: "hybrydowe", label: "Hybrydowe" },
 ];
 
-// Rodzaj (category)
 const CATEGORY_OPTIONS: { value: "all" | TrainingCategory; label: string }[] = [
   { value: "all", label: "Wszystkie" },
   { value: "kurs", label: "Kurs" },
@@ -94,7 +91,6 @@ function daysDiffFromToday(yyyyMmDd: string | null) {
   return Math.round(diffMs / (1000 * 60 * 60 * 24));
 }
 
-// Etykiety do UI
 function labelType(t: TrainingType | null) {
   if (!t) return "—";
   if (t === "online") return "Online";
@@ -114,7 +110,6 @@ function labelCategory(c: TrainingCategory | null) {
   return c;
 }
 
-// Mapowanie (category + type) -> activities.type
 function mapToActivityType(
   category: TrainingCategory | null,
   delivery: TrainingType | null
@@ -147,10 +142,9 @@ export default function TrainingHubClient() {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // filtry
   const [q, setQ] = useState("");
-  const [type, setType] = useState<"all" | TrainingType>("all"); // forma
-  const [category, setCategory] = useState<"all" | TrainingCategory>("all"); // rodzaj
+  const [type, setType] = useState<"all" | TrainingType>("all");
+  const [category, setCategory] = useState<"all" | TrainingCategory>("all");
   const [organizer, setOrganizer] = useState("all");
   const [minPoints, setMinPoints] = useState("all");
   const [onlyPartner, setOnlyPartner] = useState(false);
@@ -170,7 +164,6 @@ export default function TrainingHubClient() {
 
     if (type !== "all") query = query.eq("type", type);
     if (category !== "all") query = query.eq("category", category);
-
     if (organizer !== "all") query = query.ilike("organizer", `%${organizer}%`);
     if (minPoints !== "all") query = query.gte("points", Number(minPoints));
     if (onlyPartner) query = query.eq("is_partner", true);
@@ -202,7 +195,6 @@ export default function TrainingHubClient() {
 
   const visible = useMemo(() => items, [items]);
 
-  // Tworzymy aktywność jako "planned" (zaplanowane), a nie zaliczone
   const chooseTraining = async (t: Training) => {
     if (!user) {
       alert("Zaloguj się, żeby wybrać szkolenie.");
@@ -219,11 +211,9 @@ export default function TrainingHubClient() {
       points: typeof t.points === "number" ? t.points : 0,
       year,
       organizer: t.organizer ?? null,
-
       status: "planned",
       planned_start_date: t.start_date ?? null,
       training_id: t.id,
-
       certificate_path: null,
       certificate_name: null,
       certificate_mime: null,
@@ -251,14 +241,17 @@ export default function TrainingHubClient() {
     );
   }
 
-  // Mocniej oznaczone pola input/select (punkt 1)
   const fieldBase =
     "mt-1 h-10 w-full rounded-xl border border-slate-300 bg-slate-50/60 px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 shadow-inner shadow-slate-900/5 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100";
+
+  // ✅ Stałe szerokości prawej strony (punkt: równe przyciski od prawej)
+  const RIGHT_W = "md:w-[360px]"; // jedna stała kolumna po prawej
+  const BTN_SECONDARY_W = "md:w-[120px]";
+  const BTN_PRIMARY_W = "md:w-[200px]";
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-white to-slate-50">
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-8">
-        {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
@@ -435,7 +428,7 @@ export default function TrainingHubClient() {
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   {/* LEFT */}
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="truncate text-base font-extrabold text-slate-900">
                         {t.title}
@@ -454,7 +447,6 @@ export default function TrainingHubClient() {
                       ) : null}
                     </div>
 
-                    {/* Meta: organizer wyróżniony (punkt 2) */}
                     <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
                       {t.organizer ? (
                         <>
@@ -490,31 +482,35 @@ export default function TrainingHubClient() {
                     </div>
                   </div>
 
-                  {/* RIGHT – na desktop: punkty + przyciski w jednym rzędzie i wyśrodkowane (punkt 4) */}
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
-                    <div className="inline-flex items-center justify-end gap-2 md:justify-start">
-                      <span className="text-sm text-slate-500">Punkty</span>
-                      <span className="text-lg font-extrabold text-blue-700">
-                        {typeof t.points === "number" ? t.points : "—"}
-                      </span>
-                      <span className="text-sm font-semibold text-blue-700">
-                        pkt
-                      </span>
+                  {/* RIGHT – stała szerokość + stałe szerokości przycisków */}
+                  <div className={`shrink-0 ${RIGHT_W}`}>
+                    {/* rząd 1: punkty zawsze wyrównane do prawej */}
+                    <div className="flex items-center justify-between md:justify-end">
+                      <div className="inline-flex items-center gap-2 md:justify-end">
+                        <span className="text-sm text-slate-500">Punkty</span>
+                        <span className="text-lg font-extrabold text-blue-700">
+                          {typeof t.points === "number" ? t.points : "—"}
+                        </span>
+                        <span className="text-sm font-semibold text-blue-700">
+                          pkt
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex gap-2 md:items-center md:justify-end">
+                    {/* rząd 2: przyciski zawsze tej samej szerokości */}
+                    <div className="mt-2 flex gap-2 justify-end">
                       {t.external_url ? (
                         <a
                           href={t.external_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+                          className={`inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 ${BTN_SECONDARY_W}`}
                         >
                           Zobacz
                         </a>
                       ) : (
                         <button
-                          className="inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-400 shadow-sm"
+                          className={`inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-400 shadow-sm ${BTN_SECONDARY_W}`}
                           disabled
                           type="button"
                         >
@@ -524,7 +520,7 @@ export default function TrainingHubClient() {
 
                       <button
                         onClick={() => chooseTraining(t)}
-                        className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+                        className={`inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 ${BTN_PRIMARY_W}`}
                         type="button"
                       >
                         + Dodaj do planu
