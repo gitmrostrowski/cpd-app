@@ -134,7 +134,8 @@ function mapToActivityType(
 
 function termLabel(start: string | null, end: string | null) {
   if (!start && !end) return "Termin: —";
-  if (start && end && start !== end) return `Termin: ${formatDate(start)} – ${formatDate(end)}`;
+  if (start && end && start !== end)
+    return `Termin: ${formatDate(start)} – ${formatDate(end)}`;
   return `Termin: ${formatDate(start ?? end)}`;
 }
 
@@ -250,11 +251,15 @@ export default function TrainingHubClient() {
     );
   }
 
+  // Mocniej oznaczone pola input/select (punkt 1)
+  const fieldBase =
+    "mt-1 h-10 w-full rounded-xl border border-slate-300 bg-slate-50/60 px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 shadow-inner shadow-slate-900/5 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100";
+
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-white to-slate-50">
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-8">
         {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
               Baza szkoleń
@@ -268,14 +273,14 @@ export default function TrainingHubClient() {
           <div className="flex gap-2">
             <Link
               href="/aktywnosci"
-              className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
             >
               Aktywności
             </Link>
 
             <button
               onClick={load}
-              className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-60"
               disabled={fetching}
               type="button"
             >
@@ -288,14 +293,14 @@ export default function TrainingHubClient() {
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
             <div className="md:col-span-6">
-              <label className="text-xs font-semibold text-slate-700">
+              <label className="text-xs font-extrabold text-slate-800">
                 Szukaj
               </label>
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="np. kongres, NIL, ból, 10 pkt…"
-                className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                className={fieldBase}
               />
             </div>
 
@@ -306,7 +311,7 @@ export default function TrainingHubClient() {
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value as any)}
-                className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                className={fieldBase}
               >
                 {TYPE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -323,7 +328,7 @@ export default function TrainingHubClient() {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as any)}
-                className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                className={fieldBase}
               >
                 {CATEGORY_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -340,7 +345,7 @@ export default function TrainingHubClient() {
               <select
                 value={organizer}
                 onChange={(e) => setOrganizer(e.target.value)}
-                className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                className={fieldBase}
               >
                 {ORGANIZER_QUICK.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -357,7 +362,7 @@ export default function TrainingHubClient() {
               <select
                 value={minPoints}
                 onChange={(e) => setMinPoints(e.target.value)}
-                className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                className={fieldBase}
               >
                 {POINTS_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -370,7 +375,7 @@ export default function TrainingHubClient() {
             <div className="md:col-span-2 md:flex md:items-end">
               <button
                 onClick={load}
-                className="mt-1 h-10 w-full rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
+                className="mt-1 inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
                 disabled={fetching}
                 type="button"
               >
@@ -428,7 +433,7 @@ export default function TrainingHubClient() {
                 key={t.id}
                 className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
               >
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   {/* LEFT */}
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -449,11 +454,11 @@ export default function TrainingHubClient() {
                       ) : null}
                     </div>
 
-                    {/* Meta jako spokojny tekst, zamiast kolorowych pilli */}
+                    {/* Meta: organizer wyróżniony (punkt 2) */}
                     <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
                       {t.organizer ? (
                         <>
-                          <span className="font-semibold text-slate-700">
+                          <span className="inline-flex items-center rounded-full border border-slate-300 bg-white px-2.5 py-0.5 text-xs font-extrabold tracking-wide text-slate-900">
                             {t.organizer}
                           </span>
                           <span className="text-slate-300">•</span>
@@ -485,9 +490,9 @@ export default function TrainingHubClient() {
                     </div>
                   </div>
 
-                  {/* RIGHT */}
-                  <div className="flex shrink-0 flex-col items-stretch gap-2 md:items-end">
-                    <div className="inline-flex items-center justify-end gap-2">
+                  {/* RIGHT – na desktop: punkty + przyciski w jednym rzędzie i wyśrodkowane (punkt 4) */}
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                    <div className="inline-flex items-center justify-end gap-2 md:justify-start">
                       <span className="text-sm text-slate-500">Punkty</span>
                       <span className="text-lg font-extrabold text-blue-700">
                         {typeof t.points === "number" ? t.points : "—"}
@@ -497,19 +502,19 @@ export default function TrainingHubClient() {
                       </span>
                     </div>
 
-                    <div className="flex gap-2 md:justify-end">
+                    <div className="flex gap-2 md:items-center md:justify-end">
                       {t.external_url ? (
                         <a
                           href={t.external_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+                          className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
                         >
                           Zobacz
                         </a>
                       ) : (
                         <button
-                          className="h-10 cursor-not-allowed rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-400 shadow-sm"
+                          className="inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-400 shadow-sm"
                           disabled
                           type="button"
                         >
@@ -519,7 +524,7 @@ export default function TrainingHubClient() {
 
                       <button
                         onClick={() => chooseTraining(t)}
-                        className="h-10 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+                        className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
                         type="button"
                       >
                         + Dodaj do planu
