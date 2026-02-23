@@ -244,10 +244,9 @@ export default function TrainingHubClient() {
   const fieldBase =
     "mt-1 h-10 w-full rounded-xl border border-slate-300 bg-slate-50/60 px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 shadow-inner shadow-slate-900/5 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100";
 
-  // ✅ Stałe szerokości prawej strony (punkt: równe przyciski od prawej)
-  const RIGHT_W = "md:w-[360px]"; // jedna stała kolumna po prawej
-  const BTN_SECONDARY_W = "md:w-[120px]";
-  const BTN_PRIMARY_W = "md:w-[200px]";
+  const RIGHT_W = "md:w-[340px]"; // lekko węższe
+  const BTN_SECONDARY_W = "md:w-[112px]";
+  const BTN_PRIMARY_W = "md:w-[168px]"; // węższe niż było
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-white to-slate-50">
@@ -282,7 +281,6 @@ export default function TrainingHubClient() {
           </div>
         </div>
 
-        {/* Filtry */}
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
             <div className="md:col-span-6">
@@ -415,7 +413,6 @@ export default function TrainingHubClient() {
           )}
         </div>
 
-        {/* Lista */}
         <div className="mt-5 space-y-3">
           {visible.map((t) => {
             const dd = daysDiffFromToday(t.start_date);
@@ -427,7 +424,6 @@ export default function TrainingHubClient() {
                 className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  {/* LEFT */}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="truncate text-base font-extrabold text-slate-900">
@@ -482,10 +478,8 @@ export default function TrainingHubClient() {
                     </div>
                   </div>
 
-                  {/* RIGHT – stała szerokość + stałe szerokości przycisków */}
                   <div className={`shrink-0 ${RIGHT_W}`}>
-                    {/* rząd 1: punkty zawsze wyrównane do prawej */}
-                    <div className="flex items-center justify-between md:justify-end">
+                    <div className="flex items-center justify-end">
                       <div className="inline-flex items-center gap-2 md:justify-end">
                         <span className="text-sm text-slate-500">Punkty</span>
                         <span className="text-lg font-extrabold text-blue-700">
@@ -497,7 +491,6 @@ export default function TrainingHubClient() {
                       </div>
                     </div>
 
-                    {/* rząd 2: przyciski zawsze tej samej szerokości */}
                     <div className="mt-2 flex gap-2 justify-end">
                       {t.external_url ? (
                         <a
@@ -520,8 +513,9 @@ export default function TrainingHubClient() {
 
                       <button
                         onClick={() => chooseTraining(t)}
-                        className={`inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 ${BTN_PRIMARY_W}`}
+                        className={`inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 ${BTN_PRIMARY_W}`}
                         type="button"
+                        title="Dodaj szkolenie do planu"
                       >
                         + Dodaj do planu
                       </button>
