@@ -97,7 +97,7 @@ function daysDiffFromToday(yyyyMmDd: string | null) {
 // Etykiety do UI
 function labelType(t: TrainingType | null) {
   if (!t) return "—";
-  if (t === "online") return "Online / webinar";
+  if (t === "online") return "Online";
   if (t === "stacjonarne") return "Stacjonarne";
   if (t === "hybrydowe") return "Hybrydowe";
   return t;
@@ -112,36 +112,6 @@ function labelCategory(c: TrainingCategory | null) {
   if (c === "publikacja") return "Publikacja";
   if (c === "inne") return "Inne";
   return c;
-}
-
-// UI kolory pilli
-function pillToneForType(type: TrainingType | null) {
-  if (type === "online")
-    return "bg-violet-100 text-violet-800 border-violet-200";
-  if (type === "stacjonarne")
-    return "bg-amber-100 text-amber-900 border-amber-200";
-  if (type === "hybrydowe") return "bg-teal-100 text-teal-900 border-teal-200";
-  return "bg-slate-100 text-slate-700 border-slate-200";
-}
-
-function pillToneForCategory(category: TrainingCategory | null) {
-  if (category === "konferencja")
-    return "bg-indigo-100 text-indigo-900 border-indigo-200";
-  if (category === "warsztaty")
-    return "bg-orange-100 text-orange-900 border-orange-200";
-  if (category === "publikacja")
-    return "bg-slate-100 text-slate-900 border-slate-200";
-  if (category === "kurs") return "bg-sky-100 text-sky-900 border-sky-200";
-  if (category === "szkolenie")
-    return "bg-emerald-100 text-emerald-900 border-emerald-200";
-  return "bg-slate-100 text-slate-700 border-slate-200";
-}
-
-function pointsTone(points: number | null) {
-  if (typeof points !== "number") return "bg-slate-100 text-slate-700";
-  if (points >= 11) return "bg-emerald-600 text-white";
-  if (points >= 6) return "bg-blue-600 text-white";
-  return "bg-slate-900 text-white";
 }
 
 // Mapowanie (category + type) -> activities.type
@@ -160,6 +130,12 @@ function mapToActivityType(
   if (category === "publikacja") return "Publikacja naukowa";
   if (delivery === "stacjonarne") return "Kurs stacjonarny";
   return "Kurs online / webinar";
+}
+
+function termLabel(start: string | null, end: string | null) {
+  if (!start && !end) return "Termin: —";
+  if (start && end && start !== end) return `Termin: ${formatDate(start)} – ${formatDate(end)}`;
+  return `Termin: ${formatDate(start ?? end)}`;
 }
 
 export default function TrainingHubClient() {
@@ -243,7 +219,6 @@ export default function TrainingHubClient() {
       year,
       organizer: t.organizer ?? null,
 
-      // ✅ literal union (nie string)
       status: "planned",
       planned_start_date: t.start_date ?? null,
       training_id: t.id,
@@ -270,281 +245,298 @@ export default function TrainingHubClient() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-8">
-        <div className="text-sm text-gray-600">Sprawdzam sesję…</div>
+        <div className="text-sm text-slate-600">Sprawdzam sesję…</div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Baza szkoleń
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Znajdź kursy i webinary z punktami edukacyjnymi. Wybierz szkolenie,
-            a trafi do planu (nie zalicza się automatycznie).
-          </p>
-        </div>
-
-        <div className="flex gap-2">
-          <Link
-            href="/aktywnosci"
-            className="rounded-xl border px-4 py-2 text-sm hover:bg-slate-50"
-          >
-            Aktywności
-          </Link>
-          <button
-            onClick={load}
-            className="rounded-xl border px-4 py-2 text-sm hover:bg-slate-50"
-            disabled={fetching}
-            type="button"
-          >
-            {fetching ? "Odświeżam…" : "Odśwież"}
-          </button>
-        </div>
-      </div>
-
-      {/* Filtry */}
-      <div className="mt-6 rounded-2xl border bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-          <div className="md:col-span-4">
-            <label className="text-xs text-slate-600">Szukaj</label>
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="np. kongres, NIL, ból, 10 pkt…"
-              className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
-            />
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-white to-slate-50">
+      <div className="mx-auto max-w-6xl px-4 pb-16 pt-8">
+        {/* Header */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+              Baza szkoleń
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm text-slate-600">
+              Znajdź kursy i webinary z punktami edukacyjnymi. Wybierz szkolenie,
+              a trafi do planu (nie zalicza się automatycznie).
+            </p>
           </div>
 
-          <div className="md:col-span-2">
-            <label className="text-xs text-slate-600">Forma</label>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as any)}
-              className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
+          <div className="flex gap-2">
+            <Link
+              href="/aktywnosci"
+              className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
             >
-              {TYPE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
+              Aktywności
+            </Link>
 
-          <div className="md:col-span-2">
-            <label className="text-xs text-slate-600">Kategoria</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as any)}
-              className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
-            >
-              {CATEGORY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="text-xs text-slate-600">Organizator</label>
-            <select
-              value={organizer}
-              onChange={(e) => setOrganizer(e.target.value)}
-              className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
-            >
-              {ORGANIZER_QUICK.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="md:col-span-1">
-            <label className="text-xs text-slate-600">Punkty</label>
-            <select
-              value={minPoints}
-              onChange={(e) => setMinPoints(e.target.value)}
-              className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
-            >
-              {POINTS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="md:col-span-1 flex items-end">
             <button
               onClick={load}
-              className="w-full rounded-xl bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+              className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-60"
               disabled={fetching}
               type="button"
             >
-              Filtruj
+              {fetching ? "Odświeżam…" : "Odśwież"}
             </button>
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={onlyUpcoming}
-              onChange={(e) => setOnlyUpcoming(e.target.checked)}
-            />
-            Tylko nadchodzące
-          </label>
+        {/* Filtry */}
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
+            <div className="md:col-span-6">
+              <label className="text-xs font-semibold text-slate-700">
+                Szukaj
+              </label>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="np. kongres, NIL, ból, 10 pkt…"
+                className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
 
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={onlyPartner}
-              onChange={(e) => setOnlyPartner(e.target.checked)}
-            />
-            Tylko partnerzy
-          </label>
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold text-slate-700">
+                Forma
+              </label>
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value as any)}
+                className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              >
+                {TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div className="ml-auto text-sm text-slate-600">
-            Wynik:{" "}
-            <span className="font-medium text-slate-900">{visible.length}</span>
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold text-slate-700">
+                Kategoria
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as any)}
+                className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              >
+                {CATEGORY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold text-slate-700">
+                Organizator
+              </label>
+              <select
+                value={organizer}
+                onChange={(e) => setOrganizer(e.target.value)}
+                className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              >
+                {ORGANIZER_QUICK.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold text-slate-700">
+                Punkty
+              </label>
+              <select
+                value={minPoints}
+                onChange={(e) => setMinPoints(e.target.value)}
+                className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              >
+                {POINTS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2 md:flex md:items-end">
+              <button
+                onClick={load}
+                className="mt-1 h-10 w-full rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
+                disabled={fetching}
+                type="button"
+              >
+                Filtruj
+              </button>
+            </div>
           </div>
+
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={onlyUpcoming}
+                  onChange={(e) => setOnlyUpcoming(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+                />
+                Tylko nadchodzące
+              </label>
+
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={onlyPartner}
+                  onChange={(e) => setOnlyPartner(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+                />
+                Tylko partnerzy
+              </label>
+            </div>
+
+            <div className="text-sm text-slate-600">
+              Wynik:{" "}
+              <span className="font-semibold text-slate-900">
+                {visible.length}
+              </span>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
         </div>
 
-        {error && (
-          <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-      </div>
+        {/* Lista */}
+        <div className="mt-5 space-y-3">
+          {visible.map((t) => {
+            const dd = daysDiffFromToday(t.start_date);
+            const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
 
-      {/* Lista */}
-      <div className="mt-6 space-y-3">
-        {visible.map((t) => {
-          const dd = daysDiffFromToday(t.start_date);
-          const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
+            return (
+              <div
+                key={t.id}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  {/* LEFT */}
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate text-base font-extrabold text-slate-900">
+                        {t.title}
+                      </h3>
 
-          return (
-            <div
-              key={t.id}
-              className="rounded-2xl border bg-white p-4 shadow-sm transition hover:shadow-md"
-            >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="min-w-0">
-                  <div className="flex items-start gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="truncate text-base font-semibold text-slate-900">
-                          {t.title}
-                        </h3>
-
-                        {soon ? (
-                          <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
-                            Wkrótce
-                          </span>
-                        ) : null}
-
-                        {t.is_partner ? (
-                          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">
-                            Partner
-                          </span>
-                        ) : null}
-                      </div>
-
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                        {t.organizer ? (
-                          <span className="rounded-full border bg-slate-50 px-2 py-0.5 text-xs text-slate-700">
-                            {t.organizer}
-                          </span>
-                        ) : null}
-
-                        <span
-                          className={[
-                            "rounded-full border px-2 py-0.5 text-xs",
-                            pillToneForType(t.type),
-                          ].join(" ")}
-                        >
-                          {labelType(t.type)}
+                      {soon ? (
+                        <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700">
+                          Wkrótce
                         </span>
+                      ) : null}
 
-                        {t.category ? (
-                          <span
-                            className={[
-                              "rounded-full border px-2 py-0.5 text-xs",
-                              pillToneForCategory(t.category),
-                            ].join(" ")}
-                          >
-                            {labelCategory(t.category)}
-                          </span>
-                        ) : null}
-
-                        <span className="text-xs text-slate-600">
-                          Termin: {formatDate(t.start_date)}
-                          {t.end_date ? ` – ${formatDate(t.end_date)}` : ""}
-                          {t.voivodeship ? ` • ${t.voivodeship}` : ""}
+                      {t.is_partner ? (
+                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+                          Partner
                         </span>
-                      </div>
+                      ) : null}
                     </div>
 
-                    <div className="shrink-0">
-                      <span
-                        className={[
-                          "inline-flex items-center rounded-full px-3 py-1 text-sm font-bold",
-                          pointsTone(t.points),
-                        ].join(" ")}
-                        title="Punkty edukacyjne"
-                      >
-                        {typeof t.points === "number" ? `${t.points} pkt` : "—"}
+                    {/* Meta jako spokojny tekst, zamiast kolorowych pilli */}
+                    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
+                      {t.organizer ? (
+                        <>
+                          <span className="font-semibold text-slate-700">
+                            {t.organizer}
+                          </span>
+                          <span className="text-slate-300">•</span>
+                        </>
+                      ) : null}
+
+                      <span>{labelType(t.type)}</span>
+
+                      {t.category ? (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <span>{labelCategory(t.category)}</span>
+                        </>
+                      ) : null}
+
+                      {t.start_date || t.end_date ? (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <span>{termLabel(t.start_date, t.end_date)}</span>
+                        </>
+                      ) : null}
+
+                      {t.voivodeship ? (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <span>{t.voivodeship}</span>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* RIGHT */}
+                  <div className="flex shrink-0 flex-col items-stretch gap-2 md:items-end">
+                    <div className="inline-flex items-center justify-end gap-2">
+                      <span className="text-sm text-slate-500">Punkty</span>
+                      <span className="text-lg font-extrabold text-blue-700">
+                        {typeof t.points === "number" ? t.points : "—"}
                       </span>
+                      <span className="text-sm font-semibold text-blue-700">
+                        pkt
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2 md:justify-end">
+                      {t.external_url ? (
+                        <a
+                          href={t.external_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+                        >
+                          Zobacz
+                        </a>
+                      ) : (
+                        <button
+                          className="h-10 cursor-not-allowed rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-400 shadow-sm"
+                          disabled
+                          type="button"
+                        >
+                          Brak linku
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => chooseTraining(t)}
+                        className="h-10 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+                        type="button"
+                      >
+                        + Dodaj do planu
+                      </button>
                     </div>
                   </div>
                 </div>
-
-                <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
-                  {/* Secondary */}
-                  {t.external_url ? (
-                    <a
-                      href={t.external_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-xl border px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                    >
-                      Zobacz szkolenie
-                    </a>
-                  ) : (
-                    <button
-                      className="cursor-not-allowed rounded-xl border px-3 py-2 text-sm text-slate-400"
-                      disabled
-                      type="button"
-                    >
-                      Brak linku
-                    </button>
-                  )}
-
-                  {/* Primary */}
-                  <button
-                    onClick={() => chooseTraining(t)}
-                    className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                    type="button"
-                  >
-                    Wybierz szkolenie
-                  </button>
-                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
 
-        {!fetching && visible.length === 0 && (
-          <div className="rounded-2xl border bg-white p-6 text-sm text-slate-600">
-            Brak wyników. Zmień filtry albo wyłącz „Tylko nadchodzące”.
-          </div>
-        )}
+          {!fetching && visible.length === 0 && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+              Brak wyników. Zmień filtry albo wyłącz „Tylko nadchodzące”.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
