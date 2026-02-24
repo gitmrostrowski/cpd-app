@@ -34,6 +34,7 @@ function badge(status: TrainingStatus) {
 
 export default function AdminTrainingsPage() {
   const router = useRouter();
+  const sb = supabaseClient(); // ✅ u Ciebie to funkcja
 
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
@@ -47,12 +48,12 @@ export default function AdminTrainingsPage() {
   const [edit, setEdit] = useState<TrainingRow | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // 1) Guard admin (CLIENT) – działa przy sesji w localStorage
+  // 1) Guard admin (CLIENT)
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      const { data: auth } = await supabaseClient.auth.getUser();
+      const { data: auth } = await sb.auth.getUser();
       const user = auth?.user;
 
       if (!user) {
@@ -60,10 +61,10 @@ export default function AdminTrainingsPage() {
         return;
       }
 
-      const { data: profile, error } = await supabaseClient
+      const { data: profile, error } = await sb
         .from("profiles")
         .select("role")
-        .eq("user_id", user.id) // u Ciebie profiles.user_id
+        .eq("user_id", user.id) // ✅ u Ciebie profiles.user_id
         .maybeSingle();
 
       if (cancelled) return;
@@ -80,17 +81,15 @@ export default function AdminTrainingsPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function load() {
     setLoading(true);
     setErr(null);
 
     try {
-      let query = supabaseClient
-        .from("trainings")
-        .select("*")
-        .order("created_at", { ascending: false });
+      let query = sb.from("trainings").select("*").order("created_at", { ascending: false });
 
       if (status !== "all") query = query.eq("status", status);
 
@@ -126,13 +125,7 @@ export default function AdminTrainingsPage() {
   }, [rows, q]);
 
   async function patch(id: string, patch: Partial<TrainingRow>) {
-    const { data, error } = await supabaseClient
-      .from("trainings")
-      .update(patch as any)
-      .eq("id", id)
-      .select("*")
-      .maybeSingle();
-
+    const { data, error } = await sb.from("trainings").update(patch as any).eq("id", id).select("*").maybeSingle();
     if (error) throw error;
 
     const updated = data as any as TrainingRow;
@@ -189,10 +182,7 @@ export default function AdminTrainingsPage() {
 
     setErr(null);
     try {
-      const updated = await patch(row.id, {
-        status: "rejected",
-        reject_reason: reason.trim() || "Odrzucone",
-      });
+      const updated = await patch(row.id, { status: "rejected", reject_reason: reason.trim() || "Odrzucone" });
       if (status !== "all" && updated.status !== status) load();
     } catch (e: any) {
       setErr(e?.message || "Błąd");
@@ -209,7 +199,6 @@ export default function AdminTrainingsPage() {
     }
   }
 
-  // dopóki nie wiemy czy admin → nie pokazujemy UI (żeby nie migało)
   if (isAdmin === null) {
     return <div className="mx-auto w-full max-w-6xl px-4 py-10 text-sm text-slate-500">Sprawdzam uprawnienia…</div>;
   }
@@ -219,7 +208,9 @@ export default function AdminTrainingsPage() {
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="text-sm text-slate-500">
-            <Link href="/profil" className="hover:underline">Profil</Link>
+            <Link href="/profil" className="hover:underline">
+              Profil
+            </Link>
             <span className="px-2">/</span>
             <span className="text-slate-700">Admin</span>
           </div>
@@ -253,19 +244,14 @@ export default function AdminTrainingsPage() {
                 if (e.key === "Enter") load();
               }}
             />
-            <button
-              className="h-10 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-              onClick={load}
-            >
+            <button className="h-10 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700" onClick={load}>
               Szukaj
             </button>
           </div>
         </div>
       </div>
 
-      {err && (
-        <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{err}</div>
-      )}
+      {err && <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{err}</div>}
 
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
@@ -288,9 +274,17 @@ export default function AdminTrainingsPage() {
 
             <tbody className="text-sm text-slate-800">
               {loading ? (
-                <tr><td className="px-4 py-4 text-slate-500" colSpan={6}>Ładuję…</td></tr>
+                <tr>
+                  <td className="px-4 py-4 text-slate-500" colSpan={6}>
+                    Ładuję…
+                  </td>
+                </tr>
               ) : filtered.length === 0 ? (
-                <tr><td className="px-4 py-4 text-slate-500" colSpan={6}>Brak danych.</td></tr>
+                <tr>
+                  <td className="px-4 py-4 text-slate-500" colSpan={6}>
+                    Brak danych.
+                  </td>
+                </tr>
               ) : (
                 filtered.map((r) => (
                   <tr key={r.id} className="border-t border-slate-100 align-top">
@@ -298,7 +292,9 @@ export default function AdminTrainingsPage() {
                       <div className="font-semibold text-slate-900">{r.title}</div>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                         {r.url ? (
-                          <a className="hover:underline" href={r.url} target="_blank" rel="noreferrer">link</a>
+                          <a className="hover:underline" href={r.url} target="_blank" rel="noreferrer">
+                            link
+                          </a>
                         ) : (
                           <span className="text-slate-400">brak linku</span>
                         )}
@@ -373,6 +369,7 @@ export default function AdminTrainingsPage() {
         </div>
       </div>
 
+      {/* Modal edycji (zostaje jak wcześniej) */}
       {editOpen && edit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
@@ -380,7 +377,10 @@ export default function AdminTrainingsPage() {
               <div className="text-sm font-semibold text-slate-900">Edycja szkolenia</div>
               <button
                 className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-100"
-                onClick={() => { setEditOpen(false); setEdit(null); }}
+                onClick={() => {
+                  setEditOpen(false);
+                  setEdit(null);
+                }}
               >
                 ✕
               </button>
@@ -389,7 +389,8 @@ export default function AdminTrainingsPage() {
             <div className="grid gap-4 px-5 py-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label className="text-xs font-semibold text-slate-600">Tytuł</label>
-                <input className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                <input
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.title}
                   onChange={(e) => setEdit({ ...edit, title: e.target.value })}
                 />
@@ -397,7 +398,8 @@ export default function AdminTrainingsPage() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-600">Organizator</label>
-                <input className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                <input
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.organizer || ""}
                   onChange={(e) => setEdit({ ...edit, organizer: e.target.value || null })}
                 />
@@ -405,7 +407,9 @@ export default function AdminTrainingsPage() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-600">Punkty</label>
-                <input type="number" className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                <input
+                  type="number"
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.points ?? ""}
                   onChange={(e) => setEdit({ ...edit, points: e.target.value === "" ? null : Number(e.target.value) })}
                 />
@@ -413,7 +417,9 @@ export default function AdminTrainingsPage() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-600">Start</label>
-                <input type="date" className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                <input
+                  type="date"
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.start_date || ""}
                   onChange={(e) => setEdit({ ...edit, start_date: e.target.value || null })}
                 />
@@ -421,7 +427,9 @@ export default function AdminTrainingsPage() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-600">Koniec</label>
-                <input type="date" className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                <input
+                  type="date"
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.end_date || ""}
                   onChange={(e) => setEdit({ ...edit, end_date: e.target.value || null })}
                 />
@@ -429,7 +437,8 @@ export default function AdminTrainingsPage() {
 
               <div className="sm:col-span-2">
                 <label className="text-xs font-semibold text-slate-600">Link</label>
-                <input className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                <input
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.url || ""}
                   onChange={(e) => setEdit({ ...edit, url: e.target.value || null })}
                 />
@@ -437,7 +446,8 @@ export default function AdminTrainingsPage() {
 
               <div className="sm:col-span-2">
                 <label className="text-xs font-semibold text-slate-600">Opis</label>
-                <textarea className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                <textarea
+                  className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.description || ""}
                   onChange={(e) => setEdit({ ...edit, description: e.target.value || null })}
                 />
@@ -458,7 +468,8 @@ export default function AdminTrainingsPage() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-600">Powód odrzucenia</label>
-                <input className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                <input
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.reject_reason || ""}
                   onChange={(e) => setEdit({ ...edit, reject_reason: e.target.value || null })}
                 />
@@ -466,13 +477,18 @@ export default function AdminTrainingsPage() {
             </div>
 
             <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-5 py-4">
-              <button className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                onClick={() => { setEditOpen(false); setEdit(null); }}
+              <button
+                className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                onClick={() => {
+                  setEditOpen(false);
+                  setEdit(null);
+                }}
                 disabled={saving}
               >
                 Anuluj
               </button>
-              <button className="h-10 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+              <button
+                className="h-10 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
                 onClick={saveEdit}
                 disabled={saving}
               >
