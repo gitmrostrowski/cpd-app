@@ -35,7 +35,13 @@ type Training = {
   category: TrainingCategory | null;
   profession: string | null;
   voivodeship: string | null;
-  external_url: string | null;
+
+  // ✅ JEDNO pole w UI: url
+  url: string | null;
+
+  // legacy (zostawiamy, żeby stare dane/kolumny nie powodowały problemów)
+  external_url?: string | null;
+
   is_partner: boolean | null;
 
   topics?: string[] | null;
@@ -219,7 +225,15 @@ function parseTopics(input: string) {
   return parts.length ? parts : null;
 }
 
-// ✅ normalizacja wyników z Supabase (żeby TS nie krzyczał na brakujące kolumny)
+function normalizeUrl(raw: string | null | undefined) {
+  const v = String(raw ?? "").trim();
+  if (!v) return null;
+  // jeśli ktoś wklei "onet.pl" -> zrób z tego https://onet.pl
+  if (!/^https?:\/\//i.test(v)) return `https://${v}`;
+  return v;
+}
+
+// ✅ normalizacja wyników z Supabase
 function normalizeTrainingRow(r: any): Training {
   const price =
     typeof r.price_pln === "number"
@@ -235,6 +249,8 @@ function normalizeTrainingRow(r: any): Training {
       ? null
       : Number(r.capacity);
 
+  const legacyExternal = r.external_url ?? null;
+
   return {
     id: r.id,
     title: r.title,
@@ -249,7 +265,11 @@ function normalizeTrainingRow(r: any): Training {
     category: (r.category ?? null) as TrainingCategory | null,
     profession: r.profession ?? null,
     voivodeship: r.voivodeship ?? null,
-    external_url: r.external_url ?? null,
+
+    // ✅ priorytet: url, fallback: external_url
+    url: normalizeUrl(r.url ?? legacyExternal),
+    external_url: normalizeUrl(legacyExternal),
+
     is_partner: r.is_partner ?? null,
 
     topics: Array.isArray(r.topics) ? (r.topics as string[]) : null,
@@ -361,8 +381,7 @@ export default function TrainingHubClient() {
 
     if (onlyRecording) query = query.eq("has_recording", true);
 
-    if (enrollment !== "all")
-      query = query.eq("enrollment_status", enrollment);
+    if (enrollment !== "all") query = query.eq("enrollment_status", enrollment);
 
     if (q.trim()) {
       const qq = q.trim();
@@ -483,6 +502,8 @@ export default function TrainingHubClient() {
 
     setAddSubmitting(true);
 
+    const url = normalizeUrl(fUrl);
+
     const payload = {
       title,
       organizer: fOrganizer.trim() || null,
@@ -492,7 +513,12 @@ export default function TrainingHubClient() {
       start_date: fStart,
       end_date: fEnd || null,
       voivodeship: fVoiv.trim() || null,
-      external_url: fUrl.trim() || null,
+
+      // ✅ jedno źródło prawdy dla UI
+      url,
+
+      // ✅ legacy – niech stare miejsca też mają wartość
+      external_url: url,
 
       topics: parseTopics(fTopics),
       price_pln: priceNum,
@@ -744,7 +770,7 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            {/* PRZYCISKI (osobno, ale nadal w tej samej ramce) */}
+            {/* PRZYCISKI */}
             <div className="md:col-span-12 md:flex md:items-end md:justify-end">
               <div className="mt-1 flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
                 <button
@@ -950,9 +976,9 @@ export default function TrainingHubClient() {
                     </div>
 
                     <div className="mt-2 flex justify-end gap-2">
-                      {t.external_url ? (
+                      {t.url ? (
                         <a
-                          href={t.external_url}
+                          href={t.url}
                           target="_blank"
                           rel="noreferrer"
                           className={`inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 ${BTN_SECONDARY_W}`}
@@ -1128,9 +1154,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-12">
-                <label className="text-xs font-semibold text-slate-700">
-                  Link
-                </label>
+                <label className="text-xs font-semibold text-slate-700">Link</label>
                 <input
                   value={fUrl}
                   onChange={(e) => setFUrl(e.target.value)}
