@@ -1,3 +1,4 @@
+// components/Header.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -5,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { supabaseClient } from "@/lib/supabase/client";
 
 const REPORTS_READY = false;
 
@@ -24,6 +26,8 @@ const NAV: NavItem[] = [
   { href: "/baza-szkolen", label: "Baza szkoleń" },
 ];
 
+type ProfileRoleRow = { role: string | null };
+
 function cx(...classes: Array<string | false | undefined | null>) {
   return classes.filter(Boolean).join(" ");
 }
@@ -36,6 +40,9 @@ export default function Header() {
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   const { user, loading, signOut } = useAuth();
+
+  const [role, setRole] = useState<string | null>(null);
+  const isAdmin = role === "admin";
 
   useEffect(() => {
     const onResize = () => {
@@ -53,6 +60,35 @@ export default function Header() {
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      if (!user) {
+        setRole(null);
+        return;
+      }
+
+      const sb = supabaseClient();
+
+      // ✅ omijamy nieaktualne typy supabase.ts (profiles.role)
+      const { data, error } = await sb
+        .from("profiles" as any)
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      const profile = (data as ProfileRoleRow | null) ?? null;
+      setRole(!error && profile ? (profile.role ?? null) : null);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   const isActive = (href: string) => {
     if (!pathname) return false;
@@ -84,6 +120,7 @@ export default function Header() {
     await signOut();
     setOpenMobile(false);
     setOpenUser(false);
+    setRole(null);
   }
 
   const logoHref = user ? "/kalkulator" : "/";
@@ -168,6 +205,18 @@ export default function Header() {
                       >
                         Profil i ustawienia
                       </Link>
+
+                      {isAdmin ? (
+                        <Link
+                          href="/admin/szkolenia"
+                          className="flex items-center rounded-xl px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                          onClick={() => setOpenUser(false)}
+                        >
+                          Szkolenia (admin)
+                        </Link>
+                      ) : null}
+
+                      <div className="my-2 h-px bg-slate-100" />
 
                       <Link
                         href="/kalkulator"
@@ -276,6 +325,16 @@ export default function Header() {
                     >
                       Profil
                     </Link>
+
+                    {isAdmin ? (
+                      <Link
+                        href="/admin/szkolenia"
+                        className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-center text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                        onClick={() => setOpenMobile(false)}
+                      >
+                        Szkolenia (admin)
+                      </Link>
+                    ) : null}
 
                     <button
                       onClick={handleSignOut}
