@@ -39,11 +39,12 @@ type Training = {
   external_url: string | null;
   is_partner: boolean | null;
 
-  topics: string[] | null;
-  price_pln: number | null;
-  has_recording: boolean | null;
-  capacity: number | null;
-  enrollment_status: EnrollmentStatus | null;
+  // ✅ mogą nie istnieć w starych typach Supabase / select("*")
+  topics?: string[] | null;
+  price_pln?: number | null;
+  has_recording?: boolean | null;
+  capacity?: number | null;
+  enrollment_status?: EnrollmentStatus | null;
 
   approval_status?: ApprovalStatus | null;
   submitted_by?: string | null;
@@ -221,6 +222,55 @@ function parseTopics(input: string) {
   return parts.length ? parts : null;
 }
 
+// ✅ normalizacja wyników z Supabase (żeby TS nie krzyczał na brakujące kolumny)
+function normalizeTrainingRow(r: any): Training {
+  const price =
+    typeof r.price_pln === "number"
+      ? r.price_pln
+      : r.price_pln == null
+      ? null
+      : Number(r.price_pln);
+
+  const capacity =
+    typeof r.capacity === "number"
+      ? r.capacity
+      : r.capacity == null
+      ? null
+      : Number(r.capacity);
+
+  return {
+    id: r.id,
+    title: r.title,
+    organizer: r.organizer ?? null,
+    points: typeof r.points === "number" ? r.points : r.points ?? null,
+
+    format: (r.format ?? null) as TrainingType | null,
+
+    start_date: r.start_date ?? null,
+    end_date: r.end_date ?? null,
+
+    category: (r.category ?? null) as TrainingCategory | null,
+    profession: r.profession ?? null,
+    voivodeship: r.voivodeship ?? null,
+    external_url: r.external_url ?? null,
+    is_partner: r.is_partner ?? null,
+
+    topics: Array.isArray(r.topics) ? (r.topics as string[]) : null,
+    price_pln: Number.isNaN(price as number) ? null : (price as number | null),
+    has_recording: r.has_recording ?? null,
+    capacity: Number.isNaN(capacity as number)
+      ? null
+      : (capacity as number | null),
+    enrollment_status: (r.enrollment_status ?? null) as EnrollmentStatus | null,
+
+    approval_status: (r.approval_status ?? null) as ApprovalStatus | null,
+    submitted_by: r.submitted_by ?? null,
+
+    created_at: r.created_at,
+    updated_at: r.updated_at ?? null,
+  };
+}
+
 export default function TrainingHubClient() {
   const { user, loading } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
@@ -279,13 +329,16 @@ export default function TrainingHubClient() {
       .limit(200);
 
     // sortowanie
-    if (sortBy === "date_asc") query = query.order("start_date", { ascending: true });
-    if (sortBy === "date_desc") query = query.order("start_date", { ascending: false });
+    if (sortBy === "date_asc")
+      query = query.order("start_date", { ascending: true });
+    if (sortBy === "date_desc")
+      query = query.order("start_date", { ascending: false });
     if (sortBy === "points_desc")
       query = query.order("points", { ascending: false, nullsFirst: false });
     if (sortBy === "points_asc")
       query = query.order("points", { ascending: true, nullsFirst: false });
-    if (sortBy === "newest") query = query.order("created_at", { ascending: false });
+    if (sortBy === "newest")
+      query = query.order("created_at", { ascending: false });
 
     // filtry
     if (organizer !== "all") query = query.ilike("organizer", `%${organizer}%`);
@@ -311,7 +364,8 @@ export default function TrainingHubClient() {
 
     if (onlyRecording) query = query.eq("has_recording", true);
 
-    if (enrollment !== "all") query = query.eq("enrollment_status", enrollment);
+    if (enrollment !== "all")
+      query = query.eq("enrollment_status", enrollment);
 
     if (q.trim()) {
       const qq = q.trim();
@@ -332,7 +386,8 @@ export default function TrainingHubClient() {
       setError(error.message);
       setItems([]);
     } else {
-      setItems((data as Training[]) ?? []);
+      const rows = ((data ?? []) as any[]).map(normalizeTrainingRow);
+      setItems(rows);
     }
 
     setFetching(false);
@@ -538,7 +593,9 @@ export default function TrainingHubClient() {
           <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
             {/* RZĄD 1: Szukaj + Sortowanie + Organizator */}
             <div className="md:col-span-6">
-              <label className="text-xs font-extrabold text-slate-800">Szukaj</label>
+              <label className="text-xs font-extrabold text-slate-800">
+                Szukaj
+              </label>
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
@@ -548,7 +605,9 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-3">
-              <label className="text-xs font-semibold text-slate-700">Sortowanie</label>
+              <label className="text-xs font-semibold text-slate-700">
+                Sortowanie
+              </label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortBy)}
@@ -563,7 +622,9 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-3">
-              <label className="text-xs font-semibold text-slate-700">Organizator</label>
+              <label className="text-xs font-semibold text-slate-700">
+                Organizator
+              </label>
               <select
                 value={organizer}
                 onChange={(e) => setOrganizer(e.target.value)}
@@ -579,7 +640,9 @@ export default function TrainingHubClient() {
 
             {/* RZĄD 2: Forma + Kategoria + Punkty + Termin + Cena (równo) */}
             <div className="md:col-span-3">
-              <label className="text-xs font-semibold text-slate-700">Forma</label>
+              <label className="text-xs font-semibold text-slate-700">
+                Forma
+              </label>
               <select
                 value={format}
                 onChange={(e) => setFormat(e.target.value as any)}
@@ -594,7 +657,9 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-3">
-              <label className="text-xs font-semibold text-slate-700">Kategoria</label>
+              <label className="text-xs font-semibold text-slate-700">
+                Kategoria
+              </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as any)}
@@ -609,7 +674,9 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Punkty</label>
+              <label className="text-xs font-semibold text-slate-700">
+                Punkty
+              </label>
               <select
                 value={minPoints}
                 onChange={(e) => setMinPoints(e.target.value)}
@@ -624,7 +691,9 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Termin</label>
+              <label className="text-xs font-semibold text-slate-700">
+                Termin
+              </label>
               <select
                 value={timeWindow}
                 onChange={(e) => setTimeWindow(e.target.value as TimeWindow)}
@@ -739,12 +808,15 @@ export default function TrainingHubClient() {
               </label>
 
               {timeWindow !== "all" ? (
-                <span className="text-xs text-slate-500">(Termin ogranicza wyniki do okna)</span>
+                <span className="text-xs text-slate-500">
+                  (Termin ogranicza wyniki do okna)
+                </span>
               ) : null}
             </div>
 
             <div className="text-sm text-slate-600">
-              Wynik: <span className="font-semibold text-slate-900">{items.length}</span>
+              Wynik:{" "}
+              <span className="font-semibold text-slate-900">{items.length}</span>
             </div>
           </div>
 
@@ -761,8 +833,10 @@ export default function TrainingHubClient() {
             const dd = daysDiffFromToday(t.start_date);
             const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
 
-            const price = formatPrice(t.price_pln);
-            const enr = labelEnrollment(t.enrollment_status);
+            const price = formatPrice(typeof t.price_pln === "number" ? t.price_pln : null);
+            const enr = labelEnrollment(
+              (t.enrollment_status ?? null) as EnrollmentStatus | null
+            );
             const hasRec =
               t.has_recording === true
                 ? "Nagranie: Tak"
@@ -836,7 +910,10 @@ export default function TrainingHubClient() {
                       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
                         {price ? (
                           <span>
-                            Cena: <span className="font-semibold text-slate-700">{price}</span>
+                            Cena:{" "}
+                            <span className="font-semibold text-slate-700">
+                              {price}
+                            </span>
                           </span>
                         ) : null}
                         {price && (enr || hasRec || capacityText) ? (
@@ -845,7 +922,10 @@ export default function TrainingHubClient() {
 
                         {enr ? (
                           <span>
-                            Zapisy: <span className="font-semibold text-slate-700">{enr}</span>
+                            Zapisy:{" "}
+                            <span className="font-semibold text-slate-700">
+                              {enr}
+                            </span>
                           </span>
                         ) : null}
                         {enr && (hasRec || capacityText) ? (
@@ -853,7 +933,9 @@ export default function TrainingHubClient() {
                         ) : null}
 
                         {hasRec ? <span>{hasRec}</span> : null}
-                        {hasRec && capacityText ? <span className="text-slate-300">•</span> : null}
+                        {hasRec && capacityText ? (
+                          <span className="text-slate-300">•</span>
+                        ) : null}
 
                         {capacityText ? <span>{capacityText}</span> : null}
                       </div>
@@ -867,7 +949,9 @@ export default function TrainingHubClient() {
                         <span className="text-lg font-extrabold text-blue-700">
                           {typeof t.points === "number" ? t.points : "—"}
                         </span>
-                        <span className="text-sm font-semibold text-blue-700">pkt</span>
+                        <span className="text-sm font-semibold text-blue-700">
+                          pkt
+                        </span>
                       </div>
                     </div>
 
@@ -927,7 +1011,8 @@ export default function TrainingHubClient() {
                   Dodaj szkolenie do bazy
                 </div>
                 <div className="mt-1 text-sm text-slate-600">
-                  Po dodaniu szkolenie trafi do akceptacji operatora i dopiero potem pojawi się w wynikach.
+                  Po dodaniu szkolenie trafi do akceptacji operatora i dopiero potem
+                  pojawi się w wynikach.
                 </div>
               </div>
               <button
@@ -1021,7 +1106,9 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-6">
-                <label className="text-xs font-semibold text-slate-700">Województwo / miejsce</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Województwo / miejsce
+                </label>
                 <input
                   value={fVoiv}
                   onChange={(e) => setFVoiv(e.target.value)}
