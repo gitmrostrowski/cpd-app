@@ -19,18 +19,18 @@ type TrainingCategory =
   | "inne";
 
 type EnrollmentStatus = "open" | "waiting_list" | "closed";
+type ApprovalStatus = "approved" | "pending" | "rejected";
 
 type Training = {
   id: string;
   title: string;
   organizer: string | null;
   points: number | null;
-  // U Ciebie są w tabeli: type (text) i format (text).
-  // Założenie: "format" = forma szkolenia (online/stacjonarne/hybrydowe)
-  format: TrainingType | null;
-  type: string | null;
 
-  start_date: string | null; // date -> Supabase zwykle zwraca jako string YYYY-MM-DD
+  // U Ciebie forma jest w kolumnie "format"
+  format: TrainingType | null;
+
+  start_date: string | null;
   end_date: string | null;
 
   category: TrainingCategory | null;
@@ -39,18 +39,21 @@ type Training = {
   external_url: string | null;
   is_partner: boolean | null;
 
-  topics: string[] | null; // _text
-  price_pln: number | null; // numeric
+  topics: string[] | null;
+  price_pln: number | null;
   has_recording: boolean | null;
   capacity: number | null;
   enrollment_status: EnrollmentStatus | null;
+
+  approval_status?: ApprovalStatus | null;
+  submitted_by?: string | null;
 
   created_at: string;
   updated_at: string | null;
 };
 
 // --- Opcje filtrów ---
-const TYPE_OPTIONS: { value: "all" | TrainingType; label: string }[] = [
+const FORMAT_OPTIONS: { value: "all" | TrainingType; label: string }[] = [
   { value: "all", label: "Wszystkie" },
   { value: "online", label: "Online / webinar" },
   { value: "stacjonarne", label: "Stacjonarne" },
@@ -80,7 +83,6 @@ const POINTS_OPTIONS: { value: string; label: string }[] = [
   { value: "20", label: "≥ 20 pkt" },
 ];
 
-// ✅ okno czasowe (najczęstszy pattern u medyków)
 type TimeWindow = "all" | "7" | "30" | "90";
 const TIME_WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
   { value: "7", label: "Najbliższe 7 dni" },
@@ -189,8 +191,7 @@ function termLabel(start: string | null, end: string | null) {
 function formatPrice(pricePln: number | null) {
   if (typeof pricePln !== "number") return null;
   if (pricePln === 0) return "0 zł";
-  const rounded =
-    Math.round((pricePln + Number.EPSILON) * 100) / 100; // 2 miejsca
+  const rounded = Math.round((pricePln + Number.EPSILON) * 100) / 100;
   return `${rounded} zł`;
 }
 
@@ -212,6 +213,14 @@ function mapToActivityType(
   return "Kurs online / webinar";
 }
 
+function parseTopics(input: string) {
+  const parts = input
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.length ? parts : null;
+}
+
 export default function TrainingHubClient() {
   const { user, loading } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
@@ -222,20 +231,40 @@ export default function TrainingHubClient() {
 
   // filtry
   const [q, setQ] = useState("");
-  const [format, setFormat] = useState<"all" | TrainingType>("all"); // ✅ forma = trainings.format
+  const [sortBy, setSortBy] = useState<SortBy>("date_asc"); // ✅ obok Szukaj
+  const [organizer, setOrganizer] = useState("all"); // ✅ obok Szukaj
+  const [format, setFormat] = useState<"all" | TrainingType>("all");
   const [category, setCategory] = useState<"all" | TrainingCategory>("all");
-  const [organizer, setOrganizer] = useState("all");
+
   const [minPoints, setMinPoints] = useState("all");
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>("30");
+  const [priceMode, setPriceMode] = useState<PriceMode>("all");
+
+  const [topic, setTopic] = useState<string>("all");
+  const [enrollment, setEnrollment] = useState<"all" | EnrollmentStatus>("all");
+
   const [onlyPartner, setOnlyPartner] = useState(false);
   const [onlyUpcoming, setOnlyUpcoming] = useState(true);
-
-  // ✅ nowe filtry medyczne
-  const [timeWindow, setTimeWindow] = useState<TimeWindow>("30");
-  const [sortBy, setSortBy] = useState<SortBy>("date_asc");
-  const [topic, setTopic] = useState<string>("all");
-  const [priceMode, setPriceMode] = useState<PriceMode>("all");
   const [onlyRecording, setOnlyRecording] = useState(false);
-  const [enrollment, setEnrollment] = useState<"all" | EnrollmentStatus>("all");
+
+  // modal: dodawanie szkolenia
+  const [addOpen, setAddOpen] = useState(false);
+  const [addSubmitting, setAddSubmitting] = useState(false);
+
+  const [fTitle, setFTitle] = useState("");
+  const [fOrganizer, setFOrganizer] = useState("");
+  const [fPoints, setFPoints] = useState<string>("0");
+  const [fFormat, setFFormat] = useState<TrainingType>("online");
+  const [fCategory, setFCategory] = useState<TrainingCategory>("kurs");
+  const [fStart, setFStart] = useState("");
+  const [fEnd, setFEnd] = useState("");
+  const [fVoiv, setFVoiv] = useState("");
+  const [fUrl, setFUrl] = useState("");
+  const [fTopics, setFTopics] = useState("");
+  const [fPrice, setFPrice] = useState<string>("");
+  const [fRec, setFRec] = useState(false);
+  const [fCap, setFCap] = useState<string>("");
+  const [fEnroll, setFEnroll] = useState<EnrollmentStatus | "">("");
 
   const load = async () => {
     setFetching(true);
@@ -243,7 +272,11 @@ export default function TrainingHubClient() {
 
     const todayStr = todayYYYYMMDD();
 
-    let query = supabase.from("trainings").select("*").limit(200);
+    let query = supabase
+      .from("trainings")
+      .select("*")
+      .eq("approval_status", "approved")
+      .limit(200);
 
     // sortowanie
     if (sortBy === "date_asc") query = query.order("start_date", { ascending: true });
@@ -254,14 +287,14 @@ export default function TrainingHubClient() {
       query = query.order("points", { ascending: true, nullsFirst: false });
     if (sortBy === "newest") query = query.order("created_at", { ascending: false });
 
-    // podstawowe filtry
+    // filtry
+    if (organizer !== "all") query = query.ilike("organizer", `%${organizer}%`);
     if (format !== "all") query = query.eq("format", format);
     if (category !== "all") query = query.eq("category", category);
-    if (organizer !== "all") query = query.ilike("organizer", `%${organizer}%`);
-    if (minPoints !== "all") query = query.gte("points", Number(minPoints));
-    if (onlyPartner) query = query.eq("is_partner", true);
 
-    // ✅ okno czasu 7/30/90
+    if (minPoints !== "all") query = query.gte("points", Number(minPoints));
+
+    // okno czasu 7/30/90
     if (timeWindow !== "all") {
       const maxDate = addDaysYYYYMMDD(Number(timeWindow));
       query = query.gte("start_date", todayStr).lte("start_date", maxDate);
@@ -269,22 +302,17 @@ export default function TrainingHubClient() {
       query = query.gte("start_date", todayStr);
     }
 
-    // ✅ temat/specjalizacja (topics array)
-    if (topic !== "all") {
-      query = query.contains("topics", [topic]);
-    }
+    if (onlyPartner) query = query.eq("is_partner", true);
 
-    // ✅ cena
+    if (topic !== "all") query = query.contains("topics", [topic]);
+
     if (priceMode === "free") query = query.eq("price_pln", 0);
     if (priceMode === "paid") query = query.gt("price_pln", 0);
 
-    // ✅ nagranie
     if (onlyRecording) query = query.eq("has_recording", true);
 
-    // ✅ status zapisów
     if (enrollment !== "all") query = query.eq("enrollment_status", enrollment);
 
-    // wyszukiwanie tekstowe (dokładnie to, co ludzie wpisują)
     if (q.trim()) {
       const qq = q.trim();
       query = query.or(
@@ -315,9 +343,6 @@ export default function TrainingHubClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const visible = useMemo(() => items, [items]);
-
-  // opcje tematów (z aktualnie pobranych rekordów) — proste i działa od razu
   const topicOptions = useMemo(() => {
     const set = new Set<string>();
     for (const t of items) {
@@ -370,6 +395,93 @@ export default function TrainingHubClient() {
     );
   };
 
+  const submitNewTraining = async () => {
+    if (!user) {
+      alert("Zaloguj się, żeby dodać szkolenie.");
+      return;
+    }
+
+    const title = fTitle.trim();
+    if (!title) {
+      alert("Podaj tytuł szkolenia.");
+      return;
+    }
+    if (!fStart) {
+      alert("Podaj datę rozpoczęcia.");
+      return;
+    }
+
+    const pointsNum = Number(fPoints || 0);
+    const priceNum =
+      fPrice.trim() === "" ? null : Number(String(fPrice).replace(",", "."));
+    const capNum = fCap.trim() === "" ? null : Number(fCap);
+
+    if (Number.isNaN(pointsNum) || pointsNum < 0) {
+      alert("Nieprawidłowa liczba punktów.");
+      return;
+    }
+    if (priceNum !== null && (Number.isNaN(priceNum) || priceNum < 0)) {
+      alert("Nieprawidłowa cena.");
+      return;
+    }
+    if (capNum !== null && (Number.isNaN(capNum) || capNum < 0)) {
+      alert("Nieprawidłowy limit miejsc.");
+      return;
+    }
+
+    setAddSubmitting(true);
+
+    const payload = {
+      title,
+      organizer: fOrganizer.trim() || null,
+      points: pointsNum,
+      format: fFormat,
+      category: fCategory,
+      start_date: fStart,
+      end_date: fEnd || null,
+      voivodeship: fVoiv.trim() || null,
+      external_url: fUrl.trim() || null,
+
+      topics: parseTopics(fTopics),
+      price_pln: priceNum,
+      has_recording: fRec,
+      capacity: capNum,
+      enrollment_status: fEnroll ? (fEnroll as EnrollmentStatus) : null,
+
+      approval_status: "pending" as ApprovalStatus,
+      submitted_by: user.id,
+    };
+
+    const { error } = await supabase.from("trainings").insert(payload);
+
+    setAddSubmitting(false);
+
+    if (error) {
+      alert(`Nie udało się dodać szkolenia: ${error.message}`);
+      return;
+    }
+
+    setAddOpen(false);
+
+    // reset
+    setFTitle("");
+    setFOrganizer("");
+    setFPoints("0");
+    setFFormat("online");
+    setFCategory("kurs");
+    setFStart("");
+    setFEnd("");
+    setFVoiv("");
+    setFUrl("");
+    setFTopics("");
+    setFPrice("");
+    setFRec(false);
+    setFCap("");
+    setFEnroll("");
+
+    alert("Wysłano do akceptacji. Po zatwierdzeniu pojawi się w bazie.");
+  };
+
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-8">
@@ -383,7 +495,9 @@ export default function TrainingHubClient() {
 
   const RIGHT_W = "md:w-[340px]";
   const BTN_SECONDARY_W = "md:w-[112px]";
-  const BTN_PRIMARY_W = "md:w-[168px]";
+  const BTN_PRIMARY_W = "md:w-[168px]"; // = + Dodaj do planu
+  const BTN_FILTER_W = "md:w-[168px]"; // = Filtruj
+  const BTN_ADD_W = "md:w-[168px]"; // = Dodaj szkolenie
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-white to-slate-50">
@@ -422,92 +536,15 @@ export default function TrainingHubClient() {
         {/* Filtry */}
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
+            {/* RZĄD 1: Szukaj + Sortowanie + Organizator */}
             <div className="md:col-span-6">
-              <label className="text-xs font-extrabold text-slate-800">
-                Szukaj
-              </label>
+              <label className="text-xs font-extrabold text-slate-800">Szukaj</label>
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="np. kongres, NIL, radiologia, Warszawa, 10 pkt…"
                 className={fieldBase}
               />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Forma</label>
-              <select
-                value={format}
-                onChange={(e) => setFormat(e.target.value as any)}
-                className={fieldBase}
-              >
-                {TYPE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Kategoria</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as any)}
-                className={fieldBase}
-              >
-                {CATEGORY_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Organizator</label>
-              <select
-                value={organizer}
-                onChange={(e) => setOrganizer(e.target.value)}
-                className={fieldBase}
-              >
-                {ORGANIZER_QUICK.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* 2 rząd filtrów */}
-            <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Punkty</label>
-              <select
-                value={minPoints}
-                onChange={(e) => setMinPoints(e.target.value)}
-                className={fieldBase}
-              >
-                {POINTS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="md:col-span-3">
-              <label className="text-xs font-semibold text-slate-700">Termin</label>
-              <select
-                value={timeWindow}
-                onChange={(e) => setTimeWindow(e.target.value as TimeWindow)}
-                className={fieldBase}
-              >
-                {TIME_WINDOW_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
             </div>
 
             <div className="md:col-span-3">
@@ -525,17 +562,77 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Temat</label>
+            <div className="md:col-span-3">
+              <label className="text-xs font-semibold text-slate-700">Organizator</label>
               <select
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
+                value={organizer}
+                onChange={(e) => setOrganizer(e.target.value)}
                 className={fieldBase}
-                title="Tematy/specializacje z bazy (topics)"
               >
-                {topicOptions.map((t) => (
-                  <option key={t} value={t}>
-                    {t === "all" ? "Dowolnie" : t}
+                {ORGANIZER_QUICK.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* RZĄD 2: Forma + Kategoria + Punkty + Termin + Cena (równo) */}
+            <div className="md:col-span-3">
+              <label className="text-xs font-semibold text-slate-700">Forma</label>
+              <select
+                value={format}
+                onChange={(e) => setFormat(e.target.value as any)}
+                className={fieldBase}
+              >
+                {FORMAT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-3">
+              <label className="text-xs font-semibold text-slate-700">Kategoria</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as any)}
+                className={fieldBase}
+              >
+                {CATEGORY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold text-slate-700">Punkty</label>
+              <select
+                value={minPoints}
+                onChange={(e) => setMinPoints(e.target.value)}
+                className={fieldBase}
+              >
+                {POINTS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold text-slate-700">Termin</label>
+              <select
+                value={timeWindow}
+                onChange={(e) => setTimeWindow(e.target.value as TimeWindow)}
+                className={fieldBase}
+              >
+                {TIME_WINDOW_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
                   </option>
                 ))}
               </select>
@@ -556,7 +653,23 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="md:col-span-3">
+            {/* RZĄD 3: Temat + Zapisy + przyciski */}
+            <div className="md:col-span-4">
+              <label className="text-xs font-semibold text-slate-700">Temat</label>
+              <select
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                className={fieldBase}
+              >
+                {topicOptions.map((t) => (
+                  <option key={t} value={t}>
+                    {t === "all" ? "Dowolnie" : t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-4">
               <label className="text-xs font-semibold text-slate-700">Zapisy</label>
               <select
                 value={enrollment}
@@ -571,15 +684,25 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="md:col-span-3 md:flex md:items-end">
-              <button
-                onClick={load}
-                className="mt-1 inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
-                disabled={fetching}
-                type="button"
-              >
-                Filtruj
-              </button>
+            <div className="md:col-span-4 md:flex md:items-end md:justify-end">
+              <div className="mt-1 flex w-full gap-2 md:justify-end">
+                <button
+                  onClick={load}
+                  className={`inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60 ${BTN_FILTER_W}`}
+                  disabled={fetching}
+                  type="button"
+                >
+                  Filtruj
+                </button>
+
+                <button
+                  onClick={() => setAddOpen(true)}
+                  className={`inline-flex h-10 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 ${BTN_ADD_W}`}
+                  type="button"
+                >
+                  Dodaj szkolenie
+                </button>
+              </div>
             </div>
           </div>
 
@@ -616,15 +739,12 @@ export default function TrainingHubClient() {
               </label>
 
               {timeWindow !== "all" ? (
-                <span className="text-xs text-slate-500">
-                  (Termin ogranicza wyniki do okna)
-                </span>
+                <span className="text-xs text-slate-500">(Termin ogranicza wyniki do okna)</span>
               ) : null}
             </div>
 
             <div className="text-sm text-slate-600">
-              Wynik:{" "}
-              <span className="font-semibold text-slate-900">{visible.length}</span>
+              Wynik: <span className="font-semibold text-slate-900">{items.length}</span>
             </div>
           </div>
 
@@ -637,14 +757,18 @@ export default function TrainingHubClient() {
 
         {/* Lista */}
         <div className="mt-5 space-y-3">
-          {visible.map((t) => {
+          {items.map((t) => {
             const dd = daysDiffFromToday(t.start_date);
             const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
 
             const price = formatPrice(t.price_pln);
             const enr = labelEnrollment(t.enrollment_status);
             const hasRec =
-              t.has_recording === true ? "Nagranie: Tak" : t.has_recording === false ? "Nagranie: Nie" : null;
+              t.has_recording === true
+                ? "Nagranie: Tak"
+                : t.has_recording === false
+                ? "Nagranie: Nie"
+                : null;
 
             const capacityText =
               typeof t.capacity === "number" ? `Limit: ${t.capacity}` : null;
@@ -655,7 +779,6 @@ export default function TrainingHubClient() {
                 className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  {/* LEFT */}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="truncate text-base font-extrabold text-slate-900">
@@ -709,14 +832,25 @@ export default function TrainingHubClient() {
                       ) : null}
                     </div>
 
-                    {/* dodatkowa linia "medyczna" – krótka, nie choinka */}
                     {(price || enr || hasRec || capacityText) && (
                       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
-                        {price ? <span>Cena: <span className="font-semibold text-slate-700">{price}</span></span> : null}
-                        {price && (enr || hasRec || capacityText) ? <span className="text-slate-300">•</span> : null}
+                        {price ? (
+                          <span>
+                            Cena: <span className="font-semibold text-slate-700">{price}</span>
+                          </span>
+                        ) : null}
+                        {price && (enr || hasRec || capacityText) ? (
+                          <span className="text-slate-300">•</span>
+                        ) : null}
 
-                        {enr ? <span>Zapisy: <span className="font-semibold text-slate-700">{enr}</span></span> : null}
-                        {enr && (hasRec || capacityText) ? <span className="text-slate-300">•</span> : null}
+                        {enr ? (
+                          <span>
+                            Zapisy: <span className="font-semibold text-slate-700">{enr}</span>
+                          </span>
+                        ) : null}
+                        {enr && (hasRec || capacityText) ? (
+                          <span className="text-slate-300">•</span>
+                        ) : null}
 
                         {hasRec ? <span>{hasRec}</span> : null}
                         {hasRec && capacityText ? <span className="text-slate-300">•</span> : null}
@@ -726,7 +860,6 @@ export default function TrainingHubClient() {
                     )}
                   </div>
 
-                  {/* RIGHT */}
                   <div className={`shrink-0 ${RIGHT_W}`}>
                     <div className="flex items-center justify-end">
                       <div className="inline-flex items-center gap-2 md:justify-end">
@@ -762,7 +895,6 @@ export default function TrainingHubClient() {
                         onClick={() => chooseTraining(t)}
                         className={`inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 ${BTN_PRIMARY_W}`}
                         type="button"
-                        title="Dodaj szkolenie do planu"
                       >
                         + Dodaj do planu
                       </button>
@@ -773,13 +905,223 @@ export default function TrainingHubClient() {
             );
           })}
 
-          {!fetching && visible.length === 0 && (
+          {!fetching && items.length === 0 && (
             <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
               Brak wyników. Zmień filtry albo wybierz „Dowolnie” w Terminie.
             </div>
           )}
         </div>
       </div>
+
+      {/* MODAL: Dodaj szkolenie */}
+      {addOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/30"
+            onClick={() => (addSubmitting ? null : setAddOpen(false))}
+          />
+          <div className="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-lg font-extrabold text-slate-900">
+                  Dodaj szkolenie do bazy
+                </div>
+                <div className="mt-1 text-sm text-slate-600">
+                  Po dodaniu szkolenie trafi do akceptacji operatora i dopiero potem pojawi się w wynikach.
+                </div>
+              </div>
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                onClick={() => setAddOpen(false)}
+                disabled={addSubmitting}
+                type="button"
+              >
+                Zamknij
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12">
+              <div className="md:col-span-8">
+                <label className="text-xs font-semibold text-slate-700">Tytuł *</label>
+                <input
+                  value={fTitle}
+                  onChange={(e) => setFTitle(e.target.value)}
+                  className={fieldBase}
+                  placeholder="np. Diagnostyka sepsy — biomarkery i panel…"
+                />
+              </div>
+
+              <div className="md:col-span-4">
+                <label className="text-xs font-semibold text-slate-700">Punkty *</label>
+                <input
+                  value={fPoints}
+                  onChange={(e) => setFPoints(e.target.value)}
+                  className={fieldBase}
+                  inputMode="numeric"
+                />
+              </div>
+
+              <div className="md:col-span-6">
+                <label className="text-xs font-semibold text-slate-700">Organizator</label>
+                <input
+                  value={fOrganizer}
+                  onChange={(e) => setFOrganizer(e.target.value)}
+                  className={fieldBase}
+                  placeholder="np. NIL / OIL / Towarzystwo…"
+                />
+              </div>
+
+              <div className="md:col-span-3">
+                <label className="text-xs font-semibold text-slate-700">Forma *</label>
+                <select
+                  value={fFormat}
+                  onChange={(e) => setFFormat(e.target.value as TrainingType)}
+                  className={fieldBase}
+                >
+                  <option value="online">Online / webinar</option>
+                  <option value="stacjonarne">Stacjonarne</option>
+                  <option value="hybrydowe">Hybrydowe</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-3">
+                <label className="text-xs font-semibold text-slate-700">Kategoria *</label>
+                <select
+                  value={fCategory}
+                  onChange={(e) => setFCategory(e.target.value as TrainingCategory)}
+                  className={fieldBase}
+                >
+                  <option value="kurs">Kurs</option>
+                  <option value="szkolenie">Szkolenie</option>
+                  <option value="konferencja">Konferencja / kongres</option>
+                  <option value="warsztaty">Warsztaty</option>
+                  <option value="publikacja">Publikacja</option>
+                  <option value="inne">Inne</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-3">
+                <label className="text-xs font-semibold text-slate-700">Start *</label>
+                <input
+                  type="date"
+                  value={fStart}
+                  onChange={(e) => setFStart(e.target.value)}
+                  className={fieldBase}
+                />
+              </div>
+
+              <div className="md:col-span-3">
+                <label className="text-xs font-semibold text-slate-700">Koniec</label>
+                <input
+                  type="date"
+                  value={fEnd}
+                  onChange={(e) => setFEnd(e.target.value)}
+                  className={fieldBase}
+                />
+              </div>
+
+              <div className="md:col-span-6">
+                <label className="text-xs font-semibold text-slate-700">Województwo / miejsce</label>
+                <input
+                  value={fVoiv}
+                  onChange={(e) => setFVoiv(e.target.value)}
+                  className={fieldBase}
+                  placeholder="np. mazowieckie / Warszawa"
+                />
+              </div>
+
+              <div className="md:col-span-12">
+                <label className="text-xs font-semibold text-slate-700">Link</label>
+                <input
+                  value={fUrl}
+                  onChange={(e) => setFUrl(e.target.value)}
+                  className={fieldBase}
+                  placeholder="https://…"
+                />
+              </div>
+
+              <div className="md:col-span-12">
+                <label className="text-xs font-semibold text-slate-700">Tematy (topics)</label>
+                <input
+                  value={fTopics}
+                  onChange={(e) => setFTopics(e.target.value)}
+                  className={fieldBase}
+                  placeholder="np. radiologia, POZ, kardiologia"
+                />
+                <div className="mt-1 text-xs text-slate-500">
+                  Wpisz po przecinku. To pomoże w filtrowaniu.
+                </div>
+              </div>
+
+              <div className="md:col-span-3">
+                <label className="text-xs font-semibold text-slate-700">Cena (PLN)</label>
+                <input
+                  value={fPrice}
+                  onChange={(e) => setFPrice(e.target.value)}
+                  className={fieldBase}
+                  placeholder="np. 0 lub 199"
+                />
+              </div>
+
+              <div className="md:col-span-3">
+                <label className="text-xs font-semibold text-slate-700">Limit miejsc</label>
+                <input
+                  value={fCap}
+                  onChange={(e) => setFCap(e.target.value)}
+                  className={fieldBase}
+                  placeholder="np. 50"
+                />
+              </div>
+
+              <div className="md:col-span-3">
+                <label className="text-xs font-semibold text-slate-700">Zapisy</label>
+                <select
+                  value={fEnroll}
+                  onChange={(e) => setFEnroll(e.target.value as any)}
+                  className={fieldBase}
+                >
+                  <option value="">—</option>
+                  <option value="open">Zapisy otwarte</option>
+                  <option value="waiting_list">Lista rezerwowa</option>
+                  <option value="closed">Zapisy zamknięte</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-3 flex items-end">
+                <label className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={fRec}
+                    onChange={(e) => setFRec(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+                  />
+                  Nagranie dostępne
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
+                onClick={() => setAddOpen(false)}
+                disabled={addSubmitting}
+                type="button"
+              >
+                Anuluj
+              </button>
+
+              <button
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                onClick={submitNewTraining}
+                disabled={addSubmitting}
+                type="button"
+              >
+                {addSubmitting ? "Wysyłam…" : "Wyślij do akceptacji"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
