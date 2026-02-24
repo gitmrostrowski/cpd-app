@@ -23,6 +23,8 @@ type TrainingRow = {
   updated_at: string;
 };
 
+type ProfileRoleRow = { role: string | null };
+
 function cls(...xs: Array<string | false | null | undefined>) {
   return xs.filter(Boolean).join(" ");
 }
@@ -48,7 +50,7 @@ export default function AdminTrainingsPage() {
   const [edit, setEdit] = useState<TrainingRow | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // 1) Guard admin (CLIENT)
+  // 1) Guard admin (CLIENT) – działa przy sesji w localStorage
   useEffect(() => {
     let cancelled = false;
 
@@ -57,17 +59,20 @@ export default function AdminTrainingsPage() {
       const user = auth?.user;
 
       if (!user) {
-        if (!cancelled) router.replace("/login"); // dopasuj jeśli masz inną ścieżkę
+        if (!cancelled) router.replace("/login");
         return;
       }
 
-      const { data: profile, error } = await sb
-        .from("profiles")
+      // ✅ omijamy nieaktualne typy supabase.ts (profiles.role)
+      const { data, error } = await sb
+        .from("profiles" as any)
         .select("role")
-        .eq("user_id", user.id) // ✅ u Ciebie profiles.user_id
+        .eq("user_id", user.id)
         .maybeSingle();
 
       if (cancelled) return;
+
+      const profile = (data as ProfileRoleRow | null) ?? null;
 
       if (error || !profile || profile.role !== "admin") {
         setIsAdmin(false);
@@ -93,14 +98,12 @@ export default function AdminTrainingsPage() {
 
       if (status !== "all") query = query.eq("status", status);
 
-      if (q.trim()) {
-        query = query.or(`title.ilike.%${q.trim()}%,organizer.ilike.%${q.trim()}%`);
-      }
+      if (q.trim()) query = query.or(`title.ilike.%${q.trim()}%,organizer.ilike.%${q.trim()}%`);
 
       const { data, error } = await query;
       if (error) throw error;
 
-      setRows((data as any) ?? []);
+      setRows(((data as any) ?? []) as TrainingRow[]);
     } catch (e: any) {
       setErr(e?.message || "Błąd pobierania danych");
       setRows([]);
@@ -125,10 +128,16 @@ export default function AdminTrainingsPage() {
   }, [rows, q]);
 
   async function patch(id: string, patch: Partial<TrainingRow>) {
-    const { data, error } = await sb.from("trainings").update(patch as any).eq("id", id).select("*").maybeSingle();
+    const { data, error } = await sb
+      .from("trainings")
+      .update(patch as any)
+      .eq("id", id)
+      .select("*")
+      .maybeSingle();
+
     if (error) throw error;
 
-    const updated = data as any as TrainingRow;
+    const updated = (data as any) as TrainingRow;
     setRows((prev) => prev.map((x) => (x.id === id ? updated : x)));
     return updated;
   }
@@ -142,6 +151,7 @@ export default function AdminTrainingsPage() {
     if (!edit) return;
     setSaving(true);
     setErr(null);
+
     try {
       const updated = await patch(edit.id, {
         title: edit.title,
@@ -182,7 +192,10 @@ export default function AdminTrainingsPage() {
 
     setErr(null);
     try {
-      const updated = await patch(row.id, { status: "rejected", reject_reason: reason.trim() || "Odrzucone" });
+      const updated = await patch(row.id, {
+        status: "rejected",
+        reject_reason: reason.trim() || "Odrzucone",
+      });
       if (status !== "all" && updated.status !== status) load();
     } catch (e: any) {
       setErr(e?.message || "Błąd");
@@ -369,7 +382,6 @@ export default function AdminTrainingsPage() {
         </div>
       </div>
 
-      {/* Modal edycji (zostaje jak wcześniej) */}
       {editOpen && edit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
