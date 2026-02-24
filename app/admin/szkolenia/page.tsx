@@ -40,7 +40,7 @@ export default function AdminTrainingsPage() {
 
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
-  const [status, setStatus] = useState<"all" | TrainingStatus>("pending");
+  const [status, setStatus] = useState<"all" | TrainingStatus>("all");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<TrainingRow[]>([]);
