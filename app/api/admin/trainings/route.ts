@@ -18,8 +18,9 @@ type TrainingPatch = {
   reject_reason?: string | null;
 };
 
-function supabaseServer() {
-  const cookieStore = cookies();
+async function supabaseServer() {
+  // ✅ Next.js 15/16: cookies() jest async
+  const cookieStore = (await cookies()) as any;
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,9 +31,9 @@ function supabaseServer() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          // route handlers: można ustawiać cookies, ale Next robi to specyficznie
-          // @supabase/ssr to obsługuje; nic więcej nie trzeba
-          cookiesToSet.forEach(({ name, value, options }) => {
+          // W route handlerach cookieStore bywa typowany jako readonly,
+          // ale w praktyce set działa. Rzucamy na any, żeby TS nie blokował buildu.
+          cookiesToSet.forEach(({ name, value, options }: any) => {
             cookieStore.set(name, value, options);
           });
         },
@@ -41,15 +42,16 @@ function supabaseServer() {
   );
 }
 
-async function requireAdmin(supabase: ReturnType<typeof supabaseServer>) {
+async function requireAdmin(supabase: Awaited<ReturnType<typeof supabaseServer>>) {
   const { data: userData, error: userErr } = await supabase.auth.getUser();
   const user = userData?.user;
   if (userErr || !user) return { ok: false as const, status: 401 as const, userId: null };
 
+  // ✅ U Ciebie profiles ma user_id + role
   const { data: profile, error: profErr } = await supabase
     .from("profiles")
     .select("role")
-    .eq("user_id", user.id) // <- u Ciebie profiles.user_id
+    .eq("user_id", user.id)
     .maybeSingle();
 
   if (profErr) return { ok: false as const, status: 500 as const, userId: null };
@@ -60,7 +62,7 @@ async function requireAdmin(supabase: ReturnType<typeof supabaseServer>) {
 
 // GET /api/admin/trainings?status=pending|approved|rejected|all&q=...
 export async function GET(req: Request) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const admin = await requireAdmin(supabase);
   if (!admin.ok) return NextResponse.json({ error: "forbidden" }, { status: admin.status });
@@ -85,7 +87,7 @@ export async function GET(req: Request) {
 
 // PATCH /api/admin/trainings  body: { id, ...fields }
 export async function PATCH(req: Request) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const admin = await requireAdmin(supabase);
   if (!admin.ok) return NextResponse.json({ error: "forbidden" }, { status: admin.status });
@@ -102,7 +104,7 @@ export async function PATCH(req: Request) {
   const patch: any = { ...body };
   delete patch.id;
 
-  // Jeżeli masz te kolumny w trainings, ustawiamy ślady decyzji:
+  // Ślady akceptacji/odrzucenia (jeśli masz te kolumny w trainings)
   if (patch.status === "approved") {
     patch.reviewed_by = admin.userId;
     patch.reviewed_at = new Date().toISOString();
