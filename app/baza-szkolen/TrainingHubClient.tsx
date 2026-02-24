@@ -27,7 +27,6 @@ type Training = {
   organizer: string | null;
   points: number | null;
 
-  // U Ciebie forma jest w kolumnie "format"
   format: TrainingType | null;
 
   start_date: string | null;
@@ -39,7 +38,6 @@ type Training = {
   external_url: string | null;
   is_partner: boolean | null;
 
-  // ✅ mogą nie istnieć w starych typach Supabase / select("*")
   topics?: string[] | null;
   price_pln?: number | null;
   has_recording?: boolean | null;
@@ -196,7 +194,6 @@ function formatPrice(pricePln: number | null) {
   return `${rounded} zł`;
 }
 
-// Mapowanie (category + format) -> activities.type
 function mapToActivityType(
   category: TrainingCategory | null,
   delivery: TrainingType | null
@@ -281,11 +278,11 @@ export default function TrainingHubClient() {
 
   // filtry
   const [q, setQ] = useState("");
-  const [sortBy, setSortBy] = useState<SortBy>("date_asc"); // ✅ obok Szukaj
-  const [organizer, setOrganizer] = useState("all"); // ✅ obok Szukaj
+  const [sortBy, setSortBy] = useState<SortBy>("date_asc");
+  const [organizer, setOrganizer] = useState("all");
   const [format, setFormat] = useState<"all" | TrainingType>("all");
-  const [category, setCategory] = useState<"all" | TrainingCategory>("all");
 
+  const [category, setCategory] = useState<"all" | TrainingCategory>("all");
   const [minPoints, setMinPoints] = useState("all");
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("30");
   const [priceMode, setPriceMode] = useState<PriceMode>("all");
@@ -590,8 +587,9 @@ export default function TrainingHubClient() {
 
         {/* Filtry */}
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          {/* ✅ 2 linie pól: (Szukaj + 3 krótkie) + (6 krótkich). Przyciski osobno */}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-            {/* RZĄD 1: Szukaj + Sortowanie + Organizator */}
+            {/* LINIA 1 */}
             <div className="md:col-span-6">
               <label className="text-xs font-extrabold text-slate-800">
                 Szukaj
@@ -604,7 +602,7 @@ export default function TrainingHubClient() {
               />
             </div>
 
-            <div className="md:col-span-3">
+            <div className="md:col-span-2">
               <label className="text-xs font-semibold text-slate-700">
                 Sortowanie
               </label>
@@ -621,7 +619,7 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="md:col-span-3">
+            <div className="md:col-span-2">
               <label className="text-xs font-semibold text-slate-700">
                 Organizator
               </label>
@@ -638,11 +636,8 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            {/* RZĄD 2: Forma + Kategoria + Punkty + Termin + Cena (równo) */}
-            <div className="md:col-span-3">
-              <label className="text-xs font-semibold text-slate-700">
-                Forma
-              </label>
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold text-slate-700">Forma</label>
               <select
                 value={format}
                 onChange={(e) => setFormat(e.target.value as any)}
@@ -656,7 +651,8 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="md:col-span-3">
+            {/* LINIA 2 (6 równych) */}
+            <div className="md:col-span-2">
               <label className="text-xs font-semibold text-slate-700">
                 Kategoria
               </label>
@@ -674,9 +670,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">
-                Punkty
-              </label>
+              <label className="text-xs font-semibold text-slate-700">Punkty</label>
               <select
                 value={minPoints}
                 onChange={(e) => setMinPoints(e.target.value)}
@@ -691,9 +685,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">
-                Termin
-              </label>
+              <label className="text-xs font-semibold text-slate-700">Termin</label>
               <select
                 value={timeWindow}
                 onChange={(e) => setTimeWindow(e.target.value as TimeWindow)}
@@ -722,8 +714,7 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            {/* RZĄD 3: Temat + Zapisy + przyciski */}
-            <div className="md:col-span-4">
+            <div className="md:col-span-2">
               <label className="text-xs font-semibold text-slate-700">Temat</label>
               <select
                 value={topic}
@@ -738,7 +729,7 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="md:col-span-4">
+            <div className="md:col-span-2">
               <label className="text-xs font-semibold text-slate-700">Zapisy</label>
               <select
                 value={enrollment}
@@ -753,8 +744,9 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="md:col-span-4 md:flex md:items-end md:justify-end">
-              <div className="mt-1 flex w-full gap-2 md:justify-end">
+            {/* PRZYCISKI (osobno, ale nadal w tej samej ramce) */}
+            <div className="md:col-span-12 md:flex md:items-end md:justify-end">
+              <div className="mt-1 flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
                 <button
                   onClick={load}
                   className={`inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60 ${BTN_FILTER_W}`}
@@ -833,7 +825,9 @@ export default function TrainingHubClient() {
             const dd = daysDiffFromToday(t.start_date);
             const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
 
-            const price = formatPrice(typeof t.price_pln === "number" ? t.price_pln : null);
+            const price = formatPrice(
+              typeof t.price_pln === "number" ? t.price_pln : null
+            );
             const enr = labelEnrollment(
               (t.enrollment_status ?? null) as EnrollmentStatus | null
             );
@@ -1011,8 +1005,8 @@ export default function TrainingHubClient() {
                   Dodaj szkolenie do bazy
                 </div>
                 <div className="mt-1 text-sm text-slate-600">
-                  Po dodaniu szkolenie trafi do akceptacji operatora i dopiero potem
-                  pojawi się w wynikach.
+                  Po dodaniu szkolenie trafi do akceptacji operatora i dopiero
+                  potem pojawi się w wynikach.
                 </div>
               </div>
               <button
@@ -1027,7 +1021,9 @@ export default function TrainingHubClient() {
 
             <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12">
               <div className="md:col-span-8">
-                <label className="text-xs font-semibold text-slate-700">Tytuł *</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Tytuł *
+                </label>
                 <input
                   value={fTitle}
                   onChange={(e) => setFTitle(e.target.value)}
@@ -1037,7 +1033,9 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-4">
-                <label className="text-xs font-semibold text-slate-700">Punkty *</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Punkty *
+                </label>
                 <input
                   value={fPoints}
                   onChange={(e) => setFPoints(e.target.value)}
@@ -1047,7 +1045,9 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-6">
-                <label className="text-xs font-semibold text-slate-700">Organizator</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Organizator
+                </label>
                 <input
                   value={fOrganizer}
                   onChange={(e) => setFOrganizer(e.target.value)}
@@ -1057,7 +1057,9 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">Forma *</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Forma *
+                </label>
                 <select
                   value={fFormat}
                   onChange={(e) => setFFormat(e.target.value as TrainingType)}
@@ -1070,10 +1072,14 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">Kategoria *</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Kategoria *
+                </label>
                 <select
                   value={fCategory}
-                  onChange={(e) => setFCategory(e.target.value as TrainingCategory)}
+                  onChange={(e) =>
+                    setFCategory(e.target.value as TrainingCategory)
+                  }
                   className={fieldBase}
                 >
                   <option value="kurs">Kurs</option>
@@ -1086,7 +1092,9 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">Start *</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Start *
+                </label>
                 <input
                   type="date"
                   value={fStart}
@@ -1096,7 +1104,9 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">Koniec</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Koniec
+                </label>
                 <input
                   type="date"
                   value={fEnd}
@@ -1118,7 +1128,9 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-12">
-                <label className="text-xs font-semibold text-slate-700">Link</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Link
+                </label>
                 <input
                   value={fUrl}
                   onChange={(e) => setFUrl(e.target.value)}
@@ -1128,7 +1140,9 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-12">
-                <label className="text-xs font-semibold text-slate-700">Tematy (topics)</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Tematy (topics)
+                </label>
                 <input
                   value={fTopics}
                   onChange={(e) => setFTopics(e.target.value)}
@@ -1141,7 +1155,9 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">Cena (PLN)</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Cena (PLN)
+                </label>
                 <input
                   value={fPrice}
                   onChange={(e) => setFPrice(e.target.value)}
@@ -1151,7 +1167,9 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">Limit miejsc</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Limit miejsc
+                </label>
                 <input
                   value={fCap}
                   onChange={(e) => setFCap(e.target.value)}
@@ -1161,7 +1179,9 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">Zapisy</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Zapisy
+                </label>
                 <select
                   value={fEnroll}
                   onChange={(e) => setFEnroll(e.target.value as any)}
