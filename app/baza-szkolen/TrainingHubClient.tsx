@@ -18,20 +18,35 @@ type TrainingCategory =
   | "szkolenie"
   | "inne";
 
+type EnrollmentStatus = "open" | "waiting_list" | "closed";
+
 type Training = {
   id: string;
   title: string;
   organizer: string | null;
   points: number | null;
-  type: TrainingType | null;
-  start_date: string | null; // YYYY-MM-DD
+  // U Ciebie są w tabeli: type (text) i format (text).
+  // Założenie: "format" = forma szkolenia (online/stacjonarne/hybrydowe)
+  format: TrainingType | null;
+  type: string | null;
+
+  start_date: string | null; // date -> Supabase zwykle zwraca jako string YYYY-MM-DD
   end_date: string | null;
+
   category: TrainingCategory | null;
   profession: string | null;
   voivodeship: string | null;
   external_url: string | null;
   is_partner: boolean | null;
+
+  topics: string[] | null; // _text
+  price_pln: number | null; // numeric
+  has_recording: boolean | null;
+  capacity: number | null;
+  enrollment_status: EnrollmentStatus | null;
+
   created_at: string;
+  updated_at: string | null;
 };
 
 // --- Opcje filtrów ---
@@ -65,7 +80,7 @@ const POINTS_OPTIONS: { value: string; label: string }[] = [
   { value: "20", label: "≥ 20 pkt" },
 ];
 
-// ✅ nowość: okno czasowe
+// ✅ okno czasowe (najczęstszy pattern u medyków)
 type TimeWindow = "all" | "7" | "30" | "90";
 const TIME_WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
   { value: "7", label: "Najbliższe 7 dni" },
@@ -74,7 +89,6 @@ const TIME_WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
   { value: "all", label: "Dowolnie" },
 ];
 
-// ✅ nowość: sortowanie
 type SortBy = "date_asc" | "date_desc" | "points_desc" | "points_asc" | "newest";
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "date_asc", label: "Najbliższe terminy" },
@@ -83,6 +97,21 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "points_asc", label: "Najmniej punktów" },
   { value: "newest", label: "Nowo dodane" },
 ];
+
+type PriceMode = "all" | "free" | "paid";
+const PRICE_OPTIONS: { value: PriceMode; label: string }[] = [
+  { value: "all", label: "Dowolnie" },
+  { value: "free", label: "Darmowe" },
+  { value: "paid", label: "Płatne" },
+];
+
+const ENROLLMENT_OPTIONS: { value: "all" | EnrollmentStatus; label: string }[] =
+  [
+    { value: "all", label: "Dowolnie" },
+    { value: "open", label: "Zapisy otwarte" },
+    { value: "waiting_list", label: "Lista rezerwowa" },
+    { value: "closed", label: "Zapisy zamknięte" },
+  ];
 
 function formatDate(d: string | null) {
   if (!d) return "—";
@@ -99,7 +128,9 @@ function toYYYYMMDD(dt: Date) {
 }
 
 function todayYYYYMMDD() {
-  return toYYYYMMDD(new Date());
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return toYYYYMMDD(d);
 }
 
 function addDaysYYYYMMDD(days: number) {
@@ -140,6 +171,30 @@ function labelCategory(c: TrainingCategory | null) {
   return c;
 }
 
+function labelEnrollment(s: EnrollmentStatus | null) {
+  if (!s) return null;
+  if (s === "open") return "Zapisy otwarte";
+  if (s === "waiting_list") return "Lista rezerwowa";
+  if (s === "closed") return "Zapisy zamknięte";
+  return s;
+}
+
+function termLabel(start: string | null, end: string | null) {
+  if (!start && !end) return "Termin: —";
+  if (start && end && start !== end)
+    return `Termin: ${formatDate(start)} – ${formatDate(end)}`;
+  return `Termin: ${formatDate(start ?? end)}`;
+}
+
+function formatPrice(pricePln: number | null) {
+  if (typeof pricePln !== "number") return null;
+  if (pricePln === 0) return "0 zł";
+  const rounded =
+    Math.round((pricePln + Number.EPSILON) * 100) / 100; // 2 miejsca
+  return `${rounded} zł`;
+}
+
+// Mapowanie (category + format) -> activities.type
 function mapToActivityType(
   category: TrainingCategory | null,
   delivery: TrainingType | null
@@ -157,13 +212,6 @@ function mapToActivityType(
   return "Kurs online / webinar";
 }
 
-function termLabel(start: string | null, end: string | null) {
-  if (!start && !end) return "Termin: —";
-  if (start && end && start !== end)
-    return `Termin: ${formatDate(start)} – ${formatDate(end)}`;
-  return `Termin: ${formatDate(start ?? end)}`;
-}
-
 export default function TrainingHubClient() {
   const { user, loading } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
@@ -174,16 +222,20 @@ export default function TrainingHubClient() {
 
   // filtry
   const [q, setQ] = useState("");
-  const [type, setType] = useState<"all" | TrainingType>("all");
+  const [format, setFormat] = useState<"all" | TrainingType>("all"); // ✅ forma = trainings.format
   const [category, setCategory] = useState<"all" | TrainingCategory>("all");
   const [organizer, setOrganizer] = useState("all");
   const [minPoints, setMinPoints] = useState("all");
   const [onlyPartner, setOnlyPartner] = useState(false);
   const [onlyUpcoming, setOnlyUpcoming] = useState(true);
 
-  // ✅ nowość
+  // ✅ nowe filtry medyczne
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("30");
   const [sortBy, setSortBy] = useState<SortBy>("date_asc");
+  const [topic, setTopic] = useState<string>("all");
+  const [priceMode, setPriceMode] = useState<PriceMode>("all");
+  const [onlyRecording, setOnlyRecording] = useState(false);
+  const [enrollment, setEnrollment] = useState<"all" | EnrollmentStatus>("all");
 
   const load = async () => {
     setFetching(true);
@@ -193,35 +245,56 @@ export default function TrainingHubClient() {
 
     let query = supabase.from("trainings").select("*").limit(200);
 
-    // sort
+    // sortowanie
     if (sortBy === "date_asc") query = query.order("start_date", { ascending: true });
     if (sortBy === "date_desc") query = query.order("start_date", { ascending: false });
-    if (sortBy === "points_desc") query = query.order("points", { ascending: false, nullsFirst: false });
-    if (sortBy === "points_asc") query = query.order("points", { ascending: true, nullsFirst: false });
+    if (sortBy === "points_desc")
+      query = query.order("points", { ascending: false, nullsFirst: false });
+    if (sortBy === "points_asc")
+      query = query.order("points", { ascending: true, nullsFirst: false });
     if (sortBy === "newest") query = query.order("created_at", { ascending: false });
 
     // podstawowe filtry
-    if (type !== "all") query = query.eq("type", type);
+    if (format !== "all") query = query.eq("format", format);
     if (category !== "all") query = query.eq("category", category);
     if (organizer !== "all") query = query.ilike("organizer", `%${organizer}%`);
     if (minPoints !== "all") query = query.gte("points", Number(minPoints));
     if (onlyPartner) query = query.eq("is_partner", true);
 
-    // ✅ filtr czasu (7/30/90/dowolnie)
-    // Jeśli wybrano okno czasu, to sensownie wymuszamy "nadchodzące" w tym oknie.
+    // ✅ okno czasu 7/30/90
     if (timeWindow !== "all") {
-      const days = Number(timeWindow);
-      const maxDate = addDaysYYYYMMDD(days);
+      const maxDate = addDaysYYYYMMDD(Number(timeWindow));
       query = query.gte("start_date", todayStr).lte("start_date", maxDate);
     } else if (onlyUpcoming) {
       query = query.gte("start_date", todayStr);
     }
 
-    // wyszukiwanie tekstowe
+    // ✅ temat/specjalizacja (topics array)
+    if (topic !== "all") {
+      query = query.contains("topics", [topic]);
+    }
+
+    // ✅ cena
+    if (priceMode === "free") query = query.eq("price_pln", 0);
+    if (priceMode === "paid") query = query.gt("price_pln", 0);
+
+    // ✅ nagranie
+    if (onlyRecording) query = query.eq("has_recording", true);
+
+    // ✅ status zapisów
+    if (enrollment !== "all") query = query.eq("enrollment_status", enrollment);
+
+    // wyszukiwanie tekstowe (dokładnie to, co ludzie wpisują)
     if (q.trim()) {
       const qq = q.trim();
       query = query.or(
-        `title.ilike.%${qq}%,organizer.ilike.%${qq}%,category.ilike.%${qq}%`
+        [
+          `title.ilike.%${qq}%`,
+          `organizer.ilike.%${qq}%`,
+          `category.ilike.%${qq}%`,
+          `voivodeship.ilike.%${qq}%`,
+          `profession.ilike.%${qq}%`,
+        ].join(",")
       );
     }
 
@@ -244,6 +317,19 @@ export default function TrainingHubClient() {
 
   const visible = useMemo(() => items, [items]);
 
+  // opcje tematów (z aktualnie pobranych rekordów) — proste i działa od razu
+  const topicOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of items) {
+      const arr = Array.isArray(t.topics) ? t.topics : [];
+      for (const x of arr) {
+        const v = String(x || "").trim();
+        if (v) set.add(v);
+      }
+    }
+    return ["all", ...Array.from(set).sort((a, b) => a.localeCompare(b, "pl"))];
+  }, [items]);
+
   const chooseTraining = async (t: Training) => {
     if (!user) {
       alert("Zaloguj się, żeby wybrać szkolenie.");
@@ -256,13 +342,15 @@ export default function TrainingHubClient() {
 
     const payload: ActivityInsert = {
       user_id: user.id,
-      type: mapToActivityType(t.category, t.type),
+      type: mapToActivityType(t.category, t.format),
       points: typeof t.points === "number" ? t.points : 0,
       year,
       organizer: t.organizer ?? null,
+
       status: "planned",
       planned_start_date: t.start_date ?? null,
       training_id: t.id,
+
       certificate_path: null,
       certificate_name: null,
       certificate_mime: null,
@@ -290,11 +378,9 @@ export default function TrainingHubClient() {
     );
   }
 
-  // pola input/select
   const fieldBase =
     "mt-1 h-10 w-full rounded-xl border border-slate-300 bg-slate-50/60 px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 shadow-inner shadow-slate-900/5 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100";
 
-  // prawa kolumna kart
   const RIGHT_W = "md:w-[340px]";
   const BTN_SECONDARY_W = "md:w-[112px]";
   const BTN_PRIMARY_W = "md:w-[168px]";
@@ -343,7 +429,7 @@ export default function TrainingHubClient() {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="np. kongres, NIL, ból, 10 pkt…"
+                placeholder="np. kongres, NIL, radiologia, Warszawa, 10 pkt…"
                 className={fieldBase}
               />
             </div>
@@ -351,8 +437,8 @@ export default function TrainingHubClient() {
             <div className="md:col-span-2">
               <label className="text-xs font-semibold text-slate-700">Forma</label>
               <select
-                value={type}
-                onChange={(e) => setType(e.target.value as any)}
+                value={format}
+                onChange={(e) => setFormat(e.target.value as any)}
                 className={fieldBase}
               >
                 {TYPE_OPTIONS.map((o) => (
@@ -415,7 +501,6 @@ export default function TrainingHubClient() {
                 value={timeWindow}
                 onChange={(e) => setTimeWindow(e.target.value as TimeWindow)}
                 className={fieldBase}
-                title="Filtruj szkolenia w najbliższym czasie"
               >
                 {TIME_WINDOW_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -440,7 +525,53 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="md:col-span-4 md:flex md:items-end">
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold text-slate-700">Temat</label>
+              <select
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                className={fieldBase}
+                title="Tematy/specializacje z bazy (topics)"
+              >
+                {topicOptions.map((t) => (
+                  <option key={t} value={t}>
+                    {t === "all" ? "Dowolnie" : t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold text-slate-700">Cena</label>
+              <select
+                value={priceMode}
+                onChange={(e) => setPriceMode(e.target.value as PriceMode)}
+                className={fieldBase}
+              >
+                {PRICE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-3">
+              <label className="text-xs font-semibold text-slate-700">Zapisy</label>
+              <select
+                value={enrollment}
+                onChange={(e) => setEnrollment(e.target.value as any)}
+                className={fieldBase}
+              >
+                {ENROLLMENT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-3 md:flex md:items-end">
               <button
                 onClick={load}
                 className="mt-1 inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
@@ -474,9 +605,19 @@ export default function TrainingHubClient() {
                 Tylko partnerzy
               </label>
 
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={onlyRecording}
+                  onChange={(e) => setOnlyRecording(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+                />
+                Tylko z nagraniem
+              </label>
+
               {timeWindow !== "all" ? (
                 <span className="text-xs text-slate-500">
-                  (Termin ogranicza wyniki do najbliższego okna)
+                  (Termin ogranicza wyniki do okna)
                 </span>
               ) : null}
             </div>
@@ -499,6 +640,14 @@ export default function TrainingHubClient() {
           {visible.map((t) => {
             const dd = daysDiffFromToday(t.start_date);
             const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
+
+            const price = formatPrice(t.price_pln);
+            const enr = labelEnrollment(t.enrollment_status);
+            const hasRec =
+              t.has_recording === true ? "Nagranie: Tak" : t.has_recording === false ? "Nagranie: Nie" : null;
+
+            const capacityText =
+              typeof t.capacity === "number" ? `Limit: ${t.capacity}` : null;
 
             return (
               <div
@@ -536,7 +685,7 @@ export default function TrainingHubClient() {
                         </>
                       ) : null}
 
-                      <span>{labelType(t.type)}</span>
+                      <span>{labelType(t.format)}</span>
 
                       {t.category ? (
                         <>
@@ -559,6 +708,22 @@ export default function TrainingHubClient() {
                         </>
                       ) : null}
                     </div>
+
+                    {/* dodatkowa linia "medyczna" – krótka, nie choinka */}
+                    {(price || enr || hasRec || capacityText) && (
+                      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+                        {price ? <span>Cena: <span className="font-semibold text-slate-700">{price}</span></span> : null}
+                        {price && (enr || hasRec || capacityText) ? <span className="text-slate-300">•</span> : null}
+
+                        {enr ? <span>Zapisy: <span className="font-semibold text-slate-700">{enr}</span></span> : null}
+                        {enr && (hasRec || capacityText) ? <span className="text-slate-300">•</span> : null}
+
+                        {hasRec ? <span>{hasRec}</span> : null}
+                        {hasRec && capacityText ? <span className="text-slate-300">•</span> : null}
+
+                        {capacityText ? <span>{capacityText}</span> : null}
+                      </div>
+                    )}
                   </div>
 
                   {/* RIGHT */}
