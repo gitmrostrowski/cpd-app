@@ -28,10 +28,30 @@ type ProfileRoleRow = { role: string | null };
 function cls(...xs: Array<string | false | null | undefined>) {
   return xs.filter(Boolean).join(" ");
 }
-function badge(status: TrainingStatus) {
-  if (status === "approved") return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
-  if (status === "rejected") return "bg-rose-50 text-rose-700 ring-1 ring-rose-200";
+
+function statusLabel(s: TrainingStatus) {
+  if (s === "approved") return "zaakceptowane";
+  if (s === "rejected") return "odrzucone";
+  return "do weryfikacji";
+}
+
+function statusBadgeCls(s: TrainingStatus) {
+  if (s === "approved") return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
+  if (s === "rejected") return "bg-rose-50 text-rose-700 ring-1 ring-rose-200";
   return "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
+}
+
+function normOrganizer(v: string | null) {
+  const t = (v ?? "").trim();
+  if (!t) return null;
+  if (t.toLowerCase() === "nil") return null;
+  return t;
+}
+
+function fmtDate(iso: string | null) {
+  if (!iso) return "—";
+  // iso from DB should already be YYYY-MM-DD
+  return iso;
 }
 
 export default function AdminTrainingsPage() {
@@ -40,6 +60,7 @@ export default function AdminTrainingsPage() {
 
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
+  // ✅ domyślnie wszystkie, żeby od razu widzieć bazę do edycji
   const [status, setStatus] = useState<"all" | TrainingStatus>("all");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
@@ -122,7 +143,7 @@ export default function AdminTrainingsPage() {
     if (!qq) return rows;
     return rows.filter((r) => {
       const a = (r.title || "").toLowerCase();
-      const b = (r.organizer || "").toLowerCase();
+      const b = (normOrganizer(r.organizer) || "").toLowerCase();
       return a.includes(qq) || b.includes(qq);
     });
   }, [rows, q]);
@@ -142,9 +163,32 @@ export default function AdminTrainingsPage() {
     return updated;
   }
 
-  function openEdit(row: TrainingRow) {
-    setEdit({ ...row });
+  function openEdit(row: TrainingRow, focus?: "url" | "description") {
+    const base: TrainingRow = { ...row };
+
+    // małe ułatwienie: jeśli user kliknie "Dodaj link", a url jest null → ustawiamy pusty string w UI
+    // ale do DB zapis i tak zamienimy na null w saveEdit
+    if (focus === "url" && !base.url) base.url = "";
+    if (focus === "description" && !base.description) base.description = "";
+
+    setEdit(base);
     setEditOpen(true);
+
+    // focus robimy przez id elementu (prościej bez refów)
+    setTimeout(() => {
+      const el =
+        focus === "url"
+          ? (document.getElementById("admin-training-url") as HTMLInputElement | null)
+          : focus === "description"
+          ? (document.getElementById("admin-training-description") as HTMLTextAreaElement | null)
+          : null;
+      el?.focus();
+    }, 50);
+  }
+
+  function closeEdit() {
+    setEditOpen(false);
+    setEdit(null);
   }
 
   async function saveEdit() {
@@ -153,21 +197,22 @@ export default function AdminTrainingsPage() {
     setErr(null);
 
     try {
-      const updated = await patch(edit.id, {
-        title: edit.title,
-        organizer: edit.organizer,
+      const cleaned: Partial<TrainingRow> = {
+        title: edit.title?.trim() || edit.title,
+        organizer: normOrganizer(edit.organizer) ?? null,
         points: edit.points,
-        start_date: edit.start_date,
-        end_date: edit.end_date,
-        url: edit.url,
-        description: edit.description,
+        start_date: edit.start_date || null,
+        end_date: edit.end_date || null,
+        url: (edit.url || "").trim() ? (edit.url || "").trim() : null,
+        description: (edit.description || "").trim() ? (edit.description || "").trim() : null,
         status: edit.status,
-        reject_reason: edit.reject_reason,
-      });
+        reject_reason: (edit.reject_reason || "").trim() ? (edit.reject_reason || "").trim() : null,
+      };
 
-      setEditOpen(false);
-      setEdit(null);
+      const updated = await patch(edit.id, cleaned);
+      closeEdit();
 
+      // jeżeli jesteśmy w filtrze statusowym i rekord zmienił status → przeładuj listę
       if (status !== "all" && updated.status !== status) load();
     } catch (e: any) {
       setErr(e?.message || "Błąd zapisu");
@@ -239,17 +284,17 @@ export default function AdminTrainingsPage() {
               value={status}
               onChange={(e) => setStatus(e.target.value as any)}
             >
+              <option value="all">Wszystkie</option>
               <option value="pending">Do weryfikacji</option>
               <option value="approved">Zaakceptowane</option>
               <option value="rejected">Odrzucone</option>
-              <option value="all">Wszystkie</option>
             </select>
           </div>
 
           <div className="flex items-center gap-2">
             <label className="text-xs font-semibold text-slate-600">Szukaj</label>
             <input
-              className="h-10 w-full min-w-[220px] rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="h-10 w-full min-w-[240px] rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Tytuł lub organizator..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -269,7 +314,7 @@ export default function AdminTrainingsPage() {
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <div className="text-sm font-semibold text-slate-800">Rekordy: {filtered.length}</div>
-          <div className="text-xs text-slate-500">„Edytuj” → uzupełnij punkty/link/opis.</div>
+          <div className="text-xs text-slate-500">Tip: „Dodaj link/opis” otwiera od razu edycję.</div>
         </div>
 
         <div className="overflow-x-auto">
@@ -299,83 +344,100 @@ export default function AdminTrainingsPage() {
                   </td>
                 </tr>
               ) : (
-                filtered.map((r) => (
-                  <tr key={r.id} className="border-t border-slate-100 align-top">
-                    <td className="px-4 py-3">
-                      <div className="font-semibold text-slate-900">{r.title}</div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                        {r.url ? (
-                          <a className="hover:underline" href={r.url} target="_blank" rel="noreferrer">
-                            link
-                          </a>
-                        ) : (
-                          <span className="text-slate-400">brak linku</span>
-                        )}
-                        {r.description ? (
-                          <span className="line-clamp-1 max-w-[420px]">{r.description}</span>
-                        ) : (
-                          <span className="text-slate-400">brak opisu</span>
-                        )}
-                      </div>
-                      {r.status === "rejected" && r.reject_reason ? (
-                        <div className="mt-2 text-xs text-rose-700">Powód: {r.reject_reason}</div>
-                      ) : null}
-                    </td>
+                filtered.map((r) => {
+                  const org = normOrganizer(r.organizer);
+                  return (
+                    <tr key={r.id} className="border-t border-slate-100 align-top">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-slate-900">{r.title}</div>
 
-                    <td className="px-4 py-3">{r.organizer || <span className="text-slate-400">—</span>}</td>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                          {r.url ? (
+                            <a className="hover:underline" href={r.url} target="_blank" rel="noreferrer">
+                              link
+                            </a>
+                          ) : (
+                            <button
+                              type="button"
+                              className="text-blue-700 hover:underline"
+                              onClick={() => openEdit(r, "url")}
+                            >
+                              Dodaj link
+                            </button>
+                          )}
 
-                    <td className="px-4 py-3 text-xs text-slate-600">
-                      <div>{r.start_date || "—"}</div>
-                      <div>{r.end_date || "—"}</div>
-                    </td>
+                          {r.description ? (
+                            <span className="line-clamp-1 max-w-[420px]">{r.description}</span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="text-blue-700 hover:underline"
+                              onClick={() => openEdit(r, "description")}
+                            >
+                              Dodaj opis
+                            </button>
+                          )}
+                        </div>
 
-                    <td className="px-4 py-3">{r.points ?? <span className="text-slate-400">—</span>}</td>
+                        {r.status === "rejected" && r.reject_reason ? (
+                          <div className="mt-2 text-xs text-rose-700">Powód: {r.reject_reason}</div>
+                        ) : null}
+                      </td>
 
-                    <td className="px-4 py-3">
-                      <span className={cls("inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold", badge(r.status))}>
-                        {r.status === "pending" ? "do weryfikacji" : r.status === "approved" ? "zaakceptowane" : "odrzucone"}
-                      </span>
-                    </td>
+                      <td className="px-4 py-3">{org || <span className="text-slate-400">—</span>}</td>
 
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
-                          onClick={() => openEdit(r)}
-                        >
-                          Edytuj
-                        </button>
+                      <td className="px-4 py-3 text-xs text-slate-700">
+                        <div className="whitespace-nowrap">{fmtDate(r.start_date)}</div>
+                        <div className="whitespace-nowrap text-slate-500">{fmtDate(r.end_date)}</div>
+                      </td>
 
-                        {r.status !== "approved" && (
+                      <td className="px-4 py-3">{r.points ?? <span className="text-slate-400">—</span>}</td>
+
+                      <td className="px-4 py-3">
+                        <span className={cls("inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold", statusBadgeCls(r.status))}>
+                          {statusLabel(r.status)}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap justify-end gap-2">
                           <button
-                            className="h-9 rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
-                            onClick={() => approve(r)}
+                            className="h-9 rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
+                            onClick={() => openEdit(r)}
                           >
-                            Akceptuj
+                            Edytuj
                           </button>
-                        )}
 
-                        {r.status !== "rejected" && (
+                          {r.status !== "approved" ? (
+                            <button
+                              className="h-9 rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+                              onClick={() => approve(r)}
+                            >
+                              Akceptuj
+                            </button>
+                          ) : null}
+
                           <button
-                            className="h-9 rounded-xl bg-rose-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-rose-700"
+                            className="h-9 rounded-xl border border-rose-200 bg-white px-3 text-xs font-semibold text-rose-700 shadow-sm hover:bg-rose-50"
                             onClick={() => reject(r)}
                           >
                             Odrzuć
                           </button>
-                        )}
 
-                        {r.status !== "pending" && (
-                          <button
-                            className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
-                            onClick={() => backToPending(r)}
-                          >
-                            Cofnij
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          {r.status !== "pending" ? (
+                            <button
+                              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                              onClick={() => backToPending(r)}
+                              title="Przywróć do weryfikacji"
+                            >
+                              Do weryfikacji
+                            </button>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -387,13 +449,7 @@ export default function AdminTrainingsPage() {
           <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div className="text-sm font-semibold text-slate-900">Edycja szkolenia</div>
-              <button
-                className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-100"
-                onClick={() => {
-                  setEditOpen(false);
-                  setEdit(null);
-                }}
-              >
+              <button className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-100" onClick={closeEdit}>
                 ✕
               </button>
             </div>
@@ -450,18 +506,22 @@ export default function AdminTrainingsPage() {
               <div className="sm:col-span-2">
                 <label className="text-xs font-semibold text-slate-600">Link</label>
                 <input
+                  id="admin-training-url"
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.url || ""}
                   onChange={(e) => setEdit({ ...edit, url: e.target.value || null })}
+                  placeholder="https://..."
                 />
               </div>
 
               <div className="sm:col-span-2">
                 <label className="text-xs font-semibold text-slate-600">Opis</label>
                 <textarea
+                  id="admin-training-description"
                   className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.description || ""}
                   onChange={(e) => setEdit({ ...edit, description: e.target.value || null })}
+                  placeholder="Krótki opis szkolenia..."
                 />
               </div>
 
@@ -484,6 +544,7 @@ export default function AdminTrainingsPage() {
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.reject_reason || ""}
                   onChange={(e) => setEdit({ ...edit, reject_reason: e.target.value || null })}
+                  placeholder="Opcjonalnie…"
                 />
               </div>
             </div>
@@ -491,10 +552,7 @@ export default function AdminTrainingsPage() {
             <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-5 py-4">
               <button
                 className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                onClick={() => {
-                  setEditOpen(false);
-                  setEdit(null);
-                }}
+                onClick={closeEdit}
                 disabled={saving}
               >
                 Anuluj
