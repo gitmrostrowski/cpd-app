@@ -2,11 +2,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
-import CpdStatusPanel, { type TopLimitItem } from "@/components/dashboard/CpdStatusPanel";
+import CpdStatusPanel, {
+  type TopLimitItem,
+} from "@/components/dashboard/CpdStatusPanel";
 
 import {
   type Profession,
@@ -75,38 +78,122 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
     periodMonths: 48,
     requiredPoints: 200,
     limits: [
-      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_item", maxPoints: 6, note: "1 pkt/h, maks. 6 pkt za jedno szkolenie" },
-      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_period", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt w okresie" },
-      { key: "SCIENTIFIC_SOCIETY", label: "Towarzystwo/Kolegium", mode: "per_period", maxPoints: 20, note: "5 pkt, maks. 20 pkt w okresie" },
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_item",
+        maxPoints: 6,
+        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_period",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
+      },
+      {
+        key: "SCIENTIFIC_SOCIETY",
+        label: "Towarzystwo/Kolegium",
+        mode: "per_period",
+        maxPoints: 20,
+        note: "5 pkt, maks. 20 pkt w okresie",
+      },
     ],
   },
   "Lekarz dentysta": {
     periodMonths: 48,
     requiredPoints: 200,
     limits: [
-      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_item", maxPoints: 6, note: "1 pkt/h, maks. 6 pkt za jedno szkolenie" },
-      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_period", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt w okresie" },
-      { key: "SCIENTIFIC_SOCIETY", label: "Towarzystwo/Kolegium", mode: "per_period", maxPoints: 20, note: "5 pkt, maks. 20 pkt w okresie" },
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_item",
+        maxPoints: 6,
+        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_period",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
+      },
+      {
+        key: "SCIENTIFIC_SOCIETY",
+        label: "Towarzystwo/Kolegium",
+        mode: "per_period",
+        maxPoints: 20,
+        note: "5 pkt, maks. 20 pkt w okresie",
+      },
     ],
   },
   Pielęgniarka: {
     periodMonths: 60,
     requiredPoints: 100,
     limits: [
-      { key: "WEBINAR", label: "Webinary", mode: "per_period", maxPoints: 50, note: "5 pkt/wydarzenie, maks. 50 pkt" },
-      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_period", maxPoints: 50, note: "2/5 pkt, maks. 50 pkt" },
-      { key: "COMMITTEES", label: "Komisje/Zespoły", mode: "per_period", maxPoints: 30, note: "3 pkt/posiedzenie, maks. 30 pkt" },
-      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_year", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt/rok" },
+      {
+        key: "WEBINAR",
+        label: "Webinary",
+        mode: "per_period",
+        maxPoints: 50,
+        note: "5 pkt/wydarzenie, maks. 50 pkt",
+      },
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_period",
+        maxPoints: 50,
+        note: "2/5 pkt, maks. 50 pkt",
+      },
+      {
+        key: "COMMITTEES",
+        label: "Komisje/Zespoły",
+        mode: "per_period",
+        maxPoints: 30,
+        note: "3 pkt/posiedzenie, maks. 30 pkt",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_year",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt/rok",
+      },
     ],
   },
   Położna: {
     periodMonths: 60,
     requiredPoints: 100,
     limits: [
-      { key: "WEBINAR", label: "Webinary", mode: "per_period", maxPoints: 50, note: "5 pkt/wydarzenie, maks. 50 pkt" },
-      { key: "INTERNAL_TRAINING", label: "Szkolenie wewnętrzne", mode: "per_period", maxPoints: 50, note: "2/5 pkt, maks. 50 pkt" },
-      { key: "COMMITTEES", label: "Komisje/Zespoły", mode: "per_period", maxPoints: 30, note: "3 pkt/posiedzenie, maks. 30 pkt" },
-      { key: "JOURNAL_SUBSCRIPTION", label: "Prenumerata czasopisma", mode: "per_year", maxPoints: 10, note: "5 pkt/tytuł, maks. 10 pkt/rok" },
+      {
+        key: "WEBINAR",
+        label: "Webinary",
+        mode: "per_period",
+        maxPoints: 50,
+        note: "5 pkt/wydarzenie, maks. 50 pkt",
+      },
+      {
+        key: "INTERNAL_TRAINING",
+        label: "Szkolenie wewnętrzne",
+        mode: "per_period",
+        maxPoints: 50,
+        note: "2/5 pkt, maks. 50 pkt",
+      },
+      {
+        key: "COMMITTEES",
+        label: "Komisje/Zespoły",
+        mode: "per_period",
+        maxPoints: 30,
+        note: "3 pkt/posiedzenie, maks. 30 pkt",
+      },
+      {
+        key: "JOURNAL_SUBSCRIPTION",
+        label: "Prenumerata czasopisma",
+        mode: "per_year",
+        maxPoints: 10,
+        note: "5 pkt/tytuł, maks. 10 pkt/rok",
+      },
     ],
   },
 };
@@ -211,7 +298,7 @@ function suggestPlannedPoints(rule: { mode: "per_period" | "per_year" | "per_ite
 }
 
 /** ✅ niebieska ikonka jak przyciski */
-function IconBlue({ children }: { children: React.ReactNode }) {
+function IconBlue({ children }: { children: ReactNode }) {
   return (
     <span className="inline-flex h-8 w-8 items-center justify-center rounded-2xl border border-blue-200 bg-blue-50 text-blue-700">
       {children}
@@ -219,7 +306,7 @@ function IconBlue({ children }: { children: React.ReactNode }) {
   );
 }
 
-function FieldLabel({ icon, title }: { icon: React.ReactNode; title: string }) {
+function FieldLabel({ icon, title }: { icon: ReactNode; title: string }) {
   return (
     <div className="flex items-center gap-2 text-xs font-semibold text-slate-900">
       {icon}
@@ -276,7 +363,16 @@ export default function CalculatorClient() {
     let cancelled = false;
 
     async function run() {
-      if (!user?.id) return;
+      // ✅ ważne: gdy user jest null (np. przed/po logowaniu), nie blokuj widoku w "loading"
+      if (!user?.id) {
+        if (!cancelled) {
+          setProfile(null);
+          setActivities([]);
+          setLoading(false);
+        }
+        return;
+      }
+
       setLoading(true);
 
       const { data: p, error: pErr } = await supabase
@@ -513,10 +609,6 @@ export default function CalculatorClient() {
     });
   }
 
-  const profileLabelForPanel = useMemo(() => {
-    return displayProfession(profession, professionOther);
-  }, [profession, professionOther]);
-
   async function planForRule(r: (typeof limitsUsage)[number]) {
     if (!user?.id) return;
 
@@ -587,7 +679,15 @@ export default function CalculatorClient() {
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900">
               <IconBlue>
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
                   <path d="M19.4 15a7.97 7.97 0 0 0 .1-1 7.97 7.97 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a8.1 8.1 0 0 0-1.7-1l-.4-2.6H9.1l-.4 2.6a8.1 8.1 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7.97 7.97 0 0 0-.1 1c0 .34.03.67.1 1l-2 1.5 2 3.5 2.4-1a8.1 8.1 0 0 0 1.7 1l.4 2.6h5.8l.4-2.6a8.1 8.1 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5Z" />
                 </svg>
@@ -631,7 +731,15 @@ export default function CalculatorClient() {
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
             >
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M3 12a9 9 0 1 0 3-6.7" />
                   <path d="M3 4v6h6" />
                 </svg>
@@ -656,7 +764,16 @@ export default function CalculatorClient() {
             <FieldLabel
               icon={
                 <IconBlue>
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
                     <path d="M8 21h8" />
                     <path d="M12 17v4" />
                     <path d="M7 4h10" />
@@ -707,7 +824,15 @@ export default function CalculatorClient() {
             <FieldLabel
               icon={
                 <IconBlue>
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M12 8v4l3 2" />
                     <path d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10Z" />
                   </svg>
@@ -746,7 +871,15 @@ export default function CalculatorClient() {
               <FieldLabel
                 icon={
                   <IconBlue>
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M8 2v4" />
                       <path d="M16 2v4" />
                       <path d="M3 10h18" />
@@ -776,7 +909,15 @@ export default function CalculatorClient() {
               <FieldLabel
                 icon={
                   <IconBlue>
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M8 2v4" />
                       <path d="M16 2v4" />
                       <path d="M3 10h18" />
@@ -818,7 +959,15 @@ export default function CalculatorClient() {
             <FieldLabel
               icon={
                 <IconBlue>
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M12 2l3 7h7l-5.5 4.2L18.5 21 12 16.8 5.5 21l2-7.8L2 9h7l3-7Z" />
                   </svg>
                 </IconBlue>
@@ -843,7 +992,15 @@ export default function CalculatorClient() {
               <FieldLabel
                 icon={
                   <IconBlue>
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M12 20h9" />
                       <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
                     </svg>
@@ -919,15 +1076,14 @@ export default function CalculatorClient() {
               <>
                 <span className="text-slate-300">•</span>
                 <div className="text-slate-700">
-                  Bez certyfikatu:{" "}
-                  <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
+                  Bez certyfikatu: <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
                 </div>
               </>
             ) : null}
           </div>
         </div>
 
-        {(planInfo || planErr) ? (
+        {planInfo || planErr ? (
           <div className="mt-4 rounded-2xl border bg-white/70 p-3 text-sm">
             {planInfo ? <div className="text-emerald-700 font-semibold">{planInfo}</div> : null}
             {planErr ? <div className="text-rose-700 font-semibold">{planErr}</div> : null}
@@ -1089,8 +1245,9 @@ export default function CalculatorClient() {
                       : "border-slate-200 bg-white/80",
                   ].join(" ")}
                 >
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div className="min-w-0 flex-1">
+                  {/* ✅ układ “2-linijkowy” (desktop): rząd 1 = tytuł/badges + punkty, rząd 2 = meta + link */}
+                  <div className="grid gap-2 md:grid-cols-[1fr_auto] md:items-start">
+                    <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="min-w-0 truncate text-sm font-semibold text-slate-900">{a.type}</div>
 
@@ -1114,8 +1271,14 @@ export default function CalculatorClient() {
                           </span>
                         )}
                       </div>
+                    </div>
 
-                      <div className="mt-1 text-xs text-slate-600">
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="text-xs text-slate-600">
                         {a.organizer ? `${a.organizer} • ` : ""}
                         Rok: <span className="font-semibold text-slate-900">{a.year}</span>
                         {prog === "planned" ? (
@@ -1141,11 +1304,10 @@ export default function CalculatorClient() {
                       ) : null}
                     </div>
 
-                    <div className="shrink-0 text-right">
-                      <div className="text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
+                    <div className="shrink-0 md:justify-self-end">
                       <Link
                         href="/aktywnosci"
-                        className="mt-2 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white"
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white"
                       >
                         Otwórz w Aktywnościach →
                       </Link>
