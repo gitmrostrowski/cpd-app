@@ -24,7 +24,7 @@ type Training = {
   organizer: string | null;
   points: number | null;
   type: TrainingType | null;
-  start_date: string | null;
+  start_date: string | null; // YYYY-MM-DD
   end_date: string | null;
   category: TrainingCategory | null;
   profession: string | null;
@@ -34,6 +34,7 @@ type Training = {
   created_at: string;
 };
 
+// --- Opcje filtrów ---
 const TYPE_OPTIONS: { value: "all" | TrainingType; label: string }[] = [
   { value: "all", label: "Wszystkie" },
   { value: "online", label: "Online / webinar" },
@@ -64,6 +65,25 @@ const POINTS_OPTIONS: { value: string; label: string }[] = [
   { value: "20", label: "≥ 20 pkt" },
 ];
 
+// ✅ nowość: okno czasowe
+type TimeWindow = "all" | "7" | "30" | "90";
+const TIME_WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
+  { value: "7", label: "Najbliższe 7 dni" },
+  { value: "30", label: "Najbliższe 30 dni" },
+  { value: "90", label: "Najbliższe 90 dni" },
+  { value: "all", label: "Dowolnie" },
+];
+
+// ✅ nowość: sortowanie
+type SortBy = "date_asc" | "date_desc" | "points_desc" | "points_asc" | "newest";
+const SORT_OPTIONS: { value: SortBy; label: string }[] = [
+  { value: "date_asc", label: "Najbliższe terminy" },
+  { value: "date_desc", label: "Najpóźniejsze terminy" },
+  { value: "points_desc", label: "Najwięcej punktów" },
+  { value: "points_asc", label: "Najmniej punktów" },
+  { value: "newest", label: "Nowo dodane" },
+];
+
 function formatDate(d: string | null) {
   if (!d) return "—";
   const [y, m, day] = d.split("-");
@@ -71,12 +91,22 @@ function formatDate(d: string | null) {
   return `${day}.${m}.${y}`;
 }
 
-function todayYYYYMMDD() {
-  const dt = new Date();
+function toYYYYMMDD(dt: Date) {
   const yyyy = dt.getFullYear();
   const mm = String(dt.getMonth() + 1).padStart(2, "0");
   const dd = String(dt.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
+}
+
+function todayYYYYMMDD() {
+  return toYYYYMMDD(new Date());
+}
+
+function addDaysYYYYMMDD(days: number) {
+  const dt = new Date();
+  dt.setHours(0, 0, 0, 0);
+  dt.setDate(dt.getDate() + days);
+  return toYYYYMMDD(dt);
 }
 
 function daysDiffFromToday(yyyyMmDd: string | null) {
@@ -142,6 +172,7 @@ export default function TrainingHubClient() {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // filtry
   const [q, setQ] = useState("");
   const [type, setType] = useState<"all" | TrainingType>("all");
   const [category, setCategory] = useState<"all" | TrainingCategory>("all");
@@ -150,25 +181,43 @@ export default function TrainingHubClient() {
   const [onlyPartner, setOnlyPartner] = useState(false);
   const [onlyUpcoming, setOnlyUpcoming] = useState(true);
 
+  // ✅ nowość
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>("30");
+  const [sortBy, setSortBy] = useState<SortBy>("date_asc");
+
   const load = async () => {
     setFetching(true);
     setError(null);
 
     const todayStr = todayYYYYMMDD();
 
-    let query = supabase
-      .from("trainings")
-      .select("*")
-      .order("start_date", { ascending: true })
-      .limit(200);
+    let query = supabase.from("trainings").select("*").limit(200);
 
+    // sort
+    if (sortBy === "date_asc") query = query.order("start_date", { ascending: true });
+    if (sortBy === "date_desc") query = query.order("start_date", { ascending: false });
+    if (sortBy === "points_desc") query = query.order("points", { ascending: false, nullsFirst: false });
+    if (sortBy === "points_asc") query = query.order("points", { ascending: true, nullsFirst: false });
+    if (sortBy === "newest") query = query.order("created_at", { ascending: false });
+
+    // podstawowe filtry
     if (type !== "all") query = query.eq("type", type);
     if (category !== "all") query = query.eq("category", category);
     if (organizer !== "all") query = query.ilike("organizer", `%${organizer}%`);
     if (minPoints !== "all") query = query.gte("points", Number(minPoints));
     if (onlyPartner) query = query.eq("is_partner", true);
-    if (onlyUpcoming) query = query.gte("start_date", todayStr);
 
+    // ✅ filtr czasu (7/30/90/dowolnie)
+    // Jeśli wybrano okno czasu, to sensownie wymuszamy "nadchodzące" w tym oknie.
+    if (timeWindow !== "all") {
+      const days = Number(timeWindow);
+      const maxDate = addDaysYYYYMMDD(days);
+      query = query.gte("start_date", todayStr).lte("start_date", maxDate);
+    } else if (onlyUpcoming) {
+      query = query.gte("start_date", todayStr);
+    }
+
+    // wyszukiwanie tekstowe
     if (q.trim()) {
       const qq = q.trim();
       query = query.or(
@@ -241,16 +290,19 @@ export default function TrainingHubClient() {
     );
   }
 
+  // pola input/select
   const fieldBase =
     "mt-1 h-10 w-full rounded-xl border border-slate-300 bg-slate-50/60 px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 shadow-inner shadow-slate-900/5 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100";
 
-  const RIGHT_W = "md:w-[340px]"; // lekko węższe
+  // prawa kolumna kart
+  const RIGHT_W = "md:w-[340px]";
   const BTN_SECONDARY_W = "md:w-[112px]";
-  const BTN_PRIMARY_W = "md:w-[168px]"; // węższe niż było
+  const BTN_PRIMARY_W = "md:w-[168px]";
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-white to-slate-50">
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-8">
+        {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
@@ -281,6 +333,7 @@ export default function TrainingHubClient() {
           </div>
         </div>
 
+        {/* Filtry */}
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
             <div className="md:col-span-6">
@@ -296,9 +349,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">
-                Forma
-              </label>
+              <label className="text-xs font-semibold text-slate-700">Forma</label>
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value as any)}
@@ -313,9 +364,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">
-                Kategoria
-              </label>
+              <label className="text-xs font-semibold text-slate-700">Kategoria</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as any)}
@@ -330,9 +379,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">
-                Organizator
-              </label>
+              <label className="text-xs font-semibold text-slate-700">Organizator</label>
               <select
                 value={organizer}
                 onChange={(e) => setOrganizer(e.target.value)}
@@ -346,10 +393,9 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
+            {/* 2 rząd filtrów */}
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">
-                Punkty
-              </label>
+              <label className="text-xs font-semibold text-slate-700">Punkty</label>
               <select
                 value={minPoints}
                 onChange={(e) => setMinPoints(e.target.value)}
@@ -363,7 +409,38 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="md:col-span-2 md:flex md:items-end">
+            <div className="md:col-span-3">
+              <label className="text-xs font-semibold text-slate-700">Termin</label>
+              <select
+                value={timeWindow}
+                onChange={(e) => setTimeWindow(e.target.value as TimeWindow)}
+                className={fieldBase}
+                title="Filtruj szkolenia w najbliższym czasie"
+              >
+                {TIME_WINDOW_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-3">
+              <label className="text-xs font-semibold text-slate-700">Sortowanie</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortBy)}
+                className={fieldBase}
+              >
+                {SORT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-4 md:flex md:items-end">
               <button
                 onClick={load}
                 className="mt-1 inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
@@ -396,13 +473,17 @@ export default function TrainingHubClient() {
                 />
                 Tylko partnerzy
               </label>
+
+              {timeWindow !== "all" ? (
+                <span className="text-xs text-slate-500">
+                  (Termin ogranicza wyniki do najbliższego okna)
+                </span>
+              ) : null}
             </div>
 
             <div className="text-sm text-slate-600">
               Wynik:{" "}
-              <span className="font-semibold text-slate-900">
-                {visible.length}
-              </span>
+              <span className="font-semibold text-slate-900">{visible.length}</span>
             </div>
           </div>
 
@@ -413,6 +494,7 @@ export default function TrainingHubClient() {
           )}
         </div>
 
+        {/* Lista */}
         <div className="mt-5 space-y-3">
           {visible.map((t) => {
             const dd = daysDiffFromToday(t.start_date);
@@ -424,6 +506,7 @@ export default function TrainingHubClient() {
                 className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  {/* LEFT */}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="truncate text-base font-extrabold text-slate-900">
@@ -478,6 +561,7 @@ export default function TrainingHubClient() {
                     </div>
                   </div>
 
+                  {/* RIGHT */}
                   <div className={`shrink-0 ${RIGHT_W}`}>
                     <div className="flex items-center justify-end">
                       <div className="inline-flex items-center gap-2 md:justify-end">
@@ -485,13 +569,11 @@ export default function TrainingHubClient() {
                         <span className="text-lg font-extrabold text-blue-700">
                           {typeof t.points === "number" ? t.points : "—"}
                         </span>
-                        <span className="text-sm font-semibold text-blue-700">
-                          pkt
-                        </span>
+                        <span className="text-sm font-semibold text-blue-700">pkt</span>
                       </div>
                     </div>
 
-                    <div className="mt-2 flex gap-2 justify-end">
+                    <div className="mt-2 flex justify-end gap-2">
                       {t.external_url ? (
                         <a
                           href={t.external_url}
@@ -528,7 +610,7 @@ export default function TrainingHubClient() {
 
           {!fetching && visible.length === 0 && (
             <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-              Brak wyników. Zmień filtry albo wyłącz „Tylko nadchodzące”.
+              Brak wyników. Zmień filtry albo wybierz „Dowolnie” w Terminie.
             </div>
           )}
         </div>
