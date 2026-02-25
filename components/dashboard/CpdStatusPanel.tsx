@@ -69,14 +69,19 @@ const OUTLINE_BTN =
   "border border-slate-200/70 bg-white/80 text-slate-800 hover:bg-white backdrop-blur";
 
 // jasny niebieski dla PRO
-const PRO_BTN = "border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100";
+const PRO_BTN =
+  "border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100";
 
 const PRIMARY_BAR = "bg-blue-600";
 const PRIMARY_DOT = "bg-blue-700";
 
 type DocTone = "ok" | "warn" | "bad";
 
-function statusFromCompleteness(pointsPct: number, evidencePct: number, doneCount: number) {
+function statusFromCompleteness(
+  pointsPct: number,
+  evidencePct: number,
+  doneCount: number
+) {
   const p = clamp(pointsPct, 0, 100);
   const e = clamp(evidencePct, 0, 100);
 
@@ -142,10 +147,14 @@ function ToneBadge({
   }[tone];
 
   return (
-    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${map.wrap}`}>
+    <span
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${map.wrap}`}
+    >
       <span className={`h-2 w-2 rounded-full ${map.dot}`} />
       {label}
-      <span className="text-[11px] font-semibold opacity-80">• {reason}</span>
+      <span className="text-[11px] font-semibold opacity-80">
+        • {reason}
+      </span>
 
       {attention ? (
         <span className="ml-1 inline-flex items-center gap-2 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700">
@@ -294,7 +303,12 @@ export default function CpdStatusPanel({
             <div className="flex flex-wrap items-center gap-2">
               <div className="text-xs font-semibold text-slate-600">Panel CPD</div>
 
-              <ToneBadge tone={status.tone} label={status.label} reason={status.reason} attention={docsActionNeeded} />
+              <ToneBadge
+                tone={status.tone}
+                label={status.label}
+                reason={status.reason}
+                attention={docsActionNeeded}
+              />
 
               {isBusy ? (
                 <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600 backdrop-blur">
