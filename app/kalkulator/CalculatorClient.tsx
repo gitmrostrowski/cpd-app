@@ -40,21 +40,20 @@ type ActivityRow = {
   certificate_uploaded_at?: string | null;
 };
 
-// ✅ trzymamy to jako “model UI”, ale nie używamy 1:1 do upsert()
 type ProfileRow = {
   user_id: string;
-  profession: Profession;
+  profession: Profession; // ✅ bez null
   profession_other?: string | null;
 
   pwz_number?: string | null;
   pwz_issue_date?: string | null; // YYYY-MM-DD
 
-  period_start: number;
-  period_end: number;
-  required_points: number;
+  period_start: number; // ✅ bez null
+  period_end: number; // ✅ bez null
+  required_points: number; // ✅ bez null
 };
 
-// ✅ typ do zapisu do Supabase (bez null w number)
+// ✅ typ do zapisu do Supabase (ważne: number nie może być null)
 type ProfileUpsert = {
   user_id: string;
   profession: Profession;
@@ -392,9 +391,11 @@ export default function CalculatorClient() {
 
       if (!cancelled) {
         if (!pErr && p) {
-          const prof = (p.profession ?? "Lekarz") as Profession;
+          const prof = ((p as any).profession ?? "Lekarz") as Profession;
+          setProfession(prof);
 
           const po = normalizeOtherProfession((p as any).profession_other);
+          setProfessionOther(po);
 
           const pwzIssue = (p as any).pwz_issue_date as string | null;
           const derived = getPeriodFromPwzIssueDate(prof, pwzIssue);
@@ -405,6 +406,18 @@ export default function CalculatorClient() {
           const start = derived?.start ?? (psDb ?? 2023);
           const end = derived?.end ?? (peDb ?? 2026);
 
+          setPeriodStart(start);
+          setPeriodEnd(end);
+
+          // jeśli jest PWZ -> okres "custom" (liczony)
+          if (derived) {
+            setPeriodMode("custom");
+          } else {
+            const presetLabel = `${start}-${end}`;
+            const isPreset = presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
+            setPeriodMode(isPreset ? "preset" : "custom");
+          }
+
           const rpDb = (p as any).required_points as number | null | undefined;
           const rp =
             (rpDb ?? undefined) ??
@@ -412,14 +425,9 @@ export default function CalculatorClient() {
             RULES_BY_PROFESSION[prof]?.requiredPoints ??
             200;
 
-          // ✅ ustaw stany
-          setProfession(prof);
-          setProfessionOther(po);
-          setPeriodStart(start);
-          setPeriodEnd(end);
           setRequiredPoints(rp);
 
-          // ✅ profil w pamięci (bez null w number)
+          // ✅ trzymamy w state profil “oczyszczony” (bez null w liczbach)
           setProfile({
             user_id: user.id,
             profession: prof,
@@ -430,15 +438,6 @@ export default function CalculatorClient() {
             period_end: end,
             required_points: rp,
           });
-
-          // jeśli jest PWZ -> okres "custom" (liczony)
-          if (derived) {
-            setPeriodMode("custom");
-          } else {
-            const presetLabel = `${start}-${end}`;
-            const isPreset = presetLabel === "2019-2022" || presetLabel === "2023-2026" || presetLabel === "2027-2030";
-            setPeriodMode(isPreset ? "preset" : "custom");
-          }
 
           setDirty(false);
         } else {
@@ -577,13 +576,12 @@ export default function CalculatorClient() {
 
   const pwzIssueDate = (profile as any)?.pwz_issue_date ?? null;
 
-  // ✅ POPRAWIONE: payload do upsert nie jest ProfileRow, tylko ProfileUpsert + gwarancja number
+  // ✅ KLUCZOWA POPRAWKA: payload do upsert bez null w number + typ ProfileUpsert
   async function saveProfilePatch(patch: Partial<ProfileRow> & { profession_other?: string | null }) {
     if (!user?.id) return;
     setSavingProfile(true);
 
     const nextProfession = (patch.profession ?? profession) as Profession;
-
     const nextPeriodStart = patch.period_start !== undefined ? patch.period_start : periodStart;
     const nextPeriodEnd = patch.period_end !== undefined ? patch.period_end : periodEnd;
     const nextRequiredPoints = patch.required_points !== undefined ? patch.required_points : requiredPoints;
@@ -592,6 +590,7 @@ export default function CalculatorClient() {
     const rawOther = patch.profession_other !== undefined ? patch.profession_other : professionOther;
     const nextOther = otherReq ? normalizeOtherProfession(rawOther) || null : null;
 
+    // ✅ gwarancja number + poprawny zakres
     const ps = Number(nextPeriodStart) || 2023;
     const pe = Math.max(Number(nextPeriodEnd) || ps, ps);
     const rp = Math.max(0, Number(nextRequiredPoints) || 0);
@@ -706,7 +705,15 @@ export default function CalculatorClient() {
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900">
               <IconBlue>
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
                   <path d="M19.4 15a7.97 7.97 0 0 0 .1-1 7.97 7.97 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a8.1 8.1 0 0 0-1.7-1l-.4-2.6H9.1l-.4 2.6a8.1 8.1 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7.97 7.97 0 0 0-.1 1c0 .34.03.67.1 1l-2 1.5 2 3.5 2.4-1a8.1 8.1 0 0 0 1.7 1l.4 2.6h5.8l.4-2.6a8.1 8.1 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5Z" />
                 </svg>
@@ -716,11 +723,16 @@ export default function CalculatorClient() {
 
             <div className="mt-1 text-xs text-slate-600">
               Zmiany zapisujesz przyciskiem po prawej.
-              {savedAt && !dirty && !savingProfile ? <span className="ml-2 text-emerald-700 font-semibold">Zapisano</span> : null}
-              {!otherValid ? <span className="ml-2 text-rose-700 font-semibold">Uzupełnij „Inny zawód”</span> : null}
+              {savedAt && !dirty && !savingProfile ? (
+                <span className="ml-2 text-emerald-700 font-semibold">Zapisano</span>
+              ) : null}
+              {!otherValid ? (
+                <span className="ml-2 text-rose-700 font-semibold">Uzupełnij „Inny zawód”</span>
+              ) : null}
             </div>
           </div>
 
+          {/* ✅ kolejność: Przywróć, potem Zapisz (Zapisz skrajnie po prawej) */}
           <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center md:justify-end">
             <button
               type="button"
@@ -745,7 +757,15 @@ export default function CalculatorClient() {
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
             >
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M3 12a9 9 0 1 0 3-6.7" />
                   <path d="M3 4v6h6" />
                 </svg>
@@ -764,10 +784,270 @@ export default function CalculatorClient() {
           </div>
         </div>
 
-        {/* ...reszta pliku bez zmian... */}
-        {/* Poniżej masz swój dotychczasowy JSX (nie ruszałem) */}
-        {/* UWAGA: w tej odpowiedzi uciąłem resztę tylko w komentarzu – wklej ten plik 1:1 z Twojego,
-           bo zmiany są wyżej: typ ProfileUpsert + useEffect setProfile + saveProfilePatch */}
+        <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {/* Zawód */}
+          <div>
+            <FieldLabel
+              icon={
+                <IconBlue>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M8 21h8" />
+                    <path d="M12 17v4" />
+                    <path d="M7 4h10" />
+                    <path d="M7 4c0 5 2 6 5 8 3-2 5-3 5-8" />
+                    <path d="M9 12h6" />
+                  </svg>
+                </IconBlue>
+              }
+              title="Zawód"
+            />
+            <select
+              value={profession}
+              onChange={(e) => {
+                const v = e.target.value as Profession;
+                setProfession(v);
+                if (!isOtherProfession(v)) setProfessionOther("");
+
+                const rp = RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
+                setRequiredPoints(rp);
+
+                // jeśli jest PWZ, przelicz okres automatycznie
+                if (pwzIssueDate) {
+                  const derived = getPeriodFromPwzIssueDate(v, pwzIssueDate);
+                  if (derived) {
+                    setPeriodMode("custom");
+                    setPeriodStart(derived.start);
+                    setPeriodEnd(derived.end);
+                  }
+                }
+
+                setDirty(true);
+              }}
+              className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              {PROFESSION_OPTIONS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Tryb okresu */}
+          <div>
+            <FieldLabel
+              icon={
+                <IconBlue>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 8v4l3 2" />
+                    <path d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10Z" />
+                  </svg>
+                </IconBlue>
+              }
+              title={trybLabel}
+            />
+            <select
+              value={periodMode}
+              onChange={(e) => {
+                const v = e.target.value as "preset" | "custom";
+                setPeriodMode(v);
+
+                if (v === "custom" && pwzIssueDate) {
+                  const derived = getPeriodFromPwzIssueDate(profession, pwzIssueDate);
+                  if (derived) {
+                    setPeriodStart(derived.start);
+                    setPeriodEnd(derived.end);
+                  }
+                }
+
+                setDirty(true);
+              }}
+              className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="preset">Preset (najczęstszy)</option>
+              <option value="custom">Indywidualny</option>
+            </select>
+
+            {/* ✅ brak tekstu o automatycznym liczeniu */}
+          </div>
+
+          {/* Okres */}
+          {periodMode === "preset" && !pwzIssueDate ? (
+            <div>
+              <FieldLabel
+                icon={
+                  <IconBlue>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M8 2v4" />
+                      <path d="M16 2v4" />
+                      <path d="M3 10h18" />
+                      <path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
+                    </svg>
+                  </IconBlue>
+                }
+                title={okresLabel}
+              />
+              <select
+                value={periodLabel}
+                onChange={(e) => {
+                  const [a, b] = e.target.value.split("-").map((x) => Number(x));
+                  setPeriodStart(a);
+                  setPeriodEnd(b);
+                  setDirty(true);
+                }}
+                className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              >
+                <option value="2019-2022">2019-2022</option>
+                <option value="2023-2026">2023-2026</option>
+                <option value="2027-2030">2027-2030</option>
+              </select>
+            </div>
+          ) : (
+            <div className="xl:col-span-1">
+              <FieldLabel
+                icon={
+                  <IconBlue>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M8 2v4" />
+                      <path d="M16 2v4" />
+                      <path d="M3 10h18" />
+                      <path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
+                    </svg>
+                  </IconBlue>
+                }
+                title={okresLabel}
+              />
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <input
+                  value={periodStart}
+                  onChange={(e) => {
+                    setPeriodStart(Number(e.target.value || 0));
+                    setDirty(true);
+                  }}
+                  type="number"
+                  className="h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="Start"
+                  disabled={Boolean(pwzIssueDate)}
+                />
+                <input
+                  value={periodEnd}
+                  onChange={(e) => {
+                    setPeriodEnd(Number(e.target.value || 0));
+                    setDirty(true);
+                  }}
+                  type="number"
+                  className="h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="Koniec"
+                  disabled={Boolean(pwzIssueDate)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Wymagane punkty */}
+          <div>
+            <FieldLabel
+              icon={
+                <IconBlue>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 2l3 7h7l-5.5 4.2L18.5 21 12 16.8 5.5 21l2-7.8L2 9h7l3-7Z" />
+                  </svg>
+                </IconBlue>
+              }
+              title="Wymagane punkty — domyślne"
+            />
+            <input
+              value={requiredPoints}
+              onChange={(e) => {
+                setRequiredPoints(Number(e.target.value || 0));
+                setDirty(true);
+              }}
+              type="number"
+              min={0}
+              className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            />
+          </div>
+
+          {/* Inny zawód */}
+          {otherRequired ? (
+            <div className="md:col-span-2 xl:col-span-4">
+              <FieldLabel
+                icon={
+                  <IconBlue>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+                    </svg>
+                  </IconBlue>
+                }
+                title="Jaki zawód?"
+              />
+              <input
+                value={professionOther}
+                onChange={(e) => {
+                  setProfessionOther(e.target.value);
+                  setDirty(true);
+                }}
+                placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
+                className={`mt-2 h-11 w-full rounded-2xl border bg-white/80 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
+                  otherValid ? "border-slate-200/70 focus:ring-blue-200" : "border-rose-200/70 focus:ring-rose-200"
+                }`}
+              />
+              <p className={`mt-2 text-[11px] ${otherValid ? "text-slate-500" : "text-rose-700"}`}>
+                {otherValid ? "Doprecyzowanie pomaga dopasować zasady i raporty." : "Wpisz nazwę zawodu (min. 2 znaki), żeby profil był kompletny."}
+              </p>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {/* PANEL STATUSU */}
@@ -795,7 +1075,270 @@ export default function CalculatorClient() {
         />
       </div>
 
-      {/* ...dalej Twoja reszta JSX bez zmian... */}
+      {/* REGUŁY I LIMITY */}
+      <div className="rounded-3xl border border-slate-200/70 bg-slate-50/80 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="text-sm font-extrabold text-slate-900">Reguły i limity</div>
+            <div className="mt-1 text-sm text-slate-600">
+              Limity cząstkowe i wykorzystanie na podstawie ukończonych wpisów w okresie {periodStart}-{periodEnd}.
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <div className="text-slate-700">
+              Zaliczone: <span className="font-extrabold text-slate-900">{donePoints} pkt</span>
+            </div>
+            <span className="text-slate-300">•</span>
+            <div className="text-slate-700">
+              Brakuje: <span className="font-extrabold text-slate-900">{missingPoints} pkt</span>
+            </div>
+            {missingEvidenceCount > 0 ? (
+              <>
+                <span className="text-slate-300">•</span>
+                <div className="text-slate-700">
+                  Bez certyfikatu: <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
+
+        {planInfo || planErr ? (
+          <div className="mt-4 rounded-2xl border bg-white/70 p-3 text-sm">
+            {planInfo ? <div className="text-emerald-700 font-semibold">{planInfo}</div> : null}
+            {planErr ? <div className="text-rose-700 font-semibold">{planErr}</div> : null}
+          </div>
+        ) : null}
+
+        <div className="mt-4 space-y-3">
+          {limitsUsage.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-700">
+              Brak zdefiniowanych limitów dla tego zawodu.
+            </div>
+          ) : (
+            limitsUsage.map((r) => {
+              const isMax = (r.usedPct ?? 0) >= 100 || (Number(r.remaining) || 0) <= 0;
+
+              return (
+                <div
+                  key={r.key}
+                  className="w-full rounded-2xl border border-slate-200/70 bg-white/80 p-4 ring-1 ring-slate-100"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <div className="text-sm font-extrabold text-slate-900">{r.label}</div>
+
+                        {r.note ? (
+                          <div className="text-xs font-semibold text-slate-600">
+                            {r.note}
+                            {r.mode === "per_year" ? ` (×${r.yearsInPeriod} lat)` : ""}
+                          </div>
+                        ) : null}
+
+                        {isMax ? (
+                          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                            <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                            W pełni zrealizowane
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-1 text-xs font-semibold text-slate-600">
+                        {Math.round(r.used)} / {Math.round(r.cap)} pkt • {Math.round(r.usedPct)}%
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      {isMax ? (
+                        <Link
+                          href="/aktywnosci"
+                          className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+                        >
+                          Zobacz wpisy
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={isBusy || planningKey === r.key}
+                          onClick={() => planForRule(r)}
+                          className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                        >
+                          {planningKey === r.key ? "Dodaję…" : "Zaplanuj aktywność"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="h-3 rounded-full bg-slate-200/80">
+                        <div className="h-3 rounded-full bg-blue-600" style={{ width: `${r.usedPct}%` }} />
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 text-xs font-semibold text-slate-700">
+                      Pozostało: <span className="font-extrabold">{Math.round(r.remaining)}</span> pkt
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href="/aktywnosci"
+            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+          >
+            Przejdź do Aktywności →
+          </Link>
+          <Link
+            href="/aktywnosci?new=1"
+            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+          >
+            + Dodaj aktywność
+          </Link>
+          <Link
+            href="/portfolio"
+            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+          >
+            Raport / PDF →
+          </Link>
+        </div>
+      </div>
+
+      {/* OSTATNIE AKTYWNOŚCI */}
+      <div className="rounded-3xl border border-slate-200/70 bg-white/70 p-5 shadow-sm ring-1 ring-slate-200/50 backdrop-blur">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-sm font-extrabold text-slate-900">Ostatnie aktywności</div>
+            <div className="mt-1 text-sm text-slate-600">
+              Ostatnio dodane wpisy w okresie {periodStart}-{periodEnd} (z sygnalizacją braków).
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/aktywnosci"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+            >
+              Aktywności
+            </Link>
+            <Link
+              href="/portfolio"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+            >
+              Raporty / PDF
+            </Link>
+            <Link
+              href="/baza-szkolen"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white"
+            >
+              Baza szkoleń
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {authLoading || loading ? (
+            <div className="text-sm text-slate-600">Wczytuję…</div>
+          ) : recentRows.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 text-sm text-slate-700">
+              Brak wpisów w okresie {periodStart}-{periodEnd}.
+            </div>
+          ) : (
+            recentRows.map((a) => {
+              const prog = normalizeStatus(a.status);
+              const missing = getRowMissing(a);
+
+              return (
+                <div
+                  key={a.id}
+                  className={[
+                    "rounded-2xl border p-4",
+                    prog === "planned"
+                      ? "border-blue-200 bg-blue-50/40"
+                      : missing.length
+                      ? "border-amber-200 bg-amber-50/30"
+                      : "border-slate-200 bg-white/80",
+                  ].join(" ")}
+                >
+                  {/* ✅ układ “2-linijkowy” (desktop): rząd 1 = tytuł/badges + punkty, rząd 2 = meta + link */}
+                  <div className="grid gap-2 md:grid-cols-[1fr_auto] md:items-start">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="min-w-0 truncate text-sm font-semibold text-slate-900">{a.type}</div>
+
+                        {prog === "planned" ? (
+                          <span className="inline-flex shrink-0 items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
+                            🗓️ Zaplanowane
+                          </span>
+                        ) : (
+                          <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                            ✅ Ukończone
+                          </span>
+                        )}
+
+                        {missing.length === 0 ? (
+                          <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                            Kompletne
+                          </span>
+                        ) : (
+                          <span className="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
+                            Braki
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="text-xs text-slate-600">
+                        {a.organizer ? `${a.organizer} • ` : ""}
+                        Rok: <span className="font-semibold text-slate-900">{a.year}</span>
+                        {prog === "planned" ? (
+                          <>
+                            {" "}
+                            • Termin: <span className="font-semibold text-slate-900">{formatYMD(a.planned_start_date)}</span>
+                          </>
+                        ) : null}
+                      </div>
+
+                      {missing.length ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {missing.map((m) => (
+                            <span
+                              key={m}
+                              className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
+                            >
+                              {m}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="shrink-0 md:justify-self-end">
+                      <Link
+                        href="/aktywnosci"
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white"
+                      >
+                        Otwórz w Aktywnościach →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
     </div>
   );
 }
