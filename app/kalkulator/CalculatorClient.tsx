@@ -44,15 +44,15 @@ type ActivityRow = {
 
 type ProfileRow = {
   user_id: string;
-  profession: Profession | null;
+  profession: Profession; // ✅ bez null
   profession_other?: string | null;
 
   pwz_number?: string | null;
   pwz_issue_date?: string | null; // YYYY-MM-DD
 
-  period_start: number | null;
-  period_end: number | null;
-  required_points: number | null;
+  period_start: number; // ✅ bez null
+  period_end: number; // ✅ bez null
+  required_points: number; // ✅ bez null
 };
 
 function clamp(n: number, a: number, b: number) {
