@@ -121,6 +121,7 @@ function computeStatus(total: number, required: number) {
 
 export default function RaportsClient() {
   const { user } = useAuth();
+  const supabase = useMemo(() => supabaseClient(), []);
 
   const [initialLoading, setInitialLoading] = useState(true);
   const [loadingActivities, setLoadingActivities] = useState(false);
@@ -163,7 +164,7 @@ export default function RaportsClient() {
       }
 
       try {
-        const { data, error: pErr } = await supabaseClient
+        const { data, error: pErr } = await supabase
           .from("profiles")
           .select(
             "user_id, profession, profession_other, period_start, period_end, required_points, pwz_number, pwz_issue_date, role"
@@ -200,7 +201,7 @@ export default function RaportsClient() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, supabase]);
 
   // 2) Update date range when periodMode changes (current/previous/profile)
   useEffect(() => {
@@ -262,7 +263,7 @@ export default function RaportsClient() {
         const selectCols =
           "id,user_id,type,points,year,organizer,created_at,updated_at,status,planned_start_date,training_id,certificate_path,certificate_name,certificate_mime,certificate_size,certificate_uploaded_at,trainings(title,organizer,start_date,end_date,external_url)";
 
-        const q1 = supabaseClient
+        const q1 = supabase
           .from("activities")
           .select(selectCols)
           .eq("user_id", user.id)
@@ -270,7 +271,7 @@ export default function RaportsClient() {
           .lte("created_at", toISO)
           .order("created_at", { ascending: false });
 
-        const q2 = supabaseClient
+        const q2 = supabase
           .from("activities")
           .select(selectCols)
           .eq("user_id", user.id)
@@ -297,7 +298,7 @@ export default function RaportsClient() {
         if (merged.length > 0) {
           const ids = merged.map((x) => x.id);
 
-          const { data: docs, error: dErr } = await supabaseClient
+          const { data: docs, error: dErr } = await supabase
             .from("activity_documents")
             .select("id,user_id,activity_id,kind,path,name,mime,size,uploaded_at")
             .eq("user_id", user.id)
@@ -324,7 +325,7 @@ export default function RaportsClient() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, fromDate, toDate]);
+  }, [user?.id, fromDate, toDate, supabase]);
 
   const activityTypes = useMemo(() => {
     const set = new Set<string>();
