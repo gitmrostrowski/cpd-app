@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
-const REPORTS_READY = false;
+const REPORTS_READY = true;
 
 const LOGIN_HREF = "/login";
 
@@ -232,6 +232,14 @@ export default function Header() {
                         onClick={() => setOpenUser(false)}
                       >
                         Aktywności
+                      </Link>
+
+                      <Link
+                        href="/raporty"
+                        className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        onClick={() => setOpenUser(false)}
+                      >
+                        Raporty
                       </Link>
 
                       <Link
