@@ -1,0 +1,5 @@
+onlyBuiltDependencies:
+  - puppeteer
+  - sharp
+  - supabase
+  - unrs-resolver

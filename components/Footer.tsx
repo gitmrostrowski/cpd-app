@@ -13,6 +13,12 @@ export default function Footer() {
           <Link className="underline underline-offset-4" href="/polityka-prywatnosci">
             Polityka prywatności
           </Link>
+          <a
+            className="underline underline-offset-4"
+            href="mailto:kontakt@crpe.pl"
+          >
+            kontakt@crpe.pl
+          </a>
         </nav>
       </div>
     </footer>
