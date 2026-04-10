@@ -195,11 +195,11 @@ export default function Page() {
                 CRPE — Twoje punkty i certyfikaty w jednym miejscu
               </div>
 
-              <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-900 md:text-6xl">
-                Twój rozwój i kompetencje  
-                <br />
-                <span className="text-blue-700">w jednym miejscu.</span>
-              </h1>
+             <h1 className="mt-5 text-3xl font-bold leading-tight tracking-tight text-slate-900 md:text-4xl">
+  Twój rozwój kompetencji  
+  <br />
+  <span className="text-blue-700">w jednym miejscu.</span>
+</h1>
 
               <p className="mt-5 max-w-prose text-lg leading-relaxed text-slate-600">
                 Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w
