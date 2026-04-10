@@ -196,7 +196,7 @@ export default function Page() {
               </div>
 
               <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-900 md:text-6xl">
-                Twój rozmów i kompetencje  
+                Twój rozwój i kompetencje  
                 <br />
                 <span className="text-blue-700">w jednym miejscu.</span>
               </h1>
