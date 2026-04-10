@@ -132,7 +132,7 @@ export default function Header() {
           {/* Logo */}
           <Link href={logoHref} className="flex items-center gap-2 shrink-0">
             <Image src="/logo.svg" alt="Logo" width={28} height={28} />
-            <span className="font-semibold text-slate-900">CPD.EDU.PL</span>
+            <span className="font-semibold text-slate-900">CRPE</span>
           </Link>
 
           {/* NAV DESKTOP */}
