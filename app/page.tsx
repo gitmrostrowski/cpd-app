@@ -190,10 +190,10 @@ export default function Page() {
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-center">
             {/* LEWA */}
             <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-800 shadow-sm">
-                <span className="h-2 w-2 rounded-full bg-blue-600" />
-                Platforma umożliwia monitorowanie aktywności edukacyjnej oraz postępów uczestników, wspiera organizacje w zarządzaniu procesem edukacyjnym i obowiązkami regulacyjnymi
-              </div>
+<div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-normal text-slate-600 leading-relaxed shadow-sm">
+  <span className="h-2 w-2 rounded-full bg-slate-400" />
+  Platforma umożliwia monitorowanie aktywności edukacyjnej oraz postępów uczestników, wspiera organizacje w zarządzaniu procesem edukacyjnym i obowiązkami regulacyjnymi
+</div>
 
 <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl">
   Twój rozwój i kwalifikacje  
