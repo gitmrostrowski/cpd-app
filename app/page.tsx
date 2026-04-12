@@ -204,6 +204,9 @@ export default function Page() {
               <p className="mt-5 max-w-prose text-lg leading-relaxed text-slate-600">
                 Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w
                 aktualnym okresie rozliczeniowym. Prosto. Spokojnie. Bez Excela.
+                <span className="block mt-2 text-blue-600">
+    Platforma umożliwia monitorowanie aktywności edukacyjnej i postępów uczestników oraz wspiera organizacje w zarządzaniu procesem edukacyjnym i obowiązkami regulacyjnymi
+  </span>
               </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
