@@ -1,4 +1,3 @@
-// components/Header.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -9,7 +8,6 @@ import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
 const REPORTS_READY = true;
-
 const LOGIN_HREF = "/login";
 
 type NavItem = {
@@ -72,7 +70,6 @@ export default function Header() {
 
       const sb = supabaseClient();
 
-      // ✅ omijamy nieaktualne typy supabase.ts (profiles.role)
       const { data, error } = await sb
         .from("profiles" as any)
         .select("role")
@@ -88,7 +85,7 @@ export default function Header() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, user]);
 
   const isActive = (href: string) => {
     if (!pathname) return false;
@@ -98,9 +95,9 @@ export default function Header() {
 
   const linkCls = (href: string, disabled?: boolean) =>
     cx(
-      "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors",
+      "inline-flex min-h-[40px] min-w-[108px] items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
       disabled
-        ? "text-slate-500 cursor-not-allowed opacity-70"
+        ? "cursor-not-allowed text-slate-500 opacity-70"
         : isActive(href)
         ? "bg-slate-100 text-slate-900"
         : "text-slate-900 hover:bg-slate-50"
@@ -126,17 +123,15 @@ export default function Header() {
   const logoHref = user ? "/kalkulator" : "/";
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur shadow-sm">
+    <header className="sticky top-0 z-50 border-b bg-white/90 shadow-sm backdrop-blur">
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex h-16 items-center gap-4">
-          {/* Logo */}
-          <Link href={logoHref} className="flex items-center gap-2 shrink-0">
+          <Link href={logoHref} className="flex shrink-0 items-center gap-2">
             <Image src="/logo.svg" alt="Logo" width={28} height={28} />
             <span className="font-semibold text-slate-900">CRPE</span>
           </Link>
 
-          {/* NAV DESKTOP */}
-          <nav className="hidden sm:flex flex-1 items-center justify-end">
+          <nav className="hidden flex-1 items-center justify-end sm:flex">
             <div className="flex items-center gap-1 rounded-2xl border border-blue-200/60 bg-white px-1 py-1 shadow-sm">
               {NAV.map(({ href, label, soon }) => (
                 <Link
@@ -162,15 +157,14 @@ export default function Header() {
             </div>
           </nav>
 
-          {/* RIGHT SIDE (DESKTOP) */}
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="hidden items-center gap-2 sm:flex">
             {loading ? (
               <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
                 Sprawdzam sesję…
               </div>
             ) : user ? (
               <>
-                <div className="hidden md:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 md:flex">
                   <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
                   <span className="font-medium">{emailShort}</span>
                 </div>
@@ -181,7 +175,9 @@ export default function Header() {
                     onClick={() => setOpenUser((v) => !v)}
                     className={cx(
                       "inline-flex h-10 w-10 items-center justify-center rounded-full border transition",
-                      openUser ? "border-blue-200 bg-slate-50" : "border-slate-200 hover:bg-slate-50"
+                      openUser
+                        ? "border-blue-200 bg-slate-50"
+                        : "border-slate-200 hover:bg-slate-50"
                     )}
                     aria-label="Menu użytkownika"
                     title="Menu"
@@ -190,10 +186,12 @@ export default function Header() {
                   </button>
 
                   {openUser ? (
-                    <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-slate-200 bg-white shadow-lg p-2">
+                    <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
                       <div className="px-3 py-2 text-xs text-slate-500">
                         Zalogowany jako
-                        <div className="mt-1 text-sm font-medium text-slate-800">{user.email}</div>
+                        <div className="mt-1 text-sm font-medium text-slate-800">
+                          {user.email}
+                        </div>
                       </div>
 
                       <div className="my-2 h-px bg-slate-100" />
@@ -264,16 +262,15 @@ export default function Header() {
             ) : (
               <Link
                 href={LOGIN_HREF}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
               >
                 Zaloguj
               </Link>
             )}
           </div>
 
-          {/* HAMBURGER (MOBILE) */}
           <button
-            className="sm:hidden ml-auto inline-flex items-center rounded-xl border border-slate-300 px-3 py-2 text-slate-700"
+            className="ml-auto inline-flex items-center rounded-xl border border-slate-300 px-3 py-2 text-slate-700 sm:hidden"
             onClick={() => setOpenMobile((v) => !v)}
             aria-label="Menu"
             type="button"
@@ -282,15 +279,21 @@ export default function Header() {
           </button>
         </div>
 
-        {/* NAV MOBILE */}
         {openMobile && (
-          <nav className="sm:hidden pb-4 pt-2">
+          <nav className="pb-4 pt-2 sm:hidden">
             <div className="flex flex-col gap-1">
               {NAV.map(({ href, label, soon }) => (
                 <Link
                   key={href}
                   href={href}
-                  className={linkCls(href, !!soon)}
+                  className={cx(
+                    "inline-flex items-center justify-between gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
+                    soon
+                      ? "cursor-not-allowed text-slate-500 opacity-70"
+                      : isActive(href)
+                      ? "bg-slate-100 text-slate-900"
+                      : "text-slate-900 hover:bg-slate-50"
+                  )}
                   aria-current={isActive(href) ? "page" : undefined}
                   aria-disabled={soon ? true : undefined}
                   tabIndex={soon ? -1 : undefined}
