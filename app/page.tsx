@@ -48,7 +48,7 @@ function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
         {items.map((item) => (
           <details
             key={item.q}
-            className="group rounded-2xl border border-slate-200 bg-white px-4 md:px-5 shadow-sm hover:shadow-md transition-shadow"
+            className="group rounded-2xl border border-slate-200 bg-white px-4 md:px-5 shadow-sm transition-shadow hover:shadow-md"
           >
             <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-left text-sm font-semibold text-slate-900">
               <span>{item.q}</span>
@@ -106,7 +106,6 @@ export default function Page() {
 
       const user = auth?.user ?? null;
 
-      // niezalogowany -> landing
       if (!user) {
         setIsLoggedIn(false);
         setChecking(false);
@@ -115,7 +114,6 @@ export default function Page() {
 
       setIsLoggedIn(true);
 
-      // sprawdź profil (bramka do onboardingu)
       const { data: profile, error: profErr } = await supabase
         .from("profiles")
         .select("user_id, profession, period_start, period_end, required_points")
@@ -126,13 +124,11 @@ export default function Page() {
 
       if (profErr) console.warn("profiles error:", profErr.message);
 
-      // brak profilu -> onboarding
       if (!profile) {
         router.replace("/start");
         return;
       }
 
-      // profil jest -> centrum
       router.replace("/kalkulator");
     }
 
@@ -143,9 +139,6 @@ export default function Page() {
     };
   }, [router, supabase]);
 
-  // =========================
-  // W TRAKCIE SPRAWDZANIA SESJI
-  // =========================
   if (checking) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
@@ -156,9 +149,6 @@ export default function Page() {
     );
   }
 
-  // =========================
-  // ZALOGOWANY -> i tak redirect
-  // =========================
   if (isLoggedIn) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
@@ -169,9 +159,6 @@ export default function Page() {
     );
   }
 
-  // =========================
-  // LANDING (NIEZALOGOWANY)
-  // =========================
   const demoPeriod = "Aktualny okres rozliczeniowy";
   const demoRequired = 200;
   const demoHave = 110;
@@ -186,27 +173,24 @@ export default function Page() {
         <div className="pointer-events-none absolute left-[-10%] top-[-25%] h-[34rem] w-[34rem] rounded-full bg-blue-200/35 blur-3xl" />
         <div className="pointer-events-none absolute right-[-12%] top-[5%] h-[28rem] w-[28rem] rounded-full bg-indigo-200/25 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl px-4 pt-10 pb-12 md:pt-14">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-center">
+        <div className="relative mx-auto max-w-6xl px-4 pb-12 pt-10 md:pt-14">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start">
             {/* LEWA */}
             <div className="lg:col-span-7">
-<div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm">
-  <span className="h-2 w-2 rounded-full bg-blue-600" />
-  Wkrótce: Inteligentny asystent AI do tworzenia i zarządzania Twoim rozwojem zawodowym
-</div>
-
-<h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl">
-  Twój rozwój i kwalifikacje  
-  <br />
-  <span className="text-blue-700 font-bold">w jednym miejscu.</span>
-</h1>
+              <h1 className="text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl">
+                Twój rozwój i kwalifikacje
+                <br />
+                <span className="font-bold text-blue-700">w jednym miejscu.</span>
+              </h1>
 
               <p className="mt-5 max-w-prose text-lg leading-relaxed text-slate-600">
                 Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w
                 aktualnym okresie rozliczeniowym. Prosto. Spokojnie. Bez Excela.
-                <span className="block mt-2 text-blue-600">
-    Platforma umożliwia monitorowanie aktywności edukacyjnej i postępów uczestników oraz wspiera organizacje w zarządzaniu procesem edukacyjnym i obowiązkami regulacyjnymi
-  </span>
+                <span className="mt-2 block text-blue-600">
+                  Platforma umożliwia monitorowanie aktywności edukacyjnej i
+                  postępów uczestników oraz wspiera organizacje w zarządzaniu
+                  procesem edukacyjnym i obowiązkami regulacyjnymi
+                </span>
               </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -246,7 +230,7 @@ export default function Page() {
                 ].map((x) => (
                   <div
                     key={x.t}
-                    className="rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/60 p-4 shadow-md hover:shadow-lg transition-shadow"
+                    className="rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/60 p-4 shadow-md transition-shadow hover:shadow-lg"
                   >
                     <div className="flex items-center gap-2 text-base font-semibold text-slate-900">
                       <span className="h-2 w-2 rounded-full bg-blue-600" />
@@ -258,6 +242,12 @@ export default function Page() {
                   </div>
                 ))}
               </div>
+
+              <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm">
+                <span className="h-2 w-2 rounded-full bg-blue-600" />
+                Wkrótce: Inteligentny asystent AI do tworzenia i zarządzania
+                Twoim rozwojem zawodowym
+              </div>
             </div>
 
             {/* PRAWA */}
@@ -265,7 +255,7 @@ export default function Page() {
               <div className="relative mx-auto w-full max-w-[520px]">
                 <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-b from-blue-100/50 to-white blur-2xl" />
 
-                <div className="relative rounded-[28px] border border-slate-200/80 bg-white/70 p-5 shadow-md backdrop-blur hover:shadow-lg transition-shadow">
+                <div className="relative rounded-[28px] border border-slate-200/80 bg-white/70 p-5 shadow-md backdrop-blur transition-shadow hover:shadow-lg">
                   <div className="text-sm font-semibold text-slate-900">
                     Podgląd statusu
                   </div>
@@ -317,7 +307,6 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* === OBRAZ: poprawione tło i ramka === */}
                   <div className="mt-4 overflow-hidden rounded-3xl border border-slate-200/70 bg-gradient-to-br from-blue-50 via-white to-indigo-50 shadow-sm">
                     <div className="relative aspect-[16/10] w-full">
                       <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-blue-200/40 blur-2xl" />
@@ -349,7 +338,7 @@ export default function Page() {
           </div>
 
           {/* PROBLEM */}
-          <div className="mt-12 rounded-[32px] border border-slate-200/80 bg-white p-6 md:p-10 shadow-md">
+          <div className="mt-12 rounded-[32px] border border-slate-200/80 bg-white p-6 shadow-md md:p-10">
             <div className="grid gap-8 lg:grid-cols-12 lg:items-stretch">
               {/* LEWA */}
               <div className="lg:col-span-5">
@@ -395,7 +384,7 @@ export default function Page() {
 
               {/* PRAWA */}
               <div className="lg:col-span-7">
-                <div className="relative h-full overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-slate-50 to-white p-5 md:p-6 shadow-sm">
+                <div className="relative h-full overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-slate-50 to-white p-5 shadow-sm md:p-6">
                   <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-blue-200/30 blur-3xl" />
                   <div className="pointer-events-none absolute -left-24 -bottom-24 h-72 w-72 rounded-full bg-indigo-200/20 blur-3xl" />
 
@@ -409,7 +398,10 @@ export default function Page() {
                         t: "Zdjęcia w telefonie",
                         d: "Nie wiesz, co było do czego i z którego roku.",
                       },
-                      { t: "Excel i notatki", d: "Wymaga pilnowania i łatwo o braki." },
+                      {
+                        t: "Excel i notatki",
+                        d: "Wymaga pilnowania i łatwo o braki.",
+                      },
                       {
                         t: "Brak pewności",
                         d: "Czy na pewno masz komplet punktów i dokumentów?",
@@ -417,7 +409,7 @@ export default function Page() {
                     ].map((x) => (
                       <div
                         key={x.t}
-                        className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm hover:shadow-md transition-shadow"
+                        className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm transition-shadow hover:shadow-md"
                       >
                         <div className="text-sm font-semibold text-slate-900">
                           {x.t}
@@ -447,9 +439,11 @@ export default function Page() {
 
       {/* JAK TO DZIAŁA */}
       <section id="jak-to-dziala" className="mx-auto max-w-6xl px-4 py-12 md:py-16">
-        <div className="rounded-[32px] border border-slate-200 bg-slate-50 p-6 md:p-10 shadow-sm">
+        <div className="rounded-[32px] border border-slate-200 bg-slate-50 p-6 shadow-sm md:p-10">
           <div className="max-w-2xl">
-            <h2 className="text-3xl font-extrabold text-slate-900">Jak to działa</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900">
+              Jak to działa
+            </h2>
             <p className="mt-2 text-slate-600">
               Trzy proste kroki. Bez długiego wdrożenia.
             </p>
@@ -475,13 +469,17 @@ export default function Page() {
             ].map((x) => (
               <div
                 key={x.t}
-                className="rounded-3xl border border-slate-200 bg-white p-5 shadow-md hover:shadow-lg transition-shadow"
+                className="rounded-3xl border border-slate-200 bg-white p-5 shadow-md transition-shadow hover:shadow-lg"
               >
                 <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
                   {x.n}
                 </div>
-                <div className="mt-3 text-base font-semibold text-slate-900">{x.t}</div>
-                <div className="mt-1 text-sm leading-relaxed text-slate-600">{x.d}</div>
+                <div className="mt-3 text-base font-semibold text-slate-900">
+                  {x.t}
+                </div>
+                <div className="mt-1 text-sm leading-relaxed text-slate-600">
+                  {x.d}
+                </div>
               </div>
             ))}
           </div>
@@ -508,8 +506,10 @@ export default function Page() {
         <div className="grid gap-6 lg:grid-cols-12">
           {/* KORZYŚCI */}
           <div className="lg:col-span-6">
-            <div className="h-full rounded-[32px] border border-slate-200 bg-white p-6 md:p-10 shadow-md">
-              <h2 className="text-3xl font-extrabold text-slate-900">Co zyskujesz</h2>
+            <div className="h-full rounded-[32px] border border-slate-200 bg-white p-6 shadow-md md:p-10">
+              <h2 className="text-3xl font-extrabold text-slate-900">
+                Co zyskujesz
+              </h2>
               <p className="mt-2 text-slate-600">
                 Bez komplikacji — po prostu porządek i jasny status.
               </p>
@@ -548,7 +548,7 @@ export default function Page() {
 
           {/* DLA KOGO */}
           <div className="lg:col-span-6">
-            <div className="h-full rounded-[32px] border border-slate-200 bg-white p-6 md:p-10 shadow-md">
+            <div className="h-full rounded-[32px] border border-slate-200 bg-white p-6 shadow-md md:p-10">
               <h2 className="text-3xl font-extrabold text-slate-900">
                 Dla kogo jest CRPE
               </h2>
@@ -586,9 +586,9 @@ export default function Page() {
             </div>
           </div>
 
-          {/* FAQ (bez Radix) */}
+          {/* FAQ */}
           <div className="lg:col-span-12">
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 md:p-10 shadow-md">
+            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-md md:p-10">
               <h2 className="text-3xl font-extrabold text-slate-900">FAQ</h2>
               <p className="mt-2 text-slate-600">
                 Najczęstsze pytania. Kliknij, aby rozwinąć odpowiedź.
