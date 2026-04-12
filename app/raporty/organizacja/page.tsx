@@ -6,50 +6,62 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
-function canAccess(role: string | null) {
-  return role === "admin" || role === "organization" || role === "manager";
+type ProfileAccessRow = {
+  role: string | null;
+  can_org_report: boolean | null;
+};
+
+function canAccessOrgReport(profile: ProfileAccessRow | null) {
+  if (!profile) return false;
+  return profile.role === "admin" || profile.can_org_report === true;
 }
 
 export default function RaportOrganizacjiPage() {
   const { user, loading } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
 
-  const [role, setRole] = useState<string | null>(null);
-  const [loadingRole, setLoadingRole] = useState(false);
+  const [profileAccess, setProfileAccess] = useState<ProfileAccessRow | null>(null);
+  const [loadingAccess, setLoadingAccess] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
     if (!user?.id) {
-      setRole(null);
+      setProfileAccess(null);
       return;
     }
 
     const userId = user.id;
 
-    async function loadRole() {
-      setLoadingRole(true);
+    async function loadAccess() {
+      setLoadingAccess(true);
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles" as any)
-        .select("role")
+        .select("role, can_org_report")
         .eq("user_id", userId)
         .maybeSingle();
 
       if (cancelled) return;
 
-      setRole((data as { role?: string | null } | null)?.role ?? null);
-      setLoadingRole(false);
+      if (error) {
+        setProfileAccess(null);
+        setLoadingAccess(false);
+        return;
+      }
+
+      setProfileAccess((data as ProfileAccessRow | null) ?? null);
+      setLoadingAccess(false);
     }
 
-    loadRole();
+    loadAccess();
 
     return () => {
       cancelled = true;
     };
   }, [user?.id, supabase]);
 
-  if (loading || loadingRole) {
+  if (loading || loadingAccess) {
     return (
       <main className="mx-auto max-w-5xl px-4 py-8">
         <div className="rounded-2xl border bg-white p-4 text-sm">Ładowanie…</div>
@@ -85,7 +97,7 @@ export default function RaportOrganizacjiPage() {
     );
   }
 
-  if (!canAccess(role)) {
+  if (!canAccessOrgReport(profileAccess)) {
     return (
       <main className="mx-auto max-w-5xl px-4 py-8">
         <div className="rounded-2xl border bg-white p-6 shadow-sm">
