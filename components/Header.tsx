@@ -7,20 +7,18 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
-const REPORTS_READY = true;
 const LOGIN_HREF = "/login";
 
 type NavItem = {
   href: string;
   label: string;
-  soon?: boolean;
 };
 
 const NAV: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/kalkulator", label: "Panel CPD" },
   { href: "/aktywnosci", label: "Aktywności" },
-  { href: "/raporty", label: "Raporty", soon: !REPORTS_READY },
+  { href: "/raporty", label: "Raporty" },
   { href: "/baza-szkolen", label: "Baza szkoleń" },
 ];
 
@@ -85,7 +83,7 @@ export default function Header() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, user]);
+  }, [user?.id]);
 
   const isActive = (href: string) => {
     if (!pathname) return false;
@@ -93,12 +91,10 @@ export default function Header() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
-  const linkCls = (href: string, disabled?: boolean) =>
+  const linkCls = (href: string) =>
     cx(
-      "inline-flex min-h-[40px] min-w-[108px] items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
-      disabled
-        ? "cursor-not-allowed text-slate-500 opacity-70"
-        : isActive(href)
+      "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors",
+      isActive(href)
         ? "bg-slate-100 text-slate-900"
         : "text-slate-900 hover:bg-slate-50"
     );
@@ -133,25 +129,14 @@ export default function Header() {
 
           <nav className="hidden flex-1 items-center justify-end sm:flex">
             <div className="flex items-center gap-1 rounded-2xl border border-blue-200/60 bg-white px-1 py-1 shadow-sm">
-              {NAV.map(({ href, label, soon }) => (
+              {NAV.map(({ href, label }) => (
                 <Link
                   key={href}
                   href={href}
-                  className={linkCls(href, !!soon)}
+                  className={linkCls(href)}
                   aria-current={isActive(href) ? "page" : undefined}
-                  aria-disabled={soon ? true : undefined}
-                  tabIndex={soon ? -1 : undefined}
-                  onClick={(e) => {
-                    if (soon) e.preventDefault();
-                  }}
-                  title={soon ? "Wkrótce" : undefined}
                 >
                   <span>{label}</span>
-                  {soon ? (
-                    <span className="ml-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600">
-                      Wkrótce
-                    </span>
-                  ) : null}
                 </Link>
               ))}
             </div>
@@ -175,9 +160,7 @@ export default function Header() {
                     onClick={() => setOpenUser((v) => !v)}
                     className={cx(
                       "inline-flex h-10 w-10 items-center justify-center rounded-full border transition",
-                      openUser
-                        ? "border-blue-200 bg-slate-50"
-                        : "border-slate-200 hover:bg-slate-50"
+                      openUser ? "border-blue-200 bg-slate-50" : "border-slate-200 hover:bg-slate-50"
                     )}
                     aria-label="Menu użytkownika"
                     title="Menu"
@@ -189,9 +172,7 @@ export default function Header() {
                     <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
                       <div className="px-3 py-2 text-xs text-slate-500">
                         Zalogowany jako
-                        <div className="mt-1 text-sm font-medium text-slate-800">
-                          {user.email}
-                        </div>
+                        <div className="mt-1 text-sm font-medium text-slate-800">{user.email}</div>
                       </div>
 
                       <div className="my-2 h-px bg-slate-100" />
@@ -282,36 +263,15 @@ export default function Header() {
         {openMobile && (
           <nav className="pb-4 pt-2 sm:hidden">
             <div className="flex flex-col gap-1">
-              {NAV.map(({ href, label, soon }) => (
+              {NAV.map(({ href, label }) => (
                 <Link
                   key={href}
                   href={href}
-                  className={cx(
-                    "inline-flex items-center justify-between gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
-                    soon
-                      ? "cursor-not-allowed text-slate-500 opacity-70"
-                      : isActive(href)
-                      ? "bg-slate-100 text-slate-900"
-                      : "text-slate-900 hover:bg-slate-50"
-                  )}
+                  className={linkCls(href)}
                   aria-current={isActive(href) ? "page" : undefined}
-                  aria-disabled={soon ? true : undefined}
-                  tabIndex={soon ? -1 : undefined}
-                  onClick={(e) => {
-                    if (soon) {
-                      e.preventDefault();
-                      return;
-                    }
-                    setOpenMobile(false);
-                  }}
-                  title={soon ? "Wkrótce" : undefined}
+                  onClick={() => setOpenMobile(false)}
                 >
                   <span>{label}</span>
-                  {soon ? (
-                    <span className="ml-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">
-                      Wkrótce
-                    </span>
-                  ) : null}
                 </Link>
               ))}
 
