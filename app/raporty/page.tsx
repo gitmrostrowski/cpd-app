@@ -1,4 +1,3 @@
-// app/raporty/page.tsx
 import RaportsClient from "./RaportsClient";
 
 export const metadata = {
