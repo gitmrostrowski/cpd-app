@@ -192,7 +192,7 @@ export default function Page() {
             <div className="lg:col-span-7">
 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm">
   <span className="h-2 w-2 rounded-full bg-blue-600" />
-  Platforma do zarządzania kompetencjami i obowiązkami regulacyjnymi
+  Wkrótce: Inteligentny asystent AI do tworzenia i zarządzania Twoim rozwojem zawodowym
 </div>
 
 <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl">
