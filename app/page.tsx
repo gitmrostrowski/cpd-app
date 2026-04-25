@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createBrowserSupabase } from "@ /lib/supabaseBrowser";
+import { createBrowserSupabase } from "@/lib/supabaseBrowser";
 import {
   ArrowRight,
   Award,
@@ -12,14 +12,12 @@ import {
   CalendarCheck,
   Camera,
   Check,
-  ChevronDown,
   ClipboardCheck,
   FileText,
   FlaskConical,
   FolderOpen,
   GraduationCap,
   HeartPulse,
-  LockKeyhole,
   Mail,
   Minus,
   Pill,
@@ -50,8 +48,8 @@ function clamp(n: number, a: number, b: number) {
 }
 
 /* ─── rozmiary ikon ──────────────────────────────────────────────────────
-   Duże (karty kroków, problem cards): kontener 48px, ikona 24px
-   Średnie (listy benefitów, zawodów, hero bullets): kontener 40px, ikona 20px
+   LG (karty kroków, problem cards): kontener 48px, ikona 24px
+   MD (listy, hero bullets):         kontener 40px, ikona 20px
    ──────────────────────────────────────────────────────────────────────── */
 const ICON_LG   = "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl";
 const ICON_LG_I = "h-6 w-6";
@@ -68,10 +66,10 @@ const heroBullets = [
 ];
 
 const problemCards = [
-  { t: "Certyfikaty w mailach",  d: "Trudno je znaleźć, gdy są potrzebne.",             icon: Mail,           iconBg: "bg-blue-50",   color: "text-blue-600"  },
-  { t: "Zdjęcia w telefonie",    d: "Nie wiesz, co było do czego i z którego roku.",    icon: Camera,         iconBg: "bg-amber-50",  color: "text-amber-500" },
-  { t: "Excel i notatki",        d: "Wymaga pilnowania i łatwo o braki.",               icon: FileText,       iconBg: "bg-indigo-50", color: "text-indigo-500"},
-  { t: "Brak pewności",          d: "Czy na pewno masz komplet punktów i dokumentów?",  icon: ClipboardCheck, iconBg: "bg-slate-100", color: "text-slate-500" },
+  { t: "Certyfikaty w mailach",  d: "Trudno je znaleźć, gdy są potrzebne.",             icon: Mail,           iconBg: "bg-blue-50",   color: "text-blue-600"   },
+  { t: "Zdjęcia w telefonie",    d: "Nie wiesz, co było do czego i z którego roku.",    icon: Camera,         iconBg: "bg-amber-50",  color: "text-amber-500"  },
+  { t: "Excel i notatki",        d: "Wymaga pilnowania i łatwo o braki.",               icon: FileText,       iconBg: "bg-indigo-50", color: "text-indigo-500" },
+  { t: "Brak pewności",          d: "Czy na pewno masz komplet punktów i dokumentów?",  icon: ClipboardCheck, iconBg: "bg-slate-100", color: "text-slate-500"  },
 ];
 
 const steps = [
@@ -144,7 +142,7 @@ function BtnSecondary({ href, children }: { href: string; children: React.ReactN
   );
 }
 
-/* FAQ — React state, każde pytanie jako osobna karta */
+/* FAQ — React state, Plus/Minus toggle, każde pytanie osobna karta */
 function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
   const [open, setOpen] = useState<number | null>(null);
   return (
@@ -155,9 +153,7 @@ function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
           <div
             key={item.q}
             className={`rounded-2xl border transition-all ${
-              isOpen
-                ? "border-blue-200 bg-white shadow-sm"
-                : "border-slate-200 bg-slate-50"
+              isOpen ? "border-blue-200 bg-white shadow-sm" : "border-slate-200 bg-slate-50"
             }`}
           >
             <button
@@ -165,13 +161,9 @@ function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
               className="flex w-full items-center justify-between px-5 py-4 text-left"
             >
               <span className="text-sm font-semibold text-slate-900">{item.q}</span>
-              <span
-                className={`ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                  isOpen
-                    ? "border-blue-200 bg-blue-50"
-                    : "border-slate-200 bg-white"
-                }`}
-              >
+              <span className={`ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                isOpen ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-white"
+              }`}>
                 {isOpen
                   ? <Minus className="h-3.5 w-3.5 text-blue-600" strokeWidth={2.5} />
                   : <Plus  className="h-3.5 w-3.5 text-slate-400" strokeWidth={2.5} />
@@ -245,7 +237,6 @@ export default function Page() {
               Platforma dla zawodów medycznych
             </div>
 
-            {/* H1 — text wraps naturalnie, overflow-hidden na sekcji zapobiega wycieku */}
             <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl">
               Twój rozwój i kwalifikacje
               <br />
@@ -260,7 +251,7 @@ export default function Page() {
               </strong>
             </p>
 
-            {/* 4 bullet — ICON_MD (40px) */}
+            {/* 4 bullet — ICON_MD (40px) w układzie 2×2 */}
             <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {heroBullets.map((b) => {
                 const Icon = b.icon;
@@ -357,7 +348,11 @@ export default function Page() {
             </p>
 
             <div className="mt-5 space-y-2">
-              {["Wiesz, co masz — i gdzie to jest.", "Widzisz postęp bez liczenia w Excelu.", "Masz certyfikaty przypięte do aktywności."].map((t) => (
+              {[
+                "Wiesz, co masz — i gdzie to jest.",
+                "Widzisz postęp bez liczenia w Excelu.",
+                "Masz certyfikaty przypięte do aktywności.",
+              ].map((t) => (
                 <div key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600">
                     <Check className="h-3 w-3 text-white" strokeWidth={2.5} />
@@ -377,7 +372,6 @@ export default function Page() {
           </div>
 
           <div className="lg:col-span-7">
-            {/* problem cards — ICON_LG (48px) */}
             <div className="grid gap-3 sm:grid-cols-2">
               {problemCards.map((x) => {
                 const Icon = x.icon;
@@ -407,7 +401,7 @@ export default function Page() {
       </SectionCard>
 
       {/* ══════════════════════════════════════════════════════════════
-          JAK TO DZIAŁA — nowa hierarchia: duża ikona + numer jako badge
+          JAK TO DZIAŁA
       ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="mt-4">
         <div id="jak-to-dziala">
@@ -420,11 +414,9 @@ export default function Page() {
               const Icon = x.icon;
               return (
                 <div key={x.t} className="relative rounded-2xl border border-slate-200 bg-slate-50 p-6 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md">
-                  {/* numer jako mały badge w górnym lewym rogu */}
                   <span className="absolute left-4 top-4 flex h-6 w-6 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
                     {x.n}
                   </span>
-                  {/* duża ikona centrowana w karcie */}
                   <div className="mb-4 mt-2 flex justify-center">
                     <span className={`${ICON_LG} ${x.iconBg}`}>
                       <Icon className={`${ICON_LG_I} ${x.color}`} strokeWidth={1.75} />
@@ -451,7 +443,7 @@ export default function Page() {
         <div className="grid gap-4 lg:grid-cols-2">
 
           {/* Co zyskujesz */}
-          <div className="rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-10">
+          <div className="overflow-hidden rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-10">
             <Eyebrow>Wartość</Eyebrow>
             <h2 className="text-2xl font-bold text-slate-900">Co zyskujesz</h2>
             <p className="mt-1 text-base text-slate-600">Bez komplikacji — po prostu porządek i jasny status.</p>
@@ -480,7 +472,7 @@ export default function Page() {
           </div>
 
           {/* Dla kogo */}
-          <div className="rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-10">
+          <div className="overflow-hidden rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-10">
             <Eyebrow>Odbiorcy</Eyebrow>
             <h2 className="text-2xl font-bold text-slate-900">Dla kogo jest CRPE</h2>
             <p className="mt-1 text-base text-slate-600">
@@ -511,7 +503,7 @@ export default function Page() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
-          FAQ — każde pytanie to osobna karta, Plus/Minus zamiast chevron
+          FAQ
       ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="mt-4">
         <div className="mx-auto max-w-2xl">
