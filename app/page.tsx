@@ -184,115 +184,137 @@ export default function Page() {
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
       <SectionCard className="pt-6">
-        {/* wewnętrzny gradient tylko w tej karcie */}
-        <div className="relative overflow-hidden rounded-2xl">
-          <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-100/50 blur-3xl" />
-          <div className="pointer-events-none absolute -right-16 top-8 h-56 w-56 rounded-full bg-indigo-100/40 blur-3xl" />
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-start">
 
-          <div className="relative grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start">
-
-            {/* left */}
-            <div className="lg:col-span-6">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold text-blue-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                Platforma dla zawodów medycznych
-              </div>
-
-              <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-[46px]">
-                Twój rozwój<br />i kwalifikacje<br />
-                <span className="text-blue-600">w jednym miejscu.</span>
-              </h1>
-
-              <p className="mt-5 text-lg leading-relaxed text-slate-700">
-                Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w aktualnym
-                okresie rozliczeniowym.{" "}
-                <strong className="font-semibold text-slate-900">Prosto. Spokojnie. Bez Excela.</strong>
-              </p>
-
-              <p className="mt-3 text-base leading-relaxed text-blue-600">
-                Platforma umożliwia monitorowanie aktywności edukacyjnej i postępów uczestników
-                oraz wspiera organizacje w zarządzaniu procesem edukacyjnym i obowiązkami regulacyjnymi.
-              </p>
-
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
-                  Załóż darmowe konto <ArrowRight className="h-4 w-4" />
-                </Link>
-                <a href="#jak-to-dziala" className="inline-flex items-center rounded-xl bg-slate-100 px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
-                  Zobacz jak to działa
-                </a>
-              </div>
-
-              {/* bullet list — bez kart, sama linia */}
-              <ul className="mt-7 space-y-3 border-t border-slate-100 pt-7">
-                {heroBullets.map((b) => {
-                  const Icon = b.icon;
-                  return (
-                    <li key={b.t} className="flex items-center gap-3">
-                      <Icon className={`h-4 w-4 shrink-0 ${b.color}`} strokeWidth={1.75} />
-                      <span className="text-sm font-medium text-slate-700">{b.t}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-
-              <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700">
-                <Sparkles className="h-4 w-4 text-indigo-500" strokeWidth={1.75} />
-                Wkrótce: Inteligentny asystent AI do zarządzania rozwojem zawodowym
-              </div>
+          {/* ── LEFT ── */}
+          <div>
+            {/* eyebrow */}
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold text-blue-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+              Platforma dla zawodów medycznych
             </div>
 
-            {/* right — karta statusu */}
-            <div className="lg:col-span-6">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+            {/* H1 — łamie się na 2 linie: "Twój rozwój i kwalifikacje" / "w jednym miejscu." */}
+            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl">
+              Twój rozwój i kwalifikacje
+              <br />
+              <span className="text-blue-600">w jednym miejscu.</span>
+            </h1>
 
-                <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Podgląd statusu</p>
-                <p className="text-base font-bold text-slate-900">Aktualny okres rozliczeniowy</p>
-                <p className="mt-0.5 mb-5 text-sm text-slate-500">To przykład. Po zalogowaniu zobaczysz swoje realne dane.</p>
+            {/* lead — 1 zdanie, bez korporacyjnego drugiego paragrafu */}
+            <p className="mt-5 text-lg leading-relaxed text-slate-700">
+              Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp
+              w aktualnym okresie rozliczeniowym.{" "}
+              <strong className="font-semibold text-slate-900">
+                Prosto. Spokojnie. Bez Excela.
+              </strong>
+            </p>
 
-                {/* progress */}
-                <div className="mb-2 flex items-center justify-between text-sm">
-                  <span className="text-slate-600">Postęp w okresie</span>
-                  <span className="font-bold text-slate-800">{Math.round(demoPct)}%</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                  <div className="h-2 rounded-full bg-blue-600 transition-all" style={{ width: `${demoPct}%` }} />
-                </div>
-
-                <div className="mt-4 grid grid-cols-3 divide-x divide-slate-200 rounded-xl border border-slate-200 bg-white text-center">
-                  <div className="py-3">
-                    <div className="text-lg font-extrabold text-slate-900">{demoHave}</div>
-                    <div className="text-xs text-slate-500">Masz (pkt)</div>
+            {/* bullet list — z ikonami mającymi kolorowe tło, 2×2 grid */}
+            <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              {heroBullets.map((b) => {
+                const Icon = b.icon;
+                // mapuj color na iconBg
+                const bgMap: Record<string, string> = {
+                  "text-blue-600":   "bg-blue-50",
+                  "text-amber-500":  "bg-amber-50",
+                  "text-teal-600":   "bg-teal-50",
+                  "text-indigo-500": "bg-indigo-50",
+                };
+                return (
+                  <div key={b.t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${bgMap[b.color]}`}>
+                      <Icon className={`h-4 w-4 ${b.color}`} strokeWidth={1.75} />
+                    </span>
+                    <span className="text-sm font-medium text-slate-700">{b.t}</span>
                   </div>
-                  <div className="py-3">
-                    <div className="text-lg font-extrabold text-slate-900">{demoRequired}</div>
-                    <div className="text-xs text-slate-500">Cel (pkt)</div>
-                  </div>
-                  <div className="py-3">
-                    <div className="text-lg font-extrabold text-red-500">{demoMissing}</div>
-                    <div className="text-xs text-slate-500">Brakuje (pkt)</div>
-                  </div>
-                </div>
+                );
+              })}
+            </div>
 
-                {/* wpisy */}
-                <div className="mt-5">
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ostatnie wpisy</p>
-                  <div className="space-y-2">
-                    {demoEntries.map((e) => (
-                      <div key={e.name} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                        <span className={`h-2 w-2 shrink-0 rounded-full ${e.dot}`} />
-                        <span className="flex-1 text-sm font-medium text-slate-800">{e.name}</span>
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${e.badge}`}>{e.cat}</span>
-                        <span className="text-sm font-bold text-blue-600">+{e.pts} pkt</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+            {/* CTA buttons */}
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                Załóż darmowe konto <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a href="#jak-to-dziala" className="inline-flex items-center rounded-xl bg-slate-100 px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
+                Zobacz jak to działa
+              </a>
+            </div>
 
-                <Link href="/login" className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
-                  Zaloguj się, aby zobaczyć swój status <ArrowRight className="h-4 w-4" />
-                </Link>
+            {/* AI pill — skrócony tekst, jednolinijkowy */}
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700">
+              <Sparkles className="h-4 w-4 shrink-0 text-indigo-500" strokeWidth={1.75} />
+              Wkrótce: Asystent AI do zarządzania rozwojem zawodowym
+            </div>
+          </div>
+
+          {/* ── RIGHT — karta statusu (bg-white + shadow dla kontrastu) ── */}
+          <div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
+
+              <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Podgląd statusu</p>
+              <p className="text-base font-bold text-slate-900">Aktualny okres rozliczeniowy</p>
+              <p className="mt-0.5 mb-5 text-sm text-slate-500">
+                To przykład. Po zalogowaniu zobaczysz swoje realne dane.
+              </p>
+
+              {/* progress */}
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <span className="text-slate-600">Postęp w okresie</span>
+                <span className="font-bold text-slate-800">{Math.round(demoPct)}%</span>
               </div>
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-2.5 rounded-full bg-blue-600 transition-all"
+                  style={{ width: `${demoPct}%` }}
+                />
+              </div>
+
+              {/* stats 3-kolumny */}
+              <div className="mt-4 grid grid-cols-3 divide-x divide-slate-100 rounded-xl border border-slate-100 bg-slate-50 text-center">
+                <div className="py-3">
+                  <div className="text-xl font-extrabold text-slate-900">{demoHave}</div>
+                  <div className="text-xs text-slate-500">Masz (pkt)</div>
+                </div>
+                <div className="py-3">
+                  <div className="text-xl font-extrabold text-slate-900">{demoRequired}</div>
+                  <div className="text-xs text-slate-500">Cel (pkt)</div>
+                </div>
+                <div className="py-3">
+                  <div className="text-xl font-extrabold text-red-500">{demoMissing}</div>
+                  <div className="text-xs text-slate-500">Brakuje (pkt)</div>
+                </div>
+              </div>
+
+              {/* ostatnie wpisy */}
+              <div className="mt-5">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  Ostatnie wpisy
+                </p>
+                <div className="space-y-2">
+                  {demoEntries.map((e) => (
+                    <div
+                      key={e.name}
+                      className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5"
+                    >
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${e.dot}`} />
+                      <span className="flex-1 text-sm font-medium text-slate-800">{e.name}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${e.badge}`}>
+                        {e.cat}
+                      </span>
+                      <span className="text-sm font-bold text-blue-600">+{e.pts} pkt</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Link
+                href="/login"
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                Zaloguj się, aby zobaczyć swój status <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
         </div>
