@@ -7,17 +7,19 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabaseBrowser";
 import {
-  FolderCheck,
-  SquareCheck,
-  ShieldCheck,
-  Rocket,
-  BriefcaseMedical,
-  FilePlus2,
   BarChart3,
-  Stethoscope,
-  Building2,
+  Camera,
+  Check,
+  ClipboardCheck,
   FileText,
-  Clock3,
+  FolderCheck,
+  GraduationCap,
+  LockKeyhole,
+  Mail,
+  ShieldCheck,
+  Sparkles,
+  UploadCloud,
+  UserRoundCheck,
 } from "lucide-react";
 
 import FeatureGrid from "@/components/FeatureGrid";
@@ -51,77 +53,6 @@ const FAQ_ITEMS = [
   {
     q: "Czy korzystanie jest darmowe?",
     a: "Tak. Podstawowe funkcje są bezpłatne. Wkrótce pojawią się opcje PRO (PDF, przypomnienia).",
-  },
-];
-
-const HERO_FEATURES = [
-  {
-    Icon: FolderCheck,
-    t: "Porządek bez wysiłku",
-    d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",
-    iconBox: "bg-teal-50 text-teal-600 ring-teal-100",
-  },
-  {
-    Icon: SquareCheck,
-    t: "Jasny status punktów",
-    d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",
-    iconBox: "bg-amber-50 text-amber-600 ring-amber-100",
-  },
-  {
-    Icon: ShieldCheck,
-    t: "Bezpieczne dane",
-    d: "Dostęp masz tylko Ty. Dane są przechowywane w UE.",
-    iconBox: "bg-violet-50 text-violet-600 ring-violet-100",
-  },
-  {
-    Icon: Rocket,
-    t: "Start za darmo",
-    d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.",
-    iconBox: "bg-blue-50 text-blue-600 ring-blue-100",
-  },
-];
-
-const TRUST_ITEMS = [
-  {
-    Icon: Stethoscope,
-    t: "Dla zawodów medycznych",
-    d: "Lekarze, pielęgniarki, fizjoterapeuci i inne profesje.",
-  },
-  {
-    Icon: FileText,
-    t: "Certyfikaty pod ręką",
-    d: "Dokumenty przypięte do aktywności, nie porozrzucane po mailach.",
-  },
-  {
-    Icon: Clock3,
-    t: "Mniej ręcznej pracy",
-    d: "Koniec z Excelem i liczeniem punktów na ostatnią chwilę.",
-  },
-  {
-    Icon: Building2,
-    t: "Także dla organizacji",
-    d: "Przestrzeń pod szkolenia, uczestników i raportowanie.",
-  },
-];
-
-const HOW_IT_WORKS = [
-  {
-    Icon: BriefcaseMedical,
-    n: "1",
-    t: "Wybierz zawód",
-    d: "System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.",
-  },
-  {
-    Icon: FilePlus2,
-    n: "2",
-    t: "Dodaj aktywność",
-    d: "Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.",
-  },
-  {
-    Icon: BarChart3,
-    n: "3",
-    t: "Sprawdzaj postęp",
-    d: "Zawsze wiesz, ile punktów masz i czego brakuje.",
   },
 ];
 
@@ -165,6 +96,91 @@ function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
   );
 }
 
+const heroCards = [
+  {
+    t: "Porządek bez wysiłku",
+    d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",
+    icon: FolderCheck,
+    color: "text-teal-600",
+  },
+  {
+    t: "Jasny status punktów",
+    d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",
+    icon: BarChart3,
+    color: "text-orange-600",
+  },
+  {
+    t: "Bezpieczne dane",
+    d: "Dostęp masz tylko Ty. Dane są przechowywane w UE.",
+    icon: ShieldCheck,
+    color: "text-violet-600",
+  },
+  {
+    t: "Start za darmo",
+    d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.",
+    icon: Sparkles,
+    color: "text-blue-600",
+  },
+];
+
+const problemCards = [
+  {
+    t: "Certyfikaty w mailach",
+    d: "Trudno je znaleźć, gdy są potrzebne.",
+    icon: Mail,
+    color: "text-blue-600",
+  },
+  {
+    t: "Zdjęcia w telefonie",
+    d: "Nie wiesz, co było do czego i z którego roku.",
+    icon: Camera,
+    color: "text-indigo-600",
+  },
+  {
+    t: "Excel i notatki",
+    d: "Wymaga pilnowania i łatwo o braki.",
+    icon: FileText,
+    color: "text-orange-600",
+  },
+  {
+    t: "Brak pewności",
+    d: "Czy na pewno masz komplet punktów i dokumentów?",
+    icon: ClipboardCheck,
+    color: "text-emerald-600",
+  },
+];
+
+const steps = [
+  {
+    n: "1",
+    t: "Wybierz zawód",
+    d: "System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.",
+    icon: UserRoundCheck,
+    color: "text-blue-600",
+  },
+  {
+    n: "2",
+    t: "Dodaj aktywność",
+    d: "Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.",
+    icon: UploadCloud,
+    color: "text-teal-600",
+  },
+  {
+    n: "3",
+    t: "Sprawdzaj postęp",
+    d: "Zawsze wiesz, ile punktów masz i czego brakuje.",
+    icon: BarChart3,
+    color: "text-orange-600",
+  },
+];
+
+const benefits = [
+  "Historia wszystkich aktywności w jednym miejscu",
+  "Certyfikaty zawsze pod ręką (PDF / zdjęcia)",
+  "Przejrzysty podgląd zdobytych punktów",
+  "Gotowość do przygotowania raportu",
+];
+
 export default function Page() {
   const supabase = useMemo(() => createBrowserSupabase(), []);
   const router = useRouter();
@@ -202,7 +218,7 @@ export default function Page() {
         .from("profiles")
         .select("user_id, profession, period_start, period_end, required_points")
         .eq("user_id", user.id)
-        .maybeSingle();
+        .maybeSingle<ProfileRow>();
 
       if (!alive) return;
 
@@ -261,12 +277,7 @@ export default function Page() {
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start">
             {/* LEWA */}
             <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/75 px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm">
-                <span className="h-2 w-2 rounded-full bg-blue-600" />
-                Twoja ścieżka. Twoje punkty. Twój rozwój.
-              </div>
-
-              <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-slate-950 md:text-5xl">
+              <h1 className="text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl">
                 Twój rozwój i kwalifikacje
                 <br />
                 <span className="font-bold text-blue-700">
@@ -277,63 +288,59 @@ export default function Page() {
               <p className="mt-5 max-w-prose text-lg leading-relaxed text-slate-600">
                 Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w
                 aktualnym okresie rozliczeniowym. Prosto. Spokojnie. Bez Excela.
-              </p>
-
-              <div className="mt-5 flex max-w-prose gap-3 rounded-3xl border border-blue-100 bg-white/80 p-4 text-slate-700 shadow-sm">
-                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <p className="text-base leading-relaxed">
+                <span className="mt-2 block text-blue-600">
                   Platforma umożliwia monitorowanie aktywności edukacyjnej i
                   postępów uczestników oraz wspiera organizacje w zarządzaniu
-                  procesem edukacyjnym i obowiązkami regulacyjnymi.
-                </p>
-              </div>
+                  procesem edukacyjnym i obowiązkami regulacyjnymi
+                </span>
+              </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+                  className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
                 >
                   Załóż darmowe konto
                 </Link>
 
                 <a
                   href="#jak-to-dziala"
-                  className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-200 hover:bg-blue-50/50"
+                  className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-200 transition hover:bg-blue-50/50"
                 >
                   Zobacz jak to działa
                 </a>
               </div>
 
               <div className="mt-9 grid gap-3 sm:grid-cols-2">
-                {HERO_FEATURES.map(({ Icon, iconBox, ...x }) => (
-                  <div
-                    key={x.t}
-                    className="rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-md transition-shadow hover:shadow-lg"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ring-1 ${iconBox}`}
-                      >
-                        <Icon className="h-6 w-6" />
-                      </div>
+                {heroCards.map((x) => {
+                  const Icon = x.icon;
 
-                      <div>
-                        <div className="text-base font-semibold text-slate-900">
-                          {x.t}
-                        </div>
-                        <div className="mt-1 text-sm leading-relaxed text-slate-600">
-                          {x.d}
+                  return (
+                    <div
+                      key={x.t}
+                      className="rounded-3xl border border-slate-200/80 bg-white/90 p-5 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+                    >
+                      <div className="flex items-start gap-3">
+                        <Icon
+                          className={`mt-0.5 h-6 w-6 shrink-0 ${x.color}`}
+                          strokeWidth={2.25}
+                        />
+                        <div>
+                          <div className="text-base font-semibold text-slate-900">
+                            {x.t}
+                          </div>
+                          <div className="mt-1 text-sm leading-relaxed text-slate-600">
+                            {x.d}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
-                <span className="h-2 w-2 rounded-full bg-slate-500" />
+              <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm">
+                <Sparkles className="h-4 w-4 text-blue-600" />
                 Wkrótce: Inteligentny asystent AI do tworzenia i zarządzania
                 Twoim rozwojem zawodowym
               </div>
@@ -344,7 +351,7 @@ export default function Page() {
               <div className="relative mx-auto w-full max-w-[520px]">
                 <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-b from-blue-100/50 to-white blur-2xl" />
 
-                <div className="relative rounded-[28px] border border-slate-200/80 bg-white/80 p-5 shadow-xl shadow-blue-950/5 backdrop-blur transition-shadow hover:shadow-2xl">
+                <div className="relative rounded-[28px] border border-slate-200/80 bg-white/80 p-5 shadow-md backdrop-blur transition hover:shadow-lg">
                   <div className="text-sm font-semibold text-slate-900">
                     Podgląd statusu
                   </div>
@@ -412,40 +419,24 @@ export default function Page() {
                   </div>
 
                   <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-                    <div className="text-xs font-semibold text-blue-600">
-                      Wkrótce (PRO)
-                    </div>
-                    <div className="mt-1 text-sm font-semibold text-slate-900">
-                      Raport PDF i przypomnienia
-                    </div>
-                    <div className="mt-1 text-sm text-slate-600">
-                      Eksport raportu do PDF oraz automatyczne przypomnienia o
-                      brakujących punktach.
+                    <div className="flex items-start gap-3">
+                      <FileText className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                      <div>
+                        <div className="text-xs text-slate-500">
+                          Wkrótce (PRO)
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-slate-900">
+                          Raport PDF i przypomnienia
+                        </div>
+                        <div className="mt-1 text-sm text-slate-600">
+                          Eksport raportu do PDF oraz automatyczne przypomnienia o
+                          brakujących punktach.
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* TRUST STRIP */}
-          <div className="mt-10 rounded-[28px] border border-slate-200/80 bg-white/90 p-4 shadow-md">
-            <div className="grid gap-3 md:grid-cols-4">
-              {TRUST_ITEMS.map(({ Icon, t, d }) => (
-                <div key={t} className="flex gap-3 rounded-2xl p-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">
-                      {t}
-                    </div>
-                    <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                      {d}
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
 
@@ -472,8 +463,8 @@ export default function Page() {
                       key={t}
                       className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4"
                     >
-                      <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
-                        ✓
+                      <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                        <Check className="h-4 w-4" />
                       </span>
                       <span className="text-sm text-slate-700">{t}</span>
                     </div>
@@ -501,45 +492,41 @@ export default function Page() {
                   <div className="pointer-events-none absolute -left-24 -bottom-24 h-72 w-72 rounded-full bg-indigo-200/20 blur-3xl" />
 
                   <div className="relative grid gap-3 sm:grid-cols-2">
-                    {[
-                      {
-                        t: "Certyfikaty w mailach",
-                        d: "Trudno je znaleźć, gdy są potrzebne.",
-                      },
-                      {
-                        t: "Zdjęcia w telefonie",
-                        d: "Nie wiesz, co było do czego i z którego roku.",
-                      },
-                      {
-                        t: "Excel i notatki",
-                        d: "Wymaga pilnowania i łatwo o braki.",
-                      },
-                      {
-                        t: "Brak pewności",
-                        d: "Czy na pewno masz komplet punktów i dokumentów?",
-                      },
-                    ].map((x) => (
-                      <div
-                        key={x.t}
-                        className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm transition-shadow hover:shadow-md"
-                      >
-                        <div className="text-sm font-semibold text-slate-900">
-                          {x.t}
+                    {problemCards.map((x) => {
+                      const Icon = x.icon;
+
+                      return (
+                        <div
+                          key={x.t}
+                          className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                          <Icon
+                            className={`mb-3 h-6 w-6 ${x.color}`}
+                            strokeWidth={2.25}
+                          />
+                          <div className="text-sm font-semibold text-slate-900">
+                            {x.t}
+                          </div>
+                          <div className="mt-1 text-sm text-slate-600">
+                            {x.d}
+                          </div>
                         </div>
-                        <div className="mt-1 text-sm text-slate-600">
-                          {x.d}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="relative mt-4 rounded-3xl border border-blue-200 bg-blue-50/70 p-5 shadow-sm">
-                    <div className="text-sm font-semibold text-slate-900">
-                      CRPE porządkuje to za Ciebie
-                    </div>
-                    <div className="mt-1 text-sm text-slate-600">
-                      Wpisy, certyfikaty i status punktów masz w jednym miejscu
-                      — spokojnie i czytelnie.
+                    <div className="flex items-start gap-3">
+                      <GraduationCap className="mt-0.5 h-6 w-6 shrink-0 text-blue-600" />
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900">
+                          CRPE porządkuje to za Ciebie
+                        </div>
+                        <div className="mt-1 text-sm text-slate-600">
+                          Wpisy, certyfikaty i status punktów masz w jednym
+                          miejscu — spokojnie i czytelnie.
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -565,41 +552,42 @@ export default function Page() {
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {HOW_IT_WORKS.map(({ Icon, ...x }) => (
-              <div
-                key={x.t}
-                className="rounded-3xl border border-slate-200 bg-white p-5 shadow-md transition-shadow hover:shadow-lg"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-                    <Icon className="h-6 w-6" />
+            {steps.map((x) => {
+              const Icon = x.icon;
+
+              return (
+                <div
+                  key={x.t}
+                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+                      {x.n}
+                    </div>
+                    <Icon className={`h-6 w-6 ${x.color}`} strokeWidth={2.25} />
                   </div>
 
-                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
-                    {x.n}
+                  <div className="mt-3 text-base font-semibold text-slate-900">
+                    {x.t}
+                  </div>
+                  <div className="mt-1 text-sm leading-relaxed text-slate-600">
+                    {x.d}
                   </div>
                 </div>
-
-                <div className="mt-4 text-base font-semibold text-slate-900">
-                  {x.t}
-                </div>
-                <div className="mt-1 text-sm leading-relaxed text-slate-600">
-                  {x.d}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/login"
-              className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+              className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               Zacznij za darmo
             </Link>
             <Link
               href="/rejestracja"
-              className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 ring-1 ring-blue-200 hover:bg-blue-50/50"
+              className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 ring-1 ring-blue-200 transition hover:bg-blue-50/50"
             >
               Utwórz konto
             </Link>
@@ -621,18 +609,13 @@ export default function Page() {
               </p>
 
               <ul className="mt-6 space-y-3 text-slate-700">
-                {[
-                  "Historia wszystkich aktywności w jednym miejscu",
-                  "Certyfikaty zawsze pod ręką (PDF / zdjęcia)",
-                  "Przejrzysty podgląd zdobytych punktów",
-                  "Gotowość do przygotowania raportu",
-                ].map((t) => (
+                {benefits.map((t) => (
                   <li
                     key={t}
                     className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4"
                   >
-                    <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
-                      ✓
+                    <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                      <Check className="h-4 w-4" />
                     </span>
                     <span className="text-sm leading-relaxed">{t}</span>
                   </li>
@@ -640,15 +623,18 @@ export default function Page() {
               </ul>
 
               <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
-                <div className="text-xs font-semibold text-blue-600">
-                  Wkrótce (PRO)
-                </div>
-                <div className="mt-1 text-sm font-semibold text-slate-900">
-                  Eksport PDF i przypomnienia
-                </div>
-                <div className="mt-1 text-sm text-slate-600">
-                  Raport PDF gotowy do wydruku oraz automatyczne przypomnienia o
-                  brakach.
+                <div className="flex items-start gap-3">
+                  <FileText className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                  <div>
+                    <div className="text-xs text-slate-500">Wkrótce (PRO)</div>
+                    <div className="mt-1 text-sm font-semibold text-slate-900">
+                      Eksport PDF i przypomnienia
+                    </div>
+                    <div className="mt-1 text-sm text-slate-600">
+                      Raport PDF gotowy do wydruku oraz automatyczne
+                      przypomnienia o brakach.
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -676,19 +662,26 @@ export default function Page() {
                 ].map((t) => (
                   <div
                     key={t}
-                    className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"
+                    className="flex items-center gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"
                   >
+                    <GraduationCap className="h-5 w-5 shrink-0 text-blue-600" />
                     {t}
                   </div>
                 ))}
               </div>
 
               <div className="mt-6 rounded-3xl border border-blue-200 bg-blue-50/60 p-5">
-                <div className="text-sm font-semibold text-slate-900">
-                  Jeśli musisz zbierać punkty — CRPE jest dla Ciebie.
-                </div>
-                <div className="mt-1 text-sm text-slate-600">
-                  Zacznij od kilku wpisów. Resztę możesz uzupełniać stopniowo.
+                <div className="flex items-start gap-3">
+                  <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      Jeśli musisz zbierać punkty — CRPE jest dla Ciebie.
+                    </div>
+                    <div className="mt-1 text-sm text-slate-600">
+                      Zacznij od kilku wpisów. Resztę możesz uzupełniać
+                      stopniowo.
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -709,13 +702,13 @@ export default function Page() {
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+                  className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
                 >
                   Załóż darmowe konto
                 </Link>
                 <Link
                   href="/rejestracja"
-                  className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-200 hover:bg-blue-50/50"
+                  className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-200 transition hover:bg-blue-50/50"
                 >
                   Utwórz konto
                 </Link>
