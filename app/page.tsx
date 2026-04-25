@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createBrowserSupabase } from "@/lib/supabaseBrowser";
+import { createBrowserSupabase } from "@ /lib/supabaseBrowser";
 import {
   ArrowRight,
   Award,
