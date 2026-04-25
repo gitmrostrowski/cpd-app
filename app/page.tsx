@@ -86,12 +86,12 @@ const benefits = [
 ];
 
 const professions = [
-  { t: "Lekarze i lekarze dentyści",  icon: Stethoscope,  iconBg: "bg-blue-50",   color: "text-blue-600"   },
-  { t: "Pielęgniarki i położne",      icon: HeartPulse,   iconBg: "bg-slate-100", color: "text-slate-500"  },
-  { t: "Fizjoterapeuci",              icon: UserCog,      iconBg: "bg-amber-50",  color: "text-amber-500"  },
-  { t: "Farmaceuci",                  icon: Pill,         iconBg: "bg-indigo-50", color: "text-indigo-500" },
-  { t: "Diagności laboratoryjni",     icon: FlaskConical, iconBg: "bg-slate-100", color: "text-slate-500"  },
-  { t: "Nowe zawody medyczne",        icon: Users,        iconBg: "bg-blue-50",   color: "text-blue-600"   },
+  { t: "Lekarze i lekarze dentyści",  icon: Stethoscope  },
+  { t: "Pielęgniarki i położne",      icon: HeartPulse   },
+  { t: "Fizjoterapeuci",              icon: UserCog      },
+  { t: "Farmaceuci",                  icon: Pill         },
+  { t: "Diagności laboratoryjni",     icon: FlaskConical },
+  { t: "Nowe zawody medyczne",        icon: Users        },
 ];
 
 const demoEntries = [
@@ -251,14 +251,13 @@ export default function Page() {
               </strong>
             </p>
 
-            {/* 4 bullet — ICON_MD (40px) w układzie 2×2 */}
             <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {heroBullets.map((b) => {
                 const Icon = b.icon;
                 return (
                   <div key={b.t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-                    <span className={`${ICON_MD} ${b.iconBg}`}>
-                      <Icon className={`${ICON_MD_I} ${b.color}`} strokeWidth={1.75} />
+                    <span className={`${ICON_LG} ${b.iconBg}`}>
+                      <Icon className={`${ICON_LG_I} ${b.color}`} strokeWidth={1.75} />
                     </span>
                     <span className="text-sm font-medium text-slate-700">{b.t}</span>
                   </div>
@@ -451,8 +450,8 @@ export default function Page() {
             <ul className="mt-6 space-y-2">
               {benefits.map(({ t, icon: Icon, iconBg, color }) => (
                 <li key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
-                  <span className={`${ICON_MD} ${iconBg}`}>
-                    <Icon className={`${ICON_MD_I} ${color}`} strokeWidth={1.75} />
+                  <span className={`${ICON_LG} ${iconBg}`}>
+                    <Icon className={`${ICON_LG_I} ${color}`} strokeWidth={1.75} />
                   </span>
                   <span className="text-sm font-medium text-slate-800">{t}</span>
                 </li>
@@ -460,8 +459,8 @@ export default function Page() {
             </ul>
 
             <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <span className={`${ICON_MD} bg-amber-100 shrink-0`}>
-                <FileText className={`${ICON_MD_I} text-amber-600`} strokeWidth={1.75} />
+              <span className={`${ICON_LG} bg-amber-100 shrink-0`}>
+                <FileText className={`${ICON_LG_I} text-amber-600`} strokeWidth={1.75} />
               </span>
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-amber-600">Wkrótce — PRO</p>
@@ -480,10 +479,10 @@ export default function Page() {
             </p>
 
             <div className="mt-6 grid gap-2 sm:grid-cols-2">
-              {professions.map(({ t, icon: Icon, iconBg, color }) => (
+              {professions.map(({ t, icon: Icon }) => (
                 <div key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
-                  <span className={`${ICON_MD} ${iconBg}`}>
-                    <Icon className={`${ICON_MD_I} ${color}`} strokeWidth={1.75} />
+                  <span className={`${ICON_LG} shrink-0`} style={{ background: "#f0fdfa" }}>
+                    <Icon className={ICON_LG_I} style={{ color: "#14b8a6" }} strokeWidth={1.75} />
                   </span>
                   <span className="text-sm font-medium text-slate-800">{t}</span>
                 </div>
