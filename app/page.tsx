@@ -21,7 +21,9 @@ import {
   HeartPulse,
   LockKeyhole,
   Mail,
+  Minus,
   Pill,
+  Plus,
   ShieldCheck,
   Sparkles,
   Stethoscope,
@@ -47,9 +49,14 @@ function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
-/* ─── ikony — rozmiar kontenera 40px, ikona 20px wszędzie ─── */
-const ICON_WRAP = "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl";
-const ICON_SM   = "h-5 w-5";
+/* ─── rozmiary ikon ──────────────────────────────────────────────────────
+   Duże (karty kroków, problem cards): kontener 48px, ikona 24px
+   Średnie (listy benefitów, zawodów, hero bullets): kontener 40px, ikona 20px
+   ──────────────────────────────────────────────────────────────────────── */
+const ICON_LG   = "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl";
+const ICON_LG_I = "h-6 w-6";
+const ICON_MD   = "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl";
+const ICON_MD_I = "h-5 w-5";
 
 /* ─── data ──────────────────────────────────────────────────────────────── */
 
@@ -61,16 +68,16 @@ const heroBullets = [
 ];
 
 const problemCards = [
-  { t: "Certyfikaty w mailach",  d: "Trudno je znaleźć, gdy są potrzebne.",             icon: Mail,           iconBg: "bg-blue-50",   color: "text-blue-600"   },
-  { t: "Zdjęcia w telefonie",    d: "Nie wiesz, co było do czego i z którego roku.",    icon: Camera,         iconBg: "bg-amber-50",  color: "text-amber-500"  },
-  { t: "Excel i notatki",        d: "Wymaga pilnowania i łatwo o braki.",               icon: FileText,       iconBg: "bg-indigo-50", color: "text-indigo-500" },
-  { t: "Brak pewności",          d: "Czy na pewno masz komplet punktów i dokumentów?",  icon: ClipboardCheck, iconBg: "bg-slate-100", color: "text-slate-500"  },
+  { t: "Certyfikaty w mailach",  d: "Trudno je znaleźć, gdy są potrzebne.",             icon: Mail,           iconBg: "bg-blue-50",   color: "text-blue-600"  },
+  { t: "Zdjęcia w telefonie",    d: "Nie wiesz, co było do czego i z którego roku.",    icon: Camera,         iconBg: "bg-amber-50",  color: "text-amber-500" },
+  { t: "Excel i notatki",        d: "Wymaga pilnowania i łatwo o braki.",               icon: FileText,       iconBg: "bg-indigo-50", color: "text-indigo-500"},
+  { t: "Brak pewności",          d: "Czy na pewno masz komplet punktów i dokumentów?",  icon: ClipboardCheck, iconBg: "bg-slate-100", color: "text-slate-500" },
 ];
 
 const steps = [
-  { n: "1", t: "Wybierz zawód",    d: "System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.", icon: UserRoundCheck, iconBg: "bg-blue-50",  color: "text-blue-600"  },
-  { n: "2", t: "Dodaj aktywność",  d: "Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.",           icon: UploadCloud,    iconBg: "bg-amber-50", color: "text-amber-500" },
-  { n: "3", t: "Sprawdzaj postęp", d: "Zawsze wiesz, ile punktów masz i czego brakuje.",                                 icon: TrendingUp,     iconBg: "bg-slate-100",color: "text-slate-500" },
+  { n: "1", t: "Wybierz zawód",    d: "System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.", icon: UserRoundCheck, iconBg: "bg-blue-50",   color: "text-blue-600"  },
+  { n: "2", t: "Dodaj aktywność",  d: "Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.",           icon: UploadCloud,    iconBg: "bg-amber-50",  color: "text-amber-500" },
+  { n: "3", t: "Sprawdzaj postęp", d: "Zawsze wiesz, ile punktów masz i czego brakuje.",                                 icon: TrendingUp,     iconBg: "bg-slate-100", color: "text-slate-500" },
 ];
 
 const benefits = [
@@ -90,8 +97,8 @@ const professions = [
 ];
 
 const demoEntries = [
-  { name: "Konferencja kardiologiczna", pts: 20, cat: "Konferencja", dot: "bg-blue-500", badge: "bg-blue-50 text-blue-700" },
-  { name: "Kurs e-learning EKG",        pts: 15, cat: "E-learning",  dot: "bg-slate-400",badge: "bg-slate-100 text-slate-600" },
+  { name: "Konferencja kardiologiczna", pts: 20, cat: "Konferencja", dot: "bg-blue-500",  badge: "bg-blue-50 text-blue-700"    },
+  { name: "Kurs e-learning EKG",        pts: 15, cat: "E-learning",  dot: "bg-slate-400", badge: "bg-slate-100 text-slate-600" },
 ];
 
 const FAQ_ITEMS = [
@@ -121,7 +128,6 @@ function SectionCard({ children, className = "" }: { children: React.ReactNode; 
   );
 }
 
-/* Przycisk primary — mniejszy niż wcześniej */
 function BtnPrimary({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
@@ -130,7 +136,6 @@ function BtnPrimary({ href, children }: { href: string; children: React.ReactNod
   );
 }
 
-/* Przycisk secondary */
 function BtnSecondary({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
@@ -139,17 +144,22 @@ function BtnSecondary({ href, children }: { href: string; children: React.ReactN
   );
 }
 
-/* FAQ — pasujący styl: bez bg-slate-50, linia oddzielająca jak reszta strony */
+/* FAQ — każde pytanie jako osobna karta, spójna z resztą strony.
+   Plus → Minus przy otwieraniu żeby stan był jednoznaczny. */
 function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
   return (
-    <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white overflow-hidden">
+    <div className="space-y-2.5">
       {items.map((item) => (
-        <details key={item.q} className="group">
-          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-semibold text-slate-900 hover:bg-slate-50">
-            <span>{item.q}</span>
-            <ChevronDown className="ml-4 h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 group-open:rotate-180" strokeWidth={2} />
+        <details key={item.q} className="group rounded-2xl border border-slate-200 bg-slate-50 transition-colors open:bg-white open:shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4">
+            <span className="text-sm font-semibold text-slate-900">{item.q}</span>
+            {/* Plus widoczny gdy zamknięte, Minus gdy otwarte */}
+            <span className="ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white group-open:border-blue-200 group-open:bg-blue-50 transition-colors">
+              <Plus  className="h-3.5 w-3.5 text-slate-400 group-open:hidden" strokeWidth={2.5} />
+              <Minus className="h-3.5 w-3.5 text-blue-600 hidden group-open:block" strokeWidth={2.5} />
+            </span>
           </summary>
-          <div className="border-t border-slate-100 px-5 pb-4 pt-3 text-sm leading-relaxed text-slate-700">
+          <div className="border-t border-slate-100 px-5 pb-5 pt-3 text-sm leading-relaxed text-slate-700">
             {item.a}
           </div>
         </details>
@@ -213,8 +223,9 @@ export default function Page() {
               Platforma dla zawodów medycznych
             </div>
 
+            {/* H1 — whitespace-nowrap na pierwszej linii żeby nie łamało po "i" */}
             <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl">
-              Twój rozwój i kwalifikacje
+              <span className="whitespace-nowrap">Twój rozwój i kwalifikacje</span>
               <br />
               <span className="text-blue-600">w jednym miejscu.</span>
             </h1>
@@ -227,14 +238,14 @@ export default function Page() {
               </strong>
             </p>
 
-            {/* bullet 2×2 — ikony 40px z tłem */}
+            {/* 4 bullet — ICON_MD (40px) */}
             <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {heroBullets.map((b) => {
                 const Icon = b.icon;
                 return (
                   <div key={b.t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-                    <span className={`${ICON_WRAP} ${b.iconBg}`}>
-                      <Icon className={`${ICON_SM} ${b.color}`} strokeWidth={1.75} />
+                    <span className={`${ICON_MD} ${b.iconBg}`}>
+                      <Icon className={`${ICON_MD_I} ${b.color}`} strokeWidth={1.75} />
                     </span>
                     <span className="text-sm font-medium text-slate-700">{b.t}</span>
                   </div>
@@ -242,7 +253,6 @@ export default function Page() {
               })}
             </div>
 
-            {/* CTA — mniejsze przyciski */}
             <div className="mt-6 flex flex-wrap gap-3">
               <BtnPrimary href="/login">
                 Załóż darmowe konto <ArrowRight className="h-4 w-4" />
@@ -252,7 +262,6 @@ export default function Page() {
               </a>
             </div>
 
-            {/* AI pill */}
             <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3.5 py-1.5 text-sm font-medium text-indigo-700">
               <Sparkles className="h-4 w-4 shrink-0 text-indigo-500" strokeWidth={1.75} />
               Wkrótce: Asystent AI do zarządzania rozwojem zawodowym
@@ -346,13 +355,14 @@ export default function Page() {
           </div>
 
           <div className="lg:col-span-7">
+            {/* problem cards — ICON_LG (48px) */}
             <div className="grid gap-3 sm:grid-cols-2">
               {problemCards.map((x) => {
                 const Icon = x.icon;
                 return (
-                  <div key={x.t} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md">
-                    <span className={`mb-3 ${ICON_WRAP} ${x.iconBg}`}>
-                      <Icon className={`${ICON_SM} ${x.color}`} strokeWidth={1.75} />
+                  <div key={x.t} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md">
+                    <span className={`mb-3 ${ICON_LG} ${x.iconBg}`}>
+                      <Icon className={`${ICON_LG_I} ${x.color}`} strokeWidth={1.75} />
                     </span>
                     <div className="text-sm font-semibold text-slate-900">{x.t}</div>
                     <div className="mt-1 text-sm leading-relaxed text-slate-600">{x.d}</div>
@@ -361,10 +371,9 @@ export default function Page() {
               })}
             </div>
 
-            {/* "CRPE porządkuje" — neutralny niebieski zamiast teal */}
-            <div className="mt-3 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-              <span className={`${ICON_WRAP} bg-blue-100`}>
-                <GraduationCap className={`${ICON_SM} text-blue-600`} strokeWidth={1.75} />
+            <div className="mt-3 flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+              <span className={`${ICON_LG} bg-blue-100 shrink-0`}>
+                <GraduationCap className={`${ICON_LG_I} text-blue-600`} strokeWidth={1.75} />
               </span>
               <div>
                 <p className="text-sm font-semibold text-slate-900">CRPE porządkuje to za Ciebie</p>
@@ -376,7 +385,7 @@ export default function Page() {
       </SectionCard>
 
       {/* ══════════════════════════════════════════════════════════════
-          JAK TO DZIAŁA
+          JAK TO DZIAŁA — nowa hierarchia: duża ikona + numer jako badge
       ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="mt-4">
         <div id="jak-to-dziala">
@@ -388,13 +397,15 @@ export default function Page() {
             {steps.map((x) => {
               const Icon = x.icon;
               return (
-                <div key={x.t} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md">
-                  <div className="mb-4 flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white">
-                      {x.n}
-                    </span>
-                    <span className={`${ICON_WRAP} ${x.iconBg}`}>
-                      <Icon className={`${ICON_SM} ${x.color}`} strokeWidth={1.75} />
+                <div key={x.t} className="relative rounded-2xl border border-slate-200 bg-slate-50 p-6 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md">
+                  {/* numer jako mały badge w górnym lewym rogu */}
+                  <span className="absolute left-4 top-4 flex h-6 w-6 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
+                    {x.n}
+                  </span>
+                  {/* duża ikona centrowana w karcie */}
+                  <div className="mb-4 mt-2 flex justify-center">
+                    <span className={`${ICON_LG} ${x.iconBg}`}>
+                      <Icon className={`${ICON_LG_I} ${x.color}`} strokeWidth={1.75} />
                     </span>
                   </div>
                   <div className="text-base font-semibold text-slate-900">{x.t}</div>
@@ -425,19 +436,18 @@ export default function Page() {
 
             <ul className="mt-6 space-y-2">
               {benefits.map(({ t, icon: Icon, iconBg, color }) => (
-                <li key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-                  <span className={`${ICON_WRAP} ${iconBg}`}>
-                    <Icon className={`${ICON_SM} ${color}`} strokeWidth={1.75} />
+                <li key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
+                  <span className={`${ICON_MD} ${iconBg}`}>
+                    <Icon className={`${ICON_MD_I} ${color}`} strokeWidth={1.75} />
                   </span>
                   <span className="text-sm font-medium text-slate-800">{t}</span>
                 </li>
               ))}
             </ul>
 
-            {/* PRO teaser — amber, bo to premium */}
             <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <span className={`${ICON_WRAP} bg-amber-100`}>
-                <FileText className={`${ICON_SM} text-amber-600`} strokeWidth={1.75} />
+              <span className={`${ICON_MD} bg-amber-100 shrink-0`}>
+                <FileText className={`${ICON_MD_I} text-amber-600`} strokeWidth={1.75} />
               </span>
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-amber-600">Wkrótce — PRO</p>
@@ -457,16 +467,15 @@ export default function Page() {
 
             <div className="mt-6 grid gap-2 sm:grid-cols-2">
               {professions.map(({ t, icon: Icon, iconBg, color }) => (
-                <div key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-                  <span className={`${ICON_WRAP} ${iconBg}`}>
-                    <Icon className={`${ICON_SM} ${color}`} strokeWidth={1.75} />
+                <div key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
+                  <span className={`${ICON_MD} ${iconBg}`}>
+                    <Icon className={`${ICON_MD_I} ${color}`} strokeWidth={1.75} />
                   </span>
                   <span className="text-sm font-medium text-slate-800">{t}</span>
                 </div>
               ))}
             </div>
 
-            {/* FIX: niebieski zamiast teal, bez ikony LockKeyhole — prosta ramka */}
             <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
               <p className="text-sm font-semibold text-slate-900">
                 Jeśli musisz zbierać punkty — CRPE jest dla Ciebie.
@@ -480,7 +489,7 @@ export default function Page() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
-          FAQ — nowy styl: border-divided list, pasuje do reszty strony
+          FAQ — każde pytanie to osobna karta, Plus/Minus zamiast chevron
       ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="mt-4">
         <div className="mx-auto max-w-2xl">
