@@ -14,10 +14,22 @@ import {
   BriefcaseMedical,
   FilePlus2,
   BarChart3,
+  Stethoscope,
+  Building2,
+  FileText,
+  Clock3,
 } from "lucide-react";
 
 import FeatureGrid from "@/components/FeatureGrid";
 import BottomCTA from "@/components/BottomCTA";
+
+type ProfileRow = {
+  user_id: string;
+  profession: string | null;
+  period_start: number | null;
+  period_end: number | null;
+  required_points: number | null;
+};
 
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
@@ -66,6 +78,29 @@ const HERO_FEATURES = [
     t: "Start za darmo",
     d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.",
     iconBox: "bg-blue-50 text-blue-600 ring-blue-100",
+  },
+];
+
+const TRUST_ITEMS = [
+  {
+    Icon: Stethoscope,
+    t: "Dla zawodów medycznych",
+    d: "Lekarze, pielęgniarki, fizjoterapeuci i inne profesje.",
+  },
+  {
+    Icon: FileText,
+    t: "Certyfikaty pod ręką",
+    d: "Dokumenty przypięte do aktywności, nie porozrzucane po mailach.",
+  },
+  {
+    Icon: Clock3,
+    t: "Mniej ręcznej pracy",
+    d: "Koniec z Excelem i liczeniem punktów na ostatnią chwilę.",
+  },
+  {
+    Icon: Building2,
+    t: "Także dla organizacji",
+    d: "Przestrzeń pod szkolenia, uczestników i raportowanie.",
   },
 ];
 
@@ -226,7 +261,12 @@ export default function Page() {
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start">
             {/* LEWA */}
             <div className="lg:col-span-7">
-              <h1 className="text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/75 px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm">
+                <span className="h-2 w-2 rounded-full bg-blue-600" />
+                Twoja ścieżka. Twoje punkty. Twój rozwój.
+              </div>
+
+              <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-slate-950 md:text-5xl">
                 Twój rozwój i kwalifikacje
                 <br />
                 <span className="font-bold text-blue-700">
@@ -239,7 +279,7 @@ export default function Page() {
                 aktualnym okresie rozliczeniowym. Prosto. Spokojnie. Bez Excela.
               </p>
 
-              <div className="mt-5 flex max-w-prose gap-3 rounded-3xl border border-blue-100 bg-white/75 p-4 text-slate-700 shadow-sm">
+              <div className="mt-5 flex max-w-prose gap-3 rounded-3xl border border-blue-100 bg-white/80 p-4 text-slate-700 shadow-sm">
                 <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
                   <ShieldCheck className="h-5 w-5" />
                 </div>
@@ -270,11 +310,11 @@ export default function Page() {
                 {HERO_FEATURES.map(({ Icon, iconBox, ...x }) => (
                   <div
                     key={x.t}
-                    className="rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/60 p-4 shadow-md transition-shadow hover:shadow-lg"
+                    className="rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-md transition-shadow hover:shadow-lg"
                   >
                     <div className="flex items-start gap-3">
                       <div
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-1 ${iconBox}`}
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ring-1 ${iconBox}`}
                       >
                         <Icon className="h-6 w-6" />
                       </div>
@@ -304,7 +344,7 @@ export default function Page() {
               <div className="relative mx-auto w-full max-w-[520px]">
                 <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-b from-blue-100/50 to-white blur-2xl" />
 
-                <div className="relative rounded-[28px] border border-slate-200/80 bg-white/70 p-5 shadow-md backdrop-blur transition-shadow hover:shadow-lg">
+                <div className="relative rounded-[28px] border border-slate-200/80 bg-white/80 p-5 shadow-xl shadow-blue-950/5 backdrop-blur transition-shadow hover:shadow-2xl">
                   <div className="text-sm font-semibold text-slate-900">
                     Podgląd statusu
                   </div>
@@ -385,6 +425,27 @@ export default function Page() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* TRUST STRIP */}
+          <div className="mt-10 rounded-[28px] border border-slate-200/80 bg-white/90 p-4 shadow-md">
+            <div className="grid gap-3 md:grid-cols-4">
+              {TRUST_ITEMS.map(({ Icon, t, d }) => (
+                <div key={t} className="flex gap-3 rounded-2xl p-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      {t}
+                    </div>
+                    <div className="mt-1 text-xs leading-relaxed text-slate-600">
+                      {d}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
