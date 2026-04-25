@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabaseBrowser";
@@ -292,6 +292,49 @@ export default function Page() {
               Platforma dla zawodów medycznych
             </div>
 
+            {/* Ilustracja B — chaos → CRPE, przed H1 */}
+            <div className="mb-5 flex items-center gap-4">
+              {/* PRZED: rozsypane dokumenty */}
+              <div className="relative h-16 w-14 shrink-0">
+                <div className="absolute left-1 top-2 h-12 w-9 rotate-[-8deg] rounded-lg border border-red-200 bg-red-50 p-1.5">
+                  <div className="mb-1 h-1 w-full rounded bg-red-200" />
+                  <div className="h-1 w-3/4 rounded bg-red-200" />
+                </div>
+                <div className="absolute left-2 top-0 h-12 w-9 rotate-[5deg] rounded-lg border border-amber-200 bg-amber-50 p-1.5">
+                  <div className="mb-1 h-1 w-full rounded bg-amber-200" />
+                  <div className="h-1 w-1/2 rounded bg-amber-200" />
+                </div>
+                <div className="absolute left-3 top-1 h-12 w-9 rotate-[-1deg] rounded-lg border border-violet-200 bg-violet-50 p-1.5">
+                  <div className="mb-1 h-1 w-full rounded bg-violet-200" />
+                  <div className="h-1 w-2/3 rounded bg-violet-200" />
+                </div>
+                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-red-400">CHAOS</span>
+              </div>
+
+              {/* strzałka */}
+              <svg className="h-5 w-5 shrink-0 text-blue-500" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+
+              {/* PO: ułożony dokument CRPE */}
+              <div className="relative h-16 w-14 shrink-0">
+                <div className="absolute left-2 top-1 h-12 w-10 rounded-lg border border-blue-200 bg-blue-50 p-1.5">
+                  <div className="mb-1 h-1 w-full rounded bg-blue-300" />
+                  <div className="mb-1 h-1 w-3/4 rounded bg-blue-200" />
+                  <div className="mb-1.5 h-1 w-1/2 rounded bg-blue-200" />
+                  <div className="flex items-center gap-1">
+                    <div className="h-2 w-2 rounded-full bg-emerald-400" />
+                    <div className="h-1 flex-1 rounded bg-emerald-200" />
+                  </div>
+                </div>
+                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-blue-500">CRPE</span>
+              </div>
+
+              <p className="text-sm text-slate-500">
+                Zamieniamy rozrzucone certyfikaty i notatki w jeden przejrzysty rejestr.
+              </p>
+            </div>
+
             {/* H1 — md:text-4xl zapobiega łamaniu na 3 linie */}
             <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
               Twój rozwój i kwalifikacje
@@ -496,24 +539,50 @@ export default function Page() {
           <h2 className="text-2xl font-bold text-slate-900">Jak to działa</h2>
           <p className="mt-1 text-base text-slate-600">Trzy proste kroki. Bez długiego wdrożenia.</p>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {steps.map((x) => {
+          {/* kroki z dekoracyjnymi numerami w tle + strzałki między */}
+          <div className="mt-8 grid items-start gap-0 md:grid-cols-[1fr_32px_1fr_32px_1fr]">
+            {steps.map((x, i) => {
               const Icon = x.icon;
+              const numBgColor = ["#dbeafe", "#fef3c7", "#f1f5f9"][i];
               return (
-                <div key={x.t} className="relative rounded-2xl border border-slate-200 bg-slate-50 p-6 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md">
-                  {/* numer badge — lewy górny róg */}
-                  <span className="absolute left-4 top-4 flex h-6 w-6 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
-                    {x.n}
-                  </span>
-                  {/* duża ikona XL wyśrodkowana */}
-                  <div className="mb-5 mt-3 flex justify-center">
-                    <span className={`${ICON_XL} ${x.iconBg}`}>
-                      <Icon className={`${ICON_XL_I} ${x.color}`} strokeWidth={1.5} />
+                <React.Fragment key={x.n}>
+                  <div
+                    className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-6 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
+                  >
+                    {/* duży dekoracyjny numer w tle prawego dolnego rogu */}
+                    <span
+                      className="pointer-events-none absolute -bottom-3 -right-2 select-none text-[80px] font-black leading-none"
+                      style={{ color: numBgColor }}
+                    >
+                      {x.n}
                     </span>
+
+                    {/* mały badge numeru + ikona XL */}
+                    <div className="relative mb-5 flex items-start gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
+                        {x.n}
+                      </span>
+                    </div>
+
+                    <div className="relative mb-4 flex justify-center">
+                      <span className={`${ICON_XL} ${x.iconBg}`}>
+                        <Icon className={`${ICON_XL_I} ${x.color}`} strokeWidth={1.5} />
+                      </span>
+                    </div>
+
+                    <div className="relative text-base font-semibold text-slate-900">{x.t}</div>
+                    <div className="relative mt-1.5 text-sm leading-relaxed text-slate-600">{x.d}</div>
                   </div>
-                  <div className="text-base font-semibold text-slate-900">{x.t}</div>
-                  <div className="mt-1.5 text-sm leading-relaxed text-slate-600">{x.d}</div>
-                </div>
+
+                  {/* strzałka między krokami — tylko między 1→2 i 2→3 */}
+                  {i < steps.length - 1 && (
+                    <div key={`arrow-${i}`} className="hidden items-center justify-center md:flex">
+                      <svg className="h-6 w-6 text-slate-300" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  )}
+                </React.Fragment>
               );
             })}
           </div>
