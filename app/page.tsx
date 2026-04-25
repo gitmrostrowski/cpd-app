@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabaseBrowser";
@@ -22,8 +22,10 @@ import {
   Minus,
   Pill,
   Plus,
+  Quote,
   ShieldCheck,
   Sparkles,
+  Star,
   Stethoscope,
   TrendingUp,
   UploadCloud,
@@ -48,13 +50,14 @@ function clamp(n: number, a: number, b: number) {
 }
 
 /* ─── rozmiary ikon ──────────────────────────────────────────────────────
-   LG (karty kroków, problem cards): kontener 48px, ikona 24px
-   MD (listy, hero bullets):         kontener 40px, ikona 20px
+   XL  (karty kroków):               kontener 64px, ikona 32px
+   LG  (problem cards, listy):       kontener 48px, ikona 24px
+   MD  (hero bullets, small items):  kontener 40px, ikona 20px
    ──────────────────────────────────────────────────────────────────────── */
+const ICON_XL   = "flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl";
+const ICON_XL_I = "h-8 w-8";
 const ICON_LG   = "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl";
 const ICON_LG_I = "h-6 w-6";
-const ICON_MD   = "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl";
-const ICON_MD_I = "h-5 w-5";
 
 /* ─── data ──────────────────────────────────────────────────────────────── */
 
@@ -94,6 +97,15 @@ const professions = [
   { t: "Nowe zawody medyczne",        icon: Users        },
 ];
 
+/* Izby / samorządy zawodowe */
+const izby = [
+  "Naczelna Izba Lekarska",
+  "Naczelna Izba Pielęgniarek i Położnych",
+  "Krajowa Izba Fizjoterapeutów",
+  "Naczelna Izba Aptekarska",
+  "Krajowa Izba Diagnostów Laboratoryjnych",
+];
+
 const demoEntries = [
   { name: "Konferencja kardiologiczna", pts: 20, cat: "Konferencja", dot: "bg-blue-500",  badge: "bg-blue-50 text-blue-700"    },
   { name: "Kurs e-learning EKG",        pts: 15, cat: "E-learning",  dot: "bg-slate-400", badge: "bg-slate-100 text-slate-600" },
@@ -105,6 +117,37 @@ const FAQ_ITEMS = [
   { q: "Czy mogę korzystać z telefonu?",                   a: "Tak. Możesz dodać certyfikat od razu po szkoleniu — nawet jako zdjęcie z telefonu."            },
   { q: "Czy korzystanie jest darmowe?",                    a: "Tak. Podstawowe funkcje są bezpłatne. Wkrótce pojawią się opcje PRO (PDF, przypomnienia)."     },
 ];
+
+/* ─── animowany licznik ──────────────────────────────────────────────────── */
+function useCounter(target: number, duration = 1200) {
+  const [value, setValue] = useState(0);
+  const started = useRef(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (started.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || started.current) return;
+        started.current = true;
+        const start = performance.now();
+        const tick = (now: number) => {
+          const progress = Math.min((now - start) / duration, 1);
+          // ease-out cubic
+          const eased = 1 - Math.pow(1 - progress, 3);
+          setValue(Math.round(eased * target));
+          if (progress < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      },
+      { threshold: 0.5 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [target, duration]);
+
+  return { value, ref };
+}
 
 /* ─── primitives ────────────────────────────────────────────────────────── */
 
@@ -142,7 +185,7 @@ function BtnSecondary({ href, children }: { href: string; children: React.ReactN
   );
 }
 
-/* FAQ — React state, Plus/Minus toggle, każde pytanie osobna karta */
+/* FAQ — React state, Plus/Minus, każde pytanie osobna karta */
 function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
   const [open, setOpen] = useState<number | null>(null);
   return (
@@ -171,13 +214,25 @@ function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
               </span>
             </button>
             {isOpen && (
-              <div className="border-t border-slate-100 px-5 pb-5 pt-3 text-sm leading-relaxed text-slate-700">
+              /* FIX: pt-2 zamiast pt-3 — więcej oddechu */
+              <div className="border-t border-slate-100 px-5 pb-5 pt-2 text-sm leading-relaxed text-slate-700">
                 {item.a}
               </div>
             )}
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/* ─── stat card z animowanym licznikiem ─────────────────────────────────── */
+function StatCard({ target, label, color = "text-slate-900" }: { target: number; label: string; color?: string }) {
+  const { value, ref } = useCounter(target);
+  return (
+    <div className="py-3 text-center">
+      <span ref={ref} className={`text-xl font-extrabold tabular-nums ${color}`}>{value}</span>
+      <div className="text-xs text-slate-500">{label}</div>
     </div>
   );
 }
@@ -237,7 +292,8 @@ export default function Page() {
               Platforma dla zawodów medycznych
             </div>
 
-            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl">
+            {/* H1 — md:text-4xl zapobiega łamaniu na 3 linie */}
+            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
               Twój rozwój i kwalifikacje
               <br />
               <span className="text-blue-600">w jednym miejscu.</span>
@@ -251,6 +307,7 @@ export default function Page() {
               </strong>
             </p>
 
+            {/* 4 bullet — ICON_LG (48px) w układzie 2×2 */}
             <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {heroBullets.map((b) => {
                 const Icon = b.icon;
@@ -274,13 +331,34 @@ export default function Page() {
               </a>
             </div>
 
-            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3.5 py-1.5 text-sm font-medium text-indigo-700">
+            {/* Social proof — bez liczb, ogólne */}
+            <div className="mt-5 flex items-center gap-3">
+              <div className="flex -space-x-1">
+                {["MK", "AT", "JP"].map((i) => (
+                  <span key={i} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-100 text-[10px] font-bold text-blue-700">
+                    {i}
+                  </span>
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="flex gap-0.5">
+                  {[1,2,3,4,5].map((s) => (
+                    <Star key={s} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <span className="text-sm text-slate-600">
+                  Używają specjaliści medyczni z całej Polski
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3.5 py-1.5 text-sm font-medium text-indigo-700">
               <Sparkles className="h-4 w-4 shrink-0 text-indigo-500" strokeWidth={1.75} />
               Wkrótce: Asystent AI do zarządzania rozwojem zawodowym
             </div>
           </div>
 
-          {/* RIGHT — status card */}
+          {/* RIGHT — status card z animowanymi licznikami */}
           <div>
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
               <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Podgląd statusu</p>
@@ -295,19 +373,11 @@ export default function Page() {
                 <div className="h-2.5 rounded-full bg-blue-600" style={{ width: `${demoPct}%` }} />
               </div>
 
-              <div className="mt-4 grid grid-cols-3 divide-x divide-slate-100 rounded-xl border border-slate-100 bg-slate-50 text-center">
-                <div className="py-3">
-                  <div className="text-xl font-extrabold text-slate-900">{demoHave}</div>
-                  <div className="text-xs text-slate-500">Masz (pkt)</div>
-                </div>
-                <div className="py-3">
-                  <div className="text-xl font-extrabold text-slate-900">{demoRequired}</div>
-                  <div className="text-xs text-slate-500">Cel (pkt)</div>
-                </div>
-                <div className="py-3">
-                  <div className="text-xl font-extrabold text-red-500">{demoMissing}</div>
-                  <div className="text-xs text-slate-500">Brakuje (pkt)</div>
-                </div>
+              {/* animowane liczniki */}
+              <div className="mt-4 grid grid-cols-3 divide-x divide-slate-100 rounded-xl border border-slate-100 bg-slate-50">
+                <StatCard target={demoHave}     label="Masz (pkt)"    />
+                <StatCard target={demoRequired} label="Cel (pkt)"     />
+                <StatCard target={demoMissing}  label="Brakuje (pkt)" color="text-red-500" />
               </div>
 
               <div className="mt-5">
@@ -331,6 +401,24 @@ export default function Page() {
           </div>
         </div>
       </SectionCard>
+
+      {/* ══════════════════════════════════════════════════════════════
+          PASEK IZB ZAWODOWYCH
+      ══════════════════════════════════════════════════════════════ */}
+      <div className="mx-auto mt-4 max-w-6xl px-4">
+        <div className="overflow-hidden rounded-2xl bg-white px-6 py-5 shadow-sm ring-1 ring-slate-200/60">
+          <p className="mb-4 text-center text-[11px] font-bold uppercase tracking-widest text-slate-400">
+            Platforma wspiera zawody regulowane przez
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+            {izby.map((nazwa) => (
+              <span key={nazwa} className="text-sm font-medium text-slate-500 transition hover:text-slate-700">
+                {nazwa}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* ══════════════════════════════════════════════════════════════
           PROBLEM
@@ -400,7 +488,7 @@ export default function Page() {
       </SectionCard>
 
       {/* ══════════════════════════════════════════════════════════════
-          JAK TO DZIAŁA
+          JAK TO DZIAŁA — ikony XL (64px)
       ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="mt-4">
         <div id="jak-to-dziala">
@@ -413,12 +501,14 @@ export default function Page() {
               const Icon = x.icon;
               return (
                 <div key={x.t} className="relative rounded-2xl border border-slate-200 bg-slate-50 p-6 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md">
+                  {/* numer badge — lewy górny róg */}
                   <span className="absolute left-4 top-4 flex h-6 w-6 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
                     {x.n}
                   </span>
-                  <div className="mb-4 mt-2 flex justify-center">
-                    <span className={`${ICON_LG} ${x.iconBg}`}>
-                      <Icon className={`${ICON_LG_I} ${x.color}`} strokeWidth={1.75} />
+                  {/* duża ikona XL wyśrodkowana */}
+                  <div className="mb-5 mt-3 flex justify-center">
+                    <span className={`${ICON_XL} ${x.iconBg}`}>
+                      <Icon className={`${ICON_XL_I} ${x.color}`} strokeWidth={1.5} />
                     </span>
                   </div>
                   <div className="text-base font-semibold text-slate-900">{x.t}</div>
@@ -431,6 +521,34 @@ export default function Page() {
           <div className="mt-7 flex flex-wrap gap-3">
             <BtnPrimary href="/login">Zacznij za darmo <ArrowRight className="h-4 w-4" /></BtnPrimary>
             <BtnSecondary href="/rejestracja">Utwórz konto</BtnSecondary>
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* ══════════════════════════════════════════════════════════════
+          TESTIMONIAL
+      ══════════════════════════════════════════════════════════════ */}
+      <SectionCard className="mt-4">
+        <div className="flex flex-col items-center text-center md:flex-row md:items-start md:gap-8 md:text-left">
+          <div className="mb-4 flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-blue-700 md:mb-0">
+            AK
+          </div>
+          <div>
+            <Quote className="mb-2 h-6 w-6 text-blue-200" strokeWidth={1.5} />
+            <p className="text-base leading-relaxed text-slate-700 md:text-lg">
+              „Wcześniej trzymałam wszystko w Excelu i modliłam się żeby nie zgubić certyfikatów.
+              Teraz dodaję wpis od razu po szkoleniu — z telefonem. Przed audytem mam wszystko gotowe
+              w kilka minut, a nie w kilka godzin."
+            </p>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 md:justify-start">
+              <div className="flex gap-0.5">
+                {[1,2,3,4,5].map((s) => (
+                  <Star key={s} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              <span className="text-sm font-semibold text-slate-900">Anna K.</span>
+              <span className="text-sm text-slate-500">Pielęgniarka, Kraków</span>
+            </div>
           </div>
         </div>
       </SectionCard>
