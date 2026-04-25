@@ -6,6 +6,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabaseBrowser";
+import {
+  FolderCheck,
+  SquareCheck,
+  ShieldCheck,
+  Rocket,
+  BriefcaseMedical,
+  FilePlus2,
+  BarChart3,
+} from "lucide-react";
 
 import FeatureGrid from "@/components/FeatureGrid";
 import BottomCTA from "@/components/BottomCTA";
@@ -41,6 +50,50 @@ const FAQ_ITEMS = [
   },
 ];
 
+const HERO_FEATURES = [
+  {
+    Icon: FolderCheck,
+    t: "Porządek bez wysiłku",
+    d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",
+  },
+  {
+    Icon: SquareCheck,
+    t: "Jasny status punktów",
+    d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",
+  },
+  {
+    Icon: ShieldCheck,
+    t: "Bezpieczne dane",
+    d: "Dostęp masz tylko Ty. Dane są przechowywane w UE.",
+  },
+  {
+    Icon: Rocket,
+    t: "Start za darmo",
+    d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.",
+  },
+];
+
+const HOW_IT_WORKS = [
+  {
+    Icon: BriefcaseMedical,
+    n: "1",
+    t: "Wybierz zawód",
+    d: "System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.",
+  },
+  {
+    Icon: FilePlus2,
+    n: "2",
+    t: "Dodaj aktywność",
+    d: "Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.",
+  },
+  {
+    Icon: BarChart3,
+    n: "3",
+    t: "Sprawdzaj postęp",
+    d: "Zawsze wiesz, ile punktów masz i czego brakuje.",
+  },
+];
+
 function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-slate-50 p-2 md:p-3">
@@ -48,7 +101,7 @@ function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
         {items.map((item) => (
           <details
             key={item.q}
-            className="group rounded-2xl border border-slate-200 bg-white px-4 md:px-5 shadow-sm transition-shadow hover:shadow-md"
+            className="group rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition-shadow hover:shadow-md md:px-5"
           >
             <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-left text-sm font-semibold text-slate-900">
               <span>{item.q}</span>
@@ -180,7 +233,9 @@ export default function Page() {
               <h1 className="text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl">
                 Twój rozwój i kwalifikacje
                 <br />
-                <span className="font-bold text-blue-700">w jednym miejscu.</span>
+                <span className="font-bold text-blue-700">
+                  w jednym miejscu.
+                </span>
               </h1>
 
               <p className="mt-5 max-w-prose text-lg leading-relaxed text-slate-600">
@@ -210,34 +265,24 @@ export default function Page() {
               </div>
 
               <div className="mt-9 grid gap-3 sm:grid-cols-2">
-                {[
-                  {
-                    t: "Porządek bez wysiłku",
-                    d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",
-                  },
-                  {
-                    t: "Jasny status punktów",
-                    d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",
-                  },
-                  {
-                    t: "Bezpieczne dane",
-                    d: "Dostęp masz tylko Ty. Dane są przechowywane w UE.",
-                  },
-                  {
-                    t: "Start za darmo",
-                    d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.",
-                  },
-                ].map((x) => (
+                {HERO_FEATURES.map(({ Icon, ...x }) => (
                   <div
                     key={x.t}
                     className="rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/60 p-4 shadow-md transition-shadow hover:shadow-lg"
                   >
-                    <div className="flex items-center gap-2 text-base font-semibold text-slate-900">
-                      <span className="h-2 w-2 rounded-full bg-blue-600" />
-                      {x.t}
-                    </div>
-                    <div className="mt-1 text-sm leading-relaxed text-slate-600">
-                      {x.d}
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 ring-1 ring-teal-100">
+                        <Icon className="h-6 w-6" />
+                      </div>
+
+                      <div>
+                        <div className="text-base font-semibold text-slate-900">
+                          {x.t}
+                        </div>
+                        <div className="mt-1 text-sm leading-relaxed text-slate-600">
+                          {x.d}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -438,7 +483,10 @@ export default function Page() {
       </section>
 
       {/* JAK TO DZIAŁA */}
-      <section id="jak-to-dziala" className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+      <section
+        id="jak-to-dziala"
+        className="mx-auto max-w-6xl px-4 py-12 md:py-16"
+      >
         <div className="rounded-[32px] border border-slate-200 bg-slate-50 p-6 shadow-sm md:p-10">
           <div className="max-w-2xl">
             <h2 className="text-3xl font-extrabold text-slate-900">
@@ -450,31 +498,22 @@ export default function Page() {
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {[
-              {
-                n: "1",
-                t: "Wybierz zawód",
-                d: "System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.",
-              },
-              {
-                n: "2",
-                t: "Dodaj aktywność",
-                d: "Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.",
-              },
-              {
-                n: "3",
-                t: "Sprawdzaj postęp",
-                d: "Zawsze wiesz, ile punktów masz i czego brakuje.",
-              },
-            ].map((x) => (
+            {HOW_IT_WORKS.map(({ Icon, ...x }) => (
               <div
                 key={x.t}
                 className="rounded-3xl border border-slate-200 bg-white p-5 shadow-md transition-shadow hover:shadow-lg"
               >
-                <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
-                  {x.n}
+                <div className="flex items-center gap-3">
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 ring-1 ring-teal-100">
+                    <Icon className="h-6 w-6" />
+                  </div>
+
+                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+                    {x.n}
+                  </div>
                 </div>
-                <div className="mt-3 text-base font-semibold text-slate-900">
+
+                <div className="mt-4 text-base font-semibold text-slate-900">
                   {x.t}
                 </div>
                 <div className="mt-1 text-sm leading-relaxed text-slate-600">
