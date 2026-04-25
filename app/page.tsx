@@ -14,20 +14,20 @@ import {
   Check,
   ClipboardCheck,
   FileText,
+  FlaskConical,
   FolderOpen,
   GraduationCap,
+  HeartPulse,
   LockKeyhole,
   Mail,
+  Pill,
   ShieldCheck,
   Sparkles,
+  Stethoscope,
   TrendingUp,
   UploadCloud,
-  UserRoundCheck,
-  Stethoscope,
-  HeartPulse,
-  Pill,
-  FlaskConical,
   UserCog,
+  UserRoundCheck,
   Users,
 } from "lucide-react";
 
@@ -46,103 +46,29 @@ function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
-/* ─── colour system ──────────────────────────────────────────────────────────
-   blue-600   — brand primary (CTA, progress, numbers)
-   amber-500  — warm complement (points, PRO badge, highlights)
-   teal-600   — calm support (security, success states)
-   indigo-500 — AI / premium (sparkles pill)
-   ─────────────────────────────────────────────────────────────────────────── */
+/* ─── data ──────────────────────────────────────────────────────────────── */
 
-const heroCards = [
-  {
-    t: "Porządek bez wysiłku",
-    d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",
-    icon: FolderOpen,
-    iconBg: "bg-blue-50",
-    color: "text-blue-600",
-  },
-  {
-    t: "Jasny status punktów",
-    d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",
-    icon: BarChart3,
-    iconBg: "bg-amber-50",
-    color: "text-amber-500",
-  },
-  {
-    t: "Bezpieczne dane",
-    d: "Dostęp masz tylko Ty. Dane są przechowywane w UE.",
-    icon: ShieldCheck,
-    iconBg: "bg-teal-50",
-    color: "text-teal-600",
-  },
-  {
-    t: "Start za darmo",
-    d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.",
-    icon: Sparkles,
-    iconBg: "bg-indigo-50",
-    color: "text-indigo-500",
-  },
+// Hero — 4 bullet points (ikona + tekst, bez kart)
+const heroBullets = [
+  { t: "Wpisy i certyfikaty w jednym miejscu",          icon: FolderOpen,  color: "text-blue-600"   },
+  { t: "Jasny status punktów w aktualnym okresie",      icon: BarChart3,   color: "text-amber-500"  },
+  { t: "Dane bezpieczne, przechowywane w UE",           icon: ShieldCheck, color: "text-teal-600"   },
+  { t: "Podstawowe funkcje całkowicie bezpłatne",       icon: Sparkles,    color: "text-indigo-500" },
 ];
 
 const problemCards = [
-  {
-    t: "Certyfikaty w mailach",
-    d: "Trudno je znaleźć, gdy są potrzebne.",
-    icon: Mail,
-    iconBg: "bg-blue-50",
-    color: "text-blue-600",
-  },
-  {
-    t: "Zdjęcia w telefonie",
-    d: "Nie wiesz, co było do czego i z którego roku.",
-    icon: Camera,
-    iconBg: "bg-amber-50",
-    color: "text-amber-500",
-  },
-  {
-    t: "Excel i notatki",
-    d: "Wymaga pilnowania i łatwo o braki.",
-    icon: FileText,
-    iconBg: "bg-indigo-50",
-    color: "text-indigo-500",
-  },
-  {
-    t: "Brak pewności",
-    d: "Czy na pewno masz komplet punktów i dokumentów?",
-    icon: ClipboardCheck,
-    iconBg: "bg-teal-50",
-    color: "text-teal-600",
-  },
+  { t: "Certyfikaty w mailach",   d: "Trudno je znaleźć, gdy są potrzebne.",             icon: Mail,          iconBg: "bg-blue-50",   color: "text-blue-600"   },
+  { t: "Zdjęcia w telefonie",     d: "Nie wiesz, co było do czego i z którego roku.",    icon: Camera,        iconBg: "bg-amber-50",  color: "text-amber-500"  },
+  { t: "Excel i notatki",         d: "Wymaga pilnowania i łatwo o braki.",               icon: FileText,      iconBg: "bg-indigo-50", color: "text-indigo-500" },
+  { t: "Brak pewności",           d: "Czy na pewno masz komplet punktów i dokumentów?", icon: ClipboardCheck, iconBg: "bg-teal-50",  color: "text-teal-600"   },
 ];
 
 const steps = [
-  {
-    n: "1",
-    t: "Wybierz zawód",
-    d: "System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.",
-    icon: UserRoundCheck,
-    iconBg: "bg-blue-50",
-    color: "text-blue-600",
-  },
-  {
-    n: "2",
-    t: "Dodaj aktywność",
-    d: "Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.",
-    icon: UploadCloud,
-    iconBg: "bg-amber-50",
-    color: "text-amber-500",
-  },
-  {
-    n: "3",
-    t: "Sprawdzaj postęp",
-    d: "Zawsze wiesz, ile punktów masz i czego brakuje.",
-    icon: TrendingUp,
-    iconBg: "bg-teal-50",
-    color: "text-teal-600",
-  },
+  { n: "1", t: "Wybierz zawód",     d: "System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.", icon: UserRoundCheck, iconBg: "bg-blue-50",  color: "text-blue-600"  },
+  { n: "2", t: "Dodaj aktywność",   d: "Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.",           icon: UploadCloud,   iconBg: "bg-amber-50", color: "text-amber-500" },
+  { n: "3", t: "Sprawdzaj postęp",  d: "Zawsze wiesz, ile punktów masz i czego brakuje.",                                 icon: TrendingUp,    iconBg: "bg-teal-50",  color: "text-teal-600"  },
 ];
 
-// FIX: rotacja kolorów ikon — nie wszystkie blue-600
 const benefits = [
   { t: "Historia wszystkich aktywności w jednym miejscu", icon: BookOpen,      iconBg: "bg-blue-50",   color: "text-blue-600"   },
   { t: "Certyfikaty zawsze pod ręką (PDF / zdjęcia)",     icon: Award,         iconBg: "bg-amber-50",  color: "text-amber-500"  },
@@ -150,421 +76,221 @@ const benefits = [
   { t: "Gotowość do przygotowania raportu",               icon: CalendarCheck, iconBg: "bg-indigo-50", color: "text-indigo-500" },
 ];
 
-// FIX: dedykowane ikony zawodów + rotacja kolorów
 const professions = [
-  { t: "Lekarze i lekarze dentyści",  icon: Stethoscope,  iconBg: "bg-blue-50",   color: "text-blue-600"   },
-  { t: "Pielęgniarki i położne",      icon: HeartPulse,   iconBg: "bg-teal-50",   color: "text-teal-600"   },
-  { t: "Fizjoterapeuci",              icon: UserCog,      iconBg: "bg-amber-50",  color: "text-amber-500"  },
-  { t: "Farmaceuci",                  icon: Pill,         iconBg: "bg-indigo-50", color: "text-indigo-500" },
-  { t: "Diagności laboratoryjni",     icon: FlaskConical, iconBg: "bg-teal-50",   color: "text-teal-600"   },
-  { t: "Nowe zawody medyczne",        icon: Users,        iconBg: "bg-blue-50",   color: "text-blue-600"   },
+  { t: "Lekarze i lekarze dentyści",  icon: Stethoscope,   iconBg: "bg-blue-50",   color: "text-blue-600"   },
+  { t: "Pielęgniarki i położne",      icon: HeartPulse,    iconBg: "bg-teal-50",   color: "text-teal-600"   },
+  { t: "Fizjoterapeuci",              icon: UserCog,       iconBg: "bg-amber-50",  color: "text-amber-500"  },
+  { t: "Farmaceuci",                  icon: Pill,          iconBg: "bg-indigo-50", color: "text-indigo-500" },
+  { t: "Diagności laboratoryjni",     icon: FlaskConical,  iconBg: "bg-teal-50",   color: "text-teal-600"   },
+  { t: "Nowe zawody medyczne",        icon: Users,         iconBg: "bg-blue-50",   color: "text-blue-600"   },
 ];
 
+// Kompaktowe demo — tylko 2 wpisy
 const demoEntries = [
-  { name: "Konferencja kardiologiczna", pts: 20, cat: "Konferencja", dot: "bg-blue-500",  badge: "bg-blue-50 text-blue-700"  },
-  { name: "Kurs e-learning EKG",        pts: 15, cat: "E-learning",  dot: "bg-teal-500",  badge: "bg-teal-50 text-teal-700"  },
-  { name: "Szkolenie wewnętrzne",       pts: 10, cat: "Szkolenie",   dot: "bg-amber-400", badge: "bg-amber-50 text-amber-700" },
+  { name: "Konferencja kardiologiczna", pts: 20, cat: "Konferencja", dot: "bg-blue-500",  badge: "bg-blue-50 text-blue-700"   },
+  { name: "Kurs e-learning EKG",        pts: 15, cat: "E-learning",  dot: "bg-teal-500",  badge: "bg-teal-50 text-teal-700"   },
 ];
 
 const FAQ_ITEMS = [
-  {
-    q: "Czy CRPE jest połączone z systemami państwowymi?",
-    a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte.",
-  },
-  {
-    q: "Czy moje certyfikaty są bezpieczne?",
-    a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE.",
-  },
-  {
-    q: "Czy mogę korzystać z telefonu?",
-    a: "Tak. Możesz dodać certyfikat od razu po szkoleniu — nawet jako zdjęcie z telefonu.",
-  },
-  {
-    q: "Czy korzystanie jest darmowe?",
-    a: "Tak. Podstawowe funkcje są bezpłatne. Wkrótce pojawią się opcje PRO (PDF, przypomnienia).",
-  },
+  { q: "Czy CRPE jest połączone z systemami państwowymi?", a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte."                },
+  { q: "Czy moje certyfikaty są bezpieczne?",              a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE."                       },
+  { q: "Czy mogę korzystać z telefonu?",                   a: "Tak. Możesz dodać certyfikat od razu po szkoleniu — nawet jako zdjęcie z telefonu."                         },
+  { q: "Czy korzystanie jest darmowe?",                    a: "Tak. Podstawowe funkcje są bezpłatne. Wkrótce pojawią się opcje PRO (PDF, przypomnienia)."                  },
 ];
 
 function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
-      <div className="space-y-1.5">
-        {items.map((item) => (
-          <details
-            key={item.q}
-            className="group rounded-xl border border-slate-200 bg-white px-4 shadow-sm transition-shadow hover:shadow-md md:px-5"
-          >
-            <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-left text-sm font-semibold text-slate-900">
-              <span>{item.q}</span>
-              <span className="ml-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50">
-                <svg
-                  className="h-3.5 w-3.5 text-slate-500 transition-transform duration-200 group-open:rotate-180"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M6 9l6 6 6-6"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </summary>
-            <div className="pb-4 pt-1 text-sm leading-relaxed text-slate-700">
-              {item.a}
-            </div>
-          </details>
-        ))}
-      </div>
+    <div className="space-y-2">
+      {items.map((item) => (
+        <details
+          key={item.q}
+          className="group rounded-2xl border border-slate-200 bg-white px-5 shadow-sm transition-shadow hover:shadow-md"
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-left text-sm font-semibold text-slate-900">
+            <span>{item.q}</span>
+            <span className="ml-4 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50">
+              <svg className="h-3.5 w-3.5 text-slate-500 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          </summary>
+          <div className="pb-4 pt-1 text-sm leading-relaxed text-slate-700">{item.a}</div>
+        </details>
+      ))}
     </div>
   );
 }
 
+/* ─── eyebrow helper ────────────────────────────────────────────────────── */
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+      {children}
+    </div>
+  );
+}
+
+/* ─── page ──────────────────────────────────────────────────────────────── */
 export default function Page() {
   const supabase = useMemo(() => createBrowserSupabase(), []);
-  const router = useRouter();
+  const router   = useRouter();
 
-  const [checking, setChecking] = useState(true);
+  const [checking,   setChecking]   = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     let alive = true;
-
     async function run() {
       setChecking(true);
       const { data: auth, error: authError } = await supabase.auth.getUser();
       if (!alive) return;
-
-      if (authError) {
-        console.error(authError);
-        setIsLoggedIn(false);
-        setChecking(false);
-        return;
-      }
-
+      if (authError) { setIsLoggedIn(false); setChecking(false); return; }
       const user = auth?.user ?? null;
-
-      if (!user) {
-        setIsLoggedIn(false);
-        setChecking(false);
-        return;
-      }
-
+      if (!user) { setIsLoggedIn(false); setChecking(false); return; }
       setIsLoggedIn(true);
-
       const { data: profile, error: profErr } = await supabase
         .from("profiles")
         .select("user_id, profession, period_start, period_end, required_points")
         .eq("user_id", user.id)
         .maybeSingle<ProfileRow>();
-
       if (!alive) return;
       if (profErr) console.warn("profiles error:", profErr.message);
-
-      if (!profile) {
-        router.replace("/start");
-        return;
-      }
-      router.replace("/kalkulator");
+      router.replace(profile ? "/kalkulator" : "/start");
     }
-
     run();
     return () => { alive = false; };
   }, [router, supabase]);
 
-  if (checking) {
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="rounded-2xl border bg-white p-6 text-slate-700">Sprawdzam sesję…</div>
-      </div>
-    );
-  }
-
-  if (isLoggedIn) {
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="rounded-2xl border bg-white p-6 text-slate-700">Przenoszę do Centrum…</div>
-      </div>
-    );
-  }
+  if (checking)   return <div className="mx-auto max-w-6xl px-4 py-10"><div className="rounded-2xl border bg-white p-6 text-slate-700">Sprawdzam sesję…</div></div>;
+  if (isLoggedIn) return <div className="mx-auto max-w-6xl px-4 py-10"><div className="rounded-2xl border bg-white p-6 text-slate-700">Przenoszę do Centrum…</div></div>;
 
   const demoRequired = 200;
-  const demoHave = 110;
-  const demoPct = clamp((demoHave / demoRequired) * 100, 0, 100);
-  const demoMissing = Math.max(0, demoRequired - demoHave);
+  const demoHave     = 110;
+  const demoPct      = clamp((demoHave / demoRequired) * 100, 0, 100);
+  const demoMissing  = Math.max(0, demoRequired - demoHave);
 
   return (
     <>
       {/* ══════════════════════════════════════════════════════════════
-          HERO
+          1. HERO — białe tło, dużo powietrza u góry
       ══════════════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-blue-50/60 via-white to-white" />
-        <div className="pointer-events-none absolute left-[-8%] top-[-20%] h-[32rem] w-[32rem] rounded-full bg-blue-200/25 blur-3xl" />
-        <div className="pointer-events-none absolute right-[-10%] top-[10%] h-[24rem] w-[24rem] rounded-full bg-indigo-200/20 blur-3xl" />
+      <section className="relative overflow-hidden bg-white">
+        {/* subtelny gradient tylko w tle */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50/50 via-white to-white" />
+        <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-blue-100/40 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 top-16 h-72 w-72 rounded-full bg-indigo-100/30 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl px-4 pb-10 pt-10 md:pt-14">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start">
+        <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-20 md:pt-24">
+          <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12">
 
             {/* ── LEFT ── */}
-            <div className="lg:col-span-7">
-              {/* eyebrow */}
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold text-blue-700">
+            <div className="lg:col-span-6">
+              {/* eyebrow pill */}
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold text-blue-700">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                 Platforma dla zawodów medycznych
               </div>
 
-              <h1 className="text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl">
-                Twój rozwój i kwalifikacje
-                <br />
+              <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl lg:text-[52px]">
+                Twój rozwój<br />
+                i kwalifikacje<br />
                 <span className="text-blue-600">w jednym miejscu.</span>
               </h1>
 
-              <p className="mt-4 max-w-prose text-lg leading-relaxed text-slate-700">
-                Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w
-                aktualnym okresie rozliczeniowym.{" "}
-                <span className="font-semibold text-slate-900">
-                  Prosto. Spokojnie. Bez Excela.
-                </span>
+              <p className="mt-5 text-lg leading-relaxed text-slate-700">
+                Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp
+                w aktualnym okresie rozliczeniowym.{" "}
+                <strong className="font-semibold text-slate-900">Prosto. Spokojnie. Bez Excela.</strong>
               </p>
 
-              <p className="mt-3 max-w-prose text-base leading-relaxed text-blue-600">
-                Platforma umożliwia monitorowanie aktywności edukacyjnej i postępów
-                uczestników oraz wspiera organizacje w zarządzaniu procesem
-                edukacyjnym i obowiązkami regulacyjnymi.
+              <p className="mt-3 text-base leading-relaxed text-blue-600">
+                Platforma umożliwia monitorowanie aktywności edukacyjnej i postępów uczestników
+                oraz wspiera organizacje w zarządzaniu procesem edukacyjnym i obowiązkami regulacyjnymi.
               </p>
 
-              <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
-                >
+              {/* CTA */}
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
                   Załóż darmowe konto
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <a
-                  href="#jak-to-dziala"
-                  className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-200 transition hover:bg-blue-50/50"
-                >
+                <a href="#jak-to-dziala" className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-200 transition hover:bg-blue-50">
                   Zobacz jak to działa
                 </a>
               </div>
 
-              {/* hero feature cards */}
-              <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                {heroCards.map((x) => {
-                  const Icon = x.icon;
+              {/* 4 bullet points — bez kart, tylko ikona+tekst */}
+              <ul className="mt-8 space-y-3">
+                {heroBullets.map((b) => {
+                  const Icon = b.icon;
                   return (
-                    <div
-                      key={x.t}
-                      className="flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                    >
-                      <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${x.iconBg}`}>
-                        <Icon className={`h-5 w-5 ${x.color}`} strokeWidth={1.75} />
-                      </span>
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">{x.t}</div>
-                        <div className="mt-0.5 text-sm leading-relaxed text-slate-600">{x.d}</div>
-                      </div>
-                    </div>
+                    <li key={b.t} className="flex items-center gap-3">
+                      <Icon className={`h-5 w-5 shrink-0 ${b.color}`} strokeWidth={1.75} />
+                      <span className="text-sm font-medium text-slate-700">{b.t}</span>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
 
               {/* AI pill */}
-              <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700">
+              <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700">
                 <Sparkles className="h-4 w-4 text-indigo-500" strokeWidth={1.75} />
-                Wkrótce: Inteligentny asystent AI do tworzenia i zarządzania Twoim rozwojem zawodowym
+                Wkrótce: Inteligentny asystent AI do zarządzania rozwojem zawodowym
               </div>
             </div>
 
-            {/* ── RIGHT — status card ── */}
-            <div className="lg:col-span-5">
-              <div className="relative mx-auto w-full max-w-[460px]">
-                <div className="absolute -inset-4 rounded-[36px] bg-gradient-to-b from-blue-100/40 to-white blur-2xl" />
+            {/* ── RIGHT — kompaktowa karta statusu ── */}
+            <div className="lg:col-span-6">
+              <div className="relative mx-auto w-full max-w-[420px] lg:ml-auto">
+                <div className="absolute -inset-3 rounded-[32px] bg-blue-50/60 blur-xl" />
+                <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-lg">
 
-                <div className="relative rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-lg">
-                  {/* card header */}
-                  <div className="mb-0.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                    Podgląd statusu
-                  </div>
-                  <div className="text-base font-semibold text-slate-900">Aktualny okres rozliczeniowy</div>
-                  <div className="mb-4 mt-0.5 text-sm text-slate-500">
-                    To przykład. Po zalogowaniu zobaczysz swoje realne dane.
-                  </div>
+                  <div className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Podgląd statusu</div>
+                  <div className="text-base font-bold text-slate-900">Aktualny okres rozliczeniowy</div>
+                  <div className="mt-0.5 mb-5 text-sm text-slate-500">To przykład. Po zalogowaniu zobaczysz swoje realne dane.</div>
 
                   {/* progress */}
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                    <div className="mb-2 flex items-center justify-between text-sm">
-                      <span className="text-slate-600">Postęp w okresie</span>
-                      <span className="font-bold text-slate-800">{Math.round(demoPct)}%</span>
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                      <div
-                        className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
-                        style={{ width: `${demoPct}%` }}
-                      />
-                    </div>
-                    <div className="mt-3 grid grid-cols-3 text-center text-sm">
-                      <div>
-                        <div className="font-bold text-slate-900">{demoHave} pkt</div>
-                        <div className="text-slate-500">Masz</div>
-                      </div>
-                      <div className="border-x border-slate-200">
-                        <div className="font-bold text-slate-900">{demoRequired} pkt</div>
-                        <div className="text-slate-500">Cel</div>
-                      </div>
-                      <div>
-                        <div className="font-bold text-red-500">{demoMissing} pkt</div>
-                        <div className="text-slate-500">Brakuje</div>
-                      </div>
-                    </div>
+                  <div className="mb-1 flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Postęp w okresie</span>
+                    <span className="font-bold text-slate-800">{Math.round(demoPct)}%</span>
+                  </div>
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-2.5 rounded-full bg-blue-600 transition-all" style={{ width: `${demoPct}%` }} />
                   </div>
 
-                  {/* FIX: usunięty screenshot — wystarczą wpisy jako demo */}
-                  {/* recent entries */}
-                  <div className="mt-4">
-                    <div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                      Ostatnie wpisy
-                    </div>
-                    <div className="space-y-2">
-                      {demoEntries.map((e) => (
-                        <div
-                          key={e.name}
-                          className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5"
-                        >
-                          <span className={`h-2 w-2 shrink-0 rounded-full ${e.dot}`} />
-                          <span className="flex-1 text-sm font-medium text-slate-800">{e.name}</span>
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${e.badge}`}>
-                            {e.cat}
-                          </span>
-                          <span className="text-sm font-bold text-blue-600">+{e.pts} pkt</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* PRO teaser */}
-                  <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/60 p-3.5">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100">
-                      <FileText className="h-4 w-4 text-amber-600" strokeWidth={1.75} />
-                    </span>
+                  <div className="mt-3 grid grid-cols-3 text-center text-sm">
                     <div>
-                      <div className="text-xs font-bold uppercase tracking-widest text-amber-600">
-                        Wkrótce — PRO
-                      </div>
-                      <div className="mt-0.5 text-sm font-semibold text-slate-900">
-                        Raport PDF i przypomnienia
-                      </div>
-                      <div className="mt-0.5 text-sm text-slate-600">
-                        Eksport raportu do PDF oraz automatyczne przypomnienia o brakujących punktach.
-                      </div>
+                      <div className="text-lg font-extrabold text-slate-900">{demoHave}</div>
+                      <div className="text-xs text-slate-500">Masz (pkt)</div>
                     </div>
-                  </div>
-
-                  {/* CTA inside card */}
-                  <div className="mt-4">
-                    <Link
-                      href="/login"
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-                    >
-                      Zaloguj się, aby zobaczyć swój status
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ══════════════════════════════════════════════════════════════
-              PROBLEM
-          ══════════════════════════════════════════════════════════════ */}
-          {/* FIX: mt-10 zamiast mt-14 — mniejszy odstęp */}
-          <div className="mt-10 rounded-[28px] border border-slate-200/80 bg-white p-6 shadow-sm md:p-10">
-            <div className="grid gap-8 lg:grid-cols-12 lg:items-stretch">
-
-              <div className="lg:col-span-5">
-                <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                  Rozwiązanie
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900">
-                  Z czym się dziś mierzysz?
-                </h2>
-                <p className="mt-2 text-base leading-relaxed text-slate-600">
-                  Jeśli zbierasz punkty edukacyjne, łatwo o chaos — szczególnie
-                  gdy wszystko jest porozrzucane po wielu miejscach.
-                </p>
-
-                <div className="mt-5 space-y-2.5">
-                  {[
-                    "Wiesz, co masz — i gdzie to jest.",
-                    "Widzisz postęp bez liczenia w Excelu.",
-                    "Masz certyfikaty przypięte do aktywności.",
-                  ].map((t) => (
-                    <div
-                      key={t}
-                      className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
-                    >
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600">
-                        <Check className="h-3 w-3 text-white" strokeWidth={2.5} />
-                      </span>
-                      <span className="text-sm font-medium text-slate-800">{t}</span>
+                    <div className="border-x border-slate-100">
+                      <div className="text-lg font-extrabold text-slate-900">{demoRequired}</div>
+                      <div className="text-xs text-slate-500">Cel (pkt)</div>
                     </div>
-                  ))}
-                </div>
-
-                <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-                  <div className="mb-1.5 text-xs font-bold uppercase tracking-widest text-blue-600">
-                    Najczęstszy scenariusz
-                  </div>
-                  <p className="text-sm leading-relaxed text-slate-700">
-                    „Dodam to później." A potem brakuje certyfikatu albo nie
-                    wiadomo, z którego roku był kurs.
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-slate-900">
-                    CRPE pomaga to ogarnąć spokojnie.
-                  </p>
-                </div>
-              </div>
-
-              <div className="lg:col-span-7">
-                <div className="relative h-full overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 p-5 md:p-6">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {problemCards.map((x) => {
-                      const Icon = x.icon;
-                      return (
-                        <div
-                          key={x.t}
-                          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                        >
-                          {/* FIX: iconBg zawsze obecne — spójność z heroCards */}
-                          <span className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${x.iconBg}`}>
-                            <Icon className={`h-5 w-5 ${x.color}`} strokeWidth={1.75} />
-                          </span>
-                          <div className="text-sm font-semibold text-slate-900">{x.t}</div>
-                          <div className="mt-1 text-sm leading-relaxed text-slate-600">{x.d}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="mt-3 flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50/60 p-4">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-100">
-                      <GraduationCap className="h-4 w-4 text-teal-600" strokeWidth={1.75} />
-                    </span>
                     <div>
-                      <div className="text-sm font-semibold text-slate-900">
-                        CRPE porządkuje to za Ciebie
-                      </div>
-                      <div className="mt-0.5 text-sm leading-relaxed text-slate-600">
-                        Wpisy, certyfikaty i status punktów masz w jednym miejscu — spokojnie i czytelnie.
-                      </div>
+                      <div className="text-lg font-extrabold text-red-500">{demoMissing}</div>
+                      <div className="text-xs text-slate-500">Brakuje (pkt)</div>
                     </div>
                   </div>
+
+                  {/* 2 ostatnie wpisy */}
+                  <div className="mt-5 space-y-2">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ostatnie wpisy</div>
+                    {demoEntries.map((e) => (
+                      <div key={e.name} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${e.dot}`} />
+                        <span className="flex-1 text-sm font-medium text-slate-800">{e.name}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${e.badge}`}>{e.cat}</span>
+                        <span className="text-sm font-bold text-blue-600">+{e.pts} pkt</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CTA */}
+                  <Link href="/login" className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+                    Zaloguj się, aby zobaczyć swój status
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -573,31 +299,88 @@ export default function Page() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          JAK TO DZIAŁA
-          FIX: py-8 zamiast py-12/py-16 — mniejsze odstępy między sekcjami
+          2. PROBLEM — szare tło, bez wrappera karty
       ══════════════════════════════════════════════════════════════ */}
-      <section id="jak-to-dziala" className="mx-auto max-w-6xl px-4 py-8">
-        <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-6 shadow-sm md:p-10">
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-            Proces
-          </div>
-          <h2 className="text-2xl font-bold text-slate-900">Jak to działa</h2>
-          <p className="mt-1 text-base text-slate-600">
-            Trzy proste kroki. Bez długiego wdrożenia.
-          </p>
+      <section className="bg-slate-50 py-16 md:py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-start">
 
-          <div className="mt-7 grid gap-4 md:grid-cols-3">
+            {/* left */}
+            <div className="lg:col-span-5">
+              <Eyebrow>Rozwiązanie</Eyebrow>
+              <h2 className="text-3xl font-bold text-slate-900">Z czym się dziś mierzysz?</h2>
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
+                Jeśli zbierasz punkty edukacyjne, łatwo o chaos — szczególnie gdy wszystko
+                jest porozrzucane po wielu miejscach.
+              </p>
+
+              <div className="mt-6 space-y-2.5">
+                {["Wiesz, co masz — i gdzie to jest.", "Widzisz postęp bez liczenia w Excelu.", "Masz certyfikaty przypięte do aktywności."].map((t) => (
+                  <div key={t} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600">
+                      <Check className="h-3 w-3 text-white" strokeWidth={2.5} />
+                    </span>
+                    <span className="text-sm font-medium text-slate-800">{t}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-5">
+                <div className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">Najczęstszy scenariusz</div>
+                <p className="text-sm leading-relaxed text-slate-700">
+                  „Dodam to później." A potem brakuje certyfikatu albo nie wiadomo, z którego roku był kurs.
+                </p>
+                <p className="mt-2 text-sm font-semibold text-slate-900">CRPE pomaga to ogarnąć spokojnie.</p>
+              </div>
+            </div>
+
+            {/* right — 4 karty problemów */}
+            <div className="lg:col-span-7">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {problemCards.map((x) => {
+                  const Icon = x.icon;
+                  return (
+                    <div key={x.t} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                      <span className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${x.iconBg}`}>
+                        <Icon className={`h-5 w-5 ${x.color}`} strokeWidth={1.75} />
+                      </span>
+                      <div className="text-sm font-semibold text-slate-900">{x.t}</div>
+                      <div className="mt-1 text-sm leading-relaxed text-slate-600">{x.d}</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-3 flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50 p-4">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-100">
+                  <GraduationCap className="h-4 w-4 text-teal-600" strokeWidth={1.75} />
+                </span>
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">CRPE porządkuje to za Ciebie</div>
+                  <div className="mt-0.5 text-sm text-slate-600">Wpisy, certyfikaty i status punktów w jednym miejscu — spokojnie i czytelnie.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════
+          3. JAK TO DZIAŁA — białe tło
+      ══════════════════════════════════════════════════════════════ */}
+      <section id="jak-to-dziala" className="bg-white py-16 md:py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <Eyebrow>Proces</Eyebrow>
+          <h2 className="text-3xl font-bold text-slate-900">Jak to działa</h2>
+          <p className="mt-2 text-base text-slate-600">Trzy proste kroki. Bez długiego wdrożenia.</p>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
             {steps.map((x) => {
               const Icon = x.icon;
               return (
-                <div
-                  key={x.t}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <div className="mb-3 flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
-                      {x.n}
-                    </span>
+                <div key={x.t} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                  <div className="mb-4 flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white">{x.n}</span>
                     <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${x.iconBg}`}>
                       <Icon className={`h-5 w-5 ${x.color}`} strokeWidth={1.75} />
                     </span>
@@ -609,18 +392,11 @@ export default function Page() {
             })}
           </div>
 
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-            >
-              Zacznij za darmo
-              <ArrowRight className="h-4 w-4" />
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+              Zacznij za darmo <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link
-              href="/rejestracja"
-              className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 ring-1 ring-blue-200 transition hover:bg-blue-50/50"
-            >
+            <Link href="/rejestracja" className="rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-200 transition hover:bg-blue-50">
               Utwórz konto
             </Link>
           </div>
@@ -628,30 +404,21 @@ export default function Page() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          KORZYŚCI + DLA KOGO + FAQ
-          FIX: pb-6 zamiast pb-8, gap-4 zamiast gap-6
+          4. CO ZYSKUJESZ + DLA KOGO — szare tło
       ══════════════════════════════════════════════════════════════ */}
-      <section className="mx-auto max-w-6xl px-4 pb-6">
-        <div className="grid gap-4 lg:grid-cols-12">
+      <section className="bg-slate-50 py-16 md:py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid gap-12 lg:grid-cols-2">
 
-          {/* KORZYŚCI */}
-          <div className="lg:col-span-6">
-            <div className="h-full rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm md:p-10">
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                Wartość
-              </div>
-              <h2 className="text-2xl font-bold text-slate-900">Co zyskujesz</h2>
-              <p className="mt-1 text-base text-slate-600">
-                Bez komplikacji — po prostu porządek i jasny status.
-              </p>
+            {/* KORZYŚCI */}
+            <div>
+              <Eyebrow>Wartość</Eyebrow>
+              <h2 className="text-3xl font-bold text-slate-900">Co zyskujesz</h2>
+              <p className="mt-2 text-base text-slate-600">Bez komplikacji — po prostu porządek i jasny status.</p>
 
-              <ul className="mt-6 space-y-2.5">
-                {/* FIX: rotacja kolorów ikon */}
+              <ul className="mt-7 space-y-2.5">
                 {benefits.map(({ t, icon: Icon, iconBg, color }) => (
-                  <li
-                    key={t}
-                    className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
-                  >
+                  <li key={t} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
                       <Icon className={`h-4 w-4 ${color}`} strokeWidth={1.75} />
                     </span>
@@ -660,46 +427,31 @@ export default function Page() {
                 ))}
               </ul>
 
-              <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+              {/* PRO teaser — przeniesiony tu z karty statusu */}
+              <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100">
                   <FileText className="h-4 w-4 text-amber-600" strokeWidth={1.75} />
                 </span>
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-amber-600">
-                    Wkrótce — PRO
-                  </div>
-                  <div className="mt-0.5 text-sm font-semibold text-slate-900">
-                    Eksport PDF i przypomnienia
-                  </div>
-                  <div className="mt-0.5 text-sm text-slate-600">
-                    Raport PDF gotowy do wydruku oraz automatyczne przypomnienia o brakach.
-                  </div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-amber-600">Wkrótce — PRO</div>
+                  <div className="mt-0.5 text-sm font-semibold text-slate-900">Eksport PDF i przypomnienia</div>
+                  <div className="mt-0.5 text-sm text-slate-600">Raport PDF gotowy do wydruku oraz automatyczne przypomnienia o brakach punktowych.</div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* DLA KOGO */}
-          <div className="lg:col-span-6">
-            <div className="h-full rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm md:p-10">
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                Odbiorcy
-              </div>
-              <h2 className="text-2xl font-bold text-slate-900">
-                Dla kogo jest CRPE
-              </h2>
-              <p className="mt-1 text-base text-slate-600">
-                Dla wszystkich zawodów medycznych, które zbierają punkty
-                edukacyjne i chcą mieć porządek w dokumentach.
+            {/* DLA KOGO */}
+            <div>
+              <Eyebrow>Odbiorcy</Eyebrow>
+              <h2 className="text-3xl font-bold text-slate-900">Dla kogo jest CRPE</h2>
+              <p className="mt-2 text-base text-slate-600">
+                Dla wszystkich zawodów medycznych, które zbierają punkty edukacyjne
+                i chcą mieć porządek w dokumentach.
               </p>
 
-              {/* FIX: dedykowane ikony + rotacja kolorów zamiast wszystkich GraduationCap blue-600 */}
-              <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
+              <div className="mt-7 grid gap-2.5 sm:grid-cols-2">
                 {professions.map(({ t, icon: Icon, iconBg, color }) => (
-                  <div
-                    key={t}
-                    className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3"
-                  >
+                  <div key={t} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
                     <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
                       <Icon className={`h-4 w-4 ${color}`} strokeWidth={1.75} />
                     </span>
@@ -708,56 +460,40 @@ export default function Page() {
                 ))}
               </div>
 
-              <div className="mt-5 flex items-start gap-3 rounded-xl border border-teal-200 bg-teal-50/60 p-4">
+              <div className="mt-5 flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50 p-4">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-100">
                   <LockKeyhole className="h-4 w-4 text-teal-600" strokeWidth={1.75} />
                 </span>
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">
-                    Jeśli musisz zbierać punkty — CRPE jest dla Ciebie.
-                  </div>
-                  <div className="mt-0.5 text-sm leading-relaxed text-slate-600">
-                    Zacznij od kilku wpisów. Resztę możesz uzupełniać stopniowo.
-                  </div>
+                  <div className="text-sm font-semibold text-slate-900">Jeśli musisz zbierać punkty — CRPE jest dla Ciebie.</div>
+                  <div className="mt-0.5 text-sm text-slate-600">Zacznij od kilku wpisów. Resztę możesz uzupełniać stopniowo.</div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* FAQ
-              FIX: bg-slate-50 dla wizualnego oddzielenia od sekcji wyżej */}
-          <div className="lg:col-span-12">
-            <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-6 shadow-sm md:p-10">
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                FAQ
-              </div>
-              <h2 className="text-2xl font-bold text-slate-900">
-                Najczęstsze pytania
-              </h2>
-              <p className="mt-1 text-base text-slate-600">
-                Kliknij, aby rozwinąć odpowiedź.
-              </p>
+      {/* ══════════════════════════════════════════════════════════════
+          5. FAQ — białe tło, pełna szerokość, własna sekcja
+      ══════════════════════════════════════════════════════════════ */}
+      <section className="bg-white py-16 md:py-20">
+        <div className="mx-auto max-w-3xl px-6">
+          <Eyebrow>FAQ</Eyebrow>
+          <h2 className="text-3xl font-bold text-slate-900">Najczęstsze pytania</h2>
+          <p className="mt-2 text-base text-slate-600">Kliknij, aby rozwinąć odpowiedź.</p>
 
-              <div className="mt-6">
-                <FaqAccordion items={FAQ_ITEMS} />
-              </div>
+          <div className="mt-8">
+            <FaqAccordion items={FAQ_ITEMS} />
+          </div>
 
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
-                >
-                  Załóż darmowe konto
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/rejestracja"
-                  className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-200 transition hover:bg-blue-50/50"
-                >
-                  Utwórz konto
-                </Link>
-              </div>
-            </div>
+          <div className="mt-10 flex flex-wrap items-center gap-3">
+            <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+              Załóż darmowe konto <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="/rejestracja" className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-200 transition hover:bg-blue-50">
+              Utwórz konto
+            </Link>
           </div>
         </div>
       </section>
