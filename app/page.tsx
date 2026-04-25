@@ -292,50 +292,7 @@ export default function Page() {
               Platforma dla zawodów medycznych
             </div>
 
-            {/* Ilustracja B — chaos → CRPE, przed H1 */}
-            <div className="mb-5 flex items-center gap-4">
-              {/* PRZED: rozsypane dokumenty */}
-              <div className="relative h-16 w-14 shrink-0">
-                <div className="absolute left-1 top-2 h-12 w-9 rotate-[-8deg] rounded-lg border border-red-200 bg-red-50 p-1.5">
-                  <div className="mb-1 h-1 w-full rounded bg-red-200" />
-                  <div className="h-1 w-3/4 rounded bg-red-200" />
-                </div>
-                <div className="absolute left-2 top-0 h-12 w-9 rotate-[5deg] rounded-lg border border-amber-200 bg-amber-50 p-1.5">
-                  <div className="mb-1 h-1 w-full rounded bg-amber-200" />
-                  <div className="h-1 w-1/2 rounded bg-amber-200" />
-                </div>
-                <div className="absolute left-3 top-1 h-12 w-9 rotate-[-1deg] rounded-lg border border-violet-200 bg-violet-50 p-1.5">
-                  <div className="mb-1 h-1 w-full rounded bg-violet-200" />
-                  <div className="h-1 w-2/3 rounded bg-violet-200" />
-                </div>
-                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-red-400">CHAOS</span>
-              </div>
-
-              {/* strzałka */}
-              <svg className="h-5 w-5 shrink-0 text-blue-500" viewBox="0 0 24 24" fill="none">
-                <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-
-              {/* PO: ułożony dokument CRPE */}
-              <div className="relative h-16 w-14 shrink-0">
-                <div className="absolute left-2 top-1 h-12 w-10 rounded-lg border border-blue-200 bg-blue-50 p-1.5">
-                  <div className="mb-1 h-1 w-full rounded bg-blue-300" />
-                  <div className="mb-1 h-1 w-3/4 rounded bg-blue-200" />
-                  <div className="mb-1.5 h-1 w-1/2 rounded bg-blue-200" />
-                  <div className="flex items-center gap-1">
-                    <div className="h-2 w-2 rounded-full bg-emerald-400" />
-                    <div className="h-1 flex-1 rounded bg-emerald-200" />
-                  </div>
-                </div>
-                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-blue-500">CRPE</span>
-              </div>
-
-              <p className="text-sm text-slate-500">
-                Zamieniamy rozrzucone certyfikaty i notatki w jeden przejrzysty rejestr.
-              </p>
-            </div>
-
-            {/* H1 — md:text-4xl zapobiega łamaniu na 3 linie */}
+            {/* H1 */}
             <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
               Twój rozwój i kwalifikacje
               <br />
@@ -440,6 +397,38 @@ export default function Page() {
               <Link href="/login" className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
                 Zaloguj się, aby zobaczyć swój status <ArrowRight className="h-4 w-4" />
               </Link>
+
+              {/* ilustracja chaos → CRPE jako dekoracja na dole karty */}
+              <div className="mt-4 flex items-center justify-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
+                {/* CHAOS */}
+                <div className="relative h-10 w-10 shrink-0">
+                  <div className="absolute left-0 top-1 h-8 w-7 rotate-[-8deg] rounded border border-red-200 bg-red-50 p-1">
+                    <div className="mb-0.5 h-0.5 w-full rounded bg-red-200" />
+                    <div className="h-0.5 w-3/4 rounded bg-red-200" />
+                  </div>
+                  <div className="absolute left-1 top-0 h-8 w-7 rotate-[5deg] rounded border border-amber-200 bg-amber-50 p-1">
+                    <div className="mb-0.5 h-0.5 w-full rounded bg-amber-200" />
+                    <div className="h-0.5 w-1/2 rounded bg-amber-200" />
+                  </div>
+                  <div className="absolute left-2 top-0.5 h-8 w-7 rotate-[-1deg] rounded border border-violet-200 bg-violet-50 p-1">
+                    <div className="h-0.5 w-full rounded bg-violet-200" />
+                  </div>
+                </div>
+                <svg className="h-4 w-4 shrink-0 text-blue-400" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {/* CRPE */}
+                <div className="h-10 w-9 shrink-0 rounded border border-blue-200 bg-blue-50 p-1.5">
+                  <div className="mb-0.5 h-0.5 w-full rounded bg-blue-300" />
+                  <div className="mb-0.5 h-0.5 w-3/4 rounded bg-blue-200" />
+                  <div className="mb-1 h-0.5 w-1/2 rounded bg-blue-200" />
+                  <div className="flex items-center gap-0.5">
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    <div className="h-0.5 flex-1 rounded bg-emerald-200" />
+                  </div>
+                </div>
+                <span className="text-xs text-slate-500">Od chaosu do porządku w kilka minut</span>
+              </div>
             </div>
           </div>
         </div>
@@ -540,45 +529,46 @@ export default function Page() {
           <p className="mt-1 text-base text-slate-600">Trzy proste kroki. Bez długiego wdrożenia.</p>
 
           {/* kroki z dekoracyjnymi numerami w tle + strzałki między */}
-          <div className="mt-8 grid items-start gap-0 md:grid-cols-[1fr_32px_1fr_32px_1fr]">
+          <div className="mt-8 grid items-stretch gap-0 md:grid-cols-[1fr_40px_1fr_40px_1fr]">
             {steps.map((x, i) => {
               const Icon = x.icon;
-              const numBgColor = ["#dbeafe", "#fef3c7", "#f1f5f9"][i];
+              // bardzo jasne kolory dla watermark numeru — prawie białe
+              const watermarkColor = ["#bfdbfe", "#fde68a", "#e2e8f0"][i];
               return (
                 <React.Fragment key={x.n}>
-                  <div
-                    className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-6 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
-                  >
-                    {/* duży dekoracyjny numer w tle prawego dolnego rogu */}
+                  <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                    {/* watermark — ogromny numer w tle, prawy dolny róg */}
                     <span
-                      className="pointer-events-none absolute -bottom-3 -right-2 select-none text-[80px] font-black leading-none"
-                      style={{ color: numBgColor }}
+                      className="pointer-events-none absolute -bottom-6 -right-4 select-none font-black leading-none"
+                      style={{ fontSize: "140px", color: watermarkColor, lineHeight: 1 }}
                     >
                       {x.n}
                     </span>
 
-                    {/* mały badge numeru + ikona XL */}
-                    <div className="relative mb-5 flex items-start gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
+                    {/* treść karty */}
+                    <div className="relative">
+                      {/* numer badge */}
+                      <span className="mb-4 flex h-7 w-7 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white">
                         {x.n}
                       </span>
-                    </div>
 
-                    <div className="relative mb-4 flex justify-center">
-                      <span className={`${ICON_XL} ${x.iconBg}`}>
-                        <Icon className={`${ICON_XL_I} ${x.color}`} strokeWidth={1.5} />
-                      </span>
-                    </div>
+                      {/* ikona XL */}
+                      <div className="mb-5 flex justify-start">
+                        <span className={`${ICON_XL} ${x.iconBg}`}>
+                          <Icon className={`${ICON_XL_I} ${x.color}`} strokeWidth={1.5} />
+                        </span>
+                      </div>
 
-                    <div className="relative text-base font-semibold text-slate-900">{x.t}</div>
-                    <div className="relative mt-1.5 text-sm leading-relaxed text-slate-600">{x.d}</div>
+                      <div className="text-base font-semibold text-slate-900">{x.t}</div>
+                      <div className="mt-1.5 text-sm leading-relaxed text-slate-600">{x.d}</div>
+                    </div>
                   </div>
 
-                  {/* strzałka między krokami — tylko między 1→2 i 2→3 */}
+                  {/* strzałka między krokami */}
                   {i < steps.length - 1 && (
-                    <div key={`arrow-${i}`} className="hidden items-center justify-center md:flex">
-                      <svg className="h-6 w-6 text-slate-300" viewBox="0 0 24 24" fill="none">
-                        <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                    <div className="hidden items-center justify-center md:flex">
+                      <svg className="h-5 w-5 text-blue-300" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
                   )}
