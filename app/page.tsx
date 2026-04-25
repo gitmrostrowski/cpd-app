@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabaseBrowser";
 import {
+  ArrowRight,
+  Award,
   BarChart3,
   BookOpen,
+  CalendarCheck,
+  Camera,
   Check,
   ClipboardCheck,
   FileText,
@@ -15,15 +18,17 @@ import {
   GraduationCap,
   LockKeyhole,
   Mail,
-  Camera,
   ShieldCheck,
   Sparkles,
+  TrendingUp,
   UploadCloud,
   UserRoundCheck,
-  ArrowRight,
-  Award,
-  CalendarCheck,
-  TrendingUp,
+  Stethoscope,
+  HeartPulse,
+  Pill,
+  FlaskConical,
+  UserCog,
+  Users,
 } from "lucide-react";
 
 import FeatureGrid from "@/components/FeatureGrid";
@@ -41,68 +46,12 @@ function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
-const FAQ_ITEMS = [
-  {
-    q: "Czy CRPE jest połączone z systemami państwowymi?",
-    a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte.",
-  },
-  {
-    q: "Czy moje certyfikaty są bezpieczne?",
-    a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE.",
-  },
-  {
-    q: "Czy mogę korzystać z telefonu?",
-    a: "Tak. Możesz dodać certyfikat od razu po szkoleniu — nawet jako zdjęcie z telefonu.",
-  },
-  {
-    q: "Czy korzystanie jest darmowe?",
-    a: "Tak. Podstawowe funkcje są bezpłatne. Wkrótce pojawią się opcje PRO (PDF, przypomnienia).",
-  },
-];
-
-function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
-  return (
-    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-2 md:p-3">
-      <div className="space-y-2">
-        {items.map((item) => (
-          <details
-            key={item.q}
-            className="group rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition-shadow hover:shadow-md md:px-5"
-          >
-            <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-left text-sm font-semibold text-slate-900">
-              <span>{item.q}</span>
-              <span className="ml-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-50">
-                <svg
-                  className="h-4 w-4 text-slate-500 transition-transform duration-200 group-open:rotate-180"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M6 9l6 6 6-6"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </summary>
-            <div className="pb-4 pt-0 text-sm leading-relaxed text-slate-700">
-              {item.a}
-            </div>
-          </details>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Icon accent colours ───────────────────────────────────────────────────
-   Primary brand:       blue-600  (#2563eb)
-   Warm complementary:  amber-500 (#f59e0b)
-   Supporting:          teal-600, indigo-500
-   ────────────────────────────────────────────────────────────────────────── */
+/* ─── colour system ──────────────────────────────────────────────────────────
+   blue-600   — brand primary (CTA, progress, numbers)
+   amber-500  — warm complement (points, PRO badge, highlights)
+   teal-600   — calm support (security, success states)
+   indigo-500 — AI / premium (sparkles pill)
+   ─────────────────────────────────────────────────────────────────────────── */
 
 const heroCards = [
   {
@@ -193,36 +142,86 @@ const steps = [
   },
 ];
 
+// FIX: rotacja kolorów ikon — nie wszystkie blue-600
 const benefits = [
-  { t: "Historia wszystkich aktywności w jednym miejscu", icon: BookOpen },
-  { t: "Certyfikaty zawsze pod ręką (PDF / zdjęcia)", icon: Award },
-  { t: "Przejrzysty podgląd zdobytych punktów", icon: BarChart3 },
-  { t: "Gotowość do przygotowania raportu", icon: CalendarCheck },
+  { t: "Historia wszystkich aktywności w jednym miejscu", icon: BookOpen,      iconBg: "bg-blue-50",   color: "text-blue-600"   },
+  { t: "Certyfikaty zawsze pod ręką (PDF / zdjęcia)",     icon: Award,         iconBg: "bg-amber-50",  color: "text-amber-500"  },
+  { t: "Przejrzysty podgląd zdobytych punktów",           icon: BarChart3,     iconBg: "bg-teal-50",   color: "text-teal-600"   },
+  { t: "Gotowość do przygotowania raportu",               icon: CalendarCheck, iconBg: "bg-indigo-50", color: "text-indigo-500" },
+];
+
+// FIX: dedykowane ikony zawodów + rotacja kolorów
+const professions = [
+  { t: "Lekarze i lekarze dentyści",  icon: Stethoscope,  iconBg: "bg-blue-50",   color: "text-blue-600"   },
+  { t: "Pielęgniarki i położne",      icon: HeartPulse,   iconBg: "bg-teal-50",   color: "text-teal-600"   },
+  { t: "Fizjoterapeuci",              icon: UserCog,      iconBg: "bg-amber-50",  color: "text-amber-500"  },
+  { t: "Farmaceuci",                  icon: Pill,         iconBg: "bg-indigo-50", color: "text-indigo-500" },
+  { t: "Diagności laboratoryjni",     icon: FlaskConical, iconBg: "bg-teal-50",   color: "text-teal-600"   },
+  { t: "Nowe zawody medyczne",        icon: Users,        iconBg: "bg-blue-50",   color: "text-blue-600"   },
 ];
 
 const demoEntries = [
+  { name: "Konferencja kardiologiczna", pts: 20, cat: "Konferencja", dot: "bg-blue-500",  badge: "bg-blue-50 text-blue-700"  },
+  { name: "Kurs e-learning EKG",        pts: 15, cat: "E-learning",  dot: "bg-teal-500",  badge: "bg-teal-50 text-teal-700"  },
+  { name: "Szkolenie wewnętrzne",       pts: 10, cat: "Szkolenie",   dot: "bg-amber-400", badge: "bg-amber-50 text-amber-700" },
+];
+
+const FAQ_ITEMS = [
   {
-    name: "Konferencja kardiologiczna",
-    pts: 20,
-    cat: "Konferencja",
-    dot: "bg-blue-500",
-    badge: "bg-blue-50 text-blue-700",
+    q: "Czy CRPE jest połączone z systemami państwowymi?",
+    a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte.",
   },
   {
-    name: "Kurs e-learning EKG",
-    pts: 15,
-    cat: "E-learning",
-    dot: "bg-teal-500",
-    badge: "bg-teal-50 text-teal-700",
+    q: "Czy moje certyfikaty są bezpieczne?",
+    a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE.",
   },
   {
-    name: "Szkolenie wewnętrzne",
-    pts: 10,
-    cat: "Szkolenie",
-    dot: "bg-amber-400",
-    badge: "bg-amber-50 text-amber-700",
+    q: "Czy mogę korzystać z telefonu?",
+    a: "Tak. Możesz dodać certyfikat od razu po szkoleniu — nawet jako zdjęcie z telefonu.",
+  },
+  {
+    q: "Czy korzystanie jest darmowe?",
+    a: "Tak. Podstawowe funkcje są bezpłatne. Wkrótce pojawią się opcje PRO (PDF, przypomnienia).",
   },
 ];
+
+function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
+      <div className="space-y-1.5">
+        {items.map((item) => (
+          <details
+            key={item.q}
+            className="group rounded-xl border border-slate-200 bg-white px-4 shadow-sm transition-shadow hover:shadow-md md:px-5"
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-left text-sm font-semibold text-slate-900">
+              <span>{item.q}</span>
+              <span className="ml-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50">
+                <svg
+                  className="h-3.5 w-3.5 text-slate-500 transition-transform duration-200 group-open:rotate-180"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M6 9l6 6 6-6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            </summary>
+            <div className="pb-4 pt-1 text-sm leading-relaxed text-slate-700">
+              {item.a}
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Page() {
   const supabase = useMemo(() => createBrowserSupabase(), []);
@@ -236,7 +235,6 @@ export default function Page() {
 
     async function run() {
       setChecking(true);
-
       const { data: auth, error: authError } = await supabase.auth.getUser();
       if (!alive) return;
 
@@ -264,30 +262,23 @@ export default function Page() {
         .maybeSingle<ProfileRow>();
 
       if (!alive) return;
-
       if (profErr) console.warn("profiles error:", profErr.message);
 
       if (!profile) {
         router.replace("/start");
         return;
       }
-
       router.replace("/kalkulator");
     }
 
     run();
-
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [router, supabase]);
 
   if (checking) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="rounded-2xl border bg-white p-6 text-slate-700">
-          Sprawdzam sesję…
-        </div>
+        <div className="rounded-2xl border bg-white p-6 text-slate-700">Sprawdzam sesję…</div>
       </div>
     );
   }
@@ -295,14 +286,11 @@ export default function Page() {
   if (isLoggedIn) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="rounded-2xl border bg-white p-6 text-slate-700">
-          Przenoszę do Centrum…
-        </div>
+        <div className="rounded-2xl border bg-white p-6 text-slate-700">Przenoszę do Centrum…</div>
       </div>
     );
   }
 
-  const demoPeriod = "Aktualny okres rozliczeniowy";
   const demoRequired = 200;
   const demoHave = 110;
   const demoPct = clamp((demoHave / demoRequired) * 100, 0, 100);
@@ -310,17 +298,20 @@ export default function Page() {
 
   return (
     <>
-      {/* ── HERO ────────────────────────────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════════════
+          HERO
+      ══════════════════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-blue-50/60 via-white to-white" />
-        <div className="pointer-events-none absolute left-[-8%] top-[-20%] h-[32rem] w-[32rem] rounded-full bg-blue-200/30 blur-3xl" />
+        <div className="pointer-events-none absolute left-[-8%] top-[-20%] h-[32rem] w-[32rem] rounded-full bg-blue-200/25 blur-3xl" />
         <div className="pointer-events-none absolute right-[-10%] top-[10%] h-[24rem] w-[24rem] rounded-full bg-indigo-200/20 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl px-4 pb-12 pt-10 md:pt-14">
+        <div className="relative mx-auto max-w-6xl px-4 pb-10 pt-10 md:pt-14">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start">
 
-            {/* LEFT */}
+            {/* ── LEFT ── */}
             <div className="lg:col-span-7">
+              {/* eyebrow */}
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold text-blue-700">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                 Platforma dla zawodów medycznych
@@ -362,7 +353,8 @@ export default function Page() {
                 </a>
               </div>
 
-              <div className="mt-9 grid gap-3 sm:grid-cols-2">
+              {/* hero feature cards */}
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 {heroCards.map((x) => {
                   const Icon = x.icon;
                   return (
@@ -382,35 +374,37 @@ export default function Page() {
                 })}
               </div>
 
-              <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 shadow-sm">
+              {/* AI pill */}
+              <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700">
                 <Sparkles className="h-4 w-4 text-indigo-500" strokeWidth={1.75} />
                 Wkrótce: Inteligentny asystent AI do tworzenia i zarządzania Twoim rozwojem zawodowym
               </div>
             </div>
 
-            {/* RIGHT — status card */}
+            {/* ── RIGHT — status card ── */}
             <div className="lg:col-span-5">
-              <div className="relative mx-auto w-full max-w-[480px]">
+              <div className="relative mx-auto w-full max-w-[460px]">
                 <div className="absolute -inset-4 rounded-[36px] bg-gradient-to-b from-blue-100/40 to-white blur-2xl" />
 
-                <div className="relative rounded-[24px] border border-slate-200/80 bg-white p-5 shadow-lg">
-                  <div className="mb-0.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="relative rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-lg">
+                  {/* card header */}
+                  <div className="mb-0.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
                     Podgląd statusu
                   </div>
-                  <div className="text-base font-semibold text-slate-900">{demoPeriod}</div>
+                  <div className="text-base font-semibold text-slate-900">Aktualny okres rozliczeniowy</div>
                   <div className="mb-4 mt-0.5 text-sm text-slate-500">
                     To przykład. Po zalogowaniu zobaczysz swoje realne dane.
                   </div>
 
                   {/* progress */}
                   <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                    <div className="mb-2 flex items-center justify-between text-sm text-slate-600">
-                      <span>Postęp w okresie</span>
+                    <div className="mb-2 flex items-center justify-between text-sm">
+                      <span className="text-slate-600">Postęp w okresie</span>
                       <span className="font-bold text-slate-800">{Math.round(demoPct)}%</span>
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
                       <div
-                        className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all"
+                        className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
                         style={{ width: `${demoPct}%` }}
                       />
                     </div>
@@ -430,9 +424,10 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* entries */}
+                  {/* FIX: usunięty screenshot — wystarczą wpisy jako demo */}
+                  {/* recent entries */}
                   <div className="mt-4">
-                    <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    <div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
                       Ostatnie wpisy
                     </div>
                     <div className="space-y-2">
@@ -452,26 +447,13 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* screenshot */}
-                  <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-                    <div className="relative aspect-[16/10] w-full">
-                      <Image
-                        src="/crpe_home.jpg"
-                        alt="CRPE — podgląd aplikacji"
-                        fill
-                        className="object-contain p-4"
-                        priority
-                      />
-                    </div>
-                  </div>
-
-                  {/* PRO */}
+                  {/* PRO teaser */}
                   <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/60 p-3.5">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100">
                       <FileText className="h-4 w-4 text-amber-600" strokeWidth={1.75} />
                     </span>
                     <div>
-                      <div className="text-xs font-bold uppercase tracking-wider text-amber-600">
+                      <div className="text-xs font-bold uppercase tracking-widest text-amber-600">
                         Wkrótce — PRO
                       </div>
                       <div className="mt-0.5 text-sm font-semibold text-slate-900">
@@ -482,16 +464,31 @@ export default function Page() {
                       </div>
                     </div>
                   </div>
+
+                  {/* CTA inside card */}
+                  <div className="mt-4">
+                    <Link
+                      href="/login"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                    >
+                      Zaloguj się, aby zobaczyć swój status
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ── PROBLEM ─────────────────────────────────────────────────────── */}
-          <div className="mt-14 rounded-[28px] border border-slate-200/80 bg-white p-6 shadow-sm md:p-10">
+          {/* ══════════════════════════════════════════════════════════════
+              PROBLEM
+          ══════════════════════════════════════════════════════════════ */}
+          {/* FIX: mt-10 zamiast mt-14 — mniejszy odstęp */}
+          <div className="mt-10 rounded-[28px] border border-slate-200/80 bg-white p-6 shadow-sm md:p-10">
             <div className="grid gap-8 lg:grid-cols-12 lg:items-stretch">
+
               <div className="lg:col-span-5">
-                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
                   Rozwiązanie
                 </div>
                 <h2 className="text-2xl font-bold text-slate-900">
@@ -521,7 +518,7 @@ export default function Page() {
                 </div>
 
                 <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-                  <div className="mb-1.5 text-xs font-bold uppercase tracking-wider text-blue-600">
+                  <div className="mb-1.5 text-xs font-bold uppercase tracking-widest text-blue-600">
                     Najczęstszy scenariusz
                   </div>
                   <p className="text-sm leading-relaxed text-slate-700">
@@ -544,6 +541,7 @@ export default function Page() {
                           key={x.t}
                           className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                         >
+                          {/* FIX: iconBg zawsze obecne — spójność z heroCards */}
                           <span className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${x.iconBg}`}>
                             <Icon className={`h-5 w-5 ${x.color}`} strokeWidth={1.75} />
                           </span>
@@ -574,13 +572,13 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ── JAK TO DZIAŁA ───────────────────────────────────────────────────── */}
-      <section
-        id="jak-to-dziala"
-        className="mx-auto max-w-6xl px-4 py-12 md:py-16"
-      >
+      {/* ══════════════════════════════════════════════════════════════
+          JAK TO DZIAŁA
+          FIX: py-8 zamiast py-12/py-16 — mniejsze odstępy między sekcjami
+      ══════════════════════════════════════════════════════════════ */}
+      <section id="jak-to-dziala" className="mx-auto max-w-6xl px-4 py-8">
         <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-6 shadow-sm md:p-10">
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
             Proces
           </div>
           <h2 className="text-2xl font-bold text-slate-900">Jak to działa</h2>
@@ -629,14 +627,17 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ── KORZYŚCI + DLA KOGO + FAQ ───────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 pb-8">
-        <div className="grid gap-6 lg:grid-cols-12">
+      {/* ══════════════════════════════════════════════════════════════
+          KORZYŚCI + DLA KOGO + FAQ
+          FIX: pb-6 zamiast pb-8, gap-4 zamiast gap-6
+      ══════════════════════════════════════════════════════════════ */}
+      <section className="mx-auto max-w-6xl px-4 pb-6">
+        <div className="grid gap-4 lg:grid-cols-12">
 
           {/* KORZYŚCI */}
           <div className="lg:col-span-6">
             <div className="h-full rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm md:p-10">
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
                 Wartość
               </div>
               <h2 className="text-2xl font-bold text-slate-900">Co zyskujesz</h2>
@@ -645,13 +646,14 @@ export default function Page() {
               </p>
 
               <ul className="mt-6 space-y-2.5">
-                {benefits.map(({ t, icon: Icon }) => (
+                {/* FIX: rotacja kolorów ikon */}
+                {benefits.map(({ t, icon: Icon, iconBg, color }) => (
                   <li
                     key={t}
                     className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
                   >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50">
-                      <Icon className="h-4 w-4 text-blue-600" strokeWidth={1.75} />
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
+                      <Icon className={`h-4 w-4 ${color}`} strokeWidth={1.75} />
                     </span>
                     <span className="text-sm font-medium text-slate-800">{t}</span>
                   </li>
@@ -663,7 +665,7 @@ export default function Page() {
                   <FileText className="h-4 w-4 text-amber-600" strokeWidth={1.75} />
                 </span>
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-amber-600">
+                  <div className="text-xs font-bold uppercase tracking-widest text-amber-600">
                     Wkrótce — PRO
                   </div>
                   <div className="mt-0.5 text-sm font-semibold text-slate-900">
@@ -680,7 +682,7 @@ export default function Page() {
           {/* DLA KOGO */}
           <div className="lg:col-span-6">
             <div className="h-full rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm md:p-10">
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
                 Odbiorcy
               </div>
               <h2 className="text-2xl font-bold text-slate-900">
@@ -691,21 +693,15 @@ export default function Page() {
                 edukacyjne i chcą mieć porządek w dokumentach.
               </p>
 
+              {/* FIX: dedykowane ikony + rotacja kolorów zamiast wszystkich GraduationCap blue-600 */}
               <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
-                {[
-                  "Lekarze i lekarze dentyści",
-                  "Pielęgniarki i położne",
-                  "Fizjoterapeuci",
-                  "Farmaceuci",
-                  "Diagności laboratoryjni",
-                  "Nowe zawody medyczne",
-                ].map((t) => (
+                {professions.map(({ t, icon: Icon, iconBg, color }) => (
                   <div
                     key={t}
                     className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3"
                   >
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50">
-                      <GraduationCap className="h-4 w-4 text-blue-600" strokeWidth={1.75} />
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
+                      <Icon className={`h-4 w-4 ${color}`} strokeWidth={1.75} />
                     </span>
                     <span className="text-sm font-medium text-slate-800">{t}</span>
                   </div>
@@ -728,10 +724,11 @@ export default function Page() {
             </div>
           </div>
 
-          {/* FAQ */}
+          {/* FAQ
+              FIX: bg-slate-50 dla wizualnego oddzielenia od sekcji wyżej */}
           <div className="lg:col-span-12">
-            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm md:p-10">
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-6 shadow-sm md:p-10">
+              <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
                 FAQ
               </div>
               <h2 className="text-2xl font-bold text-slate-900">
