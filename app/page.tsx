@@ -12,6 +12,7 @@ import {
   CalendarCheck,
   Camera,
   Check,
+  ChevronDown,
   ClipboardCheck,
   FileText,
   FlaskConical,
@@ -46,59 +47,62 @@ function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
+/* ─── ikony — rozmiar kontenera 40px, ikona 20px wszędzie ─── */
+const ICON_WRAP = "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl";
+const ICON_SM   = "h-5 w-5";
+
 /* ─── data ──────────────────────────────────────────────────────────────── */
 
 const heroBullets = [
-  { t: "Wpisy i certyfikaty w jednym miejscu",       icon: FolderOpen,  color: "text-blue-600"   },
-  { t: "Jasny status punktów w aktualnym okresie",   icon: BarChart3,   color: "text-amber-500"  },
-  { t: "Dane bezpieczne, przechowywane w UE",        icon: ShieldCheck, color: "text-teal-600"   },
-  { t: "Podstawowe funkcje całkowicie bezpłatne",    icon: Sparkles,    color: "text-indigo-500" },
+  { t: "Wpisy i certyfikaty w jednym miejscu",     icon: FolderOpen,  iconBg: "bg-blue-50",   color: "text-blue-600"   },
+  { t: "Jasny status punktów w aktualnym okresie", icon: BarChart3,   iconBg: "bg-amber-50",  color: "text-amber-500"  },
+  { t: "Dane bezpieczne, przechowywane w UE",      icon: ShieldCheck, iconBg: "bg-slate-100", color: "text-slate-500"  },
+  { t: "Podstawowe funkcje całkowicie bezpłatne",  icon: Sparkles,    iconBg: "bg-indigo-50", color: "text-indigo-500" },
 ];
 
 const problemCards = [
-  { t: "Certyfikaty w mailach",  d: "Trudno je znaleźć, gdy są potrzebne.",             icon: Mail,          iconBg: "bg-blue-50",   color: "text-blue-600"   },
-  { t: "Zdjęcia w telefonie",    d: "Nie wiesz, co było do czego i z którego roku.",    icon: Camera,        iconBg: "bg-amber-50",  color: "text-amber-500"  },
-  { t: "Excel i notatki",        d: "Wymaga pilnowania i łatwo o braki.",               icon: FileText,      iconBg: "bg-indigo-50", color: "text-indigo-500" },
-  { t: "Brak pewności",          d: "Czy na pewno masz komplet punktów i dokumentów?",  icon: ClipboardCheck,iconBg: "bg-teal-50",   color: "text-teal-600"   },
+  { t: "Certyfikaty w mailach",  d: "Trudno je znaleźć, gdy są potrzebne.",             icon: Mail,           iconBg: "bg-blue-50",   color: "text-blue-600"   },
+  { t: "Zdjęcia w telefonie",    d: "Nie wiesz, co było do czego i z którego roku.",    icon: Camera,         iconBg: "bg-amber-50",  color: "text-amber-500"  },
+  { t: "Excel i notatki",        d: "Wymaga pilnowania i łatwo o braki.",               icon: FileText,       iconBg: "bg-indigo-50", color: "text-indigo-500" },
+  { t: "Brak pewności",          d: "Czy na pewno masz komplet punktów i dokumentów?",  icon: ClipboardCheck, iconBg: "bg-slate-100", color: "text-slate-500"  },
 ];
 
 const steps = [
-  { n: "1", t: "Wybierz zawód",    d: "System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.",  icon: UserRoundCheck, iconBg: "bg-blue-50",  color: "text-blue-600"  },
-  { n: "2", t: "Dodaj aktywność",  d: "Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.",            icon: UploadCloud,   iconBg: "bg-amber-50", color: "text-amber-500" },
-  { n: "3", t: "Sprawdzaj postęp", d: "Zawsze wiesz, ile punktów masz i czego brakuje.",                                  icon: TrendingUp,    iconBg: "bg-teal-50",  color: "text-teal-600"  },
+  { n: "1", t: "Wybierz zawód",    d: "System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.", icon: UserRoundCheck, iconBg: "bg-blue-50",  color: "text-blue-600"  },
+  { n: "2", t: "Dodaj aktywność",  d: "Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.",           icon: UploadCloud,    iconBg: "bg-amber-50", color: "text-amber-500" },
+  { n: "3", t: "Sprawdzaj postęp", d: "Zawsze wiesz, ile punktów masz i czego brakuje.",                                 icon: TrendingUp,     iconBg: "bg-slate-100",color: "text-slate-500" },
 ];
 
 const benefits = [
   { t: "Historia wszystkich aktywności w jednym miejscu", icon: BookOpen,      iconBg: "bg-blue-50",   color: "text-blue-600"   },
   { t: "Certyfikaty zawsze pod ręką (PDF / zdjęcia)",     icon: Award,         iconBg: "bg-amber-50",  color: "text-amber-500"  },
-  { t: "Przejrzysty podgląd zdobytych punktów",           icon: BarChart3,     iconBg: "bg-teal-50",   color: "text-teal-600"   },
+  { t: "Przejrzysty podgląd zdobytych punktów",           icon: BarChart3,     iconBg: "bg-slate-100", color: "text-slate-500"  },
   { t: "Gotowość do przygotowania raportu",               icon: CalendarCheck, iconBg: "bg-indigo-50", color: "text-indigo-500" },
 ];
 
 const professions = [
   { t: "Lekarze i lekarze dentyści",  icon: Stethoscope,  iconBg: "bg-blue-50",   color: "text-blue-600"   },
-  { t: "Pielęgniarki i położne",      icon: HeartPulse,   iconBg: "bg-teal-50",   color: "text-teal-600"   },
+  { t: "Pielęgniarki i położne",      icon: HeartPulse,   iconBg: "bg-slate-100", color: "text-slate-500"  },
   { t: "Fizjoterapeuci",              icon: UserCog,      iconBg: "bg-amber-50",  color: "text-amber-500"  },
   { t: "Farmaceuci",                  icon: Pill,         iconBg: "bg-indigo-50", color: "text-indigo-500" },
-  { t: "Diagności laboratoryjni",     icon: FlaskConical, iconBg: "bg-teal-50",   color: "text-teal-600"   },
+  { t: "Diagności laboratoryjni",     icon: FlaskConical, iconBg: "bg-slate-100", color: "text-slate-500"  },
   { t: "Nowe zawody medyczne",        icon: Users,        iconBg: "bg-blue-50",   color: "text-blue-600"   },
 ];
 
 const demoEntries = [
-  { name: "Konferencja kardiologiczna", pts: 20, cat: "Konferencja", dot: "bg-blue-500", badge: "bg-blue-50 text-blue-700"  },
-  { name: "Kurs e-learning EKG",        pts: 15, cat: "E-learning",  dot: "bg-teal-500", badge: "bg-teal-50 text-teal-700"  },
+  { name: "Konferencja kardiologiczna", pts: 20, cat: "Konferencja", dot: "bg-blue-500", badge: "bg-blue-50 text-blue-700" },
+  { name: "Kurs e-learning EKG",        pts: 15, cat: "E-learning",  dot: "bg-slate-400",badge: "bg-slate-100 text-slate-600" },
 ];
 
 const FAQ_ITEMS = [
-  { q: "Czy CRPE jest połączone z systemami państwowymi?", a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte."              },
-  { q: "Czy moje certyfikaty są bezpieczne?",              a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE."                     },
-  { q: "Czy mogę korzystać z telefonu?",                   a: "Tak. Możesz dodać certyfikat od razu po szkoleniu — nawet jako zdjęcie z telefonu."                       },
-  { q: "Czy korzystanie jest darmowe?",                    a: "Tak. Podstawowe funkcje są bezpłatne. Wkrótce pojawią się opcje PRO (PDF, przypomnienia)."                },
+  { q: "Czy CRPE jest połączone z systemami państwowymi?", a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte."   },
+  { q: "Czy moje certyfikaty są bezpieczne?",              a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE."          },
+  { q: "Czy mogę korzystać z telefonu?",                   a: "Tak. Możesz dodać certyfikat od razu po szkoleniu — nawet jako zdjęcie z telefonu."            },
+  { q: "Czy korzystanie jest darmowe?",                    a: "Tak. Podstawowe funkcje są bezpłatne. Wkrótce pojawią się opcje PRO (PDF, przypomnienia)."     },
 ];
 
-/* ─── shared primitives ─────────────────────────────────────────────────── */
+/* ─── primitives ────────────────────────────────────────────────────────── */
 
-/** Szara etykieta nad nagłówkiem sekcji */
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
     <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">
@@ -107,7 +111,6 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Biała karta-sekcja z cieniem — podstawowy kontener każdej sekcji */
 function SectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={`mx-auto max-w-6xl px-4 ${className}`}>
@@ -118,21 +121,37 @@ function SectionCard({ children, className = "" }: { children: React.ReactNode; 
   );
 }
 
-/** FAQ accordion */
+/* Przycisk primary — mniejszy niż wcześniej */
+function BtnPrimary({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+      {children}
+    </Link>
+  );
+}
+
+/* Przycisk secondary */
+function BtnSecondary({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
+      {children}
+    </Link>
+  );
+}
+
+/* FAQ — pasujący styl: bez bg-slate-50, linia oddzielająca jak reszta strony */
 function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
   return (
-    <div className="space-y-2">
+    <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white overflow-hidden">
       {items.map((item) => (
-        <details key={item.q} className="group rounded-xl border border-slate-200 bg-slate-50 px-5 transition-colors hover:bg-white">
-          <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-sm font-semibold text-slate-900">
+        <details key={item.q} className="group">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-semibold text-slate-900 hover:bg-slate-50">
             <span>{item.q}</span>
-            <span className="ml-4 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white">
-              <svg className="h-3.5 w-3.5 text-slate-400 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 24 24" fill="none">
-                <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </span>
+            <ChevronDown className="ml-4 h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 group-open:rotate-180" strokeWidth={2} />
           </summary>
-          <div className="pb-4 pt-1 text-sm leading-relaxed text-slate-700">{item.a}</div>
+          <div className="border-t border-slate-100 px-5 pb-4 pt-3 text-sm leading-relaxed text-slate-700">
+            {item.a}
+          </div>
         </details>
       ))}
     </div>
@@ -179,29 +198,27 @@ export default function Page() {
   const demoMissing  = Math.max(0, demoRequired - demoHave);
 
   return (
-    /* Szare tło strony — daje wszystkim kartom "uniesiony" wygląd */
     <div className="bg-slate-100 pb-6">
 
-      {/* ── HERO ─────────────────────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════════════
+          HERO
+      ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="pt-6">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-start">
 
-          {/* ── LEFT ── */}
+          {/* LEFT */}
           <div>
-            {/* eyebrow */}
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold text-blue-700">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
               Platforma dla zawodów medycznych
             </div>
 
-            {/* H1 — łamie się na 2 linie: "Twój rozwój i kwalifikacje" / "w jednym miejscu." */}
             <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl">
               Twój rozwój i kwalifikacje
               <br />
               <span className="text-blue-600">w jednym miejscu.</span>
             </h1>
 
-            {/* lead — 1 zdanie, bez korporacyjnego drugiego paragrafu */}
             <p className="mt-5 text-lg leading-relaxed text-slate-700">
               Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp
               w aktualnym okresie rozliczeniowym.{" "}
@@ -210,21 +227,14 @@ export default function Page() {
               </strong>
             </p>
 
-            {/* bullet list — z ikonami mającymi kolorowe tło, 2×2 grid */}
+            {/* bullet 2×2 — ikony 40px z tłem */}
             <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {heroBullets.map((b) => {
                 const Icon = b.icon;
-                // mapuj color na iconBg
-                const bgMap: Record<string, string> = {
-                  "text-blue-600":   "bg-blue-50",
-                  "text-amber-500":  "bg-amber-50",
-                  "text-teal-600":   "bg-teal-50",
-                  "text-indigo-500": "bg-indigo-50",
-                };
                 return (
                   <div key={b.t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${bgMap[b.color]}`}>
-                      <Icon className={`h-4 w-4 ${b.color}`} strokeWidth={1.75} />
+                    <span className={`${ICON_WRAP} ${b.iconBg}`}>
+                      <Icon className={`${ICON_SM} ${b.color}`} strokeWidth={1.75} />
                     </span>
                     <span className="text-sm font-medium text-slate-700">{b.t}</span>
                   </div>
@@ -232,46 +242,38 @@ export default function Page() {
               })}
             </div>
 
-            {/* CTA buttons */}
+            {/* CTA — mniejsze przyciski */}
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+              <BtnPrimary href="/login">
                 Załóż darmowe konto <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a href="#jak-to-dziala" className="inline-flex items-center rounded-xl bg-slate-100 px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
+              </BtnPrimary>
+              <a href="#jak-to-dziala" className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
                 Zobacz jak to działa
               </a>
             </div>
 
-            {/* AI pill — skrócony tekst, jednolinijkowy */}
-            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700">
+            {/* AI pill */}
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3.5 py-1.5 text-sm font-medium text-indigo-700">
               <Sparkles className="h-4 w-4 shrink-0 text-indigo-500" strokeWidth={1.75} />
               Wkrótce: Asystent AI do zarządzania rozwojem zawodowym
             </div>
           </div>
 
-          {/* ── RIGHT — karta statusu (bg-white + shadow dla kontrastu) ── */}
+          {/* RIGHT — status card */}
           <div>
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
-
               <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Podgląd statusu</p>
               <p className="text-base font-bold text-slate-900">Aktualny okres rozliczeniowy</p>
-              <p className="mt-0.5 mb-5 text-sm text-slate-500">
-                To przykład. Po zalogowaniu zobaczysz swoje realne dane.
-              </p>
+              <p className="mt-0.5 mb-5 text-sm text-slate-500">To przykład. Po zalogowaniu zobaczysz swoje realne dane.</p>
 
-              {/* progress */}
               <div className="mb-2 flex items-center justify-between text-sm">
                 <span className="text-slate-600">Postęp w okresie</span>
                 <span className="font-bold text-slate-800">{Math.round(demoPct)}%</span>
               </div>
               <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-2.5 rounded-full bg-blue-600 transition-all"
-                  style={{ width: `${demoPct}%` }}
-                />
+                <div className="h-2.5 rounded-full bg-blue-600" style={{ width: `${demoPct}%` }} />
               </div>
 
-              {/* stats 3-kolumny */}
               <div className="mt-4 grid grid-cols-3 divide-x divide-slate-100 rounded-xl border border-slate-100 bg-slate-50 text-center">
                 <div className="py-3">
                   <div className="text-xl font-extrabold text-slate-900">{demoHave}</div>
@@ -287,32 +289,21 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* ostatnie wpisy */}
               <div className="mt-5">
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Ostatnie wpisy
-                </p>
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ostatnie wpisy</p>
                 <div className="space-y-2">
                   {demoEntries.map((e) => (
-                    <div
-                      key={e.name}
-                      className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5"
-                    >
+                    <div key={e.name} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
                       <span className={`h-2 w-2 shrink-0 rounded-full ${e.dot}`} />
                       <span className="flex-1 text-sm font-medium text-slate-800">{e.name}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${e.badge}`}>
-                        {e.cat}
-                      </span>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${e.badge}`}>{e.cat}</span>
                       <span className="text-sm font-bold text-blue-600">+{e.pts} pkt</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <Link
-                href="/login"
-                className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-              >
+              <Link href="/login" className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
                 Zaloguj się, aby zobaczyć swój status <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -320,7 +311,9 @@ export default function Page() {
         </div>
       </SectionCard>
 
-      {/* ── PROBLEM ──────────────────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════════════
+          PROBLEM
+      ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="mt-4">
         <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
 
@@ -358,8 +351,8 @@ export default function Page() {
                 const Icon = x.icon;
                 return (
                   <div key={x.t} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md">
-                    <span className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${x.iconBg}`}>
-                      <Icon className={`h-5 w-5 ${x.color}`} strokeWidth={1.75} />
+                    <span className={`mb-3 ${ICON_WRAP} ${x.iconBg}`}>
+                      <Icon className={`${ICON_SM} ${x.color}`} strokeWidth={1.75} />
                     </span>
                     <div className="text-sm font-semibold text-slate-900">{x.t}</div>
                     <div className="mt-1 text-sm leading-relaxed text-slate-600">{x.d}</div>
@@ -368,9 +361,10 @@ export default function Page() {
               })}
             </div>
 
-            <div className="mt-3 flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50 p-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-100">
-                <GraduationCap className="h-4 w-4 text-teal-600" strokeWidth={1.75} />
+            {/* "CRPE porządkuje" — neutralny niebieski zamiast teal */}
+            <div className="mt-3 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+              <span className={`${ICON_WRAP} bg-blue-100`}>
+                <GraduationCap className={`${ICON_SM} text-blue-600`} strokeWidth={1.75} />
               </span>
               <div>
                 <p className="text-sm font-semibold text-slate-900">CRPE porządkuje to za Ciebie</p>
@@ -381,8 +375,10 @@ export default function Page() {
         </div>
       </SectionCard>
 
-      {/* ── JAK TO DZIAŁA ────────────────────────────────────────────── */}
-      <SectionCard className="mt-4" >
+      {/* ══════════════════════════════════════════════════════════════
+          JAK TO DZIAŁA
+      ══════════════════════════════════════════════════════════════ */}
+      <SectionCard className="mt-4">
         <div id="jak-to-dziala">
           <Eyebrow>Proces</Eyebrow>
           <h2 className="text-2xl font-bold text-slate-900">Jak to działa</h2>
@@ -394,9 +390,11 @@ export default function Page() {
               return (
                 <div key={x.t} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md">
                   <div className="mb-4 flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white">{x.n}</span>
-                    <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${x.iconBg}`}>
-                      <Icon className={`h-5 w-5 ${x.color}`} strokeWidth={1.75} />
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white">
+                      {x.n}
+                    </span>
+                    <span className={`${ICON_WRAP} ${x.iconBg}`}>
+                      <Icon className={`${ICON_SM} ${x.color}`} strokeWidth={1.75} />
                     </span>
                   </div>
                   <div className="text-base font-semibold text-slate-900">{x.t}</div>
@@ -407,17 +405,15 @@ export default function Page() {
           </div>
 
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-blue-700">
-              Zacznij za darmo <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link href="/rejestracja" className="inline-flex items-center rounded-xl bg-slate-100 px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
-              Utwórz konto
-            </Link>
+            <BtnPrimary href="/login">Zacznij za darmo <ArrowRight className="h-4 w-4" /></BtnPrimary>
+            <BtnSecondary href="/rejestracja">Utwórz konto</BtnSecondary>
           </div>
         </div>
       </SectionCard>
 
-      {/* ── KORZYŚCI + DLA KOGO ──────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════════════
+          CO ZYSKUJESZ + DLA KOGO
+      ══════════════════════════════════════════════════════════════ */}
       <div className="mx-auto mt-4 max-w-6xl px-4">
         <div className="grid gap-4 lg:grid-cols-2">
 
@@ -429,18 +425,19 @@ export default function Page() {
 
             <ul className="mt-6 space-y-2">
               {benefits.map(({ t, icon: Icon, iconBg, color }) => (
-                <li key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
-                    <Icon className={`h-4 w-4 ${color}`} strokeWidth={1.75} />
+                <li key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                  <span className={`${ICON_WRAP} ${iconBg}`}>
+                    <Icon className={`${ICON_SM} ${color}`} strokeWidth={1.75} />
                   </span>
                   <span className="text-sm font-medium text-slate-800">{t}</span>
                 </li>
               ))}
             </ul>
 
+            {/* PRO teaser — amber, bo to premium */}
             <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100">
-                <FileText className="h-4 w-4 text-amber-600" strokeWidth={1.75} />
+              <span className={`${ICON_WRAP} bg-amber-100`}>
+                <FileText className={`${ICON_SM} text-amber-600`} strokeWidth={1.75} />
               </span>
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-amber-600">Wkrótce — PRO</p>
@@ -455,52 +452,49 @@ export default function Page() {
             <Eyebrow>Odbiorcy</Eyebrow>
             <h2 className="text-2xl font-bold text-slate-900">Dla kogo jest CRPE</h2>
             <p className="mt-1 text-base text-slate-600">
-              Dla wszystkich zawodów medycznych, które zbierają punkty edukacyjne
-              i chcą mieć porządek w dokumentach.
+              Dla wszystkich zawodów medycznych zbierających punkty edukacyjne.
             </p>
 
             <div className="mt-6 grid gap-2 sm:grid-cols-2">
               {professions.map(({ t, icon: Icon, iconBg, color }) => (
-                <div key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
-                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
-                    <Icon className={`h-4 w-4 ${color}`} strokeWidth={1.75} />
+                <div key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                  <span className={`${ICON_WRAP} ${iconBg}`}>
+                    <Icon className={`${ICON_SM} ${color}`} strokeWidth={1.75} />
                   </span>
                   <span className="text-sm font-medium text-slate-800">{t}</span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-5 flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50 p-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-100">
-                <LockKeyhole className="h-4 w-4 text-teal-600" strokeWidth={1.75} />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-slate-900">Jeśli musisz zbierać punkty — CRPE jest dla Ciebie.</p>
-                <p className="mt-0.5 text-sm text-slate-600">Zacznij od kilku wpisów. Resztę możesz uzupełniać stopniowo.</p>
-              </div>
+            {/* FIX: niebieski zamiast teal, bez ikony LockKeyhole — prosta ramka */}
+            <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+              <p className="text-sm font-semibold text-slate-900">
+                Jeśli musisz zbierać punkty — CRPE jest dla Ciebie.
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                Zacznij od kilku wpisów. Resztę możesz uzupełniać stopniowo.
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── FAQ ──────────────────────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════════════
+          FAQ — nowy styl: border-divided list, pasuje do reszty strony
+      ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="mt-4">
         <div className="mx-auto max-w-2xl">
           <Eyebrow>FAQ</Eyebrow>
           <h2 className="text-2xl font-bold text-slate-900">Najczęstsze pytania</h2>
-          <p className="mt-1 text-base text-slate-600">Kliknij, aby rozwinąć odpowiedź.</p>
+          <p className="mt-1 text-base text-slate-600">Kliknij pytanie, aby zobaczyć odpowiedź.</p>
 
           <div className="mt-7">
             <FaqAccordion items={FAQ_ITEMS} />
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
-              Załóż darmowe konto <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link href="/rejestracja" className="inline-flex items-center rounded-xl bg-slate-100 px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
-              Utwórz konto
-            </Link>
+            <BtnPrimary href="/login">Załóż darmowe konto <ArrowRight className="h-4 w-4" /></BtnPrimary>
+            <BtnSecondary href="/rejestracja">Utwórz konto</BtnSecondary>
           </div>
         </div>
       </SectionCard>
