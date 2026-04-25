@@ -121,7 +121,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 function SectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={`mx-auto max-w-6xl px-4 ${className}`}>
-      <div className="rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-12 md:py-12">
+      <div className="overflow-hidden rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-12 md:py-12">
         {children}
       </div>
     </div>
@@ -144,26 +144,48 @@ function BtnSecondary({ href, children }: { href: string; children: React.ReactN
   );
 }
 
-/* FAQ — każde pytanie jako osobna karta, spójna z resztą strony.
-   Plus → Minus przy otwieraniu żeby stan był jednoznaczny. */
+/* FAQ — React state, każde pytanie jako osobna karta */
 function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
+  const [open, setOpen] = useState<number | null>(null);
   return (
     <div className="space-y-2.5">
-      {items.map((item) => (
-        <details key={item.q} className="group rounded-2xl border border-slate-200 bg-slate-50 transition-colors open:bg-white open:shadow-sm">
-          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4">
-            <span className="text-sm font-semibold text-slate-900">{item.q}</span>
-            {/* Plus widoczny gdy zamknięte, Minus gdy otwarte */}
-            <span className="ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white group-open:border-blue-200 group-open:bg-blue-50 transition-colors">
-              <Plus  className="h-3.5 w-3.5 text-slate-400 group-open:hidden" strokeWidth={2.5} />
-              <Minus className="h-3.5 w-3.5 text-blue-600 hidden group-open:block" strokeWidth={2.5} />
-            </span>
-          </summary>
-          <div className="border-t border-slate-100 px-5 pb-5 pt-3 text-sm leading-relaxed text-slate-700">
-            {item.a}
+      {items.map((item, i) => {
+        const isOpen = open === i;
+        return (
+          <div
+            key={item.q}
+            className={`rounded-2xl border transition-all ${
+              isOpen
+                ? "border-blue-200 bg-white shadow-sm"
+                : "border-slate-200 bg-slate-50"
+            }`}
+          >
+            <button
+              onClick={() => setOpen(isOpen ? null : i)}
+              className="flex w-full items-center justify-between px-5 py-4 text-left"
+            >
+              <span className="text-sm font-semibold text-slate-900">{item.q}</span>
+              <span
+                className={`ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                  isOpen
+                    ? "border-blue-200 bg-blue-50"
+                    : "border-slate-200 bg-white"
+                }`}
+              >
+                {isOpen
+                  ? <Minus className="h-3.5 w-3.5 text-blue-600" strokeWidth={2.5} />
+                  : <Plus  className="h-3.5 w-3.5 text-slate-400" strokeWidth={2.5} />
+                }
+              </span>
+            </button>
+            {isOpen && (
+              <div className="border-t border-slate-100 px-5 pb-5 pt-3 text-sm leading-relaxed text-slate-700">
+                {item.a}
+              </div>
+            )}
           </div>
-        </details>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -214,7 +236,7 @@ export default function Page() {
           HERO
       ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="pt-6">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-start">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center">
 
           {/* LEFT */}
           <div>
@@ -223,9 +245,9 @@ export default function Page() {
               Platforma dla zawodów medycznych
             </div>
 
-            {/* H1 — whitespace-nowrap na pierwszej linii żeby nie łamało po "i" */}
+            {/* H1 — text wraps naturalnie, overflow-hidden na sekcji zapobiega wycieku */}
             <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl">
-              <span className="whitespace-nowrap">Twój rozwój i kwalifikacje</span>
+              Twój rozwój i kwalifikacje
               <br />
               <span className="text-blue-600">w jednym miejscu.</span>
             </h1>
