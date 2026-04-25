@@ -214,7 +214,6 @@ function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
               </span>
             </button>
             {isOpen && (
-              /* FIX: pt-2 zamiast pt-3 — więcej oddechu */
               <div className="border-t border-slate-100 px-5 pb-5 pt-2 text-sm leading-relaxed text-slate-700">
                 {item.a}
               </div>
@@ -326,7 +325,11 @@ export default function Page() {
               <BtnPrimary href="/login">
                 Załóż darmowe konto <ArrowRight className="h-4 w-4" />
               </BtnPrimary>
-              <a href="#jak-to-dziala" className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
+              {/* ZMIANA: bg-white + border zamiast bg-slate-100 bez border — Opcja C */}
+              <a
+                href="#jak-to-dziala"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+              >
                 Zobacz jak to działa
               </a>
             </div>
