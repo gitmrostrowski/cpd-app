@@ -303,7 +303,7 @@ export default function Page() {
             <p className="mt-2 text-sm leading-relaxed text-blue-500">
               Platforma umożliwia monitorowanie aktywności edukacyjnej i postępów
               uczestników oraz wspiera organizacje w zarządzaniu procesem edukacyjnym
-              i obowiązkami regulacyjnymi
+              i&nbsp;obowiązkami regulacyjnymi
             </p>
 
             <div className="mt-6 grid grid-cols-2 gap-2.5">
