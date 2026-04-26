@@ -365,14 +365,14 @@ export default function Page() {
           {/* RIGHT — ilustracja + status card */}
           <div className="flex flex-col gap-3">
             {/* ilustracja nad kartą */}
-            <div className="overflow-hidden rounded-2xl" style={{ background: "#e8ecf2" }}>
+            <div className="overflow-hidden rounded-2xl border border-slate-200" style={{ background: "#eaecf2" }}>
               <Image
-                src="/crpe_reka.png"
+                src="/crpe_reka2.png"
                 alt="Ilustracja — zarządzanie rozwojem zawodowym"
-                width={600}
-                height={280}
+                width={800}
+                height={300}
                 className="w-full object-cover"
-                style={{ objectPosition: "center 20%", height: "160px" }}
+                style={{ objectPosition: "center center", height: "170px" }}
               />
             </div>
 
