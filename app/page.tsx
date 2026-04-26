@@ -304,8 +304,20 @@ export default function Page() {
               procesem edukacyjnym i obowiązkami regulacyjnymi
             </p>
 
+            <div className="mt-6 grid grid-cols-2 gap-2.5">
+              <Link href="/login" className="flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                Załóż darmowe konto <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href="#jak-to-dziala"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Zobacz jak to działa
+              </a>
+            </div>
+
             {/* 4 bullet — lekkie z opisami */}
-            <div className="mt-6 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
               {[
                 { t: "Porządek bez wysiłku",  d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",                    dot: "bg-blue-500"  },
                 { t: "Jasny status punktów",  d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",                             dot: "bg-amber-400" },
@@ -320,18 +332,6 @@ export default function Page() {
                   <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{b.d}</p>
                 </div>
               ))}
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-2.5">
-              <Link href="/login" className="flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
-                Załóż darmowe konto <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a
-                href="#jak-to-dziala"
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                Zobacz jak to działa
-              </a>
             </div>
 
             <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1.5 text-sm font-medium text-blue-600">
@@ -426,36 +426,7 @@ export default function Page() {
       <div className="mx-auto mt-4 max-w-6xl px-4">
         <div className="grid gap-4 lg:grid-cols-2">
 
-          {/* Co zyskujesz */}
-          <div className="overflow-hidden rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-10">
-            <Eyebrow>Wartość</Eyebrow>
-            <h2 className="text-2xl font-bold text-slate-900">Co zyskujesz</h2>
-            <p className="mt-1 text-base text-slate-600">Bez komplikacji — po prostu porządek i jasny status.</p>
-
-            <ul className="mt-6 space-y-2">
-              {benefits.map(({ t, icon: Icon }) => (
-                <li key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
-                  <span className={`${ICON_LG} bg-blue-50 shrink-0`}>
-                    <Icon className={`${ICON_LG_I} text-blue-600`} strokeWidth={1.75} />
-                  </span>
-                  <span className="text-sm font-medium text-slate-800">{t}</span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <span className={`${ICON_LG} bg-amber-100 shrink-0`}>
-                <FileText className={`${ICON_LG_I} text-amber-600`} strokeWidth={1.75} />
-              </span>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-amber-600">Wkrótce — PRO</p>
-                <p className="mt-0.5 text-sm font-semibold text-slate-900">Eksport PDF i przypomnienia</p>
-                <p className="mt-0.5 text-sm text-slate-600">Raport PDF gotowy do wydruku oraz automatyczne przypomnienia o brakach punktowych.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Dla kogo */}
+          {/* Dla kogo — po lewej */}
           <div className="overflow-hidden rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-10">
             <Eyebrow>Odbiorcy</Eyebrow>
             <h2 className="text-2xl font-bold text-slate-900">Dla kogo jest CRPE</h2>
@@ -481,6 +452,35 @@ export default function Page() {
               <p className="mt-1 text-sm text-slate-600">
                 Zacznij od kilku wpisów. Resztę możesz uzupełniać stopniowo.
               </p>
+            </div>
+          </div>
+
+          {/* Co zyskujesz — po prawej */}
+          <div className="overflow-hidden rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-10">
+            <Eyebrow>Wartość</Eyebrow>
+            <h2 className="text-2xl font-bold text-slate-900">Co zyskujesz</h2>
+            <p className="mt-1 text-base text-slate-600">Bez komplikacji — po prostu porządek i jasny status.</p>
+
+            <ul className="mt-6 space-y-2">
+              {benefits.map(({ t, icon: Icon }) => (
+                <li key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
+                  <span className={`${ICON_LG} bg-blue-50 shrink-0`}>
+                    <Icon className={`${ICON_LG_I} text-blue-600`} strokeWidth={1.75} />
+                  </span>
+                  <span className="text-sm font-medium text-slate-800">{t}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <span className={`${ICON_LG} bg-amber-100 shrink-0`}>
+                <FileText className={`${ICON_LG_I} text-amber-600`} strokeWidth={1.75} />
+              </span>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-amber-600">Wkrótce — PRO</p>
+                <p className="mt-0.5 text-sm font-semibold text-slate-900">Eksport PDF i przypomnienia</p>
+                <p className="mt-0.5 text-sm text-slate-600">Raport PDF gotowy do wydruku oraz automatyczne przypomnienia o brakach punktowych.</p>
+              </div>
             </div>
           </div>
         </div>
