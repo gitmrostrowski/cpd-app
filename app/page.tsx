@@ -294,32 +294,37 @@ export default function Page() {
 
             {/* H1 */}
             <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
-              Punkty CPD pod kontrolą.
+              Twój rozwój i kwalifikacje
               <br />
-              <span style={{ color: "#0b3f90" }}>Prosto i bez stresu.</span>
+              <span style={{ color: "#0b3f90" }}>w jednym miejscu.</span>
             </h1>
 
             <p className="mt-5 text-lg leading-relaxed text-slate-700">
               Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp
-              w aktualnym okresie rozliczeniowym.{" "}
-              <strong className="font-semibold text-slate-900">
-                Bez Excela. Spokojnie.
-              </strong>
+              w aktualnym okresie rozliczeniowym. Prosto. Spokojnie. Bez Excela.
+              <span className="mt-2 block text-blue-600">
+                Platforma umożliwia monitorowanie aktywności edukacyjnej i
+                postępów uczestników oraz wspiera organizacje w zarządzaniu
+                procesem edukacyjnym i obowiązkami regulacyjnymi
+              </span>
             </p>
 
-            {/* 4 bullet — ICON_MD (40px) w układzie 2×2 */}
+            {/* 4 bullet z opisami jak w doc 5 */}
             <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              {heroBullets.map((b) => {
-                const Icon = b.icon;
-                return (
-                  <div key={b.t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${b.iconBg}`}>
-                      <Icon className={`h-5 w-5 ${b.color}`} strokeWidth={2} />
-                    </span>
-                    <span className="text-sm font-medium text-slate-700">{b.t}</span>
+              {[
+                { t: "Porządek bez wysiłku",    d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",                               iconBg: "bg-blue-50",   color: "text-blue-600"   },
+                { t: "Jasny status punktów",     d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",                                       iconBg: "bg-amber-50",  color: "text-amber-500"  },
+                { t: "Bezpieczne dane",          d: "Dostęp masz tylko Ty. Dane są przechowywane w UE.",                                          iconBg: "bg-slate-100", color: "text-slate-500"  },
+                { t: "Start za darmo",           d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.",            iconBg: "bg-indigo-50", color: "text-indigo-500" },
+              ].map((b) => (
+                <div key={b.t} className="rounded-xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/60 px-4 py-3 shadow-sm">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                    <span className={`h-2 w-2 rounded-full ${b.iconBg.replace('bg-', 'bg-').replace('-50', '-500').replace('-100', '-500')}`} style={{ background: b.color.includes('blue') ? '#3b82f6' : b.color.includes('amber') ? '#f59e0b' : b.color.includes('indigo') ? '#6366f1' : '#94a3b8' }} />
+                    {b.t}
                   </div>
-                );
-              })}
+                  <div className="mt-1 text-xs leading-relaxed text-slate-600">{b.d}</div>
+                </div>
+              ))}
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-2.5">
@@ -357,7 +362,7 @@ export default function Page() {
 
             <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3.5 py-1.5 text-sm font-medium text-indigo-700">
               <Sparkles className="h-4 w-4 shrink-0 text-indigo-500" strokeWidth={1.75} />
-              Wkrótce: Asystent AI do zarządzania rozwojem zawodowym
+              Wkrótce: Inteligentny asystent AI do tworzenia i zarządzania Twoim rozwojem zawodowym
             </div>
           </div>
 
