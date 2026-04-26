@@ -277,7 +277,7 @@ export default function Page() {
   const demoMissing  = Math.max(0, demoRequired - demoHave);
 
   return (
-    <div className="bg-slate-100 pb-6">
+    <div className="bg-slate-100 pb-2">
 
       {/* ══════════════════════════════════════════════════════════════
           HERO
@@ -700,7 +700,7 @@ export default function Page() {
       {/* ══════════════════════════════════════════════════════════════
           FAQ
       ══════════════════════════════════════════════════════════════ */}
-      <SectionCard className="mt-4">
+      <SectionCard className="mt-4 mb-4">
         <div>
           <Eyebrow>FAQ</Eyebrow>
           <h2 className="text-2xl font-bold text-slate-900">Najczęstsze pytania</h2>
