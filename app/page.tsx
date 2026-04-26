@@ -292,10 +292,10 @@ export default function Page() {
             </div>
 
             {/* H1 */}
-            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
+            <h1 className="text-4xl font-bold leading-[1.15] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
               Twój rozwój i kwalifikacje
               <br />
-              <span className="text-blue-600">w jednym miejscu.</span>
+              <span className="italic text-blue-600">w jednym miejscu.</span>
             </h1>
 
             <p className="mt-5 text-lg leading-relaxed text-slate-700">
@@ -306,14 +306,14 @@ export default function Page() {
               </strong>
             </p>
 
-            {/* 4 bullet — ICON_LG (48px) w układzie 2×2 */}
+            {/* 4 bullet — ICON_MD (40px) w układzie 2×2 */}
             <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {heroBullets.map((b) => {
                 const Icon = b.icon;
                 return (
                   <div key={b.t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-                    <span className={`${ICON_LG} ${b.iconBg}`}>
-                      <Icon className={`${ICON_LG_I} ${b.color}`} strokeWidth={1.75} />
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${b.iconBg}`}>
+                      <Icon className={`h-5 w-5 ${b.color}`} strokeWidth={2} />
                     </span>
                     <span className="text-sm font-medium text-slate-700">{b.t}</span>
                   </div>
