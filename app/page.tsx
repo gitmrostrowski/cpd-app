@@ -287,11 +287,6 @@ export default function Page() {
 
           {/* LEFT */}
           <div>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold text-blue-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-              Platforma dla zawodów medycznych
-            </div>
-
             {/* H1 */}
             <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
               Twój rozwój i kwalifikacje
