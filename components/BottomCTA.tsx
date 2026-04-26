@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function BottomCTA() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-4">
+    <section className="mx-auto max-w-6xl px-4 pt-4 pb-2">
       <div className="relative overflow-hidden rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-12 md:py-12">
         <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-blue-100/40 blur-3xl" />
         <div className="pointer-events-none absolute -left-32 -bottom-32 h-80 w-80 rounded-full bg-indigo-100/30 blur-3xl" />
