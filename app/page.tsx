@@ -682,10 +682,10 @@ export default function Page() {
             <p className="mt-1 text-base text-slate-600">Bez komplikacji — po prostu porządek i jasny status.</p>
 
             <ul className="mt-6 space-y-2">
-              {benefits.map(({ t, icon: Icon, iconBg, color }) => (
+              {benefits.map(({ t, icon: Icon }) => (
                 <li key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
-                  <span className={`${ICON_LG} ${iconBg}`}>
-                    <Icon className={`${ICON_LG_I} ${color}`} strokeWidth={1.75} />
+                  <span className={`${ICON_LG} bg-blue-50 shrink-0`}>
+                    <Icon className={`${ICON_LG_I} text-blue-600`} strokeWidth={1.75} />
                   </span>
                   <span className="text-sm font-medium text-slate-800">{t}</span>
                 </li>
@@ -739,7 +739,7 @@ export default function Page() {
           FAQ
       ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="mt-4">
-        <div className="mx-auto max-w-2xl">
+        <div>
           <Eyebrow>FAQ</Eyebrow>
           <h2 className="text-2xl font-bold text-slate-900">Najczęstsze pytania</h2>
           <p className="mt-1 text-base text-slate-600">Kliknij pytanie, aby zobaczyć odpowiedź.</p>
