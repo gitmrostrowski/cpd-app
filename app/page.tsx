@@ -293,10 +293,10 @@ export default function Page() {
             </div>
 
             {/* H1 */}
-            <h1 className="text-4xl font-bold leading-[1.15] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
+            <h1 className="text-4xl font-bold leading-[1.15] tracking-tight md:text-4xl lg:text-5xl" style={{ color: "#062f74" }}>
               Twój rozwój i kwalifikacje
               <br />
-              <span className="text-blue-600">w jednym miejscu.</span>
+              <span style={{ color: "#0b3f90" }}>w jednym miejscu.</span>
             </h1>
 
             <p className="mt-5 text-lg leading-relaxed text-slate-700">
@@ -323,9 +323,9 @@ export default function Page() {
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <BtnPrimary href="/login">
+              <Link href="/login" className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition" style={{ background: "#062f74" }}>
                 Załóż darmowe konto <ArrowRight className="h-4 w-4" />
-              </BtnPrimary>
+              </Link>
               {/* ZMIANA: bg-white + border zamiast bg-slate-100 bez border — Opcja C */}
               <a
                 href="#jak-to-dziala"
@@ -372,7 +372,7 @@ export default function Page() {
                 width={800}
                 height={300}
                 className="w-full object-contain"
-                style={{ objectPosition: "center center", height: "200px", padding: "12px 16px 0" }}
+                style={{ objectPosition: "center top", height: "200px", padding: "4px 16px 20px" }}
               />
             </div>
 
