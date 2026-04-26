@@ -389,10 +389,16 @@ export default function Page() {
               </div>
 
               {/* animowane liczniki */}
-              <div className="mt-4 grid grid-cols-3 divide-x divide-slate-100 rounded-xl border border-slate-100 bg-slate-50">
-                <StatCard target={demoHave}     label="Masz (pkt)"    />
-                <StatCard target={demoRequired} label="Cel (pkt)"     />
-                <StatCard target={demoMissing}  label="Brakuje (pkt)" color="text-red-500" />
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-center">
+                  <StatCard target={demoHave}     label="Masz (pkt)"    />
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-center">
+                  <StatCard target={demoRequired} label="Cel (pkt)"     />
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-center">
+                  <StatCard target={demoMissing}  label="Brakuje (pkt)" color="text-red-500" />
+                </div>
               </div>
 
               <div className="mt-5">
