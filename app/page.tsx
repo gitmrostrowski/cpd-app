@@ -384,11 +384,11 @@ export default function Page() {
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ostatnie wpisy</p>
                 <div className="space-y-2">
                   {demoEntries.map((e) => (
-                    <div key={e.name} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                    <div key={e.name} className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5">
                       <span className={`h-2 w-2 shrink-0 rounded-full ${e.dot}`} />
-                      <span className="flex-1 text-sm font-medium text-slate-800">{e.name}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${e.badge}`}>{e.cat}</span>
-                      <span className="text-sm font-bold text-blue-600">+{e.pts} pkt</span>
+                      <span className="flex-1 min-w-0 truncate text-sm font-medium text-slate-800">{e.name}</span>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${e.badge}`}>{e.cat}</span>
+                      <span className="shrink-0 text-sm font-bold text-blue-600">+{e.pts} pkt</span>
                     </div>
                   ))}
                 </div>
