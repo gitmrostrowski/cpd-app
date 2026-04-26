@@ -302,27 +302,27 @@ export default function Page() {
             <p className="mt-5 text-lg leading-relaxed text-slate-700">
               Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp
               w aktualnym okresie rozliczeniowym. Prosto. Spokojnie. Bez Excela.
-              <span className="mt-2 block text-blue-600">
-                Platforma umożliwia monitorowanie aktywności edukacyjnej i
-                postępów uczestników oraz wspiera organizacje w zarządzaniu
-                procesem edukacyjnym i obowiązkami regulacyjnymi
-              </span>
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-blue-600">
+              Platforma umożliwia monitorowanie aktywności edukacyjnej i
+              postępów uczestników oraz wspiera organizacje w zarządzaniu
+              procesem edukacyjnym i obowiązkami regulacyjnymi
             </p>
 
-            {/* 4 bullet z opisami jak w doc 5 */}
-            <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            {/* 4 bullet z opisami — karty z borderem */}
+            <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {[
-                { t: "Porządek bez wysiłku",    d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",                               iconBg: "bg-blue-50",   color: "text-blue-600"   },
-                { t: "Jasny status punktów",     d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",                                       iconBg: "bg-amber-50",  color: "text-amber-500"  },
-                { t: "Bezpieczne dane",          d: "Dostęp masz tylko Ty. Dane są przechowywane w UE.",                                          iconBg: "bg-slate-100", color: "text-slate-500"  },
-                { t: "Start za darmo",           d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.",            iconBg: "bg-indigo-50", color: "text-indigo-500" },
+                { t: "Porządek bez wysiłku",  d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",                    dot: "bg-blue-500"   },
+                { t: "Jasny status punktów",  d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",                             dot: "bg-amber-400"  },
+                { t: "Bezpieczne dane",        d: "Dostęp masz tylko Ty. Dane są przechowywane w UE.",                               dot: "bg-slate-400"  },
+                { t: "Start za darmo",         d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.", dot: "bg-indigo-400" },
               ].map((b) => (
-                <div key={b.t} className="rounded-xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/60 px-4 py-3 shadow-sm">
+                <div key={b.t} className="rounded-xl border border-slate-200 bg-white px-3.5 py-3">
                   <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                    <span className={`h-2 w-2 rounded-full ${b.iconBg.replace('bg-', 'bg-').replace('-50', '-500').replace('-100', '-500')}`} style={{ background: b.color.includes('blue') ? '#3b82f6' : b.color.includes('amber') ? '#f59e0b' : b.color.includes('indigo') ? '#6366f1' : '#94a3b8' }} />
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${b.dot}`} />
                     {b.t}
                   </div>
-                  <div className="mt-1 text-xs leading-relaxed text-slate-600">{b.d}</div>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{b.d}</p>
                 </div>
               ))}
             </div>
