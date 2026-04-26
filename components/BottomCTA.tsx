@@ -1,17 +1,13 @@
-// components/BottomCTA.tsx
 "use client";
 import Link from "next/link";
 
 export default function BottomCTA() {
   return (
-    <section className="mx-auto max-w-6xl px-4 pb-6 pt-4">
+    <section className="mx-auto max-w-6xl px-4 py-4">
       <div className="relative overflow-hidden rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-12 md:py-12">
-        {/* subtelne plamy — spójne z hero */}
         <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-blue-100/40 blur-3xl" />
         <div className="pointer-events-none absolute -left-32 -bottom-32 h-80 w-80 rounded-full bg-indigo-100/30 blur-3xl" />
-
         <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-          {/* left — tekst */}
           <div className="max-w-xl">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
@@ -24,8 +20,6 @@ export default function BottomCTA() {
               Podstawowe funkcje są darmowe. Wpisz aktywność, podepnij certyfikat i miej jasny status w okresie.
             </p>
           </div>
-
-          {/* right — przyciski wyrównane pionowo do środka */}
           <div className="flex shrink-0 flex-wrap gap-3">
             <Link
               href="/login"
@@ -41,8 +35,6 @@ export default function BottomCTA() {
             </Link>
           </div>
         </div>
-
-        {/* footer usunięty — jest już w globalnym layoucie aplikacji */}
       </div>
     </section>
   );
