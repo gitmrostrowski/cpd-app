@@ -282,7 +282,7 @@ export default function Page() {
       {/* ══════════════════════════════════════════════════════════════
           HERO
       ══════════════════════════════════════════════════════════════ */}
-      <SectionCard className="pt-6">
+      <SectionCard className="pt-3">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center">
 
           {/* LEFT */}
@@ -323,7 +323,7 @@ export default function Page() {
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-2.5">
-              <Link href="/login" className="flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition" style={{ background: "#062f74" }}>
+              <Link href="/login" className="flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
                 Załóż darmowe konto <ArrowRight className="h-4 w-4" />
               </Link>
               <a
@@ -371,7 +371,7 @@ export default function Page() {
                 width={800}
                 height={300}
                 className="w-full object-contain"
-                style={{ objectPosition: "center center", height: "200px", padding: "16px 16px 12px" }}
+                style={{ objectPosition: "center center", height: "210px", padding: "8px" }}
               />
             </div>
 
