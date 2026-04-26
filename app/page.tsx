@@ -294,16 +294,16 @@ export default function Page() {
 
             {/* H1 */}
             <h1 className="text-4xl font-bold leading-[1.15] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
-              Twój rozwój i kwalifikacje
+              Punkty CPD pod kontrolą.
               <br />
-              <span style={{ color: "#0b3f90" }}>w jednym miejscu.</span>
+              <span style={{ color: "#0b3f90" }}>Prosto i bez stresu.</span>
             </h1>
 
             <p className="mt-5 text-lg leading-relaxed text-slate-700">
               Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp
               w aktualnym okresie rozliczeniowym.{" "}
               <strong className="font-semibold text-slate-900">
-                Prosto. Spokojnie. Bez Excela.
+                Bez Excela. Spokojnie.
               </strong>
             </p>
 
@@ -333,6 +333,7 @@ export default function Page() {
                 Zobacz jak to działa
               </a>
             </div>
+            <p className="mt-2 text-xs text-slate-400 text-center">Bezpłatnie · bez karty kredytowej · 2 minuty</p>
 
             {/* Social proof — bez liczb, ogólne */}
             <div className="mt-5 flex items-center gap-3">
@@ -367,11 +368,11 @@ export default function Page() {
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
               <Image
                 src="/crpe_reka2b.png"
-                alt="Ilustracja — zarządzanie rozwojem zawodowym"
+                alt="Mockup panelu CPD"
                 width={800}
-                height={300}
-                className="w-full object-contain"
-                style={{ objectPosition: "center center", height: "210px", padding: "8px" }}
+                height={400}
+                className="w-full object-cover"
+                style={{ objectPosition: "left center", height: "250px" }}
               />
             </div>
 
