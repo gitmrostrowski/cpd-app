@@ -296,7 +296,7 @@ export default function Page() {
             <h1 className="text-4xl font-bold leading-[1.15] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
               Twój rozwój i kwalifikacje
               <br />
-              <span className="italic text-blue-600">w jednym miejscu.</span>
+              <span className="text-blue-600">w jednym miejscu.</span>
             </h1>
 
             <p className="mt-5 text-lg leading-relaxed text-slate-700">
@@ -371,8 +371,8 @@ export default function Page() {
                 alt="Ilustracja — zarządzanie rozwojem zawodowym"
                 width={800}
                 height={400}
-                className="w-full object-cover"
-                style={{ objectPosition: "center center", height: "220px" }}
+                className="w-full object-contain"
+                style={{ objectPosition: "center center", height: "160px", padding: "8px" }}
               />
             </div>
 
