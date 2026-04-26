@@ -551,8 +551,8 @@ export default function Page() {
                   Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.
                 </p>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-center gap-4">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-amber-50">
-                    <UploadCloud className="h-7 w-7 text-amber-500" strokeWidth={1.5} />
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-blue-50">
+                    <UploadCloud className="h-7 w-7 text-blue-600" strokeWidth={1.5} />
                   </span>
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-slate-900">Konferencja kardiologiczna</p>
@@ -574,8 +574,8 @@ export default function Page() {
                   Zawsze wiesz, ile punktów masz i czego brakuje.
                 </p>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-center gap-4">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-slate-100">
-                    <TrendingUp className="h-7 w-7 text-slate-500" strokeWidth={1.5} />
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-blue-50">
+                    <TrendingUp className="h-7 w-7 text-blue-600" strokeWidth={1.5} />
                   </span>
                   <div className="flex-1">
                     <div className="mb-1.5 flex items-center justify-between text-xs text-slate-500">
