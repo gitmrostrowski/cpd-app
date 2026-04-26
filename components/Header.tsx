@@ -124,7 +124,7 @@ export default function Header() {
         <div className="flex h-16 items-center gap-4">
           <Link href={logoHref} className="flex shrink-0 items-center gap-2">
             <Image src="/logo.svg" alt="Logo" width={32} height={32} />
-            <span className="font-semibold text-slate-900">CRPE</span>
+            <span className="text-lg font-semibold text-slate-900">CRPE</span>
           </Link>
 
           <nav className="hidden flex-1 items-center justify-end sm:flex">
