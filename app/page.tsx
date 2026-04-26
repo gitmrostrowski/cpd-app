@@ -291,9 +291,7 @@ export default function Page() {
             <h1 className="max-w-[560px] text-[40px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-950 md:text-[48px]">
               Twój rozwój i kwalifikacje
               <br />
-              <span className="bg-gradient-to-r from-blue-700 to-sky-500 bg-clip-text text-transparent">
-                w jednym miejscu.
-              </span>
+              <span className="text-blue-600">w jednym miejscu.</span>
             </h1>
 
             <p className="mt-5 text-lg leading-relaxed text-slate-600">
@@ -306,20 +304,20 @@ export default function Page() {
               procesem edukacyjnym i obowiązkami regulacyjnymi
             </p>
 
-            {/* 4 bullet — miękkie, bez ostrych borderów */}
-            <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {/* 4 bullet — lekkie z opisami */}
+            <div className="mt-6 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
               {[
-                { t: "Porządek bez wysiłku",  d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",                    dot: "bg-blue-500"   },
-                { t: "Jasny status punktów",  d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",                             dot: "bg-amber-400"  },
-                { t: "Bezpieczne dane",        d: "Dostęp masz tylko Ty. Dane są przechowywane w UE.",                               dot: "bg-slate-400"  },
+                { t: "Porządek bez wysiłku",  d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",                    dot: "bg-blue-500"  },
+                { t: "Jasny status punktów",  d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",                             dot: "bg-amber-400" },
+                { t: "Bezpieczne dane",        d: "Dostęp masz tylko Ty. Dane są przechowywane w UE.",                               dot: "bg-slate-400" },
                 { t: "Start za darmo",         d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.", dot: "bg-blue-400"  },
               ].map((b) => (
-                <div key={b.t} className="rounded-2xl bg-slate-50 px-4 py-3.5">
+                <div key={b.t} className="rounded-xl bg-slate-50 px-3.5 py-3">
                   <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                     <span className={`h-2 w-2 shrink-0 rounded-full ${b.dot}`} />
                     {b.t}
                   </div>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{b.d}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{b.d}</p>
                 </div>
               ))}
             </div>
@@ -330,7 +328,7 @@ export default function Page() {
               </Link>
               <a
                 href="#jak-to-dziala"
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 Zobacz jak to działa
               </a>
@@ -344,8 +342,8 @@ export default function Page() {
 
           {/* RIGHT — ilustracja + status card */}
           <div className="flex flex-col gap-3">
-            {/* ilustracja nad kartą — większy oddech, cień zamiast ramki */}
-            <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-white to-blue-50/40 shadow-md">
+            {/* ilustracja nad kartą */}
+            <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-white to-blue-50/40 shadow-lg">
               <Image
                 src="/crpe_reka2b.png"
                 alt="Mockup panelu CPD"
