@@ -523,7 +523,7 @@ export default function Page() {
       </SectionCard>
 
       {/* ══════════════════════════════════════════════════════════════
-          JAK TO DZIAŁA — timeline pionowy z mini-UI
+          JAK TO DZIAŁA — timeline z ilustracjami SVG
       ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="mt-4">
         <div id="jak-to-dziala">
@@ -544,12 +544,24 @@ export default function Page() {
                 <p className="mt-1 mb-3 text-sm leading-relaxed text-slate-600">
                   System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.
                 </p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 flex flex-wrap gap-2">
-                  {["Lekarz", "Pielęgniarka", "Fizjoterapeuta", "Farmaceuta", "+ więcej"].map((t) => (
-                    <span key={t} className="rounded-full border border-slate-200 bg-white px-3 py-0.5 text-xs font-medium text-slate-700">
-                      {t}
-                    </span>
-                  ))}
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-center gap-4">
+                  {/* ilustracja: sylwetka z kartą profilu */}
+                  <svg width="72" height="56" viewBox="0 0 72 56" fill="none" className="shrink-0">
+                    <rect x="4" y="8" width="64" height="40" rx="8" fill="#eff6ff" stroke="#bfdbfe" strokeWidth="1"/>
+                    <circle cx="22" cy="28" r="10" fill="#bfdbfe"/>
+                    <circle cx="22" cy="22" r="4" fill="#93c5fd"/>
+                    <path d="M13 36c0-5 4-8 9-8s9 3 9 8" fill="#93c5fd"/>
+                    <rect x="37" y="20" width="22" height="3" rx="1.5" fill="#93c5fd"/>
+                    <rect x="37" y="26" width="16" height="3" rx="1.5" fill="#bfdbfe"/>
+                    <rect x="37" y="32" width="19" height="3" rx="1.5" fill="#bfdbfe"/>
+                  </svg>
+                  <div className="flex flex-wrap gap-2">
+                    {["Lekarz", "Pielęgniarka", "Fizjoterapeuta", "Farmaceuta", "+ więcej"].map((t) => (
+                      <span key={t} className="rounded-full border border-slate-200 bg-white px-3 py-0.5 text-xs font-medium text-slate-700">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -565,12 +577,28 @@ export default function Page() {
                 <p className="mt-1 mb-3 text-sm leading-relaxed text-slate-600">
                   Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.
                 </p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 flex items-center justify-between">
-                  <div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-center gap-4">
+                  {/* ilustracja: dokument + upload */}
+                  <svg width="72" height="56" viewBox="0 0 72 56" fill="none" className="shrink-0">
+                    <rect x="4" y="4" width="28" height="38" rx="5" fill="#fefce8" stroke="#fde68a" strokeWidth="1"/>
+                    <rect x="8" y="10" width="20" height="2.5" rx="1.25" fill="#fde68a"/>
+                    <rect x="8" y="15" width="15" height="2.5" rx="1.25" fill="#fde68a"/>
+                    <rect x="8" y="20" width="17" height="2.5" rx="1.25" fill="#fde68a"/>
+                    <rect x="8" y="30" width="20" height="7" rx="3" fill="#fbbf24" opacity="0.35"/>
+                    <path d="M13 33.5l2.5 2.5 4-4" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M36 28l4-1-4-1" fill="#94a3b8"/>
+                    <rect x="42" y="8" width="26" height="34" rx="5" fill="#f0fdf4" stroke="#bbf7d0" strokeWidth="1"/>
+                    <path d="M55 18v-5" stroke="#86efac" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M52 16l3-3 3 3" stroke="#86efac" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                    <rect x="47" y="26" width="16" height="2" rx="1" fill="#86efac"/>
+                    <rect x="47" y="30" width="12" height="2" rx="1" fill="#bbf7d0"/>
+                    <rect x="47" y="34" width="14" height="2" rx="1" fill="#bbf7d0"/>
+                  </svg>
+                  <div className="flex-1">
                     <p className="text-sm font-semibold text-slate-900">Konferencja kardiologiczna</p>
                     <p className="mt-0.5 text-xs text-slate-500">Certyfikat.pdf dołączony</p>
+                    <span className="mt-1.5 inline-block text-sm font-bold text-green-600">+20 pkt</span>
                   </div>
-                  <span className="text-sm font-bold text-green-600">+20 pkt</span>
                 </div>
               </div>
             </div>
@@ -585,17 +613,35 @@ export default function Page() {
                 <p className="mt-1 mb-3 text-sm leading-relaxed text-slate-600">
                   Zawsze wiesz, ile punktów masz i czego brakuje.
                 </p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-                  <div className="mb-1.5 flex items-center justify-between text-xs text-slate-500">
-                    <span>Postęp w okresie</span>
-                    <span className="font-semibold text-slate-800">55%</span>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                    <div className="h-2 rounded-full bg-green-500" style={{ width: "55%" }} />
-                  </div>
-                  <div className="mt-2 flex justify-between text-xs">
-                    <span className="text-slate-500">110 / 200 pkt</span>
-                    <span className="font-medium text-red-500">brakuje 90 pkt</span>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-center gap-4">
+                  {/* ilustracja: mini dashboard */}
+                  <svg width="72" height="56" viewBox="0 0 72 56" fill="none" className="shrink-0">
+                    <rect x="4" y="4" width="64" height="48" rx="8" fill="#f0fdf4" stroke="#bbf7d0" strokeWidth="1"/>
+                    <rect x="10" y="13" width="52" height="7" rx="3.5" fill="#dcfce7"/>
+                    <rect x="10" y="13" width="32" height="7" rx="3.5" fill="#4ade80"/>
+                    <text x="58" y="20" fontSize="7" fill="#15803d" fontWeight="600" fontFamily="system-ui">55%</text>
+                    <rect x="10" y="26" width="15" height="15" rx="3" fill="#dcfce7"/>
+                    <text x="17.5" y="36" textAnchor="middle" fontSize="8" fill="#15803d" fontWeight="700" fontFamily="system-ui">110</text>
+                    <text x="17.5" y="46" textAnchor="middle" fontSize="6" fill="#64748b" fontFamily="system-ui">masz</text>
+                    <rect x="28" y="26" width="15" height="15" rx="3" fill="#dcfce7"/>
+                    <text x="35.5" y="36" textAnchor="middle" fontSize="8" fill="#15803d" fontWeight="700" fontFamily="system-ui">200</text>
+                    <text x="35.5" y="46" textAnchor="middle" fontSize="6" fill="#64748b" fontFamily="system-ui">cel</text>
+                    <rect x="46" y="26" width="18" height="15" rx="3" fill="#fee2e2"/>
+                    <text x="55" y="36" textAnchor="middle" fontSize="8" fill="#dc2626" fontWeight="700" fontFamily="system-ui">90</text>
+                    <text x="55" y="46" textAnchor="middle" fontSize="6" fill="#64748b" fontFamily="system-ui">brakuje</text>
+                  </svg>
+                  <div className="flex-1">
+                    <div className="mb-1.5 flex items-center justify-between text-xs text-slate-500">
+                      <span>Postęp w okresie</span>
+                      <span className="font-semibold text-slate-800">55%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                      <div className="h-2 rounded-full bg-green-500" style={{ width: "55%" }} />
+                    </div>
+                    <div className="mt-2 flex justify-between text-xs">
+                      <span className="text-slate-500">110 / 200 pkt</span>
+                      <span className="font-medium text-red-500">brakuje 90 pkt</span>
+                    </div>
                   </div>
                 </div>
               </div>
