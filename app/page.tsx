@@ -288,31 +288,33 @@ export default function Page() {
           {/* LEFT */}
           <div>
             {/* H1 */}
-            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
+            <h1 className="max-w-[560px] text-[40px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-950 md:text-[48px]">
               Twój rozwój i kwalifikacje
               <br />
-              <span style={{ color: "#0b3f90" }}>w jednym miejscu.</span>
+              <span className="bg-gradient-to-r from-blue-700 to-sky-500 bg-clip-text text-transparent">
+                w jednym miejscu.
+              </span>
             </h1>
 
-            <p className="mt-5 text-lg leading-relaxed text-slate-700">
+            <p className="mt-5 text-lg leading-relaxed text-slate-600">
               Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp
               w aktualnym okresie rozliczeniowym. Prosto. Spokojnie. Bez Excela.
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-blue-600">
+            <p className="mt-2 text-sm leading-relaxed text-blue-500">
               Platforma umożliwia monitorowanie aktywności edukacyjnej i
               postępów uczestników oraz wspiera organizacje w zarządzaniu
               procesem edukacyjnym i obowiązkami regulacyjnymi
             </p>
 
-            {/* 4 bullet z opisami — karty z borderem */}
+            {/* 4 bullet — miękkie, bez ostrych borderów */}
             <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {[
                 { t: "Porządek bez wysiłku",  d: "Wpisy i certyfikaty masz w jednym miejscu — zawsze pod ręką.",                    dot: "bg-blue-500"   },
                 { t: "Jasny status punktów",  d: "Wiesz, ile masz i czego brakuje w aktualnym okresie.",                             dot: "bg-amber-400"  },
                 { t: "Bezpieczne dane",        d: "Dostęp masz tylko Ty. Dane są przechowywane w UE.",                               dot: "bg-slate-400"  },
-                { t: "Start za darmo",         d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.", dot: "bg-indigo-400" },
+                { t: "Start za darmo",         d: "Podstawowe funkcje są bezpłatne. Wkrótce opcje PRO: eksport PDF i przypomnienia.", dot: "bg-blue-400"  },
               ].map((b) => (
-                <div key={b.t} className="rounded-xl border border-slate-200 bg-white px-3.5 py-3">
+                <div key={b.t} className="rounded-2xl bg-slate-50 px-4 py-3.5">
                   <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                     <span className={`h-2 w-2 shrink-0 rounded-full ${b.dot}`} />
                     {b.t}
@@ -328,29 +330,29 @@ export default function Page() {
               </Link>
               <a
                 href="#jak-to-dziala"
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
               >
                 Zobacz jak to działa
               </a>
             </div>
 
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3.5 py-1.5 text-sm font-medium text-indigo-700">
-              <Sparkles className="h-4 w-4 shrink-0 text-indigo-500" strokeWidth={1.75} />
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1.5 text-sm font-medium text-blue-600">
+              <Sparkles className="h-4 w-4 shrink-0 text-blue-400" strokeWidth={1.75} />
               Wkrótce: Inteligentny asystent AI do tworzenia i zarządzania Twoim rozwojem zawodowym
             </div>
           </div>
 
           {/* RIGHT — ilustracja + status card */}
           <div className="flex flex-col gap-3">
-            {/* ilustracja nad kartą */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            {/* ilustracja nad kartą — większy oddech, cień zamiast ramki */}
+            <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-white to-blue-50/40 shadow-md">
               <Image
                 src="/crpe_reka2b.png"
                 alt="Mockup panelu CPD"
                 width={800}
                 height={400}
                 className="w-full object-cover"
-                style={{ objectPosition: "left center", height: "250px" }}
+                style={{ objectPosition: "left center", height: "280px" }}
               />
             </div>
 
