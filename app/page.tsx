@@ -334,27 +334,6 @@ export default function Page() {
               </a>
             </div>
 
-            {/* Social proof — bez liczb, ogólne */}
-            <div className="mt-5 flex items-center gap-3">
-              <div className="flex -space-x-1">
-                {["MK", "AT", "JP"].map((i) => (
-                  <span key={i} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-100 text-[10px] font-bold text-blue-700">
-                    {i}
-                  </span>
-                ))}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="flex gap-0.5">
-                  {[1,2,3,4,5].map((s) => (
-                    <Star key={s} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <span className="text-sm text-slate-600">
-                  Używają specjaliści medyczni z całej Polski
-                </span>
-              </div>
-            </div>
-
             <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3.5 py-1.5 text-sm font-medium text-indigo-700">
               <Sparkles className="h-4 w-4 shrink-0 text-indigo-500" strokeWidth={1.75} />
               Wkrótce: Inteligentny asystent AI do tworzenia i zarządzania Twoim rozwojem zawodowym
@@ -429,7 +408,7 @@ export default function Page() {
       <div className="mx-auto mt-4 max-w-6xl px-4">
         <div className="overflow-hidden rounded-2xl bg-white px-6 py-5 shadow-sm ring-1 ring-slate-200/60">
           <p className="mb-4 text-center text-[11px] font-bold uppercase tracking-widest text-slate-400">
-            Platforma wspiera zawody regulowane przez
+            CRPE wspiera zawody regulowane przez samorządy zawodowe
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
             {izby.map((nazwa) => (
