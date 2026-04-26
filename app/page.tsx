@@ -523,7 +523,7 @@ export default function Page() {
       </SectionCard>
 
       {/* ══════════════════════════════════════════════════════════════
-          JAK TO DZIAŁA — ikony XL (64px)
+          JAK TO DZIAŁA — timeline pionowy z mini-UI
       ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="mt-4">
         <div id="jak-to-dziala">
@@ -531,56 +531,79 @@ export default function Page() {
           <h2 className="text-2xl font-bold text-slate-900">Jak to działa</h2>
           <p className="mt-1 text-base text-slate-600">Trzy proste kroki. Bez długiego wdrożenia.</p>
 
-          {/* kroki z dekoracyjnymi numerami w tle + strzałki między */}
-          <div className="mt-8 grid items-stretch gap-0 md:grid-cols-[1fr_40px_1fr_40px_1fr]">
-            {steps.map((x, i) => {
-              const Icon = x.icon;
-              // bardzo jasne kolory dla watermark numeru — prawie białe
-              const watermarkColor = ["#bfdbfe", "#fde68a", "#e2e8f0"][i];
-              return (
-                <React.Fragment key={x.n}>
-                  <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                    {/* watermark — ogromny numer w tle, prawy dolny róg */}
-                    <span
-                      className="pointer-events-none absolute -bottom-6 -right-4 select-none font-black leading-none"
-                      style={{ fontSize: "140px", color: watermarkColor, lineHeight: 1 }}
-                    >
-                      {x.n}
+          <div className="mt-8 flex flex-col gap-0">
+
+            {/* Krok 1 */}
+            <div className="flex gap-5 pb-8">
+              <div className="flex flex-col items-center shrink-0">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">1</span>
+                <div className="mt-1.5 w-px flex-1 bg-slate-200" />
+              </div>
+              <div className="flex-1 pt-1">
+                <p className="text-base font-semibold text-slate-900">Wybierz zawód</p>
+                <p className="mt-1 mb-3 text-sm leading-relaxed text-slate-600">
+                  System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.
+                </p>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 flex flex-wrap gap-2">
+                  {["Lekarz", "Pielęgniarka", "Fizjoterapeuta", "Farmaceuta", "+ więcej"].map((t) => (
+                    <span key={t} className="rounded-full border border-slate-200 bg-white px-3 py-0.5 text-xs font-medium text-slate-700">
+                      {t}
                     </span>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-                    {/* treść karty */}
-                    <div className="relative">
-                      {/* numer badge */}
-                      <span className="mb-4 flex h-7 w-7 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white">
-                        {x.n}
-                      </span>
-
-                      {/* ikona XL */}
-                      <div className="mb-5 flex justify-start">
-                        <span className={`${ICON_XL} ${x.iconBg}`}>
-                          <Icon className={`${ICON_XL_I} ${x.color}`} strokeWidth={1.5} />
-                        </span>
-                      </div>
-
-                      <div className="text-base font-semibold text-slate-900">{x.t}</div>
-                      <div className="mt-1.5 text-sm leading-relaxed text-slate-600">{x.d}</div>
-                    </div>
+            {/* Krok 2 */}
+            <div className="flex gap-5 pb-8">
+              <div className="flex flex-col items-center shrink-0">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">2</span>
+                <div className="mt-1.5 w-px flex-1 bg-slate-200" />
+              </div>
+              <div className="flex-1 pt-1">
+                <p className="text-base font-semibold text-slate-900">Dodaj aktywność</p>
+                <p className="mt-1 mb-3 text-sm leading-relaxed text-slate-600">
+                  Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.
+                </p>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Konferencja kardiologiczna</p>
+                    <p className="mt-0.5 text-xs text-slate-500">Certyfikat.pdf dołączony</p>
                   </div>
+                  <span className="text-sm font-bold text-green-600">+20 pkt</span>
+                </div>
+              </div>
+            </div>
 
-                  {/* strzałka między krokami */}
-                  {i < steps.length - 1 && (
-                    <div className="hidden items-center justify-center md:flex">
-                      <svg className="h-5 w-5 text-blue-300" viewBox="0 0 24 24" fill="none">
-                        <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                  )}
-                </React.Fragment>
-              );
-            })}
+            {/* Krok 3 */}
+            <div className="flex gap-5">
+              <div className="flex flex-col items-center shrink-0">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">3</span>
+              </div>
+              <div className="flex-1 pt-1">
+                <p className="text-base font-semibold text-slate-900">Sprawdzaj postęp</p>
+                <p className="mt-1 mb-3 text-sm leading-relaxed text-slate-600">
+                  Zawsze wiesz, ile punktów masz i czego brakuje.
+                </p>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                  <div className="mb-1.5 flex items-center justify-between text-xs text-slate-500">
+                    <span>Postęp w okresie</span>
+                    <span className="font-semibold text-slate-800">55%</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                    <div className="h-2 rounded-full bg-green-500" style={{ width: "55%" }} />
+                  </div>
+                  <div className="mt-2 flex justify-between text-xs">
+                    <span className="text-slate-500">110 / 200 pkt</span>
+                    <span className="font-medium text-red-500">brakuje 90 pkt</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <div className="mt-7 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap gap-3">
             <BtnPrimary href="/login">Zacznij za darmo <ArrowRight className="h-4 w-4" /></BtnPrimary>
             <BtnSecondary href="/rejestracja">Utwórz konto</BtnSecondary>
           </div>
