@@ -370,9 +370,9 @@ export default function Page() {
                 src="/crpe_reka2.png"
                 alt="Ilustracja — zarządzanie rozwojem zawodowym"
                 width={800}
-                height={300}
+                height={400}
                 className="w-full object-cover"
-                style={{ objectPosition: "center center", height: "170px" }}
+                style={{ objectPosition: "center center", height: "220px" }}
               />
             </div>
 
@@ -413,38 +413,6 @@ export default function Page() {
               <Link href="/login" className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
                 Zaloguj się, aby zobaczyć swój status <ArrowRight className="h-4 w-4" />
               </Link>
-
-              {/* ilustracja chaos → CRPE jako dekoracja na dole karty */}
-              <div className="mt-4 flex items-center justify-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
-                {/* CHAOS */}
-                <div className="relative h-10 w-10 shrink-0">
-                  <div className="absolute left-0 top-1 h-8 w-7 rotate-[-8deg] rounded border border-red-200 bg-red-50 p-1">
-                    <div className="mb-0.5 h-0.5 w-full rounded bg-red-200" />
-                    <div className="h-0.5 w-3/4 rounded bg-red-200" />
-                  </div>
-                  <div className="absolute left-1 top-0 h-8 w-7 rotate-[5deg] rounded border border-amber-200 bg-amber-50 p-1">
-                    <div className="mb-0.5 h-0.5 w-full rounded bg-amber-200" />
-                    <div className="h-0.5 w-1/2 rounded bg-amber-200" />
-                  </div>
-                  <div className="absolute left-2 top-0.5 h-8 w-7 rotate-[-1deg] rounded border border-violet-200 bg-violet-50 p-1">
-                    <div className="h-0.5 w-full rounded bg-violet-200" />
-                  </div>
-                </div>
-                <svg className="h-4 w-4 shrink-0 text-blue-400" viewBox="0 0 24 24" fill="none">
-                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                {/* CRPE */}
-                <div className="h-10 w-9 shrink-0 rounded border border-blue-200 bg-blue-50 p-1.5">
-                  <div className="mb-0.5 h-0.5 w-full rounded bg-blue-300" />
-                  <div className="mb-0.5 h-0.5 w-3/4 rounded bg-blue-200" />
-                  <div className="mb-1 h-0.5 w-1/2 rounded bg-blue-200" />
-                  <div className="flex items-center gap-0.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    <div className="h-0.5 flex-1 rounded bg-emerald-200" />
-                  </div>
-                </div>
-                <span className="text-xs text-slate-500">Od chaosu do porządku w kilka minut</span>
-              </div>
             </div>
           </div>
         </div>
