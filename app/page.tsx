@@ -289,7 +289,9 @@ export default function Page() {
           <div>
             {/* H1 */}
             <h1 className="max-w-[560px] text-[40px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-950 md:text-[48px]">
-              Twój rozwój i kwalifikacje
+              Twój rozwój
+              <br />
+              i kwalifikacje
               <br />
               <span className="text-blue-600">w jednym miejscu.</span>
             </h1>
@@ -299,9 +301,9 @@ export default function Page() {
               w aktualnym okresie rozliczeniowym. Prosto. Spokojnie. Bez Excela.
             </p>
             <p className="mt-2 text-sm leading-relaxed text-blue-500">
-              Platforma umożliwia monitorowanie aktywności edukacyjnej i
-              postępów uczestników oraz wspiera organizacje w zarządzaniu
-              procesem edukacyjnym i obowiązkami regulacyjnymi
+              Platforma umożliwia monitorowanie aktywności edukacyjnej i postępów
+              uczestników oraz wspiera organizacje w zarządzaniu procesem edukacyjnym
+              i obowiązkami regulacyjnymi
             </p>
 
             <div className="mt-6 grid grid-cols-2 gap-2.5">
