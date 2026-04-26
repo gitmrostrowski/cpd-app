@@ -293,7 +293,7 @@ export default function Page() {
             </div>
 
             {/* H1 */}
-            <h1 className="text-4xl font-bold leading-[1.15] tracking-tight md:text-4xl lg:text-5xl" style={{ color: "#062f74" }}>
+            <h1 className="text-4xl font-bold leading-[1.15] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
               Twój rozwój i kwalifikacje
               <br />
               <span style={{ color: "#0b3f90" }}>w jednym miejscu.</span>
@@ -322,14 +322,13 @@ export default function Page() {
               })}
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/login" className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition" style={{ background: "#062f74" }}>
+            <div className="mt-6 grid grid-cols-2 gap-2.5">
+              <Link href="/login" className="flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition" style={{ background: "#062f74" }}>
                 Załóż darmowe konto <ArrowRight className="h-4 w-4" />
               </Link>
-              {/* ZMIANA: bg-white + border zamiast bg-slate-100 bez border — Opcja C */}
               <a
                 href="#jak-to-dziala"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
               >
                 Zobacz jak to działa
               </a>
@@ -372,7 +371,7 @@ export default function Page() {
                 width={800}
                 height={300}
                 className="w-full object-contain"
-                style={{ objectPosition: "center top", height: "200px", padding: "4px 16px 20px" }}
+                style={{ objectPosition: "center center", height: "200px", padding: "16px 16px 12px" }}
               />
             </div>
 
