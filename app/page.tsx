@@ -421,6 +421,72 @@ export default function Page() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
+          CO ZYSKUJESZ + DLA KOGO
+      ══════════════════════════════════════════════════════════════ */}
+      <div className="mx-auto mt-4 max-w-6xl px-4">
+        <div className="grid gap-4 lg:grid-cols-2">
+
+          {/* Co zyskujesz */}
+          <div className="overflow-hidden rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-10">
+            <Eyebrow>Wartość</Eyebrow>
+            <h2 className="text-2xl font-bold text-slate-900">Co zyskujesz</h2>
+            <p className="mt-1 text-base text-slate-600">Bez komplikacji — po prostu porządek i jasny status.</p>
+
+            <ul className="mt-6 space-y-2">
+              {benefits.map(({ t, icon: Icon }) => (
+                <li key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
+                  <span className={`${ICON_LG} bg-blue-50 shrink-0`}>
+                    <Icon className={`${ICON_LG_I} text-blue-600`} strokeWidth={1.75} />
+                  </span>
+                  <span className="text-sm font-medium text-slate-800">{t}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <span className={`${ICON_LG} bg-amber-100 shrink-0`}>
+                <FileText className={`${ICON_LG_I} text-amber-600`} strokeWidth={1.75} />
+              </span>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-amber-600">Wkrótce — PRO</p>
+                <p className="mt-0.5 text-sm font-semibold text-slate-900">Eksport PDF i przypomnienia</p>
+                <p className="mt-0.5 text-sm text-slate-600">Raport PDF gotowy do wydruku oraz automatyczne przypomnienia o brakach punktowych.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Dla kogo */}
+          <div className="overflow-hidden rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-10">
+            <Eyebrow>Odbiorcy</Eyebrow>
+            <h2 className="text-2xl font-bold text-slate-900">Dla kogo jest CRPE</h2>
+            <p className="mt-1 text-base text-slate-600">
+              Dla wszystkich zawodów medycznych zbierających punkty edukacyjne.
+            </p>
+
+            <div className="mt-6 grid gap-2 sm:grid-cols-2">
+              {professions.map(({ t, icon: Icon }) => (
+                <div key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
+                  <span className={`${ICON_LG} shrink-0`} style={{ background: "#f0fdfa" }}>
+                    <Icon className={ICON_LG_I} style={{ color: "#14b8a6" }} strokeWidth={1.75} />
+                  </span>
+                  <span className="text-sm font-medium text-slate-800">{t}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+              <p className="text-sm font-semibold text-slate-900">
+                Jeśli musisz zbierać punkty — CRPE jest dla Ciebie.
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                Zacznij od kilku wpisów. Resztę możesz uzupełniać stopniowo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════
           PROBLEM
       ══════════════════════════════════════════════════════════════ */}
       <SectionCard className="mt-4">
@@ -615,72 +681,6 @@ export default function Page() {
           </div>
         </div>
       </SectionCard>
-
-      {/* ══════════════════════════════════════════════════════════════
-          CO ZYSKUJESZ + DLA KOGO
-      ══════════════════════════════════════════════════════════════ */}
-      <div className="mx-auto mt-4 max-w-6xl px-4">
-        <div className="grid gap-4 lg:grid-cols-2">
-
-          {/* Co zyskujesz */}
-          <div className="overflow-hidden rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-10">
-            <Eyebrow>Wartość</Eyebrow>
-            <h2 className="text-2xl font-bold text-slate-900">Co zyskujesz</h2>
-            <p className="mt-1 text-base text-slate-600">Bez komplikacji — po prostu porządek i jasny status.</p>
-
-            <ul className="mt-6 space-y-2">
-              {benefits.map(({ t, icon: Icon }) => (
-                <li key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
-                  <span className={`${ICON_LG} bg-blue-50 shrink-0`}>
-                    <Icon className={`${ICON_LG_I} text-blue-600`} strokeWidth={1.75} />
-                  </span>
-                  <span className="text-sm font-medium text-slate-800">{t}</span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <span className={`${ICON_LG} bg-amber-100 shrink-0`}>
-                <FileText className={`${ICON_LG_I} text-amber-600`} strokeWidth={1.75} />
-              </span>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-amber-600">Wkrótce — PRO</p>
-                <p className="mt-0.5 text-sm font-semibold text-slate-900">Eksport PDF i przypomnienia</p>
-                <p className="mt-0.5 text-sm text-slate-600">Raport PDF gotowy do wydruku oraz automatyczne przypomnienia o brakach punktowych.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Dla kogo */}
-          <div className="overflow-hidden rounded-3xl bg-white px-8 py-10 shadow-sm ring-1 ring-slate-200/60 md:px-10">
-            <Eyebrow>Odbiorcy</Eyebrow>
-            <h2 className="text-2xl font-bold text-slate-900">Dla kogo jest CRPE</h2>
-            <p className="mt-1 text-base text-slate-600">
-              Dla wszystkich zawodów medycznych zbierających punkty edukacyjne.
-            </p>
-
-            <div className="mt-6 grid gap-2 sm:grid-cols-2">
-              {professions.map(({ t, icon: Icon }) => (
-                <div key={t} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
-                  <span className={`${ICON_LG} shrink-0`} style={{ background: "#f0fdfa" }}>
-                    <Icon className={ICON_LG_I} style={{ color: "#14b8a6" }} strokeWidth={1.75} />
-                  </span>
-                  <span className="text-sm font-medium text-slate-800">{t}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">
-                Jeśli musisz zbierać punkty — CRPE jest dla Ciebie.
-              </p>
-              <p className="mt-1 text-sm text-slate-600">
-                Zacznij od kilku wpisów. Resztę możesz uzupełniać stopniowo.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* ══════════════════════════════════════════════════════════════
           FAQ
