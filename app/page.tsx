@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabaseBrowser";
 import {
@@ -361,8 +362,20 @@ export default function Page() {
             </div>
           </div>
 
-          {/* RIGHT — status card z animowanymi licznikami */}
-          <div>
+          {/* RIGHT — ilustracja + status card */}
+          <div className="flex flex-col gap-3">
+            {/* ilustracja nad kartą */}
+            <div className="overflow-hidden rounded-2xl" style={{ background: "#e8ecf2" }}>
+              <Image
+                src="/crpe_reka.png"
+                alt="Ilustracja — zarządzanie rozwojem zawodowym"
+                width={600}
+                height={280}
+                className="w-full object-cover"
+                style={{ objectPosition: "center 20%", height: "160px" }}
+              />
+            </div>
+
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
               <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Podgląd statusu</p>
               <p className="text-base font-bold text-slate-900">Aktualny okres rozliczeniowy</p>
