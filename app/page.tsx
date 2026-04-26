@@ -293,7 +293,7 @@ export default function Page() {
             </div>
 
             {/* H1 */}
-            <h1 className="text-4xl font-bold leading-[1.15] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
+            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-4xl lg:text-5xl">
               Punkty CPD pod kontrolą.
               <br />
               <span style={{ color: "#0b3f90" }}>Prosto i bez stresu.</span>
@@ -333,7 +333,6 @@ export default function Page() {
                 Zobacz jak to działa
               </a>
             </div>
-            <p className="mt-2 text-xs text-slate-400 text-center">Bezpłatnie · bez karty kredytowej · 2 minuty</p>
 
             {/* Social proof — bez liczb, ogólne */}
             <div className="mt-5 flex items-center gap-3">
