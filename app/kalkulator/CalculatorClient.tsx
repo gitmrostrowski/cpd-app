@@ -632,7 +632,7 @@ export default function CalculatorClient() {
   const inputCls =
     "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400";
 
-  const cardCls = "scroll-mt-32 relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm";
+  const cardCls = "scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm";
 
   function scrollToSection(id: "ustawienia" | "status" | "kroki" | "limity" | "aktywnosci" | "powiadomienia") {
     const el = document.getElementById(id);
@@ -641,7 +641,7 @@ export default function CalculatorClient() {
     setActiveNav(id);
 
     // Header + podmenu + mały oddech, żeby ramka nie przyklejała się do nawigacji.
-    const offset = 134;
+    const offset = 166;
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior: "smooth" });
   }
@@ -652,10 +652,10 @@ export default function CalculatorClient() {
     "shrink-0 border-b-2 border-blue-500 px-4 py-2.5 text-sm font-medium text-blue-700 focus:outline-none";
 
   return (
-    <div className="-mx-4 min-h-screen bg-slate-100 px-4 pb-10 pt-1 sm:-mx-6 sm:px-6">
+    <div className="relative left-1/2 min-h-screen w-screen -translate-x-1/2 bg-slate-100 px-4 pb-10 pt-1 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-4">
         {/* SZYBKIE MENU */}
-        <nav className="sticky top-[66px] z-30 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <nav className="sticky top-[76px] z-30 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex min-w-max">
             <button type="button" onClick={() => scrollToSection("ustawienia")} className={activeNav === "ustawienia" ? subNavActiveCls : subNavItemCls}>
               Ustawienia
@@ -838,7 +838,7 @@ export default function CalculatorClient() {
           <div className={cardCls + " p-10 text-center text-sm font-medium text-slate-500"}>Wczytuję dane...</div>
         ) : (
           <>
-            <section id="status" className="scroll-mt-32 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section id="status" className="scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
 
               <div className="mb-5 grid gap-3 border-b border-slate-100 pb-4 lg:grid-cols-[1fr_auto_1fr] lg:items-start">
@@ -874,9 +874,9 @@ export default function CalculatorClient() {
               </div>
 
               <div className="grid gap-6 lg:grid-cols-[150px_1fr] lg:items-start">
-                <div className="flex flex-row items-center justify-center gap-4 lg:flex-col">
+                <div className="flex flex-row items-center justify-center gap-5 lg:flex-col">
                   <CircularProgress value={progress} label="pkt" />
-                  <CircularProgress value={periodTimeProgress} label="czas" size="small" tone="slate" />
+                  <CircularProgress value={periodTimeProgress} label="czas" tone="slate" />
                 </div>
 
                 <div className="min-w-0">
@@ -895,34 +895,27 @@ export default function CalculatorClient() {
                     </div>
                   </div>
 
-                  <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-                    <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center text-xs font-medium text-slate-600">
-                      <span>{periodStart}</span>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">
-                        Czas: {Math.round(periodTimeProgress)}% minęło
-                      </span>
-                      <span className="text-right">{periodEnd}</span>
+                  <div className="mt-5">
+                    <div className="mb-2 flex justify-between text-xs font-medium text-slate-500">
+                      <span>Postęp czasu</span>
+                      <span>{Math.round(periodTimeProgress)}% minęło · {Math.round(100 - periodTimeProgress)}% zostało</span>
                     </div>
-
-                    <div className="relative h-9">
-                      <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-200" />
+                    <div className="relative h-3 overflow-visible rounded-full bg-slate-100">
                       <div
-                        className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-600"
+                        className="h-3 rounded-full bg-slate-600 transition-all duration-700"
                         style={{ width: `${periodTimeProgress}%` }}
                       />
                       <div
-                        className="absolute top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm"
+                        className="absolute top-1/2 grid h-7 w-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm"
                         style={{ left: `${periodTimeProgress}%` }}
                         aria-label="Aktualny moment okresu"
                       >
                         <MiniIcon name="user" />
                       </div>
                     </div>
-
-                    <div className="mt-3 grid grid-cols-[1fr_auto_1fr] text-xs text-slate-500">
-                      <span>Start okresu</span>
-                      <span>Pozostało około {Math.round(100 - periodTimeProgress)}% czasu</span>
-                      <span className="text-right">Koniec okresu</span>
+                    <div className="mt-3 flex justify-between text-xs text-slate-500">
+                      <span>{periodStart} · start okresu</span>
+                      <span>{periodEnd} · koniec okresu</span>
                     </div>
                   </div>
 
@@ -943,7 +936,7 @@ export default function CalculatorClient() {
               </div>
             </section>
 
-            <section id="kroki" className="scroll-mt-32 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section id="kroki" className="scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
             <div className="mb-4 flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
@@ -1177,7 +1170,7 @@ export default function CalculatorClient() {
 
 
 
-        <section id="powiadomienia" className="scroll-mt-32 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section id="powiadomienia" className="scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
