@@ -147,13 +147,13 @@ function getPeriodFromPwzIssueDate(prof: Profession, pwzIssueDate: string | null
 function getRowMissing(a: ActivityRow) {
   const missing: string[] = [];
   const orgOk = Boolean(a.organizer && String(a.organizer).trim());
-  if (!orgOk) missing.push("Dodaj organizatora");
+  if (!orgOk) missing.push("Brak organizatora");
 
   const prog = normalizeStatus(a.status);
   if (prog === "planned") {
-    if (!a.planned_start_date) missing.push("Dodaj datę");
+    if (!a.planned_start_date) missing.push("Brak daty");
   } else {
-    if (!a.certificate_path) missing.push("Dodaj certyfikat");
+    if (!a.certificate_path) missing.push("Brak certyfikatu");
   }
 
   return missing;
@@ -590,306 +590,20 @@ export default function CalculatorClient() {
     const el = document.getElementById(id);
     if (!el) return;
 
-    // Uwzględnia sticky header + sticky submenu, żeby sekcja nie chowała się pod nawigacją.
-    const offset = 118;
+    // Uwzględnia górny header, żeby sekcja nie chowała się pod nawigacją.
+    const offset = 86;
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior: "smooth" });
   }
 
   const subNavItemCls =
-    "shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-slate-600 transition hover:border-blue-200 hover:text-blue-700";
+    "shrink-0 border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:border-blue-200 hover:text-blue-700";
   const subNavActiveCls =
-    "shrink-0 border-b-2 border-blue-600 px-4 py-3 text-sm font-medium text-blue-700";
+    "shrink-0 border-b-2 border-blue-600 px-4 py-2.5 text-sm font-medium text-blue-700";
 
   return (
     <div className="-mx-4 min-h-screen bg-slate-50 px-4 pb-10 pt-1 sm:-mx-6 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-5">
-        {/* SZYBKIE MENU */}
-        <nav className="sticky top-14 z-20 overflow-x-auto border border-slate-200 bg-white shadow-sm">
-          <div className="flex min-w-max">
-            <button type="button" onClick={() => scrollToSection("status")} className={subNavActiveCls}>
-              Status punktów
-            </button>
-            <button type="button" onClick={() => scrollToSection("kroki")} className={subNavItemCls}>
-              Co dalej?
-            </button>
-            <button type="button" onClick={() => scrollToSection("limity")} className={subNavItemCls}>
-              Limity
-            </button>
-            <button type="button" onClick={() => scrollToSection("aktywnosci")} className={subNavItemCls}>
-              Ostatnie aktywności
-            </button>
-            <button type="button" onClick={() => scrollToSection("ustawienia")} className={subNavItemCls}>
-              Ustawienia
-            </button>
-          </div>
-        </nav>
-
-        {isBusy ? (
-          <div className={cardCls + " p-10 text-center text-sm font-medium text-slate-500"}>Wczytuję dane...</div>
-        ) : (
-          <>
-          <section id="status" className="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center">
-              <CircularProgress value={progress} />
-
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-100">
-                    {progress >= 100 ? "Cel zrealizowany" : "Jesteś w trakcie realizacji celu"}
-                  </div>
-                  {missingEvidenceCount > 0 ? (
-                    <div className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
-                      {missingEvidenceCount} dokumentów do uzupełnienia
-                    </div>
-                  ) : null}
-                </div>
-
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-                  {missingPoints > 0 ? (
-                    <>Zostało <span className="text-orange-500">{missingPoints} pkt</span></>
-                  ) : (
-                    <>Masz komplet <span className="text-emerald-600">punktów</span></>
-                  )}
-                </h2>
-
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Masz <strong className="text-slate-950">{donePoints} / {requiredPoints} pkt</strong> w okresie {periodStart}–{periodEnd}. 
-                  Do końca zostało <strong className="text-slate-950">{daysLeft} dni</strong>.
-                </p>
-
-                <div className="mt-6">
-                  <div className="mb-2 flex justify-between text-xs font-medium text-slate-500">
-                    <span>Postęp punktów</span>
-                    <span>{donePoints} / {requiredPoints} pkt</span>
-                  </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-blue-100">
-                    <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-700 transition-all duration-700" style={{ width: `${Math.max(progress, 2)}%` }} />
-                  </div>
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 border-t border-slate-200 pt-4 sm:grid-cols-4">
-                  {[
-                    ["calendar", `${daysLeft}`, "dni do końca"],
-                    ["doc", `${missingEvidenceCount}`, "brak. dok."],
-                    ["chart", `${requiredPoints}`, "pkt wymagane"],
-                    ["user", displayProfession(profession, professionOther), "Twój zawód"],
-                  ].map(([icon, value, label]) => (
-                    <div key={label} className="border-r border-slate-200 px-4 last:border-r-0">
-                      <div className="mb-2 text-blue-600"><MiniIcon name={icon as any} /></div>
-                      <div className="truncate text-xl font-semibold text-slate-950">{value}</div>
-                      <div className="mt-0.5 text-xs text-slate-500">{label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section id="kroki" className="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-3">
-              <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
-              <div>
-                <h2 className="text-base font-medium text-slate-950">Co dalej?</h2>
-                <p className="text-sm text-slate-500">Najważniejsze działania na podstawie braków</p>
-              </div>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-3">
-              {nextSteps.map((step) => (
-                <Link
-                  key={step.title}
-                  href={step.ctaHref}
-                  className="group flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 transition hover:border-blue-300 hover:bg-slate-50"
-                >
-                  <IconBubble tone={step.tone as any}><MiniIcon name={step.icon as any} /></IconBubble>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-slate-950">{step.title}</div>
-                    <div className="mt-0.5 text-sm leading-5 text-slate-500">{step.description}</div>
-                  </div>
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-500 transition group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-600">→</span>
-                </Link>
-              ))}
-            </div>
-          </section>
-          </>
-        )}
-
-        <section className="space-y-5">
-          <div id="limity" className={cardCls}>
-            <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4">
-                <IconBubble tone="blue"><MiniIcon name="shield" /></IconBubble>
-                <div>
-                  <h2 className="text-base font-medium text-slate-950">Twoje limity</h2>
-                  <p className="mt-0.5 text-sm text-slate-500">Najbardziej ograniczające kategorie w tym okresie</p>
-                </div>
-              </div>
-              <div className="text-sm text-slate-600">
-                Zaliczone: <strong className="text-slate-950">{donePoints} pkt</strong>
-                <span className="mx-2 text-slate-300">|</span>
-                Brakuje: <strong className="text-red-500">{missingPoints} pkt</strong>
-              </div>
-            </div>
-
-            <div className="p-6">
-              {(planInfo || planErr) ? (
-                <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
-                  {planInfo ? <p className="font-bold text-blue-700">{planInfo}</p> : null}
-                  {planErr ? <p className="font-bold text-red-600">{planErr}</p> : null}
-                </div>
-              ) : null}
-
-              <div className="grid gap-3 lg:grid-cols-3">
-                {limitsUsage.length === 0 ? (
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 lg:col-span-3">Brak zdefiniowanych limitów dla tego zawodu.</div>
-                ) : (
-                  limitsUsage.map((r) => {
-                    const isMax = r.usedPct >= 100 || (Number(r.remaining) || 0) <= 0;
-
-                    return (
-                      <div key={r.key} className="group relative overflow-hidden rounded-lg border border-slate-200 bg-white p-4 transition hover:border-blue-300">
-                        <div className="flex items-center gap-4">
-                          <IconBubble tone={isMax ? "green" : "blue"}>
-                            <MiniIcon name={r.key === "JOURNAL_SUBSCRIPTION" ? "doc" : r.key === "SCIENTIFIC_SOCIETY" ? "user" : "chart"} />
-                          </IconBubble>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="font-semibold text-slate-950">{r.label}</h3>
-                              {isMax ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">wykorzystane</span> : null}
-                            </div>
-                            <p className="mt-0.5 text-xs text-slate-500">
-                              {r.mode === "per_item" ? `max ${r.cap} pkt / szkolenie` : r.mode === "per_year" ? `max ${r.maxPoints} pkt / rok` : `max ${r.cap} pkt w okresie`} · {r.used} / {r.cap} pkt
-                            </p>
-                            <div className="mt-3 flex items-center gap-3">
-                              <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                                <div className={`h-full rounded-full ${isMax ? "bg-emerald-500" : r.usedPct >= 50 ? "bg-blue-500" : "bg-slate-300"}`} style={{ width: `${r.usedPct}%` }} />
-                              </div>
-                              <span className="w-10 text-right text-xs font-medium text-slate-600">{Math.round(r.usedPct)}%</span>
-                            </div>
-                          </div>
-
-                          <div className="shrink-0 text-right">
-                            <div className={`mb-2 rounded-lg px-3 py-2 text-sm font-medium ${isMax ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-950"}`}>
-                              {Math.round(r.remaining)} pkt<br />
-                              <span className="text-xs font-medium text-slate-500">zostało</span>
-                            </div>
-
-                            {isMax ? (
-                              <Link href="/aktywnosci" className="text-xs font-medium text-slate-500 hover:text-blue-600">Zobacz →</Link>
-                            ) : (
-                              <button
-                                type="button"
-                                disabled={isBusy || planningKey === r.key}
-                                onClick={() => planForRule(r)}
-                                className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700 disabled:opacity-40"
-                              >
-                                {planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Aktywności →</Link>
-                <Link href="/aktywnosci?new=1" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">+ Dodaj aktywność</Link>
-                <Link href="/portfolio" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Raport / PDF →</Link>
-              </div>
-            </div>
-          </div>
-
-          <div id="aktywnosci" className={cardCls}>
-            <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4">
-                <IconBubble tone="green"><MiniIcon name="calendar" /></IconBubble>
-                <div>
-                  <h2 className="text-base font-medium text-slate-950">Ostatnie aktywności</h2>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-400" /> zaplanowane</span>
-                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" /> braki</span>
-                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-green-400" /> kompletne</span>
-                  </div>
-                </div>
-              </div>
-
-              <Link href="/aktywnosci" className="text-sm font-medium text-blue-600 hover:text-blue-700">Zobacz wszystkie</Link>
-            </div>
-
-            <div className="p-6">
-              <div className="grid gap-3 xl:grid-cols-2">
-                {isBusy ? (
-                  <p className="text-sm text-slate-500 xl:col-span-2">Wczytuję...</p>
-                ) : recentRows.length === 0 ? (
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 xl:col-span-2">Brak wpisów w okresie {periodStart}–{periodEnd}.</div>
-                ) : (
-                  recentRows.map((a) => {
-                    const prog = normalizeStatus(a.status);
-                    const missing = getRowMissing(a);
-                    const stripe = prog === "planned" ? "bg-blue-500" : missing.length ? "bg-amber-500" : "bg-emerald-500";
-
-                    return (
-                      <div
-                        key={a.id}
-                        className={`relative overflow-hidden rounded-lg border border-slate-200 p-4 pl-5 transition hover:border-blue-300 ${
-                          prog === "planned" ? "bg-white" : missing.length ? "bg-white" : "bg-white"
-                        }`}
-                      >
-                        <div className={`absolute inset-y-4 left-0 w-1.5 rounded-r-full ${stripe}`} />
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="font-semibold text-slate-950">{a.type}</h3>
-                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
-                                prog === "planned" ? "bg-blue-50 text-blue-700 ring-blue-100" : "bg-slate-50 text-slate-600 ring-slate-100"
-                              }`}>
-                                {prog === "planned" ? "Zaplanowane" : "Ukończone"}
-                              </span>
-                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
-                                missing.length ? "bg-amber-50 text-amber-700 ring-amber-100" : "bg-emerald-50 text-emerald-700 ring-emerald-100"
-                              }`}>
-                                {missing.length ? "Braki" : "Kompletne"}
-                              </span>
-                            </div>
-
-                            <p className="mt-1 text-xs leading-5 text-slate-500">
-                              {a.organizer ? `${a.organizer} · ` : ""}
-                              Rok: <span className="font-bold text-slate-700">{a.year}</span>
-                              {prog === "planned" && a.planned_start_date ? <> · Termin: <span className="font-bold text-slate-700">{formatYMD(a.planned_start_date)}</span></> : null}
-                            </p>
-
-                            {missing.length > 0 ? (
-                              <div className="mt-2 flex flex-wrap gap-1.5">
-                                {missing.map((m) => (
-                                  <span key={m} className="rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                                    {m}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : null}
-                          </div>
-
-                          <div className="flex shrink-0 flex-col items-end gap-2">
-                            <span className="text-sm font-medium text-slate-950">+{a.points} pkt</span>
-                            <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                              Otwórz →
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section id="ustawienia" className={cardCls}>
           <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
@@ -926,7 +640,7 @@ export default function CalculatorClient() {
                 type="button"
                 onClick={saveAllSettings}
                 disabled={isBusy || savingProfile || !dirty || !otherValid}
-                className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-55"
               >
                 {savingProfile ? "Zapisuję..." : "Zapisz zmiany"}
               </button>
@@ -1042,6 +756,293 @@ export default function CalculatorClient() {
             ) : null}
           </div>
         </section>
+
+        {/* SZYBKIE MENU */}
+        <nav className="overflow-x-auto border border-slate-200 bg-white shadow-sm">
+          <div className="flex min-w-max">
+            <button type="button" onClick={() => scrollToSection("ustawienia")} className={subNavActiveCls}>
+              Ustawienia
+            </button>
+            <button type="button" onClick={() => scrollToSection("status")} className={subNavItemCls}>
+              Status punktów
+            </button>
+            <button type="button" onClick={() => scrollToSection("kroki")} className={subNavItemCls}>
+              Co dalej?
+            </button>
+            <button type="button" onClick={() => scrollToSection("limity")} className={subNavItemCls}>
+              Limity
+            </button>
+            <button type="button" onClick={() => scrollToSection("aktywnosci")} className={subNavItemCls}>
+              Ostatnie aktywności
+            </button>
+          </div>
+        </nav>
+
+        {isBusy ? (
+          <div className={cardCls + " p-10 text-center text-sm font-medium text-slate-500"}>Wczytuję dane...</div>
+        ) : (
+          <>
+            <section id="status" className="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center">
+              <CircularProgress value={progress} />
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-100">
+                    {progress >= 100 ? "Cel zrealizowany" : "Jesteś w trakcie realizacji celu"}
+                  </div>
+                  {missingEvidenceCount > 0 ? (
+                    <div className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
+                      {missingEvidenceCount} dokumentów do uzupełnienia
+                    </div>
+                  ) : null}
+                </div>
+
+                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
+                  {missingPoints > 0 ? (
+                    <>Zostało <span className="text-orange-500">{missingPoints} pkt</span></>
+                  ) : (
+                    <>Masz komplet <span className="text-emerald-600">punktów</span></>
+                  )}
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Masz <strong className="text-slate-950">{donePoints} / {requiredPoints} pkt</strong> w okresie {periodStart}–{periodEnd}. 
+                  Do końca zostało <strong className="text-slate-950">{daysLeft} dni</strong>.
+                </p>
+
+                <div className="mt-6">
+                  <div className="mb-2 flex justify-between text-xs font-medium text-slate-500">
+                    <span>Postęp punktów</span>
+                    <span>{donePoints} / {requiredPoints} pkt</span>
+                  </div>
+                  <div className="h-3 overflow-hidden rounded-full bg-blue-100">
+                    <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-700 transition-all duration-700" style={{ width: `${Math.max(progress, 2)}%` }} />
+                  </div>
+                </div>
+
+                <div className="mt-6 grid grid-cols-2 border-t border-slate-200 pt-4 sm:grid-cols-4">
+                  {[
+                    ["calendar", `${daysLeft}`, "dni do końca"],
+                    ["doc", `${missingEvidenceCount}`, "brak. dok."],
+                    ["chart", `${requiredPoints}`, "pkt wymagane"],
+                    ["user", displayProfession(profession, professionOther), "Twój zawód"],
+                  ].map(([icon, value, label]) => (
+                    <div key={label} className="border-r border-slate-200 px-4 last:border-r-0">
+                      <div className="mb-2 text-blue-600"><MiniIcon name={icon as any} /></div>
+                      <div className="truncate text-xl font-semibold text-slate-950">{value}</div>
+                      <div className="mt-0.5 text-xs text-slate-500">{label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            </section>
+
+            <section id="kroki" className="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
+              <div>
+                <h2 className="text-base font-medium text-slate-950">Co dalej?</h2>
+                <p className="text-sm text-slate-500">Najważniejsze działania na podstawie braków</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              {nextSteps.map((step) => (
+                <Link
+                  key={step.title}
+                  href={step.ctaHref}
+                  className="group flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 transition hover:border-blue-300 hover:bg-slate-50"
+                >
+                  <IconBubble tone={step.tone as any}><MiniIcon name={step.icon as any} /></IconBubble>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-slate-950">{step.title}</div>
+                    <div className="mt-0.5 text-sm leading-5 text-slate-500">{step.description}</div>
+                  </div>
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-500 transition group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-600">→</span>
+                </Link>
+              ))}
+            </div>
+            </section>
+          </>
+        )}
+
+        <section className="space-y-5">
+          <div id="limity" className={cardCls}>
+            <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <IconBubble tone="blue"><MiniIcon name="shield" /></IconBubble>
+                <div>
+                  <h2 className="text-base font-medium text-slate-950">Twoje limity</h2>
+                  <p className="mt-0.5 text-sm text-slate-500">Najbardziej ograniczające kategorie w tym okresie</p>
+                </div>
+              </div>
+              <div className="text-sm text-slate-600">
+                Zaliczone: <strong className="text-slate-950">{donePoints} pkt</strong>
+                <span className="mx-2 text-slate-300">|</span>
+                Brakuje: <strong className="text-red-500">{missingPoints} pkt</strong>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {(planInfo || planErr) ? (
+                <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
+                  {planInfo ? <p className="font-bold text-blue-700">{planInfo}</p> : null}
+                  {planErr ? <p className="font-bold text-red-600">{planErr}</p> : null}
+                </div>
+              ) : null}
+
+              <div className="grid gap-3 lg:grid-cols-3">
+                {limitsUsage.length === 0 ? (
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 lg:col-span-3">Brak zdefiniowanych limitów dla tego zawodu.</div>
+                ) : (
+                  limitsUsage.map((r) => {
+                    const isMax = r.usedPct >= 100 || (Number(r.remaining) || 0) <= 0;
+
+                    return (
+                      <div key={r.key} className="group relative overflow-hidden rounded-lg border border-slate-200 bg-white p-4 transition hover:border-blue-300">
+                        <div className="flex items-center gap-4">
+                          <IconBubble tone={isMax ? "green" : "blue"}>
+                            <MiniIcon name={r.key === "JOURNAL_SUBSCRIPTION" ? "doc" : r.key === "SCIENTIFIC_SOCIETY" ? "user" : "chart"} />
+                          </IconBubble>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="font-semibold text-slate-950">{r.label}</h3>
+                              {isMax ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">wykorzystane</span> : null}
+                            </div>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              {r.mode === "per_item" ? `max ${r.cap} pkt / szkolenie` : r.mode === "per_year" ? `max ${r.maxPoints} pkt / rok` : `max ${r.cap} pkt w okresie`} · {r.used} / {r.cap} pkt
+                            </p>
+                            <div className="mt-3 flex items-center gap-3">
+                              <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                                <div className={`h-full rounded-full ${isMax ? "bg-emerald-500" : r.usedPct >= 50 ? "bg-blue-500" : "bg-slate-300"}`} style={{ width: `${r.usedPct}%` }} />
+                              </div>
+                              <span className="w-10 text-right text-xs font-medium text-slate-600">{Math.round(r.usedPct)}%</span>
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 text-right">
+                            <div className={`mb-2 rounded-lg px-3 py-2 text-sm font-medium ${isMax ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-950"}`}>
+                              {Math.round(r.remaining)} pkt<br />
+                              <span className="text-xs font-medium text-slate-500">zostało</span>
+                            </div>
+
+                            {isMax ? (
+                              <Link href="/aktywnosci" className="text-xs font-medium text-slate-500 hover:text-blue-600">Zobacz →</Link>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={isBusy || planningKey === r.key}
+                                onClick={() => planForRule(r)}
+                                className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700 disabled:opacity-40"
+                              >
+                                {planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+                <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Aktywności →</Link>
+                <Link href="/aktywnosci?new=1" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">+ Dodaj aktywność</Link>
+                <Link href="/portfolio" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Raport / PDF →</Link>
+              </div>
+            </div>
+          </div>
+
+          <div id="aktywnosci" className={cardCls}>
+            <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <IconBubble tone="green"><MiniIcon name="calendar" /></IconBubble>
+                <div>
+                  <h2 className="text-base font-medium text-slate-950">Ostatnie aktywności</h2>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-400" /> zaplanowane</span>
+                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" /> dokumentacja</span>
+                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-green-400" /> kompletne</span>
+                  </div>
+                </div>
+              </div>
+
+              <Link href="/aktywnosci" className="text-sm font-medium text-blue-600 hover:text-blue-700">Zobacz wszystkie</Link>
+            </div>
+
+            <div className="p-6">
+              <div className="grid gap-3 xl:grid-cols-2">
+                {isBusy ? (
+                  <p className="text-sm text-slate-500 xl:col-span-2">Wczytuję...</p>
+                ) : recentRows.length === 0 ? (
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 xl:col-span-2">Brak wpisów w okresie {periodStart}–{periodEnd}.</div>
+                ) : (
+                  recentRows.map((a) => {
+                    const prog = normalizeStatus(a.status);
+                    const missing = getRowMissing(a);
+                    const stripe = prog === "planned" ? "bg-blue-500" : missing.length ? "bg-amber-500" : "bg-emerald-500";
+
+                    return (
+                      <div
+                        key={a.id}
+                        className={`relative overflow-hidden rounded-lg border border-slate-200 p-4 pl-5 transition hover:border-blue-300 ${
+                          prog === "planned" ? "bg-white" : missing.length ? "bg-white" : "bg-white"
+                        }`}
+                      >
+                        <div className={`absolute inset-y-4 left-0 w-1.5 rounded-r-full ${stripe}`} />
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="font-semibold text-slate-950">{a.type}</h3>
+                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
+                                prog === "planned" ? "bg-blue-50 text-blue-700 ring-blue-100" : "bg-slate-50 text-slate-600 ring-slate-100"
+                              }`}>
+                                {prog === "planned" ? "Zaplanowane" : "Ukończone"}
+                              </span>
+                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
+                                missing.length ? "bg-amber-50 text-amber-700 ring-amber-100" : "bg-emerald-50 text-emerald-700 ring-emerald-100"
+                              }`}>
+                                {missing.length ? "Brak dokumentacji" : "Kompletne"}
+                              </span>
+                            </div>
+
+                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                              {a.organizer ? `${a.organizer} · ` : ""}
+                              Rok: <span className="font-bold text-slate-700">{a.year}</span>
+                              {prog === "planned" && a.planned_start_date ? <> · Termin: <span className="font-bold text-slate-700">{formatYMD(a.planned_start_date)}</span></> : null}
+                            </p>
+
+                            {missing.length > 0 ? (
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                {missing.map((m) => (
+                                  <span key={m} className="rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
+                                    {m}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <div className="flex shrink-0 flex-col items-end gap-2">
+                            <span className="text-sm font-medium text-slate-950">+{a.points} pkt</span>
+                            <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                              Otwórz →
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
 
 
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
