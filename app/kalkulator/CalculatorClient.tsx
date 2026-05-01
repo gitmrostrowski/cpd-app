@@ -311,19 +311,207 @@ function suggestPlannedPoints(rule: {
 
 // ─── Design system atoms ───────────────────────────────────────────────────
 
-// ─── Design tokens ────────────────────────────────────────────────────────
-// Palette inspired by Renata Magda's pool painting:
-//   Deep teal water  →  section accent (settings header bg)
-//   Sandy warm white →  card backgrounds
-//   Swimmer orange   →  single CTA colour
-//   Clean slate      →  text
-// ──────────────────────────────────────────────────────────────────────────
+export default function CalculatorClient() {
+  const { user, loading: authLoading } = useAuth();
 
-/** Icon badge — muted warm white, barely visible */
-function IconBadge({ children }: { children: ReactNode }) {
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [activities, setActivities] = useState<ActivityRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [profession, setProfession] = useState<Profession>("Lekarz");
+  const [professionOther, setProfessionOther] = useState<string>("");
+  const [periodStart, setPeriodStart] = useState<number>(2023);
+  const [periodEnd, setPeriodEnd] = useState<number>(2026);
+  const [requiredPoints, setRequiredPoints] = useState<number>(
+    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200
+  );
+  const [periodMode, setPeriodMode] = useState<"preset" | "custom">("preset");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [planInfo, setPlanInfo] = useState<string | null>(null);
+  const [planErr, setPlanErr] = useState<string | null>(null);
+  const [planningKey, setPlanningKey] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+
+  const supabase = useMemo(() => supabaseClient(), []);
+
+  async function reloadActivities() {
+    if (!user?.id) return;
+    const { data: a, error: aErr } = await supabase
+      .from("activities")
+      .select("id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    if (!aErr && a) setActivities(a as ActivityRow[]);
+    else setActivities([]);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      if (!user?.id) {
+        if (!cancelled) { setProfile(null); setActivities([]); setLoading(false); }
+        return;
+      }
+      setLoading(true);
+      const { data: p, error: pErr } = await supabase
+        .from("profiles")
+        .select("user_id, profession, profession_other, pwz_number, pwz_issue_date, period_start, period_end, required_points")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!cancelled) {
+        if (!pErr && p) {
+          const prof = ((p as any).profession ?? "Lekarz") as Profession;
+          setProfession(prof);
+          const po = normalizeOtherProfession((p as any).profession_other);
+          setProfessionOther(po);
+          const pwzIssue = (p as any).pwz_issue_date as string | null;
+          const derived = getPeriodFromPwzIssueDate(prof, pwzIssue);
+          const psDb = (p as any).period_start as number | null | undefined;
+          const peDb = (p as any).period_end as number | null | undefined;
+          const start = derived?.start ?? (psDb ?? 2023);
+          const end = derived?.end ?? (peDb ?? 2026);
+          setPeriodStart(start);
+          setPeriodEnd(end);
+          setPeriodMode(derived ? "custom" : ((`${start}-${end}` === "2019-2022" || `${start}-${end}` === "2023-2026" || `${start}-${end}` === "2027-2030") ? "preset" : "custom"));
+          const rpDb = (p as any).required_points as number | null | undefined;
+          const rp = (rpDb ?? undefined) ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? RULES_BY_PROFESSION[prof]?.requiredPoints ?? 200;
+          setRequiredPoints(rp);
+          setProfile({ user_id: user.id, profession: prof, profession_other: isOtherProfession(prof) ? po || null : null, pwz_number: (p as any).pwz_number ?? null, pwz_issue_date: (p as any).pwz_issue_date ?? null, period_start: start, period_end: end, required_points: rp });
+          setDirty(false);
+        } else {
+          setProfession("Lekarz"); setProfessionOther(""); setPeriodStart(2023); setPeriodEnd(2026);
+          setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200);
+          setPeriodMode("preset"); setProfile(null); setDirty(false);
+        }
+      }
+      const { data: a, error: aErr } = await supabase
+        .from("activities")
+        .select("id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (!cancelled) { if (!aErr && a) setActivities(a as ActivityRow[]); else setActivities([]); setLoading(false); }
+    }
+    run();
+    return () => { cancelled = true; };
+  }, [user?.id, supabase]);
+
+  const periodLabel = `${periodStart}-${periodEnd}`;
+
+  const inPeriodDone = useMemo(() => activities.filter((x) => {
+    const st = (x.status ?? "done") as ActivityStatus;
+    return st === "done" && x.year >= periodStart && x.year <= periodEnd;
+  }), [activities, periodStart, periodEnd]);
+
+  const inPeriodPlanned = useMemo(() => activities.filter((x) => {
+    const st = x.status ?? null;
+    const isPlanned = st === "planned" || (!!x.planned_start_date && st !== "done");
+    const y = x.planned_start_date ? Number(String(x.planned_start_date).slice(0, 4)) : x.year;
+    return isPlanned && y >= periodStart && y <= periodEnd;
+  }), [activities, periodStart, periodEnd]);
+
+  const donePoints = useMemo(() => inPeriodDone.reduce((sum, a) => sum + (Number(a.points) || 0), 0), [inPeriodDone]);
+  const missingPoints = useMemo(() => Math.max(0, (Number(requiredPoints) || 0) - donePoints), [requiredPoints, donePoints]);
+  const progress = useMemo(() => { const req = Number(requiredPoints) || 0; if (req <= 0) return 0; return clamp((donePoints / req) * 100, 0, 100); }, [requiredPoints, donePoints]);
+  const missingEvidenceCount = useMemo(() => inPeriodDone.filter((a) => !a.certificate_path).length, [inPeriodDone]);
+  const evidencePct = useMemo(() => { const total = inPeriodDone.length; if (total <= 0) return 0; return clamp(((total - missingEvidenceCount) / total) * 100, 0, 100); }, [inPeriodDone.length, missingEvidenceCount]);
+  const daysLeft = useMemo(() => daysUntilEndOfYear(periodEnd), [periodEnd]);
+
+  const limitsUsage = useMemo(() => {
+    const rules = RULES_BY_PROFESSION[profession];
+    const limits = rules?.limits ?? [];
+    const usage = new Map<string, number>();
+    for (const a of inPeriodDone) {
+      const key = mapTypeToRuleKey(a.type);
+      if (!key) continue;
+      usage.set(key, (usage.get(key) || 0) + (Number(a.points) || 0));
+    }
+    const yearsInPeriod = Math.max(1, periodEnd - periodStart + 1);
+    return limits.map((l) => {
+      const used = usage.get(l.key) || 0;
+      const cap = l.mode === "per_year" ? l.maxPoints * yearsInPeriod : l.maxPoints;
+      const remaining = Math.max(0, cap - used);
+      const usedPct = cap > 0 ? clamp((used / cap) * 100, 0, 100) : 0;
+      return { ...l, used, cap, remaining, usedPct, yearsInPeriod };
+    });
+  }, [profession, inPeriodDone, periodStart, periodEnd]);
+
+  const topLimits = useMemo<TopLimitItem[]>(() => [...limitsUsage].sort((a, b) => (b.usedPct ?? 0) - (a.usedPct ?? 0)).slice(0, 3).map((x) => ({ key: x.key, label: x.label, used: x.used, cap: x.cap, remaining: x.remaining, usedPct: x.usedPct, note: x.note, mode: x.mode })), [limitsUsage]);
+  const limitWarning = useMemo(() => { const hit = limitsUsage.find((x) => (x.usedPct ?? 0) >= 100); if (!hit) return null; return `Limit "${hit.label}" jest osiagniety.`; }, [limitsUsage]);
+  const nextStep = useMemo(() => buildNextStep(missingPoints, missingEvidenceCount, limitWarning), [missingPoints, missingEvidenceCount, limitWarning]);
+
+  const recentRows = useMemo(() => {
+    return activities.filter((a) => {
+      const prog = normalizeStatus(a.status);
+      const y = prog === "planned" && a.planned_start_date ? Number(String(a.planned_start_date).slice(0, 4)) : a.year;
+      return y >= periodStart && y <= periodEnd;
+    }).slice(0, 10);
+  }, [activities, periodStart, periodEnd]);
+
+  const isBusy = authLoading || loading;
+  const otherRequired = isOtherProfession(profession);
+  const otherValid = !otherRequired || normalizeOtherProfession(professionOther).length >= 2;
+  const pwzIssueDate = (profile as any)?.pwz_issue_date ?? null;
+
+  const trybLabel = pwzIssueDate ? "Tryb okresu - zgodny z PWZ" : "Tryb okresu";
+  const okresLabel = pwzIssueDate ? `Okres liczony z PWZ (${formatYMD(pwzIssueDate)})` : periodMode === "preset" ? "Okres rozliczeniowy" : "Okres (indywidualny)";
+
+  async function saveProfilePatch(patch: Partial<ProfileRow> & { profession_other?: string | null }) {
+    if (!user?.id) return;
+    setSavingProfile(true);
+    const nextProfession = (patch.profession ?? profession) as Profession;
+    const nextPeriodStart = patch.period_start !== undefined ? patch.period_start : periodStart;
+    const nextPeriodEnd = patch.period_end !== undefined ? patch.period_end : periodEnd;
+    const nextRequiredPoints = patch.required_points !== undefined ? patch.required_points : requiredPoints;
+    const otherReq = isOtherProfession(nextProfession);
+    const rawOther = patch.profession_other !== undefined ? patch.profession_other : professionOther;
+    const nextOther = otherReq ? normalizeOtherProfession(rawOther) || null : null;
+    const ps = Number(nextPeriodStart) || 2023;
+    const pe = Math.max(Number(nextPeriodEnd) || ps, ps);
+    const rp = Math.max(0, Number(nextRequiredPoints) || 0);
+    const payload: ProfileUpsert = { user_id: user.id, profession: nextProfession, profession_other: nextOther, pwz_number: (profile as any)?.pwz_number ?? null, pwz_issue_date: (profile as any)?.pwz_issue_date ?? null, period_start: ps, period_end: pe, required_points: rp };
+    const { error } = await supabase.from("profiles").upsert(payload);
+    setSavingProfile(false);
+    if (!error) { setSavedAt(Date.now()); setDirty(false); }
+  }
+
+  async function saveAllSettings() {
+    if (!user?.id || !otherValid) return;
+    const other = isOtherProfession(profession) ? normalizeOtherProfession(professionOther) || null : null;
+    const ps = Number(periodStart) || 0;
+    const pe = Math.max(Number(periodEnd) || 0, ps);
+    setPeriodEnd(pe);
+    await saveProfilePatch({ profession, profession_other: other, period_start: ps, period_end: pe, required_points: requiredPoints });
+  }
+
+  async function planForRule(r: (typeof limitsUsage)[number]) {
+    if (!user?.id) return;
+    setPlanInfo(null); setPlanErr(null);
+    if ((Number(r.remaining) || 0) <= 0) return;
+    const nowY = new Date().getFullYear();
+    const y = clamp(nowY, periodStart, periodEnd);
+    const pts = suggestPlannedPoints({ mode: r.mode, remaining: r.remaining });
+    if (pts <= 0) return;
+    setPlanningKey(r.key);
+    try {
+      const { error } = await supabase.from("activities").insert({ user_id: user.id, type: r.label, points: pts, year: y, organizer: null, status: "planned" as const, planned_start_date: null as string | null });
+      if (error) { setPlanErr(error.message); return; }
+      setPlanInfo(`Dodano do planu: ${r.label} (+${pts} pkt)`);
+      await reloadActivities();
+    } catch (e: any) {
+      setPlanErr(e?.message || "Nie udalo sie dodac planu.");
+    } finally {
+      setPlanningKey(null);
+    }
+  }
+
+  // ─── shared input/select class ─────────────────────────────────────────
+  const inputCls =
+    "h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-50";
 
   return (
-    <div className="space-y-4">
+<div className="space-y-4">
 
       {/* ══ 1. USTAWIENIA — white card, no color header ══════════════════════ */}
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
