@@ -311,10 +311,10 @@ function suggestPlannedPoints(rule: {
 
 // ─── Design system atoms ───────────────────────────────────────────────────
 
-/** Nowosielski-inspired icon badge — warm ochre */
+/** Renata Magda — pool turquoise icon badge */
 function IconBadge({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-800 ring-1 ring-amber-200">
+    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700 ring-1 ring-cyan-200">
       {children}
     </span>
   );
@@ -322,14 +322,14 @@ function IconBadge({ children }: { children: ReactNode }) {
 
 function FieldLabel({ icon, title }: { icon: ReactNode; title: string }) {
   return (
-    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-stone-500">
+    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
       {icon}
       {title}
     </div>
   );
 }
 
-/** Primary filled button — deep brick red (Nowosielski palette) */
+/** Primary CTA — Magda orange-red (the hat, the ball) */
 function BtnPrimary({
   children,
   onClick,
@@ -348,14 +348,14 @@ function BtnPrimary({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-900 active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${className}`}
     >
       {children}
     </button>
   );
 }
 
-/** Ghost / outline button */
+/** Ghost button — clean white with slate border */
 function BtnGhost({
   children,
   onClick,
@@ -367,15 +367,15 @@ function BtnGhost({
   href?: string;
   className?: string;
 }) {
-  const cls = `inline-flex items-center justify-center gap-1.5 rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50 active:scale-95 ${className}`;
+  const cls = `inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 ${className}`;
   if (href) return <Link href={href} className={cls}>{children}</Link>;
   return <button type="button" onClick={onClick} className={cls}>{children}</button>;
 }
 
-/** Card wrapper */
+/** Card — white with very subtle cyan tint on border */
 function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-stone-200 bg-white shadow-sm ${className}`}>
+    <div className={`rounded-2xl border border-cyan-100 bg-white shadow-sm ${className}`}>
       {children}
     </div>
   );
@@ -385,8 +385,8 @@ function Card({ children, className = "" }: { children: ReactNode; className?: s
 function CardHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-4">
-      <h2 className="text-base font-bold text-stone-900">{title}</h2>
-      {subtitle && <p className="mt-0.5 text-sm text-stone-500">{subtitle}</p>}
+      <h2 className="text-base font-bold text-slate-900">{title}</h2>
+      {subtitle && <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>}
     </div>
   );
 }
@@ -772,7 +772,7 @@ export default function CalculatorClient() {
 
   // ─── shared input class ─────────────────────────────────────────────────
   const inputCls =
-    "mt-2 h-11 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 text-sm font-medium text-stone-900 transition focus:border-rose-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-100";
+    "mt-2 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-900 transition focus:border-cyan-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-100";
 
   return (
     /* ── Page wrapper — no background override, no max-width constraint ── */
@@ -791,11 +791,11 @@ export default function CalculatorClient() {
                 </svg>
               </IconBadge>
               <div>
-                <h2 className="text-base font-bold text-stone-900">Ustawienia okresu i zawodu</h2>
-                <p className="mt-0.5 text-xs text-stone-500">
+                <h2 className="text-base font-bold text-slate-900">Ustawienia okresu i zawodu</h2>
+                <p className="mt-0.5 text-xs text-slate-500">
                   Zmiany zapisujesz przyciskiem po prawej.{" "}
                   {savedAt && !dirty && !savingProfile && (
-                    <span className="font-semibold text-rose-800">✓ Zapisano</span>
+                    <span className="font-semibold text-orange-500">✓ Zapisano</span>
                   )}
                   {!otherValid && (
                     <span className="font-semibold text-rose-600"> Uzupelnij "Inny zawod"</span>
@@ -965,7 +965,7 @@ export default function CalculatorClient() {
                   placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
                   className={`${inputCls} ${!otherValid ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100" : ""}`}
                 />
-                <p className={`mt-1.5 text-xs ${otherValid ? "text-stone-400" : "text-rose-600"}`}>
+                <p className={`mt-1.5 text-xs ${otherValid ? "text-slate-400" : "text-rose-600"}`}>
                   {otherValid
                     ? "Doprecyzowanie pomaga dopasować zasady i raporty."
                     : "Wpisz nazwę zawodu (min. 2 znaki), żeby profil był kompletny."}
@@ -1009,22 +1009,22 @@ export default function CalculatorClient() {
               subtitle={`Limity cząstkowe w okresie ${periodStart}–${periodEnd} na podstawie ukończonych wpisów.`}
             />
 
-            <div className="flex flex-wrap items-center gap-3 text-sm text-stone-600 sm:shrink-0 sm:pt-1">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 sm:shrink-0 sm:pt-1">
               <span>
                 Zaliczone:{" "}
-                <span className="font-bold text-stone-900">{donePoints} pkt</span>
+                <span className="font-bold text-slate-900">{donePoints} pkt</span>
               </span>
-              <span className="text-stone-300">|</span>
+              <span className="text-slate-300">|</span>
               <span>
                 Brakuje:{" "}
-                <span className="font-bold text-stone-900">{missingPoints} pkt</span>
+                <span className="font-bold text-orange-500">{missingPoints} pkt</span>
               </span>
               {missingEvidenceCount > 0 && (
                 <>
-                  <span className="text-stone-300">|</span>
+                  <span className="text-slate-300">|</span>
                   <span>
                     Bez certyfikatu:{" "}
-                    <span className="font-bold text-stone-900">{missingEvidenceCount}</span>
+                    <span className="font-bold text-slate-900">{missingEvidenceCount}</span>
                   </span>
                 </>
               )}
@@ -1033,8 +1033,8 @@ export default function CalculatorClient() {
 
           {/* Feedback banners */}
           {(planInfo || planErr) && (
-            <div className="mb-4 rounded-xl border bg-stone-50 p-3 text-sm">
-              {planInfo && <p className="font-semibold text-rose-800">{planInfo}</p>}
+            <div className="mb-4 rounded-xl border border-cyan-100 bg-cyan-50 p-3 text-sm">
+              {planInfo && <p className="font-semibold text-cyan-700">{planInfo}</p>}
               {planErr && <p className="font-semibold text-rose-600">{planErr}</p>}
             </div>
           )}
@@ -1042,7 +1042,7 @@ export default function CalculatorClient() {
           {/* Limit rows */}
           <div className="space-y-3">
             {limitsUsage.length === 0 ? (
-              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
                 Brak zdefiniowanych limitów dla tego zawodu.
               </div>
             ) : (
@@ -1052,29 +1052,29 @@ export default function CalculatorClient() {
                 return (
                   <div
                     key={r.key}
-                    className="rounded-xl border border-stone-200 bg-stone-50/60 p-4"
+                    className="rounded-xl border border-cyan-100 bg-cyan-50/30 p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                          <span className="text-sm font-bold text-stone-900">{r.label}</span>
+                          <span className="text-sm font-bold text-slate-900">{r.label}</span>
 
                           {r.note && (
-                            <span className="text-xs text-stone-500">
+                            <span className="text-xs text-slate-400">
                               {r.note}
                               {r.mode === "per_year" ? ` (×${r.yearsInPeriod} lat)` : ""}
                             </span>
                           )}
 
                           {isMax && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-                              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-600">
+                              <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
                               W pelni zrealizowane
                             </span>
                           )}
                         </div>
 
-                        <p className="mt-0.5 text-xs text-stone-500">
+                        <p className="mt-0.5 text-xs text-slate-400">
                           {Math.round(r.used)} / {Math.round(r.cap)} pkt — {Math.round(r.usedPct)}%
                         </p>
                       </div>
@@ -1093,17 +1093,17 @@ export default function CalculatorClient() {
                       </div>
                     </div>
 
-                    {/* Progress bar */}
+                    {/* Progress bar — cyan fill like pool water */}
                     <div className="mt-3 flex items-center gap-3">
-                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-stone-200">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200">
                         <div
-                          className="h-2 rounded-full bg-rose-800 transition-all"
+                          className="h-2 rounded-full bg-cyan-400 transition-all"
                           style={{ width: `${r.usedPct}%` }}
                         />
                       </div>
-                      <span className="shrink-0 text-xs font-semibold text-stone-600">
+                      <span className="shrink-0 text-xs font-semibold text-slate-500">
                         Pozostało:{" "}
-                        <span className="font-bold text-stone-900">{Math.round(r.remaining)} pkt</span>
+                        <span className="font-bold text-slate-900">{Math.round(r.remaining)} pkt</span>
                       </span>
                     </div>
                   </div>
@@ -1113,9 +1113,9 @@ export default function CalculatorClient() {
           </div>
 
           {/* Footer links */}
-          <div className="mt-5 flex flex-wrap gap-2 border-t border-stone-100 pt-4">
-            <BtnGhost href="/aktywnosci">Aktywności →</BtnGhost>
-            <BtnGhost href="/aktywnosci?new=1">+ Dodaj aktywność</BtnGhost>
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-cyan-100 pt-4">
+            <BtnGhost href="/aktywnosci">Aktywnosci →</BtnGhost>
+            <BtnGhost href="/aktywnosci?new=1">+ Dodaj aktywnosc</BtnGhost>
             <BtnGhost href="/portfolio">Raport / PDF →</BtnGhost>
           </div>
         </Card>
@@ -1137,9 +1137,9 @@ export default function CalculatorClient() {
 
           <div className="mt-1 space-y-2">
             {authLoading || loading ? (
-              <p className="text-sm text-stone-500">Wczytuję…</p>
+              <p className="text-sm text-slate-400">Wczytuję…</p>
             ) : recentRows.length === 0 ? (
-              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
                 Brak wpisów w okresie {periodStart}–{periodEnd}.
               </div>
             ) : (
@@ -1153,46 +1153,46 @@ export default function CalculatorClient() {
                     className={[
                       "rounded-xl border p-4 transition",
                       prog === "planned"
-                        ? "border-sky-200 bg-sky-50/50"
+                        ? "border-cyan-200 bg-cyan-50/50"
                         : missing.length
-                        ? "border-amber-200 bg-amber-50/40"
-                        : "border-stone-200 bg-stone-50/60",
+                        ? "border-orange-200 bg-orange-50/40"
+                        : "border-slate-200 bg-slate-50/60",
                     ].join(" ")}
                   >
                     <div className="flex items-start justify-between gap-4">
                       {/* Left: info */}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="truncate text-sm font-semibold text-stone-900">
+                          <span className="truncate text-sm font-semibold text-slate-900">
                             {a.type}
                           </span>
 
                           {prog === "planned" ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-xs font-medium text-cyan-700">
                               Zaplanowane
                             </span>
                           ) : (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-stone-300 bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700">
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium text-slate-500">
                               Ukonczone
                             </span>
                           )}
 
                           {missing.length === 0 ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-xs text-cyan-700">
                               Kompletne
                             </span>
                           ) : (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs text-rose-700">
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs text-orange-600">
                               Braki
                             </span>
                           )}
                         </div>
 
-                        <p className="mt-1 text-xs text-stone-500">
+                        <p className="mt-1 text-xs text-slate-400">
                           {a.organizer ? `${a.organizer} · ` : ""}
-                          Rok: <span className="font-medium text-stone-700">{a.year}</span>
+                          Rok: <span className="font-medium text-slate-700">{a.year}</span>
                           {prog === "planned" && a.planned_start_date && (
-                            <> · Termin: <span className="font-medium text-stone-700">{formatYMD(a.planned_start_date)}</span></>
+                            <> · Termin: <span className="font-medium text-slate-700">{formatYMD(a.planned_start_date)}</span></>
                           )}
                         </p>
 
@@ -1201,7 +1201,7 @@ export default function CalculatorClient() {
                             {missing.map((m) => (
                               <span
                                 key={m}
-                                className="inline-flex items-center rounded-lg border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs text-rose-700"
+                                className="inline-flex items-center rounded-lg border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs text-orange-600"
                               >
                                 {m}
                               </span>
@@ -1212,12 +1212,12 @@ export default function CalculatorClient() {
 
                       {/* Right: points + link */}
                       <div className="flex shrink-0 flex-col items-end gap-2">
-                        <span className="text-sm font-bold text-stone-900">+{a.points} pkt</span>
+                        <span className="text-sm font-bold text-slate-900">+{a.points} pkt</span>
                         <Link
                           href="/aktywnosci"
-                          className="inline-flex items-center rounded-lg border border-stone-200 bg-white px-3 py-1 text-xs font-semibold text-stone-600 transition hover:bg-stone-50"
+                          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
                         >
-                          Otwórz →
+                          Otworz →
                         </Link>
                       </div>
                     </div>
