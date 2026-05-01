@@ -826,21 +826,20 @@ export default function CalculatorClient() {
                       </div>
                     </div>
                     <div className="shrink-0">
-                      <div className="shrink-0">
-                        {isMax ? (
-                          <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                            Zobacz
-                          </Link>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={isBusy || planningKey === r.key}
-                            onClick={() => planForRule(r)}
-                            className="rounded-lg bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-slate-700 hover:scale-[1.02] disabled:opacity-40"
-                          >
-                            {planningKey === r.key ? "Dodaje..." : "+ Zaplanuj"}
-                          </button>
-                        )}
+                      {isMax ? (
+                        <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                          Zobacz
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={isBusy || planningKey === r.key}
+                          onClick={() => planForRule(r)}
+                          className="rounded-lg bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-slate-700 hover:scale-[1.02] disabled:opacity-40"
+                        >
+                          {planningKey === r.key ? "Dodaje..." : "+ Zaplanuj"}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -930,6 +929,7 @@ export default function CalculatorClient() {
                         <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
                           Otworz →
                         </Link>
+                      </div>
                     </div>
                   </div>
                 );
