@@ -1,18 +1,20 @@
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="32" height="32" rx="8" fill="#2563eb"/>
   
-  <!-- Dodano grupę w celu przesunięcia pionowego całej ikony w dół -->
-  <g transform="translate(0, 1.5)">
-    <!-- Dokumenty z niebieską obwódką -->
-    <rect x="6" y="9" width="12" height="15" rx="2" fill="white" stroke="#2563eb" stroke-width="1.5"/>
-    <rect x="10" y="6" width="12" height="15" rx="2" fill="white" stroke="#2563eb" stroke-width="2"/>
+  <!-- Grupa wyrównująca pionowo do tekstu CRPE -->
+  <g transform="translate(0, 1)">
+    <!-- Tylny dokument - biały z lekką przezroczystością dla efektu głębi -->
+    <rect x="6" y="9" width="12" height="15" rx="2" fill="white" opacity="0.8"/>
     
-    <!-- Linie tekstu - ZMODYFIKOWANE: pogrubione z 1.4 na 1.8 -->
-    <line x1="13" y1="11" x2="19" y2="11" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round"/>
-    <line x1="13" y1="14" x2="17" y2="14" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round"/>
+    <!-- Przedni dokument - czysty biały -->
+    <rect x="10" y="6" width="12" height="15" rx="2" fill="white"/>
     
-    <!-- Zielony haczyk na białym kółku - tak jak w oryginale, ale bardziej spójne -->
-    <circle cx="23" cy="23" r="5" fill="white"/>
-    <path d="M21.1 23l1 1 2-2" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Linie tekstu - ciemniejszy odcień niebieskiego dla lepszej czytelności -->
+    <line x1="13" y1="10" x2="19" y2="10" stroke="#1d4ed8" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="13" y1="13" x2="17" y2="13" stroke="#1d4ed8" stroke-width="1.5" stroke-linecap="round"/>
+    
+    <!-- Zielony haczyk - mniejszy i lepiej wkomponowany w dokument -->
+    <circle cx="18" cy="18" r="4" fill="#16a34a"/>
+    <path d="M16.5 18l1 1 2-2" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>
