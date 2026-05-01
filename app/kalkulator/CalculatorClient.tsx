@@ -512,7 +512,7 @@ export default function CalculatorClient() {
                 status: "Realizacja celu",
                 kroki: "Co dalej?",
                 limity: "Limity",
-                aktywnosci: "Ostatnie aktywnosci",
+                aktywnosci: "Aktywnosci",
                 powiadomienia: "Powiadomienia",
               };
               return (
@@ -527,7 +527,7 @@ export default function CalculatorClient() {
         {/* ── USTAWIENIA ───────────────────────────────────────────────── */}
         <section id="ustawienia" className={cardCls}>
           <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-          <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="calendar" /></IconBubble>
               <div>
@@ -719,21 +719,24 @@ export default function CalculatorClient() {
                   <Link
                     key={step.title}
                     href={step.ctaHref}
-                    className={`group flex items-center gap-3 rounded-lg border p-3.5 transition active:scale-[0.99] ${
+                    className={`group relative flex items-center gap-3 overflow-hidden rounded-lg border p-4 transition active:scale-[0.99] ${
                       step.primary
-                        ? "border-blue-300 bg-blue-50 shadow-sm hover:border-blue-400 hover:bg-blue-100"
+                        ? "border-blue-200 bg-blue-600 shadow-md hover:bg-blue-700"
                         : "border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50"
                     }`}
                   >
-                    <span className={`h-2 w-2 shrink-0 rounded-full ${step.primary ? "bg-blue-500" : "bg-slate-300"}`} />
+                    {step.primary && (
+                      <span className="pointer-events-none absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-blue-500/20 to-transparent" />
+                    )}
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${step.primary ? "bg-white/70" : "bg-slate-300"}`} />
                     <div className="min-w-0 flex-1">
-                      <div className={`text-sm font-semibold ${step.primary ? "text-blue-800" : "text-slate-900"}`}>{step.title}</div>
-                      <div className="mt-0.5 text-xs leading-4 text-slate-500">{step.description}</div>
+                      <div className={`text-sm font-bold ${step.primary ? "text-white" : "text-slate-900"}`}>{step.title}</div>
+                      <div className={`mt-0.5 text-xs leading-4 ${step.primary ? "text-blue-100" : "text-slate-500"}`}>{step.description}</div>
                     </div>
-                    <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border text-xs transition ${
+                    <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-bold transition ${
                       step.primary
-                        ? "border-blue-300 text-blue-600 group-hover:bg-blue-200"
-                        : "border-slate-200 text-slate-400 group-hover:border-blue-200 group-hover:text-blue-500"
+                        ? "bg-white/20 text-white group-hover:bg-white/30"
+                        : "border border-slate-200 text-slate-400 group-hover:border-blue-200 group-hover:text-blue-500"
                     }`}>→</span>
                   </Link>
                 ))}
@@ -828,7 +831,14 @@ export default function CalculatorClient() {
             <div className="flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="calendar" /></IconBubble>
               <div>
-                <h2 className="text-sm font-semibold text-slate-900">Ostatnie aktywnosci</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-semibold text-slate-900">Ostatnie aktywnosci</h2>
+                  {recentRows.length > 0 && (
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                      {recentRows.length}
+                    </span>
+                  )}
+                </div>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
                   {(["all", "missing", "planned", "complete"] as const).map((f) => {
                     const labels = { all: "wszystkie", missing: "brakujaca dokumentacja", planned: "zaplanowane", complete: "kompletne" };
@@ -858,7 +868,7 @@ export default function CalculatorClient() {
                   </Link>
                 </div>
               ) : (
-                recentRows.map((a) => {
+                recentRows.slice(0, 8).map((a) => {
                   const prog = normalizeStatus(a.status);
                   const missing = getRowMissing(a);
                   const hasMissing = prog !== "planned" && missing.length > 0;
@@ -901,6 +911,13 @@ export default function CalculatorClient() {
                 })
               )}
             </div>
+            {recentRows.length > 8 && (
+              <div className="mt-3 border-t border-slate-100 pt-3 text-center">
+                <Link href="/aktywnosci" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+                  Zobacz wszystkie {recentRows.length} aktywnosci →
+                </Link>
+              </div>
+            )}
           </div>
         </section>
 
