@@ -339,6 +339,7 @@ export default function CalculatorClient() {
   const [planErr, setPlanErr] = useState<string | null>(null);
   const [planningKey, setPlanningKey] = useState<string | null>(null);
   const [activityFilter, setActivityFilter] = useState<"all" | "planned" | "missing" | "complete">("all");
+  const [activeNav, setActiveNav] = useState<"ustawienia" | "status" | "kroki" | "limity" | "aktywnosci" | "powiadomienia">("ustawienia");
 
   const supabase = useMemo(() => supabaseClient(), []);
 
@@ -631,22 +632,24 @@ export default function CalculatorClient() {
   const inputCls =
     "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400";
 
-  const cardCls = "scroll-mt-44 rounded-xl border border-slate-200 bg-white shadow-sm";
+  const cardCls = "scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm";
 
-  function scrollToSection(id: string) {
+  function scrollToSection(id: "ustawienia" | "status" | "kroki" | "limity" | "aktywnosci" | "powiadomienia") {
     const el = document.getElementById(id);
     if (!el) return;
 
-    // Uwzględnia górny header i przyklejone podmenu.
-    const offset = 162;
+    setActiveNav(id);
+
+    // Header + podmenu + mały oddech, żeby ramka nie przyklejała się do nawigacji.
+    const offset = 156;
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior: "smooth" });
   }
 
   const subNavItemCls =
-    "shrink-0 border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:border-blue-300 hover:text-blue-700";
+    "shrink-0 border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:border-blue-300 hover:text-blue-700 focus:outline-none";
   const subNavActiveCls =
-    "shrink-0 border-b-2 border-blue-600 px-4 py-2.5 text-sm font-medium text-blue-700";
+    "shrink-0 border-b-2 border-blue-500 px-4 py-2.5 text-sm font-medium text-blue-700 focus:outline-none";
 
   return (
     <div className="-mx-4 min-h-screen bg-slate-50 px-4 pb-10 pt-1 sm:-mx-6 sm:px-6">
@@ -654,28 +657,29 @@ export default function CalculatorClient() {
         {/* SZYBKIE MENU */}
         <nav className="sticky top-[72px] z-30 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex min-w-max">
-            <button type="button" onClick={() => scrollToSection("ustawienia")} className={subNavActiveCls}>
+            <button type="button" onClick={() => scrollToSection("ustawienia")} className={activeNav === "ustawienia" ? subNavActiveCls : subNavItemCls}>
               Ustawienia
             </button>
-            <button type="button" onClick={() => scrollToSection("status")} className={subNavItemCls}>
+            <button type="button" onClick={() => scrollToSection("status")} className={activeNav === "status" ? subNavActiveCls : subNavItemCls}>
               Realizacja celu
             </button>
-            <button type="button" onClick={() => scrollToSection("kroki")} className={subNavItemCls}>
+            <button type="button" onClick={() => scrollToSection("kroki")} className={activeNav === "kroki" ? subNavActiveCls : subNavItemCls}>
               Co dalej?
             </button>
-            <button type="button" onClick={() => scrollToSection("limity")} className={subNavItemCls}>
+            <button type="button" onClick={() => scrollToSection("limity")} className={activeNav === "limity" ? subNavActiveCls : subNavItemCls}>
               Limity
             </button>
-            <button type="button" onClick={() => scrollToSection("aktywnosci")} className={subNavItemCls}>
+            <button type="button" onClick={() => scrollToSection("aktywnosci")} className={activeNav === "aktywnosci" ? subNavActiveCls : subNavItemCls}>
               Ostatnie aktywności
             </button>
-            <button type="button" onClick={() => scrollToSection("powiadomienia")} className={subNavItemCls}>
+            <button type="button" onClick={() => scrollToSection("powiadomienia")} className={activeNav === "powiadomienia" ? subNavActiveCls : subNavItemCls}>
               Powiadomienia
             </button>
           </div>
         </nav>
 
         <section id="ustawienia" className={cardCls}>
+          <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
           <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               <IconBubble tone="blue"><MiniIcon name="calendar" /></IconBubble>
@@ -834,23 +838,29 @@ export default function CalculatorClient() {
           <div className={cardCls + " p-10 text-center text-sm font-medium text-slate-500"}>Wczytuję dane...</div>
         ) : (
           <>
-            <section id="status" className="scroll-mt-44 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-5 grid gap-3 border-b border-slate-100 pb-4 lg:grid-cols-[1fr_auto_1fr] lg:items-start">
+            <section id="status" className="scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
+
+              <div className="mb-5 grid gap-3 border-b border-slate-100 pb-4 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
                 <div className="flex items-center gap-3">
                   <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
                   <div>
                     <h2 className="text-base font-semibold text-slate-950">Realizacja celu</h2>
-                    <p className="mt-0.5 text-sm text-slate-500">Aktualny stan punktów i dokumentów</p>
+                    <p className="mt-0.5 text-sm text-slate-500">Aktualny stan punktów, czasu i dokumentów</p>
                   </div>
                 </div>
 
-                <div className="lg:text-center">
+                <div className="rounded-lg bg-amber-50 px-5 py-3 text-center ring-1 ring-amber-100">
                   {missingPoints > 0 ? (
-                    <div className="text-2xl font-semibold tracking-tight text-slate-950">
-                      Zostało <span className="text-amber-700">{missingPoints} pkt</span>
-                    </div>
+                    <>
+                      <div className="text-xs font-medium uppercase tracking-wide text-amber-700">Do celu brakuje</div>
+                      <div className="mt-0.5 text-3xl font-semibold tracking-tight text-amber-700">{missingPoints} pkt</div>
+                    </>
                   ) : (
-                    <div className="text-2xl font-semibold tracking-tight text-emerald-600">Cel zrealizowany</div>
+                    <>
+                      <div className="text-xs font-medium uppercase tracking-wide text-emerald-700">Status</div>
+                      <div className="mt-0.5 text-2xl font-semibold tracking-tight text-emerald-700">Cel zrealizowany</div>
+                    </>
                   )}
                 </div>
 
@@ -863,47 +873,75 @@ export default function CalculatorClient() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-6 md:flex-row md:items-start">
-                <div className="flex shrink-0 flex-row gap-4 md:flex-col">
+              <div className="grid gap-6 lg:grid-cols-[150px_1fr] lg:items-start">
+                <div className="flex justify-center">
                   <CircularProgress value={progress} label="realizacji" />
-                  <CircularProgress value={100 - periodTimeProgress} label="czasu zostało" size="small" tone="slate" />
                 </div>
 
-              <div className="min-w-0 flex-1">
-                <p className="text-sm leading-6 text-slate-600">
-                  Masz <strong className="text-slate-950">{donePoints} / {requiredPoints} pkt</strong> w okresie {periodStart}–{periodEnd}. 
-                  Do końca zostało <strong className="text-slate-950">{daysLeft} dni</strong>.
-                </p>
+                <div className="min-w-0">
+                  <p className="text-sm leading-6 text-slate-600">
+                    Masz <strong className="text-slate-950">{donePoints} / {requiredPoints} pkt</strong> w okresie {periodStart}–{periodEnd}. 
+                    Do końca zostało <strong className="text-slate-950">{daysLeft} dni</strong>.
+                  </p>
 
-                <div className="mt-6">
-                  <div className="mb-2 flex justify-between text-xs font-medium text-slate-500">
-                    <span>Postęp punktów</span>
-                    <span>{donePoints} / {requiredPoints} pkt</span>
-                  </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${Math.max(progress, 2)}%` }} />
-                  </div>
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 border-t border-slate-200 pt-4 sm:grid-cols-4">
-                  {[
-                    ["calendar", `${daysLeft}`, "dni do końca"],
-                    ["doc", `${missingEvidenceCount}`, "brak dokumentacji"],
-                    ["chart", `${requiredPoints}`, "pkt wymagane"],
-                    ["user", displayProfession(profession, professionOther), "Twój zawód"],
-                  ].map(([icon, value, label]) => (
-                    <div key={label} className="border-r border-slate-200 px-4 last:border-r-0">
-                      <div className="truncate text-xl font-semibold text-slate-950">{value}</div>
-                      <div className="mt-0.5 text-xs text-slate-500">{label}</div>
+                  <div className="mt-5">
+                    <div className="mb-2 flex justify-between text-xs font-medium text-slate-500">
+                      <span>Postęp punktów</span>
+                      <span>{donePoints} / {requiredPoints} pkt</span>
                     </div>
-                  ))}
-                </div>
+                    <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${Math.max(progress, 2)}%` }} />
+                    </div>
+                  </div>
 
+                  <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div className="mb-3 flex items-center justify-between text-xs font-medium text-slate-600">
+                      <span>{periodStart}</span>
+                      <span>{Math.round(periodTimeProgress)}% czasu upłynęło</span>
+                      <span>{periodEnd}</span>
+                    </div>
+
+                    <div className="relative h-8">
+                      <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-200" />
+                      <div
+                        className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-400"
+                        style={{ width: `${periodTimeProgress}%` }}
+                      />
+                      <div
+                        className="absolute top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-slate-300 bg-white text-blue-600 shadow-sm"
+                        style={{ left: `${periodTimeProgress}%` }}
+                        aria-label="Aktualny moment okresu"
+                      >
+                        <MiniIcon name="user" />
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                      <span>Start okresu</span>
+                      <span>Pozostało około {Math.round(100 - periodTimeProgress)}% czasu</span>
+                      <span>Koniec okresu</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 grid grid-cols-2 border-t border-slate-200 pt-4 sm:grid-cols-4">
+                    {[
+                      ["calendar", `${daysLeft}`, "dni do końca"],
+                      ["doc", `${missingEvidenceCount}`, "brak dokumentacji"],
+                      ["chart", `${requiredPoints}`, "pkt wymagane"],
+                      ["user", displayProfession(profession, professionOther), "Twój zawód"],
+                    ].map(([icon, value, label]) => (
+                      <div key={label} className="border-r border-slate-200 px-4 last:border-r-0">
+                        <div className="truncate text-xl font-semibold text-slate-950">{value}</div>
+                        <div className="mt-0.5 text-xs text-slate-500">{label}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </section>
 
-            <section id="kroki" className="scroll-mt-44 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section id="kroki" className="scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
             <div className="mb-4 flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
               <div>
@@ -934,6 +972,7 @@ export default function CalculatorClient() {
 
         <section className="space-y-5">
           <div id="limity" className={cardCls}>
+          <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
             <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
                 <IconBubble tone="blue"><MiniIcon name="shield" /></IconBubble>
@@ -1019,6 +1058,7 @@ export default function CalculatorClient() {
           </div>
 
           <div id="aktywnosci" className={cardCls}>
+          <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
             <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
                 <IconBubble tone="blue"><MiniIcon name="calendar" /></IconBubble>
@@ -1134,7 +1174,8 @@ export default function CalculatorClient() {
 
 
 
-        <section id="powiadomienia" className="scroll-mt-44 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section id="powiadomienia" className="scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               <IconBubble tone="blue"><MiniIcon name="bell" /></IconBubble>
