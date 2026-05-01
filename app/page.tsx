@@ -161,6 +161,196 @@ function StatCard({ target, label, color = "text-slate-900" }: { target: number;
   );
 }
 
+/* ─── HowItWorks — animowane 3 kroki ───────────────────────────────────── */
+function HowItWorks() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold: 0.2 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    const t = setInterval(() => setActiveStep((s) => (s + 1) % 3), 2800);
+    return () => clearInterval(t);
+  }, [visible]);
+
+  const steps = [
+    {
+      n: "1", icon: UserRoundCheck, color: "blue",
+      title: "Wybierz zawód",
+      subtitle: "System sam ustawi wymagania",
+      desc: "Powiedz nam kim jesteś. System dobierze odpowiedni okres rozliczeniowy i liczbę wymaganych punktów.",
+      preview: (
+        <div className="space-y-2">
+          {[
+            { label: "Lekarz",        pts: "200 pkt / 4 lata", active: true  },
+            { label: "Pielęgniarka",  pts: "100 pkt / 5 lat",  active: false },
+            { label: "Fizjoterapeuta",pts: "100 pkt / 5 lat",  active: false },
+          ].map((p) => (
+            <div key={p.label} className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${p.active ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}>
+              <span className="font-medium">{p.label}</span>
+              <span className={`text-xs ${p.active ? "text-blue-100" : "text-slate-400"}`}>{p.pts}</span>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      n: "2", icon: UploadCloud, color: "amber",
+      title: "Dodaj aktywność",
+      subtitle: "Zdjęcie z telefonu wystarczy",
+      desc: "Wpisz nazwę szkolenia i dołącz certyfikat. Punkty są naliczane automatycznie.",
+      preview: (
+        <div>
+          <div className="mb-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50">
+              <FileText className="h-5 w-5 text-amber-500" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-slate-900">Konferencja kardiologiczna</p>
+              <p className="text-xs text-slate-400">certyfikat.pdf · 2026</p>
+            </div>
+            <span className="shrink-0 text-sm font-bold text-emerald-600">+20 pkt</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2.5 text-xs text-slate-400">
+            <UploadCloud className="h-4 w-4 shrink-0" />
+            Przeciągnij certyfikat lub kliknij
+          </div>
+        </div>
+      ),
+    },
+    {
+      n: "3", icon: TrendingUp, color: "emerald",
+      title: "Masz pełny obraz",
+      subtitle: "Zawsze wiesz co robić dalej",
+      desc: "Ile punktów masz, ile brakuje i co zrobić jako następne. Jeden ekran, zero zgadywania.",
+      preview: (
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs text-slate-500">Postęp 2025–2028</span>
+            <span className="text-sm font-bold text-slate-900">55%</span>
+          </div>
+          <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-3 rounded-full bg-blue-600 transition-all duration-1000" style={{ width: visible ? "55%" : "0%" }} />
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-1.5">
+            {[
+              { v: "110", l: "masz", c: "text-slate-900"  },
+              { v: "200", l: "cel",  c: "text-slate-900"  },
+              { v: "90",  l: "brak", c: "text-red-500"    },
+            ].map((s) => (
+              <div key={s.l} className="rounded-lg border border-slate-100 bg-slate-50 py-2 text-center">
+                <div className={`text-base font-bold ${s.c}`}>{s.v}</div>
+                <div className="text-[10px] text-slate-400">{s.l}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+            Następny krok: Uzupełnij dokumenty
+          </div>
+        </div>
+      ),
+    },
+  ];
+
+  const colorMap: Record<string, { bg: string; text: string; ring: string; num: string }> = {
+    blue:    { bg: "bg-blue-50",    text: "text-blue-600",    ring: "ring-blue-200",    num: "bg-blue-600"    },
+    amber:   { bg: "bg-amber-50",   text: "text-amber-600",   ring: "ring-amber-200",   num: "bg-amber-500"   },
+    emerald: { bg: "bg-emerald-50", text: "text-emerald-600", ring: "ring-emerald-200", num: "bg-emerald-600" },
+  };
+
+  return (
+    <div id="jak-to-dziala" ref={ref} className={`${cardCls} scroll-mt-32`}>
+      <div className="border-b border-slate-100 px-6 py-4">
+        <Eyebrow>Proces</Eyebrow>
+        <div className="flex items-end justify-between">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Jak to działa</h2>
+            <p className="mt-0.5 text-sm text-slate-500">Trzy kroki. Bez wdrożenia. Pierwsze wpisy w 2 minuty.</p>
+          </div>
+          <div className="flex gap-1.5 pb-1">
+            {steps.map((_, i) => (
+              <button key={i} onClick={() => setActiveStep(i)} className={`h-2 rounded-full transition-all duration-300 ${activeStep === i ? "w-6 bg-blue-600" : "w-2 bg-slate-200 hover:bg-slate-300"}`} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* desktop — 3 karty obok */}
+      <div className="hidden gap-0 md:grid md:grid-cols-3">
+        {steps.map((step, i) => {
+          const Icon = step.icon;
+          const c = colorMap[step.color];
+          const isActive = activeStep === i;
+          return (
+            <button key={step.n} type="button" onClick={() => setActiveStep(i)}
+              className={`group flex flex-col gap-4 border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 ${isActive ? "bg-slate-50" : "hover:bg-slate-50/50"}`}>
+              <div className="flex items-center gap-3">
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white transition-all ${c.num} ${isActive ? "scale-110 shadow-md" : ""}`}>{step.n}</span>
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 transition-all ${c.bg} ${c.ring} ${isActive ? "scale-105" : ""}`}>
+                  <Icon className={`h-5 w-5 ${c.text}`} strokeWidth={1.75} />
+                </span>
+              </div>
+              <div>
+                <p className={`text-sm font-bold transition-colors ${isActive ? "text-slate-900" : "text-slate-700"}`}>{step.title}</p>
+                <p className="mt-0.5 text-xs font-medium text-slate-400">{step.subtitle}</p>
+              </div>
+              <p className="text-xs leading-relaxed text-slate-500">{step.desc}</p>
+              <div className={`mt-auto transition-all duration-500 ${isActive ? "opacity-100" : "opacity-35"}`}>
+                {step.preview}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* mobile — jeden krok na raz */}
+      <div className="md:hidden">
+        {steps.map((step, i) => {
+          const Icon = step.icon;
+          const c = colorMap[step.color];
+          if (activeStep !== i) return null;
+          return (
+            <div key={step.n} className="p-5">
+              <div className="mb-4 flex items-center gap-3">
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${c.num}`}>{step.n}</span>
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ${c.bg} ${c.ring}`}><Icon className={`h-5 w-5 ${c.text}`} strokeWidth={1.75} /></span>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">{step.title}</p>
+                  <p className="text-xs text-slate-400">{step.subtitle}</p>
+                </div>
+              </div>
+              <p className="mb-4 text-sm leading-relaxed text-slate-500">{step.desc}</p>
+              {step.preview}
+            </div>
+          );
+        })}
+        <div className="flex justify-center gap-2 border-t border-slate-100 py-3">
+          {steps.map((_, i) => <button key={i} onClick={() => setActiveStep(i)} className={`h-2 rounded-full transition-all ${activeStep === i ? "w-8 bg-blue-600" : "w-2 bg-slate-200"}`} />)}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 border-t border-slate-100 px-6 py-4">
+        <Link href="/login" className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95">
+          Zacznij za darmo <ArrowRight className="h-4 w-4" />
+        </Link>
+        <Link href="/rejestracja" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">
+          Utwórz konto
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function Page() {
   const supabase = useMemo(() => createBrowserSupabase(), []);
   const router   = useRouter();
@@ -480,95 +670,7 @@ export default function Page() {
         </div>
 
         {/* ── JAK TO DZIAŁA ──────────────────────────────────────────── */}
-        <div id="jak-to-dziala" className={`${cardCls} scroll-mt-32`}>
-          <div className="border-b border-slate-100 px-6 py-4">
-            <Eyebrow>Proces</Eyebrow>
-            <h2 className="text-base font-bold text-slate-900">Jak to działa</h2>
-            <p className="mt-0.5 text-sm text-slate-500">Trzy proste kroki. Bez długiego wdrożenia.</p>
-          </div>
-          <div className="p-5">
-            <div className="flex flex-col gap-0">
-              {[
-                {
-                  n: "1", t: "Wybierz zawód",
-                  d: "System ustawi odpowiednie wymagania i pomoże śledzić postęp w aktualnym okresie.",
-                  icon: UserRoundCheck,
-                  preview: (
-                    <div className="flex flex-wrap gap-1.5">
-                      {["Lekarz", "Pielęgniarka", "Fizjoterapeuta", "Farmaceuta", "+ więcej"].map((t) => (
-                        <span key={t} className="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-xs font-medium text-slate-700">{t}</span>
-                      ))}
-                    </div>
-                  ),
-                  last: false,
-                },
-                {
-                  n: "2", t: "Dodaj aktywność",
-                  d: "Wpisz nazwę szkolenia i dołącz certyfikat — nawet zdjęcie z telefonu.",
-                  icon: UploadCloud,
-                  preview: (
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">Konferencja kardiologiczna</p>
-                      <p className="mt-0.5 text-xs text-slate-500">Certyfikat.pdf dołączony</p>
-                      <span className="mt-1 inline-block text-sm font-bold text-emerald-600">+20 pkt</span>
-                    </div>
-                  ),
-                  last: false,
-                },
-                {
-                  n: "3", t: "Sprawdzaj postęp",
-                  d: "Zawsze wiesz, ile punktów masz i czego brakuje.",
-                  icon: TrendingUp,
-                  preview: (
-                    <div>
-                      <div className="mb-1.5 flex items-center justify-between text-xs text-slate-500">
-                        <span>Postęp w okresie</span>
-                        <span className="font-semibold text-slate-700">55%</span>
-                      </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                        <div className="h-2 rounded-full bg-blue-600" style={{ width: "55%" }} />
-                      </div>
-                      <div className="mt-1.5 flex justify-between text-xs">
-                        <span className="text-slate-500">110 / 200 pkt</span>
-                        <span className="font-medium text-red-500">brakuje 90 pkt</span>
-                      </div>
-                    </div>
-                  ),
-                  last: true,
-                },
-              ].map((step) => {
-                const Icon = step.icon;
-                return (
-                  <div key={step.n} className={`flex gap-4 ${step.last ? "" : "pb-6"}`}>
-                    <div className="flex flex-col items-center shrink-0">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">{step.n}</span>
-                      {!step.last && <div className="mt-1.5 w-px flex-1 bg-slate-200" />}
-                    </div>
-                    <div className="flex-1 pt-0.5">
-                      <p className="text-sm font-semibold text-slate-900">{step.t}</p>
-                      <p className="mt-0.5 mb-3 text-xs leading-relaxed text-slate-500">{step.d}</p>
-                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 flex items-center gap-3">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-50">
-                          <Icon className="h-5 w-5 text-blue-600" strokeWidth={1.5} />
-                        </span>
-                        <div className="flex-1 min-w-0">{step.preview}</div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-              <Link href="/login" className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95">
-                Zacznij za darmo <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="/rejestracja" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">
-                Utwórz konto
-              </Link>
-            </div>
-          </div>
-        </div>
+        <HowItWorks />
 
         {/* ── TESTIMONIAL ────────────────────────────────────────────── */}
         <div id="opinia" className={cardCls}>
