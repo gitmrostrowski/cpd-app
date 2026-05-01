@@ -511,7 +511,7 @@ export default function CalculatorClient() {
     "h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-50";
 
   return (
-<div className="space-y-4">
+<div className="space-y-4 bg-gradient-to-b from-slate-50 to-white min-h-screen -mx-4 px-4 sm:-mx-6 sm:px-6 pt-1 pb-8">
 
       {/* ══ 1. USTAWIENIA — white card, no color header ══════════════════════ */}
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -660,22 +660,28 @@ export default function CalculatorClient() {
 
       {/* ══ 2. HERO STATUS — jeden jasny komunikat ═══════════════════════════ */}
       {!isBusy && (
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5 transition-all duration-200">
+        <div className={`rounded-2xl border px-6 py-5 transition-all duration-200 ${
+        progress >= 100
+          ? "border-green-100 bg-gradient-to-br from-white to-green-50/40 shadow-[0_10px_30px_rgba(34,197,94,0.08)]"
+          : progress >= 50
+          ? "border-blue-100 bg-gradient-to-br from-white to-blue-50/30 shadow-sm"
+          : "border-red-100 bg-gradient-to-br from-white to-red-50/40 shadow-[0_10px_30px_rgba(239,68,68,0.08)]"
+      }`}>
           {/* Główny komunikat */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex-1">
               {/* Status badge */}
           <div className="mb-3">
             {progress >= 100 ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-200">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700 ring-1 ring-green-300">
                 ✅ Spelniasz wymagania
               </span>
             ) : progress >= 50 ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700 ring-1 ring-amber-300">
                 🟡 Jestes na dobrej drodze
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-200">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700 ring-1 ring-red-300">
                 ❗ Nie spelniasz wymagan
               </span>
             )}
@@ -683,15 +689,18 @@ export default function CalculatorClient() {
 
           {missingPoints > 0 ? (
                 <>
-                  <div className="text-2xl font-bold text-slate-900">
-                    Brakuje Ci{" "}
-                    <span className="text-red-500">{missingPoints} pkt</span>
+                  <div className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Brakuje Ci</div>
+                  <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="text-4xl font-extrabold text-red-600">{missingPoints} pkt</span>
                     {missingEvidenceCount > 0 && (
-                      <span className="text-red-400"> i {missingEvidenceCount} certyfikatow</span>
+                      <>
+                        <span className="text-slate-300 text-xl">+</span>
+                        <span className="text-2xl font-bold text-amber-500">{missingEvidenceCount} cert.</span>
+                      </>
                     )}
                   </div>
-                  <div className="mt-1 text-sm text-slate-500">
-                    Masz {donePoints} / {requiredPoints} pkt • okres {periodStart}–{periodEnd} • {daysLeft} dni do konca
+                  <div className="mt-1.5 text-sm text-slate-500">
+                    Masz {donePoints} / {requiredPoints} pkt • okres {periodStart}–{periodEnd} • {daysLeft} dni
                   </div>
                 </>
               ) : (
@@ -712,18 +721,10 @@ export default function CalculatorClient() {
                   <span className="text-xs font-bold text-slate-700">{Math.round(progress)}%</span>
                   <span className="text-xs text-slate-400">{donePoints} / {requiredPoints} pkt</span>
                 </div>
-                <div className="h-4 w-full overflow-hidden rounded-full bg-slate-100 shadow-inner">
+                <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
                   <div
-                    className={`h-4 rounded-full transition-all duration-500 ${
-                      progress >= 100
-                        ? "bg-gradient-to-r from-green-400 to-green-500"
-                        : progress >= 70
-                        ? "bg-gradient-to-r from-blue-400 to-blue-500"
-                        : progress >= 30
-                        ? "bg-gradient-to-r from-amber-400 to-orange-400"
-                        : "bg-gradient-to-r from-red-400 to-red-500"
-                    }`}
-                    style={{ width: `${progress}%` }}
+                    className="h-3 rounded-full transition-all duration-700 bg-gradient-to-r from-red-400 via-orange-400 to-amber-400"
+                    style={{ width: `${Math.max(progress, 2)}%` }}
                   />
                 </div>
                 <div className="mt-2 flex gap-4 text-xs text-slate-500">
@@ -753,11 +754,11 @@ export default function CalculatorClient() {
           </div>
 
           {/* Szybkie statystyki — 1 linia */}
-          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
-            <span>📅 <strong className="text-slate-900">{daysLeft}</strong> dni do konca okresu</span>
+          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm">
+            <span className="text-slate-500">📅 <strong className="text-slate-900">{daysLeft}</strong> dni</span>
             <span>📄 <strong className={missingEvidenceCount > 0 ? "text-amber-600" : "text-slate-900"}>{Math.round(evidencePct)}% dokumentow</strong></span>
-            <span>🎯 <strong className="text-slate-900">{requiredPoints} pkt</strong> wymagane</span>
-            <span>👤 <strong className="text-slate-900">{displayProfession(profession, professionOther)}</strong></span>
+            <span className="text-slate-500">🎯 <strong className="text-slate-900">{requiredPoints} pkt</strong> wymagane</span>
+            <span className="text-slate-500">👤 <strong className="text-slate-700">{displayProfession(profession, professionOther)}</strong></span>
           </div>
         </div>
       )}
@@ -803,7 +804,7 @@ export default function CalculatorClient() {
               limitsUsage.map((r) => {
                 const isMax = (r.usedPct ?? 0) >= 100 || (Number(r.remaining) || 0) <= 0;
                 return (
-                  <div key={r.key} className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-4 transition hover:shadow-md hover:border-slate-200">
+                  <div key={r.key} className="flex items-center gap-4 rounded-xl border-l-4 border border-slate-100 border-l-blue-400 bg-white p-4 transition hover:shadow-md hover:border-l-blue-500">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-2">
                         <span className="text-sm font-semibold text-slate-900">{r.label}</span>
@@ -888,10 +889,12 @@ export default function CalculatorClient() {
                   <div
                     key={a.id}
                     className={[
-                      "rounded-xl border-l-4 border border-slate-100 bg-white p-4 transition",
-                      prog === "planned" ? "border-l-blue-400"
-                        : missing.length ? "border-l-amber-400"
-                        : "border-l-slate-200",
+                      "rounded-xl border-l-4 border border-slate-100 p-4 transition hover:shadow-sm",
+                      prog === "planned"
+                        ? "border-l-blue-400 bg-blue-50/20"
+                        : missing.length
+                        ? "border-l-amber-400 bg-amber-50/30"
+                        : "border-l-green-400 bg-white",
                     ].join(" ")}
                   >
                     <div className="flex items-start justify-between gap-4">
