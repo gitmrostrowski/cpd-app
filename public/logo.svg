@@ -1,20 +1,12 @@
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="32" height="32" rx="8" fill="#2563eb"/>
-  
-  <!-- Grupa wyrównująca pionowo do tekstu CRPE -->
   <g transform="translate(0, 1.5)">
-    <!-- Tylny dokument - biała obwódka 1px na przezroczystym tle -->
-    <rect x="6" y="9" width="12" height="15" rx="2" stroke="white" stroke-width="1" fill="none"/>
-    
-    <!-- Przedni dokument - biała obwódka 1px na przezroczystym tle -->
-    <rect x="10" y="6" width="12" height="15" rx="2" stroke="white" stroke-width="1" fill="none"/>
-    
-    <!-- Linie tekstu - wewnątrz przedniego dokumentu, ciemnoniebieskie -->
-    <line x1="13" y1="10" x2="19" y2="10" stroke="#1d4ed8" stroke-width="1" stroke-linecap="round"/>
-    <line x1="13" y1="12" x2="19" y2="12" stroke="#1d4ed8" stroke-width="1" stroke-linecap="round"/>
-    <line x1="13" y1="14" x2="17" y2="14" stroke="#1d4ed8" stroke-width="1" stroke-linecap="round"/>
-    
-    <!-- Zielony haczyk - na białym kółku, zintegrowany z przednim dokumentem -->
+    <rect x="6" y="9" width="12" height="15" rx="2" stroke="white" stroke-width="1" fill="none" opacity="0.6"/>
+    <rect x="10" y="6" width="12" height="15" rx="2" stroke="white" stroke-width="1.2" fill="none"/>
+    <!-- Kreski w kolorze złotym/żółtym -->
+    <line x1="13" y1="10" x2="19" y2="10" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="13" y1="12.5" x2="19" y2="12.5" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="13" y1="15" x2="17" y2="15" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/>
     <circle cx="21.5" cy="19.5" r="4.5" fill="white"/>
     <path d="M19.9 19.5l1 1 2.5-2.5" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
