@@ -244,7 +244,7 @@ function buildNextStep(missingPoints: number, missingEvidenceCount: number, limi
 
   return {
     title: "Ustal krótki plan",
-    description: "Dodaj wpisy jako „plan”, a potem uzupełniaj certyfikaty.",
+    description: "Dodaj wpisy jako „plan", a potem uzupełniaj certyfikaty.",
     ctaLabel: "+ Dodaj aktywność",
     ctaHref: "/aktywnosci?new=1",
   };
@@ -309,9 +309,12 @@ function suggestPlannedPoints(rule: {
   return Math.max(1, Math.min(rem, step));
 }
 
-function IconSoft({ children }: { children: ReactNode }) {
+// ─── Design system atoms ───────────────────────────────────────────────────
+
+/** Warm teal icon badge */
+function IconBadge({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex h-8 w-8 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-600">
+    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 text-teal-600 ring-1 ring-teal-100">
       {children}
     </span>
   );
@@ -319,12 +322,76 @@ function IconSoft({ children }: { children: ReactNode }) {
 
 function FieldLabel({ icon, title }: { icon: ReactNode; title: string }) {
   return (
-    <div className="flex items-center gap-2 text-xs font-semibold text-slate-900">
+    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-stone-500">
       {icon}
       {title}
     </div>
   );
 }
+
+/** Primary filled button — teal, consistent size */
+function BtnPrimary({
+  children,
+  onClick,
+  disabled,
+  type = "button",
+  className = "",
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  type?: "button" | "submit";
+  className?: string;
+}) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Ghost / outline button */
+function BtnGhost({
+  children,
+  onClick,
+  href,
+  className = "",
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  href?: string;
+  className?: string;
+}) {
+  const cls = `inline-flex items-center justify-center gap-1.5 rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50 active:scale-95 ${className}`;
+  if (href) return <Link href={href} className={cls}>{children}</Link>;
+  return <button type="button" onClick={onClick} className={cls}>{children}</button>;
+}
+
+/** Card wrapper */
+function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-2xl border border-stone-200 bg-white shadow-sm ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+/** Section header inside a card */
+function CardHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="mb-4">
+      <h2 className="text-base font-bold text-stone-900">{title}</h2>
+      {subtitle && <p className="mt-0.5 text-sm text-stone-500">{subtitle}</p>}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
 
 export default function CalculatorClient() {
   const { user, loading: authLoading } = useAuth();
@@ -475,9 +542,7 @@ export default function CalculatorClient() {
 
     run();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [user?.id, supabase]);
 
   const periodLabel = `${periodStart}-${periodEnd}`;
@@ -523,9 +588,7 @@ export default function CalculatorClient() {
     return clamp((withProof / total) * 100, 0, 100);
   }, [inPeriodDone.length, missingEvidenceCount]);
 
-  const daysLeft = useMemo(() => {
-    return daysUntilEndOfYear(periodEnd);
-  }, [periodEnd]);
+  const daysLeft = useMemo(() => daysUntilEndOfYear(periodEnd), [periodEnd]);
 
   const limitsUsage = useMemo(() => {
     const rules = RULES_BY_PROFESSION[profession];
@@ -569,7 +632,7 @@ export default function CalculatorClient() {
   const limitWarning = useMemo(() => {
     const hit = limitsUsage.find((x) => (x.usedPct ?? 0) >= 100);
     if (!hit) return null;
-    return `Limit „${hit.label}” jest osiągnięty — kolejne podobne aktywności mogą nie zwiększyć punktów w tym okresie.`;
+    return `Limit „${hit.label}" jest osiągnięty — kolejne podobne aktywności mogą nie zwiększyć punktów w tym okresie.`;
   }, [limitsUsage]);
 
   const nextStep = useMemo(() => {
@@ -704,680 +767,468 @@ export default function CalculatorClient() {
   const okresLabel = pwzIssueDate
     ? `Okres liczony z PWZ (${formatYMD(pwzIssueDate)})`
     : periodMode === "preset"
-    ? "Okres (preset)"
+    ? "Okres rozliczeniowy"
     : "Okres (indywidualny)";
 
+  // ─── shared input class ─────────────────────────────────────────────────
+  const inputCls =
+    "mt-2 h-11 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 text-sm font-medium text-stone-900 transition focus:border-teal-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-100";
+
   return (
-    <div className="space-y-6">
-      {/* USTAWIENIA */}
-      <div className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900">
-              <IconSoft>
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+    /* ── Page wrapper with warm parchment background ── */
+    <div className="min-h-screen bg-amber-50/40 px-4 pb-12 pt-6 md:px-6">
+      <div className="mx-auto max-w-5xl space-y-5">
+
+        {/* ── USTAWIENIA ─────────────────────────────────────────────── */}
+        <Card className="p-6">
+          {/* Header row */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <IconBadge>
+                {/* Settings gear */}
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
                   <path d="M19.4 15a7.97 7.97 0 0 0 .1-1 7.97 7.97 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a8.1 8.1 0 0 0-1.7-1l-.4-2.6H9.1l-.4 2.6a8.1 8.1 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7.97 7.97 0 0 0-.1 1c0 .34.03.67.1 1l-2 1.5 2 3.5 2.4-1a8.1 8.1 0 0 0 1.7 1l.4 2.6h5.8l.4-2.6a8.1 8.1 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5Z" />
                 </svg>
-              </IconSoft>
-              Ustawienia okresu i zawodu
-            </div>
-
-            <div className="mt-1 text-xs text-slate-600">
-              Zmiany zapisujesz przyciskiem po prawej.
-              {savedAt && !dirty && !savingProfile ? (
-                <span className="ml-2 font-semibold text-emerald-700">Zapisano</span>
-              ) : null}
-              {!otherValid ? (
-                <span className="ml-2 font-semibold text-rose-700">
-                  Uzupełnij „Inny zawód”
-                </span>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center md:justify-end">
-            <button
-              type="button"
-              onClick={() => {
-                const prof: Profession = "Lekarz";
-                setProfession(prof);
-                setProfessionOther("");
-
-                const derived = getPeriodFromPwzIssueDate(prof, pwzIssueDate);
-                const ps = derived?.start ?? 2023;
-                const pe = derived?.end ?? 2026;
-
-                setPeriodStart(ps);
-                setPeriodEnd(pe);
-
-                const rp = DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200;
-                setRequiredPoints(rp);
-
-                setPeriodMode(derived ? "custom" : "preset");
-                setDirty(true);
-              }}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M3 12a9 9 0 1 0 3-6.7" />
-                  <path d="M3 4v6h6" />
-                </svg>
-              </span>
-              Przywróć domyślne
-            </button>
-
-            <button
-              type="button"
-              onClick={saveAllSettings}
-              disabled={isBusy || savingProfile || !dirty || !otherValid}
-              className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-            >
-              {savingProfile ? "Zapisuję…" : "Zapisz zmiany"}
-            </button>
-
-            <Link
-              href="/profil"
-              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              Profil →
-            </Link>
-          </div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <div>
-            <FieldLabel
-              icon={
-                <IconSoft>
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M8 21h8" />
-                    <path d="M12 17v4" />
-                    <path d="M7 4h10" />
-                    <path d="M7 4c0 5 2 6 5 8 3-2 5-3 5-8" />
-                    <path d="M9 12h6" />
-                  </svg>
-                </IconSoft>
-              }
-              title="Zawód"
-            />
-
-            <select
-              value={profession}
-              onChange={(e) => {
-                const v = e.target.value as Profession;
-                setProfession(v);
-
-                if (!isOtherProfession(v)) setProfessionOther("");
-
-                const rp =
-                  RULES_BY_PROFESSION[v]?.requiredPoints ??
-                  DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ??
-                  200;
-
-                setRequiredPoints(rp);
-
-                if (pwzIssueDate) {
-                  const derived = getPeriodFromPwzIssueDate(v, pwzIssueDate);
-                  if (derived) {
-                    setPeriodMode("custom");
-                    setPeriodStart(derived.start);
-                    setPeriodEnd(derived.end);
-                  }
-                }
-
-                setDirty(true);
-              }}
-              className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            >
-              {PROFESSION_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <FieldLabel
-              icon={
-                <IconSoft>
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 8v4l3 2" />
-                    <path d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10Z" />
-                  </svg>
-                </IconSoft>
-              }
-              title={trybLabel}
-            />
-
-            <select
-              value={periodMode}
-              onChange={(e) => {
-                const v = e.target.value as "preset" | "custom";
-                setPeriodMode(v);
-
-                if (v === "custom" && pwzIssueDate) {
-                  const derived = getPeriodFromPwzIssueDate(profession, pwzIssueDate);
-                  if (derived) {
-                    setPeriodStart(derived.start);
-                    setPeriodEnd(derived.end);
-                  }
-                }
-
-                setDirty(true);
-              }}
-              className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            >
-              <option value="preset">Preset (najczęstszy)</option>
-              <option value="custom">Indywidualny</option>
-            </select>
-          </div>
-
-          {periodMode === "preset" && !pwzIssueDate ? (
-            <div>
-              <FieldLabel
-                icon={
-                  <IconSoft>
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M8 2v4" />
-                      <path d="M16 2v4" />
-                      <path d="M3 10h18" />
-                      <path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
-                    </svg>
-                  </IconSoft>
-                }
-                title={okresLabel}
-              />
-
-              <select
-                value={periodLabel}
-                onChange={(e) => {
-                  const [a, b] = e.target.value.split("-").map((x) => Number(x));
-                  setPeriodStart(a);
-                  setPeriodEnd(b);
-                  setDirty(true);
-                }}
-                className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              >
-                <option value="2019-2022">2019-2022</option>
-                <option value="2023-2026">2023-2026</option>
-                <option value="2027-2030">2027-2030</option>
-              </select>
-            </div>
-          ) : (
-            <div className="xl:col-span-1">
-              <FieldLabel
-                icon={
-                  <IconSoft>
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M8 2v4" />
-                      <path d="M16 2v4" />
-                      <path d="M3 10h18" />
-                      <path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
-                    </svg>
-                  </IconSoft>
-                }
-                title={okresLabel}
-              />
-
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <input
-                  value={periodStart}
-                  onChange={(e) => {
-                    setPeriodStart(Number(e.target.value || 0));
-                    setDirty(true);
-                  }}
-                  type="number"
-                  className="h-11 w-full rounded-2xl border border-slate-200/70 bg-white px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                  placeholder="Start"
-                  disabled={Boolean(pwzIssueDate)}
-                />
-
-                <input
-                  value={periodEnd}
-                  onChange={(e) => {
-                    setPeriodEnd(Number(e.target.value || 0));
-                    setDirty(true);
-                  }}
-                  type="number"
-                  className="h-11 w-full rounded-2xl border border-slate-200/70 bg-white px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                  placeholder="Koniec"
-                  disabled={Boolean(pwzIssueDate)}
-                />
+              </IconBadge>
+              <div>
+                <h2 className="text-base font-bold text-stone-900">Ustawienia okresu i zawodu</h2>
+                <p className="mt-0.5 text-xs text-stone-500">
+                  Zmiany zapisujesz przyciskiem po prawej.{" "}
+                  {savedAt && !dirty && !savingProfile && (
+                    <span className="font-semibold text-teal-700">✓ Zapisano</span>
+                  )}
+                  {!otherValid && (
+                    <span className="font-semibold text-rose-600"> Uzupełnij „Inny zawód"</span>
+                  )}
+                </p>
               </div>
             </div>
-          )}
 
-          <div>
-            <FieldLabel
-              icon={
-                <IconSoft>
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 2l3 7h7l-5.5 4.2L18.5 21 12 16.8 5.5 21l2-7.8L2 9h7l3-7Z" />
-                  </svg>
-                </IconSoft>
-              }
-              title="Wymagane punkty — domyślne"
-            />
-
-            <input
-              value={requiredPoints}
-              onChange={(e) => {
-                setRequiredPoints(Number(e.target.value || 0));
-                setDirty(true);
-              }}
-              type="number"
-              min={0}
-              className="mt-2 h-11 w-full rounded-2xl border border-slate-200/70 bg-white px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
-          </div>
-
-          {otherRequired ? (
-            <div className="md:col-span-2 xl:col-span-4">
-              <FieldLabel
-                icon={
-                  <IconSoft>
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M12 20h9" />
-                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
-                    </svg>
-                  </IconSoft>
-                }
-                title="Jaki zawód?"
-              />
-
-              <input
-                value={professionOther}
-                onChange={(e) => {
-                  setProfessionOther(e.target.value);
+            {/* Action buttons — consistent style */}
+            <div className="flex flex-wrap items-center gap-2">
+              <BtnGhost
+                onClick={() => {
+                  const prof: Profession = "Lekarz";
+                  setProfession(prof);
+                  setProfessionOther("");
+                  const derived = getPeriodFromPwzIssueDate(prof, pwzIssueDate);
+                  const ps = derived?.start ?? 2023;
+                  const pe = derived?.end ?? 2026;
+                  setPeriodStart(ps);
+                  setPeriodEnd(pe);
+                  const rp = DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200;
+                  setRequiredPoints(rp);
+                  setPeriodMode(derived ? "custom" : "preset");
                   setDirty(true);
                 }}
-                placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
-                className={`mt-2 h-11 w-full rounded-2xl border bg-white px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
-                  otherValid
-                    ? "border-slate-200/70 focus:ring-blue-200"
-                    : "border-rose-200/70 focus:ring-rose-200"
-                }`}
+              >
+                ↩ Domyślne
+              </BtnGhost>
+
+              <BtnPrimary
+                onClick={saveAllSettings}
+                disabled={isBusy || savingProfile || !dirty || !otherValid}
+              >
+                {savingProfile ? "Zapisuję…" : "Zapisz zmiany"}
+              </BtnPrimary>
+
+              <BtnGhost href="/profil">Profil →</BtnGhost>
+            </div>
+          </div>
+
+          {/* Fields grid */}
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {/* Zawód */}
+            <div>
+              <FieldLabel
+                icon={<IconBadge><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8" /><path d="M12 17v4" /><path d="M7 4h10" /><path d="M7 4c0 5 2 6 5 8 3-2 5-3 5-8" /><path d="M9 12h6" /></svg></IconBadge>}
+                title="Zawód"
               />
-
-              <p className={`mt-2 text-[11px] ${otherValid ? "text-slate-500" : "text-rose-700"}`}>
-                {otherValid
-                  ? "Doprecyzowanie pomaga dopasować zasady i raporty."
-                  : "Wpisz nazwę zawodu (min. 2 znaki), żeby profil był kompletny."}
-              </p>
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      {/* PANEL STATUSU */}
-      <div className="rounded-3xl bg-white/30 shadow-lg ring-1 ring-slate-200/60 backdrop-blur">
-        <CpdStatusPanel
-          isBusy={authLoading || loading}
-          userEmail={user?.email ?? null}
-          profileProfession={displayProfession(profession, professionOther)}
-          periodLabel={`${periodStart}-${periodEnd}`}
-          donePoints={donePoints}
-          requiredPoints={requiredPoints}
-          missingPoints={missingPoints}
-          progressPct={progress}
-          evidencePct={evidencePct}
-          daysLeft={daysLeft}
-          doneCount={inPeriodDone.length}
-          plannedCount={inPeriodPlanned.length}
-          missingEvidenceCount={missingEvidenceCount}
-          nextStep={nextStep}
-          topLimits={topLimits}
-          limitWarning={limitWarning}
-          primaryCtaHref="/aktywnosci?new=1"
-          secondaryCtaHref="/aktywnosci"
-          portfolioHref="/portfolio"
-        />
-      </div>
-
-      {/* REGUŁY I LIMITY */}
-      <div className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
-        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-          <div>
-            <div className="text-sm font-extrabold text-slate-900">Reguły i limity</div>
-            <div className="mt-1 text-sm text-slate-600">
-              Limity cząstkowe i wykorzystanie na podstawie ukończonych wpisów w okresie{" "}
-              {periodStart}-{periodEnd}.
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <div className="text-slate-700">
-              Zaliczone: <span className="font-extrabold text-slate-900">{donePoints} pkt</span>
+              <select
+                value={profession}
+                onChange={(e) => {
+                  const v = e.target.value as Profession;
+                  setProfession(v);
+                  if (!isOtherProfession(v)) setProfessionOther("");
+                  const rp = RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
+                  setRequiredPoints(rp);
+                  if (pwzIssueDate) {
+                    const derived = getPeriodFromPwzIssueDate(v, pwzIssueDate);
+                    if (derived) { setPeriodMode("custom"); setPeriodStart(derived.start); setPeriodEnd(derived.end); }
+                  }
+                  setDirty(true);
+                }}
+                className={inputCls}
+              >
+                {PROFESSION_OPTIONS.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
             </div>
 
-            <span className="text-slate-300">•</span>
-
-            <div className="text-slate-700">
-              Brakuje: <span className="font-extrabold text-slate-900">{missingPoints} pkt</span>
+            {/* Tryb okresu */}
+            <div>
+              <FieldLabel
+                icon={<IconBadge><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 2" /><path d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10Z" /></svg></IconBadge>}
+                title={trybLabel}
+              />
+              <select
+                value={periodMode}
+                onChange={(e) => {
+                  const v = e.target.value as "preset" | "custom";
+                  setPeriodMode(v);
+                  if (v === "custom" && pwzIssueDate) {
+                    const derived = getPeriodFromPwzIssueDate(profession, pwzIssueDate);
+                    if (derived) { setPeriodStart(derived.start); setPeriodEnd(derived.end); }
+                  }
+                  setDirty(true);
+                }}
+                className={inputCls}
+              >
+                <option value="preset">Preset (najczęstszy)</option>
+                <option value="custom">Indywidualny</option>
+              </select>
             </div>
 
-            {missingEvidenceCount > 0 ? (
-              <>
-                <span className="text-slate-300">•</span>
-                <div className="text-slate-700">
-                  Bez certyfikatu:{" "}
-                  <span className="font-extrabold text-slate-900">{missingEvidenceCount}</span>
-                </div>
-              </>
-            ) : null}
-          </div>
-        </div>
-
-        {planInfo || planErr ? (
-          <div className="mt-4 rounded-2xl border bg-[#fbfaf7] p-3 text-sm">
-            {planInfo ? <div className="font-semibold text-emerald-700">{planInfo}</div> : null}
-            {planErr ? <div className="font-semibold text-rose-700">{planErr}</div> : null}
-          </div>
-        ) : null}
-
-        <div className="mt-4 space-y-3">
-          {limitsUsage.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200/70 bg-[#fbfaf7] p-4 text-sm text-slate-700">
-              Brak zdefiniowanych limitów dla tego zawodu.
-            </div>
-          ) : (
-            limitsUsage.map((r) => {
-              const isMax = (r.usedPct ?? 0) >= 100 || (Number(r.remaining) || 0) <= 0;
-
-              return (
-                <div
-                  key={r.key}
-                  className="w-full rounded-2xl border border-slate-200/70 bg-[#fbfaf7] p-4 ring-1 ring-slate-100"
+            {/* Okres */}
+            {periodMode === "preset" && !pwzIssueDate ? (
+              <div>
+                <FieldLabel
+                  icon={<IconBadge><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v4" /><path d="M16 2v4" /><path d="M3 10h18" /><path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" /></svg></IconBadge>}
+                  title={okresLabel}
+                />
+                <select
+                  value={periodLabel}
+                  onChange={(e) => {
+                    const [a, b] = e.target.value.split("-").map((x) => Number(x));
+                    setPeriodStart(a); setPeriodEnd(b); setDirty(true);
+                  }}
+                  className={inputCls}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                        <div className="text-sm font-extrabold text-slate-900">{r.label}</div>
+                  <option value="2019-2022">2019–2022</option>
+                  <option value="2023-2026">2023–2026</option>
+                  <option value="2027-2030">2027–2030</option>
+                </select>
+              </div>
+            ) : (
+              <div>
+                <FieldLabel
+                  icon={<IconBadge><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v4" /><path d="M16 2v4" /><path d="M3 10h18" /><path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" /></svg></IconBadge>}
+                  title={okresLabel}
+                />
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <input
+                    value={periodStart}
+                    onChange={(e) => { setPeriodStart(Number(e.target.value || 0)); setDirty(true); }}
+                    type="number"
+                    placeholder="Start"
+                    disabled={Boolean(pwzIssueDate)}
+                    className={inputCls.replace("mt-2 ", "")}
+                  />
+                  <input
+                    value={periodEnd}
+                    onChange={(e) => { setPeriodEnd(Number(e.target.value || 0)); setDirty(true); }}
+                    type="number"
+                    placeholder="Koniec"
+                    disabled={Boolean(pwzIssueDate)}
+                    className={inputCls.replace("mt-2 ", "")}
+                  />
+                </div>
+              </div>
+            )}
 
-                        {r.note ? (
-                          <div className="text-xs font-semibold text-slate-600">
-                            {r.note}
-                            {r.mode === "per_year" ? ` (×${r.yearsInPeriod} lat)` : ""}
-                          </div>
-                        ) : null}
+            {/* Wymagane punkty */}
+            <div>
+              <FieldLabel
+                icon={<IconBadge><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3 7h7l-5.5 4.2L18.5 21 12 16.8 5.5 21l2-7.8L2 9h7l3-7Z" /></svg></IconBadge>}
+                title="Wymagane punkty"
+              />
+              <input
+                value={requiredPoints}
+                onChange={(e) => { setRequiredPoints(Number(e.target.value || 0)); setDirty(true); }}
+                type="number"
+                min={0}
+                className={inputCls}
+              />
+            </div>
 
-                        {isMax ? (
-                          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                            <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                            W pełni zrealizowane
-                          </span>
-                        ) : null}
+            {/* Inny zawód */}
+            {otherRequired && (
+              <div className="sm:col-span-2 xl:col-span-4">
+                <FieldLabel
+                  icon={<IconBadge><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /></svg></IconBadge>}
+                  title="Jaki zawód?"
+                />
+                <input
+                  value={professionOther}
+                  onChange={(e) => { setProfessionOther(e.target.value); setDirty(true); }}
+                  placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
+                  className={`${inputCls} ${!otherValid ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100" : ""}`}
+                />
+                <p className={`mt-1.5 text-xs ${otherValid ? "text-stone-400" : "text-rose-600"}`}>
+                  {otherValid
+                    ? "Doprecyzowanie pomaga dopasować zasady i raporty."
+                    : "Wpisz nazwę zawodu (min. 2 znaki), żeby profil był kompletny."}
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* ── PANEL STATUSU ─────────────────────────────────────────── */}
+        <Card className="overflow-hidden">
+          <CpdStatusPanel
+            isBusy={authLoading || loading}
+            userEmail={user?.email ?? null}
+            profileProfession={displayProfession(profession, professionOther)}
+            periodLabel={`${periodStart}-${periodEnd}`}
+            donePoints={donePoints}
+            requiredPoints={requiredPoints}
+            missingPoints={missingPoints}
+            progressPct={progress}
+            evidencePct={evidencePct}
+            daysLeft={daysLeft}
+            doneCount={inPeriodDone.length}
+            plannedCount={inPeriodPlanned.length}
+            missingEvidenceCount={missingEvidenceCount}
+            nextStep={nextStep}
+            topLimits={topLimits}
+            limitWarning={limitWarning}
+            primaryCtaHref="/aktywnosci?new=1"
+            secondaryCtaHref="/aktywnosci"
+            portfolioHref="/portfolio"
+          />
+        </Card>
+
+        {/* ── REGUŁY I LIMITY ────────────────────────────────────────── */}
+        <Card className="p-6">
+          {/* Section header + summary */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <CardHeader
+              title="Reguły i limity"
+              subtitle={`Limity cząstkowe w okresie ${periodStart}–${periodEnd} na podstawie ukończonych wpisów.`}
+            />
+
+            <div className="flex flex-wrap items-center gap-3 text-sm text-stone-600 sm:shrink-0 sm:pt-1">
+              <span>
+                Zaliczone:{" "}
+                <span className="font-bold text-stone-900">{donePoints} pkt</span>
+              </span>
+              <span className="text-stone-300">|</span>
+              <span>
+                Brakuje:{" "}
+                <span className="font-bold text-stone-900">{missingPoints} pkt</span>
+              </span>
+              {missingEvidenceCount > 0 && (
+                <>
+                  <span className="text-stone-300">|</span>
+                  <span>
+                    Bez certyfikatu:{" "}
+                    <span className="font-bold text-stone-900">{missingEvidenceCount}</span>
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Feedback banners */}
+          {(planInfo || planErr) && (
+            <div className="mb-4 rounded-xl border bg-stone-50 p-3 text-sm">
+              {planInfo && <p className="font-semibold text-teal-700">{planInfo}</p>}
+              {planErr && <p className="font-semibold text-rose-600">{planErr}</p>}
+            </div>
+          )}
+
+          {/* Limit rows */}
+          <div className="space-y-3">
+            {limitsUsage.length === 0 ? (
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
+                Brak zdefiniowanych limitów dla tego zawodu.
+              </div>
+            ) : (
+              limitsUsage.map((r) => {
+                const isMax = (r.usedPct ?? 0) >= 100 || (Number(r.remaining) || 0) <= 0;
+
+                return (
+                  <div
+                    key={r.key}
+                    className="rounded-xl border border-stone-200 bg-stone-50/60 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <span className="text-sm font-bold text-stone-900">{r.label}</span>
+
+                          {r.note && (
+                            <span className="text-xs text-stone-500">
+                              {r.note}
+                              {r.mode === "per_year" ? ` (×${r.yearsInPeriod} lat)` : ""}
+                            </span>
+                          )}
+
+                          {isMax && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
+                              <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+                              W pełni zrealizowane
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-0.5 text-xs text-stone-500">
+                          {Math.round(r.used)} / {Math.round(r.cap)} pkt — {Math.round(r.usedPct)}%
+                        </p>
                       </div>
 
-                      <div className="mt-1 text-xs font-semibold text-slate-600">
-                        {Math.round(r.used)} / {Math.round(r.cap)} pkt • {Math.round(r.usedPct)}%
+                      <div className="shrink-0">
+                        {isMax ? (
+                          <BtnGhost href="/aktywnosci">Zobacz wpisy</BtnGhost>
+                        ) : (
+                          <BtnPrimary
+                            disabled={isBusy || planningKey === r.key}
+                            onClick={() => planForRule(r)}
+                          >
+                            {planningKey === r.key ? "Dodaję…" : "+ Zaplanuj"}
+                          </BtnPrimary>
+                        )}
                       </div>
                     </div>
 
-                    <div className="shrink-0">
-                      {isMax ? (
+                    {/* Progress bar */}
+                    <div className="mt-3 flex items-center gap-3">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-stone-200">
+                        <div
+                          className="h-2 rounded-full bg-teal-500 transition-all"
+                          style={{ width: `${r.usedPct}%` }}
+                        />
+                      </div>
+                      <span className="shrink-0 text-xs font-semibold text-stone-600">
+                        Pozostało:{" "}
+                        <span className="font-bold text-stone-900">{Math.round(r.remaining)} pkt</span>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Footer links */}
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-stone-100 pt-4">
+            <BtnGhost href="/aktywnosci">Aktywności →</BtnGhost>
+            <BtnGhost href="/aktywnosci?new=1">+ Dodaj aktywność</BtnGhost>
+            <BtnGhost href="/portfolio">Raport / PDF →</BtnGhost>
+          </div>
+        </Card>
+
+        {/* ── OSTATNIE AKTYWNOŚCI ────────────────────────────────────── */}
+        <Card className="p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <CardHeader
+              title="Ostatnie aktywności"
+              subtitle={`Wpisy w okresie ${periodStart}–${periodEnd} z sygnalizacją braków.`}
+            />
+
+            <div className="flex flex-wrap gap-2 sm:shrink-0 sm:pt-1">
+              <BtnGhost href="/aktywnosci">Aktywności</BtnGhost>
+              <BtnGhost href="/portfolio">Raporty / PDF</BtnGhost>
+              <BtnGhost href="/baza-szkolen">Baza szkoleń</BtnGhost>
+            </div>
+          </div>
+
+          <div className="mt-1 space-y-2">
+            {authLoading || loading ? (
+              <p className="text-sm text-stone-500">Wczytuję…</p>
+            ) : recentRows.length === 0 ? (
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
+                Brak wpisów w okresie {periodStart}–{periodEnd}.
+              </div>
+            ) : (
+              recentRows.map((a) => {
+                const prog = normalizeStatus(a.status);
+                const missing = getRowMissing(a);
+
+                return (
+                  <div
+                    key={a.id}
+                    className={[
+                      "rounded-xl border p-4 transition",
+                      prog === "planned"
+                        ? "border-sky-200 bg-sky-50/50"
+                        : missing.length
+                        ? "border-amber-200 bg-amber-50/40"
+                        : "border-stone-200 bg-stone-50/60",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      {/* Left: info */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="truncate text-sm font-semibold text-stone-900">
+                            {a.type}
+                          </span>
+
+                          {prog === "planned" ? (
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">
+                              🗓 Zaplanowane
+                            </span>
+                          ) : (
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700">
+                              ✓ Ukończone
+                            </span>
+                          )}
+
+                          {missing.length === 0 ? (
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-teal-100 bg-teal-50 px-2 py-0.5 text-xs text-teal-700">
+                              Kompletne
+                            </span>
+                          ) : (
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
+                              Braki
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-1 text-xs text-stone-500">
+                          {a.organizer ? `${a.organizer} · ` : ""}
+                          Rok: <span className="font-medium text-stone-700">{a.year}</span>
+                          {prog === "planned" && a.planned_start_date && (
+                            <> · Termin: <span className="font-medium text-stone-700">{formatYMD(a.planned_start_date)}</span></>
+                          )}
+                        </p>
+
+                        {missing.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {missing.map((m) => (
+                              <span
+                                key={m}
+                                className="inline-flex items-center rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700"
+                              >
+                                {m}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: points + link */}
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        <span className="text-sm font-bold text-stone-900">+{a.points} pkt</span>
                         <Link
                           href="/aktywnosci"
-                          className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                          className="inline-flex items-center rounded-lg border border-stone-200 bg-white px-3 py-1 text-xs font-semibold text-stone-600 transition hover:bg-stone-50"
                         >
-                          Zobacz wpisy
+                          Otwórz →
                         </Link>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled={isBusy || planningKey === r.key}
-                          onClick={() => planForRule(r)}
-                          className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-                        >
-                          {planningKey === r.key ? "Dodaję…" : "Zaplanuj aktywność"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex items-center gap-3">
-                    <div className="flex-1">
-                      <div className="h-3 rounded-full bg-slate-200/80">
-                        <div className="h-3 rounded-full bg-blue-600" style={{ width: `${r.usedPct}%` }} />
                       </div>
                     </div>
-
-                    <div className="shrink-0 text-xs font-semibold text-slate-700">
-                      Pozostało: <span className="font-extrabold">{Math.round(r.remaining)}</span> pkt
-                    </div>
                   </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link
-            href="/aktywnosci"
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-          >
-            Przejdź do Aktywności →
-          </Link>
-
-          <Link
-            href="/aktywnosci?new=1"
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-          >
-            + Dodaj aktywność
-          </Link>
-
-          <Link
-            href="/portfolio"
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-          >
-            Raport / PDF →
-          </Link>
-        </div>
-      </div>
-
-      {/* OSTATNIE AKTYWNOŚCI */}
-      <div className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="text-sm font-extrabold text-slate-900">Ostatnie aktywności</div>
-            <div className="mt-1 text-sm text-slate-600">
-              Ostatnio dodane wpisy w okresie {periodStart}-{periodEnd} z sygnalizacją braków.
-            </div>
+                );
+              })
+            )}
           </div>
+        </Card>
 
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/aktywnosci"
-              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              Aktywności
-            </Link>
-
-            <Link
-              href="/portfolio"
-              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              Raporty / PDF
-            </Link>
-
-            <Link
-              href="/baza-szkolen"
-              className="inline-flex items-center justify-center rounded-2xl border border-slate-200/70 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              Baza szkoleń
-            </Link>
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-3">
-          {authLoading || loading ? (
-            <div className="text-sm text-slate-600">Wczytuję…</div>
-          ) : recentRows.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200/70 bg-[#fbfaf7] p-4 text-sm text-slate-700">
-              Brak wpisów w okresie {periodStart}-{periodEnd}.
-            </div>
-          ) : (
-            recentRows.map((a) => {
-              const prog = normalizeStatus(a.status);
-              const missing = getRowMissing(a);
-
-              return (
-                <div
-                  key={a.id}
-                  className={[
-                    "rounded-2xl border p-4",
-                    prog === "planned"
-                      ? "border-blue-200 bg-blue-50/40"
-                      : missing.length
-                      ? "border-amber-200 bg-amber-50/30"
-                      : "border-slate-200 bg-[#fbfaf7]",
-                  ].join(" ")}
-                >
-                  <div className="grid gap-2 md:grid-cols-[1fr_auto] md:items-start">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="min-w-0 truncate text-sm font-semibold text-slate-900">
-                          {a.type}
-                        </div>
-
-                        {prog === "planned" ? (
-                          <span className="inline-flex shrink-0 items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
-                            🗓️ Zaplanowane
-                          </span>
-                        ) : (
-                          <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
-                            ✅ Ukończone
-                          </span>
-                        )}
-
-                        {missing.length === 0 ? (
-                          <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
-                            Kompletne
-                          </span>
-                        ) : (
-                          <span className="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
-                            Braki
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 text-right">
-                      <div className="text-sm font-extrabold text-slate-900">+{a.points} pkt</div>
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="text-xs text-slate-600">
-                        {a.organizer ? `${a.organizer} • ` : ""}
-                        Rok: <span className="font-semibold text-slate-900">{a.year}</span>
-                        {prog === "planned" ? (
-                          <>
-                            {" "}
-                            • Termin:{" "}
-                            <span className="font-semibold text-slate-900">
-                              {formatYMD(a.planned_start_date)}
-                            </span>
-                          </>
-                        ) : null}
-                      </div>
-
-                      {missing.length ? (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {missing.map((m) => (
-                            <span
-                              key={m}
-                              className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
-                            >
-                              {m}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="shrink-0 md:justify-self-end">
-                      <Link
-                        href="/aktywnosci"
-                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                      >
-                        Otwórz w Aktywnościach →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
       </div>
     </div>
   );
