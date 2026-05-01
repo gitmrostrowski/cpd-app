@@ -641,7 +641,7 @@ export default function CalculatorClient() {
     setActiveNav(id);
 
     // Header + podmenu + mały oddech, żeby ramka nie przyklejała się do nawigacji.
-    const offset = 126;
+    const offset = 134;
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior: "smooth" });
   }
@@ -652,10 +652,10 @@ export default function CalculatorClient() {
     "shrink-0 border-b-2 border-blue-500 px-4 py-2.5 text-sm font-medium text-blue-700 focus:outline-none";
 
   return (
-    <div className="-mx-4 min-h-screen bg-slate-50 px-4 pb-10 pt-1 sm:-mx-6 sm:px-6">
+    <div className="-mx-4 min-h-screen bg-slate-100 px-4 pb-10 pt-1 sm:-mx-6 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-4">
         {/* SZYBKIE MENU */}
-        <nav className="sticky top-[68px] z-30 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <nav className="sticky top-[66px] z-30 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex min-w-max">
             <button type="button" onClick={() => scrollToSection("ustawienia")} className={activeNav === "ustawienia" ? subNavActiveCls : subNavItemCls}>
               Ustawienia
@@ -875,8 +875,8 @@ export default function CalculatorClient() {
 
               <div className="grid gap-6 lg:grid-cols-[150px_1fr] lg:items-start">
                 <div className="flex flex-row items-center justify-center gap-4 lg:flex-col">
-                  <CircularProgress value={progress} label="realizacji" />
-                  <CircularProgress value={periodTimeProgress} label="czasu minęło" size="small" tone="amber" />
+                  <CircularProgress value={progress} label="pkt" />
+                  <CircularProgress value={periodTimeProgress} label="czas" size="small" tone="slate" />
                 </div>
 
                 <div className="min-w-0">
@@ -895,21 +895,23 @@ export default function CalculatorClient() {
                     </div>
                   </div>
 
-                  <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <div className="mb-3 flex items-center justify-between text-xs font-medium text-slate-600">
+                  <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
+                    <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center text-xs font-medium text-slate-600">
                       <span>{periodStart}</span>
-                      <span>{Math.round(periodTimeProgress)}% czasu upłynęło</span>
-                      <span>{periodEnd}</span>
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">
+                        Czas: {Math.round(periodTimeProgress)}% minęło
+                      </span>
+                      <span className="text-right">{periodEnd}</span>
                     </div>
 
-                    <div className="relative h-8">
+                    <div className="relative h-9">
                       <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-200" />
                       <div
-                        className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-amber-400"
+                        className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-600"
                         style={{ width: `${periodTimeProgress}%` }}
                       />
                       <div
-                        className="absolute top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-amber-200 bg-white text-amber-600 shadow-sm"
+                        className="absolute top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm"
                         style={{ left: `${periodTimeProgress}%` }}
                         aria-label="Aktualny moment okresu"
                       >
@@ -917,10 +919,10 @@ export default function CalculatorClient() {
                       </div>
                     </div>
 
-                    <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                    <div className="mt-3 grid grid-cols-[1fr_auto_1fr] text-xs text-slate-500">
                       <span>Start okresu</span>
                       <span>Pozostało około {Math.round(100 - periodTimeProgress)}% czasu</span>
-                      <span>Koniec okresu</span>
+                      <span className="text-right">Koniec okresu</span>
                     </div>
                   </div>
 
@@ -1083,9 +1085,9 @@ export default function CalculatorClient() {
                     <button
                       type="button"
                       onClick={() => setActivityFilter("planned")}
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "planned" ? "bg-violet-50 text-violet-700" : "hover:bg-slate-50"}`}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "planned" ? "bg-slate-100 text-slate-800" : "hover:bg-slate-50"}`}
                     >
-                      <span className="h-2 w-2 rounded-full bg-violet-400" /> zaplanowane
+                      <span className="h-2 w-2 rounded-full bg-slate-500" /> zaplanowane
                     </button>
                     <button
                       type="button"
@@ -1112,7 +1114,7 @@ export default function CalculatorClient() {
                     const prog = normalizeStatus(a.status);
                     const missing = getRowMissing(a);
                     const hasMissingDocumentation = prog !== "planned" && missing.length > 0;
-                    const stripe = prog === "planned" ? "bg-violet-500" : hasMissingDocumentation ? "bg-amber-500" : "bg-emerald-500";
+                    const stripe = prog === "planned" ? "bg-slate-500" : hasMissingDocumentation ? "bg-amber-500" : "bg-emerald-500";
 
                     return (
                       <div
@@ -1127,7 +1129,7 @@ export default function CalculatorClient() {
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="font-medium text-slate-950">{a.type}</h3>
                               <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
-                                prog === "planned" ? "bg-violet-50 text-violet-700 ring-violet-100" : "bg-slate-50 text-slate-600 ring-slate-100"
+                                prog === "planned" ? "bg-slate-100 text-slate-700 ring-slate-200" : "bg-slate-50 text-slate-600 ring-slate-100"
                               }`}>
                                 {prog === "planned" ? "Zaplanowane" : "Ukończone"}
                               </span>
