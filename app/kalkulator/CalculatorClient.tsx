@@ -211,7 +211,7 @@ function CircularProgress({ value, label = "realizacji", size = "normal", tone =
   const normalizedRadius = radius - stroke / 2;
   const circumference = normalizedRadius * 2 * Math.PI;
   const offset = circumference - (clamp(value, 0, 100) / 100) * circumference;
-  const strokeTone = tone === "amber" ? "text-amber-500" : tone === "slate" ? "text-blue-400" : "text-blue-500";
+  const strokeTone = tone === "amber" ? "text-amber-500" : tone === "slate" ? "text-slate-500" : "text-blue-500";
 
   return (
     <div className={`relative shrink-0 ${isSmall ? "h-20 w-20" : "h-28 w-28"}`}>
@@ -501,41 +501,7 @@ export default function CalculatorClient() {
 
   return (
     <div className="relative left-1/2 min-h-screen w-screen -translate-x-1/2 bg-slate-100 px-4 pb-10 pt-1 sm:px-6">
-      <div className="mx-auto max-w-6xl space-y-3">
-
-        {/* ── STATUS BAR — szybki snapshot ─────────────────────────────── */}
-        {!isBusy && (
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs text-slate-500 shadow-sm">
-            <span className="font-semibold text-slate-700">{displayProfession(profession, professionOther)}</span>
-            <span className="hidden text-slate-300 sm:inline">·</span>
-            <span>
-              Postep:{" "}
-              <strong className={progress >= 100 ? "text-emerald-600" : progress >= 50 ? "text-blue-600" : "text-red-500"}>
-                {Math.round(progress)}%
-              </strong>
-            </span>
-            <span className="hidden text-slate-300 sm:inline">·</span>
-            <span><strong className="text-slate-700">{daysLeft}</strong> dni do konca</span>
-            {missingEvidenceCount > 0 && (
-              <>
-                <span className="hidden text-slate-300 sm:inline">·</span>
-                <span className="font-medium text-amber-600">{missingEvidenceCount} brakujacych dokumentow</span>
-              </>
-            )}
-            {missingPoints > 0 && (
-              <>
-                <span className="hidden text-slate-300 sm:inline">·</span>
-                <span className="font-medium text-red-500">brakuje {missingPoints} pkt</span>
-              </>
-            )}
-            {missingPoints <= 0 && (
-              <>
-                <span className="hidden text-slate-300 sm:inline">·</span>
-                <span className="font-semibold text-emerald-600">Cel zrealizowany</span>
-              </>
-            )}
-          </div>
-        )}
+      <div className="mx-auto max-w-6xl space-y-5">
 
         {/* ── SZYBKIE MENU — shadow-md, lepszy kontrast aktywnego ──────── */}
         <nav className="sticky top-[76px] z-30 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-md">
@@ -585,7 +551,7 @@ export default function CalculatorClient() {
               </Link>
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-3 px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-2 xl:grid-cols-4">
             <div>
               <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Zawod</label>
               <select value={profession} onChange={(e) => { const v = e.target.value as Profession; setProfession(v); if (!isOtherProfession(v)) setProfessionOther(""); setRequiredPoints(RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200); if (pwzIssueDate) { const d = getPeriodFromPwzIssueDate(v, pwzIssueDate); if (d) { setPeriodMode("custom"); setPeriodStart(d.start); setPeriodEnd(d.end); } } setDirty(true); }} className={`mt-1.5 ${inputCls}`}>
@@ -640,7 +606,7 @@ export default function CalculatorClient() {
               <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
 
               {/* header */}
-              <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-5 py-3 sm:flex-nowrap sm:justify-between">
+              <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-6 py-4 sm:flex-nowrap sm:justify-between">
                 <div className="flex items-center gap-3">
                   <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
                   <div>
@@ -672,11 +638,11 @@ export default function CalculatorClient() {
               </div>
 
               {/* body — zwarty layout */}
-              <div className="grid gap-4 px-5 py-4 lg:grid-cols-[auto_1fr] lg:items-start">
-                {/* circular charts — mniejsze, side by side */}
-                <div className="flex items-center gap-3 lg:flex-col">
+              <div className="grid gap-6 px-6 py-5 lg:grid-cols-[auto_1fr] lg:items-start">
+                {/* circular charts — blisko siebie, czas pod punktami */}
+                <div className="flex flex-col items-center gap-1 lg:gap-2">
                   <CircularProgress value={progress} label="pkt" />
-                  <CircularProgress value={periodTimeProgress} label="czas" tone="slate" />
+                  <CircularProgress value={periodTimeProgress} label="czas" tone="amber" size="small" />
                 </div>
 
                 <div className="min-w-0">
@@ -704,14 +670,14 @@ export default function CalculatorClient() {
                     <div className="relative h-2.5 overflow-visible rounded-full bg-slate-100">
                       <div
                         className="h-2.5 rounded-full transition-all duration-700"
-                        style={{ width: `${periodTimeProgress}%`, background: "linear-gradient(90deg, #60a5fa 0%, #818cf8 100%)" }}
+                        style={{ width: `${periodTimeProgress}%`, background: "linear-gradient(90deg, #f59e0b 0%, #d97706 100%)" }}
                       />
                       <div
-                        className="absolute top-1/2 grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-indigo-400 bg-white shadow-sm"
+                        className="absolute top-1/2 grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-amber-400 bg-white shadow-sm"
                         style={{ left: `${periodTimeProgress}%` }}
                         aria-label="Aktualny moment okresu"
                       >
-                        <span className="block h-2 w-2 rounded-full bg-indigo-500" />
+                        <span className="block h-2 w-2 rounded-full bg-amber-500" />
                       </div>
                     </div>
                     <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
@@ -728,7 +694,7 @@ export default function CalculatorClient() {
                       { value: `${requiredPoints}`, label: "pkt wymagane" },
                       { value: displayProfession(profession, professionOther), label: "Twoj zawod", small: true },
                     ].map(({ value, label, accent, small }) => (
-                      <div key={label} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                      <div key={label} className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
                         <div className={`truncate font-semibold ${small ? "text-sm" : "text-lg"} ${accent ? "text-amber-600" : "text-slate-900"}`}>{value}</div>
                         <div className="mt-0.5 text-[10px] text-slate-500">{label}</div>
                       </div>
@@ -741,21 +707,21 @@ export default function CalculatorClient() {
             {/* ── CO DALEJ ─────────────────────────────────────────────── */}
             <section id="kroki" className={cardCls}>
               <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-              <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-3">
+              <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
                 <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900">Co dalej?</h2>
                   <p className="text-xs text-slate-500">Najwazniejsze dzialania na podstawie brakow</p>
                 </div>
               </div>
-              <div className="grid gap-2 p-4 md:grid-cols-3">
+              <div className="grid gap-3 p-5 md:grid-cols-3">
                 {nextSteps.map((step, i) => (
                   <Link
                     key={step.title}
                     href={step.ctaHref}
                     className={`group flex items-center gap-3 rounded-lg border p-3.5 transition active:scale-[0.99] ${
                       step.primary
-                        ? "border-blue-200 bg-blue-50 hover:border-blue-400 hover:bg-blue-100"
+                        ? "border-blue-300 bg-blue-50 shadow-sm hover:border-blue-400 hover:bg-blue-100"
                         : "border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50"
                     }`}
                   >
@@ -779,7 +745,7 @@ export default function CalculatorClient() {
         {/* ── LIMITY ───────────────────────────────────────────────────── */}
         <section id="limity" className={`${cardCls} scroll-mt-44`}>
           <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-          <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="shield" /></IconBubble>
               <div>
@@ -794,7 +760,7 @@ export default function CalculatorClient() {
             </div>
           </div>
 
-          <div className="p-4">
+          <div className="p-5">
             {(planInfo || planErr) ? (
               <div className="mb-3 rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs">
                 {planInfo ? <p className="font-semibold text-blue-700">{planInfo}</p> : null}
@@ -858,7 +824,7 @@ export default function CalculatorClient() {
         {/* ── OSTATNIE AKTYWNOŚCI ──────────────────────────────────────── */}
         <section id="aktywnosci" className={`${cardCls} scroll-mt-44`}>
           <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-          <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="calendar" /></IconBubble>
               <div>
@@ -881,8 +847,8 @@ export default function CalculatorClient() {
             <Link href="/aktywnosci" className="shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700">Przejdz do aktywnosci</Link>
           </div>
 
-          <div className="p-4">
-            <div className="space-y-2">
+          <div className="p-5">
+            <div className="space-y-3">
               {recentRows.length === 0 ? (
                 /* ── pusty stan — z CTA ── */
                 <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-slate-200 bg-slate-50 py-8 text-center">
@@ -899,7 +865,7 @@ export default function CalculatorClient() {
                   const stripe = prog === "planned" ? "bg-slate-400" : hasMissing ? "bg-amber-500" : "bg-emerald-500";
 
                   return (
-                    <div key={a.id} className="relative overflow-hidden rounded-lg border border-slate-200 bg-white p-4 pl-5 transition hover:border-blue-200 hover:shadow-sm active:scale-[0.99]">
+                    <div key={a.id} className="relative overflow-hidden rounded-lg border border-slate-200 bg-white p-4 pl-6 transition hover:border-blue-200 hover:shadow-sm active:scale-[0.99]">
                       <div className={`absolute inset-y-3 left-0 w-1.5 rounded-r-full ${stripe}`} />
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
@@ -941,7 +907,7 @@ export default function CalculatorClient() {
         {/* ── POWIADOMIENIA ─────────────────────────────────────────────── */}
         <section id="powiadomienia" className={`${cardCls} scroll-mt-44`}>
           <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-          <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="bell" /></IconBubble>
               <div>
