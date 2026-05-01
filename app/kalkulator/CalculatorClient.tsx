@@ -720,7 +720,7 @@ export default function CalculatorClient() {
                   setPeriodMode(derived ? "custom" : "preset");
                   setDirty(true);
                 }}
-                className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                className="w-32 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
               >
                 Domyślne
               </button>
@@ -728,11 +728,11 @@ export default function CalculatorClient() {
                 type="button"
                 onClick={saveAllSettings}
                 disabled={isBusy || savingProfile || !dirty || !otherValid}
-                className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-55"
+                className="w-32 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-55"
               >
                 {savingProfile ? "Zapisuję..." : "Zapisz zmiany"}
               </button>
-              <Link href="/profil" className="rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-sm font-medium text-blue-700 shadow-sm transition hover:bg-blue-50">
+              <Link href="/profil" className="inline-flex w-32 justify-center rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm font-medium text-blue-700 shadow-sm transition hover:bg-blue-50">
                 Profil →
               </Link>
             </div>
@@ -887,9 +887,9 @@ export default function CalculatorClient() {
               </div>
 
               <div className="grid gap-6 lg:grid-cols-[150px_1fr] lg:items-start">
-                <div className="flex flex-row items-center justify-center gap-3 lg:flex-col">
-                  <CircularProgress value={progress} label="pkt" />
-                  <div className="lg:-mt-2"><CircularProgress value={periodTimeProgress} label="czas" tone="slate" /></div>
+                <div className="-mt-3 flex flex-row items-center justify-center gap-3 lg:flex-col">
+                  <div><CircularProgress value={progress} label="pkt" /></div>
+                  <div className="-mt-2 lg:-mt-5"><CircularProgress value={periodTimeProgress} label="czas" tone="slate" /></div>
                 </div>
 
                 <div className="min-w-0">
@@ -1086,21 +1086,21 @@ export default function CalculatorClient() {
                       onClick={() => filterActivities("missing")}
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "missing" ? "bg-amber-50 text-amber-700" : "hover:bg-slate-50"}`}
                     >
-                      <span className="h-2 w-2 rounded-full bg-amber-400" /> brakująca dokumentacja
+                      <span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> brakująca dokumentacja
                     </button>
                     <button
                       type="button"
                       onClick={() => filterActivities("planned")}
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "planned" ? "bg-slate-100 text-slate-800" : "hover:bg-slate-50"}`}
                     >
-                      <span className="h-2 w-2 rounded-full bg-slate-500" /> zaplanowane
+                      <span className="h-2.5 w-2.5 rounded-full bg-slate-500" /> zaplanowane
                     </button>
                     <button
                       type="button"
                       onClick={() => filterActivities("complete")}
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "complete" ? "bg-emerald-50 text-emerald-700" : "hover:bg-slate-50"}`}
                     >
-                      <span className="h-2 w-2 rounded-full bg-green-400" /> kompletne
+                      <span className="h-2.5 w-2.5 rounded-full bg-green-400" /> kompletne
                     </button>
                   </div>
                 </div>
