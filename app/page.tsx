@@ -248,19 +248,19 @@ export default function Page() {
         <div id="hero" className={`${cardCls} scroll-mt-32`}>
           <div className="relative grid grid-cols-1 gap-8 p-6 lg:grid-cols-2 lg:items-start lg:p-8">
           {/* blue left accent — jak w panelu */}
-          <div className="pointer-events-none absolute left-0 top-5 h-20 w-1 rounded-r-full bg-blue-500" />
+          <div className="pointer-events-none absolute left-0 top-5 h-20 w-1 rounded-r-full bg-slate-300" />
 
             {/* LEFT */}
             <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">
-                <Sparkles className="h-3.5 w-3.5 text-blue-400" strokeWidth={1.75} />
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                <Sparkles className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.75} />
                 Wkrótce: Asystent AI do zarządzania rozwojem zawodowym
               </div>
 
               <h1 className="text-[36px] font-bold leading-[1.1] tracking-tight text-slate-950 md:text-[44px]">
                 Twój rozwój
                 <br />i kwalifikacje
-                <br /><span className="text-blue-600">w jednym miejscu.</span>
+                <br /><span className="text-slate-900">w jednym miejscu.</span>
               </h1>
 
               <p className="mt-4 text-base leading-relaxed text-slate-600">
@@ -300,11 +300,11 @@ export default function Page() {
             {/* RIGHT — demo panel */}
             <div className="flex flex-col gap-3">
               {/* Zdjecie — placeholder z gradientem i ikoną do czasu dodania zdjecia */}
-              <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 to-blue-700" style={{ minHeight: "180px" }}>
+              <div className="relative overflow-hidden rounded-xl bg-slate-100" style={{ minHeight: "180px" }}>
                 <Image src="/crpe_reka2b.png" alt="Mockup panelu CPD" width={800} height={280} className="w-full object-cover opacity-90" style={{ objectPosition: "left center", height: "180px" }} />
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/30 to-transparent" />
                 <div className="absolute bottom-3 left-4 right-4">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                     Twoje dane, Twoja kontrola
                   </div>
@@ -361,12 +361,12 @@ export default function Page() {
         {/* ── PASEK IZB ──────────────────────────────────────────────── */}
         <div id="izby" className={cardCls}>
           <div className="px-6 py-4">
-            <p className="mb-3 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            <p className="mb-3 text-center text-[11px] font-semibold text-slate-700">
               CRPE wspiera zawody regulowane przez samorządy zawodowe
             </p>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
               {izby.map((nazwa) => (
-                <span key={nazwa} className="text-xs font-medium text-slate-500">{nazwa}</span>
+                <span key={nazwa} className="text-xs font-medium text-slate-600">{nazwa}</span>
               ))}
             </div>
           </div>
