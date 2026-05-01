@@ -480,11 +480,25 @@ export default function CalculatorClient() {
   const nextSteps = useMemo(() => buildNextSteps(missingPoints, missingEvidenceCount, limitWarning), [missingPoints, missingEvidenceCount, limitWarning]);
 
   const recentRows = useMemo(() => {
+    const rank = (a: ActivityRow) => {
+      const missing = getRowMissing(a);
+      const prog = normalizeStatus(a.status);
+
+      if (missing.length > 0) return 0;
+      if (prog === "planned") return 1;
+      return 2;
+    };
+
     return activities
       .filter((a) => {
         const prog = normalizeStatus(a.status);
         const y = prog === "planned" && a.planned_start_date ? Number(String(a.planned_start_date).slice(0, 4)) : a.year;
         return y >= periodStart && y <= periodEnd;
+      })
+      .sort((a, b) => {
+        const byRank = rank(a) - rank(b);
+        if (byRank !== 0) return byRank;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       })
       .slice(0, 5);
   }, [activities, periodStart, periodEnd]);
@@ -603,7 +617,28 @@ export default function CalculatorClient() {
 
   return (
     <div className="-mx-4 min-h-screen bg-slate-50 px-4 pb-10 pt-1 sm:-mx-6 sm:px-6">
-      <div className="mx-auto max-w-6xl space-y-5">
+      <div className="mx-auto max-w-6xl space-y-4">
+        {/* SZYBKIE MENU */}
+        <nav className="overflow-x-auto border border-slate-200 bg-white shadow-sm">
+          <div className="flex min-w-max">
+            <button type="button" onClick={() => scrollToSection("status")} className={subNavActiveCls}>
+              Status punktów
+            </button>
+            <button type="button" onClick={() => scrollToSection("kroki")} className={subNavItemCls}>
+              Co dalej?
+            </button>
+            <button type="button" onClick={() => scrollToSection("limity")} className={subNavItemCls}>
+              Limity
+            </button>
+            <button type="button" onClick={() => scrollToSection("aktywnosci")} className={subNavItemCls}>
+              Ostatnie aktywności
+            </button>
+            <button type="button" onClick={() => scrollToSection("ustawienia")} className={subNavItemCls}>
+              Ustawienia
+            </button>
+          </div>
+        </nav>
+
         <section id="ustawienia" className={cardCls}>
           <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
@@ -612,8 +647,8 @@ export default function CalculatorClient() {
                 <h2 className="text-base font-medium text-slate-950">Ustawienia okresu i zawodu</h2>
                 <p className="mt-0.5 text-sm text-slate-500">
                   Zmień preferencje w dowolnym momencie.
-                  {savedAt && !dirty && !savingProfile ? <span className="ml-1 font-bold text-blue-600">✓ Zapisano</span> : null}
-                  {!otherValid ? <span className="ml-1 font-bold text-red-500">Uzupełnij zawód</span> : null}
+                  {savedAt && !dirty && !savingProfile ? <span className="ml-1 font-medium text-blue-600">✓ Zapisano</span> : null}
+                  {!otherValid ? <span className="ml-1 font-medium text-red-500">Uzupełnij zawód</span> : null}
                 </p>
               </div>
             </div>
@@ -757,34 +792,23 @@ export default function CalculatorClient() {
           </div>
         </section>
 
-        {/* SZYBKIE MENU */}
-        <nav className="overflow-x-auto border border-slate-200 bg-white shadow-sm">
-          <div className="flex min-w-max">
-            <button type="button" onClick={() => scrollToSection("ustawienia")} className={subNavActiveCls}>
-              Ustawienia
-            </button>
-            <button type="button" onClick={() => scrollToSection("status")} className={subNavItemCls}>
-              Status punktów
-            </button>
-            <button type="button" onClick={() => scrollToSection("kroki")} className={subNavItemCls}>
-              Co dalej?
-            </button>
-            <button type="button" onClick={() => scrollToSection("limity")} className={subNavItemCls}>
-              Limity
-            </button>
-            <button type="button" onClick={() => scrollToSection("aktywnosci")} className={subNavItemCls}>
-              Ostatnie aktywności
-            </button>
-          </div>
-        </nav>
+
 
         {isBusy ? (
           <div className={cardCls + " p-10 text-center text-sm font-medium text-slate-500"}>Wczytuję dane...</div>
         ) : (
           <>
             <section id="status" className="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center">
-              <CircularProgress value={progress} />
+              <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
+                <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
+                <div>
+                  <h2 className="text-base font-semibold text-slate-950">Realizacja celu</h2>
+                  <p className="mt-0.5 text-sm text-slate-500">Aktualny stan punktów i dokumentów</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-6 md:flex-row md:items-center">
+                <CircularProgress value={progress} />
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -824,12 +848,11 @@ export default function CalculatorClient() {
                 <div className="mt-6 grid grid-cols-2 border-t border-slate-200 pt-4 sm:grid-cols-4">
                   {[
                     ["calendar", `${daysLeft}`, "dni do końca"],
-                    ["doc", `${missingEvidenceCount}`, "brak. dok."],
+                    ["doc", `${missingEvidenceCount}`, "brak dokumentacji"],
                     ["chart", `${requiredPoints}`, "pkt wymagane"],
                     ["user", displayProfession(profession, professionOther), "Twój zawód"],
                   ].map(([icon, value, label]) => (
                     <div key={label} className="border-r border-slate-200 px-4 last:border-r-0">
-                      <div className="mb-2 text-blue-600"><MiniIcon name={icon as any} /></div>
                       <div className="truncate text-xl font-semibold text-slate-950">{value}</div>
                       <div className="mt-0.5 text-xs text-slate-500">{label}</div>
                     </div>
@@ -855,9 +878,9 @@ export default function CalculatorClient() {
                   href={step.ctaHref}
                   className="group flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 transition hover:border-blue-300 hover:bg-slate-50"
                 >
-                  <IconBubble tone={step.tone as any}><MiniIcon name={step.icon as any} /></IconBubble>
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" />
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-slate-950">{step.title}</div>
+                    <div className="font-medium text-slate-950">{step.title}</div>
                     <div className="mt-0.5 text-sm leading-5 text-slate-500">{step.description}</div>
                   </div>
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-500 transition group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-600">→</span>
@@ -903,13 +926,10 @@ export default function CalculatorClient() {
                     return (
                       <div key={r.key} className="group relative overflow-hidden rounded-lg border border-slate-200 bg-white p-4 transition hover:border-blue-300">
                         <div className="flex items-center gap-4">
-                          <IconBubble tone={isMax ? "green" : "blue"}>
-                            <MiniIcon name={r.key === "JOURNAL_SUBSCRIPTION" ? "doc" : r.key === "SCIENTIFIC_SOCIETY" ? "user" : "chart"} />
-                          </IconBubble>
 
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="font-semibold text-slate-950">{r.label}</h3>
+                              <h3 className="font-medium text-slate-950">{r.label}</h3>
                               {isMax ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">wykorzystane</span> : null}
                             </div>
                             <p className="mt-0.5 text-xs text-slate-500">
@@ -965,7 +985,7 @@ export default function CalculatorClient() {
                   <h2 className="text-base font-medium text-slate-950">Ostatnie aktywności</h2>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                     <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-400" /> zaplanowane</span>
-                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" /> dokumentacja</span>
+                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" /> brakująca dokumentacja</span>
                     <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-green-400" /> kompletne</span>
                   </div>
                 </div>
@@ -975,16 +995,16 @@ export default function CalculatorClient() {
             </div>
 
             <div className="p-6">
-              <div className="grid gap-3 xl:grid-cols-2">
+              <div className="space-y-3">
                 {isBusy ? (
-                  <p className="text-sm text-slate-500 xl:col-span-2">Wczytuję...</p>
+                  <p className="text-sm text-slate-500">Wczytuję...</p>
                 ) : recentRows.length === 0 ? (
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 xl:col-span-2">Brak wpisów w okresie {periodStart}–{periodEnd}.</div>
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">Brak wpisów w okresie {periodStart}–{periodEnd}.</div>
                 ) : (
                   recentRows.map((a) => {
                     const prog = normalizeStatus(a.status);
                     const missing = getRowMissing(a);
-                    const stripe = prog === "planned" ? "bg-blue-500" : missing.length ? "bg-amber-500" : "bg-emerald-500";
+                    const stripe = missing.length ? "bg-amber-500" : prog === "planned" ? "bg-blue-500" : "bg-emerald-500";
 
                     return (
                       <div
@@ -997,7 +1017,7 @@ export default function CalculatorClient() {
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="font-semibold text-slate-950">{a.type}</h3>
+                              <h3 className="font-medium text-slate-950">{a.type}</h3>
                               <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
                                 prog === "planned" ? "bg-blue-50 text-blue-700 ring-blue-100" : "bg-slate-50 text-slate-600 ring-slate-100"
                               }`}>
@@ -1006,14 +1026,14 @@ export default function CalculatorClient() {
                               <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
                                 missing.length ? "bg-amber-50 text-amber-700 ring-amber-100" : "bg-emerald-50 text-emerald-700 ring-emerald-100"
                               }`}>
-                                {missing.length ? "Brak dokumentacji" : "Kompletne"}
+                                {missing.length ? "Brakująca dokumentacja" : "Kompletne"}
                               </span>
                             </div>
 
                             <p className="mt-1 text-xs leading-5 text-slate-500">
                               {a.organizer ? `${a.organizer} · ` : ""}
-                              Rok: <span className="font-bold text-slate-700">{a.year}</span>
-                              {prog === "planned" && a.planned_start_date ? <> · Termin: <span className="font-bold text-slate-700">{formatYMD(a.planned_start_date)}</span></> : null}
+                              Rok: <span className="font-medium text-slate-700">{a.year}</span>
+                              {prog === "planned" && a.planned_start_date ? <> · Termin: <span className="font-medium text-slate-700">{formatYMD(a.planned_start_date)}</span></> : null}
                             </p>
 
                             {missing.length > 0 ? (
