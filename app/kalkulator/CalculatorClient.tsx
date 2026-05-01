@@ -1054,44 +1054,46 @@ export default function CalculatorClient() {
         </div>
 
         {/* ── REGUŁY I LIMITY ────────────────────────────────────────── */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-          {/* Sand header band */}
-          <div className="bg-[#e8f0ef] px-6 py-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {/* Clean header — no background color, just a bottom border */}
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              {/* Teal left accent bar */}
+              <div className="mt-0.5 h-10 w-1 shrink-0 rounded-full bg-[#2a6b6b]" />
               <div>
-                <h2 className="text-sm font-bold uppercase tracking-wide text-[#1a4a4a]">Reguly i limity</h2>
+                <h2 className="text-base font-bold text-slate-900">Reguly i limity</h2>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  Limity czastkowe w okresie {periodStart}–{periodEnd} na podstawie ukonczonych wpisow.
+                  Limity w okresie {periodStart}–{periodEnd} na podstawie ukonczonych wpisow.
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
-                <span>Zaliczone: <span className="font-bold text-slate-900">{donePoints} pkt</span></span>
-                <span className="text-slate-300">|</span>
-                <span>Brakuje: <span className="font-bold text-orange-500">{missingPoints} pkt</span></span>
-                {missingEvidenceCount > 0 && (
-                  <>
-                    <span className="text-slate-300">|</span>
-                    <span>Bez certyfikatu: <span className="font-bold text-slate-900">{missingEvidenceCount}</span></span>
-                  </>
-                )}
-              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pl-4 text-sm text-slate-500 sm:pl-0">
+              <span>Zaliczone: <span className="font-bold text-slate-900">{donePoints} pkt</span></span>
+              <span className="hidden text-slate-200 sm:inline">|</span>
+              <span>Brakuje: <span className="font-bold text-orange-500">{missingPoints} pkt</span></span>
+              {missingEvidenceCount > 0 && (
+                <>
+                  <span className="hidden text-slate-200 sm:inline">|</span>
+                  <span>Bez cert.: <span className="font-bold text-slate-900">{missingEvidenceCount}</span></span>
+                </>
+              )}
             </div>
           </div>
 
-          {/* White body */}
+          {/* Body */}
           <div className="p-6">
             {(planInfo || planErr) && (
-              <div className="mb-4 rounded-lg border border-[#b8d8d8] bg-[#f0f7f7] p-3 text-sm">
-                {planInfo && <p className="font-semibold text-[#1a4a4a]">{planInfo}</p>}
+              <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
+                {planInfo && <p className="font-semibold text-[#2a6b6b]">{planInfo}</p>}
                 {planErr && <p className="font-semibold text-rose-600">{planErr}</p>}
               </div>
             )}
 
           {/* Limit rows */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             {limitsUsage.length === 0 ? (
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-                Brak zdefiniowanych limitów dla tego zawodu.
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">
+                Brak zdefiniowanych limitow dla tego zawodu.
               </div>
             ) : (
               limitsUsage.map((r) => {
@@ -1100,7 +1102,7 @@ export default function CalculatorClient() {
                 return (
                   <div
                     key={r.key}
-                    className="rounded-xl border border-slate-200 bg-slate-50/80 p-4"
+                    className="rounded-xl border border-slate-100 bg-white p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -1170,12 +1172,15 @@ export default function CalculatorClient() {
         </div>{/* /limits card */}
 
         {/* ── OSTATNIE AKTYWNOŚCI ────────────────────────────────────── */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-          {/* Slate-50 header band */}
-          <div className="flex flex-col gap-2 bg-[#e8f0ef] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wide text-[#1a4a4a]">Ostatnie aktywnosci</h2>
-              <p className="mt-0.5 text-xs text-slate-500">Wpisy w okresie {periodStart}–{periodEnd} z sygnalizacja brakow.</p>
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {/* Clean header matching limits style */}
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 h-10 w-1 shrink-0 rounded-full bg-[#2a6b6b]" />
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Ostatnie aktywnosci</h2>
+                <p className="mt-0.5 text-xs text-slate-500">Wpisy w okresie {periodStart}–{periodEnd} z sygnalizacja brakow.</p>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <BtnGhost href="/aktywnosci">Aktywnosci</BtnGhost>
@@ -1201,12 +1206,12 @@ export default function CalculatorClient() {
                   <div
                     key={a.id}
                     className={[
-                      "rounded-xl border p-4 transition",
+                      "rounded-xl border-l-4 border border-slate-100 p-4 transition",
                       prog === "planned"
-                        ? "border-[#b8d8d8] bg-[#f0f7f7]"
+                        ? "border-l-[#2a6b6b] bg-white"
                         : missing.length
-                        ? "border-orange-200 bg-orange-50/40"
-                        : "border-slate-200 bg-slate-50/60",
+                        ? "border-l-orange-400 bg-white"
+                        : "border-l-slate-200 bg-white",
                     ].join(" ")}
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -1218,21 +1223,21 @@ export default function CalculatorClient() {
                           </span>
 
                           {prog === "planned" ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-[#b8d8d8] bg-[#f0f7f7] px-2 py-0.5 text-xs font-medium text-[#2a6b6b]">
+                            <span className="inline-flex shrink-0 items-center rounded-md border border-[#2a6b6b]/30 bg-[#2a6b6b]/5 px-2 py-0.5 text-xs font-medium text-[#2a6b6b]">
                               Zaplanowane
                             </span>
                           ) : (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium text-slate-500">
+                            <span className="inline-flex shrink-0 items-center rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-500">
                               Ukonczone
                             </span>
                           )}
 
                           {missing.length === 0 ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-[#b8d8d8] bg-[#f0f7f7] px-2 py-0.5 text-xs text-[#2a6b6b]">
+                            <span className="inline-flex shrink-0 items-center rounded-md border border-[#2a6b6b]/30 bg-[#2a6b6b]/5 px-2 py-0.5 text-xs text-[#2a6b6b]">
                               Kompletne
                             </span>
                           ) : (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs text-orange-600">
+                            <span className="inline-flex shrink-0 items-center rounded-md border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs text-orange-600">
                               Braki
                             </span>
                           )}
