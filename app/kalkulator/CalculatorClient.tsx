@@ -311,10 +311,10 @@ function suggestPlannedPoints(rule: {
 
 // ─── Design system atoms ───────────────────────────────────────────────────
 
-/** Warm teal icon badge */
+/** Nowosielski-inspired icon badge — warm ochre */
 function IconBadge({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 text-teal-600 ring-1 ring-teal-100">
+    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-800 ring-1 ring-amber-200">
       {children}
     </span>
   );
@@ -329,7 +329,7 @@ function FieldLabel({ icon, title }: { icon: ReactNode; title: string }) {
   );
 }
 
-/** Primary filled button — teal, consistent size */
+/** Primary filled button — deep brick red (Nowosielski palette) */
 function BtnPrimary({
   children,
   onClick,
@@ -348,7 +348,7 @@ function BtnPrimary({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-900 active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${className}`}
     >
       {children}
     </button>
@@ -772,12 +772,11 @@ export default function CalculatorClient() {
 
   // ─── shared input class ─────────────────────────────────────────────────
   const inputCls =
-    "mt-2 h-11 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 text-sm font-medium text-stone-900 transition focus:border-teal-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-100";
+    "mt-2 h-11 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 text-sm font-medium text-stone-900 transition focus:border-rose-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-100";
 
   return (
-    /* ── Page wrapper with warm parchment background ── */
-    <div className="min-h-screen bg-amber-50/40 px-4 pb-12 pt-6 md:px-6">
-      <div className="mx-auto max-w-5xl space-y-5">
+    /* ── Page wrapper — no background override, no max-width constraint ── */
+    <div className="space-y-5">
 
         {/* ── USTAWIENIA ─────────────────────────────────────────────── */}
         <Card className="p-6">
@@ -796,7 +795,7 @@ export default function CalculatorClient() {
                 <p className="mt-0.5 text-xs text-stone-500">
                   Zmiany zapisujesz przyciskiem po prawej.{" "}
                   {savedAt && !dirty && !savingProfile && (
-                    <span className="font-semibold text-teal-700">✓ Zapisano</span>
+                    <span className="font-semibold text-rose-800">✓ Zapisano</span>
                   )}
                   {!otherValid && (
                     <span className="font-semibold text-rose-600"> Uzupelnij "Inny zawod"</span>
@@ -1035,7 +1034,7 @@ export default function CalculatorClient() {
           {/* Feedback banners */}
           {(planInfo || planErr) && (
             <div className="mb-4 rounded-xl border bg-stone-50 p-3 text-sm">
-              {planInfo && <p className="font-semibold text-teal-700">{planInfo}</p>}
+              {planInfo && <p className="font-semibold text-rose-800">{planInfo}</p>}
               {planErr && <p className="font-semibold text-rose-600">{planErr}</p>}
             </div>
           )}
@@ -1068,9 +1067,9 @@ export default function CalculatorClient() {
                           )}
 
                           {isMax && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
-                              <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
-                              W pełni zrealizowane
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                              W pelni zrealizowane
                             </span>
                           )}
                         </div>
@@ -1098,7 +1097,7 @@ export default function CalculatorClient() {
                     <div className="mt-3 flex items-center gap-3">
                       <div className="h-2 flex-1 overflow-hidden rounded-full bg-stone-200">
                         <div
-                          className="h-2 rounded-full bg-teal-500 transition-all"
+                          className="h-2 rounded-full bg-rose-800 transition-all"
                           style={{ width: `${r.usedPct}%` }}
                         />
                       </div>
@@ -1170,20 +1169,20 @@ export default function CalculatorClient() {
 
                           {prog === "planned" ? (
                             <span className="inline-flex shrink-0 items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">
-                              🗓 Zaplanowane
+                              Zaplanowane
                             </span>
                           ) : (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700">
-                              ✓ Ukończone
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-stone-300 bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700">
+                              Ukonczone
                             </span>
                           )}
 
                           {missing.length === 0 ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-teal-100 bg-teal-50 px-2 py-0.5 text-xs text-teal-700">
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
                               Kompletne
                             </span>
                           ) : (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs text-rose-700">
                               Braki
                             </span>
                           )}
@@ -1202,7 +1201,7 @@ export default function CalculatorClient() {
                             {missing.map((m) => (
                               <span
                                 key={m}
-                                className="inline-flex items-center rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700"
+                                className="inline-flex items-center rounded-lg border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs text-rose-700"
                               >
                                 {m}
                               </span>
@@ -1229,7 +1228,6 @@ export default function CalculatorClient() {
           </div>
         </Card>
 
-      </div>
     </div>
   );
 }
