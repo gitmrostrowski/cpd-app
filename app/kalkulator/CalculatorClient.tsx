@@ -282,10 +282,10 @@ function CircularProgress({ value }: { value: number }) {
   return (
     <div className="relative h-32 w-32 shrink-0">
       <svg className="-rotate-90" height="128" width="128">
-        <circle stroke="currentColor" className="text-blue-100" fill="transparent" strokeWidth={stroke} r={normalizedRadius} cx="64" cy="64" />
+        <circle stroke="currentColor" className="text-slate-200" fill="transparent" strokeWidth={stroke} r={normalizedRadius} cx="64" cy="64" />
         <circle
           stroke="currentColor"
-          className="text-blue-600 transition-all duration-700"
+          className="text-blue-500 transition-all duration-700"
           fill="transparent"
           strokeLinecap="round"
           strokeWidth={stroke}
@@ -500,7 +500,7 @@ export default function CalculatorClient() {
         if (byRank !== 0) return byRank;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       })
-      .slice(0, 5);
+      ;
   }, [activities, periodStart, periodEnd]);
 
   const isBusy = authLoading || loading;
@@ -598,14 +598,14 @@ export default function CalculatorClient() {
   const inputCls =
     "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400";
 
-  const cardCls = "scroll-mt-32 rounded-xl border border-slate-200 bg-white shadow-sm";
+  const cardCls = "scroll-mt-36 rounded-xl border border-slate-200 bg-white shadow-sm";
 
   function scrollToSection(id: string) {
     const el = document.getElementById(id);
     if (!el) return;
 
-    // Uwzględnia górny header, żeby sekcja nie chowała się pod nawigacją.
-    const offset = 86;
+    // Uwzględnia górny header i przyklejone podmenu.
+    const offset = 128;
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior: "smooth" });
   }
@@ -619,7 +619,7 @@ export default function CalculatorClient() {
     <div className="-mx-4 min-h-screen bg-slate-50 px-4 pb-10 pt-1 sm:-mx-6 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-4">
         {/* SZYBKIE MENU */}
-        <nav className="overflow-x-auto border border-slate-200 bg-white shadow-sm">
+        <nav className="sticky top-[58px] z-30 mt-2 overflow-x-auto border border-slate-200 bg-white shadow-sm">
           <div className="flex min-w-max">
             <button type="button" onClick={() => scrollToSection("status")} className={subNavActiveCls}>
               Status punktów
@@ -798,12 +798,25 @@ export default function CalculatorClient() {
           <div className={cardCls + " p-10 text-center text-sm font-medium text-slate-500"}>Wczytuję dane...</div>
         ) : (
           <>
-            <section id="status" className="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
-                <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
-                <div>
-                  <h2 className="text-base font-semibold text-slate-950">Realizacja celu</h2>
-                  <p className="mt-0.5 text-sm text-slate-500">Aktualny stan punktów i dokumentów</p>
+            <section id="status" className="scroll-mt-36 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-5 flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <IconBubble tone="slate"><MiniIcon name="chart" /></IconBubble>
+                  <div>
+                    <h2 className="text-base font-semibold text-slate-950">Realizacja celu</h2>
+                    <p className="mt-0.5 text-sm text-slate-500">Aktualny stan punktów i dokumentów</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 sm:justify-end">
+                  <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
+                    {progress >= 100 ? "Cel zrealizowany" : "W trakcie realizacji"}
+                  </span>
+                  {missingEvidenceCount > 0 ? (
+                    <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
+                      {missingEvidenceCount} dokumentów do uzupełnienia
+                    </span>
+                  ) : null}
                 </div>
               </div>
 
@@ -811,18 +824,7 @@ export default function CalculatorClient() {
                 <CircularProgress value={progress} />
 
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-100">
-                    {progress >= 100 ? "Cel zrealizowany" : "Jesteś w trakcie realizacji celu"}
-                  </div>
-                  {missingEvidenceCount > 0 ? (
-                    <div className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
-                      {missingEvidenceCount} dokumentów do uzupełnienia
-                    </div>
-                  ) : null}
-                </div>
-
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
+                <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
                   {missingPoints > 0 ? (
                     <>Zostało <span className="text-orange-500">{missingPoints} pkt</span></>
                   ) : (
@@ -840,8 +842,8 @@ export default function CalculatorClient() {
                     <span>Postęp punktów</span>
                     <span>{donePoints} / {requiredPoints} pkt</span>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-blue-100">
-                    <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-700 transition-all duration-700" style={{ width: `${Math.max(progress, 2)}%` }} />
+                  <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-full rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${Math.max(progress, 2)}%` }} />
                   </div>
                 </div>
 
@@ -862,7 +864,7 @@ export default function CalculatorClient() {
             </div>
             </section>
 
-            <section id="kroki" className="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section id="kroki" className="scroll-mt-36 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
               <div>
@@ -980,7 +982,7 @@ export default function CalculatorClient() {
           <div id="aktywnosci" className={cardCls}>
             <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
-                <IconBubble tone="green"><MiniIcon name="calendar" /></IconBubble>
+                <IconBubble tone="blue"><MiniIcon name="calendar" /></IconBubble>
                 <div>
                   <h2 className="text-base font-medium text-slate-950">Ostatnie aktywności</h2>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
@@ -991,7 +993,7 @@ export default function CalculatorClient() {
                 </div>
               </div>
 
-              <Link href="/aktywnosci" className="text-sm font-medium text-blue-600 hover:text-blue-700">Zobacz wszystkie</Link>
+              <Link href="/aktywnosci" className="text-sm font-medium text-blue-600 hover:text-blue-700">Przejdź do aktywności</Link>
             </div>
 
             <div className="p-6">
