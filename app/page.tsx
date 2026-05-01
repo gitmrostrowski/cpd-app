@@ -172,7 +172,7 @@ export default function Page() {
     const el = document.getElementById(id);
     if (!el) return;
     setActiveSection(id);
-    const offset = 120;
+    const offset = 136;
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
   }
@@ -208,7 +208,7 @@ export default function Page() {
     <div className="bg-slate-100 pb-4">
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <div className="mx-auto max-w-6xl space-y-4 px-4 pt-3">
+      <div className="mx-auto max-w-6xl space-y-4 px-4 pt-2">
 
         {/* ── STICKY SUBNAV — jak w Panelu CPD ─────────────────────── */}
         <nav className="sticky top-[76px] z-30 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-md">
@@ -245,10 +245,10 @@ export default function Page() {
           </div>
         </nav>
 
-        <div id="hero" className={cardCls}>
-          {/* blue left accent — jak w panelu */}
-          <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
+        <div id="hero" className={`${cardCls} scroll-mt-32`}>
           <div className="relative grid grid-cols-1 gap-8 p-6 lg:grid-cols-2 lg:items-start lg:p-8">
+          {/* blue left accent — jak w panelu */}
+          <div className="pointer-events-none absolute left-0 top-5 h-20 w-1 rounded-r-full bg-blue-500" />
 
             {/* LEFT */}
             <div>
@@ -299,8 +299,16 @@ export default function Page() {
 
             {/* RIGHT — demo panel */}
             <div className="flex flex-col gap-3">
-              <div className="overflow-hidden rounded-xl bg-gradient-to-br from-white to-blue-50/40 shadow-sm ring-1 ring-slate-200">
-                <Image src="/crpe_reka2b.png" alt="Mockup panelu CPD" width={800} height={280} className="w-full object-cover" style={{ objectPosition: "left center", height: "220px" }} />
+              {/* Zdjecie — placeholder z gradientem i ikoną do czasu dodania zdjecia */}
+              <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 to-blue-700" style={{ minHeight: "180px" }}>
+                <Image src="/crpe_reka2b.png" alt="Mockup panelu CPD" width={800} height={280} className="w-full object-cover opacity-90" style={{ objectPosition: "left center", height: "180px" }} />
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent" />
+                <div className="absolute bottom-3 left-4 right-4">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    Twoje dane, Twoja kontrola
+                  </div>
+                </div>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -365,7 +373,7 @@ export default function Page() {
         </div>
 
         {/* ── DLA KOGO + CO ZYSKUJESZ ────────────────────────────────── */}
-        <div id="dla-kogo" className="grid gap-4 lg:grid-cols-2">
+        <div id="dla-kogo" className="grid gap-4 lg:grid-cols-2 scroll-mt-32">
           {/* Dla kogo */}
           <div className={cardCls}>
             <div className="border-b border-slate-100 px-6 py-4">
@@ -424,7 +432,7 @@ export default function Page() {
         </div>
 
         {/* ── PROBLEM ────────────────────────────────────────────────── */}
-        <div id="problem" className={cardCls}>
+        <div id="problem" className={`${cardCls} scroll-mt-32`}>
           <div className="border-b border-slate-100 px-6 py-4">
             <Eyebrow>Rozwiązanie</Eyebrow>
             <h2 className="text-base font-bold text-slate-900">Z czym się dziś mierzysz?</h2>
@@ -472,7 +480,7 @@ export default function Page() {
         </div>
 
         {/* ── JAK TO DZIAŁA ──────────────────────────────────────────── */}
-        <div id="jak-to-dziala" className={cardCls}>
+        <div id="jak-to-dziala" className={`${cardCls} scroll-mt-32`}>
           <div className="border-b border-slate-100 px-6 py-4">
             <Eyebrow>Proces</Eyebrow>
             <h2 className="text-base font-bold text-slate-900">Jak to działa</h2>
@@ -587,7 +595,7 @@ export default function Page() {
         </div>
 
         {/* ── FAQ ────────────────────────────────────────────────────── */}
-        <div id="faq" className={cardCls}>
+        <div id="faq" className={`${cardCls} scroll-mt-32`}>
           <div className="border-b border-slate-100 px-6 py-4">
             <Eyebrow>FAQ</Eyebrow>
             <h2 className="text-base font-bold text-slate-900">Najczęstsze pytania</h2>
