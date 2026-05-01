@@ -8,17 +8,14 @@
   <rect width="32" height="32" rx="9" fill="url(#bg_grad)"/>
   
   <g transform="translate(0, 1)">
-    <!-- Tylny dokument - POGRUBIONY I ROZJAŚNIONY -->
-    <path d="M7 10C7 8.89543 7.89543 8 9 8H17L21 12V22C21 23.1046 20.1046 24 19 24H9C7.89543 24 7 23.1046 7 22V10Z" stroke="white" stroke-width="1.4" opacity="0.5"/>
+    <!-- TYLNY DOKUMENT: Teraz biały, grubszy (1.6px) i bez przezroczystości, by był idealnie widoczny -->
+    <path d="M7 10C7 8.89543 7.89543 8 9 8H17L21 12V22C21 23.1046 20.1046 24 19 24H9C7.89543 24 7 23.1046 7 22V10Z" stroke="white" stroke-width="1.6"/>
     
-    <!-- Cień pod przednim dokumentem - ZMIENIONY NA JASNY (efekt uniesienia) -->
-    <path d="M11 7H18L23 12V21C23 22.1046 22.1046 23 21 23H11C9.89543 23 9 22.1046 9 21V9C9 7.89543 9.89543 7 11 7Z" fill="white" opacity="0.15"/>
-    
-    <!-- Przedni dokument z zagiętym rogiem -->
-    <path d="M10 7C10 5.89543 10.8954 5 12 5H19L24 10V20C24 21.1046 23.1046 22 22 22H12C10.8954 22 10 21.1046 10 20V7Z" fill="white"/>
+    <!-- PRZEDNI DOKUMENT: Z wyraźnym marginesem od tego pod spodem -->
+    <path d="M10 7C10 5.89543 10.8954 5 12 5H19L24 10V20C24 21.1046 23.1046 22 22 22H12C10.8954 22 10 21.1046 10 20V7Z" fill="white" stroke="url(#bg_grad)" stroke-width="0.5"/>
     <path d="M19 5V8C19 9.10457 19.8954 10 21 10H24L19 5Z" fill="#e5e7eb"/>
     
-    <!-- Kreski tekstu -->
+    <!-- Kreski tekstu: Optymalna grubość -->
     <rect x="13" y="13" width="7" height="1.6" rx="0.8" fill="#2563eb"/>
     <rect x="13" y="16" width="5" height="1.6" rx="0.8" fill="#2563eb"/>
     
