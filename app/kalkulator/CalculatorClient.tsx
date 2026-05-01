@@ -1056,10 +1056,10 @@ export default function CalculatorClient() {
         {/* ── REGUŁY I LIMITY ────────────────────────────────────────── */}
         <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
           {/* Sand header band */}
-          <div className="bg-[#f5f0e8] px-6 py-4">
+          <div className="bg-[#e8f0ef] px-6 py-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">Reguly i limity</h2>
+                <h2 className="text-sm font-bold uppercase tracking-wide text-[#1a4a4a]">Reguly i limity</h2>
                 <p className="mt-0.5 text-xs text-slate-500">
                   Limity czastkowe w okresie {periodStart}–{periodEnd} na podstawie ukonczonych wpisow.
                 </p>
@@ -1081,8 +1081,8 @@ export default function CalculatorClient() {
           {/* White body */}
           <div className="p-6">
             {(planInfo || planErr) && (
-              <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
-                {planInfo && <p className="font-semibold text-[#2a6b6b]">{planInfo}</p>}
+              <div className="mb-4 rounded-lg border border-[#b8d8d8] bg-[#f0f7f7] p-3 text-sm">
+                {planInfo && <p className="font-semibold text-[#1a4a4a]">{planInfo}</p>}
                 {planErr && <p className="font-semibold text-rose-600">{planErr}</p>}
               </div>
             )}
@@ -1100,7 +1100,7 @@ export default function CalculatorClient() {
                 return (
                   <div
                     key={r.key}
-                    className="rounded-xl border border-cyan-100 bg-cyan-50/30 p-4"
+                    className="rounded-xl border border-slate-200 bg-slate-50/80 p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -1141,11 +1141,11 @@ export default function CalculatorClient() {
                       </div>
                     </div>
 
-                    {/* Progress bar — cyan fill like pool water */}
+                    {/* Progress bar — teal fill */}
                     <div className="mt-3 flex items-center gap-3">
                       <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200">
                         <div
-                          className="h-2 rounded-full bg-cyan-400 transition-all"
+                          className="h-2 rounded-full bg-[#2a6b6b] transition-all"
                           style={{ width: `${r.usedPct}%` }}
                         />
                       </div>
@@ -1172,9 +1172,9 @@ export default function CalculatorClient() {
         {/* ── OSTATNIE AKTYWNOŚCI ────────────────────────────────────── */}
         <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
           {/* Slate-50 header band */}
-          <div className="flex flex-col gap-2 bg-slate-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 bg-[#e8f0ef] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">Ostatnie aktywnosci</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wide text-[#1a4a4a]">Ostatnie aktywnosci</h2>
               <p className="mt-0.5 text-xs text-slate-500">Wpisy w okresie {periodStart}–{periodEnd} z sygnalizacja brakow.</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -1203,7 +1203,7 @@ export default function CalculatorClient() {
                     className={[
                       "rounded-xl border p-4 transition",
                       prog === "planned"
-                        ? "border-cyan-200 bg-cyan-50/50"
+                        ? "border-[#b8d8d8] bg-[#f0f7f7]"
                         : missing.length
                         ? "border-orange-200 bg-orange-50/40"
                         : "border-slate-200 bg-slate-50/60",
@@ -1218,7 +1218,7 @@ export default function CalculatorClient() {
                           </span>
 
                           {prog === "planned" ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-xs font-medium text-cyan-700">
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-[#b8d8d8] bg-[#f0f7f7] px-2 py-0.5 text-xs font-medium text-[#2a6b6b]">
                               Zaplanowane
                             </span>
                           ) : (
@@ -1228,7 +1228,7 @@ export default function CalculatorClient() {
                           )}
 
                           {missing.length === 0 ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-xs text-cyan-700">
+                            <span className="inline-flex shrink-0 items-center rounded-full border border-[#b8d8d8] bg-[#f0f7f7] px-2 py-0.5 text-xs text-[#2a6b6b]">
                               Kompletne
                             </span>
                           ) : (
