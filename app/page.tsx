@@ -166,6 +166,16 @@ export default function Page() {
   const router   = useRouter();
   const [checking,   setChecking]   = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("hero");
+
+  function scrollToId(id: string) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    setActiveSection(id);
+    const offset = 120;
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
+  }
 
   useEffect(() => {
     let alive = true;
@@ -199,7 +209,43 @@ export default function Page() {
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
       <div className="mx-auto max-w-6xl space-y-4 px-4 pt-3">
-        <div className={cardCls}>
+
+        {/* ── STICKY SUBNAV — jak w Panelu CPD ─────────────────────── */}
+        <nav className="sticky top-[76px] z-30 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-md">
+          <div className="flex min-w-max items-center justify-between">
+            <div className="flex">
+              {([
+                { id: "hero",      label: "O produkcie"   },
+                { id: "dla-kogo",  label: "Dla kogo"      },
+                { id: "jak-to-dziala", label: "Jak to dziala" },
+                { id: "faq",       label: "FAQ"           },
+              ] as const).map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => scrollToId(id)}
+                  className={`shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none ${
+                    activeSection === id
+                      ? "border-blue-600 text-blue-700 font-semibold"
+                      : "border-transparent text-slate-500 hover:border-blue-300 hover:text-blue-700"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="shrink-0 pr-3">
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95"
+              >
+                Zaloz konto →
+              </Link>
+            </div>
+          </div>
+        </nav>
+
+        <div id="hero" className={cardCls}>
           {/* blue left accent — jak w panelu */}
           <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
           <div className="relative grid grid-cols-1 gap-8 p-6 lg:grid-cols-2 lg:items-start lg:p-8">
@@ -305,7 +351,7 @@ export default function Page() {
         </div>
 
         {/* ── PASEK IZB ──────────────────────────────────────────────── */}
-        <div className={cardCls}>
+        <div id="izby" className={cardCls}>
           <div className="px-6 py-4">
             <p className="mb-3 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
               CRPE wspiera zawody regulowane przez samorządy zawodowe
@@ -319,7 +365,7 @@ export default function Page() {
         </div>
 
         {/* ── DLA KOGO + CO ZYSKUJESZ ────────────────────────────────── */}
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div id="dla-kogo" className="grid gap-4 lg:grid-cols-2">
           {/* Dla kogo */}
           <div className={cardCls}>
             <div className="border-b border-slate-100 px-6 py-4">
@@ -378,7 +424,7 @@ export default function Page() {
         </div>
 
         {/* ── PROBLEM ────────────────────────────────────────────────── */}
-        <div className={cardCls}>
+        <div id="problem" className={cardCls}>
           <div className="border-b border-slate-100 px-6 py-4">
             <Eyebrow>Rozwiązanie</Eyebrow>
             <h2 className="text-base font-bold text-slate-900">Z czym się dziś mierzysz?</h2>
@@ -517,7 +563,7 @@ export default function Page() {
         </div>
 
         {/* ── TESTIMONIAL ────────────────────────────────────────────── */}
-        <div className={cardCls}>
+        <div id="opinia" className={cardCls}>
           <div className="p-6">
             <div className="flex flex-col items-center gap-4 text-center md:flex-row md:items-start md:text-left">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">AK</div>
@@ -541,7 +587,7 @@ export default function Page() {
         </div>
 
         {/* ── FAQ ────────────────────────────────────────────────────── */}
-        <div className={cardCls}>
+        <div id="faq" className={cardCls}>
           <div className="border-b border-slate-100 px-6 py-4">
             <Eyebrow>FAQ</Eyebrow>
             <h2 className="text-base font-bold text-slate-900">Najczęstsze pytania</h2>
