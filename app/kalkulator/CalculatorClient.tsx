@@ -244,7 +244,7 @@ function buildNextStep(missingPoints: number, missingEvidenceCount: number, limi
 
   return {
     title: "Ustal krótki plan",
-    description: "Dodaj wpisy jako „plan", a potem uzupełniaj certyfikaty.",
+    description: `Dodaj wpisy jako "plan", a potem uzupełniaj certyfikaty.`,
     ctaLabel: "+ Dodaj aktywność",
     ctaHref: "/aktywnosci?new=1",
   };
@@ -632,7 +632,7 @@ export default function CalculatorClient() {
   const limitWarning = useMemo(() => {
     const hit = limitsUsage.find((x) => (x.usedPct ?? 0) >= 100);
     if (!hit) return null;
-    return `Limit „${hit.label}" jest osiągnięty — kolejne podobne aktywności mogą nie zwiększyć punktów w tym okresie.`;
+    return `Limit "${hit.label}" jest osiagniety - kolejne podobne aktywnosci moga nie zwiekszac punktow w tym okresie.`;
   }, [limitsUsage]);
 
   const nextStep = useMemo(() => {
@@ -799,7 +799,7 @@ export default function CalculatorClient() {
                     <span className="font-semibold text-teal-700">✓ Zapisano</span>
                   )}
                   {!otherValid && (
-                    <span className="font-semibold text-rose-600"> Uzupełnij „Inny zawód"</span>
+                    <span className="font-semibold text-rose-600"> Uzupelnij "Inny zawod"</span>
                   )}
                 </p>
               </div>
