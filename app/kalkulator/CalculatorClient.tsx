@@ -446,7 +446,7 @@ export default function CalculatorClient() {
       const prog = normalizeStatus(a.status);
       const y = prog === "planned" && a.planned_start_date ? Number(String(a.planned_start_date).slice(0, 4)) : a.year;
       return y >= periodStart && y <= periodEnd;
-    }).slice(0, 10);
+    }).slice(0, 5);
   }, [activities, periodStart, periodEnd]);
 
   const isBusy = authLoading || loading;
@@ -695,7 +695,7 @@ export default function CalculatorClient() {
                     {missingEvidenceCount > 0 && (
                       <>
                         <span className="text-slate-300 text-xl">+</span>
-                        <span className="text-2xl font-bold text-amber-500">{missingEvidenceCount} cert.</span>
+                        <span className="text-2xl font-bold text-amber-500">{missingEvidenceCount} certyfikatow</span>
                       </>
                     )}
                   </div>
@@ -756,7 +756,7 @@ export default function CalculatorClient() {
           {/* Szybkie statystyki — 1 linia */}
           <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm">
             <span className="text-slate-500">📅 <strong className="text-slate-900">{daysLeft}</strong> dni</span>
-            <span>📄 <strong className={missingEvidenceCount > 0 ? "text-amber-600" : "text-slate-900"}>{Math.round(evidencePct)}% dokumentow</strong></span>
+            <span>📄 <strong className={missingEvidenceCount > 0 ? "text-amber-600" : "text-slate-900"}>{Math.round(evidencePct)}% dokumentów</strong></span>
             <span className="text-slate-500">🎯 <strong className="text-slate-900">{requiredPoints} pkt</strong> wymagane</span>
             <span className="text-slate-500">👤 <strong className="text-slate-700">{displayProfession(profession, professionOther)}</strong></span>
           </div>
@@ -814,7 +814,11 @@ export default function CalculatorClient() {
                       </div>
                       <div className="text-xs text-slate-400">
                         {r.mode === "per_item" ? `max ${r.cap} pkt / szkolenie` : r.mode === "per_year" ? `max ${r.maxPoints} pkt / rok` : `max ${r.cap} pkt w okresie`}
-                        {" · "}{Math.round(r.used)} / {Math.round(r.cap)} pkt
+                        {" · "}
+                        {r.used === 0
+                          ? <span className="text-slate-300 italic">Nie rozpoczeto</span>
+                          : <span>{Math.round(r.used)} / {Math.round(r.cap)} pkt</span>
+                        }
                       </div>
                       <div className="mt-2 flex items-center gap-2">
                         <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
@@ -939,6 +943,16 @@ export default function CalculatorClient() {
               })
             )}
           </div>
+          {recentRows.length >= 5 && (
+            <div className="mt-4 border-t border-slate-100 pt-4 text-center">
+              <Link
+                href="/aktywnosci"
+                className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                Zobacz wszystkie aktywnosci →
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
