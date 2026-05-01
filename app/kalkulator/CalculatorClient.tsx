@@ -642,8 +642,21 @@ export default function CalculatorClient() {
 
     // Header + podmenu + mały oddech, żeby ramka nie przyklejała się do nawigacji.
     const offset = 166;
-    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    const targetTop = el.getBoundingClientRect().top + window.scrollY - offset;
+    const minStickyTop = 92;
+    const top = Math.max(targetTop, minStickyTop);
     window.scrollTo({ top, behavior: "smooth" });
+  }
+
+  function filterActivities(next: "all" | "planned" | "missing" | "complete") {
+    setActivityFilter(next);
+    setActiveNav("aktywnosci");
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        scrollToSection("aktywnosci");
+      });
+    });
   }
 
   const subNavItemCls =
@@ -874,9 +887,9 @@ export default function CalculatorClient() {
               </div>
 
               <div className="grid gap-6 lg:grid-cols-[150px_1fr] lg:items-start">
-                <div className="flex flex-row items-center justify-center gap-5 lg:flex-col">
+                <div className="flex flex-row items-center justify-center gap-3 lg:flex-col">
                   <CircularProgress value={progress} label="pkt" />
-                  <CircularProgress value={periodTimeProgress} label="czas" tone="slate" />
+                  <div className="lg:-mt-2"><CircularProgress value={periodTimeProgress} label="czas" tone="slate" /></div>
                 </div>
 
                 <div className="min-w-0">
@@ -1063,28 +1076,28 @@ export default function CalculatorClient() {
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                     <button
                       type="button"
-                      onClick={() => setActivityFilter("all")}
+                      onClick={() => filterActivities("all")}
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "all" ? "bg-slate-100 text-slate-900" : "hover:bg-slate-50"}`}
                     >
                       wszystkie
                     </button>
                     <button
                       type="button"
-                      onClick={() => setActivityFilter("missing")}
+                      onClick={() => filterActivities("missing")}
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "missing" ? "bg-amber-50 text-amber-700" : "hover:bg-slate-50"}`}
                     >
                       <span className="h-2 w-2 rounded-full bg-amber-400" /> brakująca dokumentacja
                     </button>
                     <button
                       type="button"
-                      onClick={() => setActivityFilter("planned")}
+                      onClick={() => filterActivities("planned")}
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "planned" ? "bg-slate-100 text-slate-800" : "hover:bg-slate-50"}`}
                     >
                       <span className="h-2 w-2 rounded-full bg-slate-500" /> zaplanowane
                     </button>
                     <button
                       type="button"
-                      onClick={() => setActivityFilter("complete")}
+                      onClick={() => filterActivities("complete")}
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "complete" ? "bg-emerald-50 text-emerald-700" : "hover:bg-slate-50"}`}
                     >
                       <span className="h-2 w-2 rounded-full bg-green-400" /> kompletne
