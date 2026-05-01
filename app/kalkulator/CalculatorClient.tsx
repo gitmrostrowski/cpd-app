@@ -665,7 +665,7 @@ export default function CalculatorClient() {
           ? "border-green-100 shadow-sm"
           : progress >= 50
           ? "border-slate-200 shadow-sm"
-          : "border-red-100 shadow-[0_4px_20px_rgba(239,68,68,0.06)]"
+          : "border-red-100 shadow-sm"
       }`}>
           {/* Główny komunikat */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -719,7 +719,7 @@ export default function CalculatorClient() {
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold text-slate-700">{Math.round(progress)}%</span>
-                  <span className="text-xs text-slate-400">{donePoints} / {requiredPoints} pkt</span>
+                  <span className="text-xs text-slate-500">{donePoints} / {requiredPoints} pkt</span>
                 </div>
                 <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
                   <div
@@ -774,10 +774,10 @@ export default function CalculatorClient() {
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="mt-1 h-9 w-1 shrink-0 rounded-full bg-blue-600" />
+            <div className="mt-1 h-10 w-1 shrink-0 rounded-full bg-blue-500" />
             <div>
-              <h2 className="text-base font-semibold text-slate-900">Twoje limity</h2>
-              <p className="mt-0.5 text-xs text-slate-400">Najbardziej ograniczajace kategorie w tym okresie</p>
+              <h2 className="text-base font-bold text-slate-900">Twoje limity</h2>
+              <p className="mt-0.5 text-xs text-slate-500">Najbardziej ograniczajace kategorie w tym okresie</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pl-4 text-sm sm:pl-0">
@@ -812,11 +812,11 @@ export default function CalculatorClient() {
                           <span className="rounded-md border border-green-200 bg-green-50 px-1.5 py-0.5 text-xs font-semibold text-green-700">✓</span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-400">
+                      <div className="text-xs text-slate-500">
                         {r.mode === "per_item" ? `max ${r.cap} pkt / szkolenie` : r.mode === "per_year" ? `max ${r.maxPoints} pkt / rok` : `max ${r.cap} pkt w okresie`}
                         {" · "}
                         {r.used === 0
-                          ? <span className="text-slate-300 italic">Nie rozpoczeto</span>
+                          ? <span className="text-slate-400 italic">Nie rozpoczeto</span>
                           : <span>{Math.round(r.used)} / {Math.round(r.cap)} pkt</span>
                         }
                       </div>
@@ -864,10 +864,22 @@ export default function CalculatorClient() {
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="mt-1 h-9 w-1 shrink-0 rounded-full bg-blue-600" />
+            <div className="mt-1 h-10 w-1 shrink-0 rounded-full bg-blue-500" />
             <div>
-              <h2 className="text-base font-semibold text-slate-900">Ostatnie aktywnosci</h2>
-              <p className="mt-0.5 text-xs text-slate-400">Wpisy {periodStart}–{periodEnd} z sygnalizacja brakow</p>
+              <h2 className="text-base font-bold text-slate-900">Ostatnie aktywnosci</h2>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <p className="text-xs text-slate-500">Wpisy {periodStart}–{periodEnd}</p>
+                <span className="text-slate-300">·</span>
+                <span className="inline-flex items-center gap-1 text-xs text-slate-400">
+                  <span className="inline-block h-2 w-2 rounded-full bg-blue-400" /> zaplanowane
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs text-slate-400">
+                  <span className="inline-block h-2 w-2 rounded-full bg-amber-400" /> braki
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs text-slate-400">
+                  <span className="inline-block h-2 w-2 rounded-full bg-green-400" /> kompletne
+                </span>
+              </div>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -880,7 +892,7 @@ export default function CalculatorClient() {
         <div className="p-6">
           <div className="space-y-2">
             {isBusy ? (
-              <p className="text-sm text-slate-400">Wczytuję...</p>
+              <p className="text-sm text-slate-500">Wczytuję...</p>
             ) : recentRows.length === 0 ? (
               <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">
                 Brak wpisow w okresie {periodStart}–{periodEnd}.
@@ -916,7 +928,7 @@ export default function CalculatorClient() {
                             <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">Braki</span>
                           )}
                         </div>
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="mt-1 text-xs text-slate-500">
                           {a.organizer ? `${a.organizer} · ` : ""}
                           Rok: <span className="font-medium text-slate-700">{a.year}</span>
                           {prog === "planned" && a.planned_start_date && (
