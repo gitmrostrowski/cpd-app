@@ -311,10 +311,18 @@ function suggestPlannedPoints(rule: {
 
 // ─── Design system atoms ───────────────────────────────────────────────────
 
-/** Renata Magda — pool turquoise icon badge */
+// ─── Design tokens ────────────────────────────────────────────────────────
+// Palette inspired by Renata Magda's pool painting:
+//   Deep teal water  →  section accent (settings header bg)
+//   Sandy warm white →  card backgrounds
+//   Swimmer orange   →  single CTA colour
+//   Clean slate      →  text
+// ──────────────────────────────────────────────────────────────────────────
+
+/** Icon badge — muted warm white, barely visible */
 function IconBadge({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700 ring-1 ring-cyan-200">
+    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/60 text-slate-500">
       {children}
     </span>
   );
@@ -322,14 +330,14 @@ function IconBadge({ children }: { children: ReactNode }) {
 
 function FieldLabel({ icon, title }: { icon: ReactNode; title: string }) {
   return (
-    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-white/70">
       {icon}
       {title}
     </div>
   );
 }
 
-/** Primary CTA — Magda orange-red (the hat, the ball) */
+/** ONE primary CTA colour — swimmer's warm orange. Used sparingly. */
 function BtnPrimary({
   children,
   onClick,
@@ -348,14 +356,14 @@ function BtnPrimary({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 active:scale-95 disabled:opacity-40 disabled:pointer-events-none ${className}`}
     >
       {children}
     </button>
   );
 }
 
-/** Ghost button — clean white with slate border */
+/** Ghost — plain white border, no colour noise */
 function BtnGhost({
   children,
   onClick,
@@ -367,21 +375,68 @@ function BtnGhost({
   href?: string;
   className?: string;
 }) {
-  const cls = `inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 ${className}`;
+  const cls = `inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 active:scale-95 ${className}`;
   if (href) return <Link href={href} className={cls}>{children}</Link>;
   return <button type="button" onClick={onClick} className={cls}>{children}</button>;
 }
 
-/** Card — white with very subtle cyan tint on border */
+/** Ghost on dark — for buttons sitting on teal header */
+function BtnGhostOnDark({
+  children,
+  onClick,
+  href,
+  className = "",
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  href?: string;
+  className?: string;
+}) {
+  const cls = `inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/30 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20 active:scale-95 ${className}`;
+  if (href) return <Link href={href} className={cls}>{children}</Link>;
+  return <button type="button" onClick={onClick} className={cls}>{children}</button>;
+}
+
+/** Standard white card — clean, no colour borders */
 function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-cyan-100 bg-white shadow-sm ${className}`}>
+    <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>
       {children}
     </div>
   );
 }
 
-/** Section header inside a card */
+/** Coloured section header strip inside a card */
+function SectionHeader({
+  title,
+  subtitle,
+  color = "slate",
+}: {
+  title: string;
+  subtitle?: string;
+  color?: "teal" | "sand" | "slate";
+}) {
+  const bg =
+    color === "teal"
+      ? "bg-[#2a6b6b]"          // deep pool teal
+      : color === "sand"
+      ? "bg-[#f5f0e8]"          // warm sand — light section
+      : "bg-slate-50";
+
+  const headingColor =
+    color === "teal" ? "text-white" : "text-slate-900";
+  const subColor =
+    color === "teal" ? "text-white/70" : "text-slate-500";
+
+  return (
+    <div className={`${bg} rounded-t-2xl px-6 py-4`}>
+      <h2 className={`text-sm font-bold uppercase tracking-wide ${headingColor}`}>{title}</h2>
+      {subtitle && <p className={`mt-0.5 text-xs ${subColor}`}>{subtitle}</p>}
+    </div>
+  );
+}
+
+/** Plain header for cards without coloured strip */
 function CardHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-4">
@@ -772,208 +827,199 @@ export default function CalculatorClient() {
 
   // ─── shared input class ─────────────────────────────────────────────────
   const inputCls =
-    "mt-2 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-900 transition focus:border-cyan-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-100";
+    "h-11 w-full rounded-lg border border-white/30 bg-white/10 px-3 text-sm font-medium text-white placeholder:text-white/40 transition focus:border-white/60 focus:bg-white/20 focus:outline-none focus:ring-0";
 
   return (
     /* ── Page wrapper — no background override, no max-width constraint ── */
     <div className="space-y-5">
 
         {/* ── USTAWIENIA ─────────────────────────────────────────────── */}
-        <Card className="p-6">
-          {/* Header row */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <IconBadge>
-                {/* Settings gear */}
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-                  <path d="M19.4 15a7.97 7.97 0 0 0 .1-1 7.97 7.97 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a8.1 8.1 0 0 0-1.7-1l-.4-2.6H9.1l-.4 2.6a8.1 8.1 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7.97 7.97 0 0 0-.1 1c0 .34.03.67.1 1l-2 1.5 2 3.5 2.4-1a8.1 8.1 0 0 0 1.7 1l.4 2.6h5.8l.4-2.6a8.1 8.1 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5Z" />
-                </svg>
-              </IconBadge>
+        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+          {/* Teal header band */}
+          <div className="bg-[#2a6b6b] px-6 py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-base font-bold text-slate-900">Ustawienia okresu i zawodu</h2>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <h2 className="text-sm font-bold uppercase tracking-wide text-white">
+                  Ustawienia okresu i zawodu
+                </h2>
+                <p className="mt-0.5 text-xs text-white/60">
                   Zmiany zapisujesz przyciskiem po prawej.{" "}
                   {savedAt && !dirty && !savingProfile && (
-                    <span className="font-semibold text-orange-500">✓ Zapisano</span>
+                    <span className="font-semibold text-orange-300">✓ Zapisano</span>
                   )}
                   {!otherValid && (
-                    <span className="font-semibold text-rose-600"> Uzupelnij "Inny zawod"</span>
+                    <span className="font-semibold text-red-300"> Uzupelnij zawod</span>
                   )}
                 </p>
               </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <BtnGhostOnDark
+                  onClick={() => {
+                    const prof: Profession = "Lekarz";
+                    setProfession(prof);
+                    setProfessionOther("");
+                    const derived = getPeriodFromPwzIssueDate(prof, pwzIssueDate);
+                    const ps = derived?.start ?? 2023;
+                    const pe = derived?.end ?? 2026;
+                    setPeriodStart(ps);
+                    setPeriodEnd(pe);
+                    const rp = DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200;
+                    setRequiredPoints(rp);
+                    setPeriodMode(derived ? "custom" : "preset");
+                    setDirty(true);
+                  }}
+                >
+                  ↩ Domyslne
+                </BtnGhostOnDark>
+                <BtnPrimary
+                  onClick={saveAllSettings}
+                  disabled={isBusy || savingProfile || !dirty || !otherValid}
+                >
+                  {savingProfile ? "Zapisuję…" : "Zapisz zmiany"}
+                </BtnPrimary>
+                <BtnGhostOnDark href="/profil">Profil →</BtnGhostOnDark>
+              </div>
             </div>
 
-            {/* Action buttons — consistent style */}
-            <div className="flex flex-wrap items-center gap-2">
-              <BtnGhost
-                onClick={() => {
-                  const prof: Profession = "Lekarz";
-                  setProfession(prof);
-                  setProfessionOther("");
-                  const derived = getPeriodFromPwzIssueDate(prof, pwzIssueDate);
-                  const ps = derived?.start ?? 2023;
-                  const pe = derived?.end ?? 2026;
-                  setPeriodStart(ps);
-                  setPeriodEnd(pe);
-                  const rp = DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200;
-                  setRequiredPoints(rp);
-                  setPeriodMode(derived ? "custom" : "preset");
-                  setDirty(true);
-                }}
-              >
-                ↩ Domyślne
-              </BtnGhost>
-
-              <BtnPrimary
-                onClick={saveAllSettings}
-                disabled={isBusy || savingProfile || !dirty || !otherValid}
-              >
-                {savingProfile ? "Zapisuję…" : "Zapisz zmiany"}
-              </BtnPrimary>
-
-              <BtnGhost href="/profil">Profil →</BtnGhost>
-            </div>
-          </div>
-
-          {/* Fields grid */}
-          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {/* Zawód */}
-            <div>
-              <FieldLabel
-                icon={<IconBadge><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8" /><path d="M12 17v4" /><path d="M7 4h10" /><path d="M7 4c0 5 2 6 5 8 3-2 5-3 5-8" /><path d="M9 12h6" /></svg></IconBadge>}
-                title="Zawód"
-              />
-              <select
-                value={profession}
-                onChange={(e) => {
-                  const v = e.target.value as Profession;
-                  setProfession(v);
-                  if (!isOtherProfession(v)) setProfessionOther("");
-                  const rp = RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
-                  setRequiredPoints(rp);
-                  if (pwzIssueDate) {
-                    const derived = getPeriodFromPwzIssueDate(v, pwzIssueDate);
-                    if (derived) { setPeriodMode("custom"); setPeriodStart(derived.start); setPeriodEnd(derived.end); }
-                  }
-                  setDirty(true);
-                }}
-                className={inputCls}
-              >
-                {PROFESSION_OPTIONS.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Tryb okresu */}
-            <div>
-              <FieldLabel
-                icon={<IconBadge><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 2" /><path d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10Z" /></svg></IconBadge>}
-                title={trybLabel}
-              />
-              <select
-                value={periodMode}
-                onChange={(e) => {
-                  const v = e.target.value as "preset" | "custom";
-                  setPeriodMode(v);
-                  if (v === "custom" && pwzIssueDate) {
-                    const derived = getPeriodFromPwzIssueDate(profession, pwzIssueDate);
-                    if (derived) { setPeriodStart(derived.start); setPeriodEnd(derived.end); }
-                  }
-                  setDirty(true);
-                }}
-                className={inputCls}
-              >
-                <option value="preset">Preset (najczęstszy)</option>
-                <option value="custom">Indywidualny</option>
-              </select>
-            </div>
-
-            {/* Okres */}
-            {periodMode === "preset" && !pwzIssueDate ? (
+            {/* Fields — inside teal band */}
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {/* Zawód */}
               <div>
                 <FieldLabel
-                  icon={<IconBadge><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v4" /><path d="M16 2v4" /><path d="M3 10h18" /><path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" /></svg></IconBadge>}
-                  title={okresLabel}
+                  icon={<svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10"/><path d="M7 4c0 5 2 6 5 8 3-2 5-3 5-8"/><path d="M9 12h6"/></svg>}
+                  title="Zawod"
                 />
                 <select
-                  value={periodLabel}
+                  value={profession}
                   onChange={(e) => {
-                    const [a, b] = e.target.value.split("-").map((x) => Number(x));
-                    setPeriodStart(a); setPeriodEnd(b); setDirty(true);
+                    const v = e.target.value as Profession;
+                    setProfession(v);
+                    if (!isOtherProfession(v)) setProfessionOther("");
+                    const rp = RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200;
+                    setRequiredPoints(rp);
+                    if (pwzIssueDate) {
+                      const derived = getPeriodFromPwzIssueDate(v, pwzIssueDate);
+                      if (derived) { setPeriodMode("custom"); setPeriodStart(derived.start); setPeriodEnd(derived.end); }
+                    }
+                    setDirty(true);
                   }}
-                  className={inputCls}
+                  className={`mt-1.5 ${inputCls}`}
                 >
-                  <option value="2019-2022">2019–2022</option>
-                  <option value="2023-2026">2023–2026</option>
-                  <option value="2027-2030">2027–2030</option>
+                  {PROFESSION_OPTIONS.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
                 </select>
               </div>
-            ) : (
+
+              {/* Tryb okresu */}
               <div>
                 <FieldLabel
-                  icon={<IconBadge><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v4" /><path d="M16 2v4" /><path d="M3 10h18" /><path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" /></svg></IconBadge>}
-                  title={okresLabel}
+                  icon={<svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 2"/><path d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10Z"/></svg>}
+                  title={trybLabel}
                 />
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <input
-                    value={periodStart}
-                    onChange={(e) => { setPeriodStart(Number(e.target.value || 0)); setDirty(true); }}
-                    type="number"
-                    placeholder="Start"
-                    disabled={Boolean(pwzIssueDate)}
-                    className={inputCls.replace("mt-2 ", "")}
-                  />
-                  <input
-                    value={periodEnd}
-                    onChange={(e) => { setPeriodEnd(Number(e.target.value || 0)); setDirty(true); }}
-                    type="number"
-                    placeholder="Koniec"
-                    disabled={Boolean(pwzIssueDate)}
-                    className={inputCls.replace("mt-2 ", "")}
-                  />
-                </div>
+                <select
+                  value={periodMode}
+                  onChange={(e) => {
+                    const v = e.target.value as "preset" | "custom";
+                    setPeriodMode(v);
+                    if (v === "custom" && pwzIssueDate) {
+                      const derived = getPeriodFromPwzIssueDate(profession, pwzIssueDate);
+                      if (derived) { setPeriodStart(derived.start); setPeriodEnd(derived.end); }
+                    }
+                    setDirty(true);
+                  }}
+                  className={`mt-1.5 ${inputCls}`}
+                >
+                  <option value="preset">Preset (najczestszy)</option>
+                  <option value="custom">Indywidualny</option>
+                </select>
               </div>
-            )}
 
-            {/* Wymagane punkty */}
-            <div>
-              <FieldLabel
-                icon={<IconBadge><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3 7h7l-5.5 4.2L18.5 21 12 16.8 5.5 21l2-7.8L2 9h7l3-7Z" /></svg></IconBadge>}
-                title="Wymagane punkty"
-              />
-              <input
-                value={requiredPoints}
-                onChange={(e) => { setRequiredPoints(Number(e.target.value || 0)); setDirty(true); }}
-                type="number"
-                min={0}
-                className={inputCls}
-              />
-            </div>
+              {/* Okres */}
+              {periodMode === "preset" && !pwzIssueDate ? (
+                <div>
+                  <FieldLabel
+                    icon={<svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/><path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/></svg>}
+                    title={okresLabel}
+                  />
+                  <select
+                    value={periodLabel}
+                    onChange={(e) => {
+                      const [a, b] = e.target.value.split("-").map((x) => Number(x));
+                      setPeriodStart(a); setPeriodEnd(b); setDirty(true);
+                    }}
+                    className={`mt-1.5 ${inputCls}`}
+                  >
+                    <option value="2019-2022">2019–2022</option>
+                    <option value="2023-2026">2023–2026</option>
+                    <option value="2027-2030">2027–2030</option>
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <FieldLabel
+                    icon={<svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/><path d="M4 6h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/></svg>}
+                    title={okresLabel}
+                  />
+                  <div className="mt-1.5 grid grid-cols-2 gap-2">
+                    <input
+                      value={periodStart}
+                      onChange={(e) => { setPeriodStart(Number(e.target.value || 0)); setDirty(true); }}
+                      type="number"
+                      placeholder="Start"
+                      disabled={Boolean(pwzIssueDate)}
+                      className={inputCls}
+                    />
+                    <input
+                      value={periodEnd}
+                      onChange={(e) => { setPeriodEnd(Number(e.target.value || 0)); setDirty(true); }}
+                      type="number"
+                      placeholder="Koniec"
+                      disabled={Boolean(pwzIssueDate)}
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+              )}
 
-            {/* Inny zawód */}
-            {otherRequired && (
-              <div className="sm:col-span-2 xl:col-span-4">
+              {/* Wymagane punkty */}
+              <div>
                 <FieldLabel
-                  icon={<IconBadge><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /></svg></IconBadge>}
-                  title="Jaki zawód?"
+                  icon={<svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3 7h7l-5.5 4.2L18.5 21 12 16.8 5.5 21l2-7.8L2 9h7l3-7Z"/></svg>}
+                  title="Wymagane punkty"
                 />
                 <input
-                  value={professionOther}
-                  onChange={(e) => { setProfessionOther(e.target.value); setDirty(true); }}
-                  placeholder="np. Psycholog, Logopeda, Technik elektroradiolog…"
-                  className={`${inputCls} ${!otherValid ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100" : ""}`}
+                  value={requiredPoints}
+                  onChange={(e) => { setRequiredPoints(Number(e.target.value || 0)); setDirty(true); }}
+                  type="number"
+                  min={0}
+                  className={`mt-1.5 ${inputCls}`}
                 />
-                <p className={`mt-1.5 text-xs ${otherValid ? "text-slate-400" : "text-rose-600"}`}>
-                  {otherValid
-                    ? "Doprecyzowanie pomaga dopasować zasady i raporty."
-                    : "Wpisz nazwę zawodu (min. 2 znaki), żeby profil był kompletny."}
-                </p>
               </div>
-            )}
+
+              {/* Inny zawód */}
+              {otherRequired && (
+                <div className="sm:col-span-2 xl:col-span-4">
+                  <FieldLabel
+                    icon={<svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>}
+                    title="Jaki zawod?"
+                  />
+                  <input
+                    value={professionOther}
+                    onChange={(e) => { setProfessionOther(e.target.value); setDirty(true); }}
+                    placeholder="np. Psycholog, Logopeda..."
+                    className={`mt-1.5 ${inputCls} ${!otherValid ? "border-red-400" : ""}`}
+                  />
+                  <p className={`mt-1.5 text-xs ${otherValid ? "text-white/50" : "text-red-300"}`}>
+                    {otherValid
+                      ? "Doprecyzowanie pomaga dopasowac zasady i raporty."
+                      : "Wpisz nazwe zawodu (min. 2 znaki)."}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-        </Card>
+        </div>
 
         {/* ── PANEL STATUSU ─────────────────────────────────────────── */}
         <Card className="overflow-hidden">
@@ -1001,43 +1047,38 @@ export default function CalculatorClient() {
         </Card>
 
         {/* ── REGUŁY I LIMITY ────────────────────────────────────────── */}
-        <Card className="p-6">
-          {/* Section header + summary */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <CardHeader
-              title="Reguły i limity"
-              subtitle={`Limity cząstkowe w okresie ${periodStart}–${periodEnd} na podstawie ukończonych wpisów.`}
-            />
-
-            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 sm:shrink-0 sm:pt-1">
-              <span>
-                Zaliczone:{" "}
-                <span className="font-bold text-slate-900">{donePoints} pkt</span>
-              </span>
-              <span className="text-slate-300">|</span>
-              <span>
-                Brakuje:{" "}
-                <span className="font-bold text-orange-500">{missingPoints} pkt</span>
-              </span>
-              {missingEvidenceCount > 0 && (
-                <>
-                  <span className="text-slate-300">|</span>
-                  <span>
-                    Bez certyfikatu:{" "}
-                    <span className="font-bold text-slate-900">{missingEvidenceCount}</span>
-                  </span>
-                </>
-              )}
+        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+          {/* Sand header band */}
+          <div className="bg-[#f5f0e8] px-6 py-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">Reguly i limity</h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Limity czastkowe w okresie {periodStart}–{periodEnd} na podstawie ukonczonych wpisow.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
+                <span>Zaliczone: <span className="font-bold text-slate-900">{donePoints} pkt</span></span>
+                <span className="text-slate-300">|</span>
+                <span>Brakuje: <span className="font-bold text-orange-500">{missingPoints} pkt</span></span>
+                {missingEvidenceCount > 0 && (
+                  <>
+                    <span className="text-slate-300">|</span>
+                    <span>Bez certyfikatu: <span className="font-bold text-slate-900">{missingEvidenceCount}</span></span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Feedback banners */}
-          {(planInfo || planErr) && (
-            <div className="mb-4 rounded-xl border border-cyan-100 bg-cyan-50 p-3 text-sm">
-              {planInfo && <p className="font-semibold text-cyan-700">{planInfo}</p>}
-              {planErr && <p className="font-semibold text-rose-600">{planErr}</p>}
-            </div>
-          )}
+          {/* White body */}
+          <div className="p-6">
+            {(planInfo || planErr) && (
+              <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
+                {planInfo && <p className="font-semibold text-[#2a6b6b]">{planInfo}</p>}
+                {planErr && <p className="font-semibold text-rose-600">{planErr}</p>}
+              </div>
+            )}
 
           {/* Limit rows */}
           <div className="space-y-3">
@@ -1113,33 +1154,35 @@ export default function CalculatorClient() {
           </div>
 
           {/* Footer links */}
-          <div className="mt-5 flex flex-wrap gap-2 border-t border-cyan-100 pt-4">
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
             <BtnGhost href="/aktywnosci">Aktywnosci →</BtnGhost>
             <BtnGhost href="/aktywnosci?new=1">+ Dodaj aktywnosc</BtnGhost>
             <BtnGhost href="/portfolio">Raport / PDF →</BtnGhost>
           </div>
-        </Card>
+          </div>{/* /white body */}
+        </div>{/* /limits card */}
 
         {/* ── OSTATNIE AKTYWNOŚCI ────────────────────────────────────── */}
-        <Card className="p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <CardHeader
-              title="Ostatnie aktywności"
-              subtitle={`Wpisy w okresie ${periodStart}–${periodEnd} z sygnalizacją braków.`}
-            />
-
-            <div className="flex flex-wrap gap-2 sm:shrink-0 sm:pt-1">
-              <BtnGhost href="/aktywnosci">Aktywności</BtnGhost>
+        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+          {/* Slate-50 header band */}
+          <div className="flex flex-col gap-2 bg-slate-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">Ostatnie aktywnosci</h2>
+              <p className="mt-0.5 text-xs text-slate-500">Wpisy w okresie {periodStart}–{periodEnd} z sygnalizacja brakow.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <BtnGhost href="/aktywnosci">Aktywnosci</BtnGhost>
               <BtnGhost href="/portfolio">Raporty / PDF</BtnGhost>
-              <BtnGhost href="/baza-szkolen">Baza szkoleń</BtnGhost>
+              <BtnGhost href="/baza-szkolen">Baza szkolen</BtnGhost>
             </div>
           </div>
 
-          <div className="mt-1 space-y-2">
+          <div className="p-6">
+          <div className="space-y-2">
             {authLoading || loading ? (
               <p className="text-sm text-slate-400">Wczytuję…</p>
             ) : recentRows.length === 0 ? (
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
                 Brak wpisów w okresie {periodStart}–{periodEnd}.
               </div>
             ) : (
@@ -1226,7 +1269,8 @@ export default function CalculatorClient() {
               })
             )}
           </div>
-        </Card>
+          </div>{/* /p-6 */}
+        </div>{/* /activities card */}
 
     </div>
   );
