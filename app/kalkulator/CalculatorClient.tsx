@@ -6,8 +6,6 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
-import type { TopLimitItem } from "@/components/dashboard/CpdStatusPanel";
-
 import {
   type Profession,
   PROFESSION_OPTIONS,
@@ -247,7 +245,7 @@ function buildNextStep(
 
   return {
     title: "Ustal krótki plan",
-    description: `Dodaj wpisy jako plan, a potem uzupełniaj certyfikaty.`,
+    description: "Dodaj wpisy jako plan, a potem uzupełniaj certyfikaty.",
     ctaLabel: "+ Dodaj aktywność",
     ctaHref: "/aktywnosci?new=1",
   };
@@ -318,6 +316,58 @@ function suggestPlannedPoints(rule: {
   return Math.max(1, Math.min(rem, step));
 }
 
+function SectionIcon({
+  tone = "blue",
+  children,
+}: {
+  tone?: "blue" | "green" | "amber";
+  children: React.ReactNode;
+}) {
+  const cls =
+    tone === "green"
+      ? "border-emerald-100 bg-emerald-50 text-emerald-600"
+      : tone === "amber"
+      ? "border-amber-100 bg-amber-50 text-amber-600"
+      : "border-blue-100 bg-blue-50 text-blue-600";
+
+  return (
+    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border shadow-sm ${cls}`}>
+      {children}
+    </div>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M8 2v4" />
+      <path d="M16 2v4" />
+      <path d="M3 10h18" />
+      <path d="M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+    </svg>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+      <path d="m9 12 2 2 4-5" />
+    </svg>
+  );
+}
+
+function ClipboardIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M9 5h6" />
+      <path d="M9 3h6v4H9z" />
+      <path d="M6 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1" />
+      <path d="m9 14 2 2 4-4" />
+    </svg>
+  );
+}
+
 export default function CalculatorClient() {
   const { user, loading: authLoading } = useAuth();
 
@@ -327,7 +377,6 @@ export default function CalculatorClient() {
 
   const [profession, setProfession] = useState<Profession>("Lekarz");
   const [professionOther, setProfessionOther] = useState<string>("");
-
   const [periodStart, setPeriodStart] = useState<number>(2023);
   const [periodEnd, setPeriodEnd] = useState<number>(2026);
   const [requiredPoints, setRequiredPoints] = useState<number>(
@@ -337,11 +386,9 @@ export default function CalculatorClient() {
   const [periodMode, setPeriodMode] = useState<"preset" | "custom">("preset");
   const [savingProfile, setSavingProfile] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
-
   const [planInfo, setPlanInfo] = useState<string | null>(null);
   const [planErr, setPlanErr] = useState<string | null>(null);
   const [planningKey, setPlanningKey] = useState<string | null>(null);
-
   const [dirty, setDirty] = useState(false);
 
   const supabase = useMemo(() => supabaseClient(), []);
@@ -537,22 +584,6 @@ export default function CalculatorClient() {
     });
   }, [profession, inPeriodDone, periodStart, periodEnd]);
 
-  const topLimits = useMemo<TopLimitItem[]>(() => {
-    return [...limitsUsage]
-      .sort((a, b) => (b.usedPct ?? 0) - (a.usedPct ?? 0))
-      .slice(0, 3)
-      .map((x) => ({
-        key: x.key,
-        label: x.label,
-        used: x.used,
-        cap: x.cap,
-        remaining: x.remaining,
-        usedPct: x.usedPct,
-        note: x.note,
-        mode: x.mode,
-      }));
-  }, [limitsUsage]);
-
   const limitWarning = useMemo(() => {
     const hit = limitsUsage.find((x) => (x.usedPct ?? 0) >= 100);
     if (!hit) return null;
@@ -698,31 +729,40 @@ export default function CalculatorClient() {
   }
 
   const inputCls =
-    "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-50";
+    "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-50";
 
   const sectionCls =
-    "rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200/40";
+    "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200/40";
 
   return (
     <div className="-mx-4 min-h-screen space-y-5 bg-gradient-to-b from-slate-50 via-white to-white px-4 pb-8 pt-1 sm:-mx-6 sm:px-6">
       {/* USTAWIENIA */}
-      <div className={sectionCls}>
-        <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900">
-              Ustawienia okresu i zawodu
-            </h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Zmiany zapisujesz przyciskiem.
-              {savedAt && !dirty && !savingProfile ? (
-                <span className="ml-1 font-semibold text-blue-600">✓ Zapisano</span>
-              ) : null}
-              {!otherValid ? (
-                <span className="ml-1 font-semibold text-red-500">
-                  Uzupełnij zawód
-                </span>
-              ) : null}
-            </p>
+      <div className="relative overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-br from-white via-blue-50/80 to-white shadow-sm ring-1 ring-blue-100/70">
+        <div className="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-full bg-blue-200/30 blur-3xl" />
+        <div className="pointer-events-none absolute right-20 top-0 h-40 w-40 rounded-full bg-white/60 blur-2xl" />
+
+        <div className="relative flex flex-col gap-4 border-b border-blue-100/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <SectionIcon tone="blue">
+              <CalendarIcon />
+            </SectionIcon>
+
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">
+                Ustawienia okresu i zawodu
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Zmiany zapisujesz przyciskiem.
+                {savedAt && !dirty && !savingProfile ? (
+                  <span className="ml-1 font-semibold text-blue-600">✓ Zapisano</span>
+                ) : null}
+                {!otherValid ? (
+                  <span className="ml-1 font-semibold text-red-500">
+                    Uzupełnij zawód
+                  </span>
+                ) : null}
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -741,7 +781,7 @@ export default function CalculatorClient() {
                 setPeriodMode(derived ? "custom" : "preset");
                 setDirty(true);
               }}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
               Domyślne
             </button>
@@ -750,21 +790,21 @@ export default function CalculatorClient() {
               type="button"
               onClick={saveAllSettings}
               disabled={isBusy || savingProfile || !dirty || !otherValid}
-              className="min-w-[130px] rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40"
+              className="min-w-[130px] rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-40"
             >
               {savingProfile ? "Zapisuję..." : "Zapisz zmiany"}
             </button>
 
             <Link
               href="/profil"
-              className="inline-flex min-w-[130px] items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+              className="inline-flex min-w-[130px] items-center justify-center rounded-xl border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50"
             >
               Profil →
             </Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 px-5 py-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="relative grid grid-cols-1 gap-3 px-5 py-4 sm:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Zawód
@@ -924,8 +964,12 @@ export default function CalculatorClient() {
 
       {/* HERO STATUS */}
       {!isBusy ? (
-        <div className="rounded-2xl border border-red-100 bg-white px-6 py-5 shadow-md ring-1 ring-red-50">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="relative overflow-hidden rounded-2xl border border-red-100 bg-white px-6 py-5 shadow-md ring-1 ring-red-50">
+          <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-red-100/70 blur-3xl" />
+          <div className="pointer-events-none absolute right-28 top-8 h-44 w-44 rounded-full bg-amber-100/70 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-0 left-1/3 h-20 w-80 rounded-full bg-slate-100/70 blur-3xl" />
+
+          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex-1">
               <div className="mb-3">
                 {progress >= 100 ? (
@@ -1017,7 +1061,7 @@ export default function CalculatorClient() {
             </div>
 
             <div className="shrink-0 sm:w-72">
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+              <div className="rounded-xl border border-amber-200 bg-amber-50/90 p-5 shadow-sm backdrop-blur">
                 <div className="text-xs font-bold uppercase tracking-wide text-amber-600">
                   Co teraz zrobić
                 </div>
@@ -1035,7 +1079,7 @@ export default function CalculatorClient() {
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm">
+          <div className="relative mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm">
             <span className="text-slate-600">
               📅 <strong className="text-slate-900">{daysLeft}</strong> dni
             </span>
@@ -1068,11 +1112,16 @@ export default function CalculatorClient() {
       {/* REGUŁY I LIMITY */}
       <div className={sectionCls}>
         <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">Twoje limity</h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Najbardziej ograniczające kategorie w tym okresie
-            </p>
+          <div className="flex items-center gap-4">
+            <SectionIcon tone="blue">
+              <ShieldIcon />
+            </SectionIcon>
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Twoje limity</h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Najbardziej ograniczające kategorie w tym okresie
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
@@ -1109,73 +1158,77 @@ export default function CalculatorClient() {
                 return (
                   <div
                     key={r.key}
-                    className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md"
+                    className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 pl-6 shadow-sm transition hover:border-blue-200 hover:shadow-md"
                   >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-sm font-semibold text-slate-900">
-                          {r.label}
-                        </span>
-                        {isMax ? (
-                          <span className="rounded-md border border-green-200 bg-green-50 px-1.5 py-0.5 text-xs font-semibold text-green-700">
-                            ✓
+                    <div className="absolute inset-y-3 left-0 w-1.5 rounded-r-full bg-blue-400" />
+
+                    <div className="flex items-center gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-semibold text-slate-900">
+                            {r.label}
                           </span>
-                        ) : null}
+                          {isMax ? (
+                            <span className="rounded-md border border-green-200 bg-green-50 px-1.5 py-0.5 text-xs font-semibold text-green-700">
+                              ✓
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="text-xs text-slate-500">
+                          {r.mode === "per_item"
+                            ? `max ${r.cap} pkt / szkolenie`
+                            : r.mode === "per_year"
+                            ? `max ${r.maxPoints} pkt / rok`
+                            : `max ${r.cap} pkt w okresie`}
+                          {" · "}
+                          {r.used === 0 ? (
+                            <span className="italic text-slate-400">Nie rozpoczęto</span>
+                          ) : (
+                            <span>
+                              {Math.round(r.used)} / {Math.round(r.cap)} pkt
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                            <div
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                r.usedPct >= 100
+                                  ? "bg-green-400"
+                                  : r.usedPct >= 50
+                                  ? "bg-blue-400"
+                                  : "bg-slate-400"
+                              }`}
+                              style={{ width: `${r.usedPct}%` }}
+                            />
+                          </div>
+                          <span className="shrink-0 text-xs font-bold text-slate-700">
+                            {Math.round(r.usedPct)}%
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="text-xs text-slate-500">
-                        {r.mode === "per_item"
-                          ? `max ${r.cap} pkt / szkolenie`
-                          : r.mode === "per_year"
-                          ? `max ${r.maxPoints} pkt / rok`
-                          : `max ${r.cap} pkt w okresie`}
-                        {" · "}
-                        {r.used === 0 ? (
-                          <span className="italic text-slate-400">Nie rozpoczęto</span>
+                      <div className="shrink-0">
+                        {isMax ? (
+                          <Link
+                            href="/aktywnosci"
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                          >
+                            Zobacz
+                          </Link>
                         ) : (
-                          <span>
-                            {Math.round(r.used)} / {Math.round(r.cap)} pkt
-                          </span>
+                          <button
+                            type="button"
+                            disabled={isBusy || planningKey === r.key}
+                            onClick={() => planForRule(r)}
+                            className="rounded-lg bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white transition hover:scale-[1.02] hover:bg-slate-700 disabled:opacity-40"
+                          >
+                            {planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}
+                          </button>
                         )}
                       </div>
-
-                      <div className="mt-2 flex items-center gap-2">
-                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                          <div
-                            className={`h-2 rounded-full transition-all duration-300 ${
-                              r.usedPct >= 100
-                                ? "bg-green-400"
-                                : r.usedPct >= 50
-                                ? "bg-blue-400"
-                                : "bg-slate-400"
-                            }`}
-                            style={{ width: `${r.usedPct}%` }}
-                          />
-                        </div>
-                        <span className="shrink-0 text-xs font-bold text-slate-700">
-                          {Math.round(r.usedPct)}%
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="shrink-0">
-                      {isMax ? (
-                        <Link
-                          href="/aktywnosci"
-                          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                        >
-                          Zobacz
-                        </Link>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled={isBusy || planningKey === r.key}
-                          onClick={() => planForRule(r)}
-                          className="rounded-lg bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white transition hover:scale-[1.02] hover:bg-slate-700 disabled:opacity-40"
-                        >
-                          {planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}
-                        </button>
-                      )}
                     </div>
                   </div>
                 );
@@ -1184,22 +1237,13 @@ export default function CalculatorClient() {
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-            <Link
-              href="/aktywnosci"
-              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-            >
+            <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
               Aktywności →
             </Link>
-            <Link
-              href="/aktywnosci?new=1"
-              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-            >
+            <Link href="/aktywnosci?new=1" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
               + Dodaj aktywność
             </Link>
-            <Link
-              href="/portfolio"
-              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-            >
+            <Link href="/portfolio" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
               Raport / PDF →
             </Link>
           </div>
@@ -1209,47 +1253,43 @@ export default function CalculatorClient() {
       {/* OSTATNIE AKTYWNOŚCI */}
       <div className={sectionCls}>
         <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">
-              Ostatnie aktywności
-            </h2>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <p className="text-xs text-slate-500">
-                Wpisy {periodStart}–{periodEnd}
-              </p>
-              <span className="text-slate-300">·</span>
-              <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                <span className="inline-block h-2 w-2 rounded-full bg-blue-400" />{" "}
-                zaplanowane
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />{" "}
-                braki
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                <span className="inline-block h-2 w-2 rounded-full bg-green-400" />{" "}
-                kompletne
-              </span>
+          <div className="flex items-center gap-4">
+            <SectionIcon tone="green">
+              <ClipboardIcon />
+            </SectionIcon>
+            <div>
+              <h2 className="text-base font-bold text-slate-900">
+                Ostatnie aktywności
+              </h2>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <p className="text-xs text-slate-500">
+                  Wpisy {periodStart}–{periodEnd}
+                </p>
+                <span className="text-slate-300">·</span>
+                <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                  <span className="inline-block h-2 w-2 rounded-full bg-blue-400" />{" "}
+                  zaplanowane
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                  <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />{" "}
+                  braki
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                  <span className="inline-block h-2 w-2 rounded-full bg-green-400" />{" "}
+                  kompletne
+                </span>
+              </div>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Link
-              href="/aktywnosci"
-              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-            >
+            <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
               Aktywności
             </Link>
-            <Link
-              href="/portfolio"
-              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-            >
+            <Link href="/portfolio" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
               Raporty / PDF
             </Link>
-            <Link
-              href="/baza-szkolen"
-              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-            >
+            <Link href="/baza-szkolen" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
               Baza szkoleń
             </Link>
           </div>
@@ -1267,12 +1307,18 @@ export default function CalculatorClient() {
               recentRows.map((a) => {
                 const prog = normalizeStatus(a.status);
                 const missing = getRowMissing(a);
+                const stripe =
+                  prog === "planned"
+                    ? "bg-blue-400"
+                    : missing.length
+                    ? "bg-amber-400"
+                    : "bg-green-400";
 
                 return (
                   <div
                     key={a.id}
                     className={[
-                      "rounded-xl border border-slate-200 p-4 shadow-sm transition hover:shadow-md",
+                      "relative overflow-hidden rounded-xl border border-slate-200 p-4 pl-6 shadow-sm transition hover:shadow-md",
                       prog === "planned"
                         ? "bg-blue-50/25"
                         : missing.length
@@ -1280,6 +1326,8 @@ export default function CalculatorClient() {
                         : "bg-white",
                     ].join(" ")}
                   >
+                    <div className={`absolute inset-y-3 left-0 w-1.5 rounded-r-full ${stripe}`} />
+
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
