@@ -515,7 +515,7 @@ export default function CalculatorClient() {
 
       {/* ══ 1. USTAWIENIA — white card, no color header ══════════════════════ */}
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-sm font-semibold text-slate-900">Ustawienia okresu i zawodu</h2>
             <p className="mt-0.5 text-xs text-slate-400">
@@ -559,7 +559,7 @@ export default function CalculatorClient() {
           </div>
         </div>
 
-        <div className="px-6 py-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="px-5 py-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {/* Zawód */}
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">Zawod</label>
@@ -660,11 +660,28 @@ export default function CalculatorClient() {
 
       {/* ══ 2. HERO STATUS — jeden jasny komunikat ═══════════════════════════ */}
       {!isBusy && (
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-5 transition-all duration-200">
           {/* Główny komunikat */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex-1">
-              {missingPoints > 0 ? (
+              {/* Status badge */}
+          <div className="mb-3">
+            {progress >= 100 ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-200">
+                ✅ Spelniasz wymagania
+              </span>
+            ) : progress >= 50 ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+                🟡 Jestes na dobrej drodze
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-200">
+                ❗ Nie spelniasz wymagan
+              </span>
+            )}
+          </div>
+
+          {missingPoints > 0 ? (
                 <>
                   <div className="text-2xl font-bold text-slate-900">
                     Brakuje Ci{" "}
@@ -691,13 +708,21 @@ export default function CalculatorClient() {
 
               {/* Progress bar */}
               <div className="mt-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-semibold text-slate-500">Twoj postep</span>
+                <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold text-slate-700">{Math.round(progress)}%</span>
+                  <span className="text-xs text-slate-400">{donePoints} / {requiredPoints} pkt</span>
                 </div>
-                <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className="h-4 w-full overflow-hidden rounded-full bg-slate-100 shadow-inner">
                   <div
-                    className={`h-3 rounded-full transition-all ${progress >= 100 ? "bg-green-500" : progress > 50 ? "bg-blue-500" : "bg-red-400"}`}
+                    className={`h-4 rounded-full transition-all duration-500 ${
+                      progress >= 100
+                        ? "bg-gradient-to-r from-green-400 to-green-500"
+                        : progress >= 70
+                        ? "bg-gradient-to-r from-blue-400 to-blue-500"
+                        : progress >= 30
+                        ? "bg-gradient-to-r from-amber-400 to-orange-400"
+                        : "bg-gradient-to-r from-red-400 to-red-500"
+                    }`}
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -716,10 +741,10 @@ export default function CalculatorClient() {
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
                 <div className="text-xs font-bold uppercase tracking-wide text-amber-600">Co teraz zrobic</div>
                 <div className="mt-2 text-base font-bold text-slate-900">{nextStep.title}</div>
-                <div className="mt-1 text-sm text-slate-600">{nextStep.description}</div>
+                {missingEvidenceCount > 0 && <div className="mt-1 text-sm text-slate-600">Masz {missingEvidenceCount} wpisow bez certyfikatu</div>}
                 <Link
                   href={nextStep.ctaHref}
-                  className="mt-4 block w-full rounded-lg bg-blue-600 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
+                  className="mt-4 block w-full rounded-lg bg-blue-600 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.99]"
                 >
                   {nextStep.ctaLabel}
                 </Link>
@@ -778,26 +803,29 @@ export default function CalculatorClient() {
               limitsUsage.map((r) => {
                 const isMax = (r.usedPct ?? 0) >= 100 || (Number(r.remaining) || 0) <= 0;
                 return (
-                  <div key={r.key} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                          <span className="text-sm font-semibold text-slate-900">{r.label}</span>
-                          {r.note && <span className="text-xs text-slate-400">{r.note}{r.mode === "per_year" ? ` (x${r.yearsInPeriod} lat)` : ""}</span>}
-                          {isMax && (
-                            <span className="inline-flex items-center gap-1 rounded-md border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
-                              ✓ Limit osiagniety
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-0.5 text-xs text-slate-400">{Math.round(r.used)} / {Math.round(r.cap)} pkt — {Math.round(r.usedPct)}%</p>
-                        <div className="mt-2 flex items-center gap-3">
-                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
-                            <div className="h-1.5 rounded-full bg-blue-500 transition-all" style={{ width: `${r.usedPct}%` }} />
-                          </div>
-                          <span className="shrink-0 text-xs text-slate-500">Pozostalo: <span className="font-bold text-slate-900">{Math.round(r.remaining)} pkt</span></span>
-                        </div>
+                  <div key={r.key} className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-4 transition hover:shadow-md hover:border-slate-200">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-sm font-semibold text-slate-900">{r.label}</span>
+                        {isMax && (
+                          <span className="rounded-md border border-green-200 bg-green-50 px-1.5 py-0.5 text-xs font-semibold text-green-700">✓</span>
+                        )}
                       </div>
+                      <div className="text-xs text-slate-400">
+                        {r.mode === "per_item" ? `max ${r.cap} pkt / szkolenie` : r.mode === "per_year" ? `max ${r.maxPoints} pkt / rok` : `max ${r.cap} pkt w okresie`}
+                        {" · "}{Math.round(r.used)} / {Math.round(r.cap)} pkt
+                      </div>
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                          <div
+                            className={`h-2 rounded-full transition-all duration-300 ${r.usedPct >= 100 ? "bg-green-400" : r.usedPct >= 50 ? "bg-blue-400" : "bg-slate-400"}`}
+                            style={{ width: `${r.usedPct}%` }}
+                          />
+                        </div>
+                        <span className="shrink-0 text-xs font-bold text-slate-700">{Math.round(r.usedPct)}%</span>
+                      </div>
+                    </div>
+                    <div className="shrink-0">
                       <div className="shrink-0">
                         {isMax ? (
                           <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
@@ -808,12 +836,11 @@ export default function CalculatorClient() {
                             type="button"
                             disabled={isBusy || planningKey === r.key}
                             onClick={() => planForRule(r)}
-                            className="rounded-lg bg-orange-500 px-4 py-1.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-40"
+                            className="rounded-lg bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-slate-700 hover:scale-[1.02] disabled:opacity-40"
                           >
                             {planningKey === r.key ? "Dodaje..." : "+ Zaplanuj"}
                           </button>
                         )}
-                      </div>
                     </div>
                   </div>
                 );
@@ -903,7 +930,6 @@ export default function CalculatorClient() {
                         <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
                           Otworz →
                         </Link>
-                      </div>
                     </div>
                   </div>
                 );
