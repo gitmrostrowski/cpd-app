@@ -78,14 +78,14 @@ function StatusBadge({
 
   if (missingEvidenceCount > 0) {
     return (
-      <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 ring-1 ring-rose-200">
+      <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
         Wymaga dokumentów
       </span>
     );
   }
 
   return (
-    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-200">
       W trakcie
     </span>
   );
@@ -95,7 +95,7 @@ function LimitCard({ item }: { item: TopLimitItem }) {
   const usedPct = clamp(item.usedPct, 0, 100);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+    <div className="rounded-2xl border border-slate-200 bg-[#fbfaf7] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold text-slate-900">
@@ -135,7 +135,7 @@ function MiniStat({
   value: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+    <div className="rounded-2xl border border-slate-200 bg-[#fbfaf7] p-4">
       <div className="text-xs font-semibold text-slate-500">{label}</div>
       <div className="mt-1 text-lg font-bold text-slate-900">{value}</div>
     </div>
@@ -178,7 +178,6 @@ export default function CpdStatusPanel({
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white px-6 py-7 shadow-sm ring-1 ring-slate-200/60 md:px-8">
-      {/* HEADER */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -206,18 +205,14 @@ export default function CpdStatusPanel({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Link href="/profil" className={`${BTN} ${BTN_SECONDARY}`}>
-            Uzupełnij profil
-          </Link>
           <Link href={primary.href} className={`${BTN} ${BTN_PRIMARY}`}>
             {primary.label}
           </Link>
         </div>
       </div>
 
-      {/* MAIN STATUS */}
       <div className="mt-7 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+        <div className="rounded-2xl border border-slate-200 bg-[#fbfaf7] p-5">
           <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
             <div className="text-5xl font-bold tracking-[-0.04em] text-slate-950">
               {donePoints}
@@ -261,12 +256,11 @@ export default function CpdStatusPanel({
           </div>
         </div>
 
-        {/* NEXT STEP */}
         <div
           className={[
             "rounded-2xl border p-5",
             missingEvidenceCount > 0
-              ? "border-rose-200 bg-rose-50"
+              ? "border-amber-200 bg-amber-50"
               : "border-blue-100 bg-blue-50",
           ].join(" ")}
         >
@@ -288,7 +282,6 @@ export default function CpdStatusPanel({
         </div>
       </div>
 
-      {/* PROFILE + STATS */}
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -327,7 +320,6 @@ export default function CpdStatusPanel({
         </div>
       </div>
 
-      {/* LIMITS */}
       {topLimits?.length ? (
         <div className="mt-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -365,7 +357,6 @@ export default function CpdStatusPanel({
         </div>
       ) : null}
 
-      {/* BOTTOM ACTIONS */}
       <div className="mt-6 flex flex-wrap gap-2">
         <Link href={primary.href} className={`${BTN} ${BTN_PRIMARY}`}>
           {primary.label}
