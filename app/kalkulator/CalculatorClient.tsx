@@ -324,6 +324,7 @@ export default function CalculatorClient() {
   const [planInfo, setPlanInfo] = useState<string | null>(null);
   const [planErr, setPlanErr] = useState<string | null>(null);
   const [planningKey, setPlanningKey] = useState<string | null>(null);
+  const [activityFilter, setActivityFilter] = useState<"all" | "planned" | "missing" | "complete">("all");
 
   const supabase = useMemo(() => supabaseClient(), []);
 
@@ -451,6 +452,15 @@ export default function CalculatorClient() {
 
   const daysLeft = useMemo(() => daysUntilEndOfYear(periodEnd), [periodEnd]);
 
+  const periodTimeProgress = useMemo(() => {
+    const start = new Date(periodStart, 0, 1).getTime();
+    const end = new Date(periodEnd, 11, 31, 23, 59, 59).getTime();
+    const now = Date.now();
+
+    if (end <= start) return 0;
+    return clamp(((now - start) / (end - start)) * 100, 0, 100);
+  }, [periodStart, periodEnd]);
+
   const limitsUsage = useMemo(() => {
     const limits = RULES_BY_PROFESSION[profession]?.limits ?? [];
     const usage = new Map<string, number>();
@@ -481,10 +491,11 @@ export default function CalculatorClient() {
 
   const recentRows = useMemo(() => {
     const rank = (a: ActivityRow) => {
-      const missing = getRowMissing(a);
       const prog = normalizeStatus(a.status);
+      const missing = getRowMissing(a);
+      const hasMissingDocumentation = prog !== "planned" && missing.length > 0;
 
-      if (missing.length > 0) return 0;
+      if (hasMissingDocumentation) return 0;
       if (prog === "planned") return 1;
       return 2;
     };
@@ -493,15 +504,23 @@ export default function CalculatorClient() {
       .filter((a) => {
         const prog = normalizeStatus(a.status);
         const y = prog === "planned" && a.planned_start_date ? Number(String(a.planned_start_date).slice(0, 4)) : a.year;
-        return y >= periodStart && y <= periodEnd;
+        const inPeriod = y >= periodStart && y <= periodEnd;
+        if (!inPeriod) return false;
+
+        const missing = getRowMissing(a);
+        const hasMissingDocumentation = prog !== "planned" && missing.length > 0;
+
+        if (activityFilter === "planned") return prog === "planned";
+        if (activityFilter === "missing") return hasMissingDocumentation;
+        if (activityFilter === "complete") return prog !== "planned" && !hasMissingDocumentation;
+        return true;
       })
       .sort((a, b) => {
         const byRank = rank(a) - rank(b);
         if (byRank !== 0) return byRank;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      })
-      ;
-  }, [activities, periodStart, periodEnd]);
+      });
+  }, [activities, periodStart, periodEnd, activityFilter]);
 
   const isBusy = authLoading || loading;
   const pwzIssueDate = profile?.pwz_issue_date ?? null;
@@ -598,14 +617,14 @@ export default function CalculatorClient() {
   const inputCls =
     "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400";
 
-  const cardCls = "scroll-mt-36 rounded-xl border border-slate-200 bg-white shadow-sm";
+  const cardCls = "scroll-mt-40 rounded-xl border border-slate-200 bg-white shadow-sm";
 
   function scrollToSection(id: string) {
     const el = document.getElementById(id);
     if (!el) return;
 
     // Uwzględnia górny header i przyklejone podmenu.
-    const offset = 128;
+    const offset = 146;
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior: "smooth" });
   }
@@ -619,10 +638,13 @@ export default function CalculatorClient() {
     <div className="-mx-4 min-h-screen bg-slate-50 px-4 pb-10 pt-1 sm:-mx-6 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-4">
         {/* SZYBKIE MENU */}
-        <nav className="sticky top-[58px] z-30 mt-2 overflow-x-auto border border-slate-200 bg-white shadow-sm">
+        <nav className="sticky top-[72px] z-30 overflow-x-auto border border-slate-200 bg-white shadow-sm">
           <div className="flex min-w-max">
-            <button type="button" onClick={() => scrollToSection("status")} className={subNavActiveCls}>
-              Status punktów
+            <button type="button" onClick={() => scrollToSection("ustawienia")} className={subNavActiveCls}>
+              Ustawienia
+            </button>
+            <button type="button" onClick={() => scrollToSection("status")} className={subNavItemCls}>
+              Realizacja celu
             </button>
             <button type="button" onClick={() => scrollToSection("kroki")} className={subNavItemCls}>
               Co dalej?
@@ -632,9 +654,6 @@ export default function CalculatorClient() {
             </button>
             <button type="button" onClick={() => scrollToSection("aktywnosci")} className={subNavItemCls}>
               Ostatnie aktywności
-            </button>
-            <button type="button" onClick={() => scrollToSection("ustawienia")} className={subNavItemCls}>
-              Ustawienia
             </button>
           </div>
         </nav>
@@ -798,10 +817,10 @@ export default function CalculatorClient() {
           <div className={cardCls + " p-10 text-center text-sm font-medium text-slate-500"}>Wczytuję dane...</div>
         ) : (
           <>
-            <section id="status" className="scroll-mt-36 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section id="status" className="scroll-mt-40 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="mb-5 flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <IconBubble tone="slate"><MiniIcon name="chart" /></IconBubble>
+                  <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
                   <div>
                     <h2 className="text-base font-semibold text-slate-950">Realizacja celu</h2>
                     <p className="mt-0.5 text-sm text-slate-500">Aktualny stan punktów i dokumentów</p>
@@ -809,9 +828,6 @@ export default function CalculatorClient() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 sm:justify-end">
-                  <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
-                    {progress >= 100 ? "Cel zrealizowany" : "W trakcie realizacji"}
-                  </span>
                   {missingEvidenceCount > 0 ? (
                     <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
                       {missingEvidenceCount} dokumentów do uzupełnienia
@@ -826,7 +842,7 @@ export default function CalculatorClient() {
               <div className="min-w-0 flex-1">
                 <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
                   {missingPoints > 0 ? (
-                    <>Zostało <span className="text-orange-500">{missingPoints} pkt</span></>
+                    <>Zostało <span className="text-amber-600">{missingPoints} pkt</span></>
                   ) : (
                     <>Masz komplet <span className="text-emerald-600">punktów</span></>
                   )}
@@ -860,11 +876,38 @@ export default function CalculatorClient() {
                     </div>
                   ))}
                 </div>
+
+                <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-3 flex items-center justify-between text-xs font-medium text-slate-600">
+                    <span>{periodStart}</span>
+                    <span>Aktualny moment w okresie</span>
+                    <span>{periodEnd}</span>
+                  </div>
+
+                  <div className="relative h-8">
+                    <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-200" />
+                    <div
+                      className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-400"
+                      style={{ width: `${periodTimeProgress}%` }}
+                    />
+                    <div
+                      className="absolute top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-slate-300 bg-white text-blue-600 shadow-sm"
+                      style={{ left: `${periodTimeProgress}%` }}
+                      aria-label="Aktualny moment okresu"
+                    >
+                      <MiniIcon name="user" />
+                    </div>
+                  </div>
+
+                  <div className="mt-2 text-center text-xs text-slate-500">
+                    Upłynęło około {Math.round(periodTimeProgress)}% czasu okresu rozliczeniowego.
+                  </div>
+                </div>
               </div>
             </div>
             </section>
 
-            <section id="kroki" className="scroll-mt-36 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section id="kroki" className="scroll-mt-40 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
               <div>
@@ -986,9 +1029,34 @@ export default function CalculatorClient() {
                 <div>
                   <h2 className="text-base font-medium text-slate-950">Ostatnie aktywności</h2>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-400" /> zaplanowane</span>
-                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" /> brakująca dokumentacja</span>
-                    <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-green-400" /> kompletne</span>
+                    <button
+                      type="button"
+                      onClick={() => setActivityFilter("all")}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "all" ? "bg-slate-100 text-slate-900" : "hover:bg-slate-50"}`}
+                    >
+                      wszystkie
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActivityFilter("missing")}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "missing" ? "bg-amber-50 text-amber-700" : "hover:bg-slate-50"}`}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-amber-400" /> brakująca dokumentacja
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActivityFilter("planned")}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "planned" ? "bg-blue-50 text-blue-700" : "hover:bg-slate-50"}`}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-blue-400" /> zaplanowane
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActivityFilter("complete")}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "complete" ? "bg-emerald-50 text-emerald-700" : "hover:bg-slate-50"}`}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-green-400" /> kompletne
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1001,12 +1069,13 @@ export default function CalculatorClient() {
                 {isBusy ? (
                   <p className="text-sm text-slate-500">Wczytuję...</p>
                 ) : recentRows.length === 0 ? (
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">Brak wpisów w okresie {periodStart}–{periodEnd}.</div>
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">Brak wpisów dla wybranego filtra w okresie {periodStart}–{periodEnd}.</div>
                 ) : (
                   recentRows.map((a) => {
                     const prog = normalizeStatus(a.status);
                     const missing = getRowMissing(a);
-                    const stripe = missing.length ? "bg-amber-500" : prog === "planned" ? "bg-blue-500" : "bg-emerald-500";
+                    const hasMissingDocumentation = prog !== "planned" && missing.length > 0;
+                    const stripe = prog === "planned" ? "bg-blue-500" : hasMissingDocumentation ? "bg-amber-500" : "bg-emerald-500";
 
                     return (
                       <div
@@ -1025,11 +1094,13 @@ export default function CalculatorClient() {
                               }`}>
                                 {prog === "planned" ? "Zaplanowane" : "Ukończone"}
                               </span>
-                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
-                                missing.length ? "bg-amber-50 text-amber-700 ring-amber-100" : "bg-emerald-50 text-emerald-700 ring-emerald-100"
-                              }`}>
-                                {missing.length ? "Brakująca dokumentacja" : "Kompletne"}
-                              </span>
+                              {prog !== "planned" ? (
+                                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
+                                  hasMissingDocumentation ? "bg-amber-50 text-amber-700 ring-amber-100" : "bg-emerald-50 text-emerald-700 ring-emerald-100"
+                                }`}>
+                                  {hasMissingDocumentation ? "Brakująca dokumentacja" : "Kompletne"}
+                                </span>
+                              ) : null}
                             </div>
 
                             <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -1038,7 +1109,7 @@ export default function CalculatorClient() {
                               {prog === "planned" && a.planned_start_date ? <> · Termin: <span className="font-medium text-slate-700">{formatYMD(a.planned_start_date)}</span></> : null}
                             </p>
 
-                            {missing.length > 0 ? (
+                            {hasMissingDocumentation ? (
                               <div className="mt-2 flex flex-wrap gap-1.5">
                                 {missing.map((m) => (
                                   <span key={m} className="rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
