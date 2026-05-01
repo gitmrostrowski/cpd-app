@@ -171,7 +171,7 @@ function buildNextSteps(missingPoints: number, missingEvidenceCount: number, lim
 
   if (missingEvidenceCount > 0) {
     steps.push({
-      icon: "📄",
+      icon: "doc",
       tone: "red",
       title: "Uzupełnij dokumenty",
       description: `Masz ${missingEvidenceCount} brakujących dokumentów.`,
@@ -181,7 +181,7 @@ function buildNextSteps(missingPoints: number, missingEvidenceCount: number, lim
 
   if (missingPoints > 0) {
     steps.push({
-      icon: "🎓",
+      icon: "shield",
       tone: "blue",
       title: limitWarning ? "Dobierz inną aktywność" : "Zaplanuj szkolenie",
       description: limitWarning || "Wybierz szkolenia i zdobądź punkty.",
@@ -190,7 +190,7 @@ function buildNextSteps(missingPoints: number, missingEvidenceCount: number, lim
   }
 
   steps.push({
-    icon: "📊",
+    icon: "chart",
     tone: "green",
     title: "Sprawdź raport",
     description: missingPoints <= 0 ? "Masz komplet punktów. Wygeneruj PDF." : "Zobacz szczegóły swojego postępu.",
@@ -216,7 +216,7 @@ function IconBubble({
   };
 
   return (
-    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border shadow-sm ${tones[tone]}`}>
+    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${tones[tone]}`}>
       {children}
     </div>
   );
@@ -273,16 +273,16 @@ function MiniIcon({ name }: { name: "calendar" | "shield" | "chart" | "doc" | "u
 }
 
 function CircularProgress({ value }: { value: number }) {
-  const radius = 52;
-  const stroke = 13;
+  const radius = 46;
+  const stroke = 10;
   const normalizedRadius = radius - stroke / 2;
   const circumference = normalizedRadius * 2 * Math.PI;
   const offset = circumference - (clamp(value, 0, 100) / 100) * circumference;
 
   return (
-    <div className="relative h-40 w-40">
-      <svg className="-rotate-90" height="160" width="160">
-        <circle stroke="currentColor" className="text-blue-100" fill="transparent" strokeWidth={stroke} r={normalizedRadius} cx="80" cy="80" />
+    <div className="relative h-32 w-32 shrink-0">
+      <svg className="-rotate-90" height="128" width="128">
+        <circle stroke="currentColor" className="text-blue-100" fill="transparent" strokeWidth={stroke} r={normalizedRadius} cx="64" cy="64" />
         <circle
           stroke="currentColor"
           className="text-blue-600 transition-all duration-700"
@@ -297,8 +297,8 @@ function CircularProgress({ value }: { value: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="text-4xl font-black tracking-tight text-slate-950">{Math.round(value)}%</div>
-        <div className="mt-1 text-xs font-semibold text-slate-500">realizacji</div>
+        <div className="text-3xl font-semibold tracking-tight text-slate-950">{Math.round(value)}%</div>
+        <div className="mt-0.5 text-xs font-medium text-slate-500">realizacji</div>
       </div>
     </div>
   );
@@ -582,56 +582,70 @@ export default function CalculatorClient() {
   }
 
   const inputCls =
-    "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 shadow-sm outline-none transition placeholder:text-slate-300 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400";
+    "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400";
 
-  const cardCls = "rounded-[1.35rem] border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-200/40";
+  const cardCls = "scroll-mt-32 rounded-xl border border-slate-200 bg-white shadow-sm";
+
+  function scrollToSection(id: string) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    // Uwzględnia sticky header + sticky submenu, żeby sekcja nie chowała się pod nawigacją.
+    const offset = 118;
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: "smooth" });
+  }
+
+  const subNavItemCls =
+    "shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-slate-600 transition hover:border-blue-200 hover:text-blue-700";
+  const subNavActiveCls =
+    "shrink-0 border-b-2 border-blue-600 px-4 py-3 text-sm font-medium text-blue-700";
 
   return (
-    <div className="-mx-4 min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(37,99,235,0.10),transparent_36%),linear-gradient(180deg,#f8fbff_0%,#ffffff_44%,#f8fafc_100%)] px-4 pb-10 pt-1 sm:-mx-6 sm:px-6">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="-mx-4 min-h-screen bg-slate-50 px-4 pb-10 pt-1 sm:-mx-6 sm:px-6">
+      <div className="mx-auto max-w-6xl space-y-5">
         {/* SZYBKIE MENU */}
-        <nav className="sticky top-16 z-20 rounded-2xl border border-slate-200 bg-white/90 px-3 py-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/75">
-          <div className="flex gap-2 overflow-x-auto">
-            <a href="#status" className="shrink-0 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white shadow-sm">
+        <nav className="sticky top-14 z-20 overflow-x-auto border border-slate-200 bg-white shadow-sm">
+          <div className="flex min-w-max">
+            <button type="button" onClick={() => scrollToSection("status")} className={subNavActiveCls}>
               Status punktów
-            </a>
-            <a href="#kroki" className="shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
+            </button>
+            <button type="button" onClick={() => scrollToSection("kroki")} className={subNavItemCls}>
               Co dalej?
-            </a>
-            <a href="#limity" className="shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
+            </button>
+            <button type="button" onClick={() => scrollToSection("limity")} className={subNavItemCls}>
               Limity
-            </a>
-            <a href="#aktywnosci" className="shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
+            </button>
+            <button type="button" onClick={() => scrollToSection("aktywnosci")} className={subNavItemCls}>
               Ostatnie aktywności
-            </a>
-            <a href="#ustawienia" className="shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
+            </button>
+            <button type="button" onClick={() => scrollToSection("ustawienia")} className={subNavItemCls}>
               Ustawienia
-            </a>
+            </button>
           </div>
         </nav>
 
         {isBusy ? (
-          <div className={cardCls + " p-10 text-center text-sm font-semibold text-slate-500"}>Wczytuję dane...</div>
+          <div className={cardCls + " p-10 text-center text-sm font-medium text-slate-500"}>Wczytuję dane...</div>
         ) : (
           <>
-          <section id="status" className="relative overflow-hidden rounded-[1.5rem] border border-blue-200/80 bg-white p-6 shadow-sm ring-1 ring-blue-100/70">
-            <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-blue-100/80 blur-3xl" />
-            <div className="relative flex flex-col gap-6 md:flex-row md:items-center">
+          <section id="status" className="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center">
               <CircularProgress value={progress} />
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700 ring-1 ring-blue-100">
+                  <div className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-100">
                     {progress >= 100 ? "Cel zrealizowany" : "Jesteś w trakcie realizacji celu"}
                   </div>
                   {missingEvidenceCount > 0 ? (
-                    <div className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700 ring-1 ring-amber-100">
+                    <div className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
                       {missingEvidenceCount} dokumentów do uzupełnienia
                     </div>
                   ) : null}
                 </div>
 
-                <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
                   {missingPoints > 0 ? (
                     <>Zostało <span className="text-orange-500">{missingPoints} pkt</span></>
                   ) : (
@@ -639,13 +653,13 @@ export default function CalculatorClient() {
                   )}
                 </h2>
 
-                <p className="mt-2 text-base leading-7 text-slate-600">
+                <p className="mt-2 text-sm leading-6 text-slate-600">
                   Masz <strong className="text-slate-950">{donePoints} / {requiredPoints} pkt</strong> w okresie {periodStart}–{periodEnd}. 
                   Do końca zostało <strong className="text-slate-950">{daysLeft} dni</strong>.
                 </p>
 
                 <div className="mt-6">
-                  <div className="mb-2 flex justify-between text-xs font-bold text-slate-500">
+                  <div className="mb-2 flex justify-between text-xs font-medium text-slate-500">
                     <span>Postęp punktów</span>
                     <span>{donePoints} / {requiredPoints} pkt</span>
                   </div>
@@ -654,16 +668,16 @@ export default function CalculatorClient() {
                   </div>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="mt-6 grid grid-cols-2 border-t border-slate-200 pt-4 sm:grid-cols-4">
                   {[
                     ["calendar", `${daysLeft}`, "dni do końca"],
                     ["doc", `${missingEvidenceCount}`, "brak. dok."],
                     ["chart", `${requiredPoints}`, "pkt wymagane"],
                     ["user", displayProfession(profession, professionOther), "Twój zawód"],
                   ].map(([icon, value, label]) => (
-                    <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                    <div key={label} className="border-r border-slate-200 px-4 last:border-r-0">
                       <div className="mb-2 text-blue-600"><MiniIcon name={icon as any} /></div>
-                      <div className="truncate text-lg font-black text-slate-950">{value}</div>
+                      <div className="truncate text-xl font-semibold text-slate-950">{value}</div>
                       <div className="mt-0.5 text-xs text-slate-500">{label}</div>
                     </div>
                   ))}
@@ -672,11 +686,11 @@ export default function CalculatorClient() {
             </div>
           </section>
 
-          <section id="kroki" className="rounded-[1.5rem] border border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-white p-5 shadow-sm ring-1 ring-amber-100/70">
+          <section id="kroki" className="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
-              <IconBubble tone="amber">⭐</IconBubble>
+              <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
               <div>
-                <h2 className="text-base font-black text-slate-950">Co dalej?</h2>
+                <h2 className="text-base font-medium text-slate-950">Co dalej?</h2>
                 <p className="text-sm text-slate-500">Najważniejsze działania na podstawie braków</p>
               </div>
             </div>
@@ -686,11 +700,11 @@ export default function CalculatorClient() {
                 <Link
                   key={step.title}
                   href={step.ctaHref}
-                  className="group flex items-center gap-4 rounded-2xl border border-amber-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                  className="group flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 transition hover:border-blue-300 hover:bg-slate-50"
                 >
-                  <IconBubble tone={step.tone as any}><span className="text-lg">{step.icon}</span></IconBubble>
+                  <IconBubble tone={step.tone as any}><MiniIcon name={step.icon as any} /></IconBubble>
                   <div className="min-w-0 flex-1">
-                    <div className="font-black text-slate-950">{step.title}</div>
+                    <div className="font-semibold text-slate-950">{step.title}</div>
                     <div className="mt-0.5 text-sm leading-5 text-slate-500">{step.description}</div>
                   </div>
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-500 transition group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-600">→</span>
@@ -707,7 +721,7 @@ export default function CalculatorClient() {
               <div className="flex items-center gap-4">
                 <IconBubble tone="blue"><MiniIcon name="shield" /></IconBubble>
                 <div>
-                  <h2 className="text-base font-black text-slate-950">Twoje limity</h2>
+                  <h2 className="text-base font-medium text-slate-950">Twoje limity</h2>
                   <p className="mt-0.5 text-sm text-slate-500">Najbardziej ograniczające kategorie w tym okresie</p>
                 </div>
               </div>
@@ -720,7 +734,7 @@ export default function CalculatorClient() {
 
             <div className="p-6">
               {(planInfo || planErr) ? (
-                <div className="mb-4 rounded-2xl border border-slate-100 bg-slate-50 p-3 text-sm">
+                <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
                   {planInfo ? <p className="font-bold text-blue-700">{planInfo}</p> : null}
                   {planErr ? <p className="font-bold text-red-600">{planErr}</p> : null}
                 </div>
@@ -728,13 +742,13 @@ export default function CalculatorClient() {
 
               <div className="grid gap-3 lg:grid-cols-3">
                 {limitsUsage.length === 0 ? (
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 lg:col-span-3">Brak zdefiniowanych limitów dla tego zawodu.</div>
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 lg:col-span-3">Brak zdefiniowanych limitów dla tego zawodu.</div>
                 ) : (
                   limitsUsage.map((r) => {
                     const isMax = r.usedPct >= 100 || (Number(r.remaining) || 0) <= 0;
 
                     return (
-                      <div key={r.key} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md">
+                      <div key={r.key} className="group relative overflow-hidden rounded-lg border border-slate-200 bg-white p-4 transition hover:border-blue-300">
                         <div className="flex items-center gap-4">
                           <IconBubble tone={isMax ? "green" : "blue"}>
                             <MiniIcon name={r.key === "JOURNAL_SUBSCRIPTION" ? "doc" : r.key === "SCIENTIFIC_SOCIETY" ? "user" : "chart"} />
@@ -742,8 +756,8 @@ export default function CalculatorClient() {
 
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="font-black text-slate-950">{r.label}</h3>
-                              {isMax ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">wykorzystane</span> : null}
+                              <h3 className="font-semibold text-slate-950">{r.label}</h3>
+                              {isMax ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">wykorzystane</span> : null}
                             </div>
                             <p className="mt-0.5 text-xs text-slate-500">
                               {r.mode === "per_item" ? `max ${r.cap} pkt / szkolenie` : r.mode === "per_year" ? `max ${r.maxPoints} pkt / rok` : `max ${r.cap} pkt w okresie`} · {r.used} / {r.cap} pkt
@@ -752,24 +766,24 @@ export default function CalculatorClient() {
                               <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
                                 <div className={`h-full rounded-full ${isMax ? "bg-emerald-500" : r.usedPct >= 50 ? "bg-blue-500" : "bg-slate-300"}`} style={{ width: `${r.usedPct}%` }} />
                               </div>
-                              <span className="w-10 text-right text-xs font-black text-slate-600">{Math.round(r.usedPct)}%</span>
+                              <span className="w-10 text-right text-xs font-medium text-slate-600">{Math.round(r.usedPct)}%</span>
                             </div>
                           </div>
 
                           <div className="shrink-0 text-right">
-                            <div className={`mb-2 rounded-xl px-3 py-2 text-sm font-black ${isMax ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-950"}`}>
+                            <div className={`mb-2 rounded-lg px-3 py-2 text-sm font-medium ${isMax ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-950"}`}>
                               {Math.round(r.remaining)} pkt<br />
-                              <span className="text-xs font-semibold text-slate-500">zostało</span>
+                              <span className="text-xs font-medium text-slate-500">zostało</span>
                             </div>
 
                             {isMax ? (
-                              <Link href="/aktywnosci" className="text-xs font-bold text-slate-500 hover:text-blue-600">Zobacz →</Link>
+                              <Link href="/aktywnosci" className="text-xs font-medium text-slate-500 hover:text-blue-600">Zobacz →</Link>
                             ) : (
                               <button
                                 type="button"
                                 disabled={isBusy || planningKey === r.key}
                                 onClick={() => planForRule(r)}
-                                className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-black text-white transition hover:bg-blue-700 disabled:opacity-40"
+                                className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700 disabled:opacity-40"
                               >
                                 {planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}
                               </button>
@@ -783,9 +797,9 @@ export default function CalculatorClient() {
               </div>
 
               <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                <Link href="/aktywnosci" className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">Aktywności →</Link>
-                <Link href="/aktywnosci?new=1" className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">+ Dodaj aktywność</Link>
-                <Link href="/portfolio" className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">Raport / PDF →</Link>
+                <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Aktywności →</Link>
+                <Link href="/aktywnosci?new=1" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">+ Dodaj aktywność</Link>
+                <Link href="/portfolio" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Raport / PDF →</Link>
               </div>
             </div>
           </div>
@@ -795,7 +809,7 @@ export default function CalculatorClient() {
               <div className="flex items-center gap-4">
                 <IconBubble tone="green"><MiniIcon name="calendar" /></IconBubble>
                 <div>
-                  <h2 className="text-base font-black text-slate-950">Ostatnie aktywności</h2>
+                  <h2 className="text-base font-medium text-slate-950">Ostatnie aktywności</h2>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                     <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-400" /> zaplanowane</span>
                     <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" /> braki</span>
@@ -804,7 +818,7 @@ export default function CalculatorClient() {
                 </div>
               </div>
 
-              <Link href="/aktywnosci" className="text-sm font-black text-blue-600 hover:text-blue-700">Zobacz wszystkie</Link>
+              <Link href="/aktywnosci" className="text-sm font-medium text-blue-600 hover:text-blue-700">Zobacz wszystkie</Link>
             </div>
 
             <div className="p-6">
@@ -812,7 +826,7 @@ export default function CalculatorClient() {
                 {isBusy ? (
                   <p className="text-sm text-slate-500 xl:col-span-2">Wczytuję...</p>
                 ) : recentRows.length === 0 ? (
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 xl:col-span-2">Brak wpisów w okresie {periodStart}–{periodEnd}.</div>
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 xl:col-span-2">Brak wpisów w okresie {periodStart}–{periodEnd}.</div>
                 ) : (
                   recentRows.map((a) => {
                     const prog = normalizeStatus(a.status);
@@ -822,21 +836,21 @@ export default function CalculatorClient() {
                     return (
                       <div
                         key={a.id}
-                        className={`relative overflow-hidden rounded-2xl border border-slate-200 p-4 pl-5 shadow-sm transition hover:shadow-md ${
-                          prog === "planned" ? "bg-blue-50/25" : missing.length ? "bg-amber-50/35" : "bg-white"
+                        className={`relative overflow-hidden rounded-lg border border-slate-200 p-4 pl-5 transition hover:border-blue-300 ${
+                          prog === "planned" ? "bg-white" : missing.length ? "bg-white" : "bg-white"
                         }`}
                       >
                         <div className={`absolute inset-y-4 left-0 w-1.5 rounded-r-full ${stripe}`} />
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="font-black text-slate-950">{a.type}</h3>
-                              <span className={`rounded-full px-2 py-0.5 text-xs font-bold ring-1 ${
+                              <h3 className="font-semibold text-slate-950">{a.type}</h3>
+                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
                                 prog === "planned" ? "bg-blue-50 text-blue-700 ring-blue-100" : "bg-slate-50 text-slate-600 ring-slate-100"
                               }`}>
                                 {prog === "planned" ? "Zaplanowane" : "Ukończone"}
                               </span>
-                              <span className={`rounded-full px-2 py-0.5 text-xs font-bold ring-1 ${
+                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
                                 missing.length ? "bg-amber-50 text-amber-700 ring-amber-100" : "bg-emerald-50 text-emerald-700 ring-emerald-100"
                               }`}>
                                 {missing.length ? "Braki" : "Kompletne"}
@@ -852,7 +866,7 @@ export default function CalculatorClient() {
                             {missing.length > 0 ? (
                               <div className="mt-2 flex flex-wrap gap-1.5">
                                 {missing.map((m) => (
-                                  <span key={m} className="rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                                  <span key={m} className="rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
                                     {m}
                                   </span>
                                 ))}
@@ -861,8 +875,8 @@ export default function CalculatorClient() {
                           </div>
 
                           <div className="flex shrink-0 flex-col items-end gap-2">
-                            <span className="text-sm font-black text-slate-950">+{a.points} pkt</span>
-                            <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                            <span className="text-sm font-medium text-slate-950">+{a.points} pkt</span>
+                            <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
                               Otwórz →
                             </Link>
                           </div>
@@ -881,7 +895,7 @@ export default function CalculatorClient() {
             <div className="flex items-center gap-4">
               <IconBubble tone="blue"><MiniIcon name="calendar" /></IconBubble>
               <div>
-                <h2 className="text-base font-black text-slate-950">Ustawienia okresu i zawodu</h2>
+                <h2 className="text-base font-medium text-slate-950">Ustawienia okresu i zawodu</h2>
                 <p className="mt-0.5 text-sm text-slate-500">
                   Zmień preferencje w dowolnym momencie.
                   {savedAt && !dirty && !savingProfile ? <span className="ml-1 font-bold text-blue-600">✓ Zapisano</span> : null}
@@ -904,7 +918,7 @@ export default function CalculatorClient() {
                   setPeriodMode(derived ? "custom" : "preset");
                   setDirty(true);
                 }}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
               >
                 Domyślne
               </button>
@@ -912,11 +926,11 @@ export default function CalculatorClient() {
                 type="button"
                 onClick={saveAllSettings}
                 disabled={isBusy || savingProfile || !dirty || !otherValid}
-                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {savingProfile ? "Zapisuję..." : "Zapisz zmiany"}
               </button>
-              <Link href="/profil" className="rounded-xl border border-blue-200 bg-white px-5 py-2.5 text-sm font-black text-blue-700 shadow-sm transition hover:bg-blue-50">
+              <Link href="/profil" className="rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-sm font-medium text-blue-700 shadow-sm transition hover:bg-blue-50">
                 Profil →
               </Link>
             </div>
@@ -924,7 +938,7 @@ export default function CalculatorClient() {
 
           <div className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-2 xl:grid-cols-4">
             <div>
-              <label className="text-xs font-black uppercase tracking-wide text-slate-500">Zawód</label>
+              <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Zawód</label>
               <select
                 value={profession}
                 onChange={(e) => {
@@ -953,7 +967,7 @@ export default function CalculatorClient() {
             </div>
 
             <div>
-              <label className="text-xs font-black uppercase tracking-wide text-slate-500">{trybLabel}</label>
+              <label className="text-xs font-medium uppercase tracking-wide text-slate-500">{trybLabel}</label>
               <select
                 value={periodMode}
                 onChange={(e) => {
@@ -977,7 +991,7 @@ export default function CalculatorClient() {
 
             {periodMode === "preset" && !pwzIssueDate ? (
               <div>
-                <label className="text-xs font-black uppercase tracking-wide text-slate-500">{okresLabel}</label>
+                <label className="text-xs font-medium uppercase tracking-wide text-slate-500">{okresLabel}</label>
                 <select
                   value={periodLabel}
                   onChange={(e) => {
@@ -995,7 +1009,7 @@ export default function CalculatorClient() {
               </div>
             ) : (
               <div>
-                <label className="text-xs font-black uppercase tracking-wide text-slate-500">{okresLabel}</label>
+                <label className="text-xs font-medium uppercase tracking-wide text-slate-500">{okresLabel}</label>
                 <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                   <input value={periodStart} onChange={(e) => { setPeriodStart(Number(e.target.value || 0)); setDirty(true); }} type="number" disabled={Boolean(pwzIssueDate)} className={inputCls} />
                   <span className="text-slate-400">–</span>
@@ -1005,7 +1019,7 @@ export default function CalculatorClient() {
             )}
 
             <div>
-              <label className="text-xs font-black uppercase tracking-wide text-slate-500">Wymagane punkty</label>
+              <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Wymagane punkty</label>
               <input
                 value={requiredPoints}
                 onChange={(e) => { setRequiredPoints(Number(e.target.value || 0)); setDirty(true); }}
@@ -1017,7 +1031,7 @@ export default function CalculatorClient() {
 
             {otherRequired ? (
               <div className="md:col-span-2 xl:col-span-4">
-                <label className="text-xs font-black uppercase tracking-wide text-slate-500">Jaki zawód?</label>
+                <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Jaki zawód?</label>
                 <input
                   value={professionOther}
                   onChange={(e) => { setProfessionOther(e.target.value); setDirty(true); }}
@@ -1030,17 +1044,16 @@ export default function CalculatorClient() {
         </section>
 
 
-        <section className="relative overflow-hidden rounded-[1.5rem] border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 shadow-sm">
-          <div className="absolute -right-12 -bottom-16 h-48 w-48 rounded-full bg-blue-200/40 blur-3xl" />
-          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               <IconBubble tone="blue"><MiniIcon name="bell" /></IconBubble>
               <div>
-                <h2 className="font-black text-slate-950">Bądź na bieżąco i nie przegap ważnych terminów</h2>
+                <h2 className="font-semibold text-slate-950">Bądź na bieżąco i nie przegap ważnych terminów</h2>
                 <p className="mt-1 text-sm text-slate-600">Włącz powiadomienia, aby otrzymywać przypomnienia o szkoleniach i terminach.</p>
               </div>
             </div>
-            <Link href="/profil" className="rounded-xl border border-blue-100 bg-white px-5 py-2.5 text-sm font-black text-blue-700 shadow-sm hover:bg-blue-50">
+            <Link href="/profil" className="rounded-lg border border-blue-100 bg-white px-5 py-2.5 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-50">
               Ustawienia powiadomień →
             </Link>
           </div>
