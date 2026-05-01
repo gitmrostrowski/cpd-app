@@ -660,12 +660,12 @@ export default function CalculatorClient() {
 
       {/* ══ 2. HERO STATUS — jeden jasny komunikat ═══════════════════════════ */}
       {!isBusy && (
-        <div className={`rounded-2xl border px-6 py-5 transition-all duration-200 ${
+        <div className={`rounded-2xl border bg-white px-6 py-5 transition-all duration-200 ${
         progress >= 100
-          ? "border-green-100 bg-gradient-to-br from-white to-green-50/40 shadow-[0_10px_30px_rgba(34,197,94,0.08)]"
+          ? "border-green-100 shadow-sm"
           : progress >= 50
-          ? "border-blue-100 bg-gradient-to-br from-white to-blue-50/30 shadow-sm"
-          : "border-red-100 bg-gradient-to-br from-white to-red-50/40 shadow-[0_10px_30px_rgba(239,68,68,0.08)]"
+          ? "border-slate-200 shadow-sm"
+          : "border-red-100 shadow-[0_4px_20px_rgba(239,68,68,0.06)]"
       }`}>
           {/* Główny komunikat */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -804,7 +804,7 @@ export default function CalculatorClient() {
               limitsUsage.map((r) => {
                 const isMax = (r.usedPct ?? 0) >= 100 || (Number(r.remaining) || 0) <= 0;
                 return (
-                  <div key={r.key} className="flex items-center gap-4 rounded-xl border-l-4 border border-slate-100 border-l-blue-400 bg-white p-4 transition hover:shadow-md hover:border-l-blue-500">
+                  <div key={r.key} className="flex items-center gap-4 rounded-2xl border border-slate-200 border-l-4 border-l-blue-400 bg-white p-4 transition hover:shadow-sm hover:border-blue-200 hover:border-l-blue-500">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-2">
                         <span className="text-sm font-semibold text-slate-900">{r.label}</span>
