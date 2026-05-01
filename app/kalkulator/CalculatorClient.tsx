@@ -613,6 +613,7 @@ export default function CalculatorClient() {
         {isBusy ? (
           <div className={cardCls + " p-10 text-center text-sm font-semibold text-slate-500"}>Wczytuję dane...</div>
         ) : (
+          <>
           <section id="status" className="relative overflow-hidden rounded-[1.5rem] border border-blue-200/80 bg-white p-6 shadow-sm ring-1 ring-blue-100/70">
             <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-blue-100/80 blur-3xl" />
             <div className="relative flex flex-col gap-6 md:flex-row md:items-center">
@@ -672,86 +673,32 @@ export default function CalculatorClient() {
           </section>
 
           <section id="kroki" className="rounded-[1.5rem] border border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-white p-5 shadow-sm ring-1 ring-amber-100/70">
-              <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-blue-100/80 blur-3xl" />
-              <div className="relative flex flex-col gap-6 md:flex-row md:items-center">
-                <CircularProgress value={progress} />
-
-                <div className="min-w-0 flex-1">
-                  <div className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700 ring-1 ring-blue-100">
-                    {progress >= 100 ? "Cel zrealizowany" : "Jesteś w trakcie realizacji celu"}
-                  </div>
-
-                  <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-950">
-                    {missingPoints > 0 ? (
-                      <>Zostało <span className="text-orange-500">{missingPoints} pkt</span></>
-                    ) : (
-                      <>Masz komplet <span className="text-emerald-600">punktów</span></>
-                    )}
-                  </h2>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {donePoints} / {requiredPoints} pkt w okresie {periodStart}–{periodEnd}. Dokumenty kompletne w {Math.round(evidencePct)}%.
-                  </p>
-
-                  <div className="mt-5">
-                    <div className="mb-2 flex justify-between text-xs font-bold text-slate-500">
-                      <span>Postęp punktów</span>
-                      <span>{donePoints} / {requiredPoints} pkt</span>
-                    </div>
-                    <div className="h-3 overflow-hidden rounded-full bg-blue-100">
-                      <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-700 transition-all duration-700" style={{ width: `${Math.max(progress, 2)}%` }} />
-                    </div>
-                  </div>
-
-                  <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {[
-                      ["calendar", `${daysLeft}`, "dni do końca"],
-                      ["doc", `${missingEvidenceCount}`, "brak. dok."],
-                      ["chart", `${requiredPoints}`, "pkt wymagane"],
-                      ["user", displayProfession(profession, professionOther), "Twój zawód"],
-                    ].map(([icon, value, label]) => (
-                      <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
-                        <div className="mb-2 text-blue-600"><MiniIcon name={icon as any} /></div>
-                        <div className="truncate text-sm font-black text-slate-950">{value}</div>
-                        <div className="mt-0.5 text-xs text-slate-500">{label}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+            <div className="mb-4 flex items-center gap-3">
+              <IconBubble tone="amber">⭐</IconBubble>
+              <div>
+                <h2 className="text-base font-black text-slate-950">Co dalej?</h2>
+                <p className="text-sm text-slate-500">Najważniejsze działania na podstawie braków</p>
               </div>
             </div>
 
-            <aside className="rounded-[1.5rem] border border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-white p-5 shadow-sm ring-1 ring-amber-100/70">
-              <div className="mb-4 flex items-center gap-3">
-                <IconBubble tone="amber">⭐</IconBubble>
-                <div>
-                  <h2 className="text-base font-black text-slate-950">Najbliższe kroki</h2>
-                  <p className="text-sm text-slate-500">Co warto zrobić teraz</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {nextSteps.map((step) => (
-                  <Link
-                    key={step.title}
-                    href={step.ctaHref}
-                    className="group flex items-center gap-4 rounded-2xl border border-amber-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
-                  >
-                    <IconBubble tone={step.tone as any}><span className="text-lg">{step.icon}</span></IconBubble>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-black text-slate-950">{step.title}</div>
-                      <div className="mt-0.5 text-sm leading-5 text-slate-500">{step.description}</div>
-                    </div>
-                    <span className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 text-slate-500 transition group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-600">→</span>
-                  </Link>
-                ))}
-
-                <Link href="/aktywnosci" className="block rounded-2xl border border-amber-100 bg-white/70 px-4 py-3 text-center text-sm font-black text-blue-700 transition hover:bg-blue-50">
-                  Zobacz wszystkie działania →
+            <div className="grid gap-3 md:grid-cols-3">
+              {nextSteps.map((step) => (
+                <Link
+                  key={step.title}
+                  href={step.ctaHref}
+                  className="group flex items-center gap-4 rounded-2xl border border-amber-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                >
+                  <IconBubble tone={step.tone as any}><span className="text-lg">{step.icon}</span></IconBubble>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-black text-slate-950">{step.title}</div>
+                    <div className="mt-0.5 text-sm leading-5 text-slate-500">{step.description}</div>
+                  </div>
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-500 transition group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-600">→</span>
                 </Link>
-              </div>
-            </aside>
+              ))}
+            </div>
           </section>
+          </>
         )}
 
         <section className="space-y-5">
