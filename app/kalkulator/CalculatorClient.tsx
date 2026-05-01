@@ -281,7 +281,7 @@ function CircularProgress({
   value: number;
   label?: string;
   size?: "normal" | "small";
-  tone?: "blue" | "slate";
+  tone?: "blue" | "slate" | "amber";
 }) {
   const isSmall = size === "small";
   const svgSize = isSmall ? 92 : 128;
@@ -291,7 +291,7 @@ function CircularProgress({
   const normalizedRadius = radius - stroke / 2;
   const circumference = normalizedRadius * 2 * Math.PI;
   const offset = circumference - (clamp(value, 0, 100) / 100) * circumference;
-  const strokeTone = tone === "slate" ? "text-slate-500" : "text-blue-500";
+  const strokeTone = tone === "amber" ? "text-amber-500" : tone === "slate" ? "text-slate-500" : "text-blue-500";
 
   return (
     <div className={`relative shrink-0 ${isSmall ? "h-[92px] w-[92px]" : "h-32 w-32"}`}>
@@ -632,7 +632,7 @@ export default function CalculatorClient() {
   const inputCls =
     "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400";
 
-  const cardCls = "scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm";
+  const cardCls = "scroll-mt-32 relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm";
 
   function scrollToSection(id: "ustawienia" | "status" | "kroki" | "limity" | "aktywnosci" | "powiadomienia") {
     const el = document.getElementById(id);
@@ -641,7 +641,7 @@ export default function CalculatorClient() {
     setActiveNav(id);
 
     // Header + podmenu + mały oddech, żeby ramka nie przyklejała się do nawigacji.
-    const offset = 156;
+    const offset = 126;
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior: "smooth" });
   }
@@ -655,7 +655,7 @@ export default function CalculatorClient() {
     <div className="-mx-4 min-h-screen bg-slate-50 px-4 pb-10 pt-1 sm:-mx-6 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-4">
         {/* SZYBKIE MENU */}
-        <nav className="sticky top-[72px] z-30 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <nav className="sticky top-[68px] z-30 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex min-w-max">
             <button type="button" onClick={() => scrollToSection("ustawienia")} className={activeNav === "ustawienia" ? subNavActiveCls : subNavItemCls}>
               Ustawienia
@@ -838,10 +838,10 @@ export default function CalculatorClient() {
           <div className={cardCls + " p-10 text-center text-sm font-medium text-slate-500"}>Wczytuję dane...</div>
         ) : (
           <>
-            <section id="status" className="scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section id="status" className="scroll-mt-32 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
 
-              <div className="mb-5 grid gap-3 border-b border-slate-100 pb-4 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+              <div className="mb-5 grid gap-3 border-b border-slate-100 pb-4 lg:grid-cols-[1fr_auto_1fr] lg:items-start">
                 <div className="flex items-center gap-3">
                   <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
                   <div>
@@ -874,8 +874,9 @@ export default function CalculatorClient() {
               </div>
 
               <div className="grid gap-6 lg:grid-cols-[150px_1fr] lg:items-start">
-                <div className="flex justify-center">
+                <div className="flex flex-row items-center justify-center gap-4 lg:flex-col">
                   <CircularProgress value={progress} label="realizacji" />
+                  <CircularProgress value={periodTimeProgress} label="czasu minęło" size="small" tone="amber" />
                 </div>
 
                 <div className="min-w-0">
@@ -904,11 +905,11 @@ export default function CalculatorClient() {
                     <div className="relative h-8">
                       <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-200" />
                       <div
-                        className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-400"
+                        className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-amber-400"
                         style={{ width: `${periodTimeProgress}%` }}
                       />
                       <div
-                        className="absolute top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-slate-300 bg-white text-blue-600 shadow-sm"
+                        className="absolute top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-amber-200 bg-white text-amber-600 shadow-sm"
                         style={{ left: `${periodTimeProgress}%` }}
                         aria-label="Aktualny moment okresu"
                       >
@@ -940,7 +941,7 @@ export default function CalculatorClient() {
               </div>
             </section>
 
-            <section id="kroki" className="scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section id="kroki" className="scroll-mt-32 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
             <div className="mb-4 flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
@@ -1082,9 +1083,9 @@ export default function CalculatorClient() {
                     <button
                       type="button"
                       onClick={() => setActivityFilter("planned")}
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "planned" ? "bg-blue-50 text-blue-700" : "hover:bg-slate-50"}`}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === "planned" ? "bg-violet-50 text-violet-700" : "hover:bg-slate-50"}`}
                     >
-                      <span className="h-2 w-2 rounded-full bg-blue-400" /> zaplanowane
+                      <span className="h-2 w-2 rounded-full bg-violet-400" /> zaplanowane
                     </button>
                     <button
                       type="button"
@@ -1111,7 +1112,7 @@ export default function CalculatorClient() {
                     const prog = normalizeStatus(a.status);
                     const missing = getRowMissing(a);
                     const hasMissingDocumentation = prog !== "planned" && missing.length > 0;
-                    const stripe = prog === "planned" ? "bg-blue-500" : hasMissingDocumentation ? "bg-amber-500" : "bg-emerald-500";
+                    const stripe = prog === "planned" ? "bg-violet-500" : hasMissingDocumentation ? "bg-amber-500" : "bg-emerald-500";
 
                     return (
                       <div
@@ -1126,7 +1127,7 @@ export default function CalculatorClient() {
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="font-medium text-slate-950">{a.type}</h3>
                               <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
-                                prog === "planned" ? "bg-blue-50 text-blue-700 ring-blue-100" : "bg-slate-50 text-slate-600 ring-slate-100"
+                                prog === "planned" ? "bg-violet-50 text-violet-700 ring-violet-100" : "bg-slate-50 text-slate-600 ring-slate-100"
                               }`}>
                                 {prog === "planned" ? "Zaplanowane" : "Ukończone"}
                               </span>
@@ -1174,7 +1175,7 @@ export default function CalculatorClient() {
 
 
 
-        <section id="powiadomienia" className="scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section id="powiadomienia" className="scroll-mt-32 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
