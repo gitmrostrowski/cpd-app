@@ -825,9 +825,9 @@ export default function CalculatorClient() {
     ? "Okres rozliczeniowy"
     : "Okres (indywidualny)";
 
-  // ─── shared input class ─────────────────────────────────────────────────
+  // ─── shared input/select class — white bg so <option> text is readable ────
   const inputCls =
-    "h-11 w-full rounded-lg border border-white/30 bg-white/10 px-3 text-sm font-medium text-white placeholder:text-white/40 transition focus:border-white/60 focus:bg-white/20 focus:outline-none focus:ring-0";
+    "h-11 w-full rounded-lg border border-white/40 bg-white/95 px-3 text-sm font-medium text-slate-800 transition focus:border-white focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50";
 
   return (
     /* ── Page wrapper — no background override, no max-width constraint ── */
@@ -874,10 +874,17 @@ export default function CalculatorClient() {
                 <BtnPrimary
                   onClick={saveAllSettings}
                   disabled={isBusy || savingProfile || !dirty || !otherValid}
+                  className="min-w-[130px]"
                 >
                   {savingProfile ? "Zapisuję…" : "Zapisz zmiany"}
                 </BtnPrimary>
-                <BtnGhostOnDark href="/profil">Profil →</BtnGhostOnDark>
+                {/* Profil — white solid, same width as primary, equally prominent */}
+                <Link
+                  href="/profil"
+                  className="inline-flex min-w-[130px] items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#2a6b6b] transition hover:bg-white/90 active:scale-95"
+                >
+                  Profil →
+                </Link>
               </div>
             </div>
 
@@ -1022,7 +1029,7 @@ export default function CalculatorClient() {
         </div>
 
         {/* ── PANEL STATUSU ─────────────────────────────────────────── */}
-        <Card className="overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
           <CpdStatusPanel
             isBusy={authLoading || loading}
             userEmail={user?.email ?? null}
@@ -1044,7 +1051,7 @@ export default function CalculatorClient() {
             secondaryCtaHref="/aktywnosci"
             portfolioHref="/portfolio"
           />
-        </Card>
+        </div>
 
         {/* ── REGUŁY I LIMITY ────────────────────────────────────────── */}
         <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
