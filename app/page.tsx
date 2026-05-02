@@ -200,14 +200,29 @@ function PhotoCard({
 }) {
   return (
     <div className={`group relative overflow-hidden rounded-[1.45rem] border border-slate-200 bg-slate-900 shadow-sm ${className}`}>
-      <Image src={src} alt={alt} fill className={`${imageClassName} transition duration-700 group-hover:scale-[1.03]`} sizes="(max-width: 1024px) 100vw, 780px" />
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        className={`${imageClassName} transition duration-700 group-hover:scale-[1.03]`}
+        sizes="(max-width: 1024px) 100vw, 780px"
+      />
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/82 via-slate-950/28 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-6 text-white lg:p-7">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100/90">CRPE w praktyce</p>
         <h3 className="mt-1.5 max-w-2xl text-xl font-bold leading-tight lg:text-2xl">{title}</h3>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/75">{text}</p>
+        {text ? <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/75">{text}</p> : null}
       </div>
     </div>
+  );
+}
+
+function BellIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
   );
 }
 
@@ -236,69 +251,58 @@ function CrpeFeatures() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
-      <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-        <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="border-b border-slate-100 p-6 lg:border-b-0 lg:border-r lg:p-8">
-            <Eyebrow>Funkcje w CRPE</Eyebrow>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-950 lg:text-3xl">Co dostajesz w CRPE</h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Minimum klików, maksimum porządku. Budujesz portfolio, które da się szybko sprawdzić i uzupełnić.
-            </p>
+    <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
+      <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="border-b border-slate-100 p-6 lg:border-b-0 lg:border-r lg:p-8">
+          <Eyebrow>Funkcje w CRPE</Eyebrow>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-950 lg:text-3xl">Co dostajesz w CRPE</h2>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">
+            Minimum klików, maksimum porządku. Budujesz portfolio, które da się szybko sprawdzić i uzupełnić.
+          </p>
 
-            <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-              <div className="flex gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-blue-700 ring-1 ring-blue-100">
-                  <Smartphone className="h-5 w-5" strokeWidth={2.1} />
-                </span>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-blue-600">Planowana funkcja</p>
-                  <p className="mt-0.5 text-sm font-bold text-slate-950">Dodawanie certyfikatów z telefonu</p>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                    Po szkoleniu zeskanujesz QR kod, dodasz aktywność i zrobisz zdjęcie certyfikatu. Wszystko trafi do Twojego panelu od razu, bez Excela i bez przepisywania danych.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {[
-                  { icon: QrCode, text: "Skan QR kodu szkolenia" },
-                  { icon: UploadCloud, text: "Zdjęcie certyfikatu z telefonu" },
-                  { icon: CheckCircle2, text: "Automatyczny wpis do bazy" },
-                  { icon: BellIcon, text: "Przypomnienie o brakach" },
-                ].map(({ icon: Icon, text }) => (
-                  <div key={text} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-blue-100">
-                    <Icon className="h-4 w-4 text-blue-600" strokeWidth={2} />
-                    {text}
-                  </div>
-                ))}
+          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+            <div className="flex gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-blue-700 ring-1 ring-blue-100">
+                <Smartphone className="h-5 w-5" strokeWidth={2.1} />
+              </span>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-blue-600">Planowana funkcja</p>
+                <p className="mt-0.5 text-sm font-bold text-slate-950">Dodawanie certyfikatów z telefonu</p>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                  Po szkoleniu zeskanujesz QR kod, dodasz aktywność i zrobisz zdjęcie certyfikatu. Wszystko trafi do Twojego panelu od razu, bez Excela i bez przepisywania danych.
+                </p>
               </div>
             </div>
-          </div>
 
-          <div className="grid gap-3 p-5 sm:grid-cols-2 lg:p-8">
-            {features.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-900/5">
-                <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 ring-1 ring-blue-200">
-                  <Icon className="h-5 w-5" strokeWidth={2.1} />
-                </span>
-                <h3 className="text-sm font-bold text-slate-950">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{text}</p>
-              </div>
-            ))}
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {[
+                { icon: QrCode, text: "Skan QR kodu szkolenia" },
+                { icon: UploadCloud, text: "Zdjęcie certyfikatu z telefonu" },
+                { icon: CheckCircle2, text: "Automatyczny wpis do bazy" },
+                { icon: BellIcon, text: "Przypomnienie o brakach" },
+              ].map(({ icon: Icon, text }) => (
+                <div key={text} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-blue-100">
+                  <Icon className="h-4 w-4 text-blue-600" strokeWidth={2} />
+                  {text}
+                </div>
+              ))}
+            </div>
           </div>
+        </div>
+
+        <div className="grid gap-3 p-5 sm:grid-cols-2 lg:p-8">
+          {features.map(({ icon: Icon, title, text }) => (
+            <div key={title} className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-900/5">
+              <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 ring-1 ring-blue-200">
+                <Icon className="h-5 w-5" strokeWidth={2.1} />
+              </span>
+              <h3 className="text-sm font-bold text-slate-950">{title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{text}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
-  );
-}
-
-function BellIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    </svg>
   );
 }
 
@@ -846,6 +850,7 @@ export default function Page() {
           <div id="funkcje" className="scroll-mt-32">
             <CrpeFeatures />
           </div>
+
           <ReminderSection />
 
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -865,9 +870,9 @@ export default function Page() {
                 <Eyebrow>Co mówią użytkownicy</Eyebrow>
                 <Quote className="mb-3 h-6 w-6 text-blue-200" strokeWidth={1.5} />
                 <p className="text-base leading-relaxed text-slate-700">
-                  "Wcześniej trzymałam wszystko w Excelu i modliłam się żeby nie zgubić certyfikatów.
+                  &quot;Wcześniej trzymałam wszystko w Excelu i modliłam się żeby nie zgubić certyfikatów.
                   Teraz dodaję wpis od razu po szkoleniu — z telefonu. Przed audytem mam wszystko gotowe
-                  w kilka minut, a nie w kilka godzin."
+                  w kilka minut, a nie w kilka godzin.&quot;
                 </p>
                 <div className="mt-5 flex flex-wrap items-center gap-2">
                   <div className="flex gap-0.5">
@@ -881,5 +886,10 @@ export default function Page() {
               </div>
             </div>
           </div>
+
+          <BottomCTA />
         </div>
- 
+      </section>
+    </div>
+  );
+}
