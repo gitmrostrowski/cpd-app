@@ -1,4 +1,4 @@
-// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 18:20
+// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 18:31
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -302,6 +302,42 @@ function BellIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+function ReminderSection() {
+  const items = [
+    "brakujące certyfikaty przy aktywnościach",
+    "zbliżający się koniec okresu rozliczeniowego",
+    "aktywności, które warto uzupełnić przed raportem",
+  ];
+
+  return (
+    <div id="przypomnienia" className="scroll-mt-32">
+      <div className="overflow-hidden rounded-[1.6rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white shadow-sm shadow-slate-900/5">
+        <div className="grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
+          <div className="border-b border-blue-100 p-6 lg:border-b-0 lg:border-r lg:p-8">
+            <Eyebrow>Przypomnienia</Eyebrow>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950">Nie przegap brakujących dokumentów</h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              CRPE może pomagać nie tylko w przechowywaniu certyfikatów, ale też w pilnowaniu braków i terminów.
+              Dzięki temu łatwiej przygotować się do raportu bez nerwowego sprawdzania wszystkiego na końcu okresu.
+            </p>
+          </div>
+
+          <div className="grid gap-3 p-5 sm:grid-cols-3 lg:p-8">
+            {items.map((item) => (
+              <div key={item} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-blue-200 bg-blue-50 text-blue-700">
+                  <BellIcon className="h-5 w-5" />
+                </span>
+                <p className="text-sm font-semibold leading-snug text-slate-900">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function HowItWorks() {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -591,7 +627,8 @@ export default function Page() {
     { id: "hero", label: "O produkcie" },
     { id: "dla-kogo", label: "Dla kogo" },
     { id: "jak-to-dziala", label: "Jak to działa" },
-    { id: "funkcje", label: "Funkcje" },
+    { id: "funkcje", label: "Funkcje CRPE" },
+    { id: "przypomnienia", label: "Przypomnienia" },
     { id: "faq", label: "FAQ" },
   ];
 
@@ -806,6 +843,12 @@ export default function Page() {
         <div className={`${pageWrap} space-y-6`}>
           <HowItWorks />
 
+          <div id="funkcje" className="scroll-mt-32">
+            <CrpeFeatures />
+          </div>
+
+          <ReminderSection />
+
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
             <div id="faq" className={`${cardCls} scroll-mt-32`}>
               <div className="border-b border-slate-100 px-6 py-5 lg:px-8">
@@ -840,10 +883,6 @@ export default function Page() {
             </div>
           </div>
         </div>
-      </section>
-
-      <section id="funkcje" className="scroll-mt-32 bg-slate-50 py-8">
-        <CrpeFeatures />
       </section>
 
       <section className="bg-white py-8">
