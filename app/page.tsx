@@ -309,24 +309,10 @@ export default function Page() {
             HERO — przestronny, lekki, z grafiką
         ══════════════════════════════════════════════════════════════ */}
         <div id="hero" className={`${cardCls} scroll-mt-32`}>
-          <div className="relative grid grid-cols-1 gap-0 lg:grid-cols-[280px_1fr_380px]">
+          <div className="relative grid grid-cols-1 gap-0 lg:grid-cols-[1fr_420px]">
 
-            {/* FAR LEFT — zdjecie lekarki z tabletem */}
-            <div className="relative hidden overflow-hidden lg:block" style={{ minHeight: "580px" }}>
-              <Image
-                src="/hero-medical.png"
-                alt="Lekarka z tabletem CRPE"
-                fill
-                className="object-cover object-left"
-                style={{ objectPosition: "0% center" }}
-                priority
-              />
-              {/* subtelny gradient po prawej stronie zdjecia — plynne przejscie */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/90" />
-            </div>
-
-            {/* MIDDLE — copy */}
-            <div className="flex flex-col justify-center border-l border-slate-100 px-8 py-10 lg:py-12">
+            {/* LEFT — copy */}
+            <div className="flex flex-col justify-center px-8 py-10 lg:py-12">
               {/* Eyebrow badge */}
               <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-500">
                 <Sparkles className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.75} />
@@ -475,26 +461,6 @@ export default function Page() {
         </div>
 
         {/* ── DLA KOGO + CO ZYSKUJESZ ────────────────────────────────── */}
-        {/* Zdjecie zespolu medycznego — miedzy sekcjami */}
-        <div className="overflow-hidden rounded-xl shadow-sm" style={{ height: "200px" }}>
-          <div className="relative h-full w-full">
-            <Image
-              src="/hero-medical.png"
-              alt="Zespol medyczny na szkoleniu"
-              fill
-              className="object-cover"
-              style={{ objectPosition: "33% center" }}
-            />
-            {/* Dark overlay z tekstem */}
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-900/70 via-slate-900/40 to-transparent" />
-            <div className="absolute inset-0 flex flex-col justify-center px-8">
-              <p className="text-xs font-bold uppercase tracking-widest text-white/70">Dla profesjonalistów</p>
-              <p className="mt-1 text-2xl font-bold text-white">Zarządzaj swoim rozwojem zawodowym</p>
-              <p className="mt-1 text-sm text-white/70">Dla lekarzy, pielęgniarek, fizjoterapeutów i wszystkich zbierających punkty CPD</p>
-            </div>
-          </div>
-        </div>
-
         <div id="dla-kogo" className="grid scroll-mt-32 gap-4 lg:grid-cols-2">
           <div className={cardCls}>
             <div className="border-b border-slate-100 px-6 py-4">
@@ -566,21 +532,9 @@ export default function Page() {
         {/* ── JAK TO DZIAŁA ──────────────────────────────────────────── */}
         <HowItWorks />
 
-        {/* ── TESTIMONIAL z certyfikatem ──────────────────────────────── */}
+        {/* ── TESTIMONIAL ────────────────────────────────────────────── */}
         <div className={cardCls}>
-          <div className="grid grid-cols-1 gap-0 md:grid-cols-[240px_1fr]">
-            {/* Zdjecie certyfikatu */}
-            <div className="relative hidden overflow-hidden rounded-l-xl md:block" style={{ minHeight: "200px" }}>
-              <Image
-                src="/hero-medical.png"
-                alt="Certyfikat CRPE na tablecie"
-                fill
-                className="object-cover"
-                style={{ objectPosition: "100% center" }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/60" />
-            </div>
-            <div className="p-6">
+          <div className="p-6">
             <div className="flex flex-col items-center gap-4 text-center md:flex-row md:items-start md:text-left">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">AK</div>
               <div>
@@ -595,7 +549,6 @@ export default function Page() {
                   <span className="text-xs text-slate-400">Pielęgniarka, Kraków</span>
                 </div>
               </div>
-            </div>
             </div>
           </div>
         </div>
