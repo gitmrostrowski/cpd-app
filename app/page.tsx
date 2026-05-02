@@ -1,4 +1,4 @@
-// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 17:32
+// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 17:42
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -335,11 +335,17 @@ function HowItWorks() {
         <Eyebrow>Proces</Eyebrow>
         <div className="flex items-end justify-between gap-6">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Jak uporządkujesz punkty w 3 krokach</h2>
-            <p className="mt-1 text-sm text-slate-500">Najpierw wybierasz zawód, potem dodajesz aktywności, a system pokazuje Twój aktualny status.</p>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Zobacz, jak CRPE prowadzi Cię krok po kroku</h2>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-sm shadow-blue-600/20">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+                2 minuty do pierwszego wpisu
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-slate-500">Od wyboru zawodu, przez dodanie certyfikatu, aż po jasny status punktów — bez Excela i zgadywania.</p>
           </div>
           <div className="hidden rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 sm:block">
-            3 proste kroki
+            Interaktywny podgląd
           </div>
         </div>
       </div>
@@ -355,8 +361,8 @@ function HowItWorks() {
               key={step.n}
               type="button"
               onClick={() => setActiveStep(i)}
-              className={`group flex min-h-[310px] flex-col gap-3 border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 lg:p-7 ${
-                isActive ? "bg-slate-50" : "hover:bg-slate-50/50"
+              className={`group flex min-h-[310px] flex-col gap-3 border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 lg:p-7 ${
+                isActive ? "bg-gradient-to-br from-blue-50/80 via-white to-white shadow-inner" : "hover:bg-slate-50/50"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -468,7 +474,7 @@ export default function Page() {
     const el = document.getElementById(id);
     if (!el) return;
     setActiveSection(id);
-    const top = el.getBoundingClientRect().top + window.scrollY - 180;
+    const top = el.getBoundingClientRect().top + window.scrollY - 158;
     window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
   }
 
@@ -706,7 +712,7 @@ export default function Page() {
         <div className={`${pageWrap} space-y-6`}>
           <HowItWorks />
 
-          <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
             <div className={cardCls}>
               <div className="p-6 lg:p-8">
                 <Eyebrow>Co mówią użytkownicy</Eyebrow>
