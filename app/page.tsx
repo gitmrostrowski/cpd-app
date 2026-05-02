@@ -181,66 +181,53 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
 
 function CrpeFeatures() {
   const features = [
-    { icon: UploadCloud, title: "Szybkie wpisy", text: "Dodajesz aktywność w 20–30 sekund. Bez zbędnych pól na start." },
-    { icon: FileText, title: "Certyfikaty w jednym miejscu", text: "PDF-y i zdjęcia certyfikatów są przypięte do konkretnych aktywności." },
-    { icon: ShieldCheck, title: "Porządek przed kontrolą", text: "Łatwiej przygotować historię aktywności i brakujące dokumenty." },
-    { icon: BarChart3, title: "Status w okresie", text: "Widzisz ile punktów masz, ile brakuje i co wymaga uzupełnienia." },
+    { icon: UploadCloud, title: "Dodajesz w 30 sekund", text: "Szybkie wpisy bez zbędnych pól i formularzy." },
+    { icon: FileText, title: "Masz wszystko w jednym miejscu", text: "Certyfikaty i aktywności są zawsze powiązane." },
+    { icon: BarChart3, title: "Widzisz dokładny status", text: "Ile masz punktów i czego brakuje." },
+    { icon: ShieldCheck, title: "Jesteś gotowy na kontrolę", text: "Raport i dokumenty masz uporządkowane." },
   ];
 
   return (
     <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-      <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="border-b border-slate-100 p-6 lg:border-b-0 lg:border-r lg:p-8">
-          <Eyebrow>Funkcje w CRPE</Eyebrow>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-950 lg:text-3xl">Co dostajesz w CRPE</h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-600">Minimum klików, maksimum porządku. Budujesz portfolio, które da się szybko sprawdzić i uzupełnić.</p>
+      <div className="border-b border-slate-100 px-6 py-6 lg:px-8">
+        <Eyebrow>Korzyści</Eyebrow>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-950 lg:text-3xl">Co dostajesz w CRPE</h2>
+        <p className="mt-2 max-w-2xl text-sm text-slate-500">
+          Jedno spojrzenie i wiesz: gdzie jesteś, czego brakuje i co zrobić dalej.
+        </p>
+      </div>
 
-          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-            <div className="flex gap-3">
-              <IconTile className="h-11 w-11"><Smartphone className="h-5 w-5" strokeWidth={2.1} /></IconTile>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-blue-600">Planowana funkcja</p>
-                <p className="mt-0.5 text-sm font-bold text-slate-950">Dodawanie certyfikatów z telefonu</p>
-                <p className="mt-1 text-sm leading-relaxed text-slate-600">Po szkoleniu zeskanujesz QR kod, dodasz aktywność i zrobisz zdjęcie certyfikatu. Wszystko trafi do Twojego panelu od razu, bez Excela i bez przepisywania danych.</p>
-              </div>
+      <div className="grid gap-0 md:grid-cols-4">
+        {features.map(({ icon: Icon, title, text }, i) => (
+          <div
+            key={title}
+            className="group relative flex flex-col gap-3 border-r border-slate-100 p-6 text-center last:border-r-0 hover:bg-slate-50/60"
+          >
+            <div className="flex justify-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm group-hover:scale-105 transition">
+                <Icon className="h-6 w-6 text-blue-600" strokeWidth={2} />
+              </span>
             </div>
 
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {[
-                { icon: QrCode, text: "Skan QR kodu szkolenia" },
-                { icon: UploadCloud, text: "Zdjęcie certyfikatu z telefonu" },
-                { icon: CheckCircle2, text: "Automatyczny wpis do bazy" },
-                { icon: Bell, text: "Przypomnienie o brakach" },
-              ].map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-blue-100">
-                  <Icon className="h-4 w-4 text-blue-600" strokeWidth={2} />
-                  {text}
-                </div>
-              ))}
-            </div>
+            <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+            <p className="text-xs leading-relaxed text-slate-500">{text}</p>
+
+            {/* subtle connector line */}
+            {i < features.length - 1 && (
+              <div className="pointer-events-none absolute right-0 top-1/2 hidden h-8 w-px -translate-y-1/2 bg-slate-200 md:block" />
+            )}
           </div>
-        </div>
+        ))}
+      </div>
 
-        <div className="relative grid gap-3 p-5 sm:grid-cols-2 lg:p-8">
-          <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 hidden h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full border-[14px] border-slate-200/70 lg:block" />
-          <svg className="pointer-events-none absolute left-1/2 top-1/2 z-0 hidden h-44 w-44 -translate-x-1/2 -translate-y-1/2 text-slate-300 lg:block" viewBox="0 0 220 220" fill="none" aria-hidden="true">
-            <path d="M72 43c26-13 70-9 91 17" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-            <path d="M156 37l16 27-31 4" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M177 77c13 26 9 70-17 91" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-            <path d="M183 160l-27 16-4-31" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M148 177c-26 13-70 9-91-17" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-            <path d="M64 183l-16-27 31-4" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M43 143c-13-26-9-70 17-91" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-            <path d="M37 60l27-16 4 31" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-
-          {features.map(({ icon: Icon, title, text }) => (
-            <div key={title} className="relative z-10 rounded-2xl border border-slate-200 bg-white/95 p-5 transition hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-900/5">
-              <IconTile className="mb-4 h-12 w-12"><Icon className="h-5 w-5" strokeWidth={2.1} /></IconTile>
-              <h3 className="text-sm font-bold text-slate-950">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{text}</p>
-            </div>
-          ))}
+      <div className="border-t border-slate-100 bg-slate-50/60 px-6 py-5 lg:px-8">
+        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+          <p className="text-sm font-medium text-slate-700">
+            Efekt: porządek w dokumentach i brak stresu przed kontrolą.
+          </p>
+          <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+            Gotowe w kilka minut
+          </span>
         </div>
       </div>
     </div>
