@@ -561,38 +561,13 @@ export default function Page() {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dbeafe_0,transparent_32%),linear-gradient(180deg,#f8fafc_0%,#eef2f7_50%,#f8fafc_100%)] pb-8">
       <div className={`${pageWrap} space-y-6 pt-3`}>
         <nav className="sticky top-[76px] z-30 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white/90 shadow-lg shadow-slate-900/5 backdrop-blur">
-          <div className="flex min-w-max items-center justify-between">
-            <div className="flex">
-              {[
-                { id: "hero", label: "O produkcie" },
-                { id: "dla-kogo", label: "Dla kogo" },
-                { id: "jak-to-dziala", label: "Jak to działa" },
-                { id: "faq", label: "FAQ" },
-              ].map(({ id, label }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => scrollToId(id)}
-                  className={activeSection === id ? navActive : navBase}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <div className="shrink-0 pr-3">
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95"
-              >
-                Zacznij za darmo →
-              </Link>
-            </div>
+          <div className="flex min-w-max justify-center">
+            <div className="flex">$1</div>
           </div>
         </nav>
 
         <section id="hero" className="scroll-mt-32 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-xl shadow-slate-900/5">
-          <div className="relative grid grid-cols-1 gap-10 p-6 sm:p-8 lg:grid-cols-[1fr_0.92fr] lg:gap-12 lg:p-12 xl:p-14">
+          <div className="relative grid grid-cols-1 gap-10 p-6 sm:p-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12 lg:p-12 xl:p-14">
             <div className="pointer-events-none absolute left-0 top-8 h-24 w-1.5 rounded-r-full bg-blue-600" />
             <div className="pointer-events-none absolute right-[-120px] top-[-120px] h-[320px] w-[320px] rounded-full bg-blue-100/80 blur-3xl" />
             <div className="pointer-events-none absolute bottom-[-140px] left-[35%] h-[260px] w-[260px] rounded-full bg-amber-100/70 blur-3xl" />
@@ -655,8 +630,23 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="relative z-10 flex items-center lg:justify-end">
-              <ProductPreview />
+            <div className="relative z-10 min-h-[420px] overflow-hidden rounded-[1.8rem] border border-slate-200 bg-slate-900 shadow-2xl shadow-slate-950/15 lg:min-h-[560px]">
+              <Image
+                src={IMG.hero}
+                alt="Pracowniczka medyczna z tabletem"
+                fill
+                priority
+                className="object-cover object-[50%_24%]"
+                sizes="(max-width: 1024px) 100vw, 680px"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/18 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-white lg:p-8">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100/90">CRPE w praktyce</p>
+                <h3 className="mt-2 text-2xl font-bold leading-tight lg:text-3xl">Panel zawsze pod ręką</h3>
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-white/75 lg:text-base">
+                  Dodajesz wpisy i dokumenty na bieżąco, również po szkoleniu.
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -682,23 +672,18 @@ export default function Page() {
           </div>
         </div>
 
-        <section className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+        <section className="grid gap-6 lg:grid-cols-[1fr_1fr]">
           <PhotoCard
             src={IMG.team}
             alt="Zespół medyczny przy stole"
             title="Rozwój zawodowy jest zespołowy. Porządek w dokumentach — indywidualny."
             text="CRPE pomaga każdemu specjaliście pilnować własnych punktów, terminów i certyfikatów."
-            className="min-h-[440px] lg:min-h-[500px]"
-            imageClassName="object-cover object-[50%_34%]"
+            className="min-h-[440px] lg:min-h-[520px]"
+            imageClassName="object-cover object-[50%_18%]"
           />
-          <PhotoCard
-            src={IMG.hero}
-            alt="Pracowniczka medyczna z tabletem"
-            title="Panel zawsze pod ręką"
-            text="Dodajesz wpisy i dokumenty na bieżąco, również po szkoleniu."
-            className="min-h-[440px] lg:min-h-[500px]"
-            imageClassName="object-cover object-[50%_24%]"
-          />
+          <div className="flex min-h-[440px] items-center rounded-[1.6rem] border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5 lg:min-h-[520px] lg:p-8">
+            <ProductPreview />
+          </div>
         </section>
 
         <div id="dla-kogo" className="grid scroll-mt-32 gap-6 lg:grid-cols-2">
