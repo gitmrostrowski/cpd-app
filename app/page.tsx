@@ -193,23 +193,23 @@ function CrpeFeatures() {
 
   return (
     <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-      <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 p-7 text-white lg:border-b-0 lg:border-r lg:p-8">
+      <div className="grid gap-0 lg:grid-cols-[0.72fr_1.28fr]">
+        <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 p-6 text-white lg:border-b-0 lg:border-r lg:p-7">
           <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
           <div className="pointer-events-none absolute bottom-[-90px] left-[-70px] h-56 w-56 rounded-full bg-cyan-300/20 blur-3xl" />
           <div className="relative">
             <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-blue-100">Korzyści</p>
-            <h2 className="max-w-md text-4xl font-black tracking-tight lg:text-5xl">Od szkolenia do porządku. Bez Excela.</h2>
-            <p className="mt-4 max-w-md text-base leading-relaxed text-blue-50">Po szkoleniu dodajesz certyfikat z telefonu. CRPE przypina go do aktywności, liczy punkty i pokazuje, czego jeszcze brakuje.</p>
-            <div className="mt-7 grid gap-3">
+            <h2 className="max-w-md text-3xl font-black leading-[1.05] tracking-tight lg:text-4xl">Od szkolenia do porządku.<span className="block">Bez Excela.</span></h2>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-blue-50 lg:text-base">Po szkoleniu dodajesz certyfikat z telefonu. CRPE przypina go do aktywności, liczy punkty i pokazuje, czego jeszcze brakuje.</p>
+            <div className="mt-6 grid gap-2.5">
               {["Robisz zdjęcie certyfikatu", "CRPE pamięta za Ciebie", "Widzisz status punktów od razu"].map((item) => (
-                <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/12 px-4 py-3 ring-1 ring-white/20 backdrop-blur">
+                <div key={item} className="flex items-center gap-3 rounded-xl bg-white/12 px-3.5 py-2.5 ring-1 ring-white/20 backdrop-blur">
                   <CheckCircle2 className="h-5 w-5 text-blue-100" />
                   <span className="text-sm font-bold text-white">{item}</span>
                 </div>
               ))}
             </div>
-            <Link href="/login" className="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-lg shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-blue-50">
+            <Link href="/login" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-lg shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-blue-50">
               Wypróbuj za darmo <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
