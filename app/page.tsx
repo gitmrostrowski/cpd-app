@@ -1,4 +1,4 @@
-// app/page.tsx
+// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -503,8 +503,10 @@ export default function Page() {
     { id: "faq", label: "FAQ" },
   ];
 
-  const navBase = "shrink-0 rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-blue-700";
-  const navActive = "shrink-0 rounded-xl bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 ring-1 ring-blue-100";
+  const navBase =
+    "shrink-0 rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-white/80 hover:text-blue-700";
+  const navActive =
+    "shrink-0 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-600/20";
 
   const FAQ = [
     { q: "Czy CRPE jest połączone z systemami państwowymi?", a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte." },
@@ -515,10 +517,10 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-8">
-      <div className="border-b border-slate-200 bg-white/70">
-        <div className={`${pageWrap} py-2`}>
-          <nav className="sticky top-[76px] z-30 mx-auto w-fit max-w-full overflow-x-auto rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 shadow-md shadow-slate-900/5 backdrop-blur">
-            <div className="flex min-w-max items-center justify-center gap-1">
+      <div className="sticky top-[76px] z-30 border-y border-blue-100 bg-blue-50/92 shadow-sm shadow-slate-900/5 backdrop-blur supports-[backdrop-filter]:bg-blue-50/75">
+        <div className={`${pageWrap} py-2.5`}>
+          <nav className="mx-auto flex max-w-[860px] items-center justify-center overflow-x-auto rounded-2xl border border-blue-100 bg-white/80 p-1.5 shadow-sm shadow-blue-950/5">
+            <div className="flex min-w-max items-center justify-center gap-1.5">
               {navItems.map(({ id, label }) => (
                 <button key={id} type="button" onClick={() => scrollToId(id)} className={activeSection === id ? navActive : navBase}>
                   {label}
@@ -529,7 +531,7 @@ export default function Page() {
         </div>
       </div>
 
-      <section className="bg-[radial-gradient(circle_at_top_left,#dbeafe_0,transparent_34%),linear-gradient(180deg,#eff6ff_0%,#f8fafc_100%)] py-6 lg:py-8">
+      <section className="bg-[radial-gradient(circle_at_top_left,#dbeafe_0,transparent_34%),linear-gradient(180deg,#eff6ff_0%,#f8fafc_100%)] py-7 lg:py-10">
         <div className={pageWrap}>
           <div id="hero" className="scroll-mt-32 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-xl shadow-slate-900/5">
             <div className="relative grid grid-cols-1 gap-8 p-6 sm:p-8 lg:grid-cols-[2fr_1fr] lg:p-10 xl:p-12">
@@ -597,7 +599,7 @@ export default function Page() {
         </div>
       </section>
 
-      <section className="bg-white py-5">
+      <section className="bg-white py-6">
         <div className={pageWrap}>
           <div className="rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm shadow-slate-900/5">
             <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -618,7 +620,7 @@ export default function Page() {
         </div>
       </section>
 
-      <section className="bg-slate-50 py-5 lg:py-6">
+      <section className="bg-slate-50 py-7 lg:py-9">
         <div className={`${pageWrap} space-y-6`}>
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
             <PhotoCard
