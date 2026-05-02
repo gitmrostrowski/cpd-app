@@ -564,8 +564,8 @@ export default function Page() {
     { id: "przypomnienia", label: "Przypomnienia" },
     { id: "faq", label: "FAQ" },
   ];
-  const navBase = "group inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition-all duration-200 hover:scale-[1.03] hover:bg-slate-50 hover:text-blue-700";
-  const navActive = "group inline-flex shrink-0 scale-[1.03] items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition-all duration-200";
+  const navBase = "shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:border-blue-300 hover:text-blue-700 focus:outline-none";
+  const navActive = "shrink-0 border-b-2 border-blue-600 px-3 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none";
   const FAQ = [
     { q: "Czy CRPE jest połączone z systemami państwowymi?", a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte." },
     { q: "Czy moje certyfikaty są bezpieczne?", a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE." },
@@ -575,13 +575,17 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-8">
-      <div className="sticky top-[72px] z-40 border-b border-slate-200/80 bg-white shadow-md shadow-slate-900/5 backdrop-blur supports-[backdrop-filter]:bg-white/95">
+      <div className="sticky top-[72px] z-40 border-b border-slate-200/80 bg-white/95 shadow-sm shadow-slate-900/5 backdrop-blur supports-[backdrop-filter]:bg-white/90">
         <div className={`${pageWrap} pb-4 pt-3`}>
-          <nav className="mx-auto flex w-fit max-w-full items-center justify-center overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm shadow-slate-900/5">
-            <div className="flex min-w-max items-center justify-center gap-1">
+          <nav className="mx-auto w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-md">
+            <div className="flex min-w-max">
               {navItems.map(({ id, label }) => {
                 const isActive = activeSection === id;
-                return <button key={id} type="button" onClick={() => scrollToId(id)} className={isActive ? navActive : navBase}><span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-white" : "bg-slate-300 group-hover:bg-blue-400"}`} />{label}</button>;
+                return (
+                  <button key={id} type="button" onClick={() => scrollToId(id)} className={isActive ? navActive : navBase}>
+                    {label}
+                  </button>
+                );
               })}
             </div>
           </nav>
