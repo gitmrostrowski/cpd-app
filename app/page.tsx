@@ -883,11 +883,3 @@ export default function Page() {
             </div>
           </div>
         </div>
-      </section>
-
-      <section className="bg-white py-8">
-        <BottomCTA />
-      </section>
-    </div>
-  );
-}
