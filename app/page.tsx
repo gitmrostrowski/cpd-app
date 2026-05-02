@@ -1,4 +1,4 @@
-// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 17:42
+// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 17:55
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -29,9 +29,11 @@ import {
   UserCog,
   UserRoundCheck,
   Users,
+  QrCode,
+  Smartphone,
+  CheckCircle2,
 } from "lucide-react";
 
-import FeatureGrid from "@/components/FeatureGrid";
 import BottomCTA from "@/components/BottomCTA";
 
 type ProfileRow = {
@@ -206,6 +208,96 @@ function PhotoCard({
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/75">{text}</p>
       </div>
     </div>
+  );
+}
+
+function CrpeFeatures() {
+  const features = [
+    {
+      icon: UploadCloud,
+      title: "Szybkie wpisy",
+      text: "Dodajesz aktywność w 20–30 sekund. Bez zbędnych pól na start.",
+    },
+    {
+      icon: FileText,
+      title: "Certyfikaty w jednym miejscu",
+      text: "PDF-y i zdjęcia certyfikatów są przypięte do konkretnych aktywności.",
+    },
+    {
+      icon: BarChart3,
+      title: "Status w okresie",
+      text: "Widzisz ile punktów masz, ile brakuje i co wymaga uzupełnienia.",
+    },
+    {
+      icon: ShieldCheck,
+      title: "Porządek przed kontrolą",
+      text: "Łatwiej przygotować historię aktywności i brakujące dokumenty.",
+    },
+  ];
+
+  return (
+    <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
+      <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
+        <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="border-b border-slate-100 p-6 lg:border-b-0 lg:border-r lg:p-8">
+            <Eyebrow>Funkcje w CRPE</Eyebrow>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950 lg:text-3xl">Co dostajesz w CRPE</h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              Minimum klików, maksimum porządku. Budujesz portfolio, które da się szybko sprawdzić i uzupełnić.
+            </p>
+
+            <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+              <div className="flex gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-blue-700 ring-1 ring-blue-100">
+                  <Smartphone className="h-5 w-5" strokeWidth={2.1} />
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-slate-950">MVP mobilne / PWA — dobry następny krok</p>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                    Warto dodać prosty tryb telefonu: skan QR kodu szkolenia, szybkie dodanie aktywności i zdjęcie certyfikatu od razu po wydarzeniu.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {[
+                  { icon: QrCode, text: "Skan QR kodu szkolenia" },
+                  { icon: UploadCloud, text: "Zdjęcie certyfikatu z telefonu" },
+                  { icon: CheckCircle2, text: "Automatyczny wpis do bazy" },
+                  { icon: BellIcon, text: "Przypomnienie o brakach" },
+                ].map(({ icon: Icon, text }) => (
+                  <div key={text} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-blue-100">
+                    <Icon className="h-4 w-4 text-blue-600" strokeWidth={2} />
+                    {text}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-3 p-5 sm:grid-cols-2 lg:p-8">
+            {features.map(({ icon: Icon, title, text }) => (
+              <div key={title} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md hover:shadow-slate-900/5">
+                <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm shadow-blue-600/20">
+                  <Icon className="h-5 w-5" strokeWidth={2.1} />
+                </span>
+                <h3 className="text-sm font-bold text-slate-950">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BellIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
   );
 }
 
