@@ -197,7 +197,7 @@ function CrpeFeatures() {
         </p>
       </div>
 
-      <div className="grid gap-0 md:grid-cols-4">
+      <div className="grid gap-0 md:grid-cols-4 lg:grid-cols-[1fr_1fr_1fr_1.2fr]">
         {features.map(({ icon: Icon, title, text }, i) => (
           <div
             key={title}
@@ -212,12 +212,30 @@ function CrpeFeatures() {
             <h3 className="text-sm font-bold text-slate-900">{title}</h3>
             <p className="text-xs leading-relaxed text-slate-500">{text}</p>
 
-            {/* subtle connector line */}
             {i < features.length - 1 && (
               <div className="pointer-events-none absolute right-0 top-1/2 hidden h-8 w-px -translate-y-1/2 bg-slate-200 md:block" />
             )}
           </div>
         ))}
+
+        {/* prawa sekcja - wizual */}
+        <div className="hidden lg:flex flex-col justify-center gap-3 bg-slate-50/60 p-6">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs text-slate-400">Podgląd</p>
+            <p className="text-sm font-semibold text-slate-900">Twój status CPD</p>
+            <div className="mt-2 h-2 w-full rounded-full bg-slate-100">
+              <div className="h-2 w-[60%] rounded-full bg-blue-600" />
+            </div>
+            <div className="mt-2 flex justify-between text-xs text-slate-500">
+              <span>110 pkt</span>
+              <span>200 pkt</span>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700">
+            ✔ Raport gotowy
+          </div>
+        </div>
       </div>
 
       <div className="border-t border-slate-100 bg-slate-50/60 px-6 py-5 lg:px-8">
@@ -394,8 +412,12 @@ function HowItWorks() {
 
       <div className="hidden md:block">
         <div className="relative border-b border-slate-100 bg-slate-50/60 px-8 py-6">
-          <div className="absolute left-[17%] right-[17%] top-1/2 h-1 -translate-y-1/2 rounded-full bg-slate-200" />
-          <div className="absolute left-[17%] top-1/2 h-1 -translate-y-1/2 rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${activeStep * 33}%` }} />
+          <div className="absolute left-[17%] right-[17%] top-1/2 h-1 -translate-y-1/2 rounded-full bg-slate-200 overflow-hidden">
+          <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+        </div>
+          <div className="absolute left-[17%] top-1/2 h-1 -translate-y-1/2 rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${activeStep * 33}%` }}>
+          <div className="h-full w-full animate-[pulse_2s_infinite] bg-gradient-to-r from-blue-400 via-blue-600 to-blue-400 opacity-60" />
+        </div>
           <div className="relative grid grid-cols-3 gap-6">
             {steps.map((step, i) => {
               const Icon = step.icon;
@@ -403,9 +425,9 @@ function HowItWorks() {
               const isActive = activeStep === i;
               return (
                 <button key={step.n} type="button" onClick={() => setActiveStep(i)} className="group flex flex-col items-center gap-3 text-center focus:outline-none">
-                  <span className={`relative flex h-16 w-16 items-center justify-center rounded-2xl border bg-white shadow-sm transition-all duration-300 ${isActive ? `${c.border} scale-105 shadow-md` : "border-slate-200 group-hover:border-blue-200"}`}>
+                  <span className={`relative flex h-16 w-16 items-center justify-center rounded-2xl border bg-white shadow-sm transition-all duration-300 ${isActive ? `${c.border} scale-110 shadow-lg ring-4 ring-blue-100` : "border-slate-200 group-hover:border-blue-200"}`}>
                     <span className={`absolute -left-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white ${c.num}`}>{step.n}</span>
-                    <Icon className={`h-7 w-7 ${isActive ? c.text : "text-slate-500"}`} strokeWidth={1.9} />
+                    <Icon className={`h-7 w-7 transition-all ${isActive ? `${c.text} scale-110` : "text-slate-500"}`} strokeWidth={1.9} />
                   </span>
                   <div>
                     <p className="text-sm font-bold text-slate-900">{step.title}</p>
@@ -422,7 +444,7 @@ function HowItWorks() {
             const c = cm[step.color];
             const isActive = activeStep === i;
             return (
-              <button key={step.n} type="button" onClick={() => setActiveStep(i)} className={`flex min-h-[255px] flex-col border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 lg:p-7 ${isActive ? "bg-white" : "bg-slate-50/30 hover:bg-white"}`}>
+              <button key={step.n} type="button" onClick={() => setActiveStep(i)} className={`flex min-h-[255px] flex-col border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 lg:p-7 ${isActive ? `bg-white ring-2 ${c.border}` : "bg-slate-50/30 hover:bg-white"}`}>
                 <div className={`mb-4 h-1.5 w-12 rounded-full transition-all ${isActive ? c.bg : "bg-slate-200"}`} />
                 <p className="text-sm leading-relaxed text-slate-500">{step.desc}</p>
                 <div className={`mt-auto rounded-2xl border p-3 transition-all duration-300 ${isActive ? `${c.border} ${c.soft}` : "border-slate-100 bg-white/80 opacity-75"}`}>
