@@ -12,6 +12,7 @@ import {
   BarChart3,
   BookOpen,
   CalendarCheck,
+  Check,
   FileText,
   FlaskConical,
   FolderOpen,
@@ -46,17 +47,12 @@ function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
-const cardCls = "overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm";
-
-const IMG = {
-  hero: "/lekarka_z_tabletem.png",
-  team: "/lekrze_konsyl_pion.png",
-  cert: "/crpe_reka2b (1).png",
-};
+const cardCls = "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm";
+const TEAM_IMAGE = "/lekrze_konsyl_pion.png";
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+    <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
       {children}
     </p>
   );
@@ -108,153 +104,84 @@ function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
   );
 }
 
-function useCounter(target: number, duration = 1000) {
-  const [value, setValue] = useState(0);
-  const started = useRef(false);
-  const ref = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    if (started.current) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting || started.current) return;
-
-        started.current = true;
-        const startedAt = performance.now();
-
-        const tick = (now: number) => {
-          const p = Math.min((now - startedAt) / duration, 1);
-          setValue(Math.round((1 - Math.pow(1 - p, 3)) * target));
-          if (p < 1) requestAnimationFrame(tick);
-        };
-
-        requestAnimationFrame(tick);
-      },
-      { threshold: 0.5 }
-    );
-
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [target, duration]);
-
-  return { value, ref };
-}
-
-function StatCard({
-  target,
-  label,
-  color = "text-slate-900",
-}: {
-  target: number;
-  label: string;
-  color?: string;
-}) {
-  const { value, ref } = useCounter(target);
-
+function ProductPreview() {
   return (
-    <div className="py-2 text-center">
-      <span ref={ref} className={`text-xl font-extrabold tabular-nums ${color}`}>
-        {value}
-      </span>
-      <div className="text-xs text-slate-500">{label}</div>
-    </div>
-  );
-}
+    <div className="relative">
+      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-100 blur-3xl" />
+      <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-cyan-100 blur-3xl" />
 
-function MiniDashboard({
-  demoHave,
-  demoRequired,
-  demoMissing,
-  demoPct,
-}: {
-  demoHave: number;
-  demoRequired: number;
-  demoMissing: number;
-  demoPct: number;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-100 bg-blue-50">
-            <BarChart3 className="h-4 w-4 text-blue-600" strokeWidth={1.75} />
-          </span>
-          <div>
-            <div className="text-sm font-semibold text-slate-900">Twój Panel CPD</div>
-            <div className="text-xs text-slate-400">Przykład widoku po zalogowaniu</div>
+      <div className="relative rounded-[1.7rem] border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-900/10">
+        <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 place-items-center rounded-xl border border-blue-100 bg-blue-50">
+              <BarChart3 className="h-4 w-4 text-blue-600" strokeWidth={1.8} />
+            </span>
+            <div>
+              <div className="text-sm font-bold text-slate-950">Twój Panel CPD</div>
+              <div className="text-xs text-slate-400">Przykład statusu użytkownika</div>
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-amber-50 px-3 py-2 text-right ring-1 ring-amber-100">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+              Do celu brakuje
+            </div>
+            <div className="text-2xl font-bold leading-none text-amber-700">90 pkt</div>
           </div>
         </div>
 
-        <div className="rounded-lg bg-amber-50 px-3 py-2 text-right ring-1 ring-amber-100">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
-            Do celu brakuje
+        <div className="mb-4">
+          <div className="mb-1.5 flex justify-between text-xs font-medium text-slate-500">
+            <span>Postęp punktów</span>
+            <span>110 / 200 pkt</span>
           </div>
-          <div className="text-2xl font-bold leading-none text-amber-700">{demoMissing} pkt</div>
-        </div>
-      </div>
-
-      <div className="px-5 py-4">
-        <div className="mb-1.5 flex justify-between text-xs font-medium text-slate-500">
-          <span>Postęp punktów</span>
-          <span>
-            {demoHave} / {demoRequired} pkt
-          </span>
+          <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full w-[55%] rounded-full bg-blue-600" />
+          </div>
         </div>
 
-        <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
-          <div className="h-2.5 rounded-full bg-blue-600" style={{ width: `${demoPct}%` }} />
-        </div>
-
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mb-4 grid grid-cols-3 gap-2">
           {[
-            { target: demoHave, label: "masz pkt", accent: false },
-            { target: demoRequired, label: "wymagane", accent: false },
-            { target: demoMissing, label: "brakuje", accent: true },
-          ].map((s) => (
-            <div key={s.label} className="rounded-lg border border-slate-100 bg-slate-50">
-              <StatCard
-                target={s.target}
-                label={s.label}
-                color={s.accent ? "text-amber-700" : "text-slate-900"}
-              />
+            ["110", "masz pkt", "text-slate-950"],
+            ["200", "wymagane", "text-slate-950"],
+            ["90", "brakuje", "text-amber-700"],
+          ].map(([value, label, color]) => (
+            <div key={label} className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">
+              <div className={`text-xl font-bold ${color}`}>{value}</div>
+              <div className="mt-0.5 text-[11px] text-slate-500">{label}</div>
             </div>
           ))}
         </div>
-      </div>
 
-      <div className="border-t border-slate-100 px-5 pb-4">
-        <div className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-          Co teraz zrobić
-        </div>
-        <div className="rounded-lg border border-blue-200 bg-blue-600 px-4 py-3">
-          <div className="text-xs font-bold text-white">Uzupełnij dokumenty</div>
+        <div className="mb-4 rounded-xl bg-blue-600 p-4 text-white shadow-sm">
+          <div className="text-xs font-bold uppercase tracking-wide text-blue-100">Co teraz zrobić</div>
+          <div className="mt-1 text-sm font-bold">Uzupełnij dokumenty</div>
           <div className="mt-0.5 text-xs text-blue-100">Masz 6 wpisów bez certyfikatu</div>
         </div>
-      </div>
 
-      <div className="border-t border-slate-100 px-5 pb-4">
-        <div className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-          Ostatnie aktywności
-        </div>
-        <div className="space-y-1.5">
-          {[
-            { name: "Konferencja kardiologiczna", cat: "Konferencja", pts: 20, stripe: "bg-amber-400" },
-            { name: "Kurs online / webinar", cat: "E-learning", pts: 15, stripe: "bg-slate-500" },
-            { name: "Kurs stacjonarny NIL", cat: "Kurs", pts: 6, stripe: "bg-emerald-400" },
-          ].map((e) => (
-            <div
-              key={e.name}
-              className="relative flex items-center gap-2.5 overflow-hidden rounded-lg border border-slate-100 bg-slate-50 py-2 pl-4 pr-3"
-            >
-              <div className={`absolute inset-y-1.5 left-0 w-1.5 rounded-r-full ${e.stripe}`} />
-              <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-800">{e.name}</span>
-              <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-600">
-                {e.cat}
-              </span>
-              <span className="shrink-0 text-xs font-bold text-blue-600">+{e.pts}</span>
-            </div>
-          ))}
+        <div>
+          <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            Ostatnie aktywności
+          </div>
+          <div className="space-y-2">
+            {[
+              { name: "Konferencja kardiologiczna", cat: "Konferencja", pts: 20, stripe: "bg-amber-400" },
+              { name: "Kurs online / webinar", cat: "E-learning", pts: 15, stripe: "bg-slate-500" },
+              { name: "Kurs stacjonarny NIL", cat: "Kurs", pts: 6, stripe: "bg-emerald-400" },
+            ].map((e) => (
+              <div
+                key={e.name}
+                className="relative flex items-center gap-2 overflow-hidden rounded-xl border border-slate-100 bg-slate-50 py-2.5 pl-4 pr-3"
+              >
+                <div className={`absolute inset-y-2 left-0 w-1.5 rounded-r-full ${e.stripe}`} />
+                <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-800">{e.name}</span>
+                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-500 ring-1 ring-slate-200">
+                  {e.cat}
+                </span>
+                <span className="text-xs font-bold text-blue-600">+{e.pts}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -573,11 +500,6 @@ export default function Page() {
     );
   }
 
-  const demoRequired = 200;
-  const demoHave = 110;
-  const demoPct = clamp((demoHave / demoRequired) * 100, 0, 100);
-  const demoMissing = Math.max(0, demoRequired - demoHave);
-
   const navBase =
     "shrink-0 border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:border-blue-300 hover:text-blue-700 focus:outline-none";
   const navActive =
@@ -637,16 +559,16 @@ export default function Page() {
         </nav>
 
         <section id="hero" className={`${cardCls} scroll-mt-32`}>
-          <div className="relative grid grid-cols-1 lg:grid-cols-[1.04fr_0.96fr]">
+          <div className="relative grid grid-cols-1 gap-8 p-6 lg:grid-cols-[0.95fr_1.05fr] lg:p-8">
             <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
 
-            <div className="relative z-10 p-6 lg:p-8">
+            <div className="relative z-10">
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-500">
                 <Sparkles className="h-3.5 w-3.5 text-slate-400" strokeWidth={1.75} />
                 Wkrótce: Asystent AI do zarządzania rozwojem zawodowym
               </div>
 
-              <h1 className="text-[36px] font-bold leading-[1.08] tracking-tight text-slate-900 md:text-[48px]">
+              <h1 className="text-[36px] font-bold leading-[1.08] tracking-tight text-slate-900 md:text-[50px]">
                 Punkty CPD<br />
                 pod kontrolą.<br />
                 <span className="text-blue-600">Bez stresu.</span>
@@ -700,24 +622,8 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="relative min-h-[430px] overflow-hidden border-t border-slate-100 bg-slate-50 lg:border-l lg:border-t-0">
-              <Image
-                src={IMG.hero}
-                alt="Pracowniczka medyczna pokazująca panel CPD na tablecie"
-                fill
-                priority
-                className="object-cover object-[52%_42%]"
-                sizes="(max-width: 1024px) 100vw, 520px"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-slate-950/8 to-transparent" />
-              <div className="absolute bottom-5 left-5 right-5">
-                <MiniDashboard
-                  demoHave={demoHave}
-                  demoRequired={demoRequired}
-                  demoMissing={demoMissing}
-                  demoPct={demoPct}
-                />
-              </div>
+            <div className="relative flex items-center">
+              <ProductPreview />
             </div>
           </div>
         </section>
@@ -743,15 +649,15 @@ export default function Page() {
           </div>
         </div>
 
-        <section className={`${cardCls} relative min-h-[260px]`}>
+        <section className={`${cardCls} relative min-h-[310px]`}>
           <Image
-            src={IMG.team}
+            src={TEAM_IMAGE}
             alt="Zespół medyczny omawiający rozwój zawodowy"
             fill
-            className="object-cover object-[50%_42%]"
+            className="object-cover object-[50%_38%]"
             sizes="(max-width: 1024px) 100vw, 1120px"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/82 via-slate-950/45 to-slate-950/18" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/82 via-slate-950/45 to-slate-950/16" />
           <div className="relative max-w-2xl p-7 text-white">
             <Eyebrow>Dla profesjonalistów</Eyebrow>
             <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
@@ -812,45 +718,32 @@ export default function Page() {
               <p className="mt-0.5 text-sm text-slate-500">Porządek i jasny status. Bez komplikacji.</p>
             </div>
 
-            <div className="grid gap-0 md:grid-cols-[1fr_190px]">
-              <div className="p-5">
-                <div className="space-y-2">
-                  {[
-                    { t: "Historia wszystkich aktywności w jednym miejscu", icon: BookOpen },
-                    { t: "Certyfikaty zawsze pod ręką (PDF / zdjęcia)", icon: Award },
-                    { t: "Przejrzysty podgląd zdobytych punktów", icon: BarChart3 },
-                    { t: "Gotowość do przygotowania raportu", icon: CalendarCheck },
-                  ].map(({ t, icon: Icon }) => (
-                    <div key={t} className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
-                        <Icon className="h-4 w-4 text-blue-600" strokeWidth={1.75} />
-                      </span>
-                      <span className="text-sm font-medium text-slate-800">{t}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-3 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100">
-                    <FileText className="h-4 w-4 text-amber-600" strokeWidth={1.75} />
-                  </span>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600">Wkrótce — PRO</p>
-                    <p className="mt-0.5 text-sm font-semibold text-slate-900">Eksport PDF i przypomnienia</p>
-                    <p className="mt-0.5 text-xs text-slate-500">Raport gotowy do wydruku + automatyczne przypomnienia.</p>
+            <div className="p-5">
+              <div className="space-y-2">
+                {[
+                  { t: "Historia wszystkich aktywności w jednym miejscu", icon: BookOpen },
+                  { t: "Certyfikaty zawsze pod ręką (PDF / zdjęcia)", icon: Award },
+                  { t: "Przejrzysty podgląd zdobytych punktów", icon: BarChart3 },
+                  { t: "Gotowość do przygotowania raportu", icon: CalendarCheck },
+                ].map(({ t, icon: Icon }) => (
+                  <div key={t} className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
+                      <Icon className="h-4 w-4 text-blue-600" strokeWidth={1.75} />
+                    </span>
+                    <span className="text-sm font-medium text-slate-800">{t}</span>
                   </div>
-                </div>
+                ))}
               </div>
 
-              <div className="relative hidden min-h-full border-l border-slate-100 md:block">
-                <Image
-                  src={IMG.cert}
-                  alt="Cyfrowy certyfikat i lista dokumentów"
-                  fill
-                  className="object-cover object-[55%_50%]"
-                  sizes="190px"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/10 to-transparent" />
+              <div className="mt-3 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100">
+                  <FileText className="h-4 w-4 text-amber-600" strokeWidth={1.75} />
+                </span>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600">Wkrótce — PRO</p>
+                  <p className="mt-0.5 text-sm font-semibold text-slate-900">Eksport PDF i przypomnienia</p>
+                  <p className="mt-0.5 text-xs text-slate-500">Raport gotowy do wydruku + automatyczne przypomnienia.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -860,34 +753,22 @@ export default function Page() {
 
         <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
           <div className={cardCls}>
-            <div className="grid min-h-full grid-cols-1 md:grid-cols-[1fr_180px]">
-              <div className="p-6">
-                <Eyebrow>Co mówią użytkownicy</Eyebrow>
-                <Quote className="mb-2 h-5 w-5 text-blue-200" strokeWidth={1.5} />
-                <p className="text-sm leading-relaxed text-slate-700">
-                  "Wcześniej trzymałam wszystko w Excelu i modliłam się żeby nie zgubić certyfikatów.
-                  Teraz dodaję wpis od razu po szkoleniu — z telefonu. Przed audytem mam wszystko gotowe
-                  w kilka minut, a nie w kilka godzin."
-                </p>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <div className="flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <span className="text-sm font-semibold text-slate-900">Anna K.</span>
-                  <span className="text-xs text-slate-400">Pielęgniarka, Kraków</span>
+            <div className="p-6">
+              <Eyebrow>Co mówią użytkownicy</Eyebrow>
+              <Quote className="mb-2 h-5 w-5 text-blue-200" strokeWidth={1.5} />
+              <p className="text-sm leading-relaxed text-slate-700">
+                "Wcześniej trzymałam wszystko w Excelu i modliłam się żeby nie zgubić certyfikatów.
+                Teraz dodaję wpis od razu po szkoleniu — z telefonu. Przed audytem mam wszystko gotowe
+                w kilka minut, a nie w kilka godzin."
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star key={s} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  ))}
                 </div>
-              </div>
-
-              <div className="relative hidden border-l border-slate-100 md:block">
-                <Image
-                  src={IMG.hero}
-                  alt="Pracowniczka medyczna"
-                  fill
-                  className="object-cover object-[50%_18%]"
-                  sizes="180px"
-                />
+                <span className="text-sm font-semibold text-slate-900">Anna K.</span>
+                <span className="text-xs text-slate-400">Pielęgniarka, Kraków</span>
               </div>
             </div>
           </div>
