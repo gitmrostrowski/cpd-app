@@ -184,32 +184,32 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
 function CrpeFeatures() {
   const flow = [
     { icon: BookOpen, title: "Szkolenie", text: "bierzesz udział", tone: "blue" as const },
-    { icon: FileText, title: "Certyfikat", text: "robisz zdjęcie", tone: "blue" as const },
+    { icon: FileText, title: "Certyfikat", text: "robisz zdjęcie", tone: "amber" as const },
     { icon: BarChart3, title: "Raport", text: "punkty się liczą", tone: "blue" as const },
-    { icon: FolderOpen, title: "Baza CRPE", text: "wszystko w jednym miejscu", tone: "blue" as const },
-    { icon: Users, title: "Samorząd zawodowy", text: "OIL / KIF / NIPiP", tone: "blue" as const },
+    { icon: FolderOpen, title: "Baza CRPE", text: "wszystko w jednym miejscu", tone: "indigo" as const },
+    { icon: Users, title: "Do izby", text: "materiały pod ręką", tone: "slate" as const },
     { icon: CheckCircle2, title: "Spokój", text: "wiesz, co masz", tone: "emerald" as const },
   ];
 
   return (
     <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-      <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 p-7 text-white lg:border-b-0 lg:border-r lg:p-8">
+      <div className="grid gap-0 lg:grid-cols-[0.72fr_1.28fr]">
+        <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 p-6 text-white lg:border-b-0 lg:border-r lg:p-7">
           <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
           <div className="pointer-events-none absolute bottom-[-90px] left-[-70px] h-56 w-56 rounded-full bg-cyan-300/20 blur-3xl" />
           <div className="relative">
             <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-blue-100">Korzyści</p>
-            <h2 className="max-w-md text-4xl font-black tracking-tight lg:text-5xl">Od szkolenia do porządku. Bez Excela.</h2>
-            <p className="mt-4 max-w-md text-base leading-relaxed text-blue-50">Po szkoleniu dodajesz certyfikat z telefonu. CRPE przypina go do aktywności, liczy punkty i pokazuje, czego jeszcze brakuje.</p>
-            <div className="mt-7 grid gap-3">
+            <h2 className="max-w-md text-3xl font-black leading-[1.05] tracking-tight lg:text-4xl">Od szkolenia do porządku.<span className="block">Bez Excela.</span></h2>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-blue-50 lg:text-base">Po szkoleniu dodajesz certyfikat z telefonu. CRPE przypina go do aktywności, liczy punkty i pokazuje, czego jeszcze brakuje.</p>
+            <div className="mt-6 grid gap-2.5">
               {["Robisz zdjęcie certyfikatu", "CRPE pamięta za Ciebie", "Widzisz status punktów od razu"].map((item) => (
-                <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/12 px-4 py-3 ring-1 ring-white/20 backdrop-blur">
+                <div key={item} className="flex items-center gap-3 rounded-xl bg-white/12 px-3.5 py-2.5 ring-1 ring-white/20 backdrop-blur">
                   <CheckCircle2 className="h-5 w-5 text-blue-100" />
                   <span className="text-sm font-bold text-white">{item}</span>
                 </div>
               ))}
             </div>
-            <Link href="/login" className="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-lg shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-blue-50">
+            <Link href="/login" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-lg shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-blue-50">
               Wypróbuj za darmo <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -217,11 +217,12 @@ function CrpeFeatures() {
 
         <div className="relative overflow-hidden bg-slate-50/70 p-5 lg:p-7">
           <div className="pointer-events-none absolute right-[-80px] top-[-80px] h-56 w-56 rounded-full bg-blue-100/80 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-[-100px] left-[20%] h-52 w-52 rounded-full bg-emerald-100/70 blur-3xl" />
           <div className="relative rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5">
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-black text-slate-950">Jak to działa w praktyce</p>
-                <p className="text-xs text-slate-500">szkolenie → certyfikat → raport → samorząd</p>
+                <p className="text-xs text-slate-500">szkolenie → certyfikat → raport → porządek</p>
               </div>
               <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100">~30 sek do wpisu</span>
             </div>
@@ -243,15 +244,15 @@ function CrpeFeatures() {
             </div>
           </div>
           <div className="relative mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
               <p className="text-sm font-black text-slate-950">Mniej klikania</p>
               <p className="mt-1 text-xs text-slate-600">wpis i certyfikat od razu po szkoleniu</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
               <p className="text-sm font-black text-slate-950">Mniej pamiętania</p>
               <p className="mt-1 text-xs text-slate-600">CRPE pokazuje braki i status</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
               <p className="text-sm font-black text-slate-950">Więcej spokoju</p>
               <p className="mt-1 text-xs text-slate-600">dokumenty masz w jednym widoku</p>
             </div>
@@ -261,8 +262,8 @@ function CrpeFeatures() {
               <div className="flex items-center gap-3">
                 <IconTile tone="emerald" className="h-11 w-11"><CheckCircle2 className="h-5 w-5" /></IconTile>
                 <div>
-                  <p className="text-sm font-black text-slate-950">Efekt: dokumentacja CPD pod ręką</p>
-                  <p className="text-xs text-slate-600">aktywności, certyfikaty, punkty i braki w jednym widoku</p>
+                  <p className="text-sm font-black text-slate-950">Efekt: wiesz, że temat jest ogarnięty</p>
+                  <p className="text-xs text-slate-600">aktywności, certyfikaty, punkty i braki w jednym miejscu</p>
                 </div>
               </div>
               <span className="hidden rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200 sm:inline-flex">bez chaosu</span>
@@ -286,14 +287,9 @@ function ReminderSection() {
             <p className="mt-3 text-sm leading-relaxed text-slate-600">CRPE może pomagać nie tylko w przechowywaniu certyfikatów, ale też w pilnowaniu braków i terminów. Dzięki temu łatwiej przygotować się do raportu bez nerwowego sprawdzania wszystkiego na końcu okresu.</p>
           </div>
           <div className="grid gap-3 p-5 sm:grid-cols-3 lg:p-8">
-            {items.map((item, i) => (
+            {items.map((item) => (
               <div key={item} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-                <div className="relative mb-3 w-fit">
-                  {i === items.length - 1 ? <span className="absolute inset-0 rounded-xl bg-amber-300/40 animate-ping" /> : null}
-                  <IconTile tone="amber" className={`relative h-11 w-11 ${i === items.length - 1 ? "ring-2 ring-amber-200 shadow-sm shadow-amber-200" : ""}`}>
-                    <Bell className={`h-5 w-5 ${i === items.length - 1 ? "animate-bounce" : ""}`} />
-                  </IconTile>
-                </div>
+                <IconTile className="mb-3 h-11 w-11"><Bell className="h-5 w-5" /></IconTile>
                 <p className="text-sm font-semibold leading-snug text-slate-900">{item}</p>
               </div>
             ))}
@@ -564,8 +560,8 @@ export default function Page() {
     { id: "przypomnienia", label: "Przypomnienia" },
     { id: "faq", label: "FAQ" },
   ];
-  const navBase = "group inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition-all duration-200 hover:scale-[1.03] hover:bg-slate-50 hover:text-blue-700";
-  const navActive = "group inline-flex shrink-0 scale-[1.03] items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition-all duration-200";
+  const navBase = "shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:border-blue-300 hover:text-blue-700 focus:outline-none";
+  const navActive = "shrink-0 border-b-2 border-blue-600 px-3 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none";
   const FAQ = [
     { q: "Czy CRPE jest połączone z systemami państwowymi?", a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte." },
     { q: "Czy moje certyfikaty są bezpieczne?", a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE." },
@@ -575,14 +571,15 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-8">
-      <div className="sticky top-[72px] z-40 border-b border-slate-200/80 bg-white shadow-md shadow-slate-900/5 backdrop-blur supports-[backdrop-filter]:bg-white/95">
-        <div className={`${pageWrap} pb-4 pt-3`}>
-          <nav className="mx-auto flex w-fit max-w-full items-center justify-center overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm shadow-slate-900/5">
-            <div className="flex min-w-max items-center justify-center gap-1">
-              {navItems.map(({ id, label }) => {
-                const isActive = activeSection === id;
-                return <button key={id} type="button" onClick={() => scrollToId(id)} className={isActive ? navActive : navBase}><span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-white" : "bg-slate-300 group-hover:bg-blue-400"}`} />{label}</button>;
-              })}
+      <div className="sticky top-[72px] z-40 bg-white/95 pb-4 pt-3 shadow-sm shadow-slate-900/5 backdrop-blur supports-[backdrop-filter]:bg-white/90">
+        <div className={pageWrap}>
+          <nav className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-md">
+            <div className="flex min-w-max items-center px-2">
+              {navItems.map(({ id, label }) => (
+                <button key={id} type="button" onClick={() => scrollToId(id)} className={activeSection === id ? navActive : navBase}>
+                  {label}
+                </button>
+              ))}
             </div>
           </nav>
         </div>
@@ -617,8 +614,8 @@ export default function Page() {
 
       <section className="bg-white py-6"><div className={pageWrap}><div className="rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm shadow-slate-900/5"><p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-900">CRPE wspiera zawody regulowane przez samorządy zawodowe</p><div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-2">{["Naczelną Izbę Lekarską", "Naczelną Izbę Pielęgniarek i Położnych", "Krajową Izbę Fizjoterapeutów", "Naczelną Izbę Aptekarską", "Krajową Izbę Diagnostów Laboratoryjnych"].map((n) => <span key={n} className="text-xs font-medium text-slate-500">{n}</span>)}</div></div></div></section>
 
-      <section className="bg-slate-50 py-9 lg:py-12">
-        <div className={`${pageWrap} space-y-10 lg:space-y-14`}>
+      <section className="bg-slate-50 py-7 lg:py-9">
+        <div className={`${pageWrap} space-y-6`}>
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]"><PhotoCard src={IMG.team} alt="Zespół medyczny przy stole" title="CRPE pomaga każdemu specjaliście pilnować własnych punktów, terminów i certyfikatów." text="" className="min-h-[390px] lg:min-h-[455px]" imageClassName="object-cover object-[50%_16%]" /><div className="flex min-h-[390px] items-stretch rounded-[1.45rem] bg-gradient-to-br from-white to-slate-50 p-4 lg:min-h-[455px]"><ProductPreview /></div></div>
 
           <div id="dla-kogo" className="grid scroll-mt-32 gap-6 lg:grid-cols-2">
