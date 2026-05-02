@@ -1,4 +1,4 @@
-// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 18:31
+// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 18:36
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -755,8 +755,8 @@ export default function Page() {
             <PhotoCard
               src={IMG.team}
               alt="Zespół medyczny przy stole"
-              title="Rozwój zawodowy jest zespołowy. Porządek w dokumentach — indywidualny."
-              text="CRPE pomaga każdemu specjaliście pilnować własnych punktów, terminów i certyfikatów."
+              title="CRPE pomaga każdemu specjaliście pilnować własnych punktów, terminów i certyfikatów."
+              text=""
               className="min-h-[390px] lg:min-h-[455px]"
               imageClassName="object-cover object-[50%_16%]"
             />
