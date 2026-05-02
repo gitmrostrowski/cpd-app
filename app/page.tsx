@@ -305,7 +305,7 @@ function HowItWorks() {
                 <p className="mt-0.5 text-xs font-medium text-slate-400">{step.subtitle}</p>
               </div>
               <p className="text-xs leading-relaxed text-slate-500">{step.desc}</p>
-              <div className={`mt-auto transition-all duration-500 ${isActive ? "opacity-100" : "opacity-35"}`}>
+              <div className={`mt-auto transition-all duration-500 ${isActive ? "opacity-100" : "opacity-60"}`}>
                 {step.preview}
               </div>
             </button>
@@ -339,14 +339,6 @@ function HowItWorks() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 border-t border-slate-100 px-6 py-4">
-        <Link href="/login" className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95">
-          Zacznij za darmo <ArrowRight className="h-4 w-4" />
-        </Link>
-        <Link href="/rejestracja" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">
-          Utwórz konto
-        </Link>
-      </div>
     </div>
   );
 }
@@ -458,90 +450,113 @@ export default function Page() {
                 w aktualnym okresie rozliczeniowym. Prosto. Spokojnie. Bez Excela.
               </p>
 
-              {/* 4 bullets — jak stat cards w panelu */}
+              {/* Feature grid z ikonkami */}
               <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {[
-                  { t: "Porządek bez wysiłku",  d: "Wpisy i certyfikaty zawsze pod ręką.", dot: "bg-blue-500"  },
-                  { t: "Jasny status punktów",  d: "Wiesz ile masz i czego brakuje.",       dot: "bg-amber-400" },
-                  { t: "Bezpieczne dane",        d: "Tylko Ty masz dostęp. Dane w UE.",     dot: "bg-slate-400" },
-                  { t: "Start za darmo",         d: "Podstawowe funkcje bezpłatnie.",        dot: "bg-blue-400"  },
-                ].map((b) => (
-                  <div key={b.t} className="rounded-lg border border-slate-100 bg-slate-50 px-3.5 py-3">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${b.dot}`} />
-                      {b.t}
+                  { icon: FolderOpen,  t: "Porządek bez wysiłku",  d: "Wpisy i certyfikaty zawsze pod ręką.",     bg: "bg-blue-50",   ic: "text-blue-500"   },
+                  { icon: BarChart3,   t: "Jasny status punktów",  d: "Wiesz ile masz i czego brakuje.",           bg: "bg-amber-50",  ic: "text-amber-500"  },
+                  { icon: ShieldCheck, t: "Bezpieczne dane",        d: "Tylko Ty masz dostęp. Dane w UE.",         bg: "bg-slate-100", ic: "text-slate-500"  },
+                  { icon: Sparkles,    t: "Start za darmo",         d: "Podstawowe funkcje bezpłatnie. Bez karty.", bg: "bg-indigo-50", ic: "text-indigo-500" },
+                ].map((b) => {
+                  const Icon = b.icon;
+                  return (
+                    <div key={b.t} className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3.5 py-3 transition hover:bg-white hover:shadow-sm">
+                      <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${b.bg}`}>
+                        <Icon className={`h-4 w-4 ${b.ic}`} strokeWidth={1.75} />
+                      </span>
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900">{b.t}</div>
+                        <p className="mt-0.5 text-xs text-slate-500">{b.d}</p>
+                      </div>
                     </div>
-                    <p className="mt-0.5 pl-4 text-xs text-slate-500">{b.d}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              {/* CTAs */}
+              {/* CTAs — max 2 */}
               <div className="mt-5 flex flex-wrap gap-2">
                 <Link href="/login" className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95">
-                  Załóż darmowe konto <ArrowRight className="h-4 w-4" />
+                  Zacznij za darmo <ArrowRight className="h-4 w-4" />
                 </Link>
                 <a href="#jak-to-dziala" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">
-                  Jak to działa
+                  Jak to dziala
                 </a>
               </div>
             </div>
 
-            {/* RIGHT — demo panel */}
-            <div className="flex flex-col gap-3">
-              {/* Zdjecie — placeholder z gradientem i ikoną do czasu dodania zdjecia */}
-              <div className="relative overflow-hidden rounded-xl bg-slate-100" style={{ minHeight: "180px" }}>
-                <Image src="/crpe_reka2b.png" alt="Mockup panelu CPD" width={800} height={280} className="w-full object-cover opacity-90" style={{ objectPosition: "left center", height: "180px" }} />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/30 to-transparent" />
-                <div className="absolute bottom-3 left-4 right-4">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    Twoje dane, Twoja kontrola
+            {/* RIGHT — Panel CPD style demo */}
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              {/* Nagłówek sekcji — jak w Panelu CPD */}
+              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-md border border-blue-100 bg-blue-50">
+                    <BarChart3 className="h-4 w-4 text-blue-600" strokeWidth={1.75} />
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Twój Panel CPD</div>
+                    <div className="text-xs text-slate-400">Przykład — po zalogowaniu zobaczysz swoje dane</div>
                   </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Do celu brakuje</div>
+                  <div className="text-2xl font-bold leading-none text-red-500">{demoMissing} pkt</div>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Podgląd statusu</div>
-                <div className="text-sm font-bold text-slate-900">Aktualny okres rozliczeniowy</div>
-                <p className="mt-0.5 mb-4 text-xs text-slate-500">Przykład — po zalogowaniu zobaczysz swoje dane.</p>
-
-                <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-500">
-                  <span>Postęp w okresie</span>
-                  <span className="font-bold text-slate-700">{Math.round(demoPct)}%</span>
+              {/* Progress + czas */}
+              <div className="px-5 py-4">
+                <div className="mb-1 flex justify-between text-xs font-medium text-slate-500">
+                  <span>Postęp punktów</span>
+                  <span>{demoHave} / {demoRequired} pkt</span>
                 </div>
-                <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-                  <div className="h-2.5 rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${demoPct}%` }} />
+                <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-2.5 rounded-full bg-blue-600" style={{ width: `${demoPct}%` }} />
                 </div>
 
-                <div className="mt-3 grid grid-cols-3 gap-2">
+                {/* Stats — jak w Panelu CPD */}
+                <div className="mt-3 grid grid-cols-4 gap-2">
                   {[
-                    { target: demoHave,     label: "Masz (pkt)"    },
-                    { target: demoRequired, label: "Cel (pkt)"     },
-                    { target: demoMissing,  label: "Brakuje (pkt)", color: "text-red-500" },
+                    { v: `${demoHave}`,     l: "masz pkt",  accent: false },
+                    { v: `${demoRequired}`, l: "wymagane",  accent: false },
+                    { v: `${demoMissing}`,  l: "brakuje",   accent: true  },
+                    { v: "976",             l: "dni",       accent: false },
                   ].map((s) => (
-                    <div key={s.label} className="rounded-lg border border-slate-100 bg-slate-50">
-                      <StatCard target={s.target} label={s.label} color={s.color} />
+                    <div key={s.l} className="rounded-lg border border-slate-100 bg-slate-50 px-2 py-2.5 text-center">
+                      <div className={`text-base font-bold ${s.accent ? "text-red-500" : "text-slate-900"}`}>{s.v}</div>
+                      <div className="text-[10px] text-slate-400">{s.l}</div>
                     </div>
                   ))}
                 </div>
+              </div>
 
-                <div className="mt-4">
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ostatnie wpisy</p>
-                  <div className="space-y-1.5">
-                    {demoEntries.map((e) => (
-                      <div key={e.name} className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-                        <span className={`h-2 w-2 shrink-0 rounded-full ${e.dot}`} />
-                        <span className="flex-1 min-w-0 truncate text-sm font-medium text-slate-800">{e.name}</span>
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${e.badge}`}>{e.cat}</span>
-                        <span className="shrink-0 text-sm font-bold text-blue-600">+{e.pts} pkt</span>
-                      </div>
-                    ))}
-                  </div>
+              {/* Co dalej — jak w Panelu */}
+              <div className="border-t border-slate-100 px-5 pb-4">
+                <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Co teraz zrobic</div>
+                <div className="overflow-hidden rounded-lg border border-blue-200 bg-blue-600 p-3">
+                  <div className="text-xs font-bold text-white">Uzupelnij dokumenty</div>
+                  <div className="mt-0.5 text-xs text-blue-100">Masz 6 wpisow bez certyfikatu</div>
                 </div>
+              </div>
 
-                <Link href="/login" className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95">
-                  Zaloguj się, aby zobaczyć swój status <ArrowRight className="h-4 w-4" />
+              {/* Ostatnie wpisy */}
+              <div className="border-t border-slate-100 px-5 pb-4">
+                <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ostatnie aktywnosci</div>
+                <div className="space-y-1.5">
+                  {demoEntries.map((e) => (
+                    <div key={e.name} className="relative flex items-center gap-2.5 overflow-hidden rounded-lg border border-slate-100 bg-slate-50 py-2 pl-4 pr-3">
+                      <div className={`absolute inset-y-2 left-0 w-1.5 rounded-r-full ${e.dot}`} />
+                      <span className="flex-1 min-w-0 truncate text-sm font-medium text-slate-800">{e.name}</span>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${e.badge}`}>{e.cat}</span>
+                      <span className="shrink-0 text-sm font-bold text-blue-600">+{e.pts} pkt</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Single CTA */}
+              <div className="border-t border-slate-100 px-5 py-3">
+                <Link href="/login" className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95">
+                  Zaloguj sie, aby zobaczyc swoj status <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             </div>
@@ -705,14 +720,7 @@ export default function Page() {
           </div>
           <div className="p-5">
             <FaqAccordion items={FAQ_ITEMS} />
-            <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-              <Link href="/login" className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95">
-                Załóż darmowe konto <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="/rejestracja" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">
-                Utwórz konto
-              </Link>
-            </div>
+
           </div>
         </div>
 
