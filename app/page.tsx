@@ -1,4 +1,4 @@
-// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24
+// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 17:32
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -335,19 +335,11 @@ function HowItWorks() {
         <Eyebrow>Proces</Eyebrow>
         <div className="flex items-end justify-between gap-6">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Jak to działa</h2>
-            <p className="mt-1 text-sm text-slate-500">Trzy kroki. Bez wdrożenia. Pierwsze wpisy w 2 minuty.</p>
+            <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Jak uporządkujesz punkty w 3 krokach</h2>
+            <p className="mt-1 text-sm text-slate-500">Najpierw wybierasz zawód, potem dodajesz aktywności, a system pokazuje Twój aktualny status.</p>
           </div>
-          <div className="flex gap-1.5 pb-1">
-            {steps.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setActiveStep(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${activeStep === i ? "w-6 bg-blue-600" : "w-2 bg-slate-200 hover:bg-slate-300"}`}
-                aria-label={`Pokaż krok ${i + 1}`}
-              />
-            ))}
+          <div className="hidden rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 sm:block">
+            3 proste kroki
           </div>
         </div>
       </div>
@@ -476,7 +468,7 @@ export default function Page() {
     const el = document.getElementById(id);
     if (!el) return;
     setActiveSection(id);
-    const top = el.getBoundingClientRect().top + window.scrollY - 136;
+    const top = el.getBoundingClientRect().top + window.scrollY - 180;
     window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
   }
 
@@ -517,9 +509,9 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-8">
-      <div className="sticky top-[76px] z-30 border-y border-blue-100 bg-blue-50/92 shadow-sm shadow-slate-900/5 backdrop-blur supports-[backdrop-filter]:bg-blue-50/75">
+      <div className="sticky top-[76px] z-30 border-b border-slate-200 bg-white/95 shadow-sm shadow-slate-900/5 backdrop-blur supports-[backdrop-filter]:bg-white/85">
         <div className={`${pageWrap} py-2.5`}>
-          <nav className="mx-auto flex max-w-[860px] items-center justify-center overflow-x-auto rounded-2xl border border-blue-100 bg-white/80 p-1.5 shadow-sm shadow-blue-950/5">
+          <nav className="flex w-full items-center justify-center overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm shadow-slate-900/5">
             <div className="flex min-w-max items-center justify-center gap-1.5">
               {navItems.map(({ id, label }) => (
                 <button key={id} type="button" onClick={() => scrollToId(id)} className={activeSection === id ? navActive : navBase}>
