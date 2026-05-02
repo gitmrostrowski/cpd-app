@@ -288,7 +288,12 @@ function ReminderSection() {
           <div className="grid gap-3 p-5 sm:grid-cols-3 lg:p-8">
             {items.map((item, i) => (
               <div key={item} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-                <IconTile tone="amber" className={`mb-3 h-11 w-11 ${i === items.length - 1 ? "animate-pulse" : ""}`}><Bell className={`h-5 w-5 ${i === items.length - 1 ? "animate-bounce" : ""}`} /></IconTile>
+                <div className="relative mb-3 w-fit">
+                  {i === items.length - 1 ? <span className="absolute inset-0 rounded-xl bg-amber-300/40 animate-ping" /> : null}
+                  <IconTile tone="amber" className={`relative h-11 w-11 ${i === items.length - 1 ? "ring-2 ring-amber-200 shadow-sm shadow-amber-200" : ""}`}>
+                    <Bell className={`h-5 w-5 ${i === items.length - 1 ? "animate-bounce" : ""}`} />
+                  </IconTile>
+                </div>
                 <p className="text-sm font-semibold leading-snug text-slate-900">{item}</p>
               </div>
             ))}
@@ -570,7 +575,7 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-8">
-      <div className="sticky top-[52px] z-40 border-b border-slate-200/80 bg-white shadow-md shadow-slate-900/5 backdrop-blur supports-[backdrop-filter]:bg-white/95">
+      <div className="sticky top-[72px] z-40 border-b border-slate-200/80 bg-white shadow-md shadow-slate-900/5 backdrop-blur supports-[backdrop-filter]:bg-white/95">
         <div className={`${pageWrap} pb-4 pt-3`}>
           <nav className="mx-auto flex w-fit max-w-full items-center justify-center overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm shadow-slate-900/5">
             <div className="flex min-w-max items-center justify-center gap-1">
