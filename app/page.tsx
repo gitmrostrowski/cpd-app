@@ -1,4 +1,4 @@
-// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 18:12
+// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 18:20
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -253,9 +253,9 @@ function CrpeFeatures() {
                 </span>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-blue-600">Planowana funkcja</p>
-                  <p className="mt-0.5 text-sm font-bold text-slate-950">Tryb mobilny / PWA dla telefonu</p>
+                  <p className="mt-0.5 text-sm font-bold text-slate-950">Dodawanie certyfikatów z telefonu</p>
                   <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                    Użytkownik mógłby zeskanować QR kod szkolenia, dodać aktywność i zrobić zdjęcie certyfikatu od razu po wydarzeniu — bez szukania formularzy.
+                    Po szkoleniu zeskanujesz QR kod, dodasz aktywność i zrobisz zdjęcie certyfikatu. Wszystko trafi do Twojego panelu od razu, bez Excela i bez przepisywania danych.
                   </p>
                 </div>
               </div>
@@ -591,6 +591,7 @@ export default function Page() {
     { id: "hero", label: "O produkcie" },
     { id: "dla-kogo", label: "Dla kogo" },
     { id: "jak-to-dziala", label: "Jak to działa" },
+    { id: "funkcje", label: "Funkcje" },
     { id: "faq", label: "FAQ" },
   ];
 
@@ -746,7 +747,7 @@ export default function Page() {
                     { t: "Nowe zawody medyczne", icon: Users },
                   ].map(({ t, icon: Icon }) => (
                     <div key={t} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 ring-1 ring-teal-200">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700">
                         <Icon className="h-5 w-5" strokeWidth={2.1} />
                       </span>
                       <span className="text-sm font-medium text-slate-800">{t}</span>
@@ -777,7 +778,7 @@ export default function Page() {
                     { t: "Gotowość do przygotowania raportu", icon: CalendarCheck },
                   ].map(({ t, icon: Icon }) => (
                     <div key={t} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 ring-1 ring-blue-200">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-blue-200 bg-blue-50 text-blue-700">
                         <Icon className="h-5 w-5" strokeWidth={2.1} />
                       </span>
                       <span className="text-sm font-medium text-slate-800">{t}</span>
@@ -841,7 +842,7 @@ export default function Page() {
         </div>
       </section>
 
-      <section className="bg-slate-50 py-8">
+      <section id="funkcje" className="scroll-mt-32 bg-slate-50 py-8">
         <CrpeFeatures />
       </section>
 
