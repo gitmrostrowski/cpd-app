@@ -564,8 +564,8 @@ export default function Page() {
     { id: "przypomnienia", label: "Przypomnienia" },
     { id: "faq", label: "FAQ" },
   ];
-  const navBase = "shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:border-blue-300 hover:text-blue-700 focus:outline-none";
-  const navActive = "shrink-0 border-b-2 border-blue-600 px-3 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none";
+  const navBase = "group inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition-all duration-200 hover:scale-[1.03] hover:bg-slate-50 hover:text-blue-700";
+  const navActive = "group inline-flex shrink-0 scale-[1.03] items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition-all duration-200";
   const FAQ = [
     { q: "Czy CRPE jest połączone z systemami państwowymi?", a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte." },
     { q: "Czy moje certyfikaty są bezpieczne?", a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE." },
@@ -575,17 +575,13 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-8">
-      <div className="sticky top-[72px] z-40 border-b border-slate-200/80 bg-white/95 shadow-sm shadow-slate-900/5 backdrop-blur supports-[backdrop-filter]:bg-white/90">
+      <div className="sticky top-[72px] z-40 border-b border-slate-200/80 bg-white shadow-md shadow-slate-900/5 backdrop-blur supports-[backdrop-filter]:bg-white/95">
         <div className={`${pageWrap} pb-4 pt-3`}>
-          <nav className="mx-auto w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-md">
-            <div className="flex min-w-max">
+          <nav className="mx-auto flex w-fit max-w-full items-center justify-center overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm shadow-slate-900/5">
+            <div className="flex min-w-max items-center justify-center gap-1">
               {navItems.map(({ id, label }) => {
                 const isActive = activeSection === id;
-                return (
-                  <button key={id} type="button" onClick={() => scrollToId(id)} className={isActive ? navActive : navBase}>
-                    {label}
-                  </button>
-                );
+                return <button key={id} type="button" onClick={() => scrollToId(id)} className={isActive ? navActive : navBase}><span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-white" : "bg-slate-300 group-hover:bg-blue-400"}`} />{label}</button>;
               })}
             </div>
           </nav>
@@ -621,8 +617,8 @@ export default function Page() {
 
       <section className="bg-white py-6"><div className={pageWrap}><div className="rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm shadow-slate-900/5"><p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-900">CRPE wspiera zawody regulowane przez samorządy zawodowe</p><div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-2">{["Naczelną Izbę Lekarską", "Naczelną Izbę Pielęgniarek i Położnych", "Krajową Izbę Fizjoterapeutów", "Naczelną Izbę Aptekarską", "Krajową Izbę Diagnostów Laboratoryjnych"].map((n) => <span key={n} className="text-xs font-medium text-slate-500">{n}</span>)}</div></div></div></section>
 
-      <section className="bg-slate-50 py-7 lg:py-9">
-        <div className={`${pageWrap} space-y-6`}>
+      <section className="bg-slate-50 py-9 lg:py-12">
+        <div className={`${pageWrap} space-y-10 lg:space-y-14`}>
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]"><PhotoCard src={IMG.team} alt="Zespół medyczny przy stole" title="CRPE pomaga każdemu specjaliście pilnować własnych punktów, terminów i certyfikatów." text="" className="min-h-[390px] lg:min-h-[455px]" imageClassName="object-cover object-[50%_16%]" /><div className="flex min-h-[390px] items-stretch rounded-[1.45rem] bg-gradient-to-br from-white to-slate-50 p-4 lg:min-h-[455px]"><ProductPreview /></div></div>
 
           <div id="dla-kogo" className="grid scroll-mt-32 gap-6 lg:grid-cols-2">
