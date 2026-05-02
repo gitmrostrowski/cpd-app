@@ -181,10 +181,10 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
 
 function CrpeFeatures() {
   const benefits = [
-    { icon: UploadCloud, title: "Dodajesz wpis", value: "~30 sek", text: "Szkolenie, punkty i certyfikat zapisujesz od razu." },
-    { icon: FileText, title: "Masz dokumenty", value: "1 miejsce", text: "PDF-y i zdjęcia są przypięte do aktywności." },
-    { icon: BarChart3, title: "Widzisz status", value: "na bieżąco", text: "Postęp, braki i wymagany limit są zawsze widoczne." },
-    { icon: ShieldCheck, title: "Masz spokój", value: "przed kontrolą", text: "Łatwiej przygotować podsumowanie i raport." },
+    { icon: UploadCloud, title: "Dodajesz wpis w 30 sekund", value: "bez wysiłku", text: "Po szkoleniu robisz zdjęcie certyfikatu i masz temat zamknięty. Bez odkładania na później." },
+    { icon: FileText, title: "Nigdy nie zgubisz certyfikatu", value: "0 chaosu", text: "Wszystko masz przypięte do aktywności. Koniec szukania w mailach i folderach." },
+    { icon: BarChart3, title: "Zawsze wiesz gdzie stoisz", value: "pełna kontrola", text: "Jedno spojrzenie i wiesz: ile masz punktów i czego Ci brakuje." },
+    { icon: ShieldCheck, title: "Spokój przed kontrolą", value: "bez stresu", text: "Masz gotowy porządek i dokumenty — bez nerwowego nadrabiania na koniec." },
   ];
 
   return (
@@ -194,18 +194,10 @@ function CrpeFeatures() {
           <Eyebrow>Korzyści</Eyebrow>
           <h2 className="text-2xl font-bold tracking-tight text-slate-950 lg:text-3xl">Co dostajesz w CRPE</h2>
           <p className="mt-3 text-sm leading-relaxed text-slate-600">
-            CRPE porządkuje cały proces: od dodania aktywności, przez certyfikat, aż po gotowy status punktów.
+            Zamiast chaosu w papierach i Excelu — masz jedno miejsce, które ogarnia wszystko za Ciebie.
           </p>
 
-          <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-            <div className="flex items-start gap-3">
-              <IconTile className="h-11 w-11"><Sparkles className="h-5 w-5" strokeWidth={2} /></IconTile>
-              <div>
-                <p className="text-sm font-bold text-slate-950">Efekt dla użytkownika</p>
-                <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                  Mniej szukania certyfikatów, mniej Excela i jasna informacja, co jeszcze trzeba uzupełnić.
-                </p>
-              </div>
+          <div className="mt-6 grid gap-3">
             </div>
           </div>
         </div>
@@ -243,7 +235,7 @@ function CrpeFeatures() {
             <div className="flex items-center gap-3">
               <IconTile tone="emerald" className="h-10 w-10"><CheckCircle2 className="h-5 w-5" /></IconTile>
               <div>
-                <p className="text-sm font-bold text-slate-950">Gotowe do raportu</p>
+                <p className="text-sm font-bold text-slate-950">Masz wszystko gotowe zanim ktoś zapyta</p>
                 <p className="text-xs text-slate-600">aktywności + punkty + dokumenty w jednym widoku</p>
               </div>
             </div>
