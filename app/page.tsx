@@ -1,4 +1,4 @@
-// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 18:03
+// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 18:12
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -252,9 +252,10 @@ function CrpeFeatures() {
                   <Smartphone className="h-5 w-5" strokeWidth={2.1} />
                 </span>
                 <div>
-                  <p className="text-sm font-bold text-slate-950">MVP mobilne / PWA — dobry następny krok</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-blue-600">Planowana funkcja</p>
+                  <p className="mt-0.5 text-sm font-bold text-slate-950">Tryb mobilny / PWA dla telefonu</p>
                   <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                    Warto dodać prosty tryb telefonu: skan QR kodu szkolenia, szybkie dodanie aktywności i zdjęcie certyfikatu od razu po wydarzeniu.
+                    Użytkownik mógłby zeskanować QR kod szkolenia, dodać aktywność i zrobić zdjęcie certyfikatu od razu po wydarzeniu — bez szukania formularzy.
                   </p>
                 </div>
               </div>
@@ -277,8 +278,8 @@ function CrpeFeatures() {
 
           <div className="grid gap-3 p-5 sm:grid-cols-2 lg:p-8">
             {features.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md hover:shadow-slate-900/5">
-                <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm shadow-blue-600/20">
+              <div key={title} className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-900/5">
+                <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 ring-1 ring-blue-200">
                   <Icon className="h-5 w-5" strokeWidth={2.1} />
                 </span>
                 <h3 className="text-sm font-bold text-slate-950">{title}</h3>
@@ -692,7 +693,7 @@ export default function Page() {
       <section className="bg-white py-6">
         <div className={pageWrap}>
           <div className="rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm shadow-slate-900/5">
-            <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-900">
               CRPE wspiera zawody regulowane przez samorządy zawodowe
             </p>
             <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-2">
@@ -745,8 +746,8 @@ export default function Page() {
                     { t: "Nowe zawody medyczne", icon: Users },
                   ].map(({ t, icon: Icon }) => (
                     <div key={t} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50">
-                        <Icon className="h-4 w-4 text-teal-600" strokeWidth={1.75} />
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 ring-1 ring-teal-200">
+                        <Icon className="h-5 w-5" strokeWidth={2.1} />
                       </span>
                       <span className="text-sm font-medium text-slate-800">{t}</span>
                     </div>
@@ -776,8 +777,8 @@ export default function Page() {
                     { t: "Gotowość do przygotowania raportu", icon: CalendarCheck },
                   ].map(({ t, icon: Icon }) => (
                     <div key={t} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50">
-                        <Icon className="h-4 w-4 text-blue-600" strokeWidth={1.75} />
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 ring-1 ring-blue-200">
+                        <Icon className="h-5 w-5" strokeWidth={2.1} />
                       </span>
                       <span className="text-sm font-medium text-slate-800">{t}</span>
                     </div>
@@ -785,8 +786,8 @@ export default function Page() {
                 </div>
 
                 <div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
-                    <FileText className="h-4 w-4 text-amber-600" strokeWidth={1.75} />
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 ring-1 ring-amber-200">
+                    <FileText className="h-5 w-5" strokeWidth={2.1} />
                   </span>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600">Wkrótce — PRO</p>
@@ -804,7 +805,18 @@ export default function Page() {
         <div className={`${pageWrap} space-y-6`}>
           <HowItWorks />
 
-          <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
+          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+            <div id="faq" className={`${cardCls} scroll-mt-32`}>
+              <div className="border-b border-slate-100 px-6 py-5 lg:px-8">
+                <Eyebrow>FAQ</Eyebrow>
+                <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Najczęstsze pytania</h2>
+                <p className="mt-1 text-sm text-slate-500">Kliknij pytanie, aby zobaczyć odpowiedź.</p>
+              </div>
+              <div className="p-5 lg:p-7">
+                <FaqAccordion items={FAQ} />
+              </div>
+            </div>
+
             <div className={cardCls}>
               <div className="p-6 lg:p-8">
                 <Eyebrow>Co mówią użytkownicy</Eyebrow>
@@ -823,17 +835,6 @@ export default function Page() {
                   <span className="text-sm font-semibold text-slate-900">Anna K.</span>
                   <span className="text-xs text-slate-400">Pielęgniarka, Kraków</span>
                 </div>
-              </div>
-            </div>
-
-            <div id="faq" className={`${cardCls} scroll-mt-32`}>
-              <div className="border-b border-slate-100 px-6 py-5 lg:px-8">
-                <Eyebrow>FAQ</Eyebrow>
-                <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Najczęstsze pytania</h2>
-                <p className="mt-1 text-sm text-slate-500">Kliknij pytanie, aby zobaczyć odpowiedź.</p>
-              </div>
-              <div className="p-5 lg:p-7">
-                <FaqAccordion items={FAQ} />
               </div>
             </div>
           </div>
