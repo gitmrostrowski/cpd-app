@@ -180,73 +180,77 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
 }
 
 function CrpeFeatures() {
-  const features = [
-    { icon: UploadCloud, title: "Dodajesz w 30 sekund", text: "Szybkie wpisy bez zbędnych pól i formularzy." },
-    { icon: FileText, title: "Masz wszystko w jednym miejscu", text: "Certyfikaty i aktywności są zawsze powiązane." },
-    { icon: BarChart3, title: "Widzisz dokładny status", text: "Ile masz punktów i czego brakuje." },
-    { icon: ShieldCheck, title: "Jesteś gotowy na kontrolę", text: "Raport i dokumenty masz uporządkowane." },
+  const benefits = [
+    { icon: UploadCloud, title: "Dodajesz wpis", value: "~30 sek", text: "Szkolenie, punkty i certyfikat zapisujesz od razu." },
+    { icon: FileText, title: "Masz dokumenty", value: "1 miejsce", text: "PDF-y i zdjęcia są przypięte do aktywności." },
+    { icon: BarChart3, title: "Widzisz status", value: "na bieżąco", text: "Postęp, braki i wymagany limit są zawsze widoczne." },
+    { icon: ShieldCheck, title: "Masz spokój", value: "przed kontrolą", text: "Łatwiej przygotować podsumowanie i raport." },
   ];
 
   return (
     <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-      <div className="border-b border-slate-100 px-6 py-6 lg:px-8">
-        <Eyebrow>Korzyści</Eyebrow>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-950 lg:text-3xl">Co dostajesz w CRPE</h2>
-        <p className="mt-2 max-w-2xl text-sm text-slate-500">
-          Jedno spojrzenie i wiesz: gdzie jesteś, czego brakuje i co zrobić dalej.
-        </p>
-      </div>
+      <div className="grid gap-0 lg:grid-cols-[0.82fr_1.18fr]">
+        <div className="border-b border-slate-100 p-6 lg:border-b-0 lg:border-r lg:p-8">
+          <Eyebrow>Korzyści</Eyebrow>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-950 lg:text-3xl">Co dostajesz w CRPE</h2>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">
+            CRPE porządkuje cały proces: od dodania aktywności, przez certyfikat, aż po gotowy status punktów.
+          </p>
 
-      <div className="grid gap-0 md:grid-cols-4 lg:grid-cols-[1fr_1fr_1fr_1.2fr]">
-        {features.map(({ icon: Icon, title, text }, i) => (
-          <div
-            key={title}
-            className="group relative flex flex-col gap-3 border-r border-slate-100 p-6 text-center last:border-r-0 hover:bg-slate-50/60"
-          >
-            <div className="flex justify-center">
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm group-hover:scale-105 transition">
-                <Icon className="h-6 w-6 text-blue-600" strokeWidth={2} />
-              </span>
+          <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+            <div className="flex items-start gap-3">
+              <IconTile className="h-11 w-11"><Sparkles className="h-5 w-5" strokeWidth={2} /></IconTile>
+              <div>
+                <p className="text-sm font-bold text-slate-950">Efekt dla użytkownika</p>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                  Mniej szukania certyfikatów, mniej Excela i jasna informacja, co jeszcze trzeba uzupełnić.
+                </p>
+              </div>
             </div>
-
-            <h3 className="text-sm font-bold text-slate-900">{title}</h3>
-            <p className="text-xs leading-relaxed text-slate-500">{text}</p>
-
-            {i < features.length - 1 && (
-              <div className="pointer-events-none absolute right-0 top-1/2 hidden h-8 w-px -translate-y-1/2 bg-slate-200 md:block" />
-            )}
-          </div>
-        ))}
-
-        {/* prawa sekcja - wizual */}
-        <div className="hidden lg:flex flex-col justify-center gap-3 bg-slate-50/60 p-6">
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700">⚡ Dodanie wpisu: ~30 sek</div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs text-slate-400">Podgląd</p>
-            <p className="text-sm font-semibold text-slate-900">Twój status CPD</p>
-            <div className="mt-2 h-2 w-full rounded-full bg-slate-100">
-              <div className="h-2 w-[60%] rounded-full bg-blue-600" />
-            </div>
-            <div className="mt-2 flex justify-between text-xs text-slate-500">
-              <span>110 pkt</span>
-              <span>200 pkt</span>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700">
-            ✔ Raport gotowy
           </div>
         </div>
-      </div>
 
-      <div className="border-t border-slate-100 bg-slate-50/60 px-6 py-5 lg:px-8">
-        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-          <p className="text-sm font-medium text-slate-700">
-            Efekt: porządek w dokumentach i brak stresu przed kontrolą.
-          </p>
-          <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
-            Gotowe w kilka minut
-          </span>
+        <div className="relative overflow-hidden bg-slate-50/50 p-5 lg:p-7">
+          <div className="pointer-events-none absolute right-[-80px] top-[-80px] h-56 w-56 rounded-full bg-blue-100/70 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-[-90px] left-[35%] h-48 w-48 rounded-full bg-emerald-100/50 blur-3xl" />
+
+          <div className="relative grid gap-3 sm:grid-cols-2">
+            {benefits.map(({ icon: Icon, title, value, text }, i) => (
+              <div
+                key={title}
+                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-950/5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <IconTile className="h-12 w-12"><Icon className="h-5 w-5" strokeWidth={2.1} /></IconTile>
+                  <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-500 ring-1 ring-slate-200">
+                    {value}
+                  </span>
+                </div>
+                <h3 className="mt-4 text-sm font-bold text-slate-950">{title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{text}</p>
+
+                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-blue-600 transition-all duration-700 group-hover:w-full"
+                    style={{ width: `${45 + i * 15}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="relative mt-4 flex flex-col items-start justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-3">
+              <IconTile tone="emerald" className="h-10 w-10"><CheckCircle2 className="h-5 w-5" /></IconTile>
+              <div>
+                <p className="text-sm font-bold text-slate-950">Gotowe do raportu</p>
+                <p className="text-xs text-slate-600">aktywności + punkty + dokumenty w jednym widoku</p>
+              </div>
+            </div>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200">
+              bez chaosu
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -330,7 +334,7 @@ function HowItWorks() {
       desc: "Dodajesz szkolenie, punkty i dokument. Zdjęcie albo PDF trafia do konkretnej aktywności.",
       preview: (
         <div>
-          <div className="mb-2 flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5">
+          <div className="mb-2 flex items-center gap-3 rounded-lg border border-amber-200 bg-white p-2.5">
             <IconTile tone="amber" className="h-9 w-9"><FileText className="h-4 w-4" /></IconTile>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-slate-900">Konferencja kardiologiczna</p>
@@ -338,8 +342,12 @@ function HowItWorks() {
             </div>
             <span className="shrink-0 text-sm font-bold text-emerald-600">+20 pkt</span>
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-400">
-            <UploadCloud className="h-3.5 w-3.5 shrink-0" />
+          <div className="mb-2 grid grid-cols-2 gap-2">
+            <div className="rounded-lg border border-amber-100 bg-white px-2.5 py-1.5 text-xs text-slate-500">2026</div>
+            <div className="rounded-lg border border-amber-100 bg-white px-2.5 py-1.5 text-xs font-semibold text-amber-700">Konferencja</div>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border border-dashed border-amber-300 bg-white/70 px-3 py-2 text-xs text-slate-400">
+            <UploadCloud className="h-3.5 w-3.5 shrink-0 text-amber-500" />
             Przeciągnij certyfikat lub kliknij
           </div>
         </div>
@@ -427,7 +435,7 @@ function HowItWorks() {
               const isActive = activeStep === i;
               return (
                 <button key={step.n} type="button" onMouseEnter={() => setActiveStep(i)} onClick={() => setActiveStep(i)} className="group flex flex-col items-center gap-3 text-center focus:outline-none">
-                  <span className={`relative flex h-16 w-16 items-center justify-center rounded-2xl border bg-white shadow-sm transition-all duration-300 ${isActive ? `${c.border} scale-110 shadow-lg ring-4 ring-blue-100` : "border-slate-200 group-hover:border-blue-200"}`}>
+                  <span className={`relative flex h-16 w-16 items-center justify-center rounded-2xl border bg-white shadow-sm transition-all duration-300 ${isActive ? `${c.border} scale-110 shadow-lg ring-4 ring-current/10` : "border-slate-200 group-hover:border-blue-200"}`}>
                     <span className={`absolute -left-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white ${c.num}`}>{step.n}</span>
                     <Icon className={`h-7 w-7 transition-all ${isActive ? `${c.text} scale-110` : "text-slate-500"}`} strokeWidth={1.9} />
                   </span>
@@ -446,10 +454,10 @@ function HowItWorks() {
             const c = cm[step.color];
             const isActive = activeStep === i;
             return (
-              <button key={step.n} type="button" onMouseEnter={() => setActiveStep(i)} onClick={() => setActiveStep(i)} className={`flex min-h-[255px] flex-col border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 lg:p-7 ${isActive ? `bg-white ring-2 ${c.border}` : "bg-slate-50/30 hover:bg-white"}`}>
+              <button key={step.n} type="button" onMouseEnter={() => setActiveStep(i)} onClick={() => setActiveStep(i)} className={`flex min-h-[255px] flex-col border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 focus:outline-none focus-visible:ring-0 lg:p-7 ${isActive ? `bg-white` : "bg-slate-50/30 hover:bg-white"}`}>
                 <div className={`mb-4 h-1.5 w-12 rounded-full transition-all ${isActive ? c.bg : "bg-slate-200"}`} />
                 <p className="text-sm leading-relaxed text-slate-500">{step.desc}</p>
-                <div className={`mt-auto rounded-2xl border p-3 transition-all duration-300 ${isActive ? `${c.border} ${c.soft}` : "border-slate-100 bg-white/80 opacity-75"}`}>
+                <div className={`mt-auto rounded-2xl border p-3 transition-all duration-300 ${isActive ? `${c.border} ${c.soft} shadow-sm` : "border-slate-100 bg-white/80 opacity-75"}`}>
                   {step.preview}
                 </div>
               </button>
