@@ -287,7 +287,7 @@ function HowItWorks() {
 
   useEffect(() => {
     if (!visible) return;
-    const t = setInterval(() => setActiveStep((s) => (s + 1) % 3), 2800);
+    const t = setInterval(() => setActiveStep((s) => (s + 1) % 3), 3200);
     return () => clearInterval(t);
   }, [visible]);
 
@@ -298,7 +298,7 @@ function HowItWorks() {
       color: "blue",
       title: "Wybierz zawód",
       subtitle: "System sam ustawi wymagania",
-      desc: "Powiedz nam kim jesteś. System dobierze odpowiedni okres i liczbę wymaganych punktów.",
+      desc: "Wybierasz swoją profesję, a CRPE dobiera właściwy okres i limit punktów.",
       preview: (
         <div className="space-y-1.5">
           {[
@@ -320,7 +320,7 @@ function HowItWorks() {
       color: "amber",
       title: "Dodaj aktywność",
       subtitle: "Certyfikat od razu przy wpisie",
-      desc: "Wpisz nazwę szkolenia i dołącz certyfikat. Punkty są naliczane automatycznie.",
+      desc: "Dodajesz szkolenie, punkty i dokument. Zdjęcie albo PDF trafia do konkretnej aktywności.",
       preview: (
         <div>
           <div className="mb-2 flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5">
@@ -369,7 +369,7 @@ function HowItWorks() {
               { v: "200", l: "cel", c: "text-slate-900" },
               { v: "90", l: "brak", c: "text-amber-700" },
             ].map((s) => (
-              <div key={s.l} className="rounded-lg border border-slate-100 bg-slate-50 py-1.5 text-center">
+              <div key={s.l} className="rounded-lg border border-slate-100 bg-white py-1.5 text-center">
                 <div className={`text-sm font-bold ${s.c}`}>{s.v}</div>
                 <div className="text-[10px] text-slate-400">{s.l}</div>
               </div>
@@ -380,10 +380,10 @@ function HowItWorks() {
     },
   ];
 
-  const cm: Record<string, { bg: string; text: string; ring: string; num: string; tone: "blue" | "amber" | "emerald" }> = {
-    blue: { bg: "bg-blue-50", text: "text-blue-600", ring: "ring-blue-200", num: "bg-blue-600", tone: "blue" },
-    amber: { bg: "bg-amber-50", text: "text-amber-600", ring: "ring-amber-200", num: "bg-amber-500", tone: "amber" },
-    emerald: { bg: "bg-emerald-50", text: "text-emerald-600", ring: "ring-emerald-200", num: "bg-emerald-600", tone: "emerald" },
+  const cm: Record<string, { text: string; border: string; bg: string; soft: string; num: string; tone: "blue" | "amber" | "emerald" }> = {
+    blue: { text: "text-blue-700", border: "border-blue-200", bg: "bg-blue-600", soft: "bg-blue-50", num: "bg-blue-600", tone: "blue" },
+    amber: { text: "text-amber-700", border: "border-amber-200", bg: "bg-amber-500", soft: "bg-amber-50", num: "bg-amber-500", tone: "amber" },
+    emerald: { text: "text-emerald-700", border: "border-emerald-200", bg: "bg-emerald-600", soft: "bg-emerald-50", num: "bg-emerald-600", tone: "emerald" },
   };
 
   return (
@@ -405,44 +405,46 @@ function HowItWorks() {
         </div>
       </div>
 
-      <div className="relative hidden gap-0 md:grid md:grid-cols-3">
-        <svg className="pointer-events-none absolute left-[29%] top-9 z-20 h-16 w-36 text-slate-300 lg:left-[30%] lg:w-40" viewBox="0 0 170 70" fill="none" aria-hidden="true">
-          <path d="M8 35 C48 35 92 28 142 35" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-          <path d="M126 17 L148 35 L126 53" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <svg className="pointer-events-none absolute left-[62%] top-9 z-20 h-16 w-36 text-slate-300 lg:left-[63%] lg:w-40" viewBox="0 0 170 70" fill="none" aria-hidden="true">
-          <path d="M8 35 C48 35 92 28 142 35" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-          <path d="M126 17 L148 35 L126 53" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+      <div className="hidden md:block">
+        <div className="relative border-b border-slate-100 bg-slate-50/60 px-8 py-6">
+          <div className="absolute left-[17%] right-[17%] top-1/2 h-1 -translate-y-1/2 rounded-full bg-slate-200" />
+          <div className="absolute left-[17%] top-1/2 h-1 -translate-y-1/2 rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${activeStep * 33}%` }} />
+          <div className="relative grid grid-cols-3 gap-6">
+            {steps.map((step, i) => {
+              const Icon = step.icon;
+              const c = cm[step.color];
+              const isActive = activeStep === i;
+              return (
+                <button key={step.n} type="button" onClick={() => setActiveStep(i)} className="group flex flex-col items-center gap-3 text-center focus:outline-none">
+                  <span className={`relative flex h-16 w-16 items-center justify-center rounded-2xl border bg-white shadow-sm transition-all duration-300 ${isActive ? `${c.border} scale-105 shadow-md` : "border-slate-200 group-hover:border-blue-200"}`}>
+                    <span className={`absolute -left-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white ${c.num}`}>{step.n}</span>
+                    <Icon className={`h-7 w-7 ${isActive ? c.text : "text-slate-500"}`} strokeWidth={1.9} />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{step.title}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{step.subtitle}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-        {steps.map((step, i) => {
-          const Icon = step.icon;
-          const c = cm[step.color];
-          const isActive = activeStep === i;
-          return (
-            <button key={step.n} type="button" onClick={() => setActiveStep(i)} className={`group flex min-h-[350px] flex-col gap-3 border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 lg:p-7 ${isActive ? "bg-gradient-to-br from-blue-50/80 via-white to-white shadow-inner" : "hover:bg-slate-50/50"}`}>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white transition-all ${c.num} ${isActive ? "scale-110 shadow-md" : ""}`}>{step.n}</span>
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 transition-all ${c.bg} ${c.ring} ${isActive ? "scale-105" : ""}`}><Icon className={`h-5 w-5 ${c.text}`} strokeWidth={1.75} /></span>
+        <div className="grid gap-0 md:grid-cols-3">
+          {steps.map((step, i) => {
+            const c = cm[step.color];
+            const isActive = activeStep === i;
+            return (
+              <button key={step.n} type="button" onClick={() => setActiveStep(i)} className={`flex min-h-[255px] flex-col border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 lg:p-7 ${isActive ? "bg-white" : "bg-slate-50/30 hover:bg-white"}`}>
+                <div className={`mb-4 h-1.5 w-12 rounded-full transition-all ${isActive ? c.bg : "bg-slate-200"}`} />
+                <p className="text-sm leading-relaxed text-slate-500">{step.desc}</p>
+                <div className={`mt-auto rounded-2xl border p-3 transition-all duration-300 ${isActive ? `${c.border} ${c.soft}` : "border-slate-100 bg-white/80 opacity-75"}`}>
+                  {step.preview}
                 </div>
-              </div>
-
-              <div className="flex justify-center py-1">
-                <IconTile tone={c.tone} className="h-16 w-16 shadow-sm">
-                  <Icon className="h-8 w-8" strokeWidth={1.9} />
-                </IconTile>
-              </div>
-
-              <div>
-                <p className={`text-base font-bold ${isActive ? "text-slate-900" : "text-slate-700"}`}>{step.title}</p>
-                <p className="mt-0.5 text-xs font-medium text-slate-400">{step.subtitle}</p>
-              </div>
-              <p className="text-sm leading-relaxed text-slate-500">{step.desc}</p>
-              <div className={`mt-auto transition-all duration-500 ${isActive ? "opacity-100" : "opacity-70"}`}>{step.preview}</div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="md:hidden">
@@ -453,15 +455,17 @@ function HowItWorks() {
           return (
             <div key={step.n} className="p-5">
               <div className="mb-3 flex items-center gap-3">
-                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${c.num}`}>{step.n}</span>
-                <IconTile tone={c.tone} className="h-12 w-12"><Icon className="h-6 w-6" strokeWidth={1.8} /></IconTile>
+                <span className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border ${c.border} bg-white shadow-sm`}>
+                  <span className={`absolute -left-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white ${c.num}`}>{step.n}</span>
+                  <Icon className={`h-6 w-6 ${c.text}`} strokeWidth={1.8} />
+                </span>
                 <div>
                   <p className="text-sm font-bold text-slate-900">{step.title}</p>
                   <p className="text-xs text-slate-400">{step.subtitle}</p>
                 </div>
               </div>
               <p className="mb-3 text-sm leading-relaxed text-slate-500">{step.desc}</p>
-              {step.preview}
+              <div className={`rounded-2xl border p-3 ${c.border} ${c.soft}`}>{step.preview}</div>
             </div>
           );
         })}
