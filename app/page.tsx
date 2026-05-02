@@ -12,7 +12,6 @@ import {
   BarChart3,
   BookOpen,
   CalendarCheck,
-  Check,
   FileText,
   FlaskConical,
   FolderOpen,
@@ -48,7 +47,12 @@ function clamp(n: number, a: number, b: number) {
 }
 
 const cardCls = "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm";
-const TEAM_IMAGE = "/lekrze_konsyl_pion.png";
+
+const IMG = {
+  hero: "/lekarka_z_tabletem.png",
+  team: "/lekrze_konsyl_pion.png",
+  cert: "/crpe_reka2b (1).png",
+};
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
@@ -65,7 +69,6 @@ function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
     <div className="space-y-2">
       {items.map((item, i) => {
         const isOpen = open === i;
-
         return (
           <div
             key={item.q}
@@ -91,7 +94,6 @@ function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
                 )}
               </span>
             </button>
-
             {isOpen ? (
               <div className="border-t border-slate-100 px-5 pb-4 pt-2 text-sm leading-relaxed text-slate-600">
                 {item.a}
@@ -106,83 +108,106 @@ function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
 
 function ProductPreview() {
   return (
-    <div className="relative">
-      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-100 blur-3xl" />
-      <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-cyan-100 blur-3xl" />
-
-      <div className="relative rounded-[1.7rem] border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-900/10">
-        <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-xl border border-blue-100 bg-blue-50">
-              <BarChart3 className="h-4 w-4 text-blue-600" strokeWidth={1.8} />
-            </span>
-            <div>
-              <div className="text-sm font-bold text-slate-950">Twój Panel CPD</div>
-              <div className="text-xs text-slate-400">Przykład statusu użytkownika</div>
-            </div>
-          </div>
-
-          <div className="rounded-xl bg-amber-50 px-3 py-2 text-right ring-1 ring-amber-100">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
-              Do celu brakuje
-            </div>
-            <div className="text-2xl font-bold leading-none text-amber-700">90 pkt</div>
+    <div className="rounded-[1.7rem] border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-900/10">
+      <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-9 w-9 place-items-center rounded-xl border border-blue-100 bg-blue-50">
+            <BarChart3 className="h-4 w-4 text-blue-600" strokeWidth={1.8} />
+          </span>
+          <div>
+            <div className="text-sm font-bold text-slate-950">Twój Panel CPD</div>
+            <div className="text-xs text-slate-400">Przykład statusu użytkownika</div>
           </div>
         </div>
 
-        <div className="mb-4">
-          <div className="mb-1.5 flex justify-between text-xs font-medium text-slate-500">
-            <span>Postęp punktów</span>
-            <span>110 / 200 pkt</span>
+        <div className="rounded-xl bg-amber-50 px-3 py-2 text-right ring-1 ring-amber-100">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+            Do celu brakuje
           </div>
-          <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-full w-[55%] rounded-full bg-blue-600" />
-          </div>
+          <div className="text-2xl font-bold leading-none text-amber-700">90 pkt</div>
         </div>
+      </div>
 
-        <div className="mb-4 grid grid-cols-3 gap-2">
+      <div className="mb-4">
+        <div className="mb-1.5 flex justify-between text-xs font-medium text-slate-500">
+          <span>Postęp punktów</span>
+          <span>110 / 200 pkt</span>
+        </div>
+        <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+          <div className="h-full w-[55%] rounded-full bg-blue-600" />
+        </div>
+      </div>
+
+      <div className="mb-4 grid grid-cols-3 gap-2">
+        {[
+          ["110", "masz pkt", "text-slate-950"],
+          ["200", "wymagane", "text-slate-950"],
+          ["90", "brakuje", "text-amber-700"],
+        ].map(([value, label, color]) => (
+          <div key={label} className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">
+            <div className={`text-xl font-bold ${color}`}>{value}</div>
+            <div className="mt-0.5 text-[11px] text-slate-500">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mb-4 rounded-xl bg-blue-600 p-4 text-white shadow-sm">
+        <div className="text-xs font-bold uppercase tracking-wide text-blue-100">Co teraz zrobić</div>
+        <div className="mt-1 text-sm font-bold">Uzupełnij dokumenty</div>
+        <div className="mt-0.5 text-xs text-blue-100">Masz 6 wpisów bez certyfikatu</div>
+      </div>
+
+      <div>
+        <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+          Ostatnie aktywności
+        </div>
+        <div className="space-y-2">
           {[
-            ["110", "masz pkt", "text-slate-950"],
-            ["200", "wymagane", "text-slate-950"],
-            ["90", "brakuje", "text-amber-700"],
-          ].map(([value, label, color]) => (
-            <div key={label} className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">
-              <div className={`text-xl font-bold ${color}`}>{value}</div>
-              <div className="mt-0.5 text-[11px] text-slate-500">{label}</div>
+            { name: "Konferencja kardiologiczna", cat: "Konferencja", pts: 20, stripe: "bg-amber-400" },
+            { name: "Kurs online / webinar", cat: "E-learning", pts: 15, stripe: "bg-slate-500" },
+            { name: "Kurs stacjonarny NIL", cat: "Kurs", pts: 6, stripe: "bg-emerald-400" },
+          ].map((e) => (
+            <div
+              key={e.name}
+              className="relative flex items-center gap-2 overflow-hidden rounded-xl border border-slate-100 bg-slate-50 py-2.5 pl-4 pr-3"
+            >
+              <div className={`absolute inset-y-2 left-0 w-1.5 rounded-r-full ${e.stripe}`} />
+              <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-800">{e.name}</span>
+              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-500 ring-1 ring-slate-200">
+                {e.cat}
+              </span>
+              <span className="text-xs font-bold text-blue-600">+{e.pts}</span>
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
 
-        <div className="mb-4 rounded-xl bg-blue-600 p-4 text-white shadow-sm">
-          <div className="text-xs font-bold uppercase tracking-wide text-blue-100">Co teraz zrobić</div>
-          <div className="mt-1 text-sm font-bold">Uzupełnij dokumenty</div>
-          <div className="mt-0.5 text-xs text-blue-100">Masz 6 wpisów bez certyfikatu</div>
-        </div>
-
-        <div>
-          <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            Ostatnie aktywności
-          </div>
-          <div className="space-y-2">
-            {[
-              { name: "Konferencja kardiologiczna", cat: "Konferencja", pts: 20, stripe: "bg-amber-400" },
-              { name: "Kurs online / webinar", cat: "E-learning", pts: 15, stripe: "bg-slate-500" },
-              { name: "Kurs stacjonarny NIL", cat: "Kurs", pts: 6, stripe: "bg-emerald-400" },
-            ].map((e) => (
-              <div
-                key={e.name}
-                className="relative flex items-center gap-2 overflow-hidden rounded-xl border border-slate-100 bg-slate-50 py-2.5 pl-4 pr-3"
-              >
-                <div className={`absolute inset-y-2 left-0 w-1.5 rounded-r-full ${e.stripe}`} />
-                <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-800">{e.name}</span>
-                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-500 ring-1 ring-slate-200">
-                  {e.cat}
-                </span>
-                <span className="text-xs font-bold text-blue-600">+{e.pts}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+function PhotoCard({
+  src,
+  alt,
+  title,
+  text,
+  className = "",
+  imageClassName = "object-cover",
+}: {
+  src: string;
+  alt: string;
+  title: string;
+  text: string;
+  className?: string;
+  imageClassName?: string;
+}) {
+  return (
+    <div className={`relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm ${className}`}>
+      <Image src={src} alt={alt} fill className={imageClassName} sizes="(max-width: 1024px) 100vw, 560px" />
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/82 via-slate-950/28 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100/90">CRPE w praktyce</p>
+        <h3 className="mt-1 text-lg font-bold leading-tight">{title}</h3>
+        <p className="mt-1.5 text-sm leading-relaxed text-white/75">{text}</p>
       </div>
     </div>
   );
@@ -559,7 +584,7 @@ export default function Page() {
         </nav>
 
         <section id="hero" className={`${cardCls} scroll-mt-32`}>
-          <div className="relative grid grid-cols-1 gap-8 p-6 lg:grid-cols-[0.95fr_1.05fr] lg:p-8">
+          <div className="relative grid grid-cols-1 gap-8 p-6 lg:grid-cols-[0.9fr_1.1fr] lg:p-8">
             <div className="pointer-events-none absolute left-0 top-5 h-16 w-1 rounded-r-full bg-blue-500" />
 
             <div className="relative z-10">
@@ -649,32 +674,23 @@ export default function Page() {
           </div>
         </div>
 
-        <section className={`${cardCls} relative min-h-[310px]`}>
-          <Image
-            src={TEAM_IMAGE}
-            alt="Zespół medyczny omawiający rozwój zawodowy"
-            fill
-            className="object-cover object-[50%_38%]"
-            sizes="(max-width: 1024px) 100vw, 1120px"
+        <section className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
+          <PhotoCard
+            src={IMG.team}
+            alt="Zespół medyczny przy stole"
+            title="Rozwój zawodowy jest zespołowy. Porządek w dokumentach — indywidualny."
+            text="CRPE pomaga każdemu specjaliście pilnować własnych punktów, terminów i certyfikatów."
+            className="min-h-[360px]"
+            imageClassName="object-cover object-[50%_34%]"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/82 via-slate-950/45 to-slate-950/16" />
-          <div className="relative max-w-2xl p-7 text-white">
-            <Eyebrow>Dla profesjonalistów</Eyebrow>
-            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Zarządzaj swoim rozwojem zawodowym bez chaosu.
-            </h2>
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/75">
-              Lekarz, pielęgniarka, fizjoterapeuta czy farmaceuta — CRPE pomaga zebrać szkolenia,
-              punkty i dokumenty w jednym miejscu.
-            </p>
-            <button
-              type="button"
-              onClick={() => scrollToId("jak-to-dziala")}
-              className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
-            >
-              Zobacz jak działa <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
+          <PhotoCard
+            src={IMG.hero}
+            alt="Pracowniczka medyczna z tabletem"
+            title="Panel zawsze pod ręką"
+            text="Dodajesz wpisy i dokumenty na bieżąco, również po szkoleniu."
+            className="min-h-[360px]"
+            imageClassName="object-cover object-[50%_26%]"
+          />
         </section>
 
         <div id="dla-kogo" className="grid scroll-mt-32 gap-4 lg:grid-cols-2">
