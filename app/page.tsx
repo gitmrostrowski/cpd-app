@@ -220,6 +220,7 @@ function CrpeFeatures() {
 
         {/* prawa sekcja - wizual */}
         <div className="hidden lg:flex flex-col justify-center gap-3 bg-slate-50/60 p-6">
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700">⚡ Dodanie wpisu: ~30 sek</div>
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs text-slate-400">Podgląd</p>
             <p className="text-sm font-semibold text-slate-900">Twój status CPD</p>
@@ -283,6 +284,7 @@ function HowItWorks() {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => e.isIntersecting && setVisible(true), { threshold: 0.2 });
@@ -291,10 +293,10 @@ function HowItWorks() {
   }, []);
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || paused) return;
     const t = setInterval(() => setActiveStep((s) => (s + 1) % 3), 3200);
     return () => clearInterval(t);
-  }, [visible]);
+  }, [visible, paused]);
 
   const steps = [
     {
@@ -387,12 +389,12 @@ function HowItWorks() {
 
   const cm: Record<string, { text: string; border: string; bg: string; soft: string; num: string; tone: "blue" | "amber" | "emerald" }> = {
     blue: { text: "text-blue-700", border: "border-blue-200", bg: "bg-blue-600", soft: "bg-blue-50", num: "bg-blue-600", tone: "blue" },
-    amber: { text: "text-amber-700", border: "border-amber-200", bg: "bg-amber-500", soft: "bg-amber-50", num: "bg-amber-500", tone: "amber" },
+    amber: { text: "text-amber-700", border: "border-amber-300", bg: "bg-amber-500", soft: "bg-amber-100", num: "bg-amber-500", tone: "amber" },
     emerald: { text: "text-emerald-700", border: "border-emerald-200", bg: "bg-emerald-600", soft: "bg-emerald-50", num: "bg-emerald-600", tone: "emerald" },
   };
 
   return (
-    <div id="jak-to-dziala" ref={ref} className={`${cardCls} scroll-mt-32`}>
+    <div id="jak-to-dziala" ref={ref} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} className={`${cardCls} scroll-mt-32`}>
       <div className="border-b border-slate-100 px-6 py-5 lg:px-8">
         <Eyebrow>Proces</Eyebrow>
         <div className="flex items-end justify-between gap-6">
@@ -424,7 +426,7 @@ function HowItWorks() {
               const c = cm[step.color];
               const isActive = activeStep === i;
               return (
-                <button key={step.n} type="button" onClick={() => setActiveStep(i)} className="group flex flex-col items-center gap-3 text-center focus:outline-none">
+                <button key={step.n} type="button" onMouseEnter={() => setActiveStep(i)} onClick={() => setActiveStep(i)} className="group flex flex-col items-center gap-3 text-center focus:outline-none">
                   <span className={`relative flex h-16 w-16 items-center justify-center rounded-2xl border bg-white shadow-sm transition-all duration-300 ${isActive ? `${c.border} scale-110 shadow-lg ring-4 ring-blue-100` : "border-slate-200 group-hover:border-blue-200"}`}>
                     <span className={`absolute -left-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white ${c.num}`}>{step.n}</span>
                     <Icon className={`h-7 w-7 transition-all ${isActive ? `${c.text} scale-110` : "text-slate-500"}`} strokeWidth={1.9} />
@@ -444,7 +446,7 @@ function HowItWorks() {
             const c = cm[step.color];
             const isActive = activeStep === i;
             return (
-              <button key={step.n} type="button" onClick={() => setActiveStep(i)} className={`flex min-h-[255px] flex-col border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 lg:p-7 ${isActive ? `bg-white ring-2 ${c.border}` : "bg-slate-50/30 hover:bg-white"}`}>
+              <button key={step.n} type="button" onMouseEnter={() => setActiveStep(i)} onClick={() => setActiveStep(i)} className={`flex min-h-[255px] flex-col border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 lg:p-7 ${isActive ? `bg-white ring-2 ${c.border}` : "bg-slate-50/30 hover:bg-white"}`}>
                 <div className={`mb-4 h-1.5 w-12 rounded-full transition-all ${isActive ? c.bg : "bg-slate-200"}`} />
                 <p className="text-sm leading-relaxed text-slate-500">{step.desc}</p>
                 <div className={`mt-auto rounded-2xl border p-3 transition-all duration-300 ${isActive ? `${c.border} ${c.soft}` : "border-slate-100 bg-white/80 opacity-75"}`}>
