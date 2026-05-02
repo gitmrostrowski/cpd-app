@@ -1,4 +1,4 @@
-// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 21:16
+// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 21:21
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -846,8 +846,8 @@ export default function Page() {
           <div id="funkcje" className="scroll-mt-32">
             <CrpeFeatures />
           </div>
-
           <ReminderSection />
+
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
             <div id="faq" className={`${cardCls} scroll-mt-32`}>
               <div className="border-b border-slate-100 px-6 py-5 lg:px-8">
