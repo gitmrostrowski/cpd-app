@@ -1,4 +1,4 @@
-// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 17:55
+// app/page.tsx — poprawka podmenu sticky, 2/3 layout, wersja 2026-05-02 17:24 + aktualizacja 18:03
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -841,7 +841,7 @@ export default function Page() {
       </section>
 
       <section className="bg-slate-50 py-8">
-        <FeatureGrid />
+        <CrpeFeatures />
       </section>
 
       <section className="bg-white py-8">
