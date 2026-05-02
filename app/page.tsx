@@ -673,7 +673,11 @@ export default function Page() {
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]"><PhotoCard src={IMG.team} alt="Zespół medyczny przy stole" title="CRPE pomaga każdemu specjaliście pilnować własnych punktów, terminów i certyfikatów." text="" className="min-h-[390px] lg:min-h-[455px]" imageClassName="object-cover object-[50%_16%]" /><div className="flex min-h-[390px] items-stretch rounded-[1.45rem] bg-gradient-to-br from-white to-slate-50 p-4 lg:min-h-[455px]"><ProductPreview /></div></div>
 
           <div id="dla-kogo" className="grid scroll-mt-32 gap-6 lg:grid-cols-2">
-            <div className={cardCls}><div className="border-b border-slate-100 px-6 py-5 lg:px-8"><Eyebrow>Odbiorcy</Eyebrow><h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Dla kogo jest CRPE</h2><p className="mt-1 text-sm text-slate-500">Dla zawodów medycznych zobowiązanych do zbierania punktów edukacyjnych. Lekarze, pielęgniarki, fizjoterapeuci i inni specjaliści, którzy chcą mieć porządek bez Excela.</p></div></div></div>
+            <div className={cardCls}>
+              <div className="border-b border-slate-100 px-6 py-5 lg:px-8">
+                <Eyebrow>Odbiorcy</Eyebrow>
+                <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Dla kogo jest CRPE</h2>
+                <p className="mt-1 text-sm text-slate-500">Dla zawodów medycznych zbierających punkty edukacyjne.</p>
 
           <CrpeFeatures />
           <HowItWorks />
