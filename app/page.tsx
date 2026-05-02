@@ -223,15 +223,15 @@ function CrpeFeatures() {
 
         <div className="relative grid gap-3 p-5 sm:grid-cols-2 lg:p-8">
           <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 hidden h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full border-[14px] border-slate-200/70 lg:block" />
-          <svg className="pointer-events-none absolute left-1/2 top-1/2 z-0 hidden h-52 w-52 -translate-x-1/2 -translate-y-1/2 text-slate-400/75 lg:block" viewBox="0 0 220 220" fill="none" aria-hidden="true">
-            <path d="M72 43c26-13 70-9 91 17" stroke="currentColor" strokeWidth="10" strokeLinecap="round" />
-            <path d="M156 37l16 27-31 4" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M177 77c13 26 9 70-17 91" stroke="currentColor" strokeWidth="10" strokeLinecap="round" />
-            <path d="M183 160l-27 16-4-31" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M148 177c-26 13-70 9-91-17" stroke="currentColor" strokeWidth="10" strokeLinecap="round" />
-            <path d="M64 183l-16-27 31-4" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M43 143c-13-26-9-70 17-91" stroke="currentColor" strokeWidth="10" strokeLinecap="round" />
-            <path d="M37 60l27-16 4 31" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+          <svg className="pointer-events-none absolute left-1/2 top-1/2 z-0 hidden h-44 w-44 -translate-x-1/2 -translate-y-1/2 text-slate-300 lg:block" viewBox="0 0 220 220" fill="none" aria-hidden="true">
+            <path d="M72 43c26-13 70-9 91 17" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+            <path d="M156 37l16 27-31 4" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M177 77c13 26 9 70-17 91" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+            <path d="M183 160l-27 16-4-31" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M148 177c-26 13-70 9-91-17" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+            <path d="M64 183l-16-27 31-4" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M43 143c-13-26-9-70 17-91" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+            <path d="M37 60l27-16 4 31" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
 
           {features.map(({ icon: Icon, title, text }) => (
@@ -421,8 +421,8 @@ export default function Page() {
     { id: "przypomnienia", label: "Przypomnienia" },
     { id: "faq", label: "FAQ" },
   ];
-  const navBase = "group inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-blue-700";
-  const navActive = "group inline-flex shrink-0 items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-600/20";
+  const navBase = "group inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition-all duration-200 hover:scale-[1.03] hover:bg-slate-50 hover:text-blue-700";
+  const navActive = "group inline-flex shrink-0 scale-[1.03] items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition-all duration-200";
   const FAQ = [
     { q: "Czy CRPE jest połączone z systemami państwowymi?", a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte." },
     { q: "Czy moje certyfikaty są bezpieczne?", a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE." },
@@ -464,6 +464,7 @@ export default function Page() {
                   ].map((b) => { const Icon = b.icon; return <div key={b.t} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm shadow-slate-900/5"><IconTile tone={b.tone} className="mt-0.5 h-10 w-10"><Icon className="h-5 w-5" strokeWidth={2} /></IconTile><div><div className="text-sm font-semibold text-slate-900">{b.t}</div><p className="mt-0.5 text-xs leading-relaxed text-slate-500">{b.d}</p></div></div>; })}
                 </div>
                 <div className="mt-8 flex flex-wrap gap-3"><Link href="/login" className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95">Załóż darmowe konto <ArrowRight className="h-4 w-4" /></Link><button type="button" onClick={() => scrollToId("jak-to-dziala")} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">Jak to działa</button></div>
+                <p className="mt-3 text-xs text-slate-500">Bez instalacji • 30 sekund do pierwszego wpisu • działa na telefonie</p>
               </div>
               <div className="relative z-10 min-h-[380px] overflow-hidden rounded-[1.6rem] border border-slate-200 bg-slate-900 shadow-xl shadow-slate-950/10 lg:min-h-[500px]"><Image src={IMG.hero} alt="Pracowniczka medyczna z tabletem" fill priority className="object-cover object-[50%_22%]" sizes="(max-width: 1024px) 100vw, 390px" /><div className="absolute inset-0 bg-gradient-to-t from-slate-950/78 via-transparent to-transparent" /><div className="absolute bottom-0 left-0 right-0 p-5 text-white"><p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100/90">CRPE w praktyce</p><h3 className="mt-1.5 text-xl font-bold leading-tight">Panel zawsze pod ręką</h3><p className="mt-1.5 text-sm leading-relaxed text-white/75">Dodajesz wpisy i dokumenty na bieżąco.</p></div></div>
             </div>
@@ -475,7 +476,7 @@ export default function Page() {
 
       <section className="bg-slate-50 py-7 lg:py-9">
         <div className={`${pageWrap} space-y-6`}>
-          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]"><PhotoCard src={IMG.team} alt="Zespół medyczny przy stole" title="CRPE pomaga każdemu specjaliście pilnować własnych punktów, terminów i certyfikatów." text="" className="min-h-[390px] lg:min-h-[455px]" imageClassName="object-cover object-[50%_16%]" /><div className="flex min-h-[390px] items-stretch rounded-[1.45rem] border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm shadow-slate-900/5 lg:min-h-[455px]"><ProductPreview /></div></div>
+          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]"><PhotoCard src={IMG.team} alt="Zespół medyczny przy stole" title="CRPE pomaga każdemu specjaliście pilnować własnych punktów, terminów i certyfikatów." text="" className="min-h-[390px] lg:min-h-[455px]" imageClassName="object-cover object-[50%_16%]" /><div className="flex min-h-[390px] items-stretch rounded-[1.45rem] bg-gradient-to-br from-white to-slate-50 p-4 lg:min-h-[455px]"><ProductPreview /></div></div>
 
           <div id="dla-kogo" className="grid scroll-mt-32 gap-6 lg:grid-cols-2">
             <div className={cardCls}><div className="border-b border-slate-100 px-6 py-5 lg:px-8"><Eyebrow>Odbiorcy</Eyebrow><h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Dla kogo jest CRPE</h2><p className="mt-1 text-sm text-slate-500">Dla zawodów medycznych zbierających punkty edukacyjne.</p></div><div className="p-5 lg:p-7"><div className="grid gap-3 sm:grid-cols-2">{[{ t: "Lekarze i lekarze dentyści", icon: Stethoscope }, { t: "Pielęgniarki i położne", icon: HeartPulse }, { t: "Fizjoterapeuci", icon: UserCog }, { t: "Farmaceuci", icon: Pill }, { t: "Diagności laboratoryjni", icon: FlaskConical }, { t: "Nowe zawody medyczne", icon: Users }].map(({ t, icon: Icon }) => <div key={t} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3"><IconTile tone="emerald"><Icon className="h-5 w-5" strokeWidth={2.1} /></IconTile><span className="text-sm font-medium text-slate-800">{t}</span></div>)}</div><div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4"><p className="text-sm font-semibold text-slate-900">Jeśli musisz zbierać punkty — CRPE jest dla Ciebie.</p><p className="mt-0.5 text-xs text-slate-500">Zacznij od kilku wpisów. Resztę uzupełniaj stopniowo.</p></div></div></div>
