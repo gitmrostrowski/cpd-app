@@ -1,4 +1,4 @@
-// app/page.tsx — poprawka layoutu, ikon, podmenu i sekcji funkcji CRPE
+// app/page.tsx — wersja kompletna: landing CRPE, proces premium, korzyści + mikroanimacja upload → przypisany
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -64,7 +64,7 @@ function IconTile({
   className = "h-11 w-11",
 }: {
   children: React.ReactNode;
-  tone?: "blue" | "emerald" | "amber" | "indigo" | "slate";
+  tone?: "blue" | "emerald" | "amber" | "indigo" | "slate" | "rose";
   className?: string;
 }) {
   const tones = {
@@ -73,6 +73,7 @@ function IconTile({
     amber: "border-amber-200 bg-amber-50 text-amber-700",
     indigo: "border-indigo-200 bg-indigo-50 text-indigo-700",
     slate: "border-slate-200 bg-slate-50 text-slate-600",
+    rose: "border-rose-200 bg-rose-50 text-rose-700",
   };
 
   return <span className={`${iconBox} ${className} ${tones[tone]}`}>{children}</span>;
@@ -112,7 +113,6 @@ function ProductPreview() {
             <div className="text-xs text-slate-400">Przykład statusu użytkownika</div>
           </div>
         </div>
-
         <div className="rounded-xl bg-amber-50 px-3 py-2 text-right ring-1 ring-amber-100">
           <div className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Do celu brakuje</div>
           <div className="text-2xl font-bold leading-none text-amber-700">90 pkt</div>
@@ -130,7 +130,11 @@ function ProductPreview() {
       </div>
 
       <div className="mb-4 grid grid-cols-3 gap-2">
-        {[["110", "masz pkt", "text-slate-950"], ["200", "wymagane", "text-slate-950"], ["90", "brakuje", "text-amber-700"]].map(([value, label, color]) => (
+        {[
+          ["110", "masz pkt", "text-slate-950"],
+          ["200", "wymagane", "text-slate-950"],
+          ["90", "brakuje", "text-amber-700"],
+        ].map(([value, label, color]) => (
           <div key={label} className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">
             <div className={`text-xl font-bold ${color}`}>{value}</div>
             <div className="mt-0.5 text-[11px] text-slate-500">{label}</div>
@@ -179,26 +183,104 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
   );
 }
 
+function UploadAssignAnimation() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-bold text-slate-950">Certyfikat → przypisany</p>
+          <p className="mt-0.5 text-xs text-slate-500">mikro demo działania CRPE</p>
+        </div>
+        <IconTile className="h-10 w-10"><Smartphone className="h-5 w-5" /></IconTile>
+      </div>
+
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <FileText className="h-4 w-4 text-slate-500" />
+            <span className="text-xs font-semibold text-slate-700">certyfikat.jpg</span>
+          </div>
+          <div className="h-2 w-16 rounded-full bg-slate-200" />
+        </div>
+
+        <div className="relative h-12 w-16 overflow-hidden">
+          <div className="absolute left-0 top-1/2 h-0.5 w-full -translate-y-1/2 rounded-full bg-blue-100" />
+          <UploadCloud className="absolute left-0 top-1/2 h-5 w-5 -translate-y-1/2 animate-[ping_1.8s_ease-in-out_infinite] text-blue-500 opacity-40" />
+          <ArrowRight className="absolute right-1 top-1/2 h-5 w-5 -translate-y-1/2 text-blue-600" />
+        </div>
+
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <span className="text-xs font-bold text-emerald-700">przypisany</span>
+          </div>
+          <div className="h-2 w-20 rounded-full bg-emerald-200" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CrpeFeatures() {
   const benefits = [
     { icon: UploadCloud, title: "Dodajesz wpis w 30 sekund", value: "bez wysiłku", text: "Po szkoleniu robisz zdjęcie certyfikatu i masz temat zamknięty. Bez odkładania na później." },
     { icon: FileText, title: "Nigdy nie zgubisz certyfikatu", value: "0 chaosu", text: "Wszystko masz przypięte do aktywności. Koniec szukania w mailach i folderach." },
     { icon: BarChart3, title: "Zawsze wiesz gdzie stoisz", value: "pełna kontrola", text: "Jedno spojrzenie i wiesz: ile masz punktów i czego Ci brakuje." },
-    { icon: ShieldCheck, title: "Spokój przed kontrolą", value: "bez stresu", text: "Masz gotowy porządek i dokumenty — bez nerwowego nadrabiania na koniec." },
+    { icon: ShieldCheck, title: "Spokój przed kontrolą", value: "bez stresu", text: "Masz porządek w dokumentach — bez nerwowego nadrabiania na koniec." },
   ];
 
   return (
     <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-      <div className="grid gap-0 lg:grid-cols-[0.82fr_1.18fr]">
+      <div className="grid gap-0 lg:grid-cols-[0.86fr_1.14fr]">
         <div className="border-b border-slate-100 p-6 lg:border-b-0 lg:border-r lg:p-8">
           <Eyebrow>Korzyści</Eyebrow>
           <h2 className="text-2xl font-bold tracking-tight text-slate-950 lg:text-3xl">Co dostajesz w CRPE</h2>
           <p className="mt-3 text-sm leading-relaxed text-slate-600">
-            Zamiast chaosu w papierach i Excelu — masz jedno miejsce, które ogarnia wszystko za Ciebie.
+            Zamiast chaosu w papierach i Excelu — masz jedno miejsce, które robi to za Ciebie. CRPE pomaga pamiętać o punktach, dokumentach i brakach.
           </p>
 
           <div className="mt-6 grid gap-3">
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+              <div className="flex items-start gap-3">
+                <IconTile tone="rose" className="h-11 w-11"><FileText className="h-5 w-5" /></IconTile>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-rose-600">Przed</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">Wszystko rozrzucone i trudne do ogarnięcia</p>
+                  <ul className="mt-2 space-y-1 text-sm text-slate-600">
+                    <li>• Certyfikaty w różnych miejscach</li>
+                    <li>• Nie wiesz ile masz punktów</li>
+                    <li>• Łatwo odłożyć uzupełnienie na później</li>
+                  </ul>
+                </div>
+              </div>
             </div>
+
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+              <div className="flex items-start gap-3">
+                <IconTile tone="emerald" className="h-11 w-11"><CheckCircle2 className="h-5 w-5" /></IconTile>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600">Po</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">Wszystko ogarnięte w jednym miejscu</p>
+                  <ul className="mt-2 space-y-1 text-sm text-slate-600">
+                    <li>• Aktywności i certyfikaty razem</li>
+                    <li>• Status punktów na bieżąco</li>
+                    <li>• CRPE przypomina, co trzeba uzupełnić</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-blue-100 bg-white p-4">
+              <div className="flex items-start gap-3">
+                <IconTile tone="blue" className="h-11 w-11"><Smartphone className="h-5 w-5" /></IconTile>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Ty robisz zdjęcie — reszta dzieje się sama</p>
+                  <p className="mt-1 text-sm text-slate-600">Po szkoleniu dodajesz certyfikat z telefonu. CRPE zapisuje, przypisuje i pamięta za Ciebie, co jeszcze trzeba uzupełnić.</p>
+                </div>
+              </div>
+            </div>
+
+            <UploadAssignAnimation />
           </div>
         </div>
 
@@ -208,24 +290,15 @@ function CrpeFeatures() {
 
           <div className="relative grid gap-3 sm:grid-cols-2">
             {benefits.map(({ icon: Icon, title, value, text }, i) => (
-              <div
-                key={title}
-                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-950/5"
-              >
+              <div key={title} className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-950/5">
                 <div className="flex items-start justify-between gap-3">
                   <IconTile className="h-12 w-12"><Icon className="h-5 w-5" strokeWidth={2.1} /></IconTile>
-                  <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-500 ring-1 ring-slate-200">
-                    {value}
-                  </span>
+                  <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-500 ring-1 ring-slate-200">{value}</span>
                 </div>
                 <h3 className="mt-4 text-sm font-bold text-slate-950">{title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{text}</p>
-
                 <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className="h-full rounded-full bg-blue-600 transition-all duration-700 group-hover:w-full"
-                    style={{ width: `${45 + i * 15}%` }}
-                  />
+                  <div className="h-full rounded-full bg-blue-600 transition-all duration-700 group-hover:w-full" style={{ width: `${45 + i * 15}%` }} />
                 </div>
               </div>
             ))}
@@ -239,9 +312,7 @@ function CrpeFeatures() {
                 <p className="text-xs text-slate-600">aktywności + punkty + dokumenty w jednym widoku</p>
               </div>
             </div>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200">
-              bez chaosu
-            </span>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200">bez chaosu</span>
           </div>
         </div>
       </div>
@@ -261,7 +332,6 @@ function ReminderSection() {
             <h2 className="text-2xl font-bold tracking-tight text-slate-950">Nie przegap brakujących dokumentów</h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-600">CRPE może pomagać nie tylko w przechowywaniu certyfikatów, ale też w pilnowaniu braków i terminów. Dzięki temu łatwiej przygotować się do raportu bez nerwowego sprawdzania wszystkiego na końcu okresu.</p>
           </div>
-
           <div className="grid gap-3 p-5 sm:grid-cols-3 lg:p-8">
             {items.map((item) => (
               <div key={item} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
@@ -414,12 +484,12 @@ function HowItWorks() {
 
       <div className="hidden md:block">
         <div className="relative border-b border-slate-100 bg-slate-50/60 px-8 py-6">
-          <div className="absolute left-[17%] right-[17%] top-1/2 h-1 -translate-y-1/2 rounded-full bg-slate-200 overflow-hidden">
-          <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-        </div>
+          <div className="absolute left-[17%] right-[17%] top-1/2 h-1 -translate-y-1/2 overflow-hidden rounded-full bg-slate-200">
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+          </div>
           <div className="absolute left-[17%] top-1/2 h-1 -translate-y-1/2 rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${activeStep * 33}%` }}>
-          <div className="h-full w-full animate-[pulse_2s_infinite] bg-gradient-to-r from-blue-400 via-blue-600 to-blue-400 opacity-60" />
-        </div>
+            <div className="h-full w-full animate-[pulse_2s_infinite] bg-gradient-to-r from-blue-400 via-blue-600 to-blue-400 opacity-60" />
+          </div>
           <div className="relative grid grid-cols-3 gap-6">
             {steps.map((step, i) => {
               const Icon = step.icon;
@@ -446,7 +516,7 @@ function HowItWorks() {
             const c = cm[step.color];
             const isActive = activeStep === i;
             return (
-              <button key={step.n} type="button" onMouseEnter={() => setActiveStep(i)} onClick={() => setActiveStep(i)} className={`flex min-h-[255px] flex-col border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 focus:outline-none focus-visible:ring-0 lg:p-7 ${isActive ? `bg-white` : "bg-slate-50/30 hover:bg-white"}`}>
+              <button key={step.n} type="button" onMouseEnter={() => setActiveStep(i)} onClick={() => setActiveStep(i)} className={`flex min-h-[255px] flex-col border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 focus:outline-none focus-visible:ring-0 lg:p-7 ${isActive ? "bg-white" : "bg-slate-50/30 hover:bg-white"}`}>
                 <div className={`mb-4 h-1.5 w-12 rounded-full transition-all ${isActive ? c.bg : "bg-slate-200"}`} />
                 <p className="text-sm leading-relaxed text-slate-500">{step.desc}</p>
                 <div className={`mt-auto rounded-2xl border p-3 transition-all duration-300 ${isActive ? `${c.border} ${c.soft} shadow-sm` : "border-slate-100 bg-white/80 opacity-75"}`}>
@@ -512,7 +582,9 @@ export default function Page() {
       router.replace(profile ? "/kalkulator" : "/start");
     }
     run();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [router, supabase]);
 
   function scrollToId(id: string) {
