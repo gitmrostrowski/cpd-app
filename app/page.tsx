@@ -195,8 +195,8 @@ function ScenarioStrip() {
       <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-blue-100/70 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-32 right-[-90px] h-80 w-80 rounded-full bg-emerald-100/70 blur-3xl" />
 
-      <div className="relative grid gap-0 lg:grid-cols-[0.86fr_1.14fr]">
-        <div className="border-b border-slate-100 p-8 lg:border-b-0 lg:border-r lg:p-10">
+      <div className="relative grid gap-0 lg:grid-cols-[0.82fr_1.18fr]">
+        <div className="border-b border-slate-100 p-7 lg:border-b-0 lg:border-r lg:p-9">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
             <span className={`h-2 w-2 rounded-full ${isReady ? "bg-emerald-500" : "bg-amber-500"}`} />
             <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
@@ -225,16 +225,14 @@ function ScenarioStrip() {
           </div>
         </div>
 
-        <div className="relative min-h-[360px] bg-slate-50/70 p-6 lg:p-8">
-          <div className="absolute inset-x-8 top-8 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
-
-          <div className="relative mx-auto h-full max-w-2xl">
+        <div className="relative bg-slate-50/70 p-5 lg:p-7">
+          <div className="relative mx-auto min-h-[380px] max-w-2xl">
             <div
               className={`absolute inset-0 transition-all duration-700 ${
-                isReady ? "-translate-x-10 opacity-0 scale-[0.97]" : "translate-x-0 opacity-100 scale-100"
+                isReady ? "-translate-x-8 opacity-0 scale-[0.98]" : "translate-x-0 opacity-100 scale-100"
               }`}
             >
-              <div className="h-full rounded-[1.35rem] bg-white p-5 shadow-xl shadow-slate-900/8 ring-1 ring-slate-200">
+              <div className="rounded-[1.35rem] bg-white p-5 shadow-xl shadow-slate-900/8 ring-1 ring-slate-200">
                 <div className="mb-5 flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm font-black text-slate-950">Folder z dokumentami</p>
@@ -248,13 +246,12 @@ function ScenarioStrip() {
                     ["certyfikat_final.pdf", "bez punktów", "amber"],
                     ["IMG_2847.jpg", "nieprzypisany", "slate"],
                     ["mail_od_organizatora.msg", "brak daty", "amber"],
-                    ["scan_2024_kopia.pdf", "duplikat?", "rose"],
                   ].map(([file, note, tone], i) => (
                     <div
                       key={file}
-                      className={`flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200 transition ${i === 1 ? "translate-x-4" : i === 2 ? "-translate-x-2" : ""}`}
+                      className={`flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200 transition ${i === 1 ? "translate-x-3" : ""}`}
                     >
-                      <IconTile tone={tone as "amber" | "slate" | "rose"} className="h-9 w-9 rounded-xl border-0">
+                      <IconTile tone={tone as "amber" | "slate"} className="h-9 w-9 rounded-xl border-0">
                         <FileText className="h-4 w-4" strokeWidth={2.2} />
                       </IconTile>
                       <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-700">{file}</span>
@@ -271,10 +268,10 @@ function ScenarioStrip() {
 
             <div
               className={`absolute inset-0 transition-all duration-700 ${
-                isReady ? "translate-x-0 opacity-100 scale-100" : "translate-x-10 opacity-0 scale-[0.97]"
+                isReady ? "translate-x-0 opacity-100 scale-100" : "translate-x-8 opacity-0 scale-[0.98]"
               }`}
             >
-              <div className="h-full rounded-[1.35rem] bg-white p-5 shadow-xl shadow-slate-900/8 ring-1 ring-blue-200">
+              <div className="rounded-[1.35rem] bg-white p-5 shadow-xl shadow-slate-900/8 ring-1 ring-blue-200">
                 <div className="mb-5 flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm font-black text-slate-950">Aktywność w CRPE</p>
@@ -307,7 +304,7 @@ function ScenarioStrip() {
                 </div>
 
                 <div className="mt-5 rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
-                  <div className="mb-2 flex justify-between text-xs font-bold text-slate-600">
+                  <div className="mb-1.5 flex justify-between text-xs font-bold text-slate-600">
                     <span>Postęp CPD</span>
                     <span>71%</span>
                   </div>
