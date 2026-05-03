@@ -1,4 +1,4 @@
-// app/page.tsx — kompletna, domknięta wersja landing page CRPE 17.1
+// app/page.tsx — kompletna, domknięta wersja landing page CRPE 17.2
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -182,19 +182,19 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
 
 function ScenarioStrip() {
   return (
-    <div className={`${cardCls} overflow-hidden`}>
+    <div className="overflow-hidden rounded-[1.45rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white shadow-sm shadow-slate-900/5">
       <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="border-b border-slate-100 px-6 py-5 lg:border-b-0 lg:border-r lg:px-8 lg:py-6">
+        <div className="border-b border-blue-100 px-6 py-5 lg:border-b-0 lg:border-r lg:px-8 lg:py-6">
           <Eyebrow>Typowy problem</Eyebrow>
           <h2 className="text-xl font-bold tracking-tight text-slate-950 lg:text-2xl">
-            Spokojny koniec okresu rozliczeniowego zaczyna się dużo wcześniej.
+            Największy stres zaczyna się wtedy, gdy dokumentów trzeba szukać na końcu okresu.
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            Pod koniec okresu zaczyna się szukanie certyfikatów, dat, punktów i brakujących dokumentów. CRPE pomaga zobaczyć te braki wcześniej — zanim robi się nerwowo.
+            CRPE pomaga prowadzić dokumentację na bieżąco: punkty, certyfikaty, braki i terminy są widoczne wcześniej — zanim trzeba przygotować podsumowanie.
           </p>
         </div>
 
-        <div className="grid gap-3 bg-slate-50/70 p-5 sm:grid-cols-3 lg:p-6">
+        <div className="grid gap-3 bg-white/55 p-5 sm:grid-cols-3 lg:p-6">
           {[
             "Widzisz aktualny status punktów",
             "Masz certyfikaty przypisane do aktywności",
@@ -242,7 +242,7 @@ function CrpeFeatures() {
               ))}
             </div>
             <Link href="/login" className="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-lg shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-blue-50">
-              Sprawdź ile punktów Ci brakuje <ArrowRight className="h-4 w-4" />
+              Załóż darmowe konto <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -314,8 +314,8 @@ function ReminderSection() {
         <div className="grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="border-b border-blue-100 p-6 lg:border-b-0 lg:border-r lg:p-8">
             <Eyebrow>Przypomnienia</Eyebrow>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-950">Nie przegap brakujących dokumentów</h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">CRPE może pomagać nie tylko w przechowywaniu certyfikatów, ale też w pilnowaniu braków i terminów. Dzięki temu łatwiej przygotować się do raportu bez nerwowego sprawdzania wszystkiego na końcu okresu.</p>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950">System pilnuje braków za Ciebie</h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">CRPE może przypominać o brakujących dokumentach, terminach i aktywnościach wymagających uzupełnienia. Dzięki temu łatwiej przygotować raport bez nerwowego sprawdzania wszystkiego na końcu okresu.</p>
           </div>
           <div className="grid gap-3 p-5 sm:grid-cols-3 lg:p-8">
             {items.map((item, i) => (
@@ -628,6 +628,7 @@ export default function Page() {
                 <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1.5 text-xs font-medium text-blue-700"><Sparkles className="h-3.5 w-3.5 text-blue-600" strokeWidth={1.75} />Spokojny koniec okresu rozliczeniowego zaczyna się dużo wcześniej</div>
                 <h1 className="max-w-3xl text-[42px] font-bold leading-[1.04] tracking-tight text-slate-950 sm:text-[56px] lg:text-[62px]">Masz wszystko pod kontrolą — <span className="text-blue-600">punkty, certyfikaty i terminy.</span></h1>
                 <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">Zbieraj punkty, przechowuj certyfikaty i miej pewność, że nie zabraknie Ci nic na koniec okresu.</p>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500">Pod koniec okresu nie musisz szukać dokumentów po mailach ani liczyć punktów na szybko. CRPE pokazuje wcześniej, co masz i czego jeszcze brakuje.</p>
                 <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {[
                     { icon: FolderOpen, t: "Porządek bez wysiłku", d: "Wpisy i certyfikaty zawsze pod ręką.", tone: "blue" as const },
@@ -636,8 +637,8 @@ export default function Page() {
                     { icon: Sparkles, t: "Start za darmo", d: "Podstawowe funkcje bezpłatnie. Bez karty.", tone: "indigo" as const },
                   ].map((b) => { const Icon = b.icon; return <div key={b.t} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm shadow-slate-900/5"><IconTile tone={b.tone} className="mt-0.5 h-10 w-10"><Icon className="h-5 w-5" strokeWidth={2} /></IconTile><div><div className="text-sm font-semibold text-slate-900">{b.t}</div><p className="mt-0.5 text-xs leading-relaxed text-slate-500">{b.d}</p></div></div>; })}
                 </div>
-                <div className="mt-8 flex flex-wrap gap-3"><Link href="/login" className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95">Sprawdź ile punktów Ci brakuje <ArrowRight className="h-4 w-4" /></Link><button type="button" onClick={() => scrollToId("jak-to-dziala")} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">Jak to działa</button></div>
-                <p className="mt-3 text-xs text-slate-500">Bezpłatny start • bez Excela • bez szukania certyfikatów po mailach</p>
+                <div className="mt-8 flex flex-wrap gap-3"><Link href="/login" className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95">Załóż konto i zobacz swój status <ArrowRight className="h-4 w-4" /></Link><button type="button" onClick={() => scrollToId("jak-to-dziala")} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">Sprawdź jak działa</button></div>
+                <p className="mt-3 text-xs text-slate-500">Bezpłatny start • bez karty płatniczej • pierwszy wpis w około 30 sekund</p>
               </div>
               <div className="relative z-10 min-h-[380px] overflow-hidden rounded-[1.6rem] border border-slate-200 bg-slate-900 shadow-xl shadow-slate-950/10 lg:min-h-[500px]"><Image src={IMG.hero} alt="Pracowniczka medyczna z tabletem" fill priority className="object-cover object-[50%_22%]" sizes="(max-width: 1024px) 100vw, 390px" /><div className="absolute inset-0 bg-gradient-to-t from-slate-950/78 via-transparent to-transparent" /><div className="absolute bottom-0 left-0 right-0 p-5 text-white"><p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100/90">CRPE w praktyce</p><h3 className="mt-1.5 text-xl font-bold leading-tight">Panel zawsze pod ręką</h3><p className="mt-1.5 text-sm leading-relaxed text-white/75">Dodajesz wpisy i dokumenty na bieżąco.</p></div></div>
             </div>
@@ -719,7 +720,7 @@ export default function Page() {
               <div className="p-6 lg:p-8">
                 <Eyebrow>Przykład użycia</Eyebrow>
                 <Quote className="mb-3 h-6 w-6 text-blue-200" strokeWidth={1.5} />
-                <p className="text-base leading-relaxed text-slate-700">&quot;Wcześniej trzymałam wszystko w Excelu i modliłam się, żeby nie zgubić certyfikatów. Teraz dodaję wpis od razu po szkoleniu — z telefonu.&quot;</p>
+                <p className="text-base leading-relaxed text-slate-700">&quot;Typowy scenariusz: po szkoleniu dodajesz aktywność i certyfikat od razu, a później widzisz, ile punktów masz i czego jeszcze brakuje.&quot;</p>
                 <div className="mt-5 flex flex-wrap items-center gap-2">
                   <div className="flex gap-0.5">{[1, 2, 3, 4, 5].map((s) => <Star key={s} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />)}</div>
                   <span className="text-sm font-semibold text-slate-900">Anna K.</span>
