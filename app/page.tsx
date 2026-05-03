@@ -184,59 +184,59 @@ function ScenarioStrip() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setStep((s) => (s + 1) % 3), 2200);
+    const t = setInterval(() => setStep((s) => (s + 1) % 3), 2000);
     return () => clearInterval(t);
   }, []);
 
   return (
-    <div className="mx-auto max-w-[820px] overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-lg shadow-slate-900/5">
-      <div className="grid lg:grid-cols-2">
+    <div className="mx-auto max-w-[1100px] rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
+      <div className="grid items-center gap-0 lg:grid-cols-[1fr_1fr]">
         {/* LEFT */}
         <div className="p-6 lg:p-8">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-500">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-500">
             <span className={`h-2 w-2 rounded-full ${step === 2 ? "bg-emerald-500" : "bg-amber-500"}`} />
-            {step === 2 ? "PORZĄDEK" : "PROBLEM"}
+            {step === 2 ? "Porządek" : "Problem"}
           </div>
 
-          <h2 className="text-2xl font-bold leading-tight text-slate-950">
+          <h2 className="text-xl font-bold leading-tight text-slate-950">
             {step === 2
-              ? "Jedno miejsce. Jasny status."
+              ? "Wszystko w jednym widoku."
               : "Masz dokumenty. Nie masz pewności."}
           </h2>
 
-          <p className="mt-3 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-slate-600">
             {step === 2
-              ? "CRPE łączy certyfikat, punkty i aktywność w jeden spójny widok."
-              : "Pliki są rozproszone. Trudno określić, co się liczy i ile masz punktów."}
+              ? "CRPE łączy dane i pokazuje jasny status punktów."
+              : "Pliki są rozproszone. Nie wiesz, co się liczy i ile masz punktów."}
           </p>
 
-          <div className="mt-6 rounded-xl bg-slate-100 p-1">
-            <div className="relative grid grid-cols-2 text-xs font-semibold text-center">
-              <div className={`z-10 py-2 ${step !== 2 ? "text-slate-900" : "text-slate-400"}`}>Chaos</div>
-              <div className={`z-10 py-2 ${step === 2 ? "text-slate-900" : "text-slate-400"}`}>CRPE</div>
+          {/* subtle progress */}
+          <div className="mt-5">
+            <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden">
               <div
-                className={`absolute inset-y-0 w-1/2 rounded-lg bg-white shadow transition-all duration-500 ${
-                  step === 2 ? "translate-x-full" : "translate-x-0"
-                }`}
+                className="h-full bg-blue-600 transition-all duration-700"
+                style={{ width: `${(step + 1) * 33}%` }}
               />
             </div>
           </div>
         </div>
 
         {/* RIGHT */}
-        <div className="p-6 lg:p-8 bg-slate-50">
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="mb-3 text-xs font-semibold text-slate-400">
-              {step === 2 ? "AKTYWNOŚĆ" : "DOKUMENTY"}
-            </div>
+        <div className="p-5 lg:p-7">
+          <div className="relative h-[150px] rounded-xl border border-slate-200 bg-slate-50 p-4 overflow-hidden">
 
-            {step !== 2 ? (
-              <div className="space-y-2">
+            {/* CHAOS STATE */}
+            <div
+              className={`absolute inset-0 transition-all duration-500 ${
+                step === 2 ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
+              }`}
+            >
+              <div className="space-y-2 text-sm">
                 {["certyfikat.pdf", "IMG_2847.jpg", "mail.msg"].map((f, i) => (
                   <div
                     key={f}
-                    className={`flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm transition ${
-                      step === i ? "ring-2 ring-blue-200 bg-white" : ""
+                    className={`flex justify-between rounded-md bg-white px-3 py-2 transition ${
+                      step === i ? "ring-1 ring-blue-300" : ""
                     }`}
                   >
                     <span>{f}</span>
@@ -244,9 +244,16 @@ function ScenarioStrip() {
                   </div>
                 ))}
               </div>
-            ) : (
-              <div>
-                <div className="mb-3 flex items-center justify-between">
+            </div>
+
+            {/* CLEAN STATE */}
+            <div
+              className={`absolute inset-0 transition-all duration-500 ${
+                step === 2 ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
+              }`}
+            >
+              <div className="flex h-full flex-col justify-between">
+                <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Konferencja</p>
                     <p className="text-[11px] text-slate-400">certyfikat.pdf</p>
@@ -254,28 +261,17 @@ function ScenarioStrip() {
                   <span className="rounded-full bg-blue-600 px-2 py-1 text-xs font-semibold text-white">+20</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  {["20", "PDF", "OK"].map((v, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg bg-slate-50 py-2 text-xs font-semibold text-slate-700"
-                    >
-                      {v}
-                    </div>
-                  ))}
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="rounded bg-white py-1">20</div>
+                  <div className="rounded bg-white py-1">PDF</div>
+                  <div className="rounded bg-emerald-100 py-1 text-emerald-700 font-semibold">OK</div>
                 </div>
 
-                <div className="mt-3">
-                  <div className="mb-1 flex justify-between text-[10px] text-slate-500">
-                    <span>Postęp</span>
-                    <span>71%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-slate-200">
-                    <div className="h-2 w-[71%] rounded-full bg-blue-600" />
-                  </div>
+                <div className="h-1.5 rounded-full bg-white overflow-hidden">
+                  <div className="h-full w-[70%] bg-blue-600" />
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
