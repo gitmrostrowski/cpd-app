@@ -181,57 +181,112 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
 }
 
 function ScenarioStrip() {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setActive((s) => (s + 1) % 3), 2500);
+    return () => clearInterval(t);
+  }, []);
+
   const items = [
-    { icon: FileText, title: "Braki widać wcześniej", text: "certyfikaty, daty i punkty" },
-    { icon: FolderOpen, title: "Dokumenty są podpięte", text: "każdy plik przy aktywności" },
-    { icon: BarChart3, title: "Status jest jasny", text: "wiesz, co jeszcze uzupełnić" },
+    {
+      icon: FileText,
+      title: "Braki widać wcześniej",
+      text: "certyfikaty, daty i punkty",
+    },
+    {
+      icon: FolderOpen,
+      title: "Dokumenty są podpięte",
+      text: "każdy plik przy aktywności",
+    },
+    {
+      icon: BarChart3,
+      title: "Status jest jasny",
+      text: "wiesz, co jeszcze uzupełnić",
+    },
   ];
 
   return (
-    <div className="relative overflow-hidden rounded-[1.45rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white shadow-sm shadow-slate-900/5">
-      <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-blue-200/40 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 right-[-70px] h-64 w-64 rounded-full bg-emerald-100/70 blur-3xl" />
+    <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm">
+      <div className="grid lg:grid-cols-[1fr_1.2fr]">
+        {/* LEFT */}
+        <div className="relative p-8">
+          <div className="absolute left-0 top-8 h-20 w-1.5 rounded-r-full bg-blue-600" />
 
-      <div className="relative grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="border-b border-blue-100 px-6 py-6 lg:border-b-0 lg:border-r lg:px-8 lg:py-7">
-          <div className="flex items-start gap-4">
-            <div className="relative mt-1">
-              <span className="absolute inset-0 animate-ping rounded-2xl bg-blue-400/20" />
-              <IconTile tone="blue" className="relative h-14 w-14 rounded-2xl">
-                <Bell className="h-7 w-7" strokeWidth={2.1} />
+          <div className="mb-4 flex items-center gap-3">
+            <div className="relative">
+              <span className="absolute inset-0 animate-ping rounded-xl bg-blue-400/20" />
+              <IconTile tone="blue" className="relative h-12 w-12">
+                <Bell className="h-5 w-5" />
               </IconTile>
             </div>
-            <div>
-              <Eyebrow>Typowy problem</Eyebrow>
-              <h2 className="text-xl font-bold tracking-tight text-slate-950 lg:text-2xl">
-                Koniec z szukaniem certyfikatów na ostatnią chwilę.
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                CRPE pokazuje wcześniej, czego brakuje: punktów, dokumentów, dat i aktywności do uzupełnienia — zanim trzeba przygotować podsumowanie.
-              </p>
-            </div>
+            <Eyebrow>Typowy problem</Eyebrow>
           </div>
 
-          <div className="mt-5 flex items-center gap-2 rounded-2xl border border-blue-100 bg-white/70 px-4 py-3 shadow-sm">
-            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 ring-1 ring-amber-100">chaos</span>
-            <div className="h-px flex-1 bg-gradient-to-r from-amber-200 via-blue-300 to-emerald-200" />
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">porządek</span>
+          <h2 className="text-2xl font-bold text-slate-950">
+            Koniec z chaosem na koniec okresu.
+          </h2>
+
+          <p className="mt-3 text-sm text-slate-600 max-w-md">
+            Zamiast szukać dokumentów na ostatnią chwilę, widzisz wcześniej
+            co masz i czego jeszcze brakuje.
+          </p>
+
+          {/* moving bar */}
+          <div className="mt-6 relative h-2 rounded-full bg-slate-100 overflow-hidden">
+            <div
+              className="absolute inset-y-0 bg-blue-600 transition-all duration-700"
+              style={{ width: `${(active + 1) * 33}%` }}
+            />
+          </div>
+
+          <div className="mt-3 flex justify-between text-xs font-medium text-slate-400">
+            <span>chaos</span>
+            <span>porządek</span>
           </div>
         </div>
 
-        <div className="grid gap-3 bg-white/55 p-5 sm:grid-cols-3 lg:p-6">
-          {items.map(({ icon: Icon, title, text }, i) => (
-            <div key={title} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
-              <div className="pointer-events-none absolute right-[-24px] top-[-24px] h-20 w-20 rounded-full bg-blue-50 transition group-hover:bg-blue-100" />
-              <div className="relative">
-                <IconTile tone={i === 0 ? "amber" : i === 1 ? "blue" : "emerald"} className="mb-3 h-11 w-11">
-                  <Icon className="h-5 w-5" strokeWidth={2.2} />
-                </IconTile>
-                <p className="text-sm font-bold leading-snug text-slate-900">{title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">{text}</p>
-              </div>
-            </div>
-          ))}
+        {/* RIGHT */}
+        <div className="relative bg-slate-50 p-6">
+          <div className="grid grid-cols-3 gap-4">
+            {items.map((item, i) => {
+              const Icon = item.icon;
+              const isActive = active === i;
+
+              return (
+                <div
+                  key={item.title}
+                  className={`relative rounded-2xl border p-4 transition-all duration-500 ${
+                    isActive
+                      ? "bg-white border-blue-200 shadow-lg scale-105"
+                      : "bg-white/70 border-slate-200 opacity-70"
+                  }`}
+                >
+                  <div className="mb-3">
+                    <IconTile
+                      tone={
+                        i === 0 ? "amber" : i === 1 ? "blue" : "emerald"
+                      }
+                      className={`h-11 w-11 ${isActive ? "animate-pulse" : ""}`}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </IconTile>
+                  </div>
+
+                  <p className="text-sm font-bold text-slate-900">
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {item.text}
+                  </p>
+
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-b-2xl" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
