@@ -181,136 +181,117 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
 }
 
 function ScenarioStrip() {
-  const [state, setState] = useState<0 | 1>(0);
+  const [step, setStep] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setState((s) => (s === 0 ? 1 : 0)), 3600);
+    const t = setInterval(() => setStep((s) => (s + 1) % 4), 1800);
     return () => clearInterval(t);
   }, []);
 
-  const isReady = state === 1;
+  const docs = [
+    { icon: FileText, label: "certyfikat.pdf", meta: "plik", tone: "blue" as const },
+    { icon: UploadCloud, label: "zdjęcie z telefonu", meta: "foto", tone: "amber" as const },
+    { icon: CalendarCheck, label: "data szkolenia", meta: "termin", tone: "emerald" as const },
+  ];
 
   return (
-    <div className="relative overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-      <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-blue-100/70 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 right-[-90px] h-80 w-80 rounded-full bg-emerald-100/70 blur-3xl" />
+    <div className="relative overflow-hidden rounded-[1.8rem] border border-slate-200 bg-slate-950 shadow-xl shadow-slate-900/10">
+      <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-blue-500/25 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 right-[-90px] h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.12),transparent_35%)]" />
 
       <div className="relative grid gap-0 lg:grid-cols-[0.82fr_1.18fr]">
-        <div className="border-b border-slate-100 p-7 lg:border-b-0 lg:border-r lg:p-9">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
-            <span className={`h-2 w-2 rounded-full ${isReady ? "bg-emerald-500" : "bg-amber-500"}`} />
-            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
-              {isReady ? "Porządek w CRPE" : "Typowy problem"}
-            </span>
+        <div className="border-b border-white/10 p-7 text-white lg:border-b-0 lg:border-r lg:p-9">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 ring-1 ring-white/15 backdrop-blur">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.9)]" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-100">Mini demo CRPE</span>
           </div>
 
-          <h2 className="max-w-md text-2xl font-black leading-tight tracking-tight text-slate-950 lg:text-3xl">
-            {isReady ? "Jedno miejsce. Pełny kontekst." : "Certyfikaty są. Tylko trudno je znaleźć."}
+          <h2 className="max-w-md text-3xl font-black leading-tight tracking-tight lg:text-4xl">
+            Dokumenty wpadają. Status robi się sam.
           </h2>
 
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-600">
-            {isReady
-              ? "Aktywność, certyfikat, punkty i status są połączone w jednym widoku — bez ręcznego porównywania plików."
-              : "PDF-y, zdjęcia i maile są rozproszone. Dopiero pod koniec okresu okazuje się, czego brakuje."}
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-300">
+            Zamiast pilnować PDF-ów, zdjęć i dat w kilku miejscach, wrzucasz je do CRPE. System łączy aktywność, certyfikat, punkty i braki w jeden czytelny widok.
           </p>
 
-          <div className="mt-7 max-w-md rounded-2xl bg-slate-50 p-1.5 ring-1 ring-slate-200">
-            <div className="relative grid grid-cols-2 text-center text-xs font-bold">
-              <div className={`relative z-10 rounded-xl px-3 py-2 transition ${!isReady ? "text-slate-950" : "text-slate-400"}`}>Chaos</div>
-              <div className={`relative z-10 rounded-xl px-3 py-2 transition ${isReady ? "text-slate-950" : "text-slate-400"}`}>CRPE</div>
-              <div
-                className={`absolute inset-y-0 w-1/2 rounded-xl bg-white shadow-sm ring-1 ring-slate-200 transition-transform duration-700 ${isReady ? "translate-x-full" : "translate-x-0"}`}
-              />
-            </div>
+          <div className="mt-7 grid gap-2.5">
+            {[
+              "certyfikat przypięty do aktywności",
+              "punkty widoczne od razu",
+              "braki pokazane przed raportem",
+            ].map((item, i) => (
+              <div key={item} className={`flex items-center gap-3 rounded-2xl px-4 py-3 ring-1 transition ${step >= i + 1 ? "bg-emerald-400/10 text-white ring-emerald-300/25" : "bg-white/5 text-slate-400 ring-white/10"}`}>
+                <CheckCircle2 className={`h-5 w-5 shrink-0 ${step >= i + 1 ? "text-emerald-300" : "text-slate-600"}`} />
+                <span className="text-sm font-bold">{item}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="relative bg-slate-50/70 p-5 lg:p-7">
-          <div className="relative mx-auto min-h-[380px] max-w-2xl">
-            <div
-              className={`absolute inset-0 transition-all duration-700 ${
-                isReady ? "-translate-x-8 opacity-0 scale-[0.98]" : "translate-x-0 opacity-100 scale-100"
-              }`}
-            >
-              <div className="rounded-[1.35rem] bg-white p-5 shadow-xl shadow-slate-900/8 ring-1 ring-slate-200">
+        <div className="relative min-h-[430px] p-5 lg:p-8">
+          <div className="relative mx-auto h-full max-w-3xl">
+            <div className="absolute left-0 top-4 hidden w-[38%] space-y-3 lg:block">
+              {docs.map(({ icon: Icon, label, meta, tone }, i) => {
+                const active = step === i || step > i;
+                return (
+                  <div
+                    key={label}
+                    className={`flex items-center gap-3 rounded-2xl bg-white/95 px-4 py-3 shadow-xl shadow-slate-950/20 ring-1 transition duration-500 ${active ? "translate-x-4 ring-blue-300" : "ring-white/20 opacity-70"}`}
+                  >
+                    <IconTile tone={tone} className="h-10 w-10 rounded-xl border-0">
+                      <Icon className="h-5 w-5" strokeWidth={2.2} />
+                    </IconTile>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-black text-slate-950">{label}</p>
+                      <p className="text-[11px] font-medium text-slate-400">{meta}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="absolute left-[36%] top-[88px] hidden h-px w-[18%] bg-gradient-to-r from-blue-300 to-transparent lg:block" />
+            <div className="absolute left-[50%] top-[68px] hidden h-12 w-12 -translate-x-1/2 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-2xl shadow-blue-500/30 ring-4 ring-white/10 lg:flex">
+              <Sparkles className="h-6 w-6" />
+            </div>
+
+            <div className="ml-auto flex h-full max-w-[510px] flex-col justify-center">
+              <div className="rounded-[1.55rem] bg-white p-5 shadow-2xl shadow-slate-950/25 ring-1 ring-white/60">
                 <div className="mb-5 flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-sm font-black text-slate-950">Folder z dokumentami</p>
-                    <p className="mt-1 text-xs text-slate-500">bez pewności, co zalicza się do okresu</p>
+                    <div className="mb-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-blue-700 ring-1 ring-blue-100">Panel CPD</div>
+                    <h3 className="text-xl font-black leading-tight text-slate-950">Konferencja kardiologiczna</h3>
+                    <p className="mt-1 text-xs font-medium text-slate-500">2026 · certyfikat.pdf · organizator</p>
                   </div>
-                  <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 ring-1 ring-amber-100">do sprawdzenia</span>
+                  <span className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-black text-white shadow-sm transition ${step >= 2 ? "bg-blue-600" : "bg-slate-300"}`}>+20 pkt</span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-3">
                   {[
-                    ["certyfikat_final.pdf", "bez punktów", "amber"],
-                    ["IMG_2847.jpg", "nieprzypisany", "slate"],
-                    ["mail_od_organizatora.msg", "brak daty", "amber"],
-                  ].map(([file, note, tone], i) => (
-                    <div
-                      key={file}
-                      className={`flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200 transition ${i === 1 ? "translate-x-3" : ""}`}
-                    >
-                      <IconTile tone={tone as "amber" | "slate"} className="h-9 w-9 rounded-xl border-0">
-                        <FileText className="h-4 w-4" strokeWidth={2.2} />
-                      </IconTile>
-                      <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-700">{file}</span>
-                      <span className="hidden rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200 sm:inline-flex">{note}</span>
+                    { value: step >= 1 ? "PDF" : "—", label: "certyfikat" },
+                    { value: step >= 2 ? "20" : "—", label: "punktów" },
+                    { value: step >= 3 ? "OK" : "…", label: "status" },
+                  ].map((x, i) => (
+                    <div key={x.label} className={`rounded-2xl p-4 text-center ring-1 transition ${step >= i + 1 ? "bg-emerald-50 ring-emerald-100" : "bg-slate-50 ring-slate-100"}`}>
+                      <p className={`text-2xl font-black ${step >= i + 1 && i === 2 ? "text-emerald-600" : "text-slate-950"}`}>{x.value}</p>
+                      <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">{x.label}</p>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-5 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 ring-1 ring-amber-100">
-                  Status punktów nadal wymaga ręcznego sprawdzenia.
-                </div>
-              </div>
-            </div>
-
-            <div
-              className={`absolute inset-0 transition-all duration-700 ${
-                isReady ? "translate-x-0 opacity-100 scale-100" : "translate-x-8 opacity-0 scale-[0.98]"
-              }`}
-            >
-              <div className="rounded-[1.35rem] bg-white p-5 shadow-xl shadow-slate-900/8 ring-1 ring-blue-200">
-                <div className="mb-5 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-black text-slate-950">Aktywność w CRPE</p>
-                    <p className="mt-1 text-xs text-slate-500">certyfikat, punkty i status w jednym wpisie</p>
+                <div className="mt-5 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+                  <div className="mb-2 flex justify-between text-xs font-bold text-slate-600">
+                    <span>Postęp okresu</span>
+                    <span>{step >= 3 ? "71%" : "55%"}</span>
                   </div>
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">kompletne</span>
-                </div>
-
-                <div className="rounded-[1.15rem] bg-slate-50 p-5 ring-1 ring-slate-200">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xl font-black leading-tight text-slate-950">Konferencja kardiologiczna</p>
-                      <p className="mt-1.5 text-xs font-medium text-slate-500">Organizator · 2026 · certyfikat.pdf</p>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-blue-600 px-3.5 py-1.5 text-sm font-black text-white shadow-sm">+20 pkt</span>
-                  </div>
-
-                  <div className="mt-5 grid gap-2 sm:grid-cols-3">
-                    {[
-                      ["20", "punktów", "text-slate-950"],
-                      ["PDF", "certyfikat", "text-slate-950"],
-                      ["OK", "status", "text-emerald-600"],
-                    ].map(([value, label, color]) => (
-                      <div key={label} className="rounded-2xl bg-white p-3 text-center shadow-sm ring-1 ring-slate-100">
-                        <p className={`text-xl font-black ${color}`}>{value}</p>
-                        <p className="mt-0.5 text-[10px] font-medium text-slate-400">{label}</p>
-                      </div>
-                    ))}
+                  <div className="h-3 overflow-hidden rounded-full bg-white">
+                    <div className="h-full rounded-full bg-blue-600 transition-all duration-700" style={{ width: step >= 3 ? "71%" : "55%" }} />
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
-                  <div className="mb-1.5 flex justify-between text-xs font-bold text-slate-600">
-                    <span>Postęp CPD</span>
-                    <span>71%</span>
-                  </div>
-                  <div className="h-2.5 overflow-hidden rounded-full bg-white">
-                    <div className="h-full w-[71%] rounded-full bg-blue-600" />
-                  </div>
+                <div className={`mt-4 rounded-2xl px-4 py-3 text-sm font-bold ring-1 transition ${step >= 3 ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-amber-50 text-amber-800 ring-amber-100"}`}>
+                  {step >= 3 ? "Gotowe: dokumentacja przypisana, punkty policzone, status jasny." : "CRPE uzupełnia widok na podstawie dodanych danych."}
                 </div>
               </div>
             </div>
