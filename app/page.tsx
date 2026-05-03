@@ -184,11 +184,34 @@ function ScenarioStrip() {
   const [phase, setPhase] = useState<0 | 1 | 2>(0);
 
   useEffect(() => {
-    const t = setInterval(() => setPhase((p) => ((p + 1) % 3) as 0 | 1 | 2), 1800);
+    const t = setInterval(() => setPhase((p) => ((p + 1) % 3) as 0 | 1 | 2), 2200);
     return () => clearInterval(t);
   }, []);
 
+  const isUpload = phase === 0;
+  const isProcess = phase === 1;
   const isDone = phase === 2;
+
+  const copy = [
+    {
+      badge: "Dodajesz dokument",
+      dot: "bg-amber-500",
+      title: "Wrzuć certyfikat. Reszta ma być oczywista.",
+      text: "CRPE prowadzi użytkownika od dokumentu do gotowego statusu, spokojnie i bez zbędnego klikania.",
+    },
+    {
+      badge: "Przetwarzanie",
+      dot: "bg-blue-500",
+      title: "CRPE łączy dane w jeden wpis.",
+      text: "Dokument trafia do aktywności, a panel uzupełnia punkty, plik i status bez ręcznego porównywania.",
+    },
+    {
+      badge: "Gotowe w CRPE",
+      dot: "bg-emerald-500",
+      title: "Z chaosu robi się czytelny wpis.",
+      text: "Aktywność, punkty, certyfikat i status trafiają do jednego widoku — gotowego do dalszej pracy.",
+    },
+  ];
 
   return (
     <div className="relative overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
@@ -197,56 +220,72 @@ function ScenarioStrip() {
 
       <div className="relative grid items-center gap-0 lg:grid-cols-[0.78fr_1.22fr]">
         <div className="border-b border-slate-100 px-7 py-6 lg:border-b-0 lg:border-r lg:px-8 lg:py-7">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
-            <span className={`h-2 w-2 rounded-full transition-colors duration-500 ${isDone ? "bg-emerald-500" : phase === 1 ? "bg-blue-500" : "bg-amber-500"}`} />
-            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
-              {isDone ? "Gotowe w CRPE" : phase === 1 ? "Przetwarzanie" : "Dodajesz dokument"}
-            </span>
+          <div className="relative min-h-[170px]">
+            {copy.map((item, i) => (
+              <div
+                key={item.badge}
+                className={`absolute inset-0 transition-all duration-700 ease-out ${
+                  phase === i ? "translate-y-0 opacity-100 blur-0" : "translate-y-2 opacity-0 blur-[1px]"
+                }`}
+              >
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
+                  <span className={`h-2 w-2 rounded-full ${item.dot}`} />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">{item.badge}</span>
+                </div>
+
+                <h2 className="max-w-md text-2xl font-black leading-tight tracking-tight text-slate-950 lg:text-3xl">
+                  {item.title}
+                </h2>
+
+                <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-600">
+                  {item.text}
+                </p>
+              </div>
+            ))}
           </div>
 
-          <h2 className="max-w-md text-2xl font-black leading-tight tracking-tight text-slate-950 lg:text-3xl">
-            {isDone ? "Z chaosu robi się czytelny wpis." : "Wrzuć certyfikat. Reszta ma być oczywista."}
-          </h2>
-
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-600">
-            {isDone
-              ? "Aktywność, punkty, certyfikat i status trafiają do jednego widoku — bez ręcznego porównywania plików."
-              : "CRPE ma prowadzić użytkownika od dokumentu do gotowego statusu, spokojnie i bez zbędnego klikania."}
-          </p>
+          <div className="mt-1 flex max-w-md items-center gap-2">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${
+                    phase > i ? "w-full bg-blue-600" : phase === i ? "w-2/3 bg-blue-500" : "w-0 bg-blue-500"
+                  }`}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="relative min-h-[245px] bg-slate-50/80 px-6 py-5 lg:px-8 lg:py-6">
           <div className="relative mx-auto h-[205px] max-w-3xl">
-            {/* subtle connector */}
-            <div className="absolute left-[23%] right-[23%] top-1/2 hidden h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-blue-300 to-transparent lg:block" />
+            <div className="absolute left-[22%] right-[18%] top-1/2 hidden h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-blue-300 to-transparent lg:block" />
+
             <div
-              className={`absolute left-[47%] top-1/2 z-20 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/25 transition-all duration-500 lg:flex ${
-                phase === 1 ? "scale-110 opacity-100" : "scale-95 opacity-80"
+              className={`absolute left-[47%] top-1/2 z-20 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/25 transition-all duration-700 ease-out lg:flex ${
+                isProcess ? "scale-110 opacity-100 rotate-6" : isDone ? "scale-95 opacity-0 rotate-0" : "scale-95 opacity-80 rotate-0"
               }`}
             >
-              <Sparkles className="h-5 w-5" strokeWidth={2.2} />
+              <Sparkles className={`h-5 w-5 ${isProcess ? "animate-pulse" : ""}`} strokeWidth={2.2} />
             </div>
 
-            {/* incoming document */}
             <div
-              className={`absolute left-0 top-1/2 z-10 w-[42%] -translate-y-1/2 transition-all duration-700 ${
-                phase === 0
+              className={`absolute left-0 top-1/2 z-10 w-[42%] -translate-y-1/2 transition-all duration-900 ease-out ${
+                isUpload
                   ? "translate-x-0 opacity-100 scale-100"
-                  : phase === 1
-                    ? "translate-x-[42%] opacity-90 scale-[0.96]"
-                    : "translate-x-[78%] opacity-0 scale-[0.9]"
+                  : isProcess
+                    ? "translate-x-[44%] opacity-95 scale-[0.96]"
+                    : "translate-x-[92%] opacity-0 scale-[0.9]"
               }`}
             >
               <div className="rounded-[1.25rem] bg-white p-4 shadow-xl shadow-slate-900/10 ring-1 ring-slate-200">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <IconTile tone="amber" className="h-10 w-10 rounded-xl border-0">
-                      <FileText className="h-5 w-5" strokeWidth={2.2} />
-                    </IconTile>
-                    <div>
-                      <p className="text-sm font-black text-slate-950">certyfikat.pdf</p>
-                      <p className="text-[11px] font-medium text-slate-400">dodany po szkoleniu</p>
-                    </div>
+                <div className="mb-3 flex items-center gap-3">
+                  <IconTile tone="amber" className="h-10 w-10 rounded-xl border-0">
+                    <FileText className="h-5 w-5" strokeWidth={2.2} />
+                  </IconTile>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-slate-950">certyfikat.pdf</p>
+                    <p className="text-[11px] font-medium text-slate-400">dodany po szkoleniu</p>
                   </div>
                 </div>
                 <div className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 ring-1 ring-amber-100">
@@ -255,10 +294,9 @@ function ScenarioStrip() {
               </div>
             </div>
 
-            {/* processing pulse */}
             <div
-              className={`absolute left-[42%] top-1/2 z-30 hidden -translate-y-1/2 transition-all duration-500 lg:block ${
-                phase === 1 ? "opacity-100" : "opacity-0"
+              className={`absolute left-[41.5%] top-1/2 z-30 hidden -translate-y-1/2 transition-all duration-500 lg:block ${
+                isProcess ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
               }`}
             >
               <div className="flex items-center gap-1">
@@ -268,29 +306,32 @@ function ScenarioStrip() {
               </div>
             </div>
 
-            {/* finished card */}
             <div
-              className={`absolute right-0 top-1/2 z-10 w-[58%] -translate-y-1/2 transition-all duration-700 ${
-                isDone ? "translate-x-0 opacity-100 scale-100" : "translate-x-8 opacity-60 scale-[0.97]"
+              className={`absolute right-0 top-1/2 z-10 w-[58%] -translate-y-1/2 transition-all duration-700 ease-out ${
+                isDone ? "translate-x-0 opacity-100 scale-100" : isProcess ? "translate-x-2 opacity-75 scale-[0.98]" : "translate-x-5 opacity-55 scale-[0.97]"
               }`}
             >
               <div className="rounded-[1.35rem] bg-white p-4 shadow-xl shadow-slate-900/10 ring-1 ring-blue-200">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-base font-black leading-tight text-slate-950">Konferencja kardiologiczna</p>
-                    <p className="mt-1 text-[11px] font-medium text-slate-500">2026 · certyfikat.pdf</p>
+                    <p className={`text-base font-black leading-tight text-slate-950 transition-opacity duration-500 ${isDone ? "opacity-100" : "opacity-50"}`}>Konferencja kardiologiczna</p>
+                    <p className={`mt-1 text-[11px] font-medium text-slate-500 transition-opacity duration-500 ${isDone ? "opacity-100" : "opacity-50"}`}>2026 · certyfikat.pdf</p>
                   </div>
-                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-black text-white transition-colors duration-500 ${isDone ? "bg-blue-600" : "bg-slate-300"}`}>+20 pkt</span>
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-black text-white transition-all duration-500 ${isDone ? "bg-blue-600 opacity-100" : "bg-slate-300 opacity-50"}`}>+20 pkt</span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { value: isDone ? "20" : "—", label: "punkty", ok: isDone },
-                    { value: isDone ? "PDF" : "—", label: "plik", ok: isDone },
-                    { value: isDone ? "OK" : "…", label: "status", ok: isDone },
-                  ].map((x) => (
-                    <div key={x.label} className={`rounded-xl px-2 py-2 text-center transition-colors duration-500 ${x.ok ? "bg-emerald-50" : "bg-slate-50"}`}>
-                      <p className={`text-base font-black ${x.value === "OK" ? "text-emerald-600" : "text-slate-950"}`}>{x.value}</p>
+                    { value: isDone ? "20" : "—", label: "punkty", ready: isDone },
+                    { value: isDone ? "PDF" : "—", label: "plik", ready: isDone },
+                    { value: isDone ? "OK" : "…", label: "status", ready: isDone },
+                  ].map((x, i) => (
+                    <div
+                      key={x.label}
+                      className={`rounded-xl px-2 py-2 text-center transition-all duration-500 ${x.ready ? "translate-y-0 bg-emerald-50 opacity-100" : "translate-y-1 bg-slate-50 opacity-55"}`}
+                      style={{ transitionDelay: isDone ? `${i * 90}ms` : "0ms" }}
+                    >
+                      <p className={`text-base font-black transition-colors duration-500 ${x.value === "OK" ? "text-emerald-600" : "text-slate-950"}`}>{x.value}</p>
                       <p className="text-[10px] font-medium text-slate-400">{x.label}</p>
                     </div>
                   ))}
@@ -299,10 +340,10 @@ function ScenarioStrip() {
                 <div className="mt-3">
                   <div className="mb-1 flex justify-between text-[10px] font-bold text-slate-500">
                     <span>Postęp CPD</span>
-                    <span>{isDone ? "71%" : "55%"}</span>
+                    <span className="transition-opacity duration-500">{isDone ? "71%" : "55%"}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full rounded-full bg-blue-600 transition-all duration-700" style={{ width: isDone ? "71%" : "55%" }} />
+                    <div className="h-full rounded-full bg-blue-600 transition-all duration-700 ease-out" style={{ width: isDone ? "71%" : "55%" }} />
                   </div>
                 </div>
               </div>
