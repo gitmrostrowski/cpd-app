@@ -528,6 +528,7 @@ export default function TrainingHubClient() {
 
       approval_status: "pending" as ApprovalStatus,
       submitted_by: user.id,
+      submitted_email: user.email ?? null
     };
 
     const { error } = await supabase.from("trainings").insert(payload);
