@@ -188,164 +188,131 @@ function ScenarioStrip() {
     return () => clearInterval(t);
   }, []);
 
-  const isOrder = state === 1;
+  const isReady = state === 1;
 
   return (
-    <div className="relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-      <div className="pointer-events-none absolute -left-28 -top-28 h-80 w-80 rounded-full bg-blue-100/70 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-28 right-[-90px] h-80 w-80 rounded-full bg-emerald-100/70 blur-3xl" />
+    <div className="relative overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
+      <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-blue-100/70 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 right-[-90px] h-80 w-80 rounded-full bg-emerald-100/70 blur-3xl" />
 
-      <div className="relative grid gap-0 lg:grid-cols-[0.78fr_1.22fr]">
-        {/* Copy / state */}
-        <div className="relative border-b border-slate-100 bg-white/80 p-7 lg:border-b-0 lg:border-r lg:p-8">
-          <div className="absolute left-0 top-8 h-20 w-1.5 rounded-r-full bg-blue-600" />
-
-          <div className="mb-5 flex items-center gap-3">
-            <div className="relative">
-              <span className={`absolute inset-0 rounded-2xl ${isOrder ? "animate-ping bg-emerald-300/25" : "animate-ping bg-amber-300/25"}`} />
-              <IconTile tone={isOrder ? "emerald" : "amber"} className="relative h-14 w-14 rounded-2xl shadow-sm">
-                {isOrder ? <CheckCircle2 className="h-7 w-7" strokeWidth={2.2} /> : <Bell className="h-7 w-7" strokeWidth={2.2} />}
-              </IconTile>
-            </div>
-            <div>
-              <Eyebrow>{isOrder ? "Efekt w CRPE" : "Typowy problem"}</Eyebrow>
-              <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1 text-[11px] font-bold text-slate-500">
-                <span className={`rounded-full px-2.5 py-1 transition ${!isOrder ? "bg-amber-100 text-amber-700 shadow-sm" : ""}`}>chaos</span>
-                <span className={`rounded-full px-2.5 py-1 transition ${isOrder ? "bg-emerald-100 text-emerald-700 shadow-sm" : ""}`}>porządek</span>
-              </div>
-            </div>
+      <div className="relative grid gap-0 lg:grid-cols-[0.86fr_1.14fr]">
+        <div className="border-b border-slate-100 p-8 lg:border-b-0 lg:border-r lg:p-10">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
+            <span className={`h-2 w-2 rounded-full ${isReady ? "bg-emerald-500" : "bg-amber-500"}`} />
+            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
+              {isReady ? "Porządek w CRPE" : "Typowy problem"}
+            </span>
           </div>
 
           <h2 className="max-w-md text-2xl font-black leading-tight tracking-tight text-slate-950 lg:text-3xl">
-            {isOrder ? "Jeden wpis. Certyfikat, punkty i status w komplecie." : "Certyfikaty są wszędzie. Statusu nadal brak."}
+            {isReady ? "Jedno miejsce. Pełny kontekst." : "Certyfikaty są. Tylko trudno je znaleźć."}
           </h2>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-600">
-            {isOrder
-              ? "Aktywność, dokument i punkty są połączone. Od razu widzisz, co masz, czego brakuje i co warto uzupełnić dalej."
-              : "Maile, zdjęcia, PDF-y i notatki są rozrzucone po różnych miejscach. Na końcu okresu trzeba ręcznie sprawdzać, co naprawdę się liczy."}
+
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-600">
+            {isReady
+              ? "Aktywność, certyfikat, punkty i status są połączone w jednym widoku — bez ręcznego porównywania plików."
+              : "PDF-y, zdjęcia i maile są rozproszone. Dopiero pod koniec okresu okazuje się, czego brakuje."}
           </p>
 
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="mb-2 flex justify-between text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
-              <span>chaos</span>
-              <span>porządek</span>
-            </div>
-            <div className="relative h-3 overflow-hidden rounded-full bg-slate-100">
-              <div className={`h-full rounded-full transition-all duration-700 ${isOrder ? "w-full bg-emerald-500" : "w-[34%] bg-amber-400"}`} />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/45 to-transparent" />
-            </div>
-            <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-              <span className={`${isOrder ? "text-slate-400" : "text-amber-700"}`}>{isOrder ? "problem rozwiązany" : "brakuje porządku"}</span>
-              <span className={`${isOrder ? "text-emerald-700" : "text-slate-400"}`}>{isOrder ? "gotowe do raportu" : "CRPE porządkuje dane"}</span>
+          <div className="mt-7 max-w-md rounded-2xl bg-slate-50 p-1.5 ring-1 ring-slate-200">
+            <div className="relative grid grid-cols-2 text-center text-xs font-bold">
+              <div className={`relative z-10 rounded-xl px-3 py-2 transition ${!isReady ? "text-slate-950" : "text-slate-400"}`}>Chaos</div>
+              <div className={`relative z-10 rounded-xl px-3 py-2 transition ${isReady ? "text-slate-950" : "text-slate-400"}`}>CRPE</div>
+              <div
+                className={`absolute inset-y-0 w-1/2 rounded-xl bg-white shadow-sm ring-1 ring-slate-200 transition-transform duration-700 ${isReady ? "translate-x-full" : "translate-x-0"}`}
+              />
             </div>
           </div>
         </div>
 
-        {/* Animated demo */}
-        <div className="relative min-h-[390px] bg-slate-50/80 p-5 lg:p-7">
-          {/* CHAOS */}
-          <div className={`absolute inset-5 transition-all duration-700 lg:inset-7 ${!isOrder ? "opacity-100 translate-y-0 scale-100" : "pointer-events-none opacity-0 translate-y-4 scale-[0.98]"}`}>
-            <div className="grid h-full gap-4 md:grid-cols-[1fr_0.82fr]">
-              <div className="rounded-[1.35rem] border border-amber-200 bg-white p-5 shadow-sm shadow-amber-950/5">
-                <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="relative min-h-[360px] bg-slate-50/70 p-6 lg:p-8">
+          <div className="absolute inset-x-8 top-8 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
+
+          <div className="relative mx-auto h-full max-w-2xl">
+            <div
+              className={`absolute inset-0 transition-all duration-700 ${
+                isReady ? "-translate-x-10 opacity-0 scale-[0.97]" : "translate-x-0 opacity-100 scale-100"
+              }`}
+            >
+              <div className="h-full rounded-[1.35rem] bg-white p-5 shadow-xl shadow-slate-900/8 ring-1 ring-slate-200">
+                <div className="mb-5 flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-base font-black text-slate-950">Rozrzucone dokumenty</p>
-                    <p className="mt-0.5 text-xs text-slate-500">nie wiadomo, co jest aktualne</p>
+                    <p className="text-sm font-black text-slate-950">Folder z dokumentami</p>
+                    <p className="mt-1 text-xs text-slate-500">bez pewności, co zalicza się do okresu</p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-amber-100">brak statusu</span>
+                  <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 ring-1 ring-amber-100">do sprawdzenia</span>
                 </div>
 
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {[
-                    { file: "certyfikat_final.pdf", note: "bez punktów", tone: "amber", move: "" },
-                    { file: "IMG_2847.jpg", note: "nieprzypisany", tone: "slate", move: "translate-x-3" },
-                    { file: "mail_od_organizatora.msg", note: "do sprawdzenia", tone: "amber", move: "-translate-x-1" },
-                    { file: "scan_2024_kopia.pdf", note: "duplikat?", tone: "rose", move: "translate-x-2" },
-                  ].map((row) => (
-                    <div key={row.file} className={`flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm transition ${row.move}`}>
-                      <IconTile tone={row.tone as "amber" | "slate" | "rose"} className="h-9 w-9 rounded-xl">
+                    ["certyfikat_final.pdf", "bez punktów", "amber"],
+                    ["IMG_2847.jpg", "nieprzypisany", "slate"],
+                    ["mail_od_organizatora.msg", "brak daty", "amber"],
+                    ["scan_2024_kopia.pdf", "duplikat?", "rose"],
+                  ].map(([file, note, tone], i) => (
+                    <div
+                      key={file}
+                      className={`flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200 transition ${i === 1 ? "translate-x-4" : i === 2 ? "-translate-x-2" : ""}`}
+                    >
+                      <IconTile tone={tone as "amber" | "slate" | "rose"} className="h-9 w-9 rounded-xl border-0">
                         <FileText className="h-4 w-4" strokeWidth={2.2} />
                       </IconTile>
-                      <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-700">{row.file}</span>
-                      <span className="shrink-0 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200">{row.note}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-700">{file}</span>
+                      <span className="hidden rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200 sm:inline-flex">{note}</span>
                     </div>
                   ))}
                 </div>
-              </div>
 
-              <div className="rounded-[1.35rem] border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5">
-                <p className="text-base font-black text-slate-950">Na koniec okresu</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">trzeba ręcznie ustalić, które dokumenty pasują do aktywności i ile punktów można policzyć.</p>
-
-                <div className="mt-5 space-y-2.5">
-                  {[
-                    "brak certyfikatu przy wpisie",
-                    "niejasna liczba punktów",
-                    "raport do sprawdzenia ręcznie",
-                  ].map((x) => (
-                    <div key={x} className="flex items-center gap-2 rounded-2xl bg-amber-50 px-3 py-2.5 text-xs font-bold text-amber-800 ring-1 ring-amber-100">
-                      <Bell className="h-3.5 w-3.5 shrink-0" />
-                      {x}
-                    </div>
-                  ))}
+                <div className="mt-5 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 ring-1 ring-amber-100">
+                  Status punktów nadal wymaga ręcznego sprawdzenia.
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* ORDER */}
-          <div className={`absolute inset-5 transition-all duration-700 lg:inset-7 ${isOrder ? "opacity-100 translate-y-0 scale-100" : "pointer-events-none opacity-0 translate-y-4 scale-[0.98]"}`}>
-            <div className="grid h-full gap-4 md:grid-cols-[1fr_0.82fr]">
-              <div className="rounded-[1.35rem] border border-blue-200 bg-white p-5 shadow-sm shadow-blue-950/5">
-                <div className="mb-4 flex items-start justify-between gap-3">
+            <div
+              className={`absolute inset-0 transition-all duration-700 ${
+                isReady ? "translate-x-0 opacity-100 scale-100" : "translate-x-10 opacity-0 scale-[0.97]"
+              }`}
+            >
+              <div className="h-full rounded-[1.35rem] bg-white p-5 shadow-xl shadow-slate-900/8 ring-1 ring-blue-200">
+                <div className="mb-5 flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-base font-black text-slate-950">Aktywność w CRPE</p>
-                    <p className="mt-0.5 text-xs text-slate-500">wszystko połączone w jednym wpisie</p>
+                    <p className="text-sm font-black text-slate-950">Aktywność w CRPE</p>
+                    <p className="mt-1 text-xs text-slate-500">certyfikat, punkty i status w jednym wpisie</p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-100">kompletne</span>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">kompletne</span>
                 </div>
 
-                <div className="rounded-[1.15rem] border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex items-start justify-between gap-3">
+                <div className="rounded-[1.15rem] bg-slate-50 p-5 ring-1 ring-slate-200">
+                  <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-lg font-black leading-tight text-slate-950">Konferencja kardiologiczna</p>
-                      <p className="mt-1 text-xs text-slate-500">Organizator · 2026 · certyfikat.pdf</p>
+                      <p className="text-xl font-black leading-tight text-slate-950">Konferencja kardiologiczna</p>
+                      <p className="mt-1.5 text-xs font-medium text-slate-500">Organizator · 2026 · certyfikat.pdf</p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-blue-600 px-3 py-1.5 text-sm font-black text-white shadow-sm">+20 pkt</span>
+                    <span className="shrink-0 rounded-full bg-blue-600 px-3.5 py-1.5 text-sm font-black text-white shadow-sm">+20 pkt</span>
                   </div>
 
-                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                    <div className="rounded-2xl bg-white p-3 text-center ring-1 ring-slate-100">
-                      <p className="text-xl font-black text-slate-950">20</p>
-                      <p className="text-[10px] font-medium text-slate-400">punktów</p>
-                    </div>
-                    <div className="rounded-2xl bg-white p-3 text-center ring-1 ring-slate-100">
-                      <p className="text-xl font-black text-slate-950">PDF</p>
-                      <p className="text-[10px] font-medium text-slate-400">certyfikat</p>
-                    </div>
-                    <div className="rounded-2xl bg-white p-3 text-center ring-1 ring-slate-100">
-                      <p className="text-xl font-black text-emerald-600">OK</p>
-                      <p className="text-[10px] font-medium text-slate-400">status</p>
-                    </div>
+                  <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                    {[
+                      ["20", "punktów", "text-slate-950"],
+                      ["PDF", "certyfikat", "text-slate-950"],
+                      ["OK", "status", "text-emerald-600"],
+                    ].map(([value, label, color]) => (
+                      <div key={label} className="rounded-2xl bg-white p-3 text-center shadow-sm ring-1 ring-slate-100">
+                        <p className={`text-xl font-black ${color}`}>{value}</p>
+                        <p className="mt-0.5 text-[10px] font-medium text-slate-400">{label}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
 
-              <div className="rounded-[1.35rem] border border-emerald-200 bg-emerald-50 p-5 shadow-sm shadow-emerald-950/5">
-                <div className="mb-4 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">Panel gotowy</div>
-                <p className="text-base font-black text-slate-950">Status CPD jest jasny</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-600">widzisz punkty, braki i dokumenty bez ręcznego porównywania plików.</p>
-
-                <div className="mt-7">
-                  <div className="mb-1.5 flex justify-between text-xs font-bold text-slate-600">
-                    <span>Postęp</span>
+                <div className="mt-5 rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
+                  <div className="mb-2 flex justify-between text-xs font-bold text-slate-600">
+                    <span>Postęp CPD</span>
                     <span>71%</span>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-white">
+                  <div className="h-2.5 overflow-hidden rounded-full bg-white">
                     <div className="h-full w-[71%] rounded-full bg-blue-600" />
-                  </div>
-                  <div className="mt-4 rounded-2xl bg-white p-3 text-xs font-bold leading-relaxed text-emerald-800 ring-1 ring-emerald-100">
-                    Braki widoczne wcześniej, dokumenty przypisane do aktywności.
                   </div>
                 </div>
               </div>
