@@ -1,4 +1,4 @@
-// app/page.tsx — kompletna, domknięta wersja landing page CRPE
+// app/page.tsx — landing page CRPE, wersja ewolucyjna
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -26,7 +26,6 @@ import {
   Sparkles,
   Star,
   Stethoscope,
-  Smartphone,
   UploadCloud,
   UserCog,
   UserRoundCheck,
@@ -44,7 +43,7 @@ type ProfileRow = {
 };
 
 const pageWrap = "mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8";
-const cardCls = "overflow-hidden rounded-[1.45rem] border border-slate-200/80 bg-white shadow-sm shadow-slate-900/5";
+const cardCls = "overflow-hidden rounded-[1.7rem] border border-slate-200/80 bg-white shadow-sm shadow-slate-900/5";
 const iconBox = "flex shrink-0 items-center justify-center rounded-xl border";
 
 const IMG = {
@@ -53,7 +52,7 @@ const IMG = {
 };
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
-  return <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">{children}</p>;
+  return <p className="mb-2 text-[11px] font-black uppercase tracking-[0.22em] text-blue-600">{children}</p>;
 }
 
 function IconTile({
@@ -169,10 +168,10 @@ function ProductPreview() {
 
 function PhotoCard({ src, alt, title, text, className = "", imageClassName = "object-cover" }: { src: string; alt: string; title: string; text: string; className?: string; imageClassName?: string }) {
   return (
-    <div className={`group relative overflow-hidden rounded-[1.45rem] border border-slate-200 bg-slate-900 shadow-sm ${className}`}>
+    <div className={`group relative overflow-hidden rounded-[1.7rem] border border-slate-200 bg-slate-900 shadow-sm ${className}`}>
       <Image src={src} alt={alt} fill className={`${imageClassName} transition duration-700 group-hover:scale-[1.03]`} sizes="(max-width: 1024px) 100vw, 780px" />
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/82 via-slate-950/28 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-6 text-white lg:p-7">
+      <div className="absolute bottom-0 left-0 right-0 p-6 text-white lg:p-8">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100/90">CRPE w praktyce</p>
         <h3 className="mt-1.5 max-w-2xl text-xl font-bold leading-tight lg:text-2xl">{title}</h3>
         {text ? <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/75">{text}</p> : null}
@@ -181,10 +180,66 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
   );
 }
 
+function ScenarioSection() {
+  return (
+    <div id="scenariusz" className="scroll-mt-32">
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className={`${cardCls} p-6 lg:p-8`}>
+          <Eyebrow>Typowy scenariusz</Eyebrow>
+          <h2 className="max-w-xl text-2xl font-black tracking-tight text-slate-950 lg:text-3xl">Spokojny koniec okresu rozliczeniowego zaczyna się dużo wcześniej.</h2>
+          <p className="mt-4 text-base leading-relaxed text-slate-600">
+            Pod koniec okresu zaczyna się szukanie certyfikatów, dat, punktów, limitów i brakujących dokumentów. CRPE pokazuje wcześniej, ile masz punktów, czego brakuje i które aktywności warto uzupełnić.
+          </p>
+          <div className="mt-6 grid gap-3">
+            {[
+              "widzisz aktualny status punktów",
+              "masz certyfikaty przypisane do aktywności",
+              "łatwiej sprawdzasz braki przed przygotowaniem raportu",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+                <span className="text-sm font-semibold text-slate-800">{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={`${cardCls} bg-slate-950 p-6 text-white lg:p-8`}>
+          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-200">Przykład użytkownika</p>
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            {[
+              ["142", "pkt zebrane"],
+              ["58", "pkt brakuje"],
+              ["6", "braków w dokumentach"],
+            ].map(([value, label]) => (
+              <div key={label} className="rounded-2xl bg-white/8 p-4 ring-1 ring-white/10">
+                <div className="text-3xl font-black tracking-tight">{value}</div>
+                <div className="mt-1 text-xs font-semibold text-slate-300">{label}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 rounded-2xl bg-white p-4 text-slate-950">
+            <div className="mb-2 flex items-center justify-between text-xs font-bold text-slate-500">
+              <span>Postęp okresu</span>
+              <span>71%</span>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-full w-[71%] rounded-full bg-blue-600" />
+            </div>
+            <div className="mt-4 rounded-xl bg-blue-50 p-3 text-sm font-bold text-blue-800 ring-1 ring-blue-100">
+              Najbliższy krok: uzupełnij brakujące certyfikaty i zaplanuj aktywność za minimum 58 pkt.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CrpeFeatures() {
   const flow = [
     { icon: BookOpen, title: "Szkolenie", text: "bierzesz udział", tone: "blue" as const },
-    { icon: FileText, title: "Certyfikat", text: "robisz zdjęcie", tone: "blue" as const },
+    { icon: FileText, title: "Certyfikat", text: "dodajesz dokument", tone: "blue" as const },
     { icon: BarChart3, title: "Raport", text: "punkty się liczą", tone: "blue" as const },
     { icon: FolderOpen, title: "Baza CRPE", text: "wszystko w jednym miejscu", tone: "blue" as const },
     { icon: Users, title: "Samorząd zawodowy", text: "OIL / KIF / NIPiP", tone: "blue" as const },
@@ -192,9 +247,9 @@ function CrpeFeatures() {
   ];
 
   return (
-    <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
+    <div className="overflow-hidden rounded-[1.8rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
       <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 p-7 text-white lg:border-b-0 lg:border-r lg:p-8">
+        <div className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 p-8 text-white lg:border-b-0 lg:border-r lg:p-10">
           <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
           <div className="pointer-events-none absolute bottom-[-90px] left-[-70px] h-56 w-56 rounded-full bg-cyan-300/20 blur-3xl" />
           <div className="relative">
@@ -209,13 +264,13 @@ function CrpeFeatures() {
                 </div>
               ))}
             </div>
-            <Link href="/login" className="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-lg shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-blue-50">
-              Wypróbuj za darmo <ArrowRight className="h-4 w-4" />
+            <Link href="/login" className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-blue-700 shadow-lg shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-blue-50">
+              Sprawdź ile punktów Ci brakuje <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
 
-        <div className="relative overflow-hidden bg-slate-50/70 p-5 lg:p-7">
+        <div className="relative overflow-hidden bg-slate-50/70 p-6 lg:p-8">
           <div className="pointer-events-none absolute right-[-80px] top-[-80px] h-56 w-56 rounded-full bg-blue-100/80 blur-3xl" />
           <div className="relative rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5">
             <div className="mb-5 flex items-center justify-between gap-4">
@@ -229,7 +284,7 @@ function CrpeFeatures() {
               {flow.map(({ icon: Icon, title, text, tone }, i) => (
                 <div key={title} className="relative rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-950/5">
                   <div className="mb-3 flex items-center gap-3">
-                    <IconTile tone={tone} className={`h-12 w-12 ${i === 1 ? "animate-pulse" : ""}`}>
+                    <IconTile tone={tone} className="h-12 w-12">
                       <Icon className="h-6 w-6" strokeWidth={2.1} />
                     </IconTile>
                     <div className="min-w-0">
@@ -256,18 +311,6 @@ function CrpeFeatures() {
               <p className="mt-1 text-xs text-slate-600">dokumenty masz w jednym widoku</p>
             </div>
           </div>
-          <div className="relative mt-4 overflow-hidden rounded-2xl border border-blue-100 bg-white p-4 shadow-sm shadow-slate-900/5">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <IconTile tone="emerald" className="h-11 w-11"><CheckCircle2 className="h-5 w-5" /></IconTile>
-                <div>
-                  <p className="text-sm font-black text-slate-950">Efekt: dokumentacja CPD pod ręką</p>
-                  <p className="text-xs text-slate-600">aktywności, certyfikaty, punkty i braki w jednym miejscu</p>
-                </div>
-              </div>
-              <span className="hidden rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200 sm:inline-flex">bez chaosu</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -278,20 +321,17 @@ function ReminderSection() {
   const items = ["brakujące certyfikaty przy aktywnościach", "zbliżający się koniec okresu rozliczeniowego", "aktywności, które warto uzupełnić przed raportem"];
   return (
     <div id="przypomnienia" className="scroll-mt-32">
-      <div className="overflow-hidden rounded-[1.6rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white shadow-sm shadow-slate-900/5">
+      <div className="overflow-hidden rounded-[1.8rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white shadow-sm shadow-slate-900/5">
         <div className="grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
-          <div className="border-b border-blue-100 p-6 lg:border-b-0 lg:border-r lg:p-8">
+          <div className="border-b border-blue-100 p-7 lg:border-b-0 lg:border-r lg:p-9">
             <Eyebrow>Przypomnienia</Eyebrow>
             <h2 className="text-2xl font-bold tracking-tight text-slate-950">Nie przegap brakujących dokumentów</h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-600">CRPE może pomagać nie tylko w przechowywaniu certyfikatów, ale też w pilnowaniu braków i terminów. Dzięki temu łatwiej przygotować się do raportu bez nerwowego sprawdzania wszystkiego na końcu okresu.</p>
           </div>
-          <div className="grid gap-3 p-5 sm:grid-cols-3 lg:p-8">
-            {items.map((item, i) => (
-              <div key={item} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-                <div className="relative mb-3 h-11 w-11">
-                  {i === items.length - 1 ? <span className="absolute inset-0 animate-ping rounded-xl bg-amber-300/30" /> : null}
-                  <IconTile tone="amber" className={`relative h-11 w-11 ${i === items.length - 1 ? "animate-bounce" : ""}`}><Bell className="h-5 w-5" /></IconTile>
-                </div>
+          <div className="grid gap-3 p-6 sm:grid-cols-3 lg:p-9">
+            {items.map((item) => (
+              <div key={item} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5">
+                <IconTile tone="amber" className="mb-4 h-12 w-12"><Bell className="h-5 w-5" /></IconTile>
                 <p className="text-sm font-semibold leading-snug text-slate-900">{item}</p>
               </div>
             ))}
@@ -303,212 +343,40 @@ function ReminderSection() {
 }
 
 function HowItWorks() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  const [activeStep, setActiveStep] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(([e]) => e.isIntersecting && setVisible(true), { threshold: 0.2 });
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!visible || paused) return;
-    const t = setInterval(() => setActiveStep((s) => (s + 1) % 3), 3200);
-    return () => clearInterval(t);
-  }, [visible, paused]);
-
   const steps = [
-    {
-      n: "1",
-      icon: UserRoundCheck,
-      color: "blue",
-      title: "Wybierz zawód",
-      subtitle: "System sam ustawi wymagania",
-      desc: "Wybierasz swoją profesję, a CRPE dobiera właściwy okres i limit punktów.",
-      preview: (
-        <div className="space-y-1.5">
-          {[
-            { l: "Lekarz", p: "200 pkt / 4 lata", a: true },
-            { l: "Pielęgniarka", p: "100 pkt / 5 lat", a: false },
-            { l: "Fizjoterapeuta", p: "100 pkt / 5 lat", a: false },
-          ].map((x) => (
-            <div key={x.l} className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${x.a ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}>
-              <span className="font-medium">{x.l}</span>
-              <span className={`text-xs ${x.a ? "text-blue-100" : "text-slate-400"}`}>{x.p}</span>
-            </div>
-          ))}
-        </div>
-      ),
-    },
-    {
-      n: "2",
-      icon: UploadCloud,
-      color: "amber",
-      title: "Dodaj aktywność",
-      subtitle: "Certyfikat od razu przy wpisie",
-      desc: "Dodajesz szkolenie, punkty i dokument. Zdjęcie albo PDF trafia do konkretnej aktywności.",
-      preview: (
-        <div>
-          <div className="mb-2 flex items-center gap-3 rounded-lg border border-amber-200 bg-white p-2.5">
-            <IconTile tone="amber" className="h-9 w-9"><FileText className="h-4 w-4" /></IconTile>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-900">Konferencja kardiologiczna</p>
-              <p className="text-xs text-slate-400">certyfikat.pdf · 2026</p>
-            </div>
-            <span className="shrink-0 text-sm font-bold text-emerald-600">+20 pkt</span>
-          </div>
-          <div className="mb-2 grid grid-cols-2 gap-2">
-            <div className="rounded-lg border border-amber-100 bg-white px-2.5 py-1.5 text-xs text-slate-500">2026</div>
-            <div className="rounded-lg border border-amber-100 bg-white px-2.5 py-1.5 text-xs font-semibold text-amber-700">Konferencja</div>
-          </div>
-          <div className="flex items-center gap-2 rounded-lg border border-dashed border-amber-300 bg-white/70 px-3 py-2 text-xs text-slate-400">
-            <UploadCloud className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-            Przeciągnij certyfikat lub kliknij
-          </div>
-        </div>
-      ),
-    },
-    {
-      n: "3",
-      icon: FileText,
-      color: "emerald",
-      title: "Masz gotowy raport",
-      subtitle: "Status, braki i dokumenty w jednym miejscu",
-      desc: "Widzisz postęp, brakujące punkty i dokumenty. Na końcu okresu szybciej przygotujesz podsumowanie.",
-      preview: (
-        <div>
-          <div className="mb-2 rounded-xl border border-emerald-100 bg-emerald-50 p-3">
-            <div className="flex items-center gap-2">
-              <IconTile tone="emerald" className="h-8 w-8"><CheckCircle2 className="h-4 w-4" /></IconTile>
-              <div>
-                <p className="text-sm font-bold text-slate-900">Raport CPD gotowy</p>
-                <p className="text-xs text-slate-500">aktywności + certyfikaty + punkty</p>
-              </div>
-            </div>
-          </div>
-          <div className="mb-1.5 flex justify-between text-xs text-slate-500">
-            <span>Postęp 2025–2028</span>
-            <span className="font-bold text-slate-900">55%</span>
-          </div>
-          <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-3 rounded-full bg-blue-600 transition-all duration-1000" style={{ width: visible ? "55%" : "0%" }} />
-          </div>
-          <div className="mt-2 grid grid-cols-3 gap-1.5">
-            {[
-              { v: "110", l: "masz", c: "text-slate-900" },
-              { v: "200", l: "cel", c: "text-slate-900" },
-              { v: "90", l: "brak", c: "text-amber-700" },
-            ].map((s) => (
-              <div key={s.l} className="rounded-lg border border-slate-100 bg-white py-1.5 text-center">
-                <div className={`text-sm font-bold ${s.c}`}>{s.v}</div>
-                <div className="text-[10px] text-slate-400">{s.l}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ),
-    },
+    { icon: UserRoundCheck, title: "Wybierasz zawód i okres", desc: "CRPE dopasowuje wymagania punktowe oraz podstawowe limity dla wybranego zawodu." },
+    { icon: UploadCloud, title: "Dodajesz aktywności i certyfikaty", desc: "Wpisujesz szkolenie, dodajesz punkty i przypinasz dokument jako PDF albo zdjęcie." },
+    { icon: FileText, title: "Widzisz aktualny status", desc: "Masz jasny podgląd: ile punktów już masz, czego brakuje i co warto uzupełnić dalej." },
   ];
 
-  const cm: Record<string, { text: string; border: string; bg: string; soft: string; num: string; tone: "blue" | "amber" | "emerald" }> = {
-    blue: { text: "text-blue-700", border: "border-blue-200", bg: "bg-blue-600", soft: "bg-blue-50", num: "bg-blue-600", tone: "blue" },
-    amber: { text: "text-amber-700", border: "border-amber-300", bg: "bg-amber-500", soft: "bg-amber-100", num: "bg-amber-500", tone: "amber" },
-    emerald: { text: "text-emerald-700", border: "border-emerald-200", bg: "bg-emerald-600", soft: "bg-emerald-50", num: "bg-emerald-600", tone: "emerald" },
-  };
-
   return (
-    <div id="jak-to-dziala" ref={ref} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} className={`${cardCls} scroll-mt-32`}>
-      <div className="border-b border-slate-100 px-6 py-5 lg:px-8">
+    <div id="jak-to-dziala" className={`${cardCls} scroll-mt-32`}>
+      <div className="border-b border-slate-100 px-6 py-6 lg:px-9">
         <Eyebrow>Proces</Eyebrow>
-        <div className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Zobacz, jak CRPE prowadzi Cię krok po kroku</h2>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-sm shadow-blue-600/20">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
-                2 minuty do pierwszego wpisu
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-slate-500">Od wyboru zawodu, przez dodanie certyfikatu, aż po jasny status punktów — bez Excela i zgadywania.</p>
+            <h2 className="text-2xl font-black tracking-tight text-slate-950 lg:text-3xl">Jak CRPE prowadzi Cię krok po kroku</h2>
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-slate-600">Trzy proste etapy: wybór ustawień, dodanie aktywności i bieżący status punktów. Bez Excela i zgadywania.</p>
           </div>
-          <div className="hidden rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 sm:block">Interaktywny podgląd</div>
+          <span className="w-fit rounded-full bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 ring-1 ring-blue-100">2 minuty do pierwszego wpisu</span>
         </div>
       </div>
 
-      <div className="hidden md:block">
-        <div className="relative border-b border-slate-100 bg-slate-50/60 px-8 py-6">
-          <div className="absolute left-[17%] right-[17%] top-1/2 h-1 -translate-y-1/2 overflow-hidden rounded-full bg-slate-200">
-            <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-          </div>
-          <div className="absolute left-[17%] top-1/2 h-1 -translate-y-1/2 rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${activeStep * 33}%` }}>
-            <div className="h-full w-full animate-[pulse_2s_infinite] bg-gradient-to-r from-blue-400 via-blue-600 to-blue-400 opacity-60" />
-          </div>
-          <div className="relative grid grid-cols-3 gap-6">
-            {steps.map((step, i) => {
-              const Icon = step.icon;
-              const c = cm[step.color];
-              const isActive = activeStep === i;
-              return (
-                <button key={step.n} type="button" onMouseEnter={() => setActiveStep(i)} onClick={() => setActiveStep(i)} className="group flex flex-col items-center gap-3 text-center focus:outline-none">
-                  <span className={`relative flex h-16 w-16 items-center justify-center rounded-2xl border bg-white shadow-sm transition-all duration-300 ${isActive ? `${c.border} scale-110 shadow-lg ring-4 ring-current/10` : "border-slate-200 group-hover:border-blue-200"}`}>
-                    <span className={`absolute -left-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white ${c.num}`}>{step.n}</span>
-                    <Icon className={`h-7 w-7 transition-all ${isActive ? `${c.text} scale-110` : "text-slate-500"}`} strokeWidth={1.9} />
-                  </span>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{step.title}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{step.subtitle}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="grid gap-0 md:grid-cols-3">
-          {steps.map((step, i) => {
-            const c = cm[step.color];
-            const isActive = activeStep === i;
-            return (
-              <button key={step.n} type="button" onMouseEnter={() => setActiveStep(i)} onClick={() => setActiveStep(i)} className={`flex min-h-[255px] flex-col border-r border-slate-100 p-6 text-left transition-all duration-300 last:border-r-0 focus:outline-none focus-visible:ring-0 lg:p-7 ${isActive ? "bg-white" : "bg-slate-50/30 hover:bg-white"}`}>
-                <div className={`mb-4 h-1.5 w-12 rounded-full transition-all ${isActive ? c.bg : "bg-slate-200"}`} />
-                <p className="text-sm leading-relaxed text-slate-500">{step.desc}</p>
-                <div className={`mt-auto rounded-2xl border p-3 transition-all duration-300 ${isActive ? `${c.border} ${c.soft} shadow-sm` : "border-slate-100 bg-white/80 opacity-75"}`}>
-                  {step.preview}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="md:hidden">
+      <div className="grid gap-0 lg:grid-cols-3">
         {steps.map((step, i) => {
           const Icon = step.icon;
-          const c = cm[step.color];
-          if (activeStep !== i) return null;
           return (
-            <div key={step.n} className="p-5">
-              <div className="mb-3 flex items-center gap-3">
-                <span className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border ${c.border} bg-white shadow-sm`}>
-                  <span className={`absolute -left-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white ${c.num}`}>{step.n}</span>
-                  <Icon className={`h-6 w-6 ${c.text}`} strokeWidth={1.8} />
-                </span>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">{step.title}</p>
-                  <p className="text-xs text-slate-400">{step.subtitle}</p>
-                </div>
+            <div key={step.title} className="relative border-b border-slate-100 p-6 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0 lg:p-8">
+              <div className="mb-5 flex items-center gap-4">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-black text-white">{i + 1}</span>
+                <IconTile className="h-13 w-13"><Icon className="h-6 w-6" strokeWidth={2} /></IconTile>
               </div>
-              <p className="mb-3 text-sm leading-relaxed text-slate-500">{step.desc}</p>
-              <div className={`rounded-2xl border p-3 ${c.border} ${c.soft}`}>{step.preview}</div>
+              <h3 className="text-lg font-black text-slate-950">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{step.desc}</p>
+              {i < steps.length - 1 ? <ArrowRight className="absolute right-[-10px] top-1/2 z-10 hidden h-5 w-5 -translate-y-1/2 text-blue-500 lg:block" /> : null}
             </div>
           );
         })}
-        <div className="flex justify-center gap-2 border-t border-slate-100 py-3">
-          {steps.map((_, i) => <button key={i} type="button" onClick={() => setActiveStep(i)} className={`h-2 rounded-full transition-all ${activeStep === i ? "w-8 bg-blue-600" : "w-2 bg-slate-200"}`} aria-label={`Pokaż krok ${i + 1}`} />)}
-        </div>
       </div>
     </div>
   );
@@ -556,14 +424,15 @@ export default function Page() {
 
   const navItems = [
     { id: "hero", label: "O produkcie" },
+    { id: "scenariusz", label: "Problem" },
     { id: "dla-kogo", label: "Dla kogo" },
     { id: "jak-to-dziala", label: "Jak to działa" },
     { id: "funkcje", label: "Funkcje CRPE" },
     { id: "przypomnienia", label: "Przypomnienia" },
     { id: "faq", label: "FAQ" },
   ];
-  const navBase = "shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:border-blue-300 hover:text-blue-700 focus:outline-none";
-  const navActive = "shrink-0 border-b-2 border-blue-600 px-3 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none";
+  const navBase = "shrink-0 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-700 focus:outline-none";
+  const navActive = "shrink-0 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm focus:outline-none";
   const FAQ = [
     { q: "Czy CRPE jest połączone z systemami państwowymi?", a: "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte." },
     { q: "Czy moje certyfikaty są bezpieczne?", a: "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty. Przechowujemy dane w UE." },
@@ -575,8 +444,8 @@ export default function Page() {
     <div className="min-h-screen bg-slate-50 pb-8">
       <div className="sticky top-[76px] z-30 bg-white/95 pb-3 pt-2 shadow-sm shadow-slate-900/5 backdrop-blur supports-[backdrop-filter]:bg-white/90">
         <div className={`${pageWrap}`}>
-          <nav className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-md">
-            <div className="flex min-w-max px-2">
+          <nav className="w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
+            <div className="flex min-w-max gap-1">
               {navItems.map(({ id, label }) => {
                 const isActive = activeSection === id;
                 return <button key={id} type="button" onClick={() => scrollToId(id)} className={isActive ? navActive : navBase}>{label}</button>;
@@ -586,28 +455,30 @@ export default function Page() {
         </div>
       </div>
 
-      <section className="bg-[radial-gradient(circle_at_top_left,#dbeafe_0,transparent_34%),linear-gradient(180deg,#eff6ff_0%,#f8fafc_100%)] py-7 lg:py-10">
+      <section className="bg-[radial-gradient(circle_at_top_left,#dbeafe_0,transparent_34%),linear-gradient(180deg,#eff6ff_0%,#f8fafc_100%)] py-8 lg:py-12">
         <div className={pageWrap}>
-          <div id="hero" className="scroll-mt-32 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-xl shadow-slate-900/5">
-            <div className="relative grid grid-cols-1 gap-8 p-6 sm:p-8 lg:grid-cols-[2fr_1fr] lg:p-10 xl:p-12">
-              <div className="pointer-events-none absolute left-0 top-8 h-24 w-1.5 rounded-r-full bg-blue-600" />
+          <div id="hero" className="scroll-mt-32 overflow-hidden rounded-[2.25rem] border border-slate-200/80 bg-white shadow-xl shadow-slate-900/5">
+            <div className="relative grid grid-cols-1 gap-10 p-7 sm:p-9 lg:grid-cols-[1.55fr_0.95fr] lg:p-12 xl:p-14">
+              <div className="pointer-events-none absolute left-0 top-10 h-28 w-1.5 rounded-r-full bg-blue-600" />
               <div className="pointer-events-none absolute right-[-120px] top-[-120px] h-[320px] w-[320px] rounded-full bg-blue-100/80 blur-3xl" />
               <div className="relative z-10 flex flex-col justify-center">
-                <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1.5 text-xs font-medium text-blue-700"><Sparkles className="h-3.5 w-3.5 text-blue-600" strokeWidth={1.75} />Wkrótce: Asystent AI do zarządzania rozwojem zawodowym</div>
-                <h1 className="max-w-3xl text-[42px] font-bold leading-[1.04] tracking-tight text-slate-950 sm:text-[56px] lg:text-[62px]">Punkty CPD pod kontrolą. <span className="text-blue-600">Bez stresu.</span></h1>
-                <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w aktualnym okresie rozliczeniowym. Prosto. Spokojnie. Bez Excela.</p>
-                <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700"><Sparkles className="h-3.5 w-3.5 text-blue-600" strokeWidth={1.75} />Spokojny koniec okresu rozliczeniowego zaczyna się dużo wcześniej</div>
+                <h1 className="max-w-4xl text-[40px] font-black leading-[1.04] tracking-tight text-slate-950 sm:text-[56px] lg:text-[64px]">Masz wszystko pod kontrolą — <span className="text-blue-600">punkty, certyfikaty i terminy</span></h1>
+                <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-600">Zbieraj punkty, przechowuj certyfikaty i miej pewność, że nie zabraknie Ci nic na koniec okresu.</p>
+                <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-500">CRPE porządkuje aktywności CPD, pokazuje aktualny status i pomaga wcześniej zauważyć braki — bez arkuszy, notatek i szukania dokumentów po mailach.</p>
+
+                <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {[
-                    { icon: FolderOpen, t: "Porządek bez wysiłku", d: "Wpisy i certyfikaty zawsze pod ręką.", tone: "blue" as const },
-                    { icon: BarChart3, t: "Jasny status punktów", d: "Wiesz ile masz i czego brakuje.", tone: "amber" as const },
-                    { icon: ShieldCheck, t: "Bezpieczne dane", d: "Tylko Ty masz dostęp. Dane w UE.", tone: "emerald" as const },
-                    { icon: Sparkles, t: "Start za darmo", d: "Podstawowe funkcje bezpłatnie. Bez karty.", tone: "indigo" as const },
-                  ].map((b) => { const Icon = b.icon; return <div key={b.t} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm shadow-slate-900/5"><IconTile tone={b.tone} className="mt-0.5 h-10 w-10"><Icon className="h-5 w-5" strokeWidth={2} /></IconTile><div><div className="text-sm font-semibold text-slate-900">{b.t}</div><p className="mt-0.5 text-xs leading-relaxed text-slate-500">{b.d}</p></div></div>; })}
+                    { icon: FolderOpen, t: "Certyfikaty w jednym miejscu", d: "Dokumenty przypisane do aktywności.", tone: "blue" as const },
+                    { icon: BarChart3, t: "Jasny status punktów", d: "Wiesz, ile masz i czego brakuje.", tone: "amber" as const },
+                    { icon: ShieldCheck, t: "Bezpieczne dane", d: "Dostęp do danych masz tylko Ty.", tone: "emerald" as const },
+                    { icon: CalendarCheck, t: "Terminy pod kontrolą", d: "Łatwiej przygotujesz się do raportu.", tone: "indigo" as const },
+                  ].map((b) => { const Icon = b.icon; return <div key={b.t} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm shadow-slate-900/5"><IconTile tone={b.tone} className="mt-0.5 h-10 w-10"><Icon className="h-5 w-5" strokeWidth={2} /></IconTile><div><div className="text-sm font-bold text-slate-900">{b.t}</div><p className="mt-0.5 text-xs leading-relaxed text-slate-500">{b.d}</p></div></div>; })}
                 </div>
-                <div className="mt-8 flex flex-wrap gap-3"><Link href="/login" className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95">Załóż darmowe konto <ArrowRight className="h-4 w-4" /></Link><button type="button" onClick={() => scrollToId("jak-to-dziala")} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">Jak to działa</button></div>
-                <p className="mt-3 text-xs text-slate-500">Bez instalacji • 30 sekund do pierwszego wpisu • działa na telefonie</p>
+                <div className="mt-9 flex flex-wrap gap-3"><Link href="/login" className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-7 py-4 text-base font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95">Sprawdź ile punktów Ci brakuje <ArrowRight className="h-5 w-5" /></Link><button type="button" onClick={() => scrollToId("jak-to-dziala")} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-7 py-4 text-base font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">Zobacz jak działa</button></div>
+                <p className="mt-4 text-sm text-slate-500">Bezpłatny start. Bez Excela. Bez szukania certyfikatów po mailach.</p>
               </div>
-              <div className="relative z-10 min-h-[380px] overflow-hidden rounded-[1.6rem] border border-slate-200 bg-slate-900 shadow-xl shadow-slate-950/10 lg:min-h-[500px]"><Image src={IMG.hero} alt="Pracowniczka medyczna z tabletem" fill priority className="object-cover object-[50%_22%]" sizes="(max-width: 1024px) 100vw, 390px" /><div className="absolute inset-0 bg-gradient-to-t from-slate-950/78 via-transparent to-transparent" /><div className="absolute bottom-0 left-0 right-0 p-5 text-white"><p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100/90">CRPE w praktyce</p><h3 className="mt-1.5 text-xl font-bold leading-tight">Panel zawsze pod ręką</h3><p className="mt-1.5 text-sm leading-relaxed text-white/75">Dodajesz wpisy i dokumenty na bieżąco.</p></div></div>
+              <div className="relative z-10 min-h-[390px] overflow-hidden rounded-[1.8rem] border border-slate-200 bg-slate-900 shadow-xl shadow-slate-950/10 lg:min-h-[540px]"><Image src={IMG.hero} alt="Pracowniczka medyczna z tabletem" fill priority className="object-cover object-[50%_22%]" sizes="(max-width: 1024px) 100vw, 430px" /><div className="absolute inset-0 bg-gradient-to-t from-slate-950/78 via-transparent to-transparent" /><div className="absolute bottom-0 left-0 right-0 p-6 text-white"><p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100/90">CRPE w praktyce</p><h3 className="mt-1.5 text-2xl font-black leading-tight">Panel zawsze pod ręką</h3><p className="mt-2 text-sm leading-relaxed text-white/75">Dodajesz wpisy i dokumenty na bieżąco.</p></div></div>
             </div>
           </div>
         </div>
@@ -615,18 +486,20 @@ export default function Page() {
 
       <section className="bg-white py-6"><div className={pageWrap}><div className="rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm shadow-slate-900/5"><p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-900">CRPE wspiera zawody regulowane przez samorządy zawodowe</p><div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-2">{["Naczelną Izbę Lekarską", "Naczelną Izbę Pielęgniarek i Położnych", "Krajową Izbę Fizjoterapeutów", "Naczelną Izbę Aptekarską", "Krajową Izbę Diagnostów Laboratoryjnych"].map((n) => <span key={n} className="text-xs font-medium text-slate-500">{n}</span>)}</div></div></div></section>
 
-      <section className="bg-slate-50 py-7 lg:py-9">
-        <div className={`${pageWrap} space-y-10 lg:space-y-14`}>
-          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]"><PhotoCard src={IMG.team} alt="Zespół medyczny przy stole" title="CRPE pomaga każdemu specjaliście pilnować własnych punktów, terminów i certyfikatów." text="" className="min-h-[390px] lg:min-h-[455px]" imageClassName="object-cover object-[50%_16%]" /><div className="flex min-h-[390px] items-stretch rounded-[1.45rem] bg-gradient-to-br from-white to-slate-50 p-4 lg:min-h-[455px]"><ProductPreview /></div></div>
+      <section className="bg-slate-50 py-10 lg:py-14">
+        <div className={`${pageWrap} space-y-10 lg:space-y-16`}>
+          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]"><PhotoCard src={IMG.team} alt="Zespół medyczny przy stole" title="CRPE pomaga każdemu specjaliście pilnować własnych punktów, terminów i certyfikatów." text="" className="min-h-[390px] lg:min-h-[455px]" imageClassName="object-cover object-[50%_16%]" /><div className="flex min-h-[390px] items-stretch rounded-[1.7rem] bg-gradient-to-br from-white to-slate-50 p-4 lg:min-h-[455px]"><ProductPreview /></div></div>
+
+          <ScenarioSection />
 
           <div id="dla-kogo" className="grid scroll-mt-32 gap-6 lg:grid-cols-2">
             <div className={cardCls}>
-              <div className="border-b border-slate-100 px-6 py-5 lg:px-8">
+              <div className="border-b border-slate-100 px-6 py-6 lg:px-8">
                 <Eyebrow>Odbiorcy</Eyebrow>
-                <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Dla kogo jest CRPE</h2>
-                <p className="mt-1 text-sm text-slate-500">Dla zawodów medycznych zobowiązanych do zbierania punktów edukacyjnych. Lekarze, pielęgniarki, fizjoterapeuci i inni specjaliści, którzy chcą mieć porządek bez Excela.</p>
+                <h2 className="text-2xl font-black tracking-tight text-slate-950">Dla kogo jest CRPE</h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500">Dla zawodów medycznych zobowiązanych do zbierania punktów edukacyjnych. Lekarze, pielęgniarki, fizjoterapeuci i inni specjaliści, którzy chcą mieć porządek bez Excela.</p>
               </div>
-              <div className="p-5 lg:p-7">
+              <div className="p-6 lg:p-8">
                 <div className="grid gap-3 sm:grid-cols-2">
                   {[
                     { t: "Lekarze i lekarze dentyści", icon: Stethoscope },
@@ -638,19 +511,19 @@ export default function Page() {
                   ].map(({ t, icon: Icon }) => (
                     <div key={t} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
                       <IconTile tone="emerald"><Icon className="h-5 w-5" strokeWidth={2.1} /></IconTile>
-                      <span className="text-sm font-medium text-slate-800">{t}</span>
+                      <span className="text-sm font-semibold text-slate-800">{t}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
             <div className={cardCls}>
-              <div className="border-b border-slate-100 px-6 py-5 lg:px-8">
+              <div className="border-b border-slate-100 px-6 py-6 lg:px-8">
                 <Eyebrow>Wartość</Eyebrow>
-                <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Co zyskujesz</h2>
-                <p className="mt-1 text-sm text-slate-500">Porządek i jasny status. Bez komplikacji.</p>
+                <h2 className="text-2xl font-black tracking-tight text-slate-950">Co zyskujesz</h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500">Porządek i jasny status. Bez komplikacji.</p>
               </div>
-              <div className="p-5 lg:p-7">
+              <div className="p-6 lg:p-8">
                 <div className="space-y-3">
                   {[
                     { t: "Historia aktywności w jednym miejscu", icon: BookOpen },
@@ -660,7 +533,7 @@ export default function Page() {
                   ].map(({ t, icon: Icon }) => (
                     <div key={t} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
                       <IconTile><Icon className="h-5 w-5" strokeWidth={2.1} /></IconTile>
-                      <span className="text-sm font-medium text-slate-800">{t}</span>
+                      <span className="text-sm font-semibold text-slate-800">{t}</span>
                     </div>
                   ))}
                 </div>
@@ -674,16 +547,16 @@ export default function Page() {
 
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
             <div id="faq" className={`${cardCls} scroll-mt-32`}>
-              <div className="border-b border-slate-100 px-6 py-5 lg:px-8">
+              <div className="border-b border-slate-100 px-6 py-6 lg:px-8">
                 <Eyebrow>FAQ</Eyebrow>
-                <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Najczęstsze pytania</h2>
-                <p className="mt-1 text-sm text-slate-500">Kliknij pytanie, aby zobaczyć odpowiedź.</p>
+                <h2 className="text-2xl font-black tracking-tight text-slate-950">Najczęstsze pytania</h2>
+                <p className="mt-2 text-sm text-slate-500">Kliknij pytanie, aby zobaczyć odpowiedź.</p>
               </div>
-              <div className="p-5 lg:p-7"><FaqAccordion items={FAQ} /></div>
+              <div className="p-6 lg:p-8"><FaqAccordion items={FAQ} /></div>
             </div>
             <div className={cardCls}>
               <div className="p-6 lg:p-8">
-                <Eyebrow>Co mówią użytkownicy</Eyebrow>
+                <Eyebrow>Przykład opinii</Eyebrow>
                 <Quote className="mb-3 h-6 w-6 text-blue-200" strokeWidth={1.5} />
                 <p className="text-base leading-relaxed text-slate-700">&quot;Wcześniej trzymałam wszystko w Excelu i modliłam się, żeby nie zgubić certyfikatów. Teraz dodaję wpis od razu po szkoleniu — z telefonu.&quot;</p>
                 <div className="mt-5 flex flex-wrap items-center gap-2">
