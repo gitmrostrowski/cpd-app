@@ -184,97 +184,107 @@ function ScenarioStrip() {
   const [state, setState] = useState<0 | 1>(0);
 
   useEffect(() => {
-    const t = setInterval(() => setState((s) => (s === 0 ? 1 : 0)), 3200);
+    const t = setInterval(() => setState((s) => (s === 0 ? 1 : 0)), 3600);
     return () => clearInterval(t);
   }, []);
 
-  return (
-    <div className="relative overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-100/70 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-28 right-[-90px] h-72 w-72 rounded-full bg-emerald-100/70 blur-3xl" />
+  const isOrder = state === 1;
 
-      <div className="relative grid gap-0 lg:grid-cols-[0.82fr_1.18fr]">
-        <div className="border-b border-slate-100 p-7 lg:border-b-0 lg:border-r lg:p-8">
+  return (
+    <div className="relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
+      <div className="pointer-events-none absolute -left-28 -top-28 h-80 w-80 rounded-full bg-blue-100/70 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-28 right-[-90px] h-80 w-80 rounded-full bg-emerald-100/70 blur-3xl" />
+
+      <div className="relative grid gap-0 lg:grid-cols-[0.78fr_1.22fr]">
+        {/* Copy / state */}
+        <div className="relative border-b border-slate-100 bg-white/80 p-7 lg:border-b-0 lg:border-r lg:p-8">
+          <div className="absolute left-0 top-8 h-20 w-1.5 rounded-r-full bg-blue-600" />
+
           <div className="mb-5 flex items-center gap-3">
             <div className="relative">
-              <span className={`absolute inset-0 rounded-2xl ${state === 0 ? "animate-ping bg-amber-300/25" : "animate-ping bg-emerald-300/25"}`} />
-              <IconTile tone={state === 0 ? "amber" : "emerald"} className="relative h-13 w-13 rounded-2xl">
-                {state === 0 ? <Bell className="h-6 w-6" strokeWidth={2.2} /> : <CheckCircle2 className="h-6 w-6" strokeWidth={2.2} />}
+              <span className={`absolute inset-0 rounded-2xl ${isOrder ? "animate-ping bg-emerald-300/25" : "animate-ping bg-amber-300/25"}`} />
+              <IconTile tone={isOrder ? "emerald" : "amber"} className="relative h-14 w-14 rounded-2xl shadow-sm">
+                {isOrder ? <CheckCircle2 className="h-7 w-7" strokeWidth={2.2} /> : <Bell className="h-7 w-7" strokeWidth={2.2} />}
               </IconTile>
             </div>
             <div>
-              <Eyebrow>{state === 0 ? "Typowy problem" : "Efekt w CRPE"}</Eyebrow>
-              <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px] font-bold text-slate-500">
-                <span className={`rounded-full px-2.5 py-1 transition ${state === 0 ? "bg-amber-100 text-amber-700" : ""}`}>chaos</span>
-                <span className={`rounded-full px-2.5 py-1 transition ${state === 1 ? "bg-emerald-100 text-emerald-700" : ""}`}>porządek</span>
+              <Eyebrow>{isOrder ? "Efekt w CRPE" : "Typowy problem"}</Eyebrow>
+              <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1 text-[11px] font-bold text-slate-500">
+                <span className={`rounded-full px-2.5 py-1 transition ${!isOrder ? "bg-amber-100 text-amber-700 shadow-sm" : ""}`}>chaos</span>
+                <span className={`rounded-full px-2.5 py-1 transition ${isOrder ? "bg-emerald-100 text-emerald-700 shadow-sm" : ""}`}>porządek</span>
               </div>
             </div>
           </div>
 
-          <h2 className="max-w-md text-2xl font-bold leading-tight tracking-tight text-slate-950 lg:text-3xl">
-            {state === 0 ? "Certyfikaty są wszędzie. Statusu nadal brak." : "Wszystko trafia do jednego widoku."}
+          <h2 className="max-w-md text-2xl font-black leading-tight tracking-tight text-slate-950 lg:text-3xl">
+            {isOrder ? "Jeden wpis. Certyfikat, punkty i status w komplecie." : "Certyfikaty są wszędzie. Statusu nadal brak."}
           </h2>
           <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-600">
-            {state === 0
-              ? "Maile, zdjęcia, PDF-y i notatki rozrzucone po różnych miejscach. Na końcu okresu zostaje nerwowe sprawdzanie, co naprawdę się liczy."
-              : "Aktywność, certyfikat, punkty i braki są połączone. Od razu widzisz, co masz i co jeszcze trzeba uzupełnić."}
+            {isOrder
+              ? "Aktywność, dokument i punkty są połączone. Od razu widzisz, co masz, czego brakuje i co warto uzupełnić dalej."
+              : "Maile, zdjęcia, PDF-y i notatki są rozrzucone po różnych miejscach. Na końcu okresu trzeba ręcznie sprawdzać, co naprawdę się liczy."}
           </p>
 
-          <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-            <div className="mb-2 flex justify-between text-[11px] font-bold uppercase tracking-wide text-slate-400">
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mb-2 flex justify-between text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
               <span>chaos</span>
               <span>porządek</span>
             </div>
             <div className="relative h-3 overflow-hidden rounded-full bg-slate-100">
-              <div className={`h-full rounded-full transition-all duration-700 ${state === 0 ? "w-[32%] bg-amber-400" : "w-full bg-emerald-500"}`} />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+              <div className={`h-full rounded-full transition-all duration-700 ${isOrder ? "w-full bg-emerald-500" : "w-[34%] bg-amber-400"}`} />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/45 to-transparent" />
+            </div>
+            <div className="mt-3 flex items-center justify-between text-xs font-semibold">
+              <span className={`${isOrder ? "text-slate-400" : "text-amber-700"}`}>{isOrder ? "problem rozwiązany" : "brakuje porządku"}</span>
+              <span className={`${isOrder ? "text-emerald-700" : "text-slate-400"}`}>{isOrder ? "gotowe do raportu" : "CRPE porządkuje dane"}</span>
             </div>
           </div>
         </div>
 
-        <div className="relative min-h-[330px] bg-slate-50/80 p-5 lg:p-7">
-          <div className={`absolute inset-5 transition-all duration-700 lg:inset-7 ${state === 0 ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-3 scale-[0.98]"}`}>
+        {/* Animated demo */}
+        <div className="relative min-h-[390px] bg-slate-50/80 p-5 lg:p-7">
+          {/* CHAOS */}
+          <div className={`absolute inset-5 transition-all duration-700 lg:inset-7 ${!isOrder ? "opacity-100 translate-y-0 scale-100" : "pointer-events-none opacity-0 translate-y-4 scale-[0.98]"}`}>
             <div className="grid h-full gap-4 md:grid-cols-[1fr_0.82fr]">
-              <div className="rounded-[1.35rem] border border-amber-200 bg-white p-4 shadow-sm shadow-amber-950/5">
-                <div className="mb-3 flex items-center justify-between">
+              <div className="rounded-[1.35rem] border border-amber-200 bg-white p-5 shadow-sm shadow-amber-950/5">
+                <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-bold text-slate-950">Rozrzucone dokumenty</p>
-                    <p className="text-xs text-slate-500">nie wiadomo, co jest aktualne</p>
+                    <p className="text-base font-black text-slate-950">Rozrzucone dokumenty</p>
+                    <p className="mt-0.5 text-xs text-slate-500">nie wiadomo, co jest aktualne</p>
                   </div>
-                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-amber-100">brak statusu</span>
+                  <span className="shrink-0 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-amber-100">brak statusu</span>
                 </div>
 
                 <div className="space-y-2.5">
                   {[
-                    { file: "certyfikat_final.pdf", note: "bez punktów", tone: "amber" },
-                    { file: "IMG_2847.jpg", note: "nieprzypisany", tone: "slate" },
-                    { file: "mail_od_organizatora.msg", note: "do sprawdzenia", tone: "amber" },
-                    { file: "scan_2024_kopia.pdf", note: "duplikat?", tone: "rose" },
-                  ].map((row, i) => (
-                    <div key={row.file} className={`flex items-center gap-3 rounded-xl border bg-white px-3 py-2.5 shadow-sm transition ${i === 1 ? "translate-x-3" : i === 2 ? "-translate-x-2" : ""}`}>
-                      <IconTile tone={row.tone as "amber" | "slate" | "rose"} className="h-8 w-8 rounded-lg">
+                    { file: "certyfikat_final.pdf", note: "bez punktów", tone: "amber", move: "" },
+                    { file: "IMG_2847.jpg", note: "nieprzypisany", tone: "slate", move: "translate-x-3" },
+                    { file: "mail_od_organizatora.msg", note: "do sprawdzenia", tone: "amber", move: "-translate-x-1" },
+                    { file: "scan_2024_kopia.pdf", note: "duplikat?", tone: "rose", move: "translate-x-2" },
+                  ].map((row) => (
+                    <div key={row.file} className={`flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm transition ${row.move}`}>
+                      <IconTile tone={row.tone as "amber" | "slate" | "rose"} className="h-9 w-9 rounded-xl">
                         <FileText className="h-4 w-4" strokeWidth={2.2} />
                       </IconTile>
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700">{row.file}</span>
-                      <span className="shrink-0 rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200">{row.note}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-700">{row.file}</span>
+                      <span className="shrink-0 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200">{row.note}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="flex flex-col justify-between rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm">
-                <div>
-                  <p className="text-sm font-bold text-slate-950">Na koniec okresu</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">trzeba ręcznie ustalić, które dokumenty pasują do aktywności i ile punktów można policzyć.</p>
-                </div>
-                <div className="mt-5 space-y-2">
+              <div className="rounded-[1.35rem] border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5">
+                <p className="text-base font-black text-slate-950">Na koniec okresu</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">trzeba ręcznie ustalić, które dokumenty pasują do aktywności i ile punktów można policzyć.</p>
+
+                <div className="mt-5 space-y-2.5">
                   {[
                     "brak certyfikatu przy wpisie",
                     "niejasna liczba punktów",
                     "raport do sprawdzenia ręcznie",
                   ].map((x) => (
-                    <div key={x} className="flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 ring-1 ring-amber-100">
-                      <Bell className="h-3.5 w-3.5" />
+                    <div key={x} className="flex items-center gap-2 rounded-2xl bg-amber-50 px-3 py-2.5 text-xs font-bold text-amber-800 ring-1 ring-amber-100">
+                      <Bell className="h-3.5 w-3.5 shrink-0" />
                       {x}
                     </div>
                   ))}
@@ -283,58 +293,58 @@ function ScenarioStrip() {
             </div>
           </div>
 
-          <div className={`absolute inset-5 transition-all duration-700 lg:inset-7 ${state === 1 ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-3 scale-[0.98]"}`}>
+          {/* ORDER */}
+          <div className={`absolute inset-5 transition-all duration-700 lg:inset-7 ${isOrder ? "opacity-100 translate-y-0 scale-100" : "pointer-events-none opacity-0 translate-y-4 scale-[0.98]"}`}>
             <div className="grid h-full gap-4 md:grid-cols-[1fr_0.82fr]">
-              <div className="rounded-[1.35rem] border border-blue-200 bg-white p-4 shadow-sm shadow-blue-950/5">
-                <div className="mb-3 flex items-center justify-between">
+              <div className="rounded-[1.35rem] border border-blue-200 bg-white p-5 shadow-sm shadow-blue-950/5">
+                <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-bold text-slate-950">Aktywność w CRPE</p>
-                    <p className="text-xs text-slate-500">wszystko połączone w jednym wpisie</p>
+                    <p className="text-base font-black text-slate-950">Aktywność w CRPE</p>
+                    <p className="mt-0.5 text-xs text-slate-500">wszystko połączone w jednym wpisie</p>
                   </div>
-                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-100">kompletne</span>
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-100">kompletne</span>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="rounded-[1.15rem] border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-bold text-slate-950">Konferencja kardiologiczna</p>
+                      <p className="text-lg font-black leading-tight text-slate-950">Konferencja kardiologiczna</p>
                       <p className="mt-1 text-xs text-slate-500">Organizator · 2026 · certyfikat.pdf</p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-blue-600 px-3 py-1 text-sm font-bold text-white">+20 pkt</span>
+                    <span className="shrink-0 rounded-full bg-blue-600 px-3 py-1.5 text-sm font-black text-white shadow-sm">+20 pkt</span>
                   </div>
 
                   <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                    <div className="rounded-xl bg-white p-3 text-center ring-1 ring-slate-100">
-                      <p className="text-lg font-bold text-slate-950">20</p>
-                      <p className="text-[10px] text-slate-400">punktów</p>
+                    <div className="rounded-2xl bg-white p-3 text-center ring-1 ring-slate-100">
+                      <p className="text-xl font-black text-slate-950">20</p>
+                      <p className="text-[10px] font-medium text-slate-400">punktów</p>
                     </div>
-                    <div className="rounded-xl bg-white p-3 text-center ring-1 ring-slate-100">
-                      <p className="text-lg font-bold text-slate-950">PDF</p>
-                      <p className="text-[10px] text-slate-400">certyfikat</p>
+                    <div className="rounded-2xl bg-white p-3 text-center ring-1 ring-slate-100">
+                      <p className="text-xl font-black text-slate-950">PDF</p>
+                      <p className="text-[10px] font-medium text-slate-400">certyfikat</p>
                     </div>
-                    <div className="rounded-xl bg-white p-3 text-center ring-1 ring-slate-100">
-                      <p className="text-lg font-bold text-emerald-600">OK</p>
-                      <p className="text-[10px] text-slate-400">status</p>
+                    <div className="rounded-2xl bg-white p-3 text-center ring-1 ring-slate-100">
+                      <p className="text-xl font-black text-emerald-600">OK</p>
+                      <p className="text-[10px] font-medium text-slate-400">status</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col justify-between rounded-[1.35rem] border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-                <div>
-                  <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">Panel gotowy</div>
-                  <p className="text-sm font-bold text-slate-950">Status CPD jest jasny</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-600">widzisz punkty, braki i dokumenty bez ręcznego porównywania plików.</p>
-                </div>
-                <div className="mt-5">
-                  <div className="mb-1.5 flex justify-between text-xs font-semibold text-slate-600">
+              <div className="rounded-[1.35rem] border border-emerald-200 bg-emerald-50 p-5 shadow-sm shadow-emerald-950/5">
+                <div className="mb-4 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">Panel gotowy</div>
+                <p className="text-base font-black text-slate-950">Status CPD jest jasny</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600">widzisz punkty, braki i dokumenty bez ręcznego porównywania plików.</p>
+
+                <div className="mt-7">
+                  <div className="mb-1.5 flex justify-between text-xs font-bold text-slate-600">
                     <span>Postęp</span>
                     <span>71%</span>
                   </div>
                   <div className="h-3 overflow-hidden rounded-full bg-white">
                     <div className="h-full w-[71%] rounded-full bg-blue-600" />
                   </div>
-                  <div className="mt-3 rounded-xl bg-white p-3 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100">
+                  <div className="mt-4 rounded-2xl bg-white p-3 text-xs font-bold leading-relaxed text-emerald-800 ring-1 ring-emerald-100">
                     Braki widoczne wcześniej, dokumenty przypisane do aktywności.
                   </div>
                 </div>
