@@ -18,13 +18,11 @@ type TrainingRow = {
   url: string | null;
   external_url?: string | null;
   description: string | null;
-
   approval_status: TrainingStatus | null;
   reject_reason: string | null;
-
   submitted_by: string | null;
+  submitted_email: string | null;
   user_id: string | null;
-
   created_at: string;
   updated_at: string | null;
 };
@@ -46,10 +44,8 @@ function statusLabel(s: TrainingStatus) {
 }
 
 function statusBadgeCls(s: TrainingStatus) {
-  if (s === "approved")
-    return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
-  if (s === "rejected")
-    return "bg-rose-50 text-rose-700 ring-1 ring-rose-200";
+  if (s === "approved") return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
+  if (s === "rejected") return "bg-rose-50 text-rose-700 ring-1 ring-rose-200";
   return "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
 }
 
@@ -96,9 +92,12 @@ export default function AdminTrainingsPage() {
   const sb = useMemo(() => supabaseClient(), []);
 
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-
   const [status, setStatus] = useState<"all" | TrainingStatus>("all");
   const [q, setQ] = useState("");
+  const [addedByQ, setAddedByQ] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<TrainingRow[]>([]);
   const [err, setErr] = useState<string | null>(null);
@@ -153,14 +152,19 @@ export default function AdminTrainingsPage() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (status !== "all") {
-        query = query.eq("approval_status", status);
+      if (status !== "all") query = query.eq("approval_status", status);
+
+      if (dateFrom) query = query.gte("created_at", `${dateFrom}T00:00:00`);
+      if (dateTo) query = query.lte("created_at", `${dateTo}T23:59:59`);
+
+      if (addedByQ.trim()) {
+        query = query.ilike("submitted_email", `%${addedByQ.trim()}%`);
       }
 
       if (q.trim()) {
         const qq = q.trim();
         query = query.or(
-          `title.ilike.%${qq}%,organizer.ilike.%${qq}%,description.ilike.%${qq}%`
+          `title.ilike.%${qq}%,organizer.ilike.%${qq}%,description.ilike.%${qq}%,submitted_email.ilike.%${qq}%`
         );
       }
 
@@ -181,26 +185,7 @@ export default function AdminTrainingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, status]);
 
-  const filtered = useMemo(() => {
-    const qq = q.trim().toLowerCase();
-    if (!qq) return rows;
-
-    return rows.filter((r) => {
-      const title = (r.title || "").toLowerCase();
-      const org = (normOrganizer(r.organizer) || "").toLowerCase();
-      const desc = (r.description || "").toLowerCase();
-      const submitted = (r.submitted_by || "").toLowerCase();
-      const userId = (r.user_id || "").toLowerCase();
-
-      return (
-        title.includes(qq) ||
-        org.includes(qq) ||
-        desc.includes(qq) ||
-        submitted.includes(qq) ||
-        userId.includes(qq)
-      );
-    });
-  }, [rows, q]);
+  const filtered = useMemo(() => rows, [rows]);
 
   async function patch(id: string, patchData: Partial<TrainingRow>) {
     const { data, error } = await sb
@@ -233,13 +218,9 @@ export default function AdminTrainingsPage() {
     setTimeout(() => {
       const el =
         focus === "url"
-          ? (document.getElementById(
-              "admin-training-url"
-            ) as HTMLInputElement | null)
+          ? (document.getElementById("admin-training-url") as HTMLInputElement | null)
           : focus === "description"
-          ? (document.getElementById(
-              "admin-training-description"
-            ) as HTMLTextAreaElement | null)
+          ? (document.getElementById("admin-training-description") as HTMLTextAreaElement | null)
           : null;
 
       el?.focus();
@@ -266,16 +247,10 @@ export default function AdminTrainingsPage() {
         points: edit.points,
         start_date: edit.start_date || null,
         end_date: edit.end_date || null,
-
         url,
         external_url: url,
-
-        description: (edit.description || "").trim()
-          ? (edit.description || "").trim()
-          : null,
-
+        description: (edit.description || "").trim() ? (edit.description || "").trim() : null,
         approval_status: getStatus(edit),
-
         reject_reason: (edit.reject_reason || "").trim()
           ? (edit.reject_reason || "").trim()
           : null,
@@ -308,10 +283,7 @@ export default function AdminTrainingsPage() {
   }
 
   async function reject(row: TrainingRow) {
-    const reason = window.prompt(
-      "Powód odrzucenia (opcjonalnie):",
-      row.reject_reason || ""
-    );
+    const reason = window.prompt("Powód odrzucenia:", row.reject_reason || "");
 
     if (reason === null) return;
 
@@ -344,6 +316,15 @@ export default function AdminTrainingsPage() {
     }
   }
 
+  function clearFilters() {
+    setQ("");
+    setAddedByQ("");
+    setDateFrom("");
+    setDateTo("");
+    setStatus("all");
+    setTimeout(load, 50);
+  }
+
   if (isAdmin === null) {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-10 text-sm text-slate-500">
@@ -354,34 +335,30 @@ export default function AdminTrainingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8">
-      <div className="mb-6 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <div className="text-sm text-slate-500">
-            <Link href="/profil" className="hover:underline">
-              Profil
-            </Link>
-            <span className="px-2">/</span>
-            <span className="text-slate-700">Admin</span>
-          </div>
-
-          <h1 className="mt-1 text-2xl font-semibold text-slate-900">
-            Akceptacja i edycja szkoleń
-          </h1>
-
-          <p className="mt-1 text-sm text-slate-600">
-            Wszystkie szkolenia, status akceptacji, informacja kto i kiedy dodał
-            rekord.
-          </p>
+      <div className="mb-6">
+        <div className="text-sm text-slate-500">
+          <Link href="/profil" className="hover:underline">
+            Profil
+          </Link>
+          <span className="px-2">/</span>
+          <span className="text-slate-700">Admin</span>
         </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-2">
-            <label className="text-xs font-semibold text-slate-600">
-              Status
-            </label>
+        <h1 className="mt-1 text-2xl font-semibold text-slate-900">
+          Akceptacja i edycja szkoleń
+        </h1>
 
+        <p className="mt-1 text-sm text-slate-600">
+          Zarządzaj szkoleniami, sprawdzaj kto je dodał i filtruj po statusie, osobie oraz dacie.
+        </p>
+      </div>
+
+      <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
+          <div className="lg:col-span-2">
+            <label className="text-xs font-semibold text-slate-600">Status</label>
             <select
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
               value={status}
               onChange={(e) => setStatus(e.target.value as any)}
             >
@@ -392,27 +369,70 @@ export default function AdminTrainingsPage() {
             </select>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label className="text-xs font-semibold text-slate-600">
-              Szukaj
-            </label>
-
+          <div className="lg:col-span-3">
+            <label className="text-xs font-semibold text-slate-600">Szukaj</label>
             <input
-              className="h-10 w-full min-w-[260px] rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Tytuł, organizator, opis, user id..."
+              className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Tytuł, organizator, opis..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") load();
               }}
             />
+          </div>
 
+          <div className="lg:col-span-3">
+            <label className="text-xs font-semibold text-slate-600">
+              Dodane przez
+            </label>
+            <input
+              className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Adres e-mail..."
+              value={addedByQ}
+              onChange={(e) => setAddedByQ(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") load();
+              }}
+            />
+          </div>
+
+          <div className="lg:col-span-2">
+            <label className="text-xs font-semibold text-slate-600">Od daty dodania</label>
+            <input
+              type="date"
+              className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+            />
+          </div>
+
+          <div className="lg:col-span-2">
+            <label className="text-xs font-semibold text-slate-600">Do daty dodania</label>
+            <input
+              type="date"
+              className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
+          </div>
+
+          <div className="lg:col-span-12 flex flex-col gap-2 sm:flex-row sm:justify-end">
             <button
-              className="h-10 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-              onClick={load}
+              className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              onClick={clearFilters}
               type="button"
             >
-              Szukaj
+              Wyczyść
+            </button>
+
+            <button
+              className="h-10 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
+              onClick={load}
+              disabled={loading}
+              type="button"
+            >
+              {loading ? "Szukam…" : "Filtruj"}
             </button>
           </div>
         </div>
@@ -446,10 +466,10 @@ export default function AdminTrainingsPage() {
               <tr>
                 <th className="px-4 py-3">Szkolenie</th>
                 <th className="px-4 py-3">Organizator</th>
-                <th className="px-4 py-3">Daty</th>
+                <th className="px-4 py-3">Daty szkolenia</th>
                 <th className="px-4 py-3">Pkt</th>
                 <th className="px-4 py-3">Dodane przez</th>
-                <th className="px-4 py-3">Dodano</th>
+                <th className="px-4 py-3">Data dodania</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Akcje</th>
               </tr>
@@ -472,15 +492,11 @@ export default function AdminTrainingsPage() {
                 filtered.map((r) => {
                   const org = normOrganizer(r.organizer);
                   const currentStatus = getStatus(r);
-                  const addedBy = r.submitted_by || r.user_id || null;
                   const link = normalizeUrl(r.url ?? r.external_url ?? null);
 
                   return (
-                    <tr
-                      key={r.id}
-                      className="border-t border-slate-100 align-top"
-                    >
-                      <td className="px-4 py-3">
+                    <tr key={r.id} className="border-t border-slate-100 align-top">
+                      <td className="px-4 py-4">
                         <div className="max-w-[390px] font-semibold text-slate-900">
                           {r.title}
                         </div>
@@ -527,38 +543,36 @@ export default function AdminTrainingsPage() {
                         ) : null}
                       </td>
 
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         {org || <span className="text-slate-400">—</span>}
                       </td>
 
-                      <td className="px-4 py-3 text-xs text-slate-700">
-                        <div className="whitespace-nowrap">
-                          {fmtDate(r.start_date)}
-                        </div>
-                        <div className="whitespace-nowrap text-slate-500">
-                          {fmtDate(r.end_date)}
-                        </div>
+                      <td className="px-4 py-4 text-xs text-slate-700">
+                        <div className="whitespace-nowrap">{fmtDate(r.start_date)}</div>
+                        <div className="whitespace-nowrap text-slate-500">{fmtDate(r.end_date)}</div>
                       </td>
 
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         {r.points ?? <span className="text-slate-400">—</span>}
                       </td>
 
-                      <td className="px-4 py-3 text-xs">
-                        <div className="font-semibold text-slate-700">
-                          {shortId(addedBy)}
-                        </div>
-                        {r.submitted_by && r.user_id && r.submitted_by !== r.user_id ? (
-                          <div className="mt-1 text-slate-400">
-                            user_id: {shortId(r.user_id)}
+                      <td className="px-4 py-4 text-xs">
+                        {r.submitted_email ? (
+                          <div className="font-semibold text-slate-800">
+                            {r.submitted_email}
                           </div>
-                        ) : null}
+                        ) : (
+                          <>
+                            <div className="font-semibold text-slate-500">brak e-maila</div>
+                            <div className="mt-1 text-slate-400">
+                              ID: {shortId(r.submitted_by || r.user_id)}
+                            </div>
+                          </>
+                        )}
                       </td>
 
-                      <td className="px-4 py-3 text-xs text-slate-600">
-                        <div className="whitespace-nowrap">
-                          {fmtDateTime(r.created_at)}
-                        </div>
+                      <td className="px-4 py-4 text-xs text-slate-600">
+                        <div className="whitespace-nowrap">{fmtDateTime(r.created_at)}</div>
                         {r.updated_at ? (
                           <div className="mt-1 whitespace-nowrap text-slate-400">
                             akt.: {fmtDateTime(r.updated_at)}
@@ -566,7 +580,7 @@ export default function AdminTrainingsPage() {
                         ) : null}
                       </td>
 
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <span
                           className={cls(
                             "inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold",
@@ -577,7 +591,7 @@ export default function AdminTrainingsPage() {
                         </span>
                       </td>
 
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <div className="flex flex-wrap justify-end gap-2">
                           <button
                             className="h-9 rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
@@ -611,7 +625,6 @@ export default function AdminTrainingsPage() {
                             <button
                               className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
                               onClick={() => backToPending(r)}
-                              title="Przywróć do weryfikacji"
                               type="button"
                             >
                               Do weryfikacji
@@ -638,7 +651,7 @@ export default function AdminTrainingsPage() {
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
                   Dodane: {fmtDateTime(edit.created_at)} · Dodał:{" "}
-                  {shortId(edit.submitted_by || edit.user_id)}
+                  {edit.submitted_email || shortId(edit.submitted_by || edit.user_id)}
                 </div>
               </div>
 
@@ -653,38 +666,25 @@ export default function AdminTrainingsPage() {
 
             <div className="grid gap-4 px-5 py-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="text-xs font-semibold text-slate-600">
-                  Tytuł
-                </label>
+                <label className="text-xs font-semibold text-slate-600">Tytuł</label>
                 <input
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.title}
-                  onChange={(e) =>
-                    setEdit({ ...edit, title: e.target.value })
-                  }
+                  onChange={(e) => setEdit({ ...edit, title: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600">
-                  Organizator
-                </label>
+                <label className="text-xs font-semibold text-slate-600">Organizator</label>
                 <input
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.organizer || ""}
-                  onChange={(e) =>
-                    setEdit({
-                      ...edit,
-                      organizer: e.target.value || null,
-                    })
-                  }
+                  onChange={(e) => setEdit({ ...edit, organizer: e.target.value || null })}
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600">
-                  Punkty
-                </label>
+                <label className="text-xs font-semibold text-slate-600">Punkty</label>
                 <input
                   type="number"
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
@@ -692,76 +692,50 @@ export default function AdminTrainingsPage() {
                   onChange={(e) =>
                     setEdit({
                       ...edit,
-                      points:
-                        e.target.value === "" ? null : Number(e.target.value),
+                      points: e.target.value === "" ? null : Number(e.target.value),
                     })
                   }
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600">
-                  Start
-                </label>
+                <label className="text-xs font-semibold text-slate-600">Start</label>
                 <input
                   type="date"
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.start_date || ""}
-                  onChange={(e) =>
-                    setEdit({
-                      ...edit,
-                      start_date: e.target.value || null,
-                    })
-                  }
+                  onChange={(e) => setEdit({ ...edit, start_date: e.target.value || null })}
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600">
-                  Koniec
-                </label>
+                <label className="text-xs font-semibold text-slate-600">Koniec</label>
                 <input
                   type="date"
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.end_date || ""}
-                  onChange={(e) =>
-                    setEdit({
-                      ...edit,
-                      end_date: e.target.value || null,
-                    })
-                  }
+                  onChange={(e) => setEdit({ ...edit, end_date: e.target.value || null })}
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="text-xs font-semibold text-slate-600">
-                  Link
-                </label>
+                <label className="text-xs font-semibold text-slate-600">Link</label>
                 <input
                   id="admin-training-url"
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.url || ""}
-                  onChange={(e) =>
-                    setEdit({ ...edit, url: e.target.value || null })
-                  }
+                  onChange={(e) => setEdit({ ...edit, url: e.target.value || null })}
                   placeholder="https://..."
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="text-xs font-semibold text-slate-600">
-                  Opis
-                </label>
+                <label className="text-xs font-semibold text-slate-600">Opis</label>
                 <textarea
                   id="admin-training-description"
                   className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.description || ""}
-                  onChange={(e) =>
-                    setEdit({
-                      ...edit,
-                      description: e.target.value || null,
-                    })
-                  }
+                  onChange={(e) => setEdit({ ...edit, description: e.target.value || null })}
                   placeholder="Krótki opis szkolenia..."
                 />
               </div>
@@ -793,12 +767,7 @@ export default function AdminTrainingsPage() {
                 <input
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.reject_reason || ""}
-                  onChange={(e) =>
-                    setEdit({
-                      ...edit,
-                      reject_reason: e.target.value || null,
-                    })
-                  }
+                  onChange={(e) => setEdit({ ...edit, reject_reason: e.target.value || null })}
                   placeholder="Opcjonalnie…"
                 />
               </div>
