@@ -1,4 +1,4 @@
-// app/page.tsx — kompletna, domknięta wersja landing page CRPE 17.2
+// app/page.tsx — kompletna, domknięta wersja landing page CRPE
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -26,6 +26,7 @@ import {
   Sparkles,
   Star,
   Stethoscope,
+  Smartphone,
   UploadCloud,
   UserCog,
   UserRoundCheck,
@@ -180,181 +181,6 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
   );
 }
 
-function ScenarioStrip() {
-  const [phase, setPhase] = useState<0 | 1 | 2>(0);
-
-  useEffect(() => {
-    const t = setInterval(() => setPhase((p) => ((p + 1) % 3) as 0 | 1 | 2), 2200);
-    return () => clearInterval(t);
-  }, []);
-
-  const isUpload = phase === 0;
-  const isProcess = phase === 1;
-  const isDone = phase === 2;
-
-  const copy = [
-    {
-      badge: "Dodajesz dokument",
-      dot: "bg-amber-500",
-      title: "Wrzuć certyfikat. Reszta ma być oczywista.",
-      text: "CRPE prowadzi użytkownika od dokumentu do gotowego statusu, spokojnie i bez zbędnego klikania.",
-    },
-    {
-      badge: "Przetwarzanie",
-      dot: "bg-blue-500",
-      title: "CRPE łączy dane w jeden wpis.",
-      text: "Dokument trafia do aktywności, a panel uzupełnia punkty, plik i status bez ręcznego porównywania.",
-    },
-    {
-      badge: "Gotowe w CRPE",
-      dot: "bg-emerald-500",
-      title: "Z chaosu robi się czytelny wpis.",
-      text: "Aktywność, punkty, certyfikat i status trafiają do jednego widoku — gotowego do dalszej pracy.",
-    },
-  ];
-
-  return (
-    <div className="relative overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-100/80 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-28 right-[-80px] h-72 w-72 rounded-full bg-emerald-100/70 blur-3xl" />
-
-      <div className="relative grid items-center gap-0 lg:grid-cols-[0.78fr_1.22fr]">
-        <div className="border-b border-slate-100 px-7 py-6 lg:border-b-0 lg:border-r lg:px-8 lg:py-7">
-          <div className="relative min-h-[170px]">
-            {copy.map((item, i) => (
-              <div
-                key={item.badge}
-                className={`absolute inset-0 transition-all duration-700 ease-out ${
-                  phase === i ? "translate-y-0 opacity-100 blur-0" : "translate-y-2 opacity-0 blur-[1px]"
-                }`}
-              >
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
-                  <span className={`h-2 w-2 rounded-full ${item.dot}`} />
-                  <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">{item.badge}</span>
-                </div>
-
-                <h2 className="max-w-md text-2xl font-black leading-tight tracking-tight text-slate-950 lg:text-3xl">
-                  {item.title}
-                </h2>
-
-                <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-600">
-                  {item.text}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-1 flex max-w-md items-center gap-2">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className={`h-full rounded-full transition-all duration-700 ${
-                    phase > i ? "w-full bg-blue-600" : phase === i ? "w-2/3 bg-blue-500" : "w-0 bg-blue-500"
-                  }`}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="relative min-h-[245px] bg-slate-50/80 px-6 py-5 lg:px-8 lg:py-6">
-          <div className="relative mx-auto h-[205px] max-w-3xl">
-            <div className="absolute left-[22%] right-[18%] top-1/2 hidden h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-blue-300 to-transparent lg:block" />
-
-            <div
-              className={`absolute left-[47%] top-1/2 z-20 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/25 transition-all duration-700 ease-out lg:flex ${
-                isProcess ? "scale-110 opacity-100 rotate-6" : isDone ? "scale-95 opacity-0 rotate-0" : "scale-95 opacity-80 rotate-0"
-              }`}
-            >
-              <Sparkles className={`h-5 w-5 ${isProcess ? "animate-pulse" : ""}`} strokeWidth={2.2} />
-            </div>
-
-            <div
-              className={`absolute left-0 top-1/2 z-10 w-[42%] -translate-y-1/2 transition-all duration-900 ease-out ${
-                isUpload
-                  ? "translate-x-0 opacity-100 scale-100"
-                  : isProcess
-                    ? "translate-x-[44%] opacity-95 scale-[0.96]"
-                    : "translate-x-[92%] opacity-0 scale-[0.9]"
-              }`}
-            >
-              <div className="rounded-[1.25rem] bg-white p-4 shadow-xl shadow-slate-900/10 ring-1 ring-slate-200">
-                <div className="mb-3 flex items-center gap-3">
-                  <IconTile tone="amber" className="h-10 w-10 rounded-xl border-0">
-                    <FileText className="h-5 w-5" strokeWidth={2.2} />
-                  </IconTile>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-black text-slate-950">certyfikat.pdf</p>
-                    <p className="text-[11px] font-medium text-slate-400">dodany po szkoleniu</p>
-                  </div>
-                </div>
-                <div className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 ring-1 ring-amber-100">
-                  jeszcze bez punktów i statusu
-                </div>
-              </div>
-            </div>
-
-            <div
-              className={`absolute left-[41.5%] top-1/2 z-30 hidden -translate-y-1/2 transition-all duration-500 lg:block ${
-                isProcess ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
-              }`}
-            >
-              <div className="flex items-center gap-1">
-                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:-0.2s]" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:-0.1s]" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" />
-              </div>
-            </div>
-
-            <div
-              className={`absolute right-0 top-1/2 z-10 w-[58%] -translate-y-1/2 transition-all duration-700 ease-out ${
-                isDone ? "translate-x-0 opacity-100 scale-100" : isProcess ? "translate-x-2 opacity-75 scale-[0.98]" : "translate-x-5 opacity-55 scale-[0.97]"
-              }`}
-            >
-              <div className="rounded-[1.35rem] bg-white p-4 shadow-xl shadow-slate-900/10 ring-1 ring-blue-200">
-                <div className="mb-3 flex items-start justify-between gap-3">
-                  <div>
-                    <p className={`text-base font-black leading-tight text-slate-950 transition-opacity duration-500 ${isDone ? "opacity-100" : "opacity-50"}`}>Konferencja kardiologiczna</p>
-                    <p className={`mt-1 text-[11px] font-medium text-slate-500 transition-opacity duration-500 ${isDone ? "opacity-100" : "opacity-50"}`}>2026 · certyfikat.pdf</p>
-                  </div>
-                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-black text-white transition-all duration-500 ${isDone ? "bg-blue-600 opacity-100" : "bg-slate-300 opacity-50"}`}>+20 pkt</span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { value: isDone ? "20" : "—", label: "punkty", ready: isDone },
-                    { value: isDone ? "PDF" : "—", label: "plik", ready: isDone },
-                    { value: isDone ? "OK" : "…", label: "status", ready: isDone },
-                  ].map((x, i) => (
-                    <div
-                      key={x.label}
-                      className={`rounded-xl px-2 py-2 text-center transition-all duration-500 ${x.ready ? "translate-y-0 bg-emerald-50 opacity-100" : "translate-y-1 bg-slate-50 opacity-55"}`}
-                      style={{ transitionDelay: isDone ? `${i * 90}ms` : "0ms" }}
-                    >
-                      <p className={`text-base font-black transition-colors duration-500 ${x.value === "OK" ? "text-emerald-600" : "text-slate-950"}`}>{x.value}</p>
-                      <p className="text-[10px] font-medium text-slate-400">{x.label}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-3">
-                  <div className="mb-1 flex justify-between text-[10px] font-bold text-slate-500">
-                    <span>Postęp CPD</span>
-                    <span className="transition-opacity duration-500">{isDone ? "71%" : "55%"}</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full rounded-full bg-blue-600 transition-all duration-700 ease-out" style={{ width: isDone ? "71%" : "55%" }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function CrpeFeatures() {
   const flow = [
     { icon: BookOpen, title: "Szkolenie", text: "bierzesz udział", tone: "blue" as const },
@@ -384,7 +210,7 @@ function CrpeFeatures() {
               ))}
             </div>
             <Link href="/login" className="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-lg shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-blue-50">
-              Załóż darmowe konto <ArrowRight className="h-4 w-4" />
+              Wypróbuj za darmo <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -456,8 +282,8 @@ function ReminderSection() {
         <div className="grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="border-b border-blue-100 p-6 lg:border-b-0 lg:border-r lg:p-8">
             <Eyebrow>Przypomnienia</Eyebrow>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-950">System pilnuje braków za Ciebie</h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">CRPE może przypominać o brakujących dokumentach, terminach i aktywnościach wymagających uzupełnienia. Dzięki temu łatwiej przygotować raport bez nerwowego sprawdzania wszystkiego na końcu okresu.</p>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950">Nie przegap brakujących dokumentów</h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">CRPE może pomagać nie tylko w przechowywaniu certyfikatów, ale też w pilnowaniu braków i terminów. Dzięki temu łatwiej przygotować się do raportu bez nerwowego sprawdzania wszystkiego na końcu okresu.</p>
           </div>
           <div className="grid gap-3 p-5 sm:grid-cols-3 lg:p-8">
             {items.map((item, i) => (
@@ -600,13 +426,13 @@ function HowItWorks() {
         <div className="flex items-end justify-between gap-6">
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Trzy kroki do jasnego statusu CPD</h2>
+              <h2 className="text-xl font-bold text-slate-900 lg:text-2xl">Zobacz, jak CRPE prowadzi Cię krok po kroku</h2>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-sm shadow-blue-600/20">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
                 2 minuty do pierwszego wpisu
               </span>
             </div>
-            <p className="mt-1 text-sm text-slate-500">Wybierasz zawód, dodajesz aktywności i widzisz, ile punktów masz oraz czego jeszcze brakuje.</p>
+            <p className="mt-1 text-sm text-slate-500">Od wyboru zawodu, przez dodanie certyfikatu, aż po jasny status punktów — bez Excela i zgadywania.</p>
           </div>
           <div className="hidden rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 sm:block">Interaktywny podgląd</div>
         </div>
@@ -767,10 +593,9 @@ export default function Page() {
               <div className="pointer-events-none absolute left-0 top-8 h-24 w-1.5 rounded-r-full bg-blue-600" />
               <div className="pointer-events-none absolute right-[-120px] top-[-120px] h-[320px] w-[320px] rounded-full bg-blue-100/80 blur-3xl" />
               <div className="relative z-10 flex flex-col justify-center">
-                <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1.5 text-xs font-medium text-blue-700"><Sparkles className="h-3.5 w-3.5 text-blue-600" strokeWidth={1.75} />Spokojny koniec okresu rozliczeniowego zaczyna się dużo wcześniej</div>
-                <h1 className="max-w-3xl text-[42px] font-bold leading-[1.04] tracking-tight text-slate-950 sm:text-[56px] lg:text-[62px]">Masz wszystko pod kontrolą — <span className="text-blue-600">punkty, certyfikaty i terminy.</span></h1>
-                <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">Zbieraj punkty, przechowuj certyfikaty i miej pewność, że nie zabraknie Ci nic na koniec okresu.</p>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500">Pod koniec okresu nie musisz szukać dokumentów po mailach ani liczyć punktów na szybko. CRPE pokazuje wcześniej, co masz i czego jeszcze brakuje.</p>
+                <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1.5 text-xs font-medium text-blue-700"><Sparkles className="h-3.5 w-3.5 text-blue-600" strokeWidth={1.75} />Wkrótce: Asystent AI do zarządzania rozwojem zawodowym</div>
+                <h1 className="max-w-3xl text-[42px] font-bold leading-[1.04] tracking-tight text-slate-950 sm:text-[56px] lg:text-[62px]">Punkty CPD pod kontrolą. <span className="text-blue-600">Bez stresu.</span></h1>
+                <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w aktualnym okresie rozliczeniowym. Prosto. Spokojnie. Bez Excela.</p>
                 <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {[
                     { icon: FolderOpen, t: "Porządek bez wysiłku", d: "Wpisy i certyfikaty zawsze pod ręką.", tone: "blue" as const },
@@ -779,8 +604,8 @@ export default function Page() {
                     { icon: Sparkles, t: "Start za darmo", d: "Podstawowe funkcje bezpłatnie. Bez karty.", tone: "indigo" as const },
                   ].map((b) => { const Icon = b.icon; return <div key={b.t} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm shadow-slate-900/5"><IconTile tone={b.tone} className="mt-0.5 h-10 w-10"><Icon className="h-5 w-5" strokeWidth={2} /></IconTile><div><div className="text-sm font-semibold text-slate-900">{b.t}</div><p className="mt-0.5 text-xs leading-relaxed text-slate-500">{b.d}</p></div></div>; })}
                 </div>
-                <div className="mt-8 flex flex-wrap gap-3"><Link href="/login" className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95">Załóż konto i zobacz swój status <ArrowRight className="h-4 w-4" /></Link><button type="button" onClick={() => scrollToId("jak-to-dziala")} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">Sprawdź jak działa</button></div>
-                <p className="mt-3 text-xs text-slate-500">Bezpłatny start • bez karty płatniczej • pierwszy wpis w około 30 sekund</p>
+                <div className="mt-8 flex flex-wrap gap-3"><Link href="/login" className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95">Załóż darmowe konto <ArrowRight className="h-4 w-4" /></Link><button type="button" onClick={() => scrollToId("jak-to-dziala")} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">Jak to działa</button></div>
+                <p className="mt-3 text-xs text-slate-500">Bez instalacji • 30 sekund do pierwszego wpisu • działa na telefonie</p>
               </div>
               <div className="relative z-10 min-h-[380px] overflow-hidden rounded-[1.6rem] border border-slate-200 bg-slate-900 shadow-xl shadow-slate-950/10 lg:min-h-[500px]"><Image src={IMG.hero} alt="Pracowniczka medyczna z tabletem" fill priority className="object-cover object-[50%_22%]" sizes="(max-width: 1024px) 100vw, 390px" /><div className="absolute inset-0 bg-gradient-to-t from-slate-950/78 via-transparent to-transparent" /><div className="absolute bottom-0 left-0 right-0 p-5 text-white"><p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100/90">CRPE w praktyce</p><h3 className="mt-1.5 text-xl font-bold leading-tight">Panel zawsze pod ręką</h3><p className="mt-1.5 text-sm leading-relaxed text-white/75">Dodajesz wpisy i dokumenty na bieżąco.</p></div></div>
             </div>
@@ -793,8 +618,6 @@ export default function Page() {
       <section className="bg-slate-50 py-7 lg:py-9">
         <div className={`${pageWrap} space-y-10 lg:space-y-14`}>
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]"><PhotoCard src={IMG.team} alt="Zespół medyczny przy stole" title="CRPE pomaga każdemu specjaliście pilnować własnych punktów, terminów i certyfikatów." text="" className="min-h-[390px] lg:min-h-[455px]" imageClassName="object-cover object-[50%_16%]" /><div className="flex min-h-[390px] items-stretch rounded-[1.45rem] bg-gradient-to-br from-white to-slate-50 p-4 lg:min-h-[455px]"><ProductPreview /></div></div>
-
-          <ScenarioStrip />
 
           <div id="dla-kogo" className="grid scroll-mt-32 gap-6 lg:grid-cols-2">
             <div className={cardCls}>
@@ -860,9 +683,9 @@ export default function Page() {
             </div>
             <div className={cardCls}>
               <div className="p-6 lg:p-8">
-                <Eyebrow>Przykład użycia</Eyebrow>
+                <Eyebrow>Co mówią użytkownicy</Eyebrow>
                 <Quote className="mb-3 h-6 w-6 text-blue-200" strokeWidth={1.5} />
-                <p className="text-base leading-relaxed text-slate-700">&quot;Typowy scenariusz: po szkoleniu dodajesz aktywność i certyfikat od razu, a później widzisz, ile punktów masz i czego jeszcze brakuje.&quot;</p>
+                <p className="text-base leading-relaxed text-slate-700">&quot;Wcześniej trzymałam wszystko w Excelu i modliłam się, żeby nie zgubić certyfikatów. Teraz dodaję wpis od razu po szkoleniu — z telefonu.&quot;</p>
                 <div className="mt-5 flex flex-wrap items-center gap-2">
                   <div className="flex gap-0.5">{[1, 2, 3, 4, 5].map((s) => <Star key={s} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />)}</div>
                   <span className="text-sm font-semibold text-slate-900">Anna K.</span>
