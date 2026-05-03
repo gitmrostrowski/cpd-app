@@ -181,111 +181,165 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
 }
 
 function ScenarioStrip() {
-  const [active, setActive] = useState(0);
+  const [state, setState] = useState<0 | 1>(0);
 
   useEffect(() => {
-    const t = setInterval(() => setActive((s) => (s + 1) % 3), 2500);
+    const t = setInterval(() => setState((s) => (s === 0 ? 1 : 0)), 3200);
     return () => clearInterval(t);
   }, []);
 
-  const items = [
-    {
-      icon: FileText,
-      title: "Braki widać wcześniej",
-      text: "certyfikaty, daty i punkty",
-    },
-    {
-      icon: FolderOpen,
-      title: "Dokumenty są podpięte",
-      text: "każdy plik przy aktywności",
-    },
-    {
-      icon: BarChart3,
-      title: "Status jest jasny",
-      text: "wiesz, co jeszcze uzupełnić",
-    },
-  ];
-
   return (
-    <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm">
-      <div className="grid lg:grid-cols-[1fr_1.2fr]">
-        {/* LEFT */}
-        <div className="relative p-8">
-          <div className="absolute left-0 top-8 h-20 w-1.5 rounded-r-full bg-blue-600" />
+    <div className="relative overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
+      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-100/70 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-28 right-[-90px] h-72 w-72 rounded-full bg-emerald-100/70 blur-3xl" />
 
-          <div className="mb-4 flex items-center gap-3">
+      <div className="relative grid gap-0 lg:grid-cols-[0.82fr_1.18fr]">
+        <div className="border-b border-slate-100 p-7 lg:border-b-0 lg:border-r lg:p-8">
+          <div className="mb-5 flex items-center gap-3">
             <div className="relative">
-              <span className="absolute inset-0 animate-ping rounded-xl bg-blue-400/20" />
-              <IconTile tone="blue" className="relative h-12 w-12">
-                <Bell className="h-5 w-5" />
+              <span className={`absolute inset-0 rounded-2xl ${state === 0 ? "animate-ping bg-amber-300/25" : "animate-ping bg-emerald-300/25"}`} />
+              <IconTile tone={state === 0 ? "amber" : "emerald"} className="relative h-13 w-13 rounded-2xl">
+                {state === 0 ? <Bell className="h-6 w-6" strokeWidth={2.2} /> : <CheckCircle2 className="h-6 w-6" strokeWidth={2.2} />}
               </IconTile>
             </div>
-            <Eyebrow>Typowy problem</Eyebrow>
+            <div>
+              <Eyebrow>{state === 0 ? "Typowy problem" : "Efekt w CRPE"}</Eyebrow>
+              <div className="inline-flex rounded-full bg-slate-100 p-1 text-[11px] font-bold text-slate-500">
+                <span className={`rounded-full px-2.5 py-1 transition ${state === 0 ? "bg-amber-100 text-amber-700" : ""}`}>chaos</span>
+                <span className={`rounded-full px-2.5 py-1 transition ${state === 1 ? "bg-emerald-100 text-emerald-700" : ""}`}>porządek</span>
+              </div>
+            </div>
           </div>
 
-          <h2 className="text-2xl font-bold text-slate-950">
-            Koniec z chaosem na koniec okresu.
+          <h2 className="max-w-md text-2xl font-bold leading-tight tracking-tight text-slate-950 lg:text-3xl">
+            {state === 0 ? "Certyfikaty są wszędzie. Statusu nadal brak." : "Wszystko trafia do jednego widoku."}
           </h2>
-
-          <p className="mt-3 text-sm text-slate-600 max-w-md">
-            Zamiast szukać dokumentów na ostatnią chwilę, widzisz wcześniej
-            co masz i czego jeszcze brakuje.
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-600">
+            {state === 0
+              ? "Maile, zdjęcia, PDF-y i notatki rozrzucone po różnych miejscach. Na końcu okresu zostaje nerwowe sprawdzanie, co naprawdę się liczy."
+              : "Aktywność, certyfikat, punkty i braki są połączone. Od razu widzisz, co masz i co jeszcze trzeba uzupełnić."}
           </p>
 
-          {/* moving bar */}
-          <div className="mt-6 relative h-2 rounded-full bg-slate-100 overflow-hidden">
-            <div
-              className="absolute inset-y-0 bg-blue-600 transition-all duration-700"
-              style={{ width: `${(active + 1) * 33}%` }}
-            />
-          </div>
-
-          <div className="mt-3 flex justify-between text-xs font-medium text-slate-400">
-            <span>chaos</span>
-            <span>porządek</span>
+          <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div className="mb-2 flex justify-between text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              <span>chaos</span>
+              <span>porządek</span>
+            </div>
+            <div className="relative h-3 overflow-hidden rounded-full bg-slate-100">
+              <div className={`h-full rounded-full transition-all duration-700 ${state === 0 ? "w-[32%] bg-amber-400" : "w-full bg-emerald-500"}`} />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+            </div>
           </div>
         </div>
 
-        {/* RIGHT */}
-        <div className="relative bg-slate-50 p-6">
-          <div className="grid grid-cols-3 gap-4">
-            {items.map((item, i) => {
-              const Icon = item.icon;
-              const isActive = active === i;
+        <div className="relative min-h-[330px] bg-slate-50/80 p-5 lg:p-7">
+          <div className={`absolute inset-5 transition-all duration-700 lg:inset-7 ${state === 0 ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-3 scale-[0.98]"}`}>
+            <div className="grid h-full gap-4 md:grid-cols-[1fr_0.82fr]">
+              <div className="rounded-[1.35rem] border border-amber-200 bg-white p-4 shadow-sm shadow-amber-950/5">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-slate-950">Rozrzucone dokumenty</p>
+                    <p className="text-xs text-slate-500">nie wiadomo, co jest aktualne</p>
+                  </div>
+                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-amber-100">brak statusu</span>
+                </div>
 
-              return (
-                <div
-                  key={item.title}
-                  className={`relative rounded-2xl border p-4 transition-all duration-500 ${
-                    isActive
-                      ? "bg-white border-blue-200 shadow-lg scale-105"
-                      : "bg-white/70 border-slate-200 opacity-70"
-                  }`}
-                >
-                  <div className="mb-3">
-                    <IconTile
-                      tone={
-                        i === 0 ? "amber" : i === 1 ? "blue" : "emerald"
-                      }
-                      className={`h-11 w-11 ${isActive ? "animate-pulse" : ""}`}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </IconTile>
+                <div className="space-y-2.5">
+                  {[
+                    { file: "certyfikat_final.pdf", note: "bez punktów", tone: "amber" },
+                    { file: "IMG_2847.jpg", note: "nieprzypisany", tone: "slate" },
+                    { file: "mail_od_organizatora.msg", note: "do sprawdzenia", tone: "amber" },
+                    { file: "scan_2024_kopia.pdf", note: "duplikat?", tone: "rose" },
+                  ].map((row, i) => (
+                    <div key={row.file} className={`flex items-center gap-3 rounded-xl border bg-white px-3 py-2.5 shadow-sm transition ${i === 1 ? "translate-x-3" : i === 2 ? "-translate-x-2" : ""}`}>
+                      <IconTile tone={row.tone as "amber" | "slate" | "rose"} className="h-8 w-8 rounded-lg">
+                        <FileText className="h-4 w-4" strokeWidth={2.2} />
+                      </IconTile>
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700">{row.file}</span>
+                      <span className="shrink-0 rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200">{row.note}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-between rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm">
+                <div>
+                  <p className="text-sm font-bold text-slate-950">Na koniec okresu</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">trzeba ręcznie ustalić, które dokumenty pasują do aktywności i ile punktów można policzyć.</p>
+                </div>
+                <div className="mt-5 space-y-2">
+                  {[
+                    "brak certyfikatu przy wpisie",
+                    "niejasna liczba punktów",
+                    "raport do sprawdzenia ręcznie",
+                  ].map((x) => (
+                    <div key={x} className="flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 ring-1 ring-amber-100">
+                      <Bell className="h-3.5 w-3.5" />
+                      {x}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={`absolute inset-5 transition-all duration-700 lg:inset-7 ${state === 1 ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-3 scale-[0.98]"}`}>
+            <div className="grid h-full gap-4 md:grid-cols-[1fr_0.82fr]">
+              <div className="rounded-[1.35rem] border border-blue-200 bg-white p-4 shadow-sm shadow-blue-950/5">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-slate-950">Aktywność w CRPE</p>
+                    <p className="text-xs text-slate-500">wszystko połączone w jednym wpisie</p>
+                  </div>
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-100">kompletne</span>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-bold text-slate-950">Konferencja kardiologiczna</p>
+                      <p className="mt-1 text-xs text-slate-500">Organizator · 2026 · certyfikat.pdf</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-blue-600 px-3 py-1 text-sm font-bold text-white">+20 pkt</span>
                   </div>
 
-                  <p className="text-sm font-bold text-slate-900">
-                    {item.title}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {item.text}
-                  </p>
-
-                  {isActive && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-b-2xl" />
-                  )}
+                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                    <div className="rounded-xl bg-white p-3 text-center ring-1 ring-slate-100">
+                      <p className="text-lg font-bold text-slate-950">20</p>
+                      <p className="text-[10px] text-slate-400">punktów</p>
+                    </div>
+                    <div className="rounded-xl bg-white p-3 text-center ring-1 ring-slate-100">
+                      <p className="text-lg font-bold text-slate-950">PDF</p>
+                      <p className="text-[10px] text-slate-400">certyfikat</p>
+                    </div>
+                    <div className="rounded-xl bg-white p-3 text-center ring-1 ring-slate-100">
+                      <p className="text-lg font-bold text-emerald-600">OK</p>
+                      <p className="text-[10px] text-slate-400">status</p>
+                    </div>
+                  </div>
                 </div>
-              );
-            })}
+              </div>
+
+              <div className="flex flex-col justify-between rounded-[1.35rem] border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+                <div>
+                  <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">Panel gotowy</div>
+                  <p className="text-sm font-bold text-slate-950">Status CPD jest jasny</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600">widzisz punkty, braki i dokumenty bez ręcznego porównywania plików.</p>
+                </div>
+                <div className="mt-5">
+                  <div className="mb-1.5 flex justify-between text-xs font-semibold text-slate-600">
+                    <span>Postęp</span>
+                    <span>71%</span>
+                  </div>
+                  <div className="h-3 overflow-hidden rounded-full bg-white">
+                    <div className="h-full w-[71%] rounded-full bg-blue-600" />
+                  </div>
+                  <div className="mt-3 rounded-xl bg-white p-3 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100">
+                    Braki widoczne wcześniej, dokumenty przypisane do aktywności.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
