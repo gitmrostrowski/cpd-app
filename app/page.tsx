@@ -181,30 +181,55 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
 }
 
 function ScenarioStrip() {
+  const items = [
+    { icon: FileText, title: "Braki widać wcześniej", text: "certyfikaty, daty i punkty" },
+    { icon: FolderOpen, title: "Dokumenty są podpięte", text: "każdy plik przy aktywności" },
+    { icon: BarChart3, title: "Status jest jasny", text: "wiesz, co jeszcze uzupełnić" },
+  ];
+
   return (
-    <div className="overflow-hidden rounded-[1.45rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white shadow-sm shadow-slate-900/5">
-      <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="border-b border-blue-100 px-6 py-5 lg:border-b-0 lg:border-r lg:px-8 lg:py-6">
-          <Eyebrow>Typowy problem</Eyebrow>
-          <h2 className="text-xl font-bold tracking-tight text-slate-950 lg:text-2xl">
-            Największy stres zaczyna się wtedy, gdy dokumentów trzeba szukać na końcu okresu.
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            CRPE pomaga prowadzić dokumentację na bieżąco: punkty, certyfikaty, braki i terminy są widoczne wcześniej — zanim trzeba przygotować podsumowanie.
-          </p>
+    <div className="relative overflow-hidden rounded-[1.45rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white shadow-sm shadow-slate-900/5">
+      <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-blue-200/40 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 right-[-70px] h-64 w-64 rounded-full bg-emerald-100/70 blur-3xl" />
+
+      <div className="relative grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="border-b border-blue-100 px-6 py-6 lg:border-b-0 lg:border-r lg:px-8 lg:py-7">
+          <div className="flex items-start gap-4">
+            <div className="relative mt-1">
+              <span className="absolute inset-0 animate-ping rounded-2xl bg-blue-400/20" />
+              <IconTile tone="blue" className="relative h-14 w-14 rounded-2xl">
+                <Bell className="h-7 w-7" strokeWidth={2.1} />
+              </IconTile>
+            </div>
+            <div>
+              <Eyebrow>Typowy problem</Eyebrow>
+              <h2 className="text-xl font-bold tracking-tight text-slate-950 lg:text-2xl">
+                Koniec z szukaniem certyfikatów na ostatnią chwilę.
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                CRPE pokazuje wcześniej, czego brakuje: punktów, dokumentów, dat i aktywności do uzupełnienia — zanim trzeba przygotować podsumowanie.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 flex items-center gap-2 rounded-2xl border border-blue-100 bg-white/70 px-4 py-3 shadow-sm">
+            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 ring-1 ring-amber-100">chaos</span>
+            <div className="h-px flex-1 bg-gradient-to-r from-amber-200 via-blue-300 to-emerald-200" />
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">porządek</span>
+          </div>
         </div>
 
         <div className="grid gap-3 bg-white/55 p-5 sm:grid-cols-3 lg:p-6">
-          {[
-            "Widzisz aktualny status punktów",
-            "Masz certyfikaty przypisane do aktywności",
-            "Łatwiej przygotujesz raport na koniec okresu",
-          ].map((item) => (
-            <div key={item} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-              <IconTile tone="emerald" className="h-9 w-9">
-                <CheckCircle2 className="h-4 w-4" strokeWidth={2.2} />
-              </IconTile>
-              <p className="text-sm font-semibold leading-snug text-slate-800">{item}</p>
+          {items.map(({ icon: Icon, title, text }, i) => (
+            <div key={title} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+              <div className="pointer-events-none absolute right-[-24px] top-[-24px] h-20 w-20 rounded-full bg-blue-50 transition group-hover:bg-blue-100" />
+              <div className="relative">
+                <IconTile tone={i === 0 ? "amber" : i === 1 ? "blue" : "emerald"} className="mb-3 h-11 w-11">
+                  <Icon className="h-5 w-5" strokeWidth={2.2} />
+                </IconTile>
+                <p className="text-sm font-bold leading-snug text-slate-900">{title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">{text}</p>
+              </div>
             </div>
           ))}
         </div>
