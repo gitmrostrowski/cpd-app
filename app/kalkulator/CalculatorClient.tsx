@@ -166,32 +166,32 @@ function suggestPlannedPoints(rule: { mode: "per_period" | "per_year" | "per_ite
 function buildNextSteps(missingPoints: number, missingEvidenceCount: number, limitWarning: string | null) {
   const steps = [];
   if (missingEvidenceCount > 0) {
-    steps.push({ icon: "doc", tone: "red", title: "Uzupełnij dokumenty", description: `Masz ${missingEvidenceCount} brakujących dokumentów.`, ctaHref: "/aktywnosci", primary: true });
+    steps.push({ title: "Uzupełnij dokumenty", description: `Masz ${missingEvidenceCount} brakujących dokumentów.`, ctaHref: "/aktywnosci", primary: true });
   }
   if (missingPoints > 0) {
-    steps.push({ icon: "shield", tone: "blue", title: limitWarning ? "Dobierz inną aktywność" : "Zaplanuj szkolenie", description: limitWarning || "Wybierz szkolenia i zdobądź punkty.", ctaHref: "/aktywnosci?new=1", primary: missingEvidenceCount === 0 });
+    steps.push({ title: limitWarning ? "Dobierz inną aktywność" : "Zaplanuj szkolenie", description: limitWarning || "Wybierz szkolenia i zdobądź punkty.", ctaHref: "/aktywnosci?new=1", primary: missingEvidenceCount === 0 });
   }
-  steps.push({ icon: "chart", tone: "green", title: "Sprawdź raport", description: missingPoints <= 0 ? "Masz komplet punktów. Wygeneruj PDF." : "Zobacz szczegóły swojego postępu.", ctaHref: "/portfolio", primary: false });
+  steps.push({ title: "Sprawdź raport", description: missingPoints <= 0 ? "Masz komplet punktów. Wygeneruj PDF." : "Zobacz szczegóły swojego postępu.", ctaHref: "/portfolio", primary: false });
   return steps.slice(0, 3);
 }
 
 function IconBubble({ children, tone = "blue" }: { children: React.ReactNode; tone?: "blue" | "green" | "amber" | "red" | "slate" }) {
   const tones = {
-    blue: "border-blue-100 bg-blue-50 text-blue-600",
-    green: "border-emerald-100 bg-emerald-50 text-emerald-600",
-    amber: "border-amber-100 bg-amber-50 text-amber-600",
-    red: "border-red-100 bg-red-50 text-red-600",
-    slate: "border-slate-100 bg-slate-50 text-slate-600",
+    blue: "bg-blue-50 text-blue-600 ring-blue-100",
+    green: "bg-emerald-50 text-emerald-600 ring-emerald-100",
+    amber: "bg-amber-50 text-amber-600 ring-amber-100",
+    red: "bg-red-50 text-red-600 ring-red-100",
+    slate: "bg-slate-50 text-slate-600 ring-slate-100",
   };
-  return (
-    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${tones[tone]}`}>
-      {children}
-    </div>
-  );
+  return <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ring-1 ${tones[tone]}`}>{children}</div>;
 }
 
-function MiniIcon({ name }: { name: "calendar" | "shield" | "chart" | "doc" | "user" | "bell" }) {
-  const common = "h-4 w-4";
+function MiniIcon({ name }: { name: "calendar" | "shield" | "chart" | "doc" | "user" | "bell" | "plus" | "upload" | "qr" | "folder" }) {
+  const common = "h-5 w-5";
+  if (name === "plus") return <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>;
+  if (name === "upload") return <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M17 8l-5-5-5 5M12 3v12" /></svg>;
+  if (name === "qr") return <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3z" /><path d="M14 14h2v2h-2zM19 14h2v4h-2zM14 19h4v2h-4z" /></svg>;
+  if (name === "folder") return <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" /></svg>;
   if (name === "calendar") return <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 2v4M16 2v4M3 10h18" /><path d="M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /></svg>;
   if (name === "shield") return <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="m9 12 2 2 4-5" /></svg>;
   if (name === "chart") return <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19V5M4 19h16" /><path d="M8 16v-5M12 16V8M16 16v-8" /></svg>;
@@ -200,39 +200,25 @@ function MiniIcon({ name }: { name: "calendar" | "shield" | "chart" | "doc" | "u
   return <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 6 3 8H3c0-2 3-1 3-8" /><path d="M10 20a2 2 0 0 0 4 0" /></svg>;
 }
 
-function CircularProgress({ value, label = "realizacji", size = "normal", tone = "blue" }: {
-  value: number; label?: string; size?: "normal" | "small"; tone?: "blue" | "slate" | "amber";
-}) {
-  const isSmall = size === "small";
-  const svgSize = isSmall ? 80 : 112;
+function CircularProgress({ value, label = "realizacji", centerText, tone = "blue" }: { value: number; label?: string; centerText?: string; tone?: "blue" | "amber" | "emerald" }) {
+  const svgSize = 128;
   const center = svgSize / 2;
-  const radius = isSmall ? 30 : 40;
-  const stroke = isSmall ? 7 : 9;
+  const radius = 48;
+  const stroke = 11;
   const normalizedRadius = radius - stroke / 2;
   const circumference = normalizedRadius * 2 * Math.PI;
   const offset = circumference - (clamp(value, 0, 100) / 100) * circumference;
-  const strokeTone = tone === "amber" ? "text-amber-500" : tone === "slate" ? "text-slate-500" : "text-blue-500";
+  const strokeTone = tone === "amber" ? "text-amber-500" : tone === "emerald" ? "text-emerald-500" : "text-blue-600";
 
   return (
-    <div className={`relative shrink-0 ${isSmall ? "h-20 w-20" : "h-28 w-28"}`}>
+    <div className="relative h-32 w-32 shrink-0">
       <svg className="-rotate-90" height={svgSize} width={svgSize}>
-        <circle stroke="currentColor" className="text-slate-200" fill="transparent" strokeWidth={stroke} r={normalizedRadius} cx={center} cy={center} />
-        <circle
-          stroke="currentColor"
-          className={`${strokeTone} transition-all duration-700`}
-          fill="transparent"
-          strokeLinecap="round"
-          strokeWidth={stroke}
-          strokeDasharray={`${circumference} ${circumference}`}
-          strokeDashoffset={offset}
-          r={normalizedRadius}
-          cx={center}
-          cy={center}
-        />
+        <circle stroke="currentColor" className="text-slate-100" fill="transparent" strokeWidth={stroke} r={normalizedRadius} cx={center} cy={center} />
+        <circle stroke="currentColor" className={`${strokeTone} transition-all duration-700`} fill="transparent" strokeLinecap="round" strokeWidth={stroke} strokeDasharray={`${circumference} ${circumference}`} strokeDashoffset={offset} r={normalizedRadius} cx={center} cy={center} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className={`${isSmall ? "text-lg" : "text-2xl"} font-semibold tracking-tight text-slate-900`}>{Math.round(value)}%</div>
-        <div className="mt-0.5 text-center text-[10px] font-medium leading-tight text-slate-500">{label}</div>
+        <div className="text-3xl font-extrabold tracking-tight text-slate-950">{centerText ?? Math.round(value)}</div>
+        <div className="mt-1 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</div>
       </div>
     </div>
   );
@@ -259,7 +245,7 @@ export default function CalculatorClient() {
   const [planErr, setPlanErr] = useState<string | null>(null);
   const [planningKey, setPlanningKey] = useState<string | null>(null);
   const [activityFilter, setActivityFilter] = useState<"all" | "planned" | "missing" | "complete">("all");
-  const [activeNav, setActiveNav] = useState<"ustawienia" | "status" | "kroki" | "limity" | "aktywnosci" | "powiadomienia">("ustawienia");
+  const [activeNav, setActiveNav] = useState<"status" | "ustawienia" | "kroki" | "limity" | "aktywnosci" | "powiadomienia">("status");
 
   const supabase = useMemo(() => supabaseClient(), []);
 
@@ -343,11 +329,8 @@ export default function CalculatorClient() {
   }, [requiredPoints, donePoints]);
 
   const missingEvidenceCount = useMemo(() => inPeriodDone.filter((a) => !a.certificate_path).length, [inPeriodDone]);
-  const evidencePct = useMemo(() => {
-    if (inPeriodDone.length <= 0) return 0;
-    return clamp(((inPeriodDone.length - missingEvidenceCount) / inPeriodDone.length) * 100, 0, 100);
-  }, [inPeriodDone.length, missingEvidenceCount]);
-
+  const certificatesCount = useMemo(() => inPeriodDone.filter((a) => Boolean(a.certificate_path)).length, [inPeriodDone]);
+  const plannedPoints = useMemo(() => inPeriodPlanned.reduce((sum, a) => sum + (Number(a.points) || 0), 0), [inPeriodPlanned]);
   const daysLeft = useMemo(() => daysUntilEndOfYear(periodEnd), [periodEnd]);
 
   const periodTimeProgress = useMemo(() => {
@@ -357,6 +340,11 @@ export default function CalculatorClient() {
     if (end <= start) return 0;
     return clamp(((now - start) / (end - start)) * 100, 0, 100);
   }, [periodStart, periodEnd]);
+
+  const avgPerMonthNeeded = useMemo(() => {
+    const monthsLeft = Math.max(1, Math.ceil(daysLeft / 30.44));
+    return missingPoints <= 0 ? 0 : missingPoints / monthsLeft;
+  }, [missingPoints, daysLeft]);
 
   const limitsUsage = useMemo(() => {
     const limits = RULES_BY_PROFESSION[profession]?.limits ?? [];
@@ -378,8 +366,14 @@ export default function CalculatorClient() {
 
   const limitWarning = useMemo(() => {
     const hit = limitsUsage.find((x) => (x.usedPct ?? 0) >= 100);
-    return hit ? `Limit "${hit.label}" jest osiagniety.` : null;
+    return hit ? `Limit „${hit.label}” jest osiągnięty.` : null;
   }, [limitsUsage]);
+
+  const strongestCategory = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const a of inPeriodDone) map.set(a.type, (map.get(a.type) || 0) + (Number(a.points) || 0));
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1])[0] ?? null;
+  }, [inPeriodDone]);
 
   const nextSteps = useMemo(() => buildNextSteps(missingPoints, missingEvidenceCount, limitWarning), [missingPoints, missingEvidenceCount, limitWarning]);
 
@@ -453,22 +447,20 @@ export default function CalculatorClient() {
       setPlanInfo(`Dodano do planu: ${r.label} (+${pts} pkt)`);
       await reloadActivities();
     } catch (e: any) {
-      setPlanErr(e?.message || "Nie udalo sie dodac planu.");
+      setPlanErr(e?.message || "Nie udało się dodać planu.");
     } finally {
       setPlanningKey(null);
     }
   }
 
-  const inputCls = "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400";
+  const inputCls = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400";
+  const cardCls = "scroll-mt-32 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm";
 
-  // card base — consistent across all sections
-  const cardCls = "scroll-mt-44 relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md";
-
-  function scrollToSection(id: "ustawienia" | "status" | "kroki" | "limity" | "aktywnosci" | "powiadomienia") {
+  function scrollToSection(id: "status" | "ustawienia" | "kroki" | "limity" | "aktywnosci" | "powiadomienia") {
     const el = document.getElementById(id);
     if (!el) return;
     setActiveNav(id);
-    const offset = 140;
+    const offset = 128;
     const targetTop = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
   }
@@ -479,44 +471,86 @@ export default function CalculatorClient() {
     window.requestAnimationFrame(() => window.requestAnimationFrame(() => scrollToSection("aktywnosci")));
   }
 
-  // ── nav styles — podbity kontrast, shadow-md ──────────────────────────────
-  const navBase = "shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:border-blue-300 hover:text-blue-700 focus:outline-none";
-  const navActive = "shrink-0 border-b-2 border-blue-600 px-3 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none";
+  const emptyStateHref = activityFilter === "planned" ? "/aktywnosci?new=1" : activityFilter === "missing" ? "/aktywnosci" : "/aktywnosci?new=1";
+  const emptyStateMsg = activityFilter === "planned" ? "Nie masz zaplanowanych aktywności." : activityFilter === "missing" ? "Brak wpisów z brakującą dokumentacją." : activityFilter === "complete" ? "Brak kompletnych wpisów w tym okresie." : "Nie masz jeszcze żadnych aktywności w tym okresie.";
+  const emptyStateCta = activityFilter === "missing" ? "Uzupełnij dokumenty" : "Dodaj pierwszą aktywność";
 
-  const emptyStateHref = activityFilter === "planned"
-    ? "/aktywnosci?new=1"
-    : activityFilter === "missing"
-    ? "/aktywnosci"
-    : "/aktywnosci?new=1";
-
-  const emptyStateMsg = activityFilter === "planned"
-    ? "Nie masz zaplanowanych aktywnosci."
-    : activityFilter === "missing"
-    ? "Brak wpisow z brakujaca dokumentacja."
-    : activityFilter === "complete"
-    ? "Brak kompletnych wpisow w tym okresie."
-    : "Nie masz jeszcze zadnych aktywnosci w tym okresie.";
-
-  const emptyStateCta = activityFilter === "missing" ? "Uzupelnij dokumenty" : "Dodaj pierwsza aktywnosc";
+  const userInitial = (user?.email?.[0] || "U").toUpperCase();
+  const userName = user?.email?.split("@")[0] || "Użytkownik";
 
   return (
-    <div className="relative left-1/2 min-h-screen w-screen -translate-x-1/2 bg-slate-100 px-4 pb-10 pt-1 sm:px-6">
+    <div className="relative left-1/2 w-screen -translate-x-1/2 bg-slate-50 px-4 pb-12 pt-1 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-5">
+        <section className="overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-white via-blue-50/70 to-white p-5 shadow-sm sm:p-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-3xl bg-blue-600 text-xl font-extrabold text-white shadow-lg shadow-blue-200">{userInitial}</div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Witaj z powrotem,</p>
+                <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">{userName}</h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  {displayProfession(profession, professionOther)} · Okres rozliczeniowy {periodStart}–{periodEnd}
+                </p>
+              </div>
+            </div>
 
-        {/* ── SZYBKIE MENU — shadow-md, lepszy kontrast aktywnego ──────── */}
-        <nav className="sticky top-[76px] z-30 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-md">
-          <div className="flex min-w-max">
-            {(["ustawienia", "status", "kroki", "limity", "aktywnosci", "powiadomienia"] as const).map((id) => {
+            <div className="flex flex-wrap gap-2 lg:justify-end">
+              {missingPoints > 0 ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+                  Brakuje {missingPoints} pkt · tempo {avgPerMonthNeeded.toFixed(1)} pkt/m-c
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">Cel zrealizowany</div>
+              )}
+              <Link href="/profil" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Profil →</Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-3 md:grid-cols-3">
+          <Link href="/aktywnosci?new=1" className="group flex items-center gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+            <IconBubble tone="blue"><MiniIcon name="plus" /></IconBubble>
+            <div>
+              <h3 className="font-bold text-slate-950">Dodaj aktywność</h3>
+              <p className="text-sm text-slate-500">Wpis ręczny w kilkadziesiąt sekund</p>
+            </div>
+          </Link>
+          <Link href="/aktywnosci?upload=1" className="group flex items-center gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+            <IconBubble tone="blue"><MiniIcon name="upload" /></IconBubble>
+            <div>
+              <h3 className="font-bold text-slate-950">Wgraj certyfikat</h3>
+              <p className="text-sm text-slate-500">PDF lub zdjęcie do dokumentacji</p>
+            </div>
+          </Link>
+          <Link href="/skaner" className="group flex items-center gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+            <IconBubble tone="blue"><MiniIcon name="qr" /></IconBubble>
+            <div>
+              <h3 className="font-bold text-slate-950">Skanuj kod QR</h3>
+              <p className="text-sm text-slate-500">Z certyfikatu lub plakatu szkolenia</p>
+            </div>
+          </Link>
+        </section>
+
+        {missingEvidenceCount > 0 ? (
+          <div className="flex flex-col gap-3 rounded-3xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="font-semibold">{missingEvidenceCount} certyfikat{missingEvidenceCount === 1 ? "" : "ów"} wymaga uzupełnienia dokumentacji.</div>
+            <Link href="/aktywnosci" className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-amber-800 ring-1 ring-amber-200 transition hover:bg-amber-100">Zobacz</Link>
+          </div>
+        ) : null}
+
+        <nav className="sticky top-[76px] z-30 overflow-x-auto rounded-2xl border border-slate-200 bg-white/95 px-2 shadow-sm backdrop-blur">
+          <div className="flex min-w-max gap-1">
+            {(["status", "ustawienia", "kroki", "limity", "aktywnosci", "powiadomienia"] as const).map((id) => {
               const labels: Record<string, string> = {
+                status: "Status",
                 ustawienia: "Ustawienia",
-                status: "Realizacja celu",
                 kroki: "Co dalej?",
                 limity: "Limity",
-                aktywnosci: "Aktywnosci",
+                aktywnosci: "Aktywności",
                 powiadomienia: "Powiadomienia",
               };
               return (
-                <button key={id} type="button" onClick={() => scrollToSection(id)} className={activeNav === id ? navActive : navBase}>
+                <button key={id} type="button" onClick={() => scrollToSection(id)} className={`rounded-xl px-4 py-3 text-sm font-bold transition ${activeNav === id ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}>
                   {labels[id]}
                 </button>
               );
@@ -524,220 +558,158 @@ export default function CalculatorClient() {
           </div>
         </nav>
 
-        {/* ── USTAWIENIA ───────────────────────────────────────────────── */}
-        <section id="ustawienia" className={cardCls}>
-          <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-          <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <IconBubble tone="blue"><MiniIcon name="calendar" /></IconBubble>
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900">Ustawienia okresu i zawodu</h2>
-                <p className="text-xs text-slate-500">
-                  Zmien preferencje w dowolnym momencie.
-                  {savedAt && !dirty && !savingProfile ? <span className="ml-1 font-medium text-blue-600">Zapisano</span> : null}
-                  {!otherValid ? <span className="ml-1 font-medium text-red-500">Uzupelnij zawod</span> : null}
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={() => { const prof: Profession = "Lekarz"; const derived = getPeriodFromPwzIssueDate(prof, pwzIssueDate); setProfession(prof); setProfessionOther(""); setPeriodStart(derived?.start ?? 2023); setPeriodEnd(derived?.end ?? 2026); setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200); setPeriodMode(derived ? "custom" : "preset"); setDirty(true); }} className="w-28 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">
-                Domyslne
-              </button>
-              <button type="button" onClick={saveAllSettings} disabled={isBusy || savingProfile || !dirty || !otherValid} className="w-28 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50">
-                {savingProfile ? "Zapisuje..." : "Zapisz"}
-              </button>
-              <Link href="/profil" className="inline-flex w-28 justify-center rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95">
-                Profil →
-              </Link>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-2 xl:grid-cols-4">
-            <div>
-              <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Zawod</label>
-              <select value={profession} onChange={(e) => { const v = e.target.value as Profession; setProfession(v); if (!isOtherProfession(v)) setProfessionOther(""); setRequiredPoints(RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200); if (pwzIssueDate) { const d = getPeriodFromPwzIssueDate(v, pwzIssueDate); if (d) { setPeriodMode("custom"); setPeriodStart(d.start); setPeriodEnd(d.end); } } setDirty(true); }} className={`mt-1.5 ${inputCls}`}>
-                {PROFESSION_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium uppercase tracking-wide text-slate-500">{trybLabel}</label>
-              <select value={periodMode} onChange={(e) => { const v = e.target.value as "preset" | "custom"; setPeriodMode(v); if (v === "custom" && pwzIssueDate) { const d = getPeriodFromPwzIssueDate(profession, pwzIssueDate); if (d) { setPeriodStart(d.start); setPeriodEnd(d.end); } } setDirty(true); }} className={`mt-1.5 ${inputCls}`}>
-                <option value="preset">Preset najczestszy</option>
-                <option value="custom">Indywidualny</option>
-              </select>
-            </div>
-            {periodMode === "preset" && !pwzIssueDate ? (
-              <div>
-                <label className="text-xs font-medium uppercase tracking-wide text-slate-500">{okresLabel}</label>
-                <select value={periodLabel} onChange={(e) => { const [a, b] = e.target.value.split("-").map(Number); setPeriodStart(a); setPeriodEnd(b); setDirty(true); }} className={`mt-1.5 ${inputCls}`}>
-                  <option value="2019-2022">2019–2022</option>
-                  <option value="2023-2026">2023–2026</option>
-                  <option value="2027-2030">2027–2030</option>
-                </select>
-              </div>
-            ) : (
-              <div>
-                <label className="text-xs font-medium uppercase tracking-wide text-slate-500">{okresLabel}</label>
-                <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                  <input value={periodStart} onChange={(e) => { setPeriodStart(Number(e.target.value || 0)); setDirty(true); }} type="number" disabled={Boolean(pwzIssueDate)} className={inputCls} />
-                  <span className="text-slate-400">–</span>
-                  <input value={periodEnd} onChange={(e) => { setPeriodEnd(Number(e.target.value || 0)); setDirty(true); }} type="number" disabled={Boolean(pwzIssueDate)} className={inputCls} />
-                </div>
-              </div>
-            )}
-            <div>
-              <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Wymagane punkty</label>
-              <input value={requiredPoints} onChange={(e) => { setRequiredPoints(Number(e.target.value || 0)); setDirty(true); }} type="number" min={0} className={`mt-1.5 ${inputCls}`} />
-            </div>
-            {otherRequired ? (
-              <div className="md:col-span-2 xl:col-span-4">
-                <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Jaki zawod?</label>
-                <input value={professionOther} onChange={(e) => { setProfessionOther(e.target.value); setDirty(true); }} placeholder="np. Psycholog, Logopeda..." className={`mt-1.5 ${inputCls} ${!otherValid ? "border-red-300 focus:border-red-400 focus:ring-red-100" : ""}`} />
-              </div>
-            ) : null}
-          </div>
-        </section>
-
         {isBusy ? (
-          <div className={`${cardCls} p-8 text-center text-sm font-medium text-slate-500`}>Wczytuję dane...</div>
+          <div className={`${cardCls} p-10 text-center text-sm font-semibold text-slate-500`}>Wczytuję dane...</div>
         ) : (
           <>
-            {/* ── REALIZACJA CELU ──────────────────────────────────────── */}
             <section id="status" className={cardCls}>
-              <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-
-              {/* header */}
-              <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-6 py-4 sm:flex-nowrap sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
-                  <div>
-                    <h2 className="text-sm font-semibold text-slate-900">Realizacja celu</h2>
-                    <p className="text-xs text-slate-500">Aktualny stan punktow, czasu i dokumentow</p>
-                  </div>
-                </div>
-
-                {/* KPI — bez ramki, tylko typografia */}
-                <div className="sm:text-right">
-                  {missingPoints > 0 ? (
-                    <>
-                      <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Do celu brakuje</div>
-                      <div className="text-3xl font-bold leading-none tracking-tight text-red-500">{missingPoints} pkt</div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Status</div>
-                      <div className="text-2xl font-bold leading-none text-emerald-600">Cel zrealizowany</div>
-                    </>
-                  )}
-                </div>
-
-                {missingEvidenceCount > 0 ? (
-                  <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
-                    {missingEvidenceCount} dokumentow do uzupelnienia
-                  </span>
-                ) : null}
-              </div>
-
-              {/* body — zwarty layout */}
-              <div className="grid gap-6 px-6 py-5 lg:grid-cols-[auto_1fr] lg:items-start">
-                {/* circular charts — oba równe, obok siebie */}
-                <div className="flex flex-row items-center gap-4 lg:flex-col lg:gap-3">
-                  <CircularProgress value={progress} label="pkt" />
-                  <CircularProgress value={periodTimeProgress} label="czas" tone="amber" />
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-sm text-slate-600">
-                    Masz <strong className="text-slate-900">{donePoints} / {requiredPoints} pkt</strong> w okresie {periodStart}–{periodEnd}. Do konca zostalo <strong className="text-slate-900">{daysLeft} dni</strong>.
-                  </p>
-
-                  {/* progress punktow */}
-                  <div className="mt-3">
-                    <div className="mb-1 flex justify-between text-xs font-medium text-slate-500">
-                      <span>Postep punktow</span>
-                      <span>{donePoints} / {requiredPoints} pkt</span>
+              <div className="grid gap-0 lg:grid-cols-[1fr_360px]">
+                <div className="p-6 sm:p-7">
+                  <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-600">Status CPD</p>
+                      <h2 className="mt-1 text-xl font-extrabold tracking-tight text-slate-950">Twój postęp w okresie {periodStart}–{periodEnd}</h2>
+                      <p className="mt-1 text-sm text-slate-500">Punkty, tempo i dokumentacja w jednym miejscu.</p>
                     </div>
-                    <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${Math.max(progress, 2)}%` }} />
-                    </div>
+                    <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ring-1 ${missingPoints <= 0 ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : missingPoints <= 20 ? "bg-amber-50 text-amber-700 ring-amber-100" : "bg-red-50 text-red-700 ring-red-100"}`}>
+                      {missingPoints <= 0 ? "Gotowe" : missingPoints <= 20 ? "Prawie" : "Do uzupełnienia"}
+                    </span>
                   </div>
 
-                  {/* progress czasu — ocieplony kolor, dashed marker */}
-                  <div className="mt-3">
-                    <div className="mb-1 flex justify-between text-xs font-medium text-slate-500">
-                      <span>Postep czasu</span>
-                      <span>{Math.round(periodTimeProgress)}% minelo · {Math.round(100 - periodTimeProgress)}% zostalo</span>
-                    </div>
-                    <div className="relative h-2.5 overflow-visible rounded-full bg-slate-100">
-                      <div
-                        className="h-2.5 rounded-full transition-all duration-700"
-                        style={{ width: `${periodTimeProgress}%`, background: "linear-gradient(90deg, #f59e0b 0%, #d97706 100%)" }}
-                      />
-                      <div
-                        className="absolute top-1/2 grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-amber-400 bg-white shadow-sm"
-                        style={{ left: `${periodTimeProgress}%` }}
-                        aria-label="Aktualny moment okresu"
-                      >
-                        <span className="block h-2 w-2 rounded-full bg-amber-500" />
+                  <div className="flex flex-col gap-8 md:flex-row md:items-center">
+                    <CircularProgress value={progress} centerText={`${donePoints}`} label={`z ${requiredPoints} pkt`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        <div><p className="text-xs font-bold uppercase tracking-wide text-slate-400">Zebrane</p><p className="mt-1 text-3xl font-extrabold text-slate-950">{donePoints}</p></div>
+                        <div><p className="text-xs font-bold uppercase tracking-wide text-slate-400">Brakuje</p><p className="mt-1 text-3xl font-extrabold text-amber-600">{missingPoints}</p></div>
+                        <div><p className="text-xs font-bold uppercase tracking-wide text-slate-400">Pozostało</p><p className="mt-1 text-3xl font-extrabold text-slate-950">{Math.ceil(daysLeft / 30.44)}</p><p className="text-xs text-slate-500">mies.</p></div>
+                        <div><p className="text-xs font-bold uppercase tracking-wide text-slate-400">Tempo</p><p className="mt-1 text-3xl font-extrabold text-slate-950">{avgPerMonthNeeded.toFixed(1)}</p><p className="text-xs text-slate-500">pkt/m-c</p></div>
+                      </div>
+
+                      <div className="mt-6">
+                        <div className="mb-2 flex justify-between text-xs font-semibold text-slate-500">
+                          <span>{Math.round(progress)}% celu</span>
+                          <span>cel: {requiredPoints} pkt</span>
+                        </div>
+                        <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                          <div className="h-full rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${Math.max(progress, 2)}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="mt-4">
+                        <div className="mb-2 flex justify-between text-xs font-semibold text-slate-500">
+                          <span>Upływ czasu</span>
+                          <span>{Math.round(periodTimeProgress)}% minęło · {daysLeft} dni do końca</span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                          <div className="h-full rounded-full bg-amber-500 transition-all duration-700" style={{ width: `${periodTimeProgress}%` }} />
+                        </div>
                       </div>
                     </div>
-                    <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
-                      <span>{periodStart} start</span>
-                      <span>koniec {periodEnd}</span>
-                    </div>
-                  </div>
-
-                  {/* stats grid */}
-                  <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 sm:grid-cols-4">
-                    {[
-                      { value: `${daysLeft}`, label: "dni do konca" },
-                      { value: `${missingEvidenceCount}`, label: "brak dokumentacji", accent: missingEvidenceCount > 0 },
-                      { value: `${requiredPoints}`, label: "pkt wymagane" },
-                      { value: displayProfession(profession, professionOther), label: "Twoj zawod", small: true },
-                    ].map(({ value, label, accent, small }) => (
-                      <div key={label} className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
-                        <div className={`truncate font-semibold ${small ? "text-sm" : "text-lg"} ${accent ? "text-amber-600" : "text-slate-900"}`}>{value}</div>
-                        <div className="mt-0.5 text-[10px] text-slate-500">{label}</div>
-                      </div>
-                    ))}
                   </div>
                 </div>
+
+                <aside className="grid gap-3 border-t border-slate-100 bg-slate-50/70 p-5 lg:border-l lg:border-t-0">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="flex items-center justify-between"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Aktywności</p><IconBubble tone="blue"><MiniIcon name="calendar" /></IconBubble></div>
+                    <p className="mt-2 text-3xl font-extrabold text-slate-950">{inPeriodDone.length}</p>
+                    <p className="mt-1 text-sm font-semibold text-emerald-600">+{inPeriodPlanned.length} zaplanowane</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="flex items-center justify-between"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Certyfikaty</p><IconBubble tone="blue"><MiniIcon name="doc" /></IconBubble></div>
+                    <p className="mt-2 text-3xl font-extrabold text-slate-950">{certificatesCount}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-500">{missingEvidenceCount} do uzupełnienia</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="flex items-center justify-between"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Najsilniejsza kategoria</p><IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble></div>
+                    <p className="mt-2 text-base font-extrabold text-slate-950">{strongestCategory ? strongestCategory[0] : "—"}</p>
+                    <p className="mt-1 text-2xl font-extrabold text-slate-950">{strongestCategory ? `${strongestCategory[1]} pkt` : "0 pkt"}</p>
+                  </div>
+                </aside>
               </div>
             </section>
 
-            {/* ── CO DALEJ ─────────────────────────────────────────────── */}
-            <section id="kroki" className={cardCls}>
-              <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-              <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
-                <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
+            <section id="ustawienia" className={cardCls}>
+              <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <IconBubble tone="blue"><MiniIcon name="user" /></IconBubble>
+                  <div>
+                    <h2 className="font-extrabold text-slate-950">Ustawienia okresu i zawodu</h2>
+                    <p className="text-sm text-slate-500">
+                      Zmień preferencje w dowolnym momencie.
+                      {savedAt && !dirty && !savingProfile ? <span className="ml-1 font-bold text-blue-600">Zapisano</span> : null}
+                      {!otherValid ? <span className="ml-1 font-bold text-red-500">Uzupełnij zawód</span> : null}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={() => { const prof: Profession = "Lekarz"; const derived = getPeriodFromPwzIssueDate(prof, pwzIssueDate); setProfession(prof); setProfessionOther(""); setPeriodStart(derived?.start ?? 2023); setPeriodEnd(derived?.end ?? 2026); setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200); setPeriodMode(derived ? "custom" : "preset"); setDirty(true); }} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50">Domyślne</button>
+                  <button type="button" onClick={saveAllSettings} disabled={isBusy || savingProfile || !dirty || !otherValid} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{savingProfile ? "Zapisuję..." : "Zapisz"}</button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-2 xl:grid-cols-4">
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-900">Co dalej?</h2>
-                  <p className="text-xs text-slate-500">Najwazniejsze dzialania na podstawie brakow</p>
+                  <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Zawód</label>
+                  <select value={profession} onChange={(e) => { const v = e.target.value as Profession; setProfession(v); if (!isOtherProfession(v)) setProfessionOther(""); setRequiredPoints(RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200); if (pwzIssueDate) { const d = getPeriodFromPwzIssueDate(v, pwzIssueDate); if (d) { setPeriodMode("custom"); setPeriodStart(d.start); setPeriodEnd(d.end); } } setDirty(true); }} className={`mt-1.5 ${inputCls}`}>
+                    {PROFESSION_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wide text-slate-500">{trybLabel}</label>
+                  <select value={periodMode} onChange={(e) => { const v = e.target.value as "preset" | "custom"; setPeriodMode(v); if (v === "custom" && pwzIssueDate) { const d = getPeriodFromPwzIssueDate(profession, pwzIssueDate); if (d) { setPeriodStart(d.start); setPeriodEnd(d.end); } } setDirty(true); }} className={`mt-1.5 ${inputCls}`}>
+                    <option value="preset">Preset najczęstszy</option>
+                    <option value="custom">Indywidualny</option>
+                  </select>
+                </div>
+                {periodMode === "preset" && !pwzIssueDate ? (
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wide text-slate-500">{okresLabel}</label>
+                    <select value={periodLabel} onChange={(e) => { const [a, b] = e.target.value.split("-").map(Number); setPeriodStart(a); setPeriodEnd(b); setDirty(true); }} className={`mt-1.5 ${inputCls}`}>
+                      <option value="2019-2022">2019–2022</option>
+                      <option value="2023-2026">2023–2026</option>
+                      <option value="2027-2030">2027–2030</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wide text-slate-500">{okresLabel}</label>
+                    <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                      <input value={periodStart} onChange={(e) => { setPeriodStart(Number(e.target.value || 0)); setDirty(true); }} type="number" disabled={Boolean(pwzIssueDate)} className={inputCls} />
+                      <span className="text-slate-400">–</span>
+                      <input value={periodEnd} onChange={(e) => { setPeriodEnd(Number(e.target.value || 0)); setDirty(true); }} type="number" disabled={Boolean(pwzIssueDate)} className={inputCls} />
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Wymagane punkty</label>
+                  <input value={requiredPoints} onChange={(e) => { setRequiredPoints(Number(e.target.value || 0)); setDirty(true); }} type="number" min={0} className={`mt-1.5 ${inputCls}`} />
+                </div>
+                {otherRequired ? (
+                  <div className="md:col-span-2 xl:col-span-4">
+                    <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Jaki zawód?</label>
+                    <input value={professionOther} onChange={(e) => { setProfessionOther(e.target.value); setDirty(true); }} placeholder="np. Psycholog, Logopeda..." className={`mt-1.5 ${inputCls} ${!otherValid ? "border-red-300 focus:border-red-400 focus:ring-red-100" : ""}`} />
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
+            <section id="kroki" className={cardCls}>
+              <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-5">
+                <IconBubble tone="blue"><MiniIcon name="shield" /></IconBubble>
+                <div>
+                  <h2 className="font-extrabold text-slate-950">Co dalej?</h2>
+                  <p className="text-sm text-slate-500">Najważniejsze działania na podstawie braków.</p>
                 </div>
               </div>
               <div className="grid gap-3 p-5 md:grid-cols-3">
-                {nextSteps.map((step, i) => (
-                  <Link
-                    key={step.title}
-                    href={step.ctaHref}
-                    className={`group relative flex items-center gap-3 overflow-hidden rounded-lg border p-4 transition active:scale-[0.99] ${
-                      step.primary
-                        ? "border-blue-200 bg-blue-600 shadow-md hover:bg-blue-700"
-                        : "border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50"
-                    }`}
-                  >
-                    {step.primary && (
-                      <span className="pointer-events-none absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-blue-500/20 to-transparent" />
-                    )}
-                    <span className={`h-2 w-2 shrink-0 rounded-full ${step.primary ? "bg-white/70" : "bg-slate-300"}`} />
-                    <div className="min-w-0 flex-1">
-                      <div className={`text-sm font-bold ${step.primary ? "text-white" : "text-slate-900"}`}>{step.title}</div>
-                      <div className={`mt-0.5 text-xs leading-4 ${step.primary ? "text-blue-100" : "text-slate-500"}`}>{step.description}</div>
+                {nextSteps.map((step) => (
+                  <Link key={step.title} href={step.ctaHref} className={`group relative flex min-h-[112px] items-center gap-4 overflow-hidden rounded-2xl border p-5 transition hover:-translate-y-0.5 ${step.primary ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-100" : "border-slate-200 bg-white hover:border-blue-200 hover:shadow-sm"}`}>
+                    <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${step.primary ? "bg-white/15" : "bg-blue-50 text-blue-600"}`}>→</span>
+                    <div>
+                      <div className={`font-extrabold ${step.primary ? "text-white" : "text-slate-950"}`}>{step.title}</div>
+                      <div className={`mt-1 text-sm ${step.primary ? "text-blue-100" : "text-slate-500"}`}>{step.description}</div>
                     </div>
-                    <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-bold transition ${
-                      step.primary
-                        ? "bg-white/20 text-white group-hover:bg-white/30"
-                        : "border border-slate-200 text-slate-400 group-hover:border-blue-200 group-hover:text-blue-500"
-                    }`}>→</span>
                   </Link>
                 ))}
               </div>
@@ -745,199 +717,122 @@ export default function CalculatorClient() {
           </>
         )}
 
-        {/* ── LIMITY ───────────────────────────────────────────────────── */}
-        <section id="limity" className={`${cardCls} scroll-mt-44`}>
-          <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-          <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <section id="limity" className={cardCls}>
+          <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="shield" /></IconBubble>
               <div>
-                <h2 className="text-sm font-semibold text-slate-900">Twoje limity</h2>
-                <p className="text-xs text-slate-500">Najbardziej ograniczajace kategorie w tym okresie</p>
+                <h2 className="font-extrabold text-slate-950">Twoje limity</h2>
+                <p className="text-sm text-slate-500">Najbardziej ograniczające kategorie w tym okresie.</p>
               </div>
             </div>
-            <div className="pl-12 text-xs text-slate-500 sm:pl-0">
-              Zaliczone: <strong className="text-slate-900">{donePoints} pkt</strong>
-              <span className="mx-2 text-slate-300">|</span>
-              Brakuje: <strong className="text-red-500">{missingPoints} pkt</strong>
-            </div>
+            <div className="text-sm text-slate-500">Zaliczone: <strong className="text-slate-950">{donePoints} pkt</strong><span className="mx-2 text-slate-300">|</span>Brakuje: <strong className="text-red-500">{missingPoints} pkt</strong></div>
           </div>
 
           <div className="p-5">
             {(planInfo || planErr) ? (
-              <div className="mb-3 rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs">
-                {planInfo ? <p className="font-semibold text-blue-700">{planInfo}</p> : null}
-                {planErr ? <p className="font-semibold text-red-600">{planErr}</p> : null}
+              <div className="mb-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm">
+                {planInfo ? <p className="font-bold text-blue-700">{planInfo}</p> : null}
+                {planErr ? <p className="font-bold text-red-600">{planErr}</p> : null}
               </div>
             ) : null}
 
-            <div className="grid gap-2 lg:grid-cols-3">
+            <div className="grid gap-3 lg:grid-cols-3">
               {limitsUsage.length === 0 ? (
-                <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 lg:col-span-3">Brak zdefiniowanych limitow dla tego zawodu.</div>
+                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5 text-sm text-slate-500 lg:col-span-3">Brak zdefiniowanych limitów dla tego zawodu.</div>
               ) : (
                 limitsUsage.map((r) => {
                   const isMax = r.usedPct >= 100 || (Number(r.remaining) || 0) <= 0;
                   return (
-                    <div key={r.key} className="group rounded-lg border border-slate-200 bg-white p-3.5 transition hover:border-blue-200 hover:shadow-sm active:scale-[0.99]">
-                      <div className="flex items-start gap-3">
+                    <div key={r.key} className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <h3 className="text-sm font-semibold text-slate-900">{r.label}</h3>
-                            {isMax ? <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-100">wykorzystane</span> : null}
-                          </div>
-                          <p className="mt-0.5 text-xs text-slate-500">
-                            {r.mode === "per_item" ? `max ${r.cap} pkt / szkolenie` : r.mode === "per_year" ? `max ${r.maxPoints} pkt / rok` : `max ${r.cap} pkt w okresie`}
-                            {" · "}{r.used === 0 ? <span className="italic text-slate-400">Nie rozpoczeto</span> : `${r.used} / ${r.cap} pkt`}
-                          </p>
-                          <div className="mt-2 flex items-center gap-2">
-                            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
-                              <div className={`h-full rounded-full transition-all duration-500 ${isMax ? "bg-emerald-500" : r.usedPct >= 50 ? "bg-blue-500" : "bg-slate-300"}`} style={{ width: `${r.usedPct}%` }} />
-                            </div>
-                            <span className="w-8 text-right text-[10px] font-medium text-slate-500">{Math.round(r.usedPct)}%</span>
-                          </div>
+                          <h3 className="font-extrabold text-slate-950">{r.label}</h3>
+                          <p className="mt-1 text-xs text-slate-500">{r.note}</p>
                         </div>
-                        <div className="shrink-0 text-right">
-                          <div className={`mb-1.5 rounded px-2 py-1.5 text-xs font-semibold ${isMax ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-900"}`}>
-                            {Math.round(r.remaining)} pkt<br />
-                            <span className="text-[10px] font-normal text-slate-400">zostalo</span>
-                          </div>
-                          {isMax ? (
-                            <Link href="/aktywnosci" className="text-[10px] font-medium text-slate-400 hover:text-blue-600">Zobacz →</Link>
-                          ) : (
-                            <button type="button" disabled={isBusy || planningKey === r.key} onClick={() => planForRule(r)} className="rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 active:scale-95 disabled:opacity-40">
-                              {planningKey === r.key ? "Dodaje..." : "+ Zaplanuj"}
-                            </button>
-                          )}
+                        <div className={`shrink-0 rounded-xl px-3 py-2 text-right text-xs font-bold ${isMax ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-800"}`}>
+                          {Math.round(r.remaining)} pkt<br /><span className="font-medium text-slate-400">zostało</span>
                         </div>
+                      </div>
+                      <div className="mt-4 flex items-center gap-2">
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                          <div className={`h-full rounded-full transition-all duration-500 ${isMax ? "bg-emerald-500" : r.usedPct >= 50 ? "bg-blue-500" : "bg-slate-300"}`} style={{ width: `${r.usedPct}%` }} />
+                        </div>
+                        <span className="w-9 text-right text-xs font-bold text-slate-500">{Math.round(r.usedPct)}%</span>
+                      </div>
+                      <div className="mt-4 flex items-center justify-between gap-2">
+                        <p className="text-xs text-slate-500">{r.used} / {r.cap} pkt</p>
+                        {isMax ? <Link href="/aktywnosci" className="text-xs font-bold text-blue-600">Zobacz →</Link> : <button type="button" disabled={isBusy || planningKey === r.key} onClick={() => planForRule(r)} className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-700 disabled:opacity-40">{planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}</button>}
                       </div>
                     </div>
                   );
                 })
               )}
             </div>
-
-            <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-              <Link href="/aktywnosci" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50">Aktywnosci →</Link>
-              <Link href="/aktywnosci?new=1" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50">+ Dodaj aktywnosc</Link>
-              <Link href="/portfolio" className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50">Raport / PDF →</Link>
-            </div>
           </div>
         </section>
 
-        {/* ── OSTATNIE AKTYWNOŚCI ──────────────────────────────────────── */}
-        <section id="aktywnosci" className={`${cardCls} scroll-mt-44`}>
-          <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-          <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <section id="aktywnosci" className={cardCls}>
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="calendar" /></IconBubble>
               <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-semibold text-slate-900">Ostatnie aktywnosci</h2>
-                  {recentRows.length > 0 && (
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                      {recentRows.length}
-                    </span>
-                  )}
-                </div>
-                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                <div className="flex items-center gap-2"><h2 className="font-extrabold text-slate-950">Ostatnie aktywności</h2>{recentRows.length > 0 ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">{recentRows.length}</span> : null}</div>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
                   {(["all", "missing", "planned", "complete"] as const).map((f) => {
-                    const labels = { all: "wszystkie", missing: "brakujaca dokumentacja", planned: "zaplanowane", complete: "kompletne" };
-                    const dots = { all: "", missing: "bg-amber-400", planned: "bg-slate-400", complete: "bg-emerald-400" };
-                    const active = { all: "bg-slate-100 text-slate-800", missing: "bg-amber-50 text-amber-700", planned: "bg-slate-100 text-slate-800", complete: "bg-emerald-50 text-emerald-700" };
-                    return (
-                      <button key={f} type="button" onClick={() => filterActivities(f)} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === f ? active[f] : "text-slate-500 hover:bg-slate-50"}`}>
-                        {dots[f] ? <span className={`h-2 w-2 rounded-full ${dots[f]}`} /> : null}
-                        {labels[f]}
-                      </button>
-                    );
+                    const labels = { all: "wszystkie", missing: "brakująca dokumentacja", planned: "zaplanowane", complete: "kompletne" };
+                    const active = { all: "bg-slate-900 text-white", missing: "bg-amber-100 text-amber-800", planned: "bg-slate-100 text-slate-800", complete: "bg-emerald-100 text-emerald-800" };
+                    return <button key={f} type="button" onClick={() => filterActivities(f)} className={`rounded-full px-3 py-1 font-bold transition ${activityFilter === f ? active[f] : "text-slate-500 hover:bg-slate-50"}`}>{labels[f]}</button>;
                   })}
                 </div>
               </div>
             </div>
-            <Link href="/aktywnosci" className="shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700">Przejdz do aktywnosci</Link>
+            <Link href="/aktywnosci" className="shrink-0 text-sm font-bold text-blue-600 hover:text-blue-700">Przejdź do aktywności</Link>
           </div>
 
           <div className="p-5">
-            <div className="space-y-3">
-              {recentRows.length === 0 ? (
-                /* ── pusty stan — z CTA ── */
-                <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-slate-200 bg-slate-50 py-8 text-center">
-                  <div className="text-sm font-medium text-slate-700">{emptyStateMsg}</div>
-                  <Link href={emptyStateHref} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 active:scale-95">
-                    {emptyStateCta}
-                  </Link>
-                </div>
-              ) : (
-                recentRows.slice(0, 8).map((a) => {
+            {recentRows.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center">
+                <div className="text-sm font-bold text-slate-700">{emptyStateMsg}</div>
+                <Link href={emptyStateHref} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700">{emptyStateCta}</Link>
+              </div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {recentRows.slice(0, 8).map((a) => {
                   const prog = normalizeStatus(a.status);
                   const missing = getRowMissing(a);
                   const hasMissing = prog !== "planned" && missing.length > 0;
-                  const stripe = prog === "planned" ? "bg-slate-400" : hasMissing ? "bg-amber-500" : "bg-emerald-500";
-
                   return (
-                    <div key={a.id} className="relative overflow-hidden rounded-lg border border-slate-200 bg-white p-4 pl-6 transition hover:border-blue-200 hover:shadow-sm active:scale-[0.99]">
-                      <div className={`absolute inset-y-3 left-0 w-1.5 rounded-r-full ${stripe}`} />
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <h3 className="text-sm font-semibold text-slate-900">{a.type}</h3>
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${prog === "planned" ? "bg-slate-100 text-slate-600 ring-slate-200" : "bg-slate-50 text-slate-500 ring-slate-100"}`}>
-                              {prog === "planned" ? "Zaplanowane" : "Ukonczone"}
-                            </span>
-                            {prog !== "planned" ? (
-                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${hasMissing ? "bg-amber-50 text-amber-700 ring-amber-100" : "bg-emerald-50 text-emerald-700 ring-emerald-100"}`}>
-                                {hasMissing ? "Brakujaca dokumentacja" : "Kompletne"}
-                              </span>
-                            ) : null}
-                          </div>
-                          <p className="mt-1 text-xs text-slate-500">
-                            {a.organizer ? `${a.organizer} · ` : ""}
-                            Rok: <span className="font-medium text-slate-700">{a.year}</span>
-                            {prog === "planned" && a.planned_start_date ? <> · Termin: <span className="font-medium text-slate-700">{formatYMD(a.planned_start_date)}</span></> : null}
-                          </p>
-                          {hasMissing ? (
-                            <div className="mt-1.5 flex flex-wrap gap-1">
-                              {missing.map((m) => <span key={m} className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-amber-100">{m}</span>)}
-                            </div>
-                          ) : null}
-                        </div>
-                        <div className="flex shrink-0 flex-col items-end gap-2">
-                          <span className="text-sm font-semibold text-slate-900">+{a.points} pkt</span>
-                          <Link href="/aktywnosci" className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50">Otworz →</Link>
-                        </div>
+                    <div key={a.id} className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:shadow-sm">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">{a.type}</span>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${prog === "planned" ? "bg-slate-100 text-slate-600" : hasMissing ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>{prog === "planned" ? "Zaplanowane" : hasMissing ? "Do uzupełnienia" : "Kompletne"}</span>
                       </div>
+                      <h3 className="mt-3 line-clamp-2 min-h-[44px] font-extrabold leading-snug text-slate-950">{a.type}</h3>
+                      <p className="mt-1 text-sm text-slate-500">{a.organizer ? `${a.organizer} · ` : ""}Rok: <span className="font-bold text-slate-700">{a.year}</span>{prog === "planned" && a.planned_start_date ? <> · Termin: <span className="font-bold text-slate-700">{formatYMD(a.planned_start_date)}</span></> : null}</p>
+                      {hasMissing ? <div className="mt-2 flex flex-wrap gap-1">{missing.map((m) => <span key={m} className="rounded-lg bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700 ring-1 ring-amber-100">{m}</span>)}</div> : null}
+                      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3"><span className="text-xl font-extrabold text-slate-950">+{a.points} pkt</span><Link href="/aktywnosci" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Otwórz →</Link></div>
                     </div>
                   );
-                })
-              )}
-            </div>
-            {recentRows.length > 8 && (
-              <div className="mt-3 border-t border-slate-100 pt-3 text-center">
-                <Link href="/aktywnosci" className="text-sm font-medium text-blue-600 hover:text-blue-700">
-                  Zobacz wszystkie {recentRows.length} aktywnosci →
-                </Link>
+                })}
               </div>
             )}
+            {recentRows.length > 8 ? <div className="mt-4 text-center"><Link href="/aktywnosci" className="text-sm font-bold text-blue-600 hover:text-blue-700">Zobacz wszystkie {recentRows.length} aktywności →</Link></div> : null}
           </div>
         </section>
 
-        {/* ── POWIADOMIENIA ─────────────────────────────────────────────── */}
-        <section id="powiadomienia" className={`${cardCls} scroll-mt-44`}>
-          <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
+        <section id="powiadomienia" className={cardCls}>
           <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <IconBubble tone="blue"><MiniIcon name="bell" /></IconBubble>
               <div>
-                <h2 className="text-sm font-semibold text-slate-900">Badz na biezaco i nie przegap waznych terminow</h2>
-                <p className="mt-0.5 text-xs text-slate-500">Wlacz powiadomienia, aby otrzymywac przypomnienia o szkoleniach i terminach.</p>
+                <h2 className="font-extrabold text-slate-950">Bądź na bieżąco i nie przegap ważnych terminów</h2>
+                <p className="mt-0.5 text-sm text-slate-500">Włącz powiadomienia, aby otrzymywać przypomnienia o szkoleniach i terminach.</p>
               </div>
             </div>
-            <Link href="/profil" className="shrink-0 rounded-lg border border-blue-100 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95">
-              Ustawienia powiadomien →
-            </Link>
+            <Link href="/profil" className="shrink-0 rounded-xl border border-blue-100 bg-white px-4 py-2 text-sm font-bold text-blue-700 shadow-sm transition hover:bg-blue-50">Ustawienia powiadomień →</Link>
           </div>
         </section>
-
       </div>
     </div>
   );
