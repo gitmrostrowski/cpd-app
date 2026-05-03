@@ -181,94 +181,129 @@ function PhotoCard({ src, alt, title, text, className = "", imageClassName = "ob
 }
 
 function ScenarioStrip() {
-  const [step, setStep] = useState(0);
+  const [phase, setPhase] = useState<0 | 1 | 2>(0);
 
   useEffect(() => {
-    const t = setInterval(() => setStep((s) => (s + 1) % 3), 2000);
+    const t = setInterval(() => setPhase((p) => ((p + 1) % 3) as 0 | 1 | 2), 1800);
     return () => clearInterval(t);
   }, []);
 
+  const isDone = phase === 2;
+
   return (
-    <div className="mx-auto max-w-[1100px] rounded-[1.6rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-      <div className="grid items-center gap-0 lg:grid-cols-[1fr_1fr]">
-        {/* LEFT */}
-        <div className="p-6 lg:p-8">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-500">
-            <span className={`h-2 w-2 rounded-full ${step === 2 ? "bg-emerald-500" : "bg-amber-500"}`} />
-            {step === 2 ? "Porządek" : "Problem"}
+    <div className="relative overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
+      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-100/80 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-28 right-[-80px] h-72 w-72 rounded-full bg-emerald-100/70 blur-3xl" />
+
+      <div className="relative grid items-center gap-0 lg:grid-cols-[0.78fr_1.22fr]">
+        <div className="border-b border-slate-100 px-7 py-6 lg:border-b-0 lg:border-r lg:px-8 lg:py-7">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
+            <span className={`h-2 w-2 rounded-full transition-colors duration-500 ${isDone ? "bg-emerald-500" : phase === 1 ? "bg-blue-500" : "bg-amber-500"}`} />
+            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
+              {isDone ? "Gotowe w CRPE" : phase === 1 ? "Przetwarzanie" : "Dodajesz dokument"}
+            </span>
           </div>
 
-          <h2 className="text-xl font-bold leading-tight text-slate-950">
-            {step === 2
-              ? "Wszystko w jednym widoku."
-              : "Masz dokumenty. Nie masz pewności."}
+          <h2 className="max-w-md text-2xl font-black leading-tight tracking-tight text-slate-950 lg:text-3xl">
+            {isDone ? "Z chaosu robi się czytelny wpis." : "Wrzuć certyfikat. Reszta ma być oczywista."}
           </h2>
 
-          <p className="mt-2 text-sm text-slate-600">
-            {step === 2
-              ? "CRPE łączy dane i pokazuje jasny status punktów."
-              : "Pliki są rozproszone. Nie wiesz, co się liczy i ile masz punktów."}
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-600">
+            {isDone
+              ? "Aktywność, punkty, certyfikat i status trafiają do jednego widoku — bez ręcznego porównywania plików."
+              : "CRPE ma prowadzić użytkownika od dokumentu do gotowego statusu, spokojnie i bez zbędnego klikania."}
           </p>
-
-          {/* subtle progress */}
-          <div className="mt-5">
-            <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden">
-              <div
-                className="h-full bg-blue-600 transition-all duration-700"
-                style={{ width: `${(step + 1) * 33}%` }}
-              />
-            </div>
-          </div>
         </div>
 
-        {/* RIGHT */}
-        <div className="p-5 lg:p-7">
-          <div className="relative h-[150px] rounded-xl border border-slate-200 bg-slate-50 p-4 overflow-hidden">
-
-            {/* CHAOS STATE */}
+        <div className="relative min-h-[245px] bg-slate-50/80 px-6 py-5 lg:px-8 lg:py-6">
+          <div className="relative mx-auto h-[205px] max-w-3xl">
+            {/* subtle connector */}
+            <div className="absolute left-[23%] right-[23%] top-1/2 hidden h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-blue-300 to-transparent lg:block" />
             <div
-              className={`absolute inset-0 transition-all duration-500 ${
-                step === 2 ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
+              className={`absolute left-[47%] top-1/2 z-20 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/25 transition-all duration-500 lg:flex ${
+                phase === 1 ? "scale-110 opacity-100" : "scale-95 opacity-80"
               }`}
             >
-              <div className="space-y-2 text-sm">
-                {["certyfikat.pdf", "IMG_2847.jpg", "mail.msg"].map((f, i) => (
-                  <div
-                    key={f}
-                    className={`flex justify-between rounded-md bg-white px-3 py-2 transition ${
-                      step === i ? "ring-1 ring-blue-300" : ""
-                    }`}
-                  >
-                    <span>{f}</span>
-                    <span className="text-[10px] text-slate-400">brak danych</span>
+              <Sparkles className="h-5 w-5" strokeWidth={2.2} />
+            </div>
+
+            {/* incoming document */}
+            <div
+              className={`absolute left-0 top-1/2 z-10 w-[42%] -translate-y-1/2 transition-all duration-700 ${
+                phase === 0
+                  ? "translate-x-0 opacity-100 scale-100"
+                  : phase === 1
+                    ? "translate-x-[42%] opacity-90 scale-[0.96]"
+                    : "translate-x-[78%] opacity-0 scale-[0.9]"
+              }`}
+            >
+              <div className="rounded-[1.25rem] bg-white p-4 shadow-xl shadow-slate-900/10 ring-1 ring-slate-200">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <IconTile tone="amber" className="h-10 w-10 rounded-xl border-0">
+                      <FileText className="h-5 w-5" strokeWidth={2.2} />
+                    </IconTile>
+                    <div>
+                      <p className="text-sm font-black text-slate-950">certyfikat.pdf</p>
+                      <p className="text-[11px] font-medium text-slate-400">dodany po szkoleniu</p>
+                    </div>
                   </div>
-                ))}
+                </div>
+                <div className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 ring-1 ring-amber-100">
+                  jeszcze bez punktów i statusu
+                </div>
               </div>
             </div>
 
-            {/* CLEAN STATE */}
+            {/* processing pulse */}
             <div
-              className={`absolute inset-0 transition-all duration-500 ${
-                step === 2 ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
+              className={`absolute left-[42%] top-1/2 z-30 hidden -translate-y-1/2 transition-all duration-500 lg:block ${
+                phase === 1 ? "opacity-100" : "opacity-0"
               }`}
             >
-              <div className="flex h-full flex-col justify-between">
-                <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:-0.2s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:-0.1s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" />
+              </div>
+            </div>
+
+            {/* finished card */}
+            <div
+              className={`absolute right-0 top-1/2 z-10 w-[58%] -translate-y-1/2 transition-all duration-700 ${
+                isDone ? "translate-x-0 opacity-100 scale-100" : "translate-x-8 opacity-60 scale-[0.97]"
+              }`}
+            >
+              <div className="rounded-[1.35rem] bg-white p-4 shadow-xl shadow-slate-900/10 ring-1 ring-blue-200">
+                <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">Konferencja</p>
-                    <p className="text-[11px] text-slate-400">certyfikat.pdf</p>
+                    <p className="text-base font-black leading-tight text-slate-950">Konferencja kardiologiczna</p>
+                    <p className="mt-1 text-[11px] font-medium text-slate-500">2026 · certyfikat.pdf</p>
                   </div>
-                  <span className="rounded-full bg-blue-600 px-2 py-1 text-xs font-semibold text-white">+20</span>
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-black text-white transition-colors duration-500 ${isDone ? "bg-blue-600" : "bg-slate-300"}`}>+20 pkt</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                  <div className="rounded bg-white py-1">20</div>
-                  <div className="rounded bg-white py-1">PDF</div>
-                  <div className="rounded bg-emerald-100 py-1 text-emerald-700 font-semibold">OK</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: isDone ? "20" : "—", label: "punkty", ok: isDone },
+                    { value: isDone ? "PDF" : "—", label: "plik", ok: isDone },
+                    { value: isDone ? "OK" : "…", label: "status", ok: isDone },
+                  ].map((x) => (
+                    <div key={x.label} className={`rounded-xl px-2 py-2 text-center transition-colors duration-500 ${x.ok ? "bg-emerald-50" : "bg-slate-50"}`}>
+                      <p className={`text-base font-black ${x.value === "OK" ? "text-emerald-600" : "text-slate-950"}`}>{x.value}</p>
+                      <p className="text-[10px] font-medium text-slate-400">{x.label}</p>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="h-1.5 rounded-full bg-white overflow-hidden">
-                  <div className="h-full w-[70%] bg-blue-600" />
+                <div className="mt-3">
+                  <div className="mb-1 flex justify-between text-[10px] font-bold text-slate-500">
+                    <span>Postęp CPD</span>
+                    <span>{isDone ? "71%" : "55%"}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-full rounded-full bg-blue-600 transition-all duration-700" style={{ width: isDone ? "71%" : "55%" }} />
+                  </div>
                 </div>
               </div>
             </div>
