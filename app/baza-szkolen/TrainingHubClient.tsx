@@ -93,6 +93,19 @@ const POINTS_OPTIONS: { value: string; label: string }[] = [
   { value: "20", label: "≥ 20 pkt" },
 ];
 
+const PROFESSION_OPTIONS: { value: string; label: string }[] = [
+  { value: "all", label: "Wszystkie" },
+  { value: "general", label: "Ogólne / dla wszystkich" },
+  { value: "lekarz", label: "Lekarz" },
+  { value: "lekarz dentysta", label: "Lekarz dentysta" },
+  { value: "pielęgniarka", label: "Pielęgniarka / położna" },
+  { value: "farmaceuta", label: "Farmaceuta" },
+  { value: "fizjoterapeuta", label: "Fizjoterapeuta" },
+  { value: "diagnosta", label: "Diagnosta laboratoryjny" },
+  { value: "ratownik", label: "Ratownik medyczny" },
+  { value: "technik", label: "Technik medyczny" },
+];
+
 const VOIVODESHIP_OPTIONS: { value: string; label: string }[] = [
   { value: "all", label: "Cała Polska / online" },
   { value: "dolnośląskie", label: "Dolnośląskie" },
@@ -230,7 +243,6 @@ function formatTone(format: TrainingType | null) {
     return {
       stripe: "bg-amber-400",
       badge: "border-amber-200 bg-amber-50 text-amber-700",
-      icon: "text-amber-600 bg-amber-50 border-amber-100",
     };
   }
 
@@ -238,14 +250,12 @@ function formatTone(format: TrainingType | null) {
     return {
       stripe: "bg-indigo-500",
       badge: "border-indigo-200 bg-indigo-50 text-indigo-700",
-      icon: "text-indigo-600 bg-indigo-50 border-indigo-100",
     };
   }
 
   return {
     stripe: "bg-blue-500",
     badge: "border-blue-100 bg-blue-50 text-blue-700",
-    icon: "text-blue-600 bg-blue-50 border-blue-100",
   };
 }
 
@@ -310,6 +320,11 @@ function labelEnrollment(s: EnrollmentStatus | null) {
   if (s === "waiting_list") return "Lista rezerwowa";
   if (s === "closed") return "Zapisy zamknięte";
   return s;
+}
+
+function labelProfession(p: string | null) {
+  if (!p) return "Dla wszystkich";
+  return p;
 }
 
 function formatPrice(pricePln: number | null) {
@@ -425,6 +440,7 @@ export default function TrainingHubClient() {
   const [minPoints, setMinPoints] = useState("all");
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("90");
   const [place, setPlace] = useState("all");
+  const [professionFilter, setProfessionFilter] = useState("all");
   const [priceMode, setPriceMode] = useState<PriceMode>("all");
 
   const [topic, setTopic] = useState<string>("all");
@@ -491,6 +507,17 @@ export default function TrainingHubClient() {
     }
 
     if (place !== "all") query = query.ilike("voivodeship", `%${place}%`);
+
+    if (professionFilter === "general") {
+      query = query.or(
+        "profession.is.null,profession.ilike.%ogól%,profession.ilike.%wszys%"
+      );
+    } else if (professionFilter !== "all") {
+      query = query.or(
+        `profession.is.null,profession.ilike.%ogól%,profession.ilike.%wszys%,profession.ilike.%${professionFilter}%`
+      );
+    }
+
     if (onlyPartner) query = query.eq("is_partner", true);
     if (topic !== "all") query = query.contains("topics", [topic]);
     if (priceMode === "free") query = query.eq("price_pln", 0);
@@ -747,14 +774,44 @@ export default function TrainingHubClient() {
 
         <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
-            <div className="lg:col-span-4">
+            <div className="lg:col-span-3">
               <label className={labelBase}>Szukaj</label>
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="np. kongres, NIL, radiologia, Warszawa, 10 pkt…"
+                placeholder="np. kongres, NIL, radiologia..."
                 className={fieldBase}
               />
+            </div>
+
+            <div className="lg:col-span-2">
+              <label className={labelBase}>Zawód / specjalizacja</label>
+              <select
+                value={professionFilter}
+                onChange={(e) => setProfessionFilter(e.target.value)}
+                className={fieldBase}
+              >
+                {PROFESSION_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="lg:col-span-2">
+              <label className={labelBase}>Miejsce</label>
+              <select
+                value={place}
+                onChange={(e) => setPlace(e.target.value)}
+                className={fieldBase}
+              >
+                {VOIVODESHIP_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="lg:col-span-2">
@@ -772,7 +829,7 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-1">
               <label className={labelBase}>Forma</label>
               <select
                 value={format}
@@ -780,21 +837,6 @@ export default function TrainingHubClient() {
                 className={fieldBase}
               >
                 {FORMAT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="lg:col-span-2">
-              <label className={labelBase}>Miejsce</label>
-              <select
-                value={place}
-                onChange={(e) => setPlace(e.target.value)}
-                className={fieldBase}
-              >
-                {VOIVODESHIP_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
@@ -922,80 +964,48 @@ export default function TrainingHubClient() {
               </div>
 
               <div>
-                <label className={labelBase}>Zakres</label>
-                <label className="flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-xs font-medium text-slate-600">
-                  <input
-                    type="checkbox"
-                    checked={onlyUpcoming}
-                    onChange={(e) => setOnlyUpcoming(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
-                  />
-                  Nadchodzące
-                </label>
+                <label className={labelBase}>Opcje</label>
+                <div className="flex h-10 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-3">
+                  <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={onlyRecording}
+                      onChange={(e) => setOnlyRecording(e.target.checked)}
+                      className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+                    />
+                    Nagranie
+                  </label>
+
+                  <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={onlyUpcoming}
+                      onChange={(e) => setOnlyUpcoming(e.target.checked)}
+                      className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+                    />
+                    Nadchodzące
+                  </label>
+                </div>
               </div>
             </div>
           ) : null}
 
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-slate-500">
+              Wynik:{" "}
+              <span className="font-semibold text-slate-900">
+                {items.length}
+              </span>
+            </div>
+
             <div className="flex flex-wrap items-center gap-2">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100">
-                <input
-                  type="checkbox"
-                  checked={enrollment === "open"}
-                  onChange={(e) =>
-                    setEnrollment(e.target.checked ? "open" : "all")
-                  }
-                  className="h-3.5 w-3.5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-100"
-                />
-                Zapisy otwarte
-              </label>
-
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-white">
-                <input
-                  type="checkbox"
-                  checked={onlyRecording}
-                  onChange={(e) => setOnlyRecording(e.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
-                />
-                Z nagraniem
-              </label>
-
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-white">
-                <input
-                  type="checkbox"
-                  checked={onlyPartner}
-                  onChange={(e) => setOnlyPartner(e.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
-                />
-                Partnerzy
-              </label>
-
-              {timeWindow !== "all" ? (
-                <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700">
-                  Okno:{" "}
-                  {
-                    TIME_WINDOW_OPTIONS.find((x) => x.value === timeWindow)
-                      ?.label
-                  }
-                </span>
-              ) : null}
-
               <button
                 type="button"
                 onClick={() => setShowMoreFilters((v) => !v)}
-                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
               >
                 {showMoreFilters ? "Mniej filtrów" : "Więcej filtrów"}
               </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="text-sm text-slate-500">
-                Wynik:{" "}
-                <span className="font-semibold text-slate-900">
-                  {items.length}
-                </span>
-              </div>
 
               <button
                 onClick={() => setAddOpen(true)}
@@ -1075,14 +1085,6 @@ export default function TrainingHubClient() {
                           Wkrótce
                         </span>
                       ) : null}
-
-                      {t.is_partner ? (
-                        <span
-                          className={`${pillBase} border-emerald-200 bg-emerald-50 text-emerald-700`}
-                        >
-                          Partner
-                        </span>
-                      ) : null}
                     </div>
 
                     <h3 className="mt-2 line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-slate-950">
@@ -1143,34 +1145,34 @@ export default function TrainingHubClient() {
                       </span>
                     </div>
 
-                    {(hasRec || capacityText) && (
-                      <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-medium text-slate-500">
-                        {hasRec ? (
-                          <span className="rounded-full bg-slate-50 px-2 py-0.5 ring-1 ring-slate-200">
-                            {hasRec}
-                          </span>
-                        ) : null}
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <span className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200">
+                        {labelProfession(t.profession)}
+                      </span>
 
-                        {capacityText ? (
-                          <span className="rounded-full bg-slate-50 px-2 py-0.5 ring-1 ring-slate-200">
-                            {capacityText}
-                          </span>
-                        ) : null}
-                      </div>
-                    )}
+                      {hasRec ? (
+                        <span className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200">
+                          {hasRec}
+                        </span>
+                      ) : null}
 
-                    {Array.isArray(t.topics) && t.topics.length > 0 ? (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {t.topics.slice(0, 5).map((x) => (
-                          <span
-                            key={x}
-                            className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200"
-                          >
-                            {x}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
+                      {capacityText ? (
+                        <span className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200">
+                          {capacityText}
+                        </span>
+                      ) : null}
+
+                      {Array.isArray(t.topics)
+                        ? t.topics.slice(0, 4).map((x) => (
+                            <span
+                              key={x}
+                              className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200"
+                            >
+                              {x}
+                            </span>
+                          ))
+                        : null}
+                    </div>
                   </div>
 
                   <div className="border-t border-slate-100 bg-slate-50/70 p-3 md:w-[300px] md:border-l md:border-t-0">
