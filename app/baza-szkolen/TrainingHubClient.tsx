@@ -1213,6 +1213,7 @@ export default function TrainingHubClient() {
                     </div>
                       </div>
                   </div>
+                  </div>
 
                   <div className="border-t border-slate-100 bg-slate-50/80 p-3 md:w-[300px] md:border-l md:border-t-0">
                     <div className="flex items-center gap-3">
