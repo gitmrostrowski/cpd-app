@@ -591,6 +591,63 @@ export default function TrainingHubClient() {
     return ["all", ...Array.from(set).sort((a, b) => a.localeCompare(b, "pl"))];
   }, [items]);
 
+  const sidebarStats = useMemo(() => {
+    const totalPoints = items.reduce(
+      (sum, t) => sum + (typeof t.points === "number" ? t.points : 0),
+      0
+    );
+
+    return {
+      totalPoints,
+      online: items.filter((t) => t.format === "online").length,
+      stationary: items.filter((t) => t.format === "stacjonarne").length,
+      open: items.filter((t) => t.enrollment_status === "open").length,
+    };
+  }, [items]);
+
+  const nextTrainings = useMemo(() => items.slice(0, 4), [items]);
+
+  const calendarPreview = useMemo(() => {
+    const dated = items
+      .filter((t) => t.start_date)
+      .sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
+
+    const baseDate = dated[0]?.start_date
+      ? new Date(`${dated[0].start_date}T00:00:00`)
+      : new Date();
+
+    const year = baseDate.getFullYear();
+    const month = baseDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const eventMap = new Map<number, TrainingType | null>();
+
+    for (const item of dated) {
+      if (!item.start_date) continue;
+
+      const d = new Date(`${item.start_date}T00:00:00`);
+      if (d.getFullYear() === year && d.getMonth() === month) {
+        eventMap.set(d.getDate(), item.format);
+      }
+    }
+
+    const monthLabel = new Intl.DateTimeFormat("pl-PL", {
+      month: "long",
+      year: "numeric",
+    }).format(baseDate);
+
+    return {
+      monthLabel,
+      days: Array.from({ length: daysInMonth }, (_, i) => {
+        const day = i + 1;
+        return {
+          day,
+          format: eventMap.get(day) ?? null,
+          hasEvent: eventMap.has(day),
+        };
+      }),
+    };
+  }, [items]);
+
   const chooseTraining = async (t: Training) => {
     if (!user) {
       alert("Zaloguj się, żeby dodać szkolenie do planu.");
@@ -1054,220 +1111,379 @@ export default function TrainingHubClient() {
           )}
         </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {items.map((t) => {
-            const dd = daysDiffFromToday(t.start_date);
-            const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_310px]">
+          <div className="space-y-3">
+            {items.map((t) => {
+              const dd = daysDiffFromToday(t.start_date);
+              const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
 
-            const price = formatPrice(
-              typeof t.price_pln === "number" ? t.price_pln : null
-            );
+              const price = formatPrice(
+                typeof t.price_pln === "number" ? t.price_pln : null
+              );
 
-            const enr = labelEnrollment(
-              (t.enrollment_status ?? null) as EnrollmentStatus | null
-            );
+              const enr = labelEnrollment(
+                (t.enrollment_status ?? null) as EnrollmentStatus | null
+              );
 
-            const date = dateParts(t.start_date);
-            const range = dateRangeShort(t.start_date, t.end_date);
-            const tone = formatTone(t.format);
+              const date = dateParts(t.start_date);
+              const range = dateRangeShort(t.start_date, t.end_date);
+              const tone = formatTone(t.format);
 
-            const capacityText =
-              typeof t.capacity === "number" ? `Limit ${t.capacity}` : null;
+              const capacityText =
+                typeof t.capacity === "number" ? `Limit ${t.capacity}` : null;
 
-            return (
-              <article
-                key={t.id}
-                className="group flex min-h-[230px] flex-col rounded-[1.35rem] border border-slate-200/90 bg-white p-4 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-[1px] hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/6"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <div className="shrink-0 rounded-2xl bg-slate-50 px-3 py-2 ring-1 ring-slate-200/90">
-                      <div className={`mb-1 h-1.5 w-8 rounded-full ${tone.dateTop}`} />
-                      <div className="text-2xl font-semibold leading-none tracking-[-0.05em] text-slate-950">
-                        {date.day}
-                      </div>
-                      <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        {date.month}
+              return (
+                <article
+                  key={t.id}
+                  className="group rounded-[1.35rem] border border-slate-200/90 bg-white p-4 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-[1px] hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/6"
+                >
+                  <div className="flex gap-4">
+                    <div className="shrink-0">
+                      <div className="flex w-[74px] flex-col items-center rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-200/90">
+                        <span className={`mb-2 h-1.5 w-8 rounded-full ${tone.dateTop}`} />
+                        <span className="text-3xl font-semibold leading-none tracking-[-0.05em] text-slate-950">
+                          {date.day}
+                        </span>
+                        <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          {date.month}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className={`${pillBase} ${tone.badge}`}>
-                          <FormatIcon format={t.format} className="mr-1 h-3 w-3" />
-                          {labelType(t.format)}
-                        </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className={`${pillBase} ${tone.badge}`}>
+                              <FormatIcon
+                                format={t.format}
+                                className="mr-1 h-3 w-3"
+                              />
+                              {labelType(t.format)}
+                            </span>
 
-                        {enr ? (
-                          <span
-                            className={`${pillBase} ${statusTone(
-                              t.enrollment_status
-                            )}`}
-                          >
-                            <CheckCircle2
-                              className="mr-1 h-3 w-3"
-                              strokeWidth={2}
-                            />
-                            {enr}
+                            {enr ? (
+                              <span
+                                className={`${pillBase} ${statusTone(
+                                  t.enrollment_status
+                                )}`}
+                              >
+                                <CheckCircle2
+                                  className="mr-1 h-3 w-3"
+                                  strokeWidth={2}
+                                />
+                                {enr}
+                              </span>
+                            ) : null}
+
+                            {soon ? (
+                              <span
+                                className={`${pillBase} border-amber-200 bg-amber-50 text-amber-700`}
+                              >
+                                <Clock3
+                                  className="mr-1 h-3 w-3"
+                                  strokeWidth={2}
+                                />
+                                Wkrótce
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <h3 className="mt-2 line-clamp-2 text-[15.5px] font-semibold leading-snug tracking-[-0.01em] text-slate-950">
+                            {t.title}
+                          </h3>
+                        </div>
+
+                        <div className="hidden shrink-0 rounded-2xl bg-blue-50/70 px-3 py-2 text-right ring-1 ring-blue-100 md:block">
+                          <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-blue-500">
+                            CPD
+                          </div>
+                          <div className="mt-0.5 whitespace-nowrap text-lg font-semibold leading-none tracking-[-0.03em] text-blue-700">
+                            {typeof t.points === "number" ? t.points : "—"}
+                            <span className="ml-1 text-xs font-semibold">
+                              pkt
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
+                        {range ? (
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <span
+                              className={`${metaIconBase} border-slate-200 text-slate-500`}
+                            >
+                              <CalendarDays
+                                className="h-3 w-3"
+                                strokeWidth={2}
+                              />
+                            </span>
+                            <span className="truncate font-semibold text-slate-700">
+                              {range}
+                            </span>
                           </span>
                         ) : null}
 
-                        {soon ? (
-                          <span
-                            className={`${pillBase} border-amber-200 bg-amber-50 text-amber-700`}
-                          >
-                            <Clock3 className="mr-1 h-3 w-3" strokeWidth={2} />
-                            Wkrótce
+                        {t.organizer ? (
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <span
+                              className={`${metaIconBase} border-slate-200 text-slate-500`}
+                            >
+                              <Building2 className="h-3 w-3" strokeWidth={2} />
+                            </span>
+                            <span className="truncate font-semibold text-slate-700">
+                              {t.organizer}
+                            </span>
                           </span>
                         ) : null}
+
+                        {t.voivodeship ? (
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <span
+                              className={`${metaIconBase} border-slate-200 text-slate-500`}
+                            >
+                              <MapPin className="h-3 w-3" strokeWidth={2} />
+                            </span>
+                            <span className="truncate font-semibold text-slate-700">
+                              {t.voivodeship}
+                            </span>
+                          </span>
+                        ) : null}
+
+                        <span className="inline-flex min-w-0 items-center gap-1.5">
+                          <span
+                            className={`${metaIconBase} border-slate-200 text-slate-500`}
+                          >
+                            <Award className="h-3 w-3" strokeWidth={2} />
+                          </span>
+                          <span className="truncate">
+                            {labelCategory(t.category)}
+                            {price ? (
+                              <>
+                                {" · "}
+                                <span className="font-semibold text-slate-700">
+                                  {price}
+                                </span>
+                              </>
+                            ) : null}
+                          </span>
+                        </span>
                       </div>
 
-                      <h3 className="mt-2 line-clamp-2 text-[15.5px] font-semibold leading-snug tracking-[-0.01em] text-slate-950">
-                        {t.title}
-                      </h3>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 rounded-2xl bg-blue-50/80 px-3 py-2 text-right ring-1 ring-blue-100">
-                    <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-blue-500">
-                      CPD
-                    </div>
-                    <div className="mt-0.5 whitespace-nowrap text-lg font-semibold leading-none tracking-[-0.03em] text-blue-700">
-                      {typeof t.points === "number" ? t.points : "—"}
-                      <span className="ml-1 text-xs font-semibold">pkt</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-3 grid gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500 sm:grid-cols-2">
-                  {range ? (
-                    <span className="inline-flex min-w-0 items-center gap-1.5">
-                      <span
-                        className={`${metaIconBase} border-slate-200 text-slate-500`}
-                      >
-                        <CalendarDays className="h-3 w-3" strokeWidth={2} />
-                      </span>
-                      <span className="truncate font-semibold text-slate-700">
-                        {range}
-                      </span>
-                    </span>
-                  ) : null}
-
-                  {t.organizer ? (
-                    <span className="inline-flex min-w-0 items-center gap-1.5">
-                      <span
-                        className={`${metaIconBase} border-slate-200 text-slate-500`}
-                      >
-                        <Building2 className="h-3 w-3" strokeWidth={2} />
-                      </span>
-                      <span className="truncate font-semibold text-slate-700">
-                        {t.organizer}
-                      </span>
-                    </span>
-                  ) : null}
-
-                  {t.voivodeship ? (
-                    <span className="inline-flex min-w-0 items-center gap-1.5">
-                      <span
-                        className={`${metaIconBase} border-slate-200 text-slate-500`}
-                      >
-                        <MapPin className="h-3 w-3" strokeWidth={2} />
-                      </span>
-                      <span className="truncate font-semibold text-slate-700">
-                        {t.voivodeship}
-                      </span>
-                    </span>
-                  ) : null}
-
-                  <span className="inline-flex min-w-0 items-center gap-1.5">
-                    <span
-                      className={`${metaIconBase} border-slate-200 text-slate-500`}
-                    >
-                      <Award className="h-3 w-3" strokeWidth={2} />
-                    </span>
-                    <span className="truncate">
-                      {labelCategory(t.category)}
-                      {price ? (
-                        <>
-                          {" · "}
-                          <span className="font-semibold text-slate-700">
-                            {price}
-                          </span>
-                        </>
-                      ) : null}
-                    </span>
-                  </span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  <span className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
-                    {labelProfession(t.profession)}
-                  </span>
-
-                  {capacityText ? (
-                    <span className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
-                      {capacityText}
-                    </span>
-                  ) : null}
-
-                  {Array.isArray(t.topics)
-                    ? t.topics.slice(0, 3).map((x) => (
-                        <span
-                          key={x}
-                          className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80"
-                        >
-                          {x}
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        <span className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
+                          {labelProfession(t.profession)}
                         </span>
-                      ))
-                    : null}
-                </div>
 
-                <div className="mt-auto pt-4">
-                  <div className="flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="text-[11px] leading-snug text-slate-400">
-                      Plan CPD ≠ zapis u organizatora.
-                    </div>
+                        {capacityText ? (
+                          <span className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
+                            {capacityText}
+                          </span>
+                        ) : null}
 
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      {t.url ? (
-                        <a
-                          href={t.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
-                        >
-                          Organizator
-                        </a>
-                      ) : (
-                        <button
-                          className="inline-flex h-9 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-400 shadow-sm"
-                          disabled
-                          type="button"
-                        >
-                          Brak linku
-                        </button>
-                      )}
+                        {Array.isArray(t.topics)
+                          ? t.topics.slice(0, 3).map((x) => (
+                              <span
+                                key={x}
+                                className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80"
+                              >
+                                {x}
+                              </span>
+                            ))
+                          : null}
+                      </div>
 
-                      <button
-                        onClick={() => chooseTraining(t)}
-                        className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
-                        type="button"
-                        title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
-                      >
-                        Do planu
-                      </button>
+                      <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="text-[11px] leading-snug text-slate-400">
+                          Plan CPD ≠ zapis u organizatora.
+                        </div>
+
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          {t.url ? (
+                            <a
+                              href={t.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
+                            >
+                              Organizator
+                            </a>
+                          ) : (
+                            <button
+                              className="inline-flex h-9 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-400 shadow-sm"
+                              disabled
+                              type="button"
+                            >
+                              Brak linku
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => chooseTraining(t)}
+                            className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
+                            type="button"
+                            title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
+                          >
+                            Do planu
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </article>
-            );
-          })}
+                </article>
+              );
+            })}
 
-          {!fetching && items.length === 0 && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm shadow-slate-900/5 xl:col-span-2">
-              Brak wyników. Zmień filtry albo wybierz „Dowolnie” w Terminie.
+            {!fetching && items.length === 0 && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm shadow-slate-900/5">
+                Brak wyników. Zmień filtry albo wybierz „Dowolnie” w Terminie.
+              </div>
+            )}
+          </div>
+
+          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+            <div className="overflow-hidden rounded-[1.35rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white p-4 shadow-sm shadow-blue-950/5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
+                    Planowanie
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em] text-slate-950">
+                    Najbliższe terminy
+                  </h2>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                    Szybki podgląd wydarzeń z aktualnych filtrów.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-white px-3 py-2 text-right ring-1 ring-blue-100">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-500">
+                    Wynik
+                  </div>
+                  <div className="text-2xl font-semibold leading-none text-blue-700">
+                    {items.length}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200/80">
+                  <div className="text-lg font-semibold text-slate-950">
+                    {sidebarStats.totalPoints}
+                  </div>
+                  <div className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                    pkt
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200/80">
+                  <div className="text-lg font-semibold text-slate-950">
+                    {sidebarStats.online}
+                  </div>
+                  <div className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                    online
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200/80">
+                  <div className="text-lg font-semibold text-slate-950">
+                    {sidebarStats.open}
+                  </div>
+                  <div className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                    zapisy
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
+
+            <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-slate-950">
+                    Kalendarz
+                  </div>
+                  <div className="text-xs capitalize text-slate-500">
+                    {calendarPreview.monthLabel}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                  <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                  online
+                  <span className="inline-flex h-2 w-2 rounded-full bg-amber-400" />
+                  stacj.
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-7 gap-1">
+                {calendarPreview.days.map((day) => {
+                  const dayTone =
+                    day.format === "stacjonarne"
+                      ? "bg-amber-100 text-amber-800 ring-amber-200"
+                      : day.format === "hybrydowe"
+                      ? "bg-indigo-100 text-indigo-800 ring-indigo-200"
+                      : day.hasEvent
+                      ? "bg-blue-100 text-blue-800 ring-blue-200"
+                      : "bg-slate-50 text-slate-400 ring-slate-100";
+
+                  return (
+                    <div
+                      key={day.day}
+                      className={`flex aspect-square items-center justify-center rounded-xl text-[11px] font-semibold ring-1 ${dayTone}`}
+                    >
+                      {day.day}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+              <div className="text-sm font-semibold text-slate-950">
+                Najbliżej w planie
+              </div>
+
+              <div className="mt-3 space-y-2.5">
+                {nextTrainings.map((t) => {
+                  const d = dateParts(t.start_date);
+                  const tone = formatTone(t.format);
+
+                  return (
+                    <div
+                      key={t.id}
+                      className="flex gap-3 rounded-2xl bg-slate-50/80 p-2.5 ring-1 ring-slate-200/80"
+                    >
+                      <div className="flex w-11 shrink-0 flex-col items-center rounded-xl bg-white py-1.5 ring-1 ring-slate-200">
+                        <span className={`mb-1 h-1 w-5 rounded-full ${tone.dateTop}`} />
+                        <span className="text-sm font-semibold leading-none text-slate-950">
+                          {d.day}
+                        </span>
+                        <span className="mt-0.5 text-[9px] font-semibold uppercase text-slate-400">
+                          {d.month}
+                        </span>
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="line-clamp-2 text-xs font-semibold leading-snug text-slate-800">
+                          {t.title}
+                        </div>
+                        <div className="mt-1 text-[11px] text-slate-500">
+                          {typeof t.points === "number" ? t.points : "—"} pkt ·{" "}
+                          {labelType(t.format)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {nextTrainings.length === 0 ? (
+                  <div className="text-xs text-slate-500">
+                    Brak szkoleń w aktualnych filtrach.
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
 
