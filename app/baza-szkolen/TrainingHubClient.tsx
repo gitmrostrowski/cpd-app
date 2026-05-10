@@ -475,6 +475,9 @@ export default function TrainingHubClient() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [addSubmitting, setAddSubmitting] = useState(false);
+  const [selectedCalendarTrainingId, setSelectedCalendarTrainingId] = useState<
+    string | null
+  >(null);
 
   const [fTitle, setFTitle] = useState("");
   const [fOrganizer, setFOrganizer] = useState("");
@@ -607,46 +610,74 @@ export default function TrainingHubClient() {
 
   const nextTrainings = useMemo(() => items.slice(0, 4), [items]);
 
-  const calendarPreview = useMemo(() => {
+  const calendarMonths = useMemo(() => {
     const dated = items
       .filter((t) => t.start_date)
       .sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
 
-    const baseDate = dated[0]?.start_date
+    const firstDate = dated[0]?.start_date
       ? new Date(`${dated[0].start_date}T00:00:00`)
       : new Date();
 
-    const year = baseDate.getFullYear();
-    const month = baseDate.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const eventMap = new Map<number, TrainingType | null>();
+    const startMonth = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
+    const eventMap = new Map<string, Training[]>();
 
     for (const item of dated) {
       if (!item.start_date) continue;
-
-      const d = new Date(`${item.start_date}T00:00:00`);
-      if (d.getFullYear() === year && d.getMonth() === month) {
-        eventMap.set(d.getDate(), item.format);
-      }
+      const arr = eventMap.get(item.start_date) ?? [];
+      arr.push(item);
+      eventMap.set(item.start_date, arr);
     }
 
-    const monthLabel = new Intl.DateTimeFormat("pl-PL", {
-      month: "long",
-      year: "numeric",
-    }).format(baseDate);
+    return Array.from({ length: 4 }, (_, monthOffset) => {
+      const cursor = new Date(
+        startMonth.getFullYear(),
+        startMonth.getMonth() + monthOffset,
+        1
+      );
 
-    return {
-      monthLabel,
-      days: Array.from({ length: daysInMonth }, (_, i) => {
+      const year = cursor.getFullYear();
+      const month = cursor.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+
+      const monthLabel = new Intl.DateTimeFormat("pl-PL", {
+        month: "long",
+        year: "numeric",
+      }).format(cursor);
+
+      const blanks = Array.from({ length: firstWeekday }, () => null);
+
+      const days = Array.from({ length: daysInMonth }, (_, i) => {
         const day = i + 1;
+        const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+          day
+        ).padStart(2, "0")}`;
+        const events = eventMap.get(dateKey) ?? [];
+
         return {
           day,
-          format: eventMap.get(day) ?? null,
-          hasEvent: eventMap.has(day),
+          dateKey,
+          events,
+          primary: events[0] ?? null,
         };
-      }),
-    };
+      });
+
+      return {
+        monthLabel,
+        days: [...blanks, ...days],
+      };
+    });
   }, [items]);
+
+  const selectedCalendarTraining = useMemo(() => {
+    if (!selectedCalendarTrainingId) return nextTrainings[0] ?? null;
+    return (
+      items.find((item) => item.id === selectedCalendarTrainingId) ??
+      nextTrainings[0] ??
+      null
+    );
+  }, [items, nextTrainings, selectedCalendarTrainingId]);
 
   const chooseTraining = async (t: Training) => {
     if (!user) {
@@ -1294,9 +1325,7 @@ export default function TrainingHubClient() {
                       </div>
 
                       <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="text-[11px] leading-snug text-slate-400">
-                          Plan CPD ≠ zapis u organizatora.
-                        </div>
+                        <div className="hidden sm:block" />
 
                         <div className="flex flex-col gap-2 sm:flex-row">
                           {t.url ? (
@@ -1324,7 +1353,7 @@ export default function TrainingHubClient() {
                             type="button"
                             title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
                           >
-                            Do planu
+                            Dodaj do planu
                           </button>
                         </div>
                       </div>
@@ -1400,10 +1429,10 @@ export default function TrainingHubClient() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-slate-950">
-                    Kalendarz
+                    Kalendarz szkoleń
                   </div>
-                  <div className="text-xs capitalize text-slate-500">
-                    {calendarPreview.monthLabel}
+                  <div className="text-xs text-slate-500">
+                    4 miesiące z aktualnych filtrów
                   </div>
                 </div>
 
@@ -1415,27 +1444,129 @@ export default function TrainingHubClient() {
                 </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-7 gap-1">
-                {calendarPreview.days.map((day) => {
-                  const dayTone =
-                    day.format === "stacjonarne"
-                      ? "bg-amber-100 text-amber-800 ring-amber-200"
-                      : day.format === "hybrydowe"
-                      ? "bg-indigo-100 text-indigo-800 ring-indigo-200"
-                      : day.hasEvent
-                      ? "bg-blue-100 text-blue-800 ring-blue-200"
-                      : "bg-slate-50 text-slate-400 ring-slate-100";
-
-                  return (
-                    <div
-                      key={day.day}
-                      className={`flex aspect-square items-center justify-center rounded-xl text-[11px] font-semibold ring-1 ${dayTone}`}
-                    >
-                      {day.day}
+              <div className="mt-4 space-y-4">
+                {calendarMonths.map((month) => (
+                  <div key={month.monthLabel}>
+                    <div className="mb-2 text-xs font-semibold capitalize text-slate-700">
+                      {month.monthLabel}
                     </div>
-                  );
-                })}
+
+                    <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-300">
+                      {["P", "W", "Ś", "C", "P", "S", "N"].map((d, idx) => (
+                        <div key={`${month.monthLabel}-${d}-${idx}`}>{d}</div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1">
+                      {month.days.map((day, index) => {
+                        if (!day) {
+                          return (
+                            <div
+                              key={`${month.monthLabel}-empty-${index}`}
+                              className="aspect-square"
+                            />
+                          );
+                        }
+
+                        const format = day.primary?.format ?? null;
+                        const hasEvent = day.events.length > 0;
+                        const isSelected =
+                          selectedCalendarTraining?.start_date === day.dateKey;
+
+                        const dayTone =
+                          format === "stacjonarne"
+                            ? "bg-amber-100 text-amber-800 ring-amber-200 hover:bg-amber-200"
+                            : format === "hybrydowe"
+                            ? "bg-indigo-100 text-indigo-800 ring-indigo-200 hover:bg-indigo-200"
+                            : hasEvent
+                            ? "bg-blue-100 text-blue-800 ring-blue-200 hover:bg-blue-200"
+                            : "bg-slate-50 text-slate-400 ring-slate-100";
+
+                        return (
+                          <button
+                            key={day.dateKey}
+                            type="button"
+                            disabled={!hasEvent}
+                            onMouseEnter={() =>
+                              day.primary
+                                ? setSelectedCalendarTrainingId(day.primary.id)
+                                : null
+                            }
+                            onClick={() =>
+                              day.primary
+                                ? setSelectedCalendarTrainingId(day.primary.id)
+                                : null
+                            }
+                            className={`relative flex aspect-square items-center justify-center rounded-xl text-[11px] font-semibold ring-1 transition disabled:cursor-default ${dayTone} ${
+                              isSelected ? "outline outline-2 outline-blue-400" : ""
+                            }`}
+                            title={
+                              day.primary
+                                ? `${day.primary.title} (${day.events.length} wydarzenie${
+                                    day.events.length > 1 ? "a" : ""
+                                  })`
+                                : undefined
+                            }
+                          >
+                            {day.day}
+                            {day.events.length > 1 ? (
+                              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[9px] font-bold text-slate-600 shadow-sm ring-1 ring-slate-200">
+                                {day.events.length}
+                              </span>
+                            ) : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
+
+              {selectedCalendarTraining ? (
+                <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-500">
+                    Wybrane wydarzenie
+                  </div>
+
+                  <div className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-slate-950">
+                    {selectedCalendarTraining.title}
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                    <span>{formatDate(selectedCalendarTraining.start_date)}</span>
+                    <span>·</span>
+                    <span>
+                      {typeof selectedCalendarTraining.points === "number"
+                        ? selectedCalendarTraining.points
+                        : "—"}{" "}
+                      pkt
+                    </span>
+                    <span>·</span>
+                    <span>{labelType(selectedCalendarTraining.format)}</span>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-2">
+                    {selectedCalendarTraining.url ? (
+                      <a
+                        href={selectedCalendarTraining.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                      >
+                        Organizator
+                      </a>
+                    ) : null}
+
+                    <button
+                      onClick={() => chooseTraining(selectedCalendarTraining)}
+                      className="inline-flex h-9 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50"
+                      type="button"
+                    >
+                      Dodaj do planu
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
