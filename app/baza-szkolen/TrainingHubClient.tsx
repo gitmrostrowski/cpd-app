@@ -1,4 +1,3 @@
-// app/baza-szkolen/TrainingHubClient.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -36,10 +35,7 @@ type Training = {
   profession: string | null;
   voivodeship: string | null;
 
-  // ✅ JEDNO pole w UI: url
   url: string | null;
-
-  // legacy (zostawiamy, żeby stare dane/kolumny nie powodowały problemów)
   external_url?: string | null;
 
   is_partner: boolean | null;
@@ -57,7 +53,6 @@ type Training = {
   updated_at: string | null;
 };
 
-// --- Opcje filtrów ---
 const FORMAT_OPTIONS: { value: "all" | TrainingType; label: string }[] = [
   { value: "all", label: "Wszystkie" },
   { value: "online", label: "Online / webinar" },
@@ -127,6 +122,70 @@ function formatDate(d: string | null) {
   return `${day}.${m}.${y}`;
 }
 
+function dateParts(d: string | null) {
+  if (!d) {
+    return {
+      day: "—",
+      month: "",
+      weekday: "",
+      year: "",
+    };
+  }
+
+  const [y, m, day] = d.split("-").map(Number);
+  if (!y || !m || !day) {
+    return {
+      day: "—",
+      month: "",
+      weekday: "",
+      year: "",
+    };
+  }
+
+  const date = new Date(y, m - 1, day);
+
+  const month = new Intl.DateTimeFormat("pl-PL", {
+    month: "short",
+  })
+    .format(date)
+    .replace(".", "")
+    .toUpperCase();
+
+  const weekday = new Intl.DateTimeFormat("pl-PL", {
+    weekday: "short",
+  })
+    .format(date)
+    .replace(".", "");
+
+  return {
+    day: String(day).padStart(2, "0"),
+    month,
+    weekday,
+    year: String(y),
+  };
+}
+
+function dateRangeShort(start: string | null, end: string | null) {
+  if (!start && !end) return null;
+  if (start && end && start !== end) {
+    return `${formatDate(start)} – ${formatDate(end)}`;
+  }
+  return formatDate(start ?? end);
+}
+
+function statusTone(status: EnrollmentStatus | null | undefined) {
+  if (status === "open") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+  if (status === "waiting_list") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+  if (status === "closed") {
+    return "border-slate-200 bg-slate-50 text-slate-500";
+  }
+  return "border-slate-200 bg-slate-50 text-slate-500";
+}
+
 function toYYYYMMDD(dt: Date) {
   const yyyy = dt.getFullYear();
   const mm = String(dt.getMonth() + 1).padStart(2, "0");
@@ -151,10 +210,12 @@ function daysDiffFromToday(yyyyMmDd: string | null) {
   if (!yyyyMmDd) return null;
   const [y, m, d] = yyyyMmDd.split("-").map(Number);
   if (!y || !m || !d) return null;
+
   const start = new Date(y, m - 1, d);
   const today = new Date();
   start.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
+
   const diffMs = start.getTime() - today.getTime();
   return Math.round(diffMs / (1000 * 60 * 60 * 24));
 }
@@ -184,13 +245,6 @@ function labelEnrollment(s: EnrollmentStatus | null) {
   if (s === "waiting_list") return "Lista rezerwowa";
   if (s === "closed") return "Zapisy zamknięte";
   return s;
-}
-
-function termLabel(start: string | null, end: string | null) {
-  if (!start && !end) return "Termin: —";
-  if (start && end && start !== end)
-    return `Termin: ${formatDate(start)} – ${formatDate(end)}`;
-  return `Termin: ${formatDate(start ?? end)}`;
 }
 
 function formatPrice(pricePln: number | null) {
@@ -228,12 +282,10 @@ function parseTopics(input: string) {
 function normalizeUrl(raw: string | null | undefined) {
   const v = String(raw ?? "").trim();
   if (!v) return null;
-  // jeśli ktoś wklei "onet.pl" -> zrób z tego https://onet.pl
   if (!/^https?:\/\//i.test(v)) return `https://${v}`;
   return v;
 }
 
-// ✅ normalizacja wyników z Supabase
 function normalizeTrainingRow(r: any): Training {
   const price =
     typeof r.price_pln === "number"
@@ -266,7 +318,6 @@ function normalizeTrainingRow(r: any): Training {
     profession: r.profession ?? null,
     voivodeship: r.voivodeship ?? null,
 
-    // ✅ priorytet: url, fallback: external_url
     url: normalizeUrl(r.url ?? legacyExternal),
     external_url: normalizeUrl(legacyExternal),
 
@@ -280,7 +331,7 @@ function normalizeTrainingRow(r: any): Training {
       : (capacity as number | null),
     enrollment_status: (r.enrollment_status ?? null) as EnrollmentStatus | null,
 
-    approval_status: (r.approval_status ?? null) as ApprovalStatus | null,
+    approval_status: (r.apval_status ?? r.approval_status ?? null) as ApprovalStatus | null,
     submitted_by: r.submitted_by ?? null,
 
     created_at: r.created_at,
@@ -296,7 +347,6 @@ export default function TrainingHubClient() {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // filtry
   const [q, setQ] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("date_asc");
   const [organizer, setOrganizer] = useState("all");
@@ -314,7 +364,6 @@ export default function TrainingHubClient() {
   const [onlyUpcoming, setOnlyUpcoming] = useState(true);
   const [onlyRecording, setOnlyRecording] = useState(false);
 
-  // modal: dodawanie szkolenia
   const [addOpen, setAddOpen] = useState(false);
   const [addSubmitting, setAddSubmitting] = useState(false);
 
@@ -345,7 +394,6 @@ export default function TrainingHubClient() {
       .eq("approval_status", "approved")
       .limit(200);
 
-    // sortowanie
     if (sortBy === "date_asc")
       query = query.order("start_date", { ascending: true });
     if (sortBy === "date_desc")
@@ -357,14 +405,12 @@ export default function TrainingHubClient() {
     if (sortBy === "newest")
       query = query.order("created_at", { ascending: false });
 
-    // filtry
     if (organizer !== "all") query = query.ilike("organizer", `%${organizer}%`);
     if (format !== "all") query = query.eq("format", format);
     if (category !== "all") query = query.eq("category", category);
 
     if (minPoints !== "all") query = query.gte("points", Number(minPoints));
 
-    // okno czasu 7/30/90
     if (timeWindow !== "all") {
       const maxDate = addDaysYYYYMMDD(Number(timeWindow));
       query = query.gte("start_date", todayStr).lte("start_date", maxDate);
@@ -473,10 +519,12 @@ export default function TrainingHubClient() {
     }
 
     const title = fTitle.trim();
+
     if (!title) {
       alert("Podaj tytuł szkolenia.");
       return;
     }
+
     if (!fStart) {
       alert("Podaj datę rozpoczęcia.");
       return;
@@ -491,10 +539,12 @@ export default function TrainingHubClient() {
       alert("Nieprawidłowa liczba punktów.");
       return;
     }
+
     if (priceNum !== null && (Number.isNaN(priceNum) || priceNum < 0)) {
       alert("Nieprawidłowa cena.");
       return;
     }
+
     if (capNum !== null && (Number.isNaN(capNum) || capNum < 0)) {
       alert("Nieprawidłowy limit miejsc.");
       return;
@@ -514,10 +564,7 @@ export default function TrainingHubClient() {
       end_date: fEnd || null,
       voivodeship: fVoiv.trim() || null,
 
-      // ✅ jedno źródło prawdy dla UI
       url,
-
-      // ✅ legacy – niech stare miejsca też mają wartość
       external_url: url,
 
       topics: parseTopics(fTopics),
@@ -528,7 +575,7 @@ export default function TrainingHubClient() {
 
       approval_status: "pending" as ApprovalStatus,
       submitted_by: user.id,
-      submitted_email: user.email ?? null
+      submitted_email: user.email ?? null,
     };
 
     const { error } = await supabase.from("trainings").insert(payload);
@@ -542,7 +589,6 @@ export default function TrainingHubClient() {
 
     setAddOpen(false);
 
-    // reset
     setFTitle("");
     setFOrganizer("");
     setFPoints("0");
@@ -563,64 +609,65 @@ export default function TrainingHubClient() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <div className="text-sm text-slate-600">Sprawdzam sesję…</div>
+      <div className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
+        <div className="rounded-[1.45rem] border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm shadow-slate-900/5">
+          Sprawdzam sesję…
+        </div>
       </div>
     );
   }
 
   const fieldBase =
-    "mt-1 h-10 w-full rounded-xl border border-slate-300 bg-slate-50/60 px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 shadow-inner shadow-slate-900/5 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100";
+    "mt-1 h-10 w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 shadow-inner shadow-slate-900/5 transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100";
 
-  const RIGHT_W = "md:w-[340px]";
-  const BTN_SECONDARY_W = "md:w-[112px]";
-  const BTN_PRIMARY_W = "md:w-[168px]"; // = + Dodaj do planu
-  const BTN_FILTER_W = "md:w-[168px]"; // = Filtruj
-  const BTN_ADD_W = "md:w-[168px]"; // = Dodaj szkolenie
+  const labelBase =
+    "text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500";
+
+  const pillBase =
+    "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold leading-none";
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-b from-white to-slate-50">
-      <div className="mx-auto max-w-6xl px-4 pb-16 pt-8">
-        {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-              Baza szkoleń
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              Znajdź kursy i webinary z punktami edukacyjnymi. Wybierz szkolenie,
-              a trafi do planu (nie zalicza się automatycznie).
-            </p>
-          </div>
+    <div className="min-h-[calc(100vh-64px)] bg-slate-50">
+      <div className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-900/5 sm:p-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">
+                Baza CRPE
+              </p>
+              <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                Baza szkoleń
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                Znajdź kursy, webinary i wydarzenia z punktami edukacyjnymi.
+                Wybierz szkolenie, a trafi do Twojego planu CPD.
+              </p>
+            </div>
 
-          <div className="flex gap-2">
-            <Link
-              href="/aktywnosci"
-              className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
-            >
-              Aktywności
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/aktywnosci"
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 active:scale-95"
+              >
+                Aktywności
+              </Link>
 
-            <button
-              onClick={load}
-              className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-60"
-              disabled={fetching}
-              type="button"
-            >
-              {fetching ? "Odświeżam…" : "Odśwież"}
-            </button>
+              <button
+                onClick={load}
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-60"
+                disabled={fetching}
+                type="button"
+              >
+                {fetching ? "Odświeżam…" : "Odśwież"}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Filtry */}
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          {/* ✅ 2 linie pól: (Szukaj + 3 krótkie) + (6 krótkich). Przyciski osobno */}
+        <div className="mt-5 rounded-[1.45rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-            {/* LINIA 1 */}
             <div className="md:col-span-6">
-              <label className="text-xs font-extrabold text-slate-800">
-                Szukaj
-              </label>
+              <label className={labelBase}>Szukaj</label>
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
@@ -630,9 +677,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">
-                Sortowanie
-              </label>
+              <label className={labelBase}>Sortowanie</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortBy)}
@@ -647,9 +692,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">
-                Organizator
-              </label>
+              <label className={labelBase}>Organizator</label>
               <select
                 value={organizer}
                 onChange={(e) => setOrganizer(e.target.value)}
@@ -664,7 +707,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Forma</label>
+              <label className={labelBase}>Forma</label>
               <select
                 value={format}
                 onChange={(e) => setFormat(e.target.value as any)}
@@ -678,11 +721,8 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            {/* LINIA 2 (6 równych) */}
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">
-                Kategoria
-              </label>
+              <label className={labelBase}>Kategoria</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as any)}
@@ -697,7 +737,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Punkty</label>
+              <label className={labelBase}>Punkty</label>
               <select
                 value={minPoints}
                 onChange={(e) => setMinPoints(e.target.value)}
@@ -712,7 +752,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Termin</label>
+              <label className={labelBase}>Termin</label>
               <select
                 value={timeWindow}
                 onChange={(e) => setTimeWindow(e.target.value as TimeWindow)}
@@ -727,7 +767,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Cena</label>
+              <label className={labelBase}>Cena</label>
               <select
                 value={priceMode}
                 onChange={(e) => setPriceMode(e.target.value as PriceMode)}
@@ -742,7 +782,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Temat</label>
+              <label className={labelBase}>Temat</label>
               <select
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
@@ -757,7 +797,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700">Zapisy</label>
+              <label className={labelBase}>Zapisy</label>
               <select
                 value={enrollment}
                 onChange={(e) => setEnrollment(e.target.value as any)}
@@ -771,12 +811,11 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            {/* PRZYCISKI */}
             <div className="md:col-span-12 md:flex md:items-end md:justify-end">
               <div className="mt-1 flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
                 <button
                   onClick={load}
-                  className={`inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60 ${BTN_FILTER_W}`}
+                  className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95 disabled:opacity-60 sm:w-auto sm:min-w-[150px]"
                   disabled={fetching}
                   type="button"
                 >
@@ -785,7 +824,7 @@ export default function TrainingHubClient() {
 
                 <button
                   onClick={() => setAddOpen(true)}
-                  className={`inline-flex h-10 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 ${BTN_ADD_W}`}
+                  className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 active:scale-95 sm:w-auto sm:min-w-[150px]"
                   type="button"
                 >
                   Dodaj szkolenie
@@ -794,59 +833,52 @@ export default function TrainingHubClient() {
             </div>
           </div>
 
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-4">
-              <label className="flex items-center gap-2 text-sm text-slate-700">
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-white">
                 <input
                   type="checkbox"
                   checked={onlyUpcoming}
                   onChange={(e) => setOnlyUpcoming(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+                  className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
                 />
                 Tylko nadchodzące
               </label>
 
-              <label className="flex items-center gap-2 text-sm text-slate-700">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-white">
                 <input
                   type="checkbox"
                   checked={onlyPartner}
                   onChange={(e) => setOnlyPartner(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+                  className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
                 />
                 Tylko partnerzy
               </label>
 
-              <label className="flex items-center gap-2 text-sm text-slate-700">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-white">
                 <input
                   type="checkbox"
                   checked={onlyRecording}
                   onChange={(e) => setOnlyRecording(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+                  className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
                 />
                 Tylko z nagraniem
               </label>
-
-              {timeWindow !== "all" ? (
-                <span className="text-xs text-slate-500">
-                  (Termin ogranicza wyniki do okna)
-                </span>
-              ) : null}
             </div>
 
             <div className="text-sm text-slate-600">
               Wynik:{" "}
-              <span className="font-semibold text-slate-900">{items.length}</span>
+              <span className="font-black text-slate-950">{items.length}</span>
             </div>
           </div>
 
           {error && (
-            <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
               {error}
             </div>
           )}
         </div>
 
-        {/* Lista */}
         <div className="mt-5 space-y-3">
           {items.map((t) => {
             const dd = daysDiffFromToday(t.start_date);
@@ -855,189 +887,237 @@ export default function TrainingHubClient() {
             const price = formatPrice(
               typeof t.price_pln === "number" ? t.price_pln : null
             );
+
             const enr = labelEnrollment(
               (t.enrollment_status ?? null) as EnrollmentStatus | null
             );
-            const hasRec =
-              t.has_recording === true
-                ? "Nagranie: Tak"
-                : t.has_recording === false
-                ? "Nagranie: Nie"
-                : null;
+
+            const date = dateParts(t.start_date);
+            const range = dateRangeShort(t.start_date, t.end_date);
+
+            const hasRec = t.has_recording === true ? "Nagranie" : null;
 
             const capacityText =
-              typeof t.capacity === "number" ? `Limit: ${t.capacity}` : null;
+              typeof t.capacity === "number" ? `Limit ${t.capacity}` : null;
 
             return (
-              <div
+              <article
                 key={t.id}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                className="group overflow-hidden rounded-[1.45rem] border border-slate-200/90 bg-white shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-950/5"
               >
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div className="min-w-0 flex-1">
+                <div className="grid gap-0 md:grid-cols-[1fr_250px]">
+                  <div className="min-w-0 p-4 sm:p-5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="truncate text-base font-extrabold text-slate-900">
-                        {t.title}
-                      </h3>
+                      {t.organizer ? (
+                        <span
+                          className={`${pillBase} border-slate-200 bg-slate-50 text-slate-700`}
+                        >
+                          {t.organizer}
+                        </span>
+                      ) : null}
+
+                      <span
+                        className={`${pillBase} border-blue-100 bg-blue-50 text-blue-700`}
+                      >
+                        {labelType(t.format)}
+                      </span>
+
+                      {t.category ? (
+                        <span
+                          className={`${pillBase} border-slate-200 bg-white text-slate-600`}
+                        >
+                          {labelCategory(t.category)}
+                        </span>
+                      ) : null}
+
+                      {enr ? (
+                        <span
+                          className={`${pillBase} ${statusTone(
+                            t.enrollment_status
+                          )}`}
+                        >
+                          {enr}
+                        </span>
+                      ) : null}
 
                       {soon ? (
-                        <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700">
+                        <span
+                          className={`${pillBase} border-rose-200 bg-rose-50 text-rose-700`}
+                        >
                           Wkrótce
                         </span>
                       ) : null}
 
                       {t.is_partner ? (
-                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+                        <span
+                          className={`${pillBase} border-emerald-200 bg-emerald-50 text-emerald-700`}
+                        >
                           Partner
                         </span>
                       ) : null}
                     </div>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
-                      {t.organizer ? (
-                        <>
-                          <span className="inline-flex items-center rounded-full border border-slate-300 bg-white px-2.5 py-0.5 text-xs font-extrabold tracking-wide text-slate-900">
-                            {t.organizer}
+                    <h3 className="mt-3 line-clamp-2 text-[15px] font-black leading-snug tracking-tight text-slate-950 sm:text-base">
+                      {t.title}
+                    </h3>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs font-medium text-slate-500">
+                      {range ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                          Termin:{" "}
+                          <span className="font-bold text-slate-700">
+                            {range}
                           </span>
-                          <span className="text-slate-300">•</span>
-                        </>
-                      ) : null}
-
-                      <span>{labelType(t.format)}</span>
-
-                      {t.category ? (
-                        <>
-                          <span className="text-slate-300">•</span>
-                          <span>{labelCategory(t.category)}</span>
-                        </>
-                      ) : null}
-
-                      {t.start_date || t.end_date ? (
-                        <>
-                          <span className="text-slate-300">•</span>
-                          <span>{termLabel(t.start_date, t.end_date)}</span>
-                        </>
+                        </span>
                       ) : null}
 
                       {t.voivodeship ? (
-                        <>
-                          <span className="text-slate-300">•</span>
-                          <span>{t.voivodeship}</span>
-                        </>
+                        <span>
+                          Miejsce:{" "}
+                          <span className="font-bold text-slate-700">
+                            {t.voivodeship}
+                          </span>
+                        </span>
+                      ) : null}
+
+                      {price ? (
+                        <span>
+                          Cena:{" "}
+                          <span className="font-bold text-slate-700">
+                            {price}
+                          </span>
+                        </span>
+                      ) : null}
+
+                      {hasRec ? (
+                        <span>
+                          <span className="font-bold text-slate-700">
+                            {hasRec}
+                          </span>
+                        </span>
+                      ) : null}
+
+                      {capacityText ? (
+                        <span>
+                          <span className="font-bold text-slate-700">
+                            {capacityText}
+                          </span>
+                        </span>
                       ) : null}
                     </div>
 
-                    {(price || enr || hasRec || capacityText) && (
-                      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
-                        {price ? (
-                          <span>
-                            Cena:{" "}
-                            <span className="font-semibold text-slate-700">
-                              {price}
-                            </span>
+                    {Array.isArray(t.topics) && t.topics.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {t.topics.slice(0, 4).map((x) => (
+                          <span
+                            key={x}
+                            className="rounded-full bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200"
+                          >
+                            {x}
                           </span>
-                        ) : null}
-                        {price && (enr || hasRec || capacityText) ? (
-                          <span className="text-slate-300">•</span>
-                        ) : null}
-
-                        {enr ? (
-                          <span>
-                            Zapisy:{" "}
-                            <span className="font-semibold text-slate-700">
-                              {enr}
-                            </span>
-                          </span>
-                        ) : null}
-                        {enr && (hasRec || capacityText) ? (
-                          <span className="text-slate-300">•</span>
-                        ) : null}
-
-                        {hasRec ? <span>{hasRec}</span> : null}
-                        {hasRec && capacityText ? (
-                          <span className="text-slate-300">•</span>
-                        ) : null}
-
-                        {capacityText ? <span>{capacityText}</span> : null}
+                        ))}
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
-                  <div className={`shrink-0 ${RIGHT_W}`}>
-                    <div className="flex items-center justify-end">
-                      <div className="inline-flex items-center gap-2 md:justify-end">
-                        <span className="text-sm text-slate-500">Punkty</span>
-                        <span className="text-lg font-extrabold text-blue-700">
+                  <div className="border-t border-slate-100 bg-slate-50/70 p-4 sm:p-5 md:border-l md:border-t-0">
+                    <div className="flex items-center justify-between gap-4 md:block">
+                      <div className="flex items-center gap-3 md:block md:text-center">
+                        <div className="inline-flex min-w-[78px] flex-col items-center justify-center rounded-2xl border border-blue-100 bg-white px-3 py-2 shadow-sm shadow-slate-900/5">
+                          <span className="text-3xl font-black leading-none tracking-tight text-slate-950">
+                            {date.day}
+                          </span>
+                          <span className="mt-1 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700">
+                            {date.month}
+                          </span>
+                        </div>
+
+                        <div className="md:mt-2">
+                          <div className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                            {date.weekday || "Termin"}
+                          </div>
+                          {date.year ? (
+                            <div className="mt-0.5 text-xs font-semibold text-slate-500">
+                              {date.year}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="text-right md:mt-4 md:text-center">
+                        <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                          Punkty
+                        </div>
+                        <div className="mt-0.5 text-2xl font-black leading-none text-blue-700">
                           {typeof t.points === "number" ? t.points : "—"}
-                        </span>
-                        <span className="text-sm font-semibold text-blue-700">
-                          pkt
-                        </span>
+                          <span className="ml-1 text-sm font-black">pkt</span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="mt-2 flex justify-end gap-2">
+                    <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-1">
+                      <button
+                        onClick={() => chooseTraining(t)}
+                        className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95"
+                        type="button"
+                      >
+                        + Dodaj do planu
+                      </button>
+
                       {t.url ? (
                         <a
                           href={t.url}
                           target="_blank"
                           rel="noreferrer"
-                          className={`inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 ${BTN_SECONDARY_W}`}
+                          className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
                         >
-                          Zobacz
+                          Szczegóły
                         </a>
                       ) : (
                         <button
-                          className={`inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-400 shadow-sm ${BTN_SECONDARY_W}`}
+                          className="inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-400 shadow-sm"
                           disabled
                           type="button"
                         >
                           Brak linku
                         </button>
                       )}
-
-                      <button
-                        onClick={() => chooseTraining(t)}
-                        className={`inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 ${BTN_PRIMARY_W}`}
-                        type="button"
-                      >
-                        + Dodaj do planu
-                      </button>
                     </div>
                   </div>
                 </div>
-              </div>
+              </article>
             );
           })}
 
           {!fetching && items.length === 0 && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+            <div className="rounded-[1.45rem] border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm shadow-slate-900/5">
               Brak wyników. Zmień filtry albo wybierz „Dowolnie” w Terminie.
             </div>
           )}
         </div>
       </div>
 
-      {/* MODAL: Dodaj szkolenie */}
       {addOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/30"
             onClick={() => (addSubmitting ? null : setAddOpen(false))}
           />
-          <div className="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+          <div className="relative w-full max-w-2xl rounded-[1.45rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-950/10">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-lg font-extrabold text-slate-900">
+                <div className="text-lg font-black text-slate-950">
                   Dodaj szkolenie do bazy
                 </div>
-                <div className="mt-1 text-sm text-slate-600">
+                <div className="mt-1 text-sm leading-relaxed text-slate-600">
                   Po dodaniu szkolenie trafi do akceptacji operatora i dopiero
                   potem pojawi się w wynikach.
                 </div>
               </div>
+
               <button
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
                 onClick={() => setAddOpen(false)}
                 disabled={addSubmitting}
                 type="button"
@@ -1048,9 +1128,7 @@ export default function TrainingHubClient() {
 
             <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12">
               <div className="md:col-span-8">
-                <label className="text-xs font-semibold text-slate-700">
-                  Tytuł *
-                </label>
+                <label className={labelBase}>Tytuł *</label>
                 <input
                   value={fTitle}
                   onChange={(e) => setFTitle(e.target.value)}
@@ -1060,9 +1138,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-4">
-                <label className="text-xs font-semibold text-slate-700">
-                  Punkty *
-                </label>
+                <label className={labelBase}>Punkty *</label>
                 <input
                   value={fPoints}
                   onChange={(e) => setFPoints(e.target.value)}
@@ -1072,9 +1148,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-6">
-                <label className="text-xs font-semibold text-slate-700">
-                  Organizator
-                </label>
+                <label className={labelBase}>Organizator</label>
                 <input
                   value={fOrganizer}
                   onChange={(e) => setFOrganizer(e.target.value)}
@@ -1084,9 +1158,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">
-                  Forma *
-                </label>
+                <label className={labelBase}>Forma *</label>
                 <select
                   value={fFormat}
                   onChange={(e) => setFFormat(e.target.value as TrainingType)}
@@ -1099,9 +1171,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">
-                  Kategoria *
-                </label>
+                <label className={labelBase}>Kategoria *</label>
                 <select
                   value={fCategory}
                   onChange={(e) =>
@@ -1119,9 +1189,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">
-                  Start *
-                </label>
+                <label className={labelBase}>Start *</label>
                 <input
                   type="date"
                   value={fStart}
@@ -1131,9 +1199,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">
-                  Koniec
-                </label>
+                <label className={labelBase}>Koniec</label>
                 <input
                   type="date"
                   value={fEnd}
@@ -1143,9 +1209,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-6">
-                <label className="text-xs font-semibold text-slate-700">
-                  Województwo / miejsce
-                </label>
+                <label className={labelBase}>Województwo / miejsce</label>
                 <input
                   value={fVoiv}
                   onChange={(e) => setFVoiv(e.target.value)}
@@ -1155,7 +1219,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-12">
-                <label className="text-xs font-semibold text-slate-700">Link</label>
+                <label className={labelBase}>Link</label>
                 <input
                   value={fUrl}
                   onChange={(e) => setFUrl(e.target.value)}
@@ -1165,9 +1229,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-12">
-                <label className="text-xs font-semibold text-slate-700">
-                  Tematy (topics)
-                </label>
+                <label className={labelBase}>Tematy</label>
                 <input
                   value={fTopics}
                   onChange={(e) => setFTopics(e.target.value)}
@@ -1180,9 +1242,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">
-                  Cena (PLN)
-                </label>
+                <label className={labelBase}>Cena PLN</label>
                 <input
                   value={fPrice}
                   onChange={(e) => setFPrice(e.target.value)}
@@ -1192,9 +1252,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">
-                  Limit miejsc
-                </label>
+                <label className={labelBase}>Limit miejsc</label>
                 <input
                   value={fCap}
                   onChange={(e) => setFCap(e.target.value)}
@@ -1204,9 +1262,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="text-xs font-semibold text-slate-700">
-                  Zapisy
-                </label>
+                <label className={labelBase}>Zapisy</label>
                 <select
                   value={fEnroll}
                   onChange={(e) => setFEnroll(e.target.value as any)}
@@ -1219,8 +1275,8 @@ export default function TrainingHubClient() {
                 </select>
               </div>
 
-              <div className="md:col-span-3 flex items-end">
-                <label className="flex items-center gap-2 text-sm text-slate-700">
+              <div className="flex items-end md:col-span-3">
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                   <input
                     type="checkbox"
                     checked={fRec}
@@ -1234,7 +1290,7 @@ export default function TrainingHubClient() {
 
             <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
               <button
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
                 onClick={() => setAddOpen(false)}
                 disabled={addSubmitting}
                 type="button"
@@ -1243,7 +1299,7 @@ export default function TrainingHubClient() {
               </button>
 
               <button
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 disabled:opacity-60"
                 onClick={submitNewTraining}
                 disabled={addSubmitting}
                 type="button"
