@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Award,
@@ -450,6 +450,7 @@ function normalizeTrainingRow(r: any): Training {
 export default function TrainingHubClient() {
   const { user, loading } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
+  const resultsTopRef = useRef<HTMLDivElement | null>(null);
 
   const [items, setItems] = useState<Training[]>([]);
   const [fetching, setFetching] = useState(false);
@@ -670,6 +671,7 @@ export default function TrainingHubClient() {
 
       return {
         monthLabel,
+        monthKey: `${year}-${String(month + 1).padStart(2, "0")}`,
         days: [...blanks, ...days],
       };
     });
@@ -711,6 +713,25 @@ export default function TrainingHubClient() {
     if (!selectedCalendarDateKey && !selectedCalendarTrainingId) return;
     setSelectedCalendarDateKey(null);
     setSelectedCalendarTrainingId(null);
+  };
+
+  const scrollResultsIntoView = () => {
+    window.setTimeout(() => {
+      const el = resultsTopRef.current;
+      if (!el) return;
+
+      const top = el.getBoundingClientRect().top + window.scrollY - 96;
+      window.scrollTo({
+        top: Math.max(top, 0),
+        behavior: "smooth",
+      });
+    }, 0);
+  };
+
+  const selectCalendarDay = (trainingId: string, dateKey: string) => {
+    setSelectedCalendarTrainingId(trainingId);
+    setSelectedCalendarDateKey(dateKey);
+    scrollResultsIntoView();
   };
 
   const chooseTraining = async (t: Training) => {
@@ -1180,7 +1201,7 @@ export default function TrainingHubClient() {
           className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_310px]"
           onClick={clearCalendarSelection}
         >
-          <div className="space-y-3">
+          <div className="space-y-3" ref={resultsTopRef}>
             {selectedCalendarDateKey ? (
               <div
                 className="flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm text-slate-700 shadow-sm shadow-blue-950/5 sm:flex-row sm:items-center sm:justify-between"
@@ -1543,15 +1564,9 @@ export default function TrainingHubClient() {
                             key={day.dateKey}
                             type="button"
                             disabled={!hasEvent}
-                            onMouseEnter={() => {
-                              if (!day.primary) return;
-                              setSelectedCalendarTrainingId(day.primary.id);
-                              setSelectedCalendarDateKey(day.dateKey);
-                            }}
                             onClick={() => {
                               if (!day.primary) return;
-                              setSelectedCalendarTrainingId(day.primary.id);
-                              setSelectedCalendarDateKey(day.dateKey);
+                              selectCalendarDay(day.primary.id, day.dateKey);
                             }}
                             className={`relative flex aspect-square items-center justify-center rounded-xl text-[11px] font-semibold ring-1 transition disabled:cursor-default ${dayTone} ${
                               isSelected ? "outline outline-2 outline-blue-400" : ""
@@ -1574,34 +1589,93 @@ export default function TrainingHubClient() {
                         );
                       })}
                     </div>
+
+                    {selectedCalendarDateKey?.startsWith(month.monthKey) &&
+                    selectedCalendarTraining ? (
+                      <div className="mt-3 rounded-2xl border border-blue-100 bg-blue-50/60 p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-500">
+                              Podgląd dnia
+                            </div>
+                            <div className="mt-0.5 text-xs text-slate-500">
+                              {formatDate(selectedCalendarDateKey)}
+                            </div>
+                          </div>
+
+                          {selectedCalendarDateTrainings.length > 1 ? (
+                            <div className="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-blue-700 ring-1 ring-blue-100">
+                              {selectedCalendarDateTrainings.length} wydarzenia
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-3 space-y-2">
+                          {selectedCalendarDateTrainings.map((event) => {
+                            const isActive =
+                              selectedCalendarTraining.id === event.id;
+
+                            return (
+                              <button
+                                key={event.id}
+                                type="button"
+                                onClick={() =>
+                                  selectCalendarDay(event.id, event.start_date ?? selectedCalendarDateKey)
+                                }
+                                className={`w-full rounded-xl border p-2 text-left transition ${
+                                  isActive
+                                    ? "border-blue-200 bg-white shadow-sm"
+                                    : "border-transparent bg-white/60 hover:bg-white"
+                                }`}
+                              >
+                                <div className="line-clamp-2 text-xs font-semibold leading-snug text-slate-950">
+                                  {event.title}
+                                </div>
+                                <div className="mt-1 text-[11px] text-slate-500">
+                                  {typeof event.points === "number"
+                                    ? event.points
+                                    : "—"}{" "}
+                                  pkt · {labelType(event.format)}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-1 gap-2">
+                          {selectedCalendarTraining.url ? (
+                            <a
+                              href={selectedCalendarTraining.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                            >
+                              Organizator
+                            </a>
+                          ) : null}
+
+                          <button
+                            onClick={() =>
+                              chooseTraining(selectedCalendarTraining)
+                            }
+                            className="inline-flex h-9 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50"
+                            type="button"
+                          >
+                            Dodaj do planu
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </div>
 
-              {selectedCalendarDateKey ? (
-                <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-3">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-500">
-                    Aktywny filtr z kalendarza
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-slate-950">
-                    {formatDate(selectedCalendarDateKey)}
-                  </div>
-                  <div className="mt-1 text-xs leading-relaxed text-slate-500">
-                    Lista po lewej pokazuje tylko wydarzenia z tego dnia.
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearCalendarSelection}
-                    className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50"
-                  >
-                    Pokaż wszystkie wydarzenia
-                  </button>
-                </div>
-              ) : (
+              {!selectedCalendarDateKey ? (
                 <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-3 text-xs leading-relaxed text-slate-500">
-                  Kliknij oznaczony dzień, aby przefiltrować listę po lewej.
+                  Kliknij oznaczony dzień, aby przefiltrować listę po lewej i
+                  zobaczyć szczegóły przy wybranym miesiącu.
                 </div>
-              )}
+              ) : null}
             </div>
 
             <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
