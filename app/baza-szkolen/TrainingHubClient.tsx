@@ -243,6 +243,8 @@ function formatTone(format: TrainingType | null) {
     return {
       stripe: "bg-amber-400",
       badge: "border-amber-200 bg-amber-50 text-amber-700",
+      iconBox: "border-amber-200 bg-amber-50 text-amber-700",
+      dateTop: "bg-amber-400",
     };
   }
 
@@ -250,13 +252,35 @@ function formatTone(format: TrainingType | null) {
     return {
       stripe: "bg-indigo-500",
       badge: "border-indigo-200 bg-indigo-50 text-indigo-700",
+      iconBox: "border-indigo-200 bg-indigo-50 text-indigo-700",
+      dateTop: "bg-indigo-500",
     };
   }
 
   return {
     stripe: "bg-blue-500",
     badge: "border-blue-100 bg-blue-50 text-blue-700",
+    iconBox: "border-blue-100 bg-blue-50 text-blue-700",
+    dateTop: "bg-blue-500",
   };
+}
+
+function FormatIcon({
+  format,
+  className = "h-3 w-3",
+}: {
+  format: TrainingType | null;
+  className?: string;
+}) {
+  if (format === "stacjonarne") {
+    return <MapPin className={className} strokeWidth={2} />;
+  }
+
+  if (format === "hybrydowe") {
+    return <Building2 className={className} strokeWidth={2} />;
+  }
+
+  return <MonitorPlay className={className} strokeWidth={2} />;
 }
 
 function toYYYYMMDD(dt: Date) {
@@ -1061,9 +1085,17 @@ export default function TrainingHubClient() {
 
                 <div className="flex flex-col md:flex-row md:items-stretch">
                   <div className="min-w-0 flex-1 p-4 pl-5">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`mt-0.5 hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl border shadow-sm shadow-slate-900/5 sm:inline-flex ${tone.iconBox}`}
+                      >
+                        <FormatIcon format={t.format} className="h-5 w-5" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className={`${pillBase} ${tone.badge}`}>
-                        <MonitorPlay className="mr-1 h-3 w-3" strokeWidth={2} />
+                        <FormatIcon format={t.format} className="mr-1 h-3 w-3" />
                         {labelType(t.format)}
                       </span>
 
@@ -1179,12 +1211,17 @@ export default function TrainingHubClient() {
                           ))
                         : null}
                     </div>
+                      </div>
                   </div>
 
-                  <div className="border-t border-slate-100 bg-slate-50/70 p-3 md:w-[300px] md:border-l md:border-t-0">
+                  <div className="border-t border-slate-100 bg-slate-50/80 p-3 md:w-[300px] md:border-l md:border-t-0">
                     <div className="flex items-center gap-3">
-                      <div className="flex min-w-[72px] flex-col items-center justify-center rounded-2xl border border-blue-100 bg-white px-3 py-2 shadow-sm shadow-slate-900/5">
-                        <span className="text-2xl font-bold leading-none tracking-tight text-slate-950">
+                      <div className="relative flex min-w-[76px] flex-col items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white px-3 pb-2 pt-3 shadow-sm shadow-slate-900/5">
+                        <div className={`absolute left-0 right-0 top-0 h-1.5 ${tone.dateTop}`} />
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                          {date.weekday || "Termin"}
+                        </span>
+                        <span className="mt-0.5 text-2xl font-bold leading-none tracking-tight text-slate-950">
                           {date.day}
                         </span>
                         <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700">
@@ -1194,12 +1231,14 @@ export default function TrainingHubClient() {
 
                       <div className="min-w-0 flex-1">
                         <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                          {date.weekday || "Termin"}
+                          Punkty CPD
                           {date.year ? ` · ${date.year}` : ""}
                         </div>
 
-                        <div className="mt-1 text-2xl font-bold leading-none text-blue-700">
-                          {typeof t.points === "number" ? t.points : "—"}
+                        <div className="mt-1 inline-flex items-baseline rounded-xl bg-blue-50 px-2.5 py-1 text-blue-700 ring-1 ring-blue-100">
+                          <span className="text-2xl font-bold leading-none">
+                            {typeof t.points === "number" ? t.points : "—"}
+                          </span>
                           <span className="ml-1 text-sm font-semibold">
                             pkt
                           </span>
@@ -1210,10 +1249,11 @@ export default function TrainingHubClient() {
                     <div className="mt-3 grid grid-cols-2 gap-2">
                       <button
                         onClick={() => chooseTraining(t)}
-                        className="inline-flex h-9 items-center justify-center rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95"
+                        className="inline-flex h-9 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 active:scale-95"
                         type="button"
+                        title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
                       >
-                        Dodaj do planu
+                        Do planu
                       </button>
 
                       {t.url ? (
@@ -1221,9 +1261,9 @@ export default function TrainingHubClient() {
                           href={t.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                          className="inline-flex h-9 items-center justify-center rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95"
                         >
-                          Szczegóły
+                          Organizator
                         </a>
                       ) : (
                         <button
@@ -1235,6 +1275,10 @@ export default function TrainingHubClient() {
                         </button>
                       )}
                     </div>
+
+                    <p className="mt-2 text-center text-[10px] leading-snug text-slate-400">
+                      Plan CPD nie zastępuje zapisu u organizatora.
+                    </p>
                   </div>
                 </div>
               </article>
