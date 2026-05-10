@@ -1087,7 +1087,7 @@ export default function TrainingHubClient() {
                   <div className="min-w-0 flex-1 p-4 pl-5">
                     <div className="flex items-start gap-3">
                       <div
-                        className={`mt-0.5 hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl border shadow-sm shadow-slate-900/5 sm:inline-flex ${tone.iconBox}`}
+                        className={`mt-0.5 hidden h-10 w-10 shrink-0 items-center justify-center rounded-2xl border shadow-sm shadow-slate-900/5 sm:inline-flex ${tone.iconBox}`}
                       >
                         <FormatIcon format={t.format} className="h-5 w-5" />
                       </div>
@@ -1123,7 +1123,7 @@ export default function TrainingHubClient() {
                       ) : null}
                     </div>
 
-                    <h3 className="mt-2 line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-slate-950">
+                    <h3 className="mt-2 line-clamp-2 text-[15.5px] font-semibold leading-snug tracking-[-0.01em] text-slate-950">
                       {t.title}
                     </h3>
 
@@ -1190,21 +1190,21 @@ export default function TrainingHubClient() {
                     </div>
 
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      <span className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200">
+                      <span className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
                         {labelProfession(t.profession)}
                       </span>
 
                       {capacityText ? (
-                        <span className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200">
+                        <span className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
                           {capacityText}
                         </span>
                       ) : null}
 
                       {Array.isArray(t.topics)
-                        ? t.topics.slice(0, 4).map((x) => (
+                        ? t.topics.slice(0, 3).map((x) => (
                             <span
                               key={x}
-                              className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200"
+                              className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80"
                             >
                               {x}
                             </span>
@@ -1215,48 +1215,36 @@ export default function TrainingHubClient() {
                   </div>
                   </div>
 
-                  <div className="border-t border-slate-100 bg-slate-50/80 p-3 md:w-[300px] md:border-l md:border-t-0">
+                  <div className="border-t border-slate-100 bg-slate-50/50 p-4 md:w-[292px] md:border-l md:border-t-0">
                     <div className="flex items-center gap-3">
-                      <div className="relative flex min-w-[76px] flex-col items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white px-3 pb-2 pt-3 shadow-sm shadow-slate-900/5">
-                        <div className={`absolute left-0 right-0 top-0 h-1.5 ${tone.dateTop}`} />
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                          {date.weekday || "Termin"}
-                        </span>
-                        <span className="mt-0.5 text-2xl font-bold leading-none tracking-tight text-slate-950">
+                      <div className="flex min-w-[76px] flex-col items-center justify-center rounded-2xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
+                        <span className={`mb-1 h-1.5 w-8 rounded-full ${tone.dateTop}`} />
+                        <span className="text-3xl font-semibold leading-none tracking-[-0.04em] text-slate-950">
                           {date.day}
                         </span>
-                        <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700">
+                        <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                           {date.month}
                         </span>
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                          Punkty CPD
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                          {date.weekday || "Termin"}
                           {date.year ? ` · ${date.year}` : ""}
                         </div>
 
-                        <div className="mt-1 inline-flex items-baseline rounded-xl bg-blue-50 px-2.5 py-1 text-blue-700 ring-1 ring-blue-100">
-                          <span className="text-2xl font-bold leading-none">
+                        <div className="mt-1">
+                          <span className="text-2xl font-semibold leading-none tracking-[-0.03em] text-blue-700">
                             {typeof t.points === "number" ? t.points : "—"}
                           </span>
-                          <span className="ml-1 text-sm font-semibold">
-                            pkt
+                          <span className="ml-1 text-sm font-semibold text-blue-700">
+                            pkt CPD
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => chooseTraining(t)}
-                        className="inline-flex h-9 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 active:scale-95"
-                        type="button"
-                        title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
-                      >
-                        Do planu
-                      </button>
-
+                    <div className="mt-3 grid grid-cols-1 gap-2">
                       {t.url ? (
                         <a
                           href={t.url}
@@ -1264,7 +1252,7 @@ export default function TrainingHubClient() {
                           rel="noreferrer"
                           className="inline-flex h-9 items-center justify-center rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95"
                         >
-                          Organizator
+                          Zobacz u organizatora
                         </a>
                       ) : (
                         <button
@@ -1275,11 +1263,16 @@ export default function TrainingHubClient() {
                           Brak linku
                         </button>
                       )}
-                    </div>
 
-                    <p className="mt-2 text-center text-[10px] leading-snug text-slate-400">
-                      Plan CPD nie zastępuje zapisu u organizatora.
-                    </p>
+                      <button
+                        onClick={() => chooseTraining(t)}
+                        className="inline-flex h-9 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 active:scale-95"
+                        type="button"
+                        title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
+                      >
+                        Dodaj do planu CPD
+                      </button>
+                    </div>
                   </div>
                 </div>
               </article>
