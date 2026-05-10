@@ -1077,201 +1077,191 @@ export default function TrainingHubClient() {
             return (
               <article
                 key={t.id}
-                className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5 transition-all duration-200 hover:border-blue-200 hover:shadow-md hover:shadow-blue-950/5"
+                className="group overflow-hidden rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-[1px] hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/6"
               >
-                <div
-                  className={`absolute bottom-3 left-0 top-3 w-1 rounded-r-full ${tone.stripe}`}
-                />
+                <div className="flex gap-4">
+                  <div className="hidden shrink-0 sm:block">
+                    <div className="flex w-[74px] flex-col items-center rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-200/90">
+                      <span className={`mb-2 h-1.5 w-8 rounded-full ${tone.dateTop}`} />
+                      <span className="text-3xl font-semibold leading-none tracking-[-0.05em] text-slate-950">
+                        {date.day}
+                      </span>
+                      <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        {date.month}
+                      </span>
+                    </div>
+                  </div>
 
-                <div className="flex flex-col md:flex-row md:items-stretch">
-                  <div className="min-w-0 flex-1 p-4 pl-5">
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`mt-0.5 hidden h-10 w-10 shrink-0 items-center justify-center rounded-2xl border shadow-sm shadow-slate-900/5 sm:inline-flex ${tone.iconBox}`}
-                      >
-                        <FormatIcon format={t.format} className="h-5 w-5" />
-                      </div>
-
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                       <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className={`${pillBase} ${tone.badge}`}>
-                        <FormatIcon format={t.format} className="mr-1 h-3 w-3" />
-                        {labelType(t.format)}
-                      </span>
-
-                      {enr ? (
-                        <span
-                          className={`${pillBase} ${statusTone(
-                            t.enrollment_status
-                          )}`}
-                        >
-                          <CheckCircle2
-                            className="mr-1 h-3 w-3"
-                            strokeWidth={2}
-                          />
-                          {enr}
-                        </span>
-                      ) : null}
-
-                      {soon ? (
-                        <span
-                          className={`${pillBase} border-amber-200 bg-amber-50 text-amber-700`}
-                        >
-                          <Clock3 className="mr-1 h-3 w-3" strokeWidth={2} />
-                          Wkrótce
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <h3 className="mt-2 line-clamp-2 text-[15.5px] font-semibold leading-snug tracking-[-0.01em] text-slate-950">
-                      {t.title}
-                    </h3>
-
-                    <div className="mt-2 grid gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500 sm:grid-cols-2 lg:grid-cols-4">
-                      {range ? (
-                        <span className="inline-flex min-w-0 items-center gap-1.5">
-                          <span
-                            className={`${metaIconBase} border-blue-100 text-blue-600`}
-                          >
-                            <CalendarDays className="h-3 w-3" strokeWidth={2} />
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className={`${pillBase} ${tone.badge}`}>
+                            <FormatIcon format={t.format} className="mr-1 h-3 w-3" />
+                            {labelType(t.format)}
                           </span>
-                          <span className="truncate">
-                            <span className="font-semibold text-slate-700">
-                              {range}
-                            </span>
-                          </span>
-                        </span>
-                      ) : null}
 
-                      {t.organizer ? (
-                        <span className="inline-flex min-w-0 items-center gap-1.5">
-                          <span
-                            className={`${metaIconBase} border-slate-200 text-slate-500`}
-                          >
-                            <Building2 className="h-3 w-3" strokeWidth={2} />
-                          </span>
-                          <span className="truncate font-semibold text-slate-700">
-                            {t.organizer}
-                          </span>
-                        </span>
-                      ) : null}
-
-                      {t.voivodeship ? (
-                        <span className="inline-flex min-w-0 items-center gap-1.5">
-                          <span
-                            className={`${metaIconBase} border-slate-200 text-slate-500`}
-                          >
-                            <MapPin className="h-3 w-3" strokeWidth={2} />
-                          </span>
-                          <span className="truncate font-semibold text-slate-700">
-                            {t.voivodeship}
-                          </span>
-                        </span>
-                      ) : null}
-
-                      <span className="inline-flex min-w-0 items-center gap-1.5">
-                        <span
-                          className={`${metaIconBase} border-slate-200 text-slate-500`}
-                        >
-                          <Award className="h-3 w-3" strokeWidth={2} />
-                        </span>
-                        <span className="truncate">
-                          {labelCategory(t.category)}
-                          {price ? (
-                            <>
-                              {" · "}
-                              <span className="font-semibold text-slate-700">
-                                {price}
-                              </span>
-                            </>
-                          ) : null}
-                        </span>
-                      </span>
-                    </div>
-
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      <span className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
-                        {labelProfession(t.profession)}
-                      </span>
-
-                      {capacityText ? (
-                        <span className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
-                          {capacityText}
-                        </span>
-                      ) : null}
-
-                      {Array.isArray(t.topics)
-                        ? t.topics.slice(0, 3).map((x) => (
+                          {enr ? (
                             <span
-                              key={x}
-                              className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80"
+                              className={`${pillBase} ${statusTone(
+                                t.enrollment_status
+                              )}`}
                             >
-                              {x}
+                              <CheckCircle2
+                                className="mr-1 h-3 w-3"
+                                strokeWidth={2}
+                              />
+                              {enr}
                             </span>
-                          ))
-                        : null}
-                    </div>
-                      </div>
-                  </div>
-                  </div>
+                          ) : null}
 
-                  <div className="border-t border-slate-100 bg-slate-50/50 p-4 md:w-[292px] md:border-l md:border-t-0">
-                    <div className="flex items-center gap-3">
-                      <div className="flex min-w-[76px] flex-col items-center justify-center rounded-2xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200">
-                        <span className={`mb-1 h-1.5 w-8 rounded-full ${tone.dateTop}`} />
-                        <span className="text-3xl font-semibold leading-none tracking-[-0.04em] text-slate-950">
-                          {date.day}
-                        </span>
-                        <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          {date.month}
-                        </span>
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                          {date.weekday || "Termin"}
-                          {date.year ? ` · ${date.year}` : ""}
+                          {soon ? (
+                            <span
+                              className={`${pillBase} border-amber-200 bg-amber-50 text-amber-700`}
+                            >
+                              <Clock3 className="mr-1 h-3 w-3" strokeWidth={2} />
+                              Wkrótce
+                            </span>
+                          ) : null}
                         </div>
 
-                        <div className="mt-1">
-                          <span className="text-2xl font-semibold leading-none tracking-[-0.03em] text-blue-700">
+                        <h3 className="mt-2 line-clamp-2 text-[15.5px] font-semibold leading-snug tracking-[-0.01em] text-slate-950">
+                          {t.title}
+                        </h3>
+
+                        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500">
+                          {range ? (
+                            <span className="inline-flex min-w-0 items-center gap-1.5">
+                              <span
+                                className={`${metaIconBase} border-slate-200 text-slate-500`}
+                              >
+                                <CalendarDays className="h-3 w-3" strokeWidth={2} />
+                              </span>
+                              <span className="truncate font-semibold text-slate-700">
+                                {range}
+                              </span>
+                            </span>
+                          ) : null}
+
+                          {t.organizer ? (
+                            <span className="inline-flex min-w-0 items-center gap-1.5">
+                              <span
+                                className={`${metaIconBase} border-slate-200 text-slate-500`}
+                              >
+                                <Building2 className="h-3 w-3" strokeWidth={2} />
+                              </span>
+                              <span className="truncate font-semibold text-slate-700">
+                                {t.organizer}
+                              </span>
+                            </span>
+                          ) : null}
+
+                          {t.voivodeship ? (
+                            <span className="inline-flex min-w-0 items-center gap-1.5">
+                              <span
+                                className={`${metaIconBase} border-slate-200 text-slate-500`}
+                              >
+                                <MapPin className="h-3 w-3" strokeWidth={2} />
+                              </span>
+                              <span className="truncate font-semibold text-slate-700">
+                                {t.voivodeship}
+                              </span>
+                            </span>
+                          ) : null}
+
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <span
+                              className={`${metaIconBase} border-slate-200 text-slate-500`}
+                            >
+                              <Award className="h-3 w-3" strokeWidth={2} />
+                            </span>
+                            <span className="truncate">
+                              {labelCategory(t.category)}
+                              {price ? (
+                                <>
+                                  {" · "}
+                                  <span className="font-semibold text-slate-700">
+                                    {price}
+                                  </span>
+                                </>
+                              ) : null}
+                            </span>
+                          </span>
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          <span className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
+                            {labelProfession(t.profession)}
+                          </span>
+
+                          {capacityText ? (
+                            <span className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
+                              {capacityText}
+                            </span>
+                          ) : null}
+
+                          {Array.isArray(t.topics)
+                            ? t.topics.slice(0, 3).map((x) => (
+                                <span
+                                  key={x}
+                                  className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80"
+                                >
+                                  {x}
+                                </span>
+                              ))
+                            : null}
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-3 md:min-w-[250px] md:justify-end">
+                        <div className="text-right">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                            Punkty CPD
+                          </div>
+                          <div className="mt-0.5 text-xl font-semibold leading-none tracking-[-0.03em] text-slate-950">
                             {typeof t.points === "number" ? t.points : "—"}
-                          </span>
-                          <span className="ml-1 text-sm font-semibold text-blue-700">
-                            pkt CPD
-                          </span>
+                            <span className="ml-1 text-sm font-semibold text-slate-500">
+                              pkt
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-3 grid grid-cols-1 gap-2">
-                      {t.url ? (
-                        <a
-                          href={t.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex h-9 items-center justify-center rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95"
-                        >
-                          Zobacz u organizatora
-                        </a>
-                      ) : (
-                        <button
-                          className="inline-flex h-9 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-400 shadow-sm"
-                          disabled
-                          type="button"
-                        >
-                          Brak linku
-                        </button>
-                      )}
+                    <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="text-xs text-slate-400">
+                        Dodanie do planu nie oznacza zapisu u organizatora.
+                      </div>
 
-                      <button
-                        onClick={() => chooseTraining(t)}
-                        className="inline-flex h-9 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 active:scale-95"
-                        type="button"
-                        title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
-                      >
-                        Dodaj do planu CPD
-                      </button>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        {t.url ? (
+                          <a
+                            href={t.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
+                          >
+                            Zobacz u organizatora
+                          </a>
+                        ) : (
+                          <button
+                            className="inline-flex h-9 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-400 shadow-sm"
+                            disabled
+                            type="button"
+                          >
+                            Brak linku
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => chooseTraining(t)}
+                          className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
+                          type="button"
+                          title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
+                        >
+                          Do planu CPD
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
