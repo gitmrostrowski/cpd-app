@@ -84,6 +84,7 @@ const POINTS_OPTIONS: { value: string; label: string }[] = [
 ];
 
 type TimeWindow = "all" | "7" | "30" | "90";
+
 const TIME_WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
   { value: "7", label: "Najbliższe 7 dni" },
   { value: "30", label: "Najbliższe 30 dni" },
@@ -92,6 +93,7 @@ const TIME_WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
 ];
 
 type SortBy = "date_asc" | "date_desc" | "points_desc" | "points_asc" | "newest";
+
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "date_asc", label: "Najbliższe terminy" },
   { value: "date_desc", label: "Najpóźniejsze terminy" },
@@ -101,6 +103,7 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 ];
 
 type PriceMode = "all" | "free" | "paid";
+
 const PRICE_OPTIONS: { value: PriceMode; label: string }[] = [
   { value: "all", label: "Dowolnie" },
   { value: "free", label: "Darmowe" },
@@ -133,6 +136,7 @@ function dateParts(d: string | null) {
   }
 
   const [y, m, day] = d.split("-").map(Number);
+
   if (!y || !m || !day) {
     return {
       day: "—",
@@ -167,9 +171,11 @@ function dateParts(d: string | null) {
 
 function dateRangeShort(start: string | null, end: string | null) {
   if (!start && !end) return null;
+
   if (start && end && start !== end) {
     return `${formatDate(start)} – ${formatDate(end)}`;
   }
+
   return formatDate(start ?? end);
 }
 
@@ -177,12 +183,15 @@ function statusTone(status: EnrollmentStatus | null | undefined) {
   if (status === "open") {
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
   }
+
   if (status === "waiting_list") {
     return "border-amber-200 bg-amber-50 text-amber-700";
   }
+
   if (status === "closed") {
     return "border-slate-200 bg-slate-50 text-slate-500";
   }
+
   return "border-slate-200 bg-slate-50 text-slate-500";
 }
 
@@ -208,11 +217,13 @@ function addDaysYYYYMMDD(days: number) {
 
 function daysDiffFromToday(yyyyMmDd: string | null) {
   if (!yyyyMmDd) return null;
+
   const [y, m, d] = yyyyMmDd.split("-").map(Number);
   if (!y || !m || !d) return null;
 
   const start = new Date(y, m - 1, d);
   const today = new Date();
+
   start.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
 
@@ -250,6 +261,7 @@ function labelEnrollment(s: EnrollmentStatus | null) {
 function formatPrice(pricePln: number | null) {
   if (typeof pricePln !== "number") return null;
   if (pricePln === 0) return "0 zł";
+
   const rounded = Math.round((pricePln + Number.EPSILON) * 100) / 100;
   return `${rounded} zł`;
 }
@@ -276,13 +288,16 @@ function parseTopics(input: string) {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+
   return parts.length ? parts : null;
 }
 
 function normalizeUrl(raw: string | null | undefined) {
   const v = String(raw ?? "").trim();
+
   if (!v) return null;
   if (!/^https?:\/\//i.test(v)) return `https://${v}`;
+
   return v;
 }
 
@@ -331,7 +346,7 @@ function normalizeTrainingRow(r: any): Training {
       : (capacity as number | null),
     enrollment_status: (r.enrollment_status ?? null) as EnrollmentStatus | null,
 
-    approval_status: (r.apval_status ?? r.approval_status ?? null) as ApprovalStatus | null,
+    approval_status: (r.approval_status ?? null) as ApprovalStatus | null,
     submitted_by: r.submitted_by ?? null,
 
     created_at: r.created_at,
@@ -354,7 +369,10 @@ export default function TrainingHubClient() {
 
   const [category, setCategory] = useState<"all" | TrainingCategory>("all");
   const [minPoints, setMinPoints] = useState("all");
-  const [timeWindow, setTimeWindow] = useState<TimeWindow>("30");
+
+  // Domyślnie: Najbliższe 90 dni
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>("90");
+
   const [priceMode, setPriceMode] = useState<PriceMode>("all");
 
   const [topic, setTopic] = useState<string>("all");
@@ -431,6 +449,7 @@ export default function TrainingHubClient() {
 
     if (q.trim()) {
       const qq = q.trim();
+
       query = query.or(
         [
           `title.ilike.%${qq}%`,
@@ -462,13 +481,16 @@ export default function TrainingHubClient() {
 
   const topicOptions = useMemo(() => {
     const set = new Set<string>();
+
     for (const t of items) {
       const arr = Array.isArray(t.topics) ? t.topics : [];
+
       for (const x of arr) {
         const v = String(x || "").trim();
         if (v) set.add(v);
       }
     }
+
     return ["all", ...Array.from(set).sort((a, b) => a.localeCompare(b, "pl"))];
   }, [items]);
 
@@ -624,7 +646,7 @@ export default function TrainingHubClient() {
     "text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500";
 
   const pillBase =
-    "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold leading-none";
+    "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold leading-none";
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50">
@@ -879,7 +901,7 @@ export default function TrainingHubClient() {
           )}
         </div>
 
-        <div className="mt-5 space-y-3">
+        <div className="mt-5 space-y-2.5">
           {items.map((t) => {
             const dd = daysDiffFromToday(t.start_date);
             const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
@@ -903,11 +925,11 @@ export default function TrainingHubClient() {
             return (
               <article
                 key={t.id}
-                className="group overflow-hidden rounded-[1.45rem] border border-slate-200/90 bg-white shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-950/5"
+                className="group overflow-hidden rounded-[1.25rem] border border-slate-200/90 bg-white shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-950/5"
               >
-                <div className="grid gap-0 md:grid-cols-[1fr_250px]">
-                  <div className="min-w-0 p-4 sm:p-5">
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-col md:flex-row md:items-stretch">
+                  <div className="min-w-0 flex-1 p-4">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       {t.organizer ? (
                         <span
                           className={`${pillBase} border-slate-200 bg-slate-50 text-slate-700`}
@@ -957,11 +979,11 @@ export default function TrainingHubClient() {
                       ) : null}
                     </div>
 
-                    <h3 className="mt-3 line-clamp-2 text-[15px] font-black leading-snug tracking-tight text-slate-950 sm:text-base">
+                    <h3 className="mt-2 line-clamp-2 text-[15px] font-black leading-snug tracking-tight text-slate-950">
                       {t.title}
                     </h3>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs font-medium text-slate-500">
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500">
                       {range ? (
                         <span className="inline-flex items-center gap-1.5">
                           <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
@@ -991,28 +1013,24 @@ export default function TrainingHubClient() {
                       ) : null}
 
                       {hasRec ? (
-                        <span>
-                          <span className="font-bold text-slate-700">
-                            {hasRec}
-                          </span>
+                        <span className="font-bold text-slate-700">
+                          {hasRec}
                         </span>
                       ) : null}
 
                       {capacityText ? (
-                        <span>
-                          <span className="font-bold text-slate-700">
-                            {capacityText}
-                          </span>
+                        <span className="font-bold text-slate-700">
+                          {capacityText}
                         </span>
                       ) : null}
                     </div>
 
                     {Array.isArray(t.topics) && t.topics.length > 0 ? (
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {t.topics.slice(0, 4).map((x) => (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {t.topics.slice(0, 5).map((x) => (
                           <span
                             key={x}
-                            className="rounded-full bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200"
+                            className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200"
                           >
                             {x}
                           </span>
@@ -1021,48 +1039,41 @@ export default function TrainingHubClient() {
                     ) : null}
                   </div>
 
-                  <div className="border-t border-slate-100 bg-slate-50/70 p-4 sm:p-5 md:border-l md:border-t-0">
-                    <div className="flex items-center justify-between gap-4 md:block">
-                      <div className="flex items-center gap-3 md:block md:text-center">
-                        <div className="inline-flex min-w-[78px] flex-col items-center justify-center rounded-2xl border border-blue-100 bg-white px-3 py-2 shadow-sm shadow-slate-900/5">
-                          <span className="text-3xl font-black leading-none tracking-tight text-slate-950">
-                            {date.day}
-                          </span>
-                          <span className="mt-1 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700">
-                            {date.month}
-                          </span>
-                        </div>
-
-                        <div className="md:mt-2">
-                          <div className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                            {date.weekday || "Termin"}
-                          </div>
-                          {date.year ? (
-                            <div className="mt-0.5 text-xs font-semibold text-slate-500">
-                              {date.year}
-                            </div>
-                          ) : null}
-                        </div>
+                  <div className="border-t border-slate-100 bg-slate-50/70 p-3 md:w-[300px] md:border-l md:border-t-0">
+                    <div className="flex items-center gap-3">
+                      <div className="flex min-w-[72px] flex-col items-center justify-center rounded-2xl border border-blue-100 bg-white px-3 py-2 shadow-sm shadow-slate-900/5">
+                        <span className="text-2xl font-black leading-none tracking-tight text-slate-950">
+                          {date.day}
+                        </span>
+                        <span className="mt-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-blue-700">
+                          {date.month}
+                        </span>
                       </div>
 
-                      <div className="text-right md:mt-4 md:text-center">
-                        <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                          Punkty
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                          {date.weekday || "Termin"}
+                          {date.year ? ` · ${date.year}` : ""}
                         </div>
-                        <div className="mt-0.5 text-2xl font-black leading-none text-blue-700">
+
+                        <div className="mt-1 text-2xl font-black leading-none text-blue-700">
                           {typeof t.points === "number" ? t.points : "—"}
                           <span className="ml-1 text-sm font-black">pkt</span>
+                        </div>
+
+                        <div className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                          Punkty edukacyjne
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-1">
+                    <div className="mt-3 grid grid-cols-2 gap-2">
                       <button
                         onClick={() => chooseTraining(t)}
-                        className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95"
+                        className="inline-flex h-9 items-center justify-center rounded-xl bg-blue-600 px-3 text-xs font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95"
                         type="button"
                       >
-                        + Dodaj do planu
+                        + Do planu
                       </button>
 
                       {t.url ? (
@@ -1070,13 +1081,13 @@ export default function TrainingHubClient() {
                           href={t.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                          className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
                         >
                           Szczegóły
                         </a>
                       ) : (
                         <button
-                          className="inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-400 shadow-sm"
+                          className="inline-flex h-9 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-400 shadow-sm"
                           disabled
                           type="button"
                         >
@@ -1104,6 +1115,7 @@ export default function TrainingHubClient() {
             className="absolute inset-0 bg-black/30"
             onClick={() => (addSubmitting ? null : setAddOpen(false))}
           />
+
           <div className="relative w-full max-w-2xl rounded-[1.45rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-950/10">
             <div className="flex items-start justify-between gap-3">
               <div>
