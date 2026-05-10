@@ -2,6 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  Award,
+  BookOpen,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  MapPin,
+  MonitorPlay,
+} from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/supabase";
@@ -213,6 +223,30 @@ function statusTone(status: EnrollmentStatus | null | undefined) {
   }
 
   return "border-slate-200 bg-slate-50 text-slate-500";
+}
+
+function formatTone(format: TrainingType | null) {
+  if (format === "stacjonarne") {
+    return {
+      stripe: "bg-amber-400",
+      badge: "border-amber-200 bg-amber-50 text-amber-700",
+      icon: "text-amber-600 bg-amber-50 border-amber-100",
+    };
+  }
+
+  if (format === "hybrydowe") {
+    return {
+      stripe: "bg-indigo-500",
+      badge: "border-indigo-200 bg-indigo-50 text-indigo-700",
+      icon: "text-indigo-600 bg-indigo-50 border-indigo-100",
+    };
+  }
+
+  return {
+    stripe: "bg-blue-500",
+    badge: "border-blue-100 bg-blue-50 text-blue-700",
+    icon: "text-blue-600 bg-blue-50 border-blue-100",
+  };
 }
 
 function toYYYYMMDD(dt: Date) {
@@ -665,6 +699,9 @@ export default function TrainingHubClient() {
   const pillBase =
     "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium leading-none";
 
+  const metaIconBase =
+    "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border bg-white";
+
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[linear-gradient(180deg,#f3f6fb_0%,#f8fafc_45%,#f4f6f8_100%)]">
       <div className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-7 sm:px-6 lg:px-8">
@@ -672,14 +709,20 @@ export default function TrainingHubClient() {
           <div className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full bg-amber-400" />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-950">
-                Baza szkoleń
-              </h1>
-              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
-                Kursy, webinary i wydarzenia z punktami edukacyjnymi. Dodaj
-                wybrane szkolenie do planu CPD.
-              </p>
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700">
+                <BookOpen className="h-5 w-5" strokeWidth={2} />
+              </span>
+
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+                  Baza szkoleń
+                </h1>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
+                  Kursy, webinary i wydarzenia z punktami edukacyjnymi. Dodaj
+                  wybrane szkolenie do planu CPD.
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -929,7 +972,11 @@ export default function TrainingHubClient() {
 
               {timeWindow !== "all" ? (
                 <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700">
-                  Okno: {TIME_WINDOW_OPTIONS.find((x) => x.value === timeWindow)?.label}
+                  Okno:{" "}
+                  {
+                    TIME_WINDOW_OPTIONS.find((x) => x.value === timeWindow)
+                      ?.label
+                  }
                 </span>
               ) : null}
 
@@ -982,6 +1029,7 @@ export default function TrainingHubClient() {
 
             const date = dateParts(t.start_date);
             const range = dateRangeShort(t.start_date, t.end_date);
+            const tone = formatTone(t.format);
 
             const hasRec = t.has_recording === true ? "Nagranie" : null;
 
@@ -991,32 +1039,19 @@ export default function TrainingHubClient() {
             return (
               <article
                 key={t.id}
-                className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/6 transition-all duration-200 hover:border-blue-200 hover:shadow-md hover:shadow-blue-950/5"
+                className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5 transition-all duration-200 hover:border-blue-200 hover:shadow-md hover:shadow-blue-950/5"
               >
-                <div className="flex flex-col md:flex-row md:items-stretch">
-                  <div className="min-w-0 flex-1 p-4">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {t.organizer ? (
-                        <span
-                          className={`${pillBase} border-slate-200 bg-slate-50 text-slate-600`}
-                        >
-                          {t.organizer}
-                        </span>
-                      ) : null}
+                <div
+                  className={`absolute bottom-3 left-0 top-3 w-1 rounded-r-full ${tone.stripe}`}
+                />
 
-                      <span
-                        className={`${pillBase} border-blue-100 bg-blue-50 text-blue-700`}
-                      >
+                <div className="flex flex-col md:flex-row md:items-stretch">
+                  <div className="min-w-0 flex-1 p-4 pl-5">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className={`${pillBase} ${tone.badge}`}>
+                        <MonitorPlay className="mr-1 h-3 w-3" strokeWidth={2} />
                         {labelType(t.format)}
                       </span>
-
-                      {t.category ? (
-                        <span
-                          className={`${pillBase} border-slate-200 bg-white text-slate-500`}
-                        >
-                          {labelCategory(t.category)}
-                        </span>
-                      ) : null}
 
                       {enr ? (
                         <span
@@ -1024,6 +1059,10 @@ export default function TrainingHubClient() {
                             t.enrollment_status
                           )}`}
                         >
+                          <CheckCircle2
+                            className="mr-1 h-3 w-3"
+                            strokeWidth={2}
+                          />
                           {enr}
                         </span>
                       ) : null}
@@ -1032,6 +1071,7 @@ export default function TrainingHubClient() {
                         <span
                           className={`${pillBase} border-amber-200 bg-amber-50 text-amber-700`}
                         >
+                          <Clock3 className="mr-1 h-3 w-3" strokeWidth={2} />
                           Wkrótce
                         </span>
                       ) : null}
@@ -1049,47 +1089,75 @@ export default function TrainingHubClient() {
                       {t.title}
                     </h3>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500">
+                    <div className="mt-2 grid gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500 sm:grid-cols-2 lg:grid-cols-4">
                       {range ? (
-                        <span className="inline-flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                          Termin:{" "}
-                          <span className="font-semibold text-slate-700">
-                            {range}
+                        <span className="inline-flex min-w-0 items-center gap-1.5">
+                          <span className={`${metaIconBase} border-blue-100 text-blue-600`}>
+                            <CalendarDays className="h-3 w-3" strokeWidth={2} />
+                          </span>
+                          <span className="truncate">
+                            <span className="font-semibold text-slate-700">
+                              {range}
+                            </span>
+                          </span>
+                        </span>
+                      ) : null}
+
+                      {t.organizer ? (
+                        <span className="inline-flex min-w-0 items-center gap-1.5">
+                          <span className={`${metaIconBase} border-slate-200 text-slate-500`}>
+                            <Building2 className="h-3 w-3" strokeWidth={2} />
+                          </span>
+                          <span className="truncate font-semibold text-slate-700">
+                            {t.organizer}
                           </span>
                         </span>
                       ) : null}
 
                       {t.voivodeship ? (
-                        <span>
-                          Miejsce:{" "}
-                          <span className="font-semibold text-slate-700">
+                        <span className="inline-flex min-w-0 items-center gap-1.5">
+                          <span className={`${metaIconBase} border-slate-200 text-slate-500`}>
+                            <MapPin className="h-3 w-3" strokeWidth={2} />
+                          </span>
+                          <span className="truncate font-semibold text-slate-700">
                             {t.voivodeship}
                           </span>
                         </span>
                       ) : null}
 
-                      {price ? (
-                        <span>
-                          Cena:{" "}
-                          <span className="font-semibold text-slate-700">
-                            {price}
-                          </span>
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <span className={`${metaIconBase} border-slate-200 text-slate-500`}>
+                          <Award className="h-3 w-3" strokeWidth={2} />
                         </span>
-                      ) : null}
-
-                      {hasRec ? (
-                        <span className="font-semibold text-slate-700">
-                          {hasRec}
+                        <span className="truncate">
+                          {labelCategory(t.category)}
+                          {price ? (
+                            <>
+                              {" · "}
+                              <span className="font-semibold text-slate-700">
+                                {price}
+                              </span>
+                            </>
+                          ) : null}
                         </span>
-                      ) : null}
-
-                      {capacityText ? (
-                        <span className="font-semibold text-slate-700">
-                          {capacityText}
-                        </span>
-                      ) : null}
+                      </span>
                     </div>
+
+                    {(hasRec || capacityText) && (
+                      <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-medium text-slate-500">
+                        {hasRec ? (
+                          <span className="rounded-full bg-slate-50 px-2 py-0.5 ring-1 ring-slate-200">
+                            {hasRec}
+                          </span>
+                        ) : null}
+
+                        {capacityText ? (
+                          <span className="rounded-full bg-slate-50 px-2 py-0.5 ring-1 ring-slate-200">
+                            {capacityText}
+                          </span>
+                        ) : null}
+                      </div>
+                    )}
 
                     {Array.isArray(t.topics) && t.topics.length > 0 ? (
                       <div className="mt-2 flex flex-wrap gap-1.5">
