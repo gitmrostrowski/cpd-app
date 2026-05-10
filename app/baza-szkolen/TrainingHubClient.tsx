@@ -369,10 +369,7 @@ export default function TrainingHubClient() {
 
   const [category, setCategory] = useState<"all" | TrainingCategory>("all");
   const [minPoints, setMinPoints] = useState("all");
-
-  // Domyślnie: Najbliższe 90 dni
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("90");
-
   const [priceMode, setPriceMode] = useState<PriceMode>("all");
 
   const [topic, setTopic] = useState<string>("all");
@@ -381,6 +378,8 @@ export default function TrainingHubClient() {
   const [onlyPartner, setOnlyPartner] = useState(false);
   const [onlyUpcoming, setOnlyUpcoming] = useState(true);
   const [onlyRecording, setOnlyRecording] = useState(false);
+
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   const [addOpen, setAddOpen] = useState(false);
   const [addSubmitting, setAddSubmitting] = useState(false);
@@ -437,14 +436,10 @@ export default function TrainingHubClient() {
     }
 
     if (onlyPartner) query = query.eq("is_partner", true);
-
     if (topic !== "all") query = query.contains("topics", [topic]);
-
     if (priceMode === "free") query = query.eq("price_pln", 0);
     if (priceMode === "paid") query = query.gt("price_pln", 0);
-
     if (onlyRecording) query = query.eq("has_recording", true);
-
     if (enrollment !== "all") query = query.eq("enrollment_status", enrollment);
 
     if (q.trim()) {
@@ -632,7 +627,7 @@ export default function TrainingHubClient() {
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[1.45rem] border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm shadow-slate-900/5">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm shadow-slate-900/5">
           Sprawdzam sesję…
         </div>
       </div>
@@ -640,43 +635,40 @@ export default function TrainingHubClient() {
   }
 
   const fieldBase =
-    "mt-1 h-10 w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 shadow-inner shadow-slate-900/5 transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100";
+    "h-10 w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-inner shadow-slate-900/5 transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100";
 
   const labelBase =
-    "text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500";
+    "mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500";
 
   const pillBase =
-    "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold leading-none";
+    "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium leading-none";
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50">
-      <div className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-900/5 sm:p-7">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-h-[calc(100vh-64px)] bg-[#f8fafc]">
+      <div className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-7 sm:px-6 lg:px-8">
+        <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm shadow-slate-900/5 sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">
-                Baza CRPE
-              </p>
-              <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-950">
                 Baza szkoleń
               </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
-                Znajdź kursy, webinary i wydarzenia z punktami edukacyjnymi.
-                Wybierz szkolenie, a trafi do Twojego planu CPD.
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
+                Kursy, webinary i wydarzenia z punktami edukacyjnymi. Dodaj
+                wybrane szkolenie do planu CPD.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/aktywnosci"
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
               >
                 Aktywności
               </Link>
 
               <button
                 onClick={load}
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-60"
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-60"
                 disabled={fetching}
                 type="button"
               >
@@ -686,9 +678,9 @@ export default function TrainingHubClient() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-[1.45rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-            <div className="md:col-span-6">
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
+            <div className="lg:col-span-5">
               <label className={labelBase}>Szukaj</label>
               <input
                 value={q}
@@ -698,82 +690,7 @@ export default function TrainingHubClient() {
               />
             </div>
 
-            <div className="md:col-span-2">
-              <label className={labelBase}>Sortowanie</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortBy)}
-                className={fieldBase}
-              >
-                {SORT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className={labelBase}>Organizator</label>
-              <select
-                value={organizer}
-                onChange={(e) => setOrganizer(e.target.value)}
-                className={fieldBase}
-              >
-                {ORGANIZER_QUICK.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className={labelBase}>Forma</label>
-              <select
-                value={format}
-                onChange={(e) => setFormat(e.target.value as any)}
-                className={fieldBase}
-              >
-                {FORMAT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className={labelBase}>Kategoria</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as any)}
-                className={fieldBase}
-              >
-                {CATEGORY_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className={labelBase}>Punkty</label>
-              <select
-                value={minPoints}
-                onChange={(e) => setMinPoints(e.target.value)}
-                className={fieldBase}
-              >
-                {POINTS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
+            <div className="lg:col-span-2">
               <label className={labelBase}>Termin</label>
               <select
                 value={timeWindow}
@@ -788,14 +705,14 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="md:col-span-2">
-              <label className={labelBase}>Cena</label>
+            <div className="lg:col-span-2">
+              <label className={labelBase}>Forma</label>
               <select
-                value={priceMode}
-                onChange={(e) => setPriceMode(e.target.value as PriceMode)}
+                value={format}
+                onChange={(e) => setFormat(e.target.value as any)}
                 className={fieldBase}
               >
-                {PRICE_OPTIONS.map((o) => (
+                {FORMAT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
@@ -803,29 +720,14 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="md:col-span-2">
-              <label className={labelBase}>Temat</label>
+            <div className="lg:col-span-2">
+              <label className={labelBase}>Punkty</label>
               <select
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
+                value={minPoints}
+                onChange={(e) => setMinPoints(e.target.value)}
                 className={fieldBase}
               >
-                {topicOptions.map((t) => (
-                  <option key={t} value={t}>
-                    {t === "all" ? "Dowolnie" : t}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className={labelBase}>Zapisy</label>
-              <select
-                value={enrollment}
-                onChange={(e) => setEnrollment(e.target.value as any)}
-                className={fieldBase}
-              >
-                {ENROLLMENT_OPTIONS.map((o) => (
+                {POINTS_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
@@ -833,31 +735,115 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="md:col-span-12 md:flex md:items-end md:justify-end">
-              <div className="mt-1 flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
-                <button
-                  onClick={load}
-                  className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95 disabled:opacity-60 sm:w-auto sm:min-w-[150px]"
-                  disabled={fetching}
-                  type="button"
-                >
-                  Filtruj
-                </button>
-
-                <button
-                  onClick={() => setAddOpen(true)}
-                  className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 active:scale-95 sm:w-auto sm:min-w-[150px]"
-                  type="button"
-                >
-                  Dodaj szkolenie
-                </button>
-              </div>
+            <div className="flex items-end lg:col-span-1">
+              <button
+                onClick={load}
+                className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95 disabled:opacity-60"
+                disabled={fetching}
+                type="button"
+              >
+                Filtruj
+              </button>
             </div>
           </div>
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {showMoreFilters ? (
+            <div className="mt-3 grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 md:grid-cols-2 lg:grid-cols-6">
+              <div>
+                <label className={labelBase}>Sortowanie</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortBy)}
+                  className={fieldBase}
+                >
+                  {SORT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelBase}>Organizator</label>
+                <select
+                  value={organizer}
+                  onChange={(e) => setOrganizer(e.target.value)}
+                  className={fieldBase}
+                >
+                  {ORGANIZER_QUICK.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelBase}>Kategoria</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as any)}
+                  className={fieldBase}
+                >
+                  {CATEGORY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelBase}>Cena</label>
+                <select
+                  value={priceMode}
+                  onChange={(e) => setPriceMode(e.target.value as PriceMode)}
+                  className={fieldBase}
+                >
+                  {PRICE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelBase}>Temat</label>
+                <select
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  className={fieldBase}
+                >
+                  {topicOptions.map((t) => (
+                    <option key={t} value={t}>
+                      {t === "all" ? "Dowolnie" : t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelBase}>Zapisy</label>
+                <select
+                  value={enrollment}
+                  onChange={(e) => setEnrollment(e.target.value as any)}
+                  className={fieldBase}
+                >
+                  {ENROLLMENT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-white">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-white">
                 <input
                   type="checkbox"
                   checked={onlyUpcoming}
@@ -867,30 +853,50 @@ export default function TrainingHubClient() {
                 Tylko nadchodzące
               </label>
 
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-white">
-                <input
-                  type="checkbox"
-                  checked={onlyPartner}
-                  onChange={(e) => setOnlyPartner(e.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
-                />
-                Tylko partnerzy
-              </label>
-
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-white">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-white">
                 <input
                   type="checkbox"
                   checked={onlyRecording}
                   onChange={(e) => setOnlyRecording(e.target.checked)}
                   className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
                 />
-                Tylko z nagraniem
+                Z nagraniem
               </label>
+
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-white">
+                <input
+                  type="checkbox"
+                  checked={onlyPartner}
+                  onChange={(e) => setOnlyPartner(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+                />
+                Partnerzy
+              </label>
+
+              <button
+                type="button"
+                onClick={() => setShowMoreFilters((v) => !v)}
+                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50"
+              >
+                {showMoreFilters ? "Mniej filtrów" : "Więcej filtrów"}
+              </button>
             </div>
 
-            <div className="text-sm text-slate-600">
-              Wynik:{" "}
-              <span className="font-black text-slate-950">{items.length}</span>
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-slate-500">
+                Wynik:{" "}
+                <span className="font-semibold text-slate-900">
+                  {items.length}
+                </span>
+              </div>
+
+              <button
+                onClick={() => setAddOpen(true)}
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                type="button"
+              >
+                Dodaj szkolenie
+              </button>
             </div>
           </div>
 
@@ -901,7 +907,7 @@ export default function TrainingHubClient() {
           )}
         </div>
 
-        <div className="mt-5 space-y-2.5">
+        <div className="mt-4 space-y-2.5">
           {items.map((t) => {
             const dd = daysDiffFromToday(t.start_date);
             const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
@@ -925,14 +931,14 @@ export default function TrainingHubClient() {
             return (
               <article
                 key={t.id}
-                className="group overflow-hidden rounded-[1.25rem] border border-slate-200/90 bg-white shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-950/5"
+                className="group overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm shadow-slate-900/5 transition-all duration-200 hover:border-blue-200 hover:shadow-md hover:shadow-blue-950/5"
               >
                 <div className="flex flex-col md:flex-row md:items-stretch">
                   <div className="min-w-0 flex-1 p-4">
                     <div className="flex flex-wrap items-center gap-1.5">
                       {t.organizer ? (
                         <span
-                          className={`${pillBase} border-slate-200 bg-slate-50 text-slate-700`}
+                          className={`${pillBase} border-slate-200 bg-slate-50 text-slate-600`}
                         >
                           {t.organizer}
                         </span>
@@ -946,7 +952,7 @@ export default function TrainingHubClient() {
 
                       {t.category ? (
                         <span
-                          className={`${pillBase} border-slate-200 bg-white text-slate-600`}
+                          className={`${pillBase} border-slate-200 bg-white text-slate-500`}
                         >
                           {labelCategory(t.category)}
                         </span>
@@ -964,7 +970,7 @@ export default function TrainingHubClient() {
 
                       {soon ? (
                         <span
-                          className={`${pillBase} border-rose-200 bg-rose-50 text-rose-700`}
+                          className={`${pillBase} border-amber-200 bg-amber-50 text-amber-700`}
                         >
                           Wkrótce
                         </span>
@@ -979,7 +985,7 @@ export default function TrainingHubClient() {
                       ) : null}
                     </div>
 
-                    <h3 className="mt-2 line-clamp-2 text-[15px] font-black leading-snug tracking-tight text-slate-950">
+                    <h3 className="mt-2 line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-slate-950">
                       {t.title}
                     </h3>
 
@@ -988,7 +994,7 @@ export default function TrainingHubClient() {
                         <span className="inline-flex items-center gap-1.5">
                           <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                           Termin:{" "}
-                          <span className="font-bold text-slate-700">
+                          <span className="font-semibold text-slate-700">
                             {range}
                           </span>
                         </span>
@@ -997,7 +1003,7 @@ export default function TrainingHubClient() {
                       {t.voivodeship ? (
                         <span>
                           Miejsce:{" "}
-                          <span className="font-bold text-slate-700">
+                          <span className="font-semibold text-slate-700">
                             {t.voivodeship}
                           </span>
                         </span>
@@ -1006,20 +1012,20 @@ export default function TrainingHubClient() {
                       {price ? (
                         <span>
                           Cena:{" "}
-                          <span className="font-bold text-slate-700">
+                          <span className="font-semibold text-slate-700">
                             {price}
                           </span>
                         </span>
                       ) : null}
 
                       {hasRec ? (
-                        <span className="font-bold text-slate-700">
+                        <span className="font-semibold text-slate-700">
                           {hasRec}
                         </span>
                       ) : null}
 
                       {capacityText ? (
-                        <span className="font-bold text-slate-700">
+                        <span className="font-semibold text-slate-700">
                           {capacityText}
                         </span>
                       ) : null}
@@ -1030,7 +1036,7 @@ export default function TrainingHubClient() {
                         {t.topics.slice(0, 5).map((x) => (
                           <span
                             key={x}
-                            className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200"
+                            className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200"
                           >
                             {x}
                           </span>
@@ -1039,30 +1045,28 @@ export default function TrainingHubClient() {
                     ) : null}
                   </div>
 
-                  <div className="border-t border-slate-100 bg-slate-50/70 p-3 md:w-[300px] md:border-l md:border-t-0">
+                  <div className="border-t border-slate-100 bg-slate-50/60 p-3 md:w-[300px] md:border-l md:border-t-0">
                     <div className="flex items-center gap-3">
                       <div className="flex min-w-[72px] flex-col items-center justify-center rounded-2xl border border-blue-100 bg-white px-3 py-2 shadow-sm shadow-slate-900/5">
-                        <span className="text-2xl font-black leading-none tracking-tight text-slate-950">
+                        <span className="text-2xl font-bold leading-none tracking-tight text-slate-950">
                           {date.day}
                         </span>
-                        <span className="mt-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-blue-700">
+                        <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700">
                           {date.month}
                         </span>
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                           {date.weekday || "Termin"}
                           {date.year ? ` · ${date.year}` : ""}
                         </div>
 
-                        <div className="mt-1 text-2xl font-black leading-none text-blue-700">
+                        <div className="mt-1 text-2xl font-bold leading-none text-blue-700">
                           {typeof t.points === "number" ? t.points : "—"}
-                          <span className="ml-1 text-sm font-black">pkt</span>
-                        </div>
-
-                        <div className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                          Punkty edukacyjne
+                          <span className="ml-1 text-sm font-semibold">
+                            pkt
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -1070,7 +1074,7 @@ export default function TrainingHubClient() {
                     <div className="mt-3 grid grid-cols-2 gap-2">
                       <button
                         onClick={() => chooseTraining(t)}
-                        className="inline-flex h-9 items-center justify-center rounded-xl bg-blue-600 px-3 text-xs font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95"
+                        className="inline-flex h-9 items-center justify-center rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95"
                         type="button"
                       >
                         + Do planu
@@ -1081,13 +1085,13 @@ export default function TrainingHubClient() {
                           href={t.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                          className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
                         >
                           Szczegóły
                         </a>
                       ) : (
                         <button
-                          className="inline-flex h-9 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-400 shadow-sm"
+                          className="inline-flex h-9 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-400 shadow-sm"
                           disabled
                           type="button"
                         >
@@ -1102,7 +1106,7 @@ export default function TrainingHubClient() {
           })}
 
           {!fetching && items.length === 0 && (
-            <div className="rounded-[1.45rem] border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm shadow-slate-900/5">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm shadow-slate-900/5">
               Brak wyników. Zmień filtry albo wybierz „Dowolnie” w Terminie.
             </div>
           )}
@@ -1116,10 +1120,10 @@ export default function TrainingHubClient() {
             onClick={() => (addSubmitting ? null : setAddOpen(false))}
           />
 
-          <div className="relative w-full max-w-2xl rounded-[1.45rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-950/10">
+          <div className="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-950/10">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-lg font-black text-slate-950">
+                <div className="text-lg font-semibold text-slate-950">
                   Dodaj szkolenie do bazy
                 </div>
                 <div className="mt-1 text-sm leading-relaxed text-slate-600">
@@ -1129,7 +1133,7 @@ export default function TrainingHubClient() {
               </div>
 
               <button
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
                 onClick={() => setAddOpen(false)}
                 disabled={addSubmitting}
                 type="button"
@@ -1288,7 +1292,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="flex items-end md:col-span-3">
-                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
                   <input
                     type="checkbox"
                     checked={fRec}
@@ -1302,7 +1306,7 @@ export default function TrainingHubClient() {
 
             <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
               <button
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
                 onClick={() => setAddOpen(false)}
                 disabled={addSubmitting}
                 type="button"
@@ -1311,7 +1315,7 @@ export default function TrainingHubClient() {
               </button>
 
               <button
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 disabled:opacity-60"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 disabled:opacity-60"
                 onClick={submitNewTraining}
                 disabled={addSubmitting}
                 type="button"
