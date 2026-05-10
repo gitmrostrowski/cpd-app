@@ -478,6 +478,9 @@ export default function TrainingHubClient() {
   const [selectedCalendarTrainingId, setSelectedCalendarTrainingId] = useState<
     string | null
   >(null);
+  const [selectedCalendarDateKey, setSelectedCalendarDateKey] = useState<
+    string | null
+  >(null);
 
   const [fTitle, setFTitle] = useState("");
   const [fOrganizer, setFOrganizer] = useState("");
@@ -670,14 +673,32 @@ export default function TrainingHubClient() {
     });
   }, [items]);
 
+  const selectedCalendarDateTrainings = useMemo(() => {
+    if (!selectedCalendarDateKey) {
+      const first = nextTrainings[0];
+      return first ? [first] : [];
+    }
+
+    return items.filter((item) => item.start_date === selectedCalendarDateKey);
+  }, [items, nextTrainings, selectedCalendarDateKey]);
+
   const selectedCalendarTraining = useMemo(() => {
-    if (!selectedCalendarTrainingId) return nextTrainings[0] ?? null;
+    if (!selectedCalendarTrainingId) {
+      return selectedCalendarDateTrainings[0] ?? nextTrainings[0] ?? null;
+    }
+
     return (
       items.find((item) => item.id === selectedCalendarTrainingId) ??
+      selectedCalendarDateTrainings[0] ??
       nextTrainings[0] ??
       null
     );
-  }, [items, nextTrainings, selectedCalendarTrainingId]);
+  }, [
+    items,
+    nextTrainings,
+    selectedCalendarDateTrainings,
+    selectedCalendarTrainingId,
+  ]);
 
   const chooseTraining = async (t: Training) => {
     if (!user) {
@@ -1378,20 +1399,11 @@ export default function TrainingHubClient() {
                     Planowanie
                   </p>
                   <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em] text-slate-950">
-                    Najbliższe terminy
+                    Podsumowanie filtrów
                   </h2>
                   <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                    Szybki podgląd wydarzeń z aktualnych filtrów.
+                    Potencjał punktów i formaty szkoleń z aktualnej listy.
                   </p>
-                </div>
-
-                <div className="rounded-2xl bg-white px-3 py-2 text-right ring-1 ring-blue-100">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-500">
-                    Wynik
-                  </div>
-                  <div className="text-2xl font-semibold leading-none text-blue-700">
-                    {items.length}
-                  </div>
                 </div>
               </div>
 
@@ -1416,10 +1428,10 @@ export default function TrainingHubClient() {
 
                 <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200/80">
                   <div className="text-lg font-semibold text-slate-950">
-                    {sidebarStats.open}
+                    {sidebarStats.stationary}
                   </div>
                   <div className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
-                    zapisy
+                    stacj.
                   </div>
                 </div>
               </div>
@@ -1487,16 +1499,16 @@ export default function TrainingHubClient() {
                             key={day.dateKey}
                             type="button"
                             disabled={!hasEvent}
-                            onMouseEnter={() =>
-                              day.primary
-                                ? setSelectedCalendarTrainingId(day.primary.id)
-                                : null
-                            }
-                            onClick={() =>
-                              day.primary
-                                ? setSelectedCalendarTrainingId(day.primary.id)
-                                : null
-                            }
+                            onMouseEnter={() => {
+                              if (!day.primary) return;
+                              setSelectedCalendarTrainingId(day.primary.id);
+                              setSelectedCalendarDateKey(day.dateKey);
+                            }}
+                            onClick={() => {
+                              if (!day.primary) return;
+                              setSelectedCalendarTrainingId(day.primary.id);
+                              setSelectedCalendarDateKey(day.dateKey);
+                            }}
                             className={`relative flex aspect-square items-center justify-center rounded-xl text-[11px] font-semibold ring-1 transition disabled:cursor-default ${dayTone} ${
                               isSelected ? "outline outline-2 outline-blue-400" : ""
                             }`}
@@ -1524,25 +1536,48 @@ export default function TrainingHubClient() {
 
               {selectedCalendarTraining ? (
                 <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-3">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-500">
-                    Wybrane wydarzenie
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-500">
+                        Podgląd dnia
+                      </div>
+                      <div className="mt-0.5 text-xs text-slate-500">
+                        {formatDate(selectedCalendarTraining.start_date)}
+                      </div>
+                    </div>
+
+                    {selectedCalendarDateTrainings.length > 1 ? (
+                      <div className="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-blue-700 ring-1 ring-blue-100">
+                        {selectedCalendarDateTrainings.length} wydarzenia
+                      </div>
+                    ) : null}
                   </div>
 
-                  <div className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-slate-950">
-                    {selectedCalendarTraining.title}
-                  </div>
+                  <div className="mt-3 space-y-2">
+                    {selectedCalendarDateTrainings.map((event) => {
+                      const isActive = selectedCalendarTraining.id === event.id;
 
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-                    <span>{formatDate(selectedCalendarTraining.start_date)}</span>
-                    <span>·</span>
-                    <span>
-                      {typeof selectedCalendarTraining.points === "number"
-                        ? selectedCalendarTraining.points
-                        : "—"}{" "}
-                      pkt
-                    </span>
-                    <span>·</span>
-                    <span>{labelType(selectedCalendarTraining.format)}</span>
+                      return (
+                        <button
+                          key={event.id}
+                          type="button"
+                          onClick={() => setSelectedCalendarTrainingId(event.id)}
+                          className={`w-full rounded-xl border p-2 text-left transition ${
+                            isActive
+                              ? "border-blue-200 bg-white shadow-sm"
+                              : "border-transparent bg-white/60 hover:bg-white"
+                          }`}
+                        >
+                          <div className="line-clamp-2 text-xs font-semibold leading-snug text-slate-950">
+                            {event.title}
+                          </div>
+                          <div className="mt-1 text-[11px] text-slate-500">
+                            {typeof event.points === "number" ? event.points : "—"} pkt ·{" "}
+                            {labelType(event.format)}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
 
                   <div className="mt-3 grid grid-cols-1 gap-2">
