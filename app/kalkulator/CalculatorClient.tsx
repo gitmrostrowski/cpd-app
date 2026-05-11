@@ -72,21 +72,21 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
         label: "Szkolenie wewnętrzne",
         mode: "per_item",
         maxPoints: 6,
-        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
+        note: "Pilnuj limitu za pojedyncze szkolenie.",
       },
       {
         key: "JOURNAL_SUBSCRIPTION",
         label: "Prenumerata czasopisma",
         mode: "per_period",
         maxPoints: 10,
-        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
+        note: "Dobra kategoria uzupełniająca, ale szybko osiąga limit.",
       },
       {
         key: "SCIENTIFIC_SOCIETY",
         label: "Towarzystwo/Kolegium",
         mode: "per_period",
         maxPoints: 20,
-        note: "5 pkt, maks. 20 pkt w okresie",
+        note: "Może pomóc domknąć punkty, jeśli masz potwierdzenie członkostwa.",
       },
     ],
   },
@@ -99,21 +99,21 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
         label: "Szkolenie wewnętrzne",
         mode: "per_item",
         maxPoints: 6,
-        note: "1 pkt/h, maks. 6 pkt za jedno szkolenie",
+        note: "Pilnuj limitu za pojedyncze szkolenie.",
       },
       {
         key: "JOURNAL_SUBSCRIPTION",
         label: "Prenumerata czasopisma",
         mode: "per_period",
         maxPoints: 10,
-        note: "5 pkt/tytuł, maks. 10 pkt w okresie",
+        note: "Dobra kategoria uzupełniająca, ale szybko osiąga limit.",
       },
       {
         key: "SCIENTIFIC_SOCIETY",
         label: "Towarzystwo/Kolegium",
         mode: "per_period",
         maxPoints: 20,
-        note: "5 pkt, maks. 20 pkt w okresie",
+        note: "Może pomóc domknąć punkty, jeśli masz potwierdzenie członkostwa.",
       },
     ],
   },
@@ -126,28 +126,28 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
         label: "Webinary",
         mode: "per_period",
         maxPoints: 50,
-        note: "5 pkt/wydarzenie, maks. 50 pkt",
+        note: "Wygodny sposób na punkty, ale pamiętaj o limicie.",
       },
       {
         key: "INTERNAL_TRAINING",
         label: "Szkolenie wewnętrzne",
         mode: "per_period",
         maxPoints: 50,
-        note: "2/5 pkt, maks. 50 pkt",
+        note: "Dobre do uzupełnienia braków w okresie.",
       },
       {
         key: "COMMITTEES",
         label: "Komisje/Zespoły",
         mode: "per_period",
         maxPoints: 30,
-        note: "3 pkt/posiedzenie, maks. 30 pkt",
+        note: "Wymaga dobrej dokumentacji obecności.",
       },
       {
         key: "JOURNAL_SUBSCRIPTION",
         label: "Prenumerata czasopisma",
         mode: "per_year",
         maxPoints: 10,
-        note: "5 pkt/tytuł, maks. 10 pkt/rok",
+        note: "Limit liczony rocznie — sprawdź lata w okresie.",
       },
     ],
   },
@@ -160,28 +160,28 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
         label: "Webinary",
         mode: "per_period",
         maxPoints: 50,
-        note: "5 pkt/wydarzenie, maks. 50 pkt",
+        note: "Wygodny sposób na punkty, ale pamiętaj o limicie.",
       },
       {
         key: "INTERNAL_TRAINING",
         label: "Szkolenie wewnętrzne",
         mode: "per_period",
         maxPoints: 50,
-        note: "2/5 pkt, maks. 50 pkt",
+        note: "Dobre do uzupełnienia braków w okresie.",
       },
       {
         key: "COMMITTEES",
         label: "Komisje/Zespoły",
         mode: "per_period",
         maxPoints: 30,
-        note: "3 pkt/posiedzenie, maks. 30 pkt",
+        note: "Wymaga dobrej dokumentacji obecności.",
       },
       {
         key: "JOURNAL_SUBSCRIPTION",
         label: "Prenumerata czasopisma",
         mode: "per_year",
         maxPoints: 10,
-        note: "5 pkt/tytuł, maks. 10 pkt/rok",
+        note: "Limit liczony rocznie — sprawdź lata w okresie.",
       },
     ],
   },
@@ -233,9 +233,13 @@ function getPeriodFromPwzIssueDate(
 
 function getRowMissing(a: ActivityRow) {
   const missing: string[] = [];
-  if (!Boolean(a.organizer && String(a.organizer).trim())) missing.push("Brak organizatora");
+
+  if (!Boolean(a.organizer && String(a.organizer).trim())) {
+    missing.push("Brak organizatora");
+  }
 
   const prog = normalizeStatus(a.status);
+
   if (prog === "planned") {
     if (!a.planned_start_date) missing.push("Brak daty");
   } else {
@@ -260,37 +264,40 @@ function buildNextSteps(
   missingEvidenceCount: number,
   limitWarning: string | null,
 ) {
-  const steps = [];
+  const steps: {
+    title: string;
+    description: string;
+    ctaHref: string;
+    primary: boolean;
+    tone: "amber" | "blue" | "green";
+  }[] = [];
 
   if (missingEvidenceCount > 0) {
     steps.push({
-      icon: "doc",
-      tone: "red",
       title: "Uzupełnij dokumenty",
       description: `Masz ${missingEvidenceCount} brakujących dokumentów.`,
       ctaHref: "/aktywnosci",
       primary: true,
+      tone: "amber",
     });
   }
 
   if (missingPoints > 0) {
     steps.push({
-      icon: "shield",
-      tone: "blue",
       title: limitWarning ? "Dobierz inną aktywność" : "Zaplanuj szkolenie",
       description: limitWarning || "Wybierz szkolenia i zdobądź punkty.",
       ctaHref: "/baza-szkolen",
       primary: missingEvidenceCount === 0,
+      tone: "blue",
     });
   }
 
   steps.push({
-    icon: "chart",
-    tone: "green",
     title: "Sprawdź raport",
     description: missingPoints <= 0 ? "Masz komplet punktów. Wygeneruj PDF." : "Zobacz szczegóły swojego postępu.",
     ctaHref: "/portfolio",
     primary: false,
+    tone: "green",
   });
 
   return steps.slice(0, 3);
@@ -562,17 +569,6 @@ export default function CalculatorClient() {
 
   const inPeriodDone = useMemo(
     () => activities.filter((x) => normalizeStatus(x.status) === "done" && x.year >= periodStart && x.year <= periodEnd),
-    [activities, periodStart, periodEnd],
-  );
-
-  const inPeriodPlanned = useMemo(
-    () =>
-      activities.filter((x) => {
-        const st = x.status ?? null;
-        const isPlanned = st === "planned" || (!!x.planned_start_date && st !== "done");
-        const y = x.planned_start_date ? Number(String(x.planned_start_date).slice(0, 4)) : x.year;
-        return isPlanned && y >= periodStart && y <= periodEnd;
-      }),
     [activities, periodStart, periodEnd],
   );
 
@@ -1091,68 +1087,139 @@ export default function CalculatorClient() {
                 </div>
               </div>
 
-              <div className="sm:text-right">
-                {missingPoints > 0 ? (
-                  <>
-                    <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Do celu brakuje</div>
-                    <div className="text-3xl font-bold leading-none tracking-tight text-red-500">{missingPoints} pkt</div>
-                  </>
+              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                {missingEvidenceCount > 0 ? (
+                  <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
+                    {missingEvidenceCount} dokumentów do uzupełnienia
+                  </span>
                 ) : (
-                  <>
-                    <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Status</div>
-                    <div className="text-2xl font-bold leading-none text-emerald-600">Cel zrealizowany</div>
-                  </>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
+                    Dokumenty kompletne
+                  </span>
+                )}
+
+                {missingPoints > 0 ? (
+                  <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 ring-1 ring-red-100">
+                    Brakuje {missingPoints} pkt
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
+                    Cel zrealizowany
+                  </span>
                 )}
               </div>
-
-              {missingEvidenceCount > 0 ? (
-                <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
-                  {missingEvidenceCount} dokumentów do uzupełnienia
-                </span>
-              ) : null}
             </div>
 
-            <div className="grid gap-6 px-6 py-5 lg:grid-cols-[auto_1fr] lg:items-start">
-              <div className="flex flex-row items-center gap-4 lg:flex-col lg:gap-3">
-                <CircularProgress value={progress} label="pkt" />
-                <CircularProgress value={periodTimeProgress} label="czas" tone="amber" />
+            <div className="grid gap-5 p-5 lg:grid-cols-[280px_1fr]">
+              <div className="relative overflow-hidden rounded-[1.25rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white p-4">
+                <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-blue-100/70" />
+                <div className="relative">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
+                    Status punktów
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-4">
+                    <CircularProgress value={progress} label="pkt" />
+                    <div>
+                      <div className="text-3xl font-extrabold tracking-[-0.05em] text-slate-950">
+                        {donePoints}
+                        <span className="text-base font-semibold text-slate-400"> / {requiredPoints}</span>
+                      </div>
+                      <div className="mt-1 text-xs leading-relaxed text-slate-500">
+                        punktów zaliczonych w okresie {periodStart}–{periodEnd}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm">
+                    {missingPoints > 0 ? (
+                      <>
+                        <div className="text-xs font-semibold text-slate-900">Najbliższy cel</div>
+                        <div className="mt-1 text-sm text-slate-600">
+                          Dobierz aktywności za minimum{" "}
+                          <span className="font-bold text-red-500">{missingPoints} pkt</span>.
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-xs font-semibold text-emerald-700">Cel punktowy osiągnięty</div>
+                        <div className="mt-1 text-sm text-slate-600">
+                          Teraz dopilnuj dokumentów i raportu.
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <div className="min-w-0">
-                <p className="text-sm text-slate-600">
-                  Masz{" "}
-                  <strong className="text-slate-900">
-                    {donePoints} / {requiredPoints} pkt
-                  </strong>{" "}
-                  w okresie {periodStart}–{periodEnd}. Do końca zostało{" "}
-                  <strong className="text-slate-900">{daysLeft} dni</strong>.
-                </p>
+              <div className="grid gap-4">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {[
+                    {
+                      label: "Brakuje do celu",
+                      value: `${missingPoints}`,
+                      suffix: "pkt",
+                      tone: missingPoints > 0 ? "text-red-500" : "text-emerald-600",
+                      bg: missingPoints > 0 ? "bg-red-50 ring-red-100" : "bg-emerald-50 ring-emerald-100",
+                    },
+                    {
+                      label: "Dni do końca",
+                      value: `${daysLeft}`,
+                      suffix: "dni",
+                      tone: "text-slate-950",
+                      bg: "bg-white ring-slate-200",
+                    },
+                    {
+                      label: "Dokumenty",
+                      value: `${Math.round(evidencePct)}`,
+                      suffix: "%",
+                      tone: missingEvidenceCount > 0 ? "text-amber-600" : "text-emerald-600",
+                      bg: missingEvidenceCount > 0 ? "bg-amber-50 ring-amber-100" : "bg-emerald-50 ring-emerald-100",
+                    },
+                    {
+                      label: "Zawód",
+                      value: displayProfession(profession, professionOther),
+                      suffix: "",
+                      tone: "text-slate-950",
+                      bg: "bg-white ring-slate-200",
+                      small: true,
+                    },
+                  ].map((x) => (
+                    <div key={x.label} className={`rounded-2xl p-3 ring-1 ${x.bg}`}>
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                        {x.label}
+                      </div>
+                      <div className={`mt-1 truncate font-extrabold tracking-[-0.04em] ${x.small ? "text-base" : "text-2xl"} ${x.tone}`}>
+                        {x.value}
+                        {x.suffix ? <span className="ml-1 text-xs font-semibold text-slate-400">{x.suffix}</span> : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-                <div className="mt-3">
+                <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
                   <div className="mb-1 flex justify-between text-xs font-medium text-slate-500">
                     <span>Postęp punktów</span>
                     <span>
                       {donePoints} / {requiredPoints} pkt
                     </span>
                   </div>
-                  <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-3 overflow-hidden rounded-full bg-slate-100">
                     <div
                       className="h-full rounded-full bg-blue-600 transition-all duration-700"
                       style={{ width: `${Math.max(progress, 2)}%` }}
                     />
                   </div>
-                </div>
 
-                <div className="mt-3">
-                  <div className="mb-1 flex justify-between text-xs font-medium text-slate-500">
+                  <div className="mt-4 mb-1 flex justify-between text-xs font-medium text-slate-500">
                     <span>Postęp czasu</span>
                     <span>
                       {Math.round(periodTimeProgress)}% minęło · {Math.round(100 - periodTimeProgress)}% zostało
                     </span>
                   </div>
-                  <div className="relative h-2.5 overflow-visible rounded-full bg-slate-100">
+                  <div className="relative h-3 overflow-visible rounded-full bg-slate-100">
                     <div
-                      className="h-2.5 rounded-full transition-all duration-700"
+                      className="h-3 rounded-full transition-all duration-700"
                       style={{
                         width: `${periodTimeProgress}%`,
                         background: "linear-gradient(90deg, #f59e0b 0%, #d97706 100%)",
@@ -1170,26 +1237,6 @@ export default function CalculatorClient() {
                     <span>{periodStart} start</span>
                     <span>koniec {periodEnd}</span>
                   </div>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 sm:grid-cols-4">
-                  {[
-                    { value: `${daysLeft}`, label: "dni do końca" },
-                    { value: `${missingEvidenceCount}`, label: "brak dokumentacji", accent: missingEvidenceCount > 0 },
-                    { value: `${requiredPoints}`, label: "pkt wymagane" },
-                    { value: displayProfession(profession, professionOther), label: "Twój zawód", small: true },
-                  ].map(({ value, label, accent, small }) => (
-                    <div key={label} className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-                      <div
-                        className={`truncate font-semibold ${small ? "text-sm" : "text-lg"} ${
-                          accent ? "text-amber-600" : "text-slate-900"
-                        }`}
-                      >
-                        {value}
-                      </div>
-                      <div className="mt-0.5 text-[10px] text-slate-500">{label}</div>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
@@ -1210,40 +1257,47 @@ export default function CalculatorClient() {
             </div>
 
             <div className="grid gap-3 p-5 md:grid-cols-3">
-              {nextSteps.map((step) => (
-                <Link
-                  key={step.title}
-                  href={step.ctaHref}
-                  className={`group relative flex items-center gap-3 overflow-hidden rounded-2xl border p-4 transition active:scale-[0.99] ${
-                    step.primary
-                      ? "border-blue-200 bg-blue-600 shadow-[0_5px_12px_rgba(37,99,235,0.20)] hover:bg-blue-700"
-                      : "border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50"
-                  }`}
-                >
-                  {step.primary && (
-                    <span className="pointer-events-none absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-blue-500/20 to-transparent" />
-                  )}
+              {nextSteps.map((step) => {
+                const primaryAmber = step.primary && step.tone === "amber";
+                const primaryBlue = step.primary && step.tone === "blue";
 
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${step.primary ? "bg-white/70" : "bg-slate-300"}`} />
-
-                  <div className="min-w-0 flex-1">
-                    <div className={`text-sm font-bold ${step.primary ? "text-white" : "text-slate-900"}`}>{step.title}</div>
-                    <div className={`mt-0.5 text-xs leading-4 ${step.primary ? "text-blue-100" : "text-slate-500"}`}>
-                      {step.description}
-                    </div>
-                  </div>
-
-                  <span
-                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-bold transition ${
-                      step.primary
-                        ? "bg-white/20 text-white group-hover:bg-white/30"
-                        : "border border-slate-200 text-slate-400 group-hover:border-blue-200 group-hover:text-blue-500"
+                return (
+                  <Link
+                    key={step.title}
+                    href={step.ctaHref}
+                    className={`group relative flex items-center gap-3 overflow-hidden rounded-2xl border p-4 transition active:scale-[0.99] ${
+                      primaryAmber
+                        ? "border-amber-200 bg-gradient-to-br from-amber-400 to-orange-500 shadow-[0_5px_12px_rgba(245,158,11,0.24)] hover:from-amber-500 hover:to-orange-600"
+                        : primaryBlue
+                          ? "border-blue-200 bg-blue-600 shadow-[0_5px_12px_rgba(37,99,235,0.20)] hover:bg-blue-700"
+                          : "border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50"
                     }`}
                   >
-                    →
-                  </span>
-                </Link>
-              ))}
+                    {(primaryAmber || primaryBlue) && (
+                      <span className="pointer-events-none absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-white/15 to-transparent" />
+                    )}
+
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${step.primary ? "bg-white/75" : "bg-slate-300"}`} />
+
+                    <div className="min-w-0 flex-1">
+                      <div className={`text-sm font-bold ${step.primary ? "text-white" : "text-slate-900"}`}>{step.title}</div>
+                      <div className={`mt-0.5 text-xs leading-4 ${step.primary ? "text-white/85" : "text-slate-500"}`}>
+                        {step.description}
+                      </div>
+                    </div>
+
+                    <span
+                      className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-bold transition ${
+                        step.primary
+                          ? "bg-white/20 text-white group-hover:bg-white/30"
+                          : "border border-slate-200 text-slate-400 group-hover:border-blue-200 group-hover:text-blue-500"
+                      }`}
+                    >
+                      →
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         </>
@@ -1260,7 +1314,7 @@ export default function CalculatorClient() {
 
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Twoje limity</h2>
-              <p className="text-xs text-slate-500">Najbardziej ograniczające kategorie w tym okresie</p>
+              <p className="text-xs text-slate-500">Kategorie, które mogą ograniczać realne zaliczenie punktów</p>
             </div>
           </div>
 
@@ -1279,7 +1333,7 @@ export default function CalculatorClient() {
             </div>
           ) : null}
 
-          <div className="grid gap-2 lg:grid-cols-3">
+          <div className="grid gap-3 lg:grid-cols-3">
             {limitsUsage.length === 0 ? (
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 lg:col-span-3">
                 Brak zdefiniowanych limitów dla tego zawodu.
@@ -1287,70 +1341,98 @@ export default function CalculatorClient() {
             ) : (
               limitsUsage.map((r) => {
                 const isMax = r.usedPct >= 100 || (Number(r.remaining) || 0) <= 0;
+                const high = r.usedPct >= 70 && !isMax;
+                const stripe = isMax ? "bg-emerald-500" : high ? "bg-amber-400" : "bg-blue-500";
+                const statusText = isMax
+                  ? "Limit wykorzystany — kolejne punkty mogą nie zwiększyć wyniku."
+                  : high
+                    ? `Zostało niewiele miejsca: ${Math.round(r.remaining)} pkt.`
+                    : `Możesz jeszcze wykorzystać ${Math.round(r.remaining)} pkt w tej kategorii.`;
 
                 return (
                   <div
                     key={r.key}
-                    className="group rounded-2xl border border-slate-200 bg-white p-3.5 transition hover:border-blue-200 hover:shadow-sm active:scale-[0.99]"
+                    className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 pl-5 transition hover:border-blue-200 hover:shadow-sm active:scale-[0.99]"
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="min-w-0 flex-1">
+                    <div className={`absolute bottom-3 left-0 top-3 w-1.5 rounded-r-full ${stripe}`} />
+
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <h3 className="text-sm font-semibold text-slate-900">{r.label}</h3>
-                          {isMax ? (
-                            <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-100">
-                              wykorzystane
-                            </span>
-                          ) : null}
+                          <h3 className="text-sm font-bold text-slate-900">{r.label}</h3>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${
+                              isMax
+                                ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
+                                : high
+                                  ? "bg-amber-50 text-amber-700 ring-amber-100"
+                                  : "bg-blue-50 text-blue-700 ring-blue-100"
+                            }`}
+                          >
+                            {isMax ? "wykorzystane" : high ? "blisko limitu" : "dostępne"}
+                          </span>
                         </div>
 
-                        <p className="mt-0.5 text-xs text-slate-500">
+                        <p className="mt-1 text-xs leading-relaxed text-slate-500">
                           {r.mode === "per_item"
                             ? `max ${r.cap} pkt / szkolenie`
                             : r.mode === "per_year"
                               ? `max ${r.maxPoints} pkt / rok`
                               : `max ${r.cap} pkt w okresie`}
                           {" · "}
-                          {r.used === 0 ? <span className="italic text-slate-400">Nie rozpoczęto</span> : `${r.used} / ${r.cap} pkt`}
+                          {r.used === 0 ? <span className="italic text-slate-400">nie rozpoczęto</span> : `${r.used} / ${r.cap} pkt`}
                         </p>
-
-                        <div className="mt-2 flex items-center gap-2">
-                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ${
-                                isMax ? "bg-emerald-500" : r.usedPct >= 50 ? "bg-blue-500" : "bg-slate-300"
-                              }`}
-                              style={{ width: `${r.usedPct}%` }}
-                            />
-                          </div>
-                          <span className="w-8 text-right text-[10px] font-medium text-slate-500">
-                            {Math.round(r.usedPct)}%
-                          </span>
-                        </div>
                       </div>
 
-                      <div className="shrink-0 text-right">
-                        <div className={`mb-1.5 rounded-xl px-2 py-1.5 text-xs font-semibold ${isMax ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-900"}`}>
-                          {Math.round(r.remaining)} pkt
-                          <br />
-                          <span className="text-[10px] font-normal text-slate-400">zostało</span>
+                      <div className="shrink-0 rounded-2xl bg-slate-50 px-3 py-2 text-right ring-1 ring-slate-200">
+                        <div className="text-lg font-extrabold leading-none tracking-[-0.04em] text-slate-950">
+                          {Math.round(r.remaining)}
                         </div>
-
-                        {isMax ? (
-                          <Link href="/aktywnosci" className="text-[10px] font-medium text-slate-400 hover:text-blue-600">
-                            Zobacz →
-                          </Link>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={isBusy || planningKey === r.key}
-                            onClick={() => planForRule(r)}
-                            className="rounded-xl bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 active:scale-95 disabled:opacity-40"
-                          >
-                            {planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}
-                          </button>
-                        )}
+                        <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                          pkt zostało
+                        </div>
                       </div>
+                    </div>
+
+                    <div className="mt-3">
+                      <div className="mb-1 flex items-center justify-between text-[10px] font-medium text-slate-400">
+                        <span>Wykorzystanie limitu</span>
+                        <span>{Math.round(r.usedPct)}%</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            isMax ? "bg-emerald-500" : high ? "bg-amber-400" : "bg-blue-500"
+                          }`}
+                          style={{ width: `${Math.max(r.usedPct, r.used > 0 ? 5 : 0)}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
+                      <span className="font-semibold text-slate-900">Wskazówka: </span>
+                      {r.note || statusText}
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between gap-2">
+                      <div className="text-[11px] leading-relaxed text-slate-500">
+                        {statusText}
+                      </div>
+
+                      {isMax ? (
+                        <Link href="/aktywnosci" className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-50">
+                          Zobacz
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={isBusy || planningKey === r.key}
+                          onClick={() => planForRule(r)}
+                          className="shrink-0 rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 active:scale-95 disabled:opacity-40"
+                        >
+                          {planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
