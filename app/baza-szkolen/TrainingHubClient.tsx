@@ -1426,7 +1426,7 @@ export default function TrainingHubClient() {
 
                           <button
                             onClick={() => chooseTraining(t)}
-                            className="inline-flex h-8 items-center justify-center rounded-xl border border-blue-600 bg-blue-600 px-4 text-xs font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.24)] transition hover:border-blue-700 hover:bg-blue-700 active:scale-95"
+                            className="inline-flex h-8 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 text-xs font-semibold text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100 hover:text-blue-800 active:scale-95"
                             type="button"
                             title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
                           >
@@ -1448,7 +1448,7 @@ export default function TrainingHubClient() {
           </div>
 
           <aside className="space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex min-h-[154px] flex-col overflow-hidden rounded-[1.25rem] border border-slate-300/80 bg-white p-3 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)]">
+            <div className="flex h-[148px] flex-col overflow-hidden rounded-[1.25rem] border border-slate-300/80 bg-white p-3 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)]">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
                   Planowanie
@@ -1464,8 +1464,8 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="mt-2.5 grid grid-cols-3 gap-2">
-                <div className="flex min-h-[57px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <div className="flex min-h-[51px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                     <Award className="h-4 w-4" strokeWidth={2.2} />
                   </div>
 
@@ -1479,8 +1479,8 @@ export default function TrainingHubClient() {
                   </div>
                 </div>
 
-                <div className="flex min-h-[57px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <div className="flex min-h-[51px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                     <MonitorPlay className="h-4 w-4" strokeWidth={2.2} />
                   </div>
 
@@ -1494,8 +1494,8 @@ export default function TrainingHubClient() {
                   </div>
                 </div>
 
-                <div className="flex min-h-[57px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                <div className="flex min-h-[51px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
                     <MapPin className="h-4 w-4" strokeWidth={2.2} />
                   </div>
 
