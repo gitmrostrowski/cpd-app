@@ -225,7 +225,7 @@ function tabTone(tab: ActivityTab) {
     return {
       stripe: "bg-amber-400",
       icon: "bg-amber-50 text-amber-700 ring-amber-100",
-      pill: "border-amber-200 bg-white text-amber-700",
+      pill: "border-slate-200 bg-white text-slate-700",
       active: "border-slate-300 bg-white shadow-sm ring-1 ring-slate-200",
       number: "text-amber-700",
     };
@@ -269,6 +269,7 @@ function activityVisual(a: ActivityRow, docsForActivity: ActivityDocRow[]) {
       tab: "planned" as const,
       label: "Zaplanowane",
       stripe: "bg-blue-500",
+      pointStripe: "bg-blue-500",
       card: "border-slate-300/80 bg-white hover:border-blue-200 hover:shadow-[0_1px_0_rgba(37,99,235,0.08),0_7px_14px_rgba(37,99,235,0.12)]",
       badge: "border-blue-200 bg-blue-50 text-blue-700",
       iconBox: "bg-blue-50 text-blue-700 ring-blue-100",
@@ -281,8 +282,9 @@ function activityVisual(a: ActivityRow, docsForActivity: ActivityDocRow[]) {
       tab: "todo" as const,
       label: "Do uzupełnienia",
       stripe: "bg-amber-400",
+      pointStripe: "bg-slate-300",
       card: "border-slate-300/80 bg-white hover:border-amber-200 hover:shadow-[0_1px_0_rgba(245,158,11,0.08),0_7px_14px_rgba(245,158,11,0.12)]",
-      badge: "border-amber-200 bg-white text-amber-700",
+      badge: "border-slate-200 bg-white text-slate-700",
       iconBox: "bg-amber-50 text-amber-700 ring-amber-100",
       Icon: AlertTriangle,
     };
@@ -292,6 +294,7 @@ function activityVisual(a: ActivityRow, docsForActivity: ActivityDocRow[]) {
     tab: "ready" as const,
     label: "Gotowe do raportu",
     stripe: "bg-emerald-500",
+    pointStripe: "bg-emerald-500",
     card: "border-slate-300/80 bg-white hover:border-emerald-200 hover:shadow-[0_1px_0_rgba(16,185,129,0.08),0_7px_14px_rgba(16,185,129,0.12)]",
     badge: "border-emerald-200 bg-emerald-50 text-emerald-700",
     iconBox: "bg-emerald-50 text-emerald-700 ring-emerald-100",
@@ -1233,7 +1236,7 @@ export default function ActivitiesPage() {
                         <div className="hidden shrink-0 sm:block">
                           <div className="flex w-[66px] flex-col items-center rounded-2xl bg-slate-50 px-2 py-2 shadow-inner shadow-slate-900/5 ring-1 ring-slate-300/80">
                             <span
-                              className={`mb-1.5 h-1.5 w-8 rounded-full ${visual.stripe}`}
+                              className={`mb-1.5 h-1.5 w-8 rounded-full ${visual.pointStripe}`}
                             />
                             <span className="text-2xl font-extrabold leading-none tracking-[-0.06em] text-slate-950">
                               {a.points}
@@ -1399,7 +1402,7 @@ export default function ActivitiesPage() {
                               {st.missing.map((m) => (
                                 <span
                                   key={m}
-                                  className="rounded-full bg-white px-2 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200"
+                                  className="rounded-full bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200"
                                 >
                                   {m}
                                 </span>
