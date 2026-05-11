@@ -1468,54 +1468,60 @@ export default function TrainingHubClient() {
           </div>
 
           <aside className="space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex min-h-[166px] flex-col justify-between overflow-hidden rounded-[1.45rem] border border-blue-200/80 bg-gradient-to-br from-blue-50 via-white to-white p-4 shadow-[0_12px_32px_rgba(37,99,235,0.10)]">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
-                    Planowanie
-                  </p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em] text-slate-950">
-                    Podsumowanie filtrów
-                  </h2>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                    Potencjał punktów i formaty szkoleń z aktualnej listy.
-                  </p>
-                </div>
+            <div className="flex h-[194px] flex-col justify-between overflow-hidden rounded-[1.45rem] border border-blue-200/80 bg-gradient-to-br from-blue-50 via-white to-white p-4 shadow-[0_2px_0_rgba(37,99,235,0.05),0_12px_28px_rgba(37,99,235,0.10),0_24px_42px_rgba(15,23,42,0.045)]">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
+                  Planowanie
+                </p>
+
+                <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em] text-slate-950">
+                  Podsumowanie filtrów
+                </h2>
+
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  Potencjał punktów i formaty szkoleń z aktualnej listy.
+                </p>
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200/90">
-                  <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-2xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200/90">
+                  <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                     <Award className="h-5 w-5" strokeWidth={2.2} />
                   </div>
-                  <div className="text-lg font-semibold text-slate-950">
+
+                  <div className="text-lg font-semibold leading-none text-slate-950">
                     {sidebarStats.totalPoints}
                   </div>
-                  <div className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+
+                  <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
                     pkt
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200/90">
-                  <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                <div className="rounded-2xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200/90">
+                  <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                     <MonitorPlay className="h-5 w-5" strokeWidth={2.2} />
                   </div>
-                  <div className="text-lg font-semibold text-slate-950">
+
+                  <div className="text-lg font-semibold leading-none text-slate-950">
                     {sidebarStats.online}
                   </div>
-                  <div className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+
+                  <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
                     online
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200/90">
-                  <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+                <div className="rounded-2xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200/90">
+                  <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
                     <MapPin className="h-5 w-5" strokeWidth={2.2} />
                   </div>
-                  <div className="text-lg font-semibold text-slate-950">
+
+                  <div className="text-lg font-semibold leading-none text-slate-950">
                     {sidebarStats.stationary}
                   </div>
-                  <div className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+
+                  <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
                     stacj.
                   </div>
                 </div>
