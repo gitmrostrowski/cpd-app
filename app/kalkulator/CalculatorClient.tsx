@@ -328,7 +328,7 @@ function IconBubble({
 function MiniIcon({
   name,
 }: {
-  name: "calendar" | "shield" | "chart" | "doc" | "user" | "bell";
+  name: "calendar" | "shield" | "chart" | "doc" | "user" | "bell" | "walk";
 }) {
   const common = "h-4 w-4";
 
@@ -377,6 +377,18 @@ function MiniIcon({
     );
   }
 
+  if (name === "walk") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="13" cy="4" r="2" />
+        <path d="M10 21l2-8" />
+        <path d="M16 21l-3-5" />
+        <path d="M9 9l3-2 3 2" />
+        <path d="M12 7l1 6 4 1" />
+      </svg>
+    );
+  }
+
   return (
     <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M6 8a6 6 0 0 1 12 0c0 7 3 6 3 8H3c0-2 3-1 3-8" />
@@ -394,7 +406,7 @@ function CircularProgress({
   value: number;
   label?: string;
   size?: "normal" | "small";
-  tone?: "blue" | "slate" | "amber" | "indigo";
+  tone?: "blue" | "slate" | "amber";
 }) {
   const isSmall = size === "small";
   const svgSize = isSmall ? 80 : 112;
@@ -409,9 +421,7 @@ function CircularProgress({
       ? "text-amber-500"
       : tone === "slate"
         ? "text-slate-500"
-        : tone === "indigo"
-          ? "text-indigo-500"
-          : "text-blue-500";
+        : "text-blue-600";
 
   return (
     <div className={`relative shrink-0 ${isSmall ? "h-20 w-20" : "h-28 w-28"}`}>
@@ -616,9 +626,9 @@ export default function CalculatorClient() {
     progress <= 0
       ? "Start okresu"
       : paceDelta >= 10
-        ? "Wyprzedzasz tempo"
+        ? "Dobry zapas"
         : paceDelta >= -10
-          ? "Tempo jest stabilne"
+          ? "Tempo stabilne"
           : "Warto nadrobić";
 
   const limitsUsage = useMemo(() => {
@@ -1121,7 +1131,7 @@ export default function CalculatorClient() {
 
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900">Realizacja celu</h2>
-                  <p className="text-xs text-slate-500">Najpierw sprawdź braki, potem dobierz punkty</p>
+                  <p className="text-xs text-slate-500">Jeden widok: gdzie jesteś, czego brakuje i co zrobić dalej</p>
                 </div>
               </div>
 
@@ -1168,17 +1178,27 @@ export default function CalculatorClient() {
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <div className="rounded-2xl border border-slate-200 bg-white p-3">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Do celu</div>
-                    <div className={`mt-1 text-2xl font-extrabold tracking-[-0.04em] ${missingPoints > 0 ? "text-red-500" : "text-emerald-600"}`}>
+                    <div className="mt-1 text-2xl font-extrabold tracking-[-0.04em] text-slate-950">
                       {missingPoints}
                       <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
+                    </div>
+                    <div className="mt-1 text-[11px] text-slate-500">
+                      jeszcze do zebrania
                     </div>
                   </div>
 
                   <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Dokumenty</div>
-                    <div className={`mt-1 text-2xl font-extrabold tracking-[-0.04em] ${missingEvidenceCount > 0 ? "text-amber-600" : "text-emerald-600"}`}>
-                      {missingEvidenceCount}
-                      <span className="ml-1 text-xs font-semibold text-slate-400">braków</span>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Dokumenty</div>
+                        <div className={`mt-1 text-2xl font-extrabold tracking-[-0.04em] ${missingEvidenceCount > 0 ? "text-amber-600" : "text-emerald-600"}`}>
+                          {missingEvidenceCount}
+                          <span className="ml-1 text-xs font-semibold text-slate-400">braków</span>
+                        </div>
+                      </div>
+                      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+                        <MiniIcon name="doc" />
+                      </span>
                     </div>
                   </div>
 
@@ -1187,6 +1207,9 @@ export default function CalculatorClient() {
                     <div className={`mt-1 truncate text-base font-extrabold tracking-[-0.03em] ${paceDelta < -10 ? "text-amber-600" : "text-slate-950"}`}>
                       {paceLabel}
                     </div>
+                    <div className="mt-1 text-[11px] text-slate-500">
+                      względem upływu okresu
+                    </div>
                   </div>
 
                   <div className="rounded-2xl border border-slate-200 bg-white p-3">
@@ -1194,32 +1217,43 @@ export default function CalculatorClient() {
                     <div className="mt-1 truncate text-base font-extrabold tracking-[-0.03em] text-slate-950">
                       {displayProfession(profession, professionOther)}
                     </div>
+                    <div className="mt-1 text-[11px] text-slate-500">
+                      aktualny profil
+                    </div>
                   </div>
                 </div>
 
                 <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
+                  <div className="relative mb-5 pt-7">
+                    <div className="absolute left-0 right-0 top-4 h-2 rounded-full bg-slate-100" />
+                    <div
+                      className="absolute left-0 top-4 h-2 rounded-full bg-blue-600 transition-all duration-700"
+                      style={{ width: `${Math.max(progress, 2)}%` }}
+                    />
+                    <div
+                      className="absolute top-0 flex -translate-x-1/2 flex-col items-center transition-all duration-700"
+                      style={{ left: `${clamp(progress, 3, 97)}%` }}
+                    >
+                      <span className="flex h-8 w-8 animate-pulse items-center justify-center rounded-full border border-blue-200 bg-white text-blue-700 shadow-sm">
+                        <MiniIcon name="walk" />
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="mb-1 flex justify-between text-xs font-medium text-slate-500">
                     <span>Postęp punktów</span>
                     <span>
                       {donePoints} / {requiredPoints} pkt
                     </span>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full rounded-full bg-blue-600 transition-all duration-700"
-                      style={{ width: `${Math.max(progress, 2)}%` }}
-                    />
-                  </div>
 
                   <div className="mt-4 mb-1 flex justify-between text-xs font-medium text-slate-500">
                     <span>Upływ okresu</span>
-                    <span>
-                      {Math.round(periodTimeProgress)}% okresu minęło
-                    </span>
+                    <span>{Math.round(periodTimeProgress)}% okresu minęło</span>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className="h-full rounded-full bg-indigo-500 transition-all duration-700"
+                      className="h-full rounded-full bg-slate-500 transition-all duration-700"
                       style={{ width: `${periodTimeProgress}%` }}
                     />
                   </div>
@@ -1321,22 +1355,21 @@ export default function CalculatorClient() {
 
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Twoje limity</h2>
-              <p className="text-xs text-slate-500">Sprawdź, czy dana kategoria nadal może dać Ci punkty</p>
+              <p className="text-xs text-slate-500">Prosta informacja: czy ta kategoria nadal pomaga zebrać punkty</p>
             </div>
           </div>
 
           <div className="pl-12 text-xs text-slate-500 sm:pl-0">
             Zaliczone: <strong className="text-slate-900">{donePoints} pkt</strong>
             <span className="mx-2 text-slate-300">|</span>
-            Brakuje: <strong className="text-red-500">{missingPoints} pkt</strong>
+            Brakuje: <strong className="text-slate-900">{missingPoints} pkt</strong>
           </div>
         </div>
 
         <div className="p-5">
           <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm leading-relaxed text-slate-600">
-            <span className="font-semibold text-slate-900">Jak czytać limity?</span>{" "}
-            To nie jest lista braków. To podpowiedź, ile punktów możesz jeszcze realnie zaliczyć z wybranych kategorii.
-            Jeśli limit jest wykorzystany, lepiej planować inną aktywność.
+            <span className="font-semibold text-slate-900">Limity nie są brakami.</span>{" "}
+            Pokazują tylko, ile punktów możesz jeszcze bezpiecznie zaliczyć z danej kategorii.
           </div>
 
           {planInfo || planErr ? (
@@ -1346,36 +1379,44 @@ export default function CalculatorClient() {
             </div>
           ) : null}
 
-          <div className="grid gap-3 lg:grid-cols-3">
+          <div className="space-y-3">
             {limitsUsage.length === 0 ? (
-              <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 lg:col-span-3">
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">
                 Brak zdefiniowanych limitów dla tego zawodu.
               </div>
             ) : (
               limitsUsage.map((r) => {
                 const isMax = r.usedPct >= 100 || (Number(r.remaining) || 0) <= 0;
                 const high = r.usedPct >= 70 && !isMax;
-                const statusLabel = isMax ? "Limit wykorzystany" : high ? "Blisko limitu" : "Można planować";
+
+                const statusLabel = isMax ? "Nie planuj więcej" : high ? "Ostrożnie" : "Można planować";
                 const statusClass = isMax
                   ? "bg-slate-100 text-slate-600 ring-slate-200"
                   : high
                     ? "bg-amber-50 text-amber-700 ring-amber-100"
                     : "bg-blue-50 text-blue-700 ring-blue-100";
-                const barClass = isMax ? "bg-slate-500" : high ? "bg-amber-400" : "bg-blue-500";
+
+                const barClass = isMax ? "bg-slate-500" : high ? "bg-amber-400" : "bg-blue-600";
+
                 const recommendation = isMax
-                  ? "Nie dokładaj więcej punktów z tej kategorii, jeśli chcesz zwiększyć wynik."
+                  ? "Limit tej kategorii jest już wykorzystany. Wybierz inną formę aktywności."
                   : high
-                    ? `Zostało ${Math.round(r.remaining)} pkt. Użyj tej kategorii ostrożnie.`
-                    : `Możesz jeszcze wykorzystać ${Math.round(r.remaining)} pkt w tej kategorii.`;
+                    ? `Zostało ${Math.round(r.remaining)} pkt. Ta kategoria może jeszcze pomóc, ale nie opieraj na niej całego planu.`
+                    : `Zostało ${Math.round(r.remaining)} pkt. Ta kategoria nadal może pomóc domknąć cel.`;
 
                 return (
                   <div
                     key={r.key}
                     className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:shadow-sm"
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_220px_1fr_auto] lg:items-center">
                       <div className="min-w-0">
-                        <h3 className="text-sm font-bold text-slate-950">{r.label}</h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-sm font-bold text-slate-950">{r.label}</h3>
+                          <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ring-1 ${statusClass}`}>
+                            {statusLabel}
+                          </span>
+                        </div>
                         <p className="mt-1 text-xs leading-relaxed text-slate-500">
                           {r.mode === "per_item"
                             ? `Limit: ${r.cap} pkt za jedną aktywność`
@@ -1385,71 +1426,65 @@ export default function CalculatorClient() {
                         </p>
                       </div>
 
-                      <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ring-1 ${statusClass}`}>
-                        {statusLabel}
-                      </span>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                      <div className="rounded-xl bg-slate-50 px-2 py-2 ring-1 ring-slate-100">
-                        <div className="text-base font-extrabold text-slate-950">{r.used}</div>
-                        <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">użyte</div>
-                      </div>
-                      <div className="rounded-xl bg-slate-50 px-2 py-2 ring-1 ring-slate-100">
-                        <div className="text-base font-extrabold text-slate-950">{r.cap}</div>
-                        <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">limit</div>
-                      </div>
-                      <div className="rounded-xl bg-slate-50 px-2 py-2 ring-1 ring-slate-100">
-                        <div className={`text-base font-extrabold ${isMax ? "text-slate-500" : "text-blue-700"}`}>
-                          {Math.round(r.remaining)}
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="rounded-xl bg-slate-50 px-2 py-2 ring-1 ring-slate-100">
+                          <div className="text-base font-extrabold text-slate-950">{r.used}</div>
+                          <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">użyte</div>
                         </div>
-                        <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">zostało</div>
+                        <div className="rounded-xl bg-slate-50 px-2 py-2 ring-1 ring-slate-100">
+                          <div className="text-base font-extrabold text-slate-950">{r.cap}</div>
+                          <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">limit</div>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 px-2 py-2 ring-1 ring-slate-100">
+                          <div className={`text-base font-extrabold ${isMax ? "text-slate-500" : "text-blue-700"}`}>
+                            {Math.round(r.remaining)}
+                          </div>
+                          <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">zostało</div>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="mt-4">
-                      <div className="mb-1 flex justify-between text-[10px] font-medium text-slate-400">
-                        <span>Wykorzystanie</span>
-                        <span>{Math.round(r.usedPct)}%</span>
+                      <div>
+                        <div className="mb-1 flex justify-between text-[10px] font-medium text-slate-400">
+                          <span>Wykorzystanie</span>
+                          <span>{Math.round(r.usedPct)}%</span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${barClass}`}
+                            style={{ width: `${Math.max(r.usedPct, r.used > 0 ? 5 : 0)}%` }}
+                          />
+                        </div>
+                        <div className="mt-2 text-xs leading-relaxed text-slate-600">
+                          {recommendation}
+                        </div>
                       </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${barClass}`}
-                          style={{ width: `${Math.max(r.usedPct, r.used > 0 ? 5 : 0)}%` }}
-                        />
-                      </div>
-                    </div>
 
-                    <div className="mt-3 text-xs leading-relaxed text-slate-600">
-                      <span className="font-semibold text-slate-900">Wniosek: </span>
-                      {recommendation}
+                      <div className="flex justify-end">
+                        {isMax ? (
+                          <Link
+                            href="/aktywnosci"
+                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-50"
+                          >
+                            Zobacz
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={isBusy || planningKey === r.key}
+                            onClick={() => planForRule(r)}
+                            className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 active:scale-95 disabled:opacity-40"
+                          >
+                            {planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {r.note ? (
-                      <div className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                      <div className="mt-3 border-t border-slate-100 pt-3 text-[11px] leading-relaxed text-slate-500">
                         {r.note}
                       </div>
                     ) : null}
-
-                    <div className="mt-4 flex justify-end">
-                      {isMax ? (
-                        <Link
-                          href="/aktywnosci"
-                          className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-50"
-                        >
-                          Zobacz wpisy
-                        </Link>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled={isBusy || planningKey === r.key}
-                          onClick={() => planForRule(r)}
-                          className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 active:scale-95 disabled:opacity-40"
-                        >
-                          {planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}
-                        </button>
-                      )}
-                    </div>
                   </div>
                 );
               })
