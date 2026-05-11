@@ -135,7 +135,12 @@ const TIME_WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
   { value: "all", label: "Dowolnie" },
 ];
 
-type SortBy = "date_asc" | "date_desc" | "points_desc" | "points_asc" | "newest";
+type SortBy =
+  | "date_asc"
+  | "date_desc"
+  | "points_desc"
+  | "points_asc"
+  | "newest";
 
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "date_asc", label: "Najbliższe terminy" },
@@ -885,7 +890,7 @@ export default function TrainingHubClient() {
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm shadow-slate-900/5">
+        <div className="rounded-2xl border border-slate-300/80 bg-white p-5 text-sm text-slate-600 shadow-[0_10px_28px_rgba(15,23,42,0.055)]">
           Sprawdzam sesję…
         </div>
       </div>
@@ -893,7 +898,7 @@ export default function TrainingHubClient() {
   }
 
   const fieldBase =
-    "h-10 w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-inner shadow-slate-900/5 transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100";
+    "h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-sm shadow-slate-900/5 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/80";
 
   const labelBase =
     "mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500";
@@ -902,12 +907,12 @@ export default function TrainingHubClient() {
     "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium leading-none";
 
   const metaIconBase =
-    "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border bg-white";
+    "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500";
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-[linear-gradient(180deg,#f3f6fb_0%,#f8fafc_45%,#f4f6f8_100%)]">
+    <div className="min-h-[calc(100vh-64px)] bg-[linear-gradient(180deg,#edf3f9_0%,#f1f5f9_46%,#e9eff6_100%)]">
       <div className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-7 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm shadow-slate-900/5 sm:px-6">
+        <div className="relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white px-5 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:px-6">
           <div className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full bg-amber-400" />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -930,14 +935,14 @@ export default function TrainingHubClient() {
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/aktywnosci"
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
               >
                 Aktywności
               </Link>
 
               <button
                 onClick={load}
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-60"
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-60"
                 disabled={fetching}
                 type="button"
               >
@@ -947,7 +952,7 @@ export default function TrainingHubClient() {
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+        <div className="mt-5 rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.055)]">
           <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="text-sm font-semibold text-slate-900">
@@ -1058,7 +1063,7 @@ export default function TrainingHubClient() {
           </div>
 
           {showMoreFilters ? (
-            <div className="mt-3 grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 md:grid-cols-2 lg:grid-cols-7">
+            <div className="mt-3 grid grid-cols-1 gap-3 border-t border-slate-200 pt-3 md:grid-cols-2 lg:grid-cols-7">
               <div>
                 <label className={labelBase}>Sortowanie</label>
                 <select
@@ -1151,7 +1156,7 @@ export default function TrainingHubClient() {
 
               <div>
                 <label className={labelBase}>Zakres</label>
-                <label className="flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-xs font-medium text-slate-600">
+                <label className="flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-xs font-medium text-slate-600 shadow-sm shadow-slate-900/5">
                   <input
                     type="checkbox"
                     checked={onlyUpcoming}
@@ -1176,7 +1181,7 @@ export default function TrainingHubClient() {
               <button
                 type="button"
                 onClick={() => setShowMoreFilters((v) => !v)}
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
               >
                 {showMoreFilters ? "Mniej filtrów" : "Więcej filtrów"}
               </button>
@@ -1199,19 +1204,19 @@ export default function TrainingHubClient() {
         </div>
 
         <div
-          className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_310px]"
+          className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]"
           onClick={clearCalendarSelection}
         >
           <div
             className={
               selectedCalendarDateKey
-                ? "space-y-3 lg:sticky lg:top-24 lg:self-start"
-                : "space-y-3"
+                ? "space-y-4 lg:sticky lg:top-24 lg:self-start"
+                : "space-y-4"
             }
           >
             {selectedCalendarDateKey ? (
               <div
-                className="flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm text-slate-700 shadow-sm shadow-blue-950/5 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-[1.35rem] border border-blue-200 bg-blue-50/80 p-4 text-sm text-slate-700 shadow-[0_8px_22px_rgba(37,99,235,0.08)] sm:flex-row sm:items-center sm:justify-between"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div>
@@ -1219,7 +1224,8 @@ export default function TrainingHubClient() {
                     Wybrany dzień z kalendarza
                   </div>
                   <div className="mt-1 font-semibold text-slate-950">
-                    {formatDate(selectedCalendarDateKey)} · {visibleItems.length} szkolenie
+                    {formatDate(selectedCalendarDateKey)} ·{" "}
+                    {visibleItems.length} szkolenie
                     {visibleItems.length === 1 ? "" : "ń"}
                   </div>
                 </div>
@@ -1257,13 +1263,19 @@ export default function TrainingHubClient() {
                 <article
                   key={t.id}
                   onClick={(e) => e.stopPropagation()}
-                  className="group rounded-[1.35rem] border border-slate-200/90 bg-white p-4 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-[1px] hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/6"
+                  className="group relative overflow-hidden rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.055)] transition-all duration-200 hover:-translate-y-[1px] hover:border-blue-200 hover:shadow-[0_14px_34px_rgba(37,99,235,0.12)]"
                 >
-                  <div className="flex gap-4">
+                  <div
+                    className={`absolute bottom-0 left-0 top-0 w-1.5 ${tone.stripe}`}
+                  />
+
+                  <div className="flex gap-4 pl-1.5">
                     <div className="shrink-0">
-                      <div className="flex w-[74px] flex-col items-center rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-200/90">
-                        <span className={`mb-2 h-1.5 w-8 rounded-full ${tone.dateTop}`} />
-                        <span className="text-3xl font-semibold leading-none tracking-[-0.05em] text-slate-950">
+                      <div className="flex w-[78px] flex-col items-center rounded-2xl bg-slate-50 px-3 py-3 shadow-inner shadow-slate-900/5 ring-1 ring-slate-300/80">
+                        <span
+                          className={`mb-2 h-1.5 w-8 rounded-full ${tone.dateTop}`}
+                        />
+                        <span className="text-3xl font-extrabold leading-none tracking-[-0.06em] text-slate-950">
                           {date.day}
                         </span>
                         <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -1311,12 +1323,12 @@ export default function TrainingHubClient() {
                             ) : null}
                           </div>
 
-                          <h3 className="mt-2 line-clamp-2 text-[15.5px] font-semibold leading-snug tracking-[-0.01em] text-slate-950">
+                          <h3 className="mt-2 line-clamp-2 text-[16px] font-bold leading-snug tracking-[-0.015em] text-slate-950">
                             {t.title}
                           </h3>
                         </div>
 
-                        <div className="hidden shrink-0 rounded-2xl bg-blue-50/70 px-3 py-2 text-right ring-1 ring-blue-100 md:block">
+                        <div className="hidden shrink-0 rounded-2xl bg-blue-50/80 px-3 py-2 text-right ring-1 ring-blue-100 md:block">
                           <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-blue-500">
                             CPD
                           </div>
@@ -1329,12 +1341,10 @@ export default function TrainingHubClient() {
                         </div>
                       </div>
 
-                      <div className="mt-3 grid gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
+                      <div className="mt-3 grid gap-x-4 gap-y-2 text-xs font-medium text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
                         {range ? (
                           <span className="inline-flex min-w-0 items-center gap-1.5">
-                            <span
-                              className={`${metaIconBase} border-slate-200 text-slate-500`}
-                            >
+                            <span className={metaIconBase}>
                               <CalendarDays
                                 className="h-3 w-3"
                                 strokeWidth={2}
@@ -1348,9 +1358,7 @@ export default function TrainingHubClient() {
 
                         {t.organizer ? (
                           <span className="inline-flex min-w-0 items-center gap-1.5">
-                            <span
-                              className={`${metaIconBase} border-slate-200 text-slate-500`}
-                            >
+                            <span className={metaIconBase}>
                               <Building2 className="h-3 w-3" strokeWidth={2} />
                             </span>
                             <span className="truncate font-semibold text-slate-700">
@@ -1361,9 +1369,7 @@ export default function TrainingHubClient() {
 
                         {t.voivodeship ? (
                           <span className="inline-flex min-w-0 items-center gap-1.5">
-                            <span
-                              className={`${metaIconBase} border-slate-200 text-slate-500`}
-                            >
+                            <span className={metaIconBase}>
                               <MapPin className="h-3 w-3" strokeWidth={2} />
                             </span>
                             <span className="truncate font-semibold text-slate-700">
@@ -1373,9 +1379,7 @@ export default function TrainingHubClient() {
                         ) : null}
 
                         <span className="inline-flex min-w-0 items-center gap-1.5">
-                          <span
-                            className={`${metaIconBase} border-slate-200 text-slate-500`}
-                          >
+                          <span className={metaIconBase}>
                             <Award className="h-3 w-3" strokeWidth={2} />
                           </span>
                           <span className="truncate">
@@ -1393,12 +1397,12 @@ export default function TrainingHubClient() {
                       </div>
 
                       <div className="mt-3 flex flex-wrap gap-1.5">
-                        <span className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
                           {labelProfession(t.profession)}
                         </span>
 
                         {capacityText ? (
-                          <span className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
                             {capacityText}
                           </span>
                         ) : null}
@@ -1407,7 +1411,7 @@ export default function TrainingHubClient() {
                           ? t.topics.slice(0, 3).map((x) => (
                               <span
                                 key={x}
-                                className="rounded-full bg-slate-50/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80"
+                                className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200"
                               >
                                 {x}
                               </span>
@@ -1415,7 +1419,7 @@ export default function TrainingHubClient() {
                           : null}
                       </div>
 
-                      <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="mt-3 flex flex-col gap-2 border-t border-slate-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="hidden sm:block" />
 
                         <div className="flex flex-col gap-2 sm:flex-row">
@@ -1440,7 +1444,7 @@ export default function TrainingHubClient() {
 
                           <button
                             onClick={() => chooseTraining(t)}
-                            className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
+                            className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-slate-50 px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
                             type="button"
                             title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
                           >
@@ -1455,14 +1459,14 @@ export default function TrainingHubClient() {
             })}
 
             {!fetching && visibleItems.length === 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm shadow-slate-900/5">
+              <div className="rounded-[1.35rem] border border-slate-300/80 bg-white p-6 text-sm text-slate-600 shadow-[0_8px_24px_rgba(15,23,42,0.055)]">
                 Brak wyników. Zmień filtry albo wybierz „Dowolnie” w Terminie.
               </div>
             )}
           </div>
 
           <aside className="space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="overflow-hidden rounded-[1.35rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white p-4 shadow-sm shadow-blue-950/5">
+            <div className="overflow-hidden rounded-[1.45rem] border border-blue-200/80 bg-gradient-to-br from-blue-50 via-white to-white p-4 shadow-[0_10px_28px_rgba(37,99,235,0.08)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
@@ -1478,7 +1482,7 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-2">
-                <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200/80">
+                <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200/90">
                   <div className="text-lg font-semibold text-slate-950">
                     {sidebarStats.totalPoints}
                   </div>
@@ -1487,7 +1491,7 @@ export default function TrainingHubClient() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200/80">
+                <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200/90">
                   <div className="text-lg font-semibold text-slate-950">
                     {sidebarStats.online}
                   </div>
@@ -1496,7 +1500,7 @@ export default function TrainingHubClient() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200/80">
+                <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200/90">
                   <div className="text-lg font-semibold text-slate-950">
                     {sidebarStats.stationary}
                   </div>
@@ -1507,7 +1511,7 @@ export default function TrainingHubClient() {
               </div>
             </div>
 
-            <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.055)]">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-slate-950">
@@ -1557,7 +1561,8 @@ export default function TrainingHubClient() {
 
                         const format = day.primary?.format ?? null;
                         const hasEvent = day.events.length > 0;
-                        const isSelected = selectedCalendarDateKey === day.dateKey;
+                        const isSelected =
+                          selectedCalendarDateKey === day.dateKey;
 
                         const dayTone =
                           format === "stacjonarne"
@@ -1578,11 +1583,15 @@ export default function TrainingHubClient() {
                               selectCalendarDay(day.primary.id, day.dateKey);
                             }}
                             className={`relative flex aspect-square items-center justify-center rounded-xl text-[11px] font-semibold ring-1 transition disabled:cursor-default ${dayTone} ${
-                              isSelected ? "outline outline-2 outline-blue-400" : ""
+                              isSelected
+                                ? "outline outline-2 outline-blue-400"
+                                : ""
                             }`}
                             title={
                               day.primary
-                                ? `${day.primary.title} (${day.events.length} wydarzenie${
+                                ? `${day.primary.title} (${
+                                    day.events.length
+                                  } wydarzenie${
                                     day.events.length > 1 ? "a" : ""
                                   })`
                                 : undefined
@@ -1598,20 +1607,19 @@ export default function TrainingHubClient() {
                         );
                       })}
                     </div>
-
                   </div>
                 ))}
               </div>
 
               {!selectedCalendarDateKey ? (
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-3 text-xs leading-relaxed text-slate-500">
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-xs leading-relaxed text-slate-500">
                   Kliknij oznaczony dzień, aby ustawić go pod menu i pokazać
                   odpowiadające szkolenia po lewej.
                 </div>
               ) : null}
             </div>
 
-            <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.055)]">
               <div className="text-sm font-semibold text-slate-950">
                 Najbliżej w planie
               </div>
@@ -1624,10 +1632,12 @@ export default function TrainingHubClient() {
                   return (
                     <div
                       key={t.id}
-                      className="flex gap-3 rounded-2xl bg-slate-50/80 p-2.5 ring-1 ring-slate-200/80"
+                      className="flex gap-3 rounded-2xl bg-slate-50 p-2.5 ring-1 ring-slate-300/70 transition hover:bg-white hover:shadow-sm"
                     >
                       <div className="flex w-11 shrink-0 flex-col items-center rounded-xl bg-white py-1.5 ring-1 ring-slate-200">
-                        <span className={`mb-1 h-1 w-5 rounded-full ${tone.dateTop}`} />
+                        <span
+                          className={`mb-1 h-1 w-5 rounded-full ${tone.dateTop}`}
+                        />
                         <span className="text-sm font-semibold leading-none text-slate-950">
                           {d.day}
                         </span>
@@ -1667,7 +1677,7 @@ export default function TrainingHubClient() {
             onClick={() => (addSubmitting ? null : setAddOpen(false))}
           />
 
-          <div className="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-950/10">
+          <div className="relative w-full max-w-2xl rounded-[1.45rem] border border-slate-300/80 bg-white p-5 shadow-xl shadow-slate-950/10">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-lg font-semibold text-slate-950">
@@ -1680,7 +1690,7 @@ export default function TrainingHubClient() {
               </div>
 
               <button
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
                 onClick={() => setAddOpen(false)}
                 disabled={addSubmitting}
                 type="button"
@@ -1853,7 +1863,7 @@ export default function TrainingHubClient() {
 
             <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
               <button
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
                 onClick={() => setAddOpen(false)}
                 disabled={addSubmitting}
                 type="button"
