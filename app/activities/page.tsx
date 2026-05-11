@@ -3,6 +3,26 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  AlertTriangle,
+  Archive,
+  Award,
+  CalendarDays,
+  CheckCircle2,
+  ClipboardList,
+  Clock3,
+  FileCheck2,
+  FilePlus2,
+  FileText,
+  FolderCheck,
+  FolderOpen,
+  Paperclip,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  UploadCloud,
+} from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
@@ -62,6 +82,41 @@ const ALLOWED_MIME = new Set([
   "image/webp",
 ]);
 
+type StatusKind = "complete" | "missing";
+type ActivityTab = "todo" | "planned" | "ready" | "all";
+
+const ACTIVITY_TABS: {
+  key: ActivityTab;
+  label: string;
+  short: string;
+  description: string;
+}[] = [
+  {
+    key: "todo",
+    label: "Do uzupełnienia",
+    short: "Braki",
+    description: "Brakujące dane, certyfikaty lub dokumenty.",
+  },
+  {
+    key: "planned",
+    label: "Zaplanowane",
+    short: "Plan",
+    description: "Szkolenia w planie. Jeszcze nie liczą się do punktów.",
+  },
+  {
+    key: "ready",
+    label: "Gotowe do raportu",
+    short: "Gotowe",
+    description: "Kompletne aktywności gotowe do rozliczenia.",
+  },
+  {
+    key: "all",
+    label: "Wszystkie",
+    short: "Historia",
+    description: "Pełna historia aktywności.",
+  },
+];
+
 function normalizeStatus(s: ActivityStatus | undefined): "planned" | "done" {
   return s === "planned" ? "planned" : "done";
 }
@@ -115,36 +170,6 @@ function daysUntil(ymd: string | null | undefined) {
   return diffDays;
 }
 
-type StatusKind = "complete" | "missing";
-type ActivityTab = "todo" | "planned" | "ready" | "all";
-
-const ACTIVITY_TABS: {
-  key: ActivityTab;
-  label: string;
-  description: string;
-}[] = [
-  {
-    key: "todo",
-    label: "Do uzupełnienia",
-    description: "Brakujące dane, certyfikaty lub dokumenty.",
-  },
-  {
-    key: "planned",
-    label: "Zaplanowane",
-    description: "Szkolenia w planie. Jeszcze nie liczą się do punktów.",
-  },
-  {
-    key: "ready",
-    label: "Gotowe do raportu",
-    description: "Kompletne aktywności gotowe do rozliczenia.",
-  },
-  {
-    key: "all",
-    label: "Wszystkie",
-    description: "Pełna historia aktywności.",
-  },
-];
-
 function splitDocs(docsForActivity: ActivityDocRow[]) {
   const certDocs = docsForActivity.filter((d) => String(d.kind).toLowerCase() === "certificate");
   const otherDocs = docsForActivity.filter((d) => String(d.kind).toLowerCase() !== "certificate");
@@ -177,26 +202,94 @@ function getActivityTab(a: ActivityRow, docsForActivity: ActivityDocRow[]): Excl
   return "ready";
 }
 
+function tabTone(tab: ActivityTab) {
+  if (tab === "todo") {
+    return {
+      stripe: "bg-amber-400",
+      icon: "bg-amber-50 text-amber-700 ring-amber-100",
+      pill: "border-amber-200 bg-amber-50 text-amber-700",
+      active: "border-amber-200 bg-white shadow-sm ring-1 ring-amber-100",
+      number: "text-amber-700",
+    };
+  }
+
+  if (tab === "planned") {
+    return {
+      stripe: "bg-blue-500",
+      icon: "bg-blue-50 text-blue-700 ring-blue-100",
+      pill: "border-blue-200 bg-blue-50 text-blue-700",
+      active: "border-blue-200 bg-white shadow-sm ring-1 ring-blue-100",
+      number: "text-blue-700",
+    };
+  }
+
+  if (tab === "ready") {
+    return {
+      stripe: "bg-emerald-500",
+      icon: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+      pill: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      active: "border-emerald-200 bg-white shadow-sm ring-1 ring-emerald-100",
+      number: "text-emerald-700",
+    };
+  }
+
+  return {
+    stripe: "bg-slate-400",
+    icon: "bg-slate-50 text-slate-600 ring-slate-100",
+    pill: "border-slate-200 bg-slate-50 text-slate-600",
+    active: "border-slate-200 bg-white shadow-sm ring-1 ring-slate-200",
+    number: "text-slate-900",
+  };
+}
+
+function activityVisual(a: ActivityRow, docsForActivity: ActivityDocRow[]) {
+  const prog = normalizeStatus(a.status);
+  const st = getRowStatus(a, docsForActivity);
+
+  if (prog === "planned") {
+    return {
+      tab: "planned" as const,
+      label: "Zaplanowane",
+      stripe: "bg-blue-500",
+      card: "border-slate-300/80 bg-white hover:border-blue-200 hover:shadow-[0_1px_0_rgba(37,99,235,0.08),0_7px_14px_rgba(37,99,235,0.12)]",
+      badge: "border-blue-200 bg-blue-50 text-blue-700",
+      iconBox: "bg-blue-50 text-blue-700 ring-blue-100",
+      Icon: CalendarDays,
+    };
+  }
+
+  if (st.kind === "missing") {
+    return {
+      tab: "todo" as const,
+      label: "Do uzupełnienia",
+      stripe: "bg-amber-400",
+      card: "border-slate-300/80 bg-white hover:border-amber-200 hover:shadow-[0_1px_0_rgba(245,158,11,0.08),0_7px_14px_rgba(245,158,11,0.12)]",
+      badge: "border-amber-200 bg-amber-50 text-amber-700",
+      iconBox: "bg-amber-50 text-amber-700 ring-amber-100",
+      Icon: AlertTriangle,
+    };
+  }
+
+  return {
+    tab: "ready" as const,
+    label: "Gotowe do raportu",
+    stripe: "bg-emerald-500",
+    card: "border-slate-300/80 bg-white hover:border-emerald-200 hover:shadow-[0_1px_0_rgba(16,185,129,0.08),0_7px_14px_rgba(16,185,129,0.12)]",
+    badge: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    iconBox: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    Icon: CheckCircle2,
+  };
+}
+
 function Badge({
-  tone,
+  className,
   children,
 }: {
-  tone: "blue" | "emerald" | "amber" | "slate" | "rose";
+  className: string;
   children: React.ReactNode;
 }) {
-  const styles =
-    tone === "blue"
-      ? "border-blue-200 bg-blue-50 text-blue-700"
-      : tone === "emerald"
-        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-        : tone === "amber"
-          ? "border-amber-200 bg-amber-50 text-amber-800"
-          : tone === "rose"
-            ? "border-rose-200 bg-rose-50 text-rose-700"
-            : "border-slate-200 bg-slate-50 text-slate-700";
-
   return (
-    <span className={["inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] leading-4", styles].join(" ")}>
+    <span className={["inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none shadow-sm", className].join(" ")}>
       {children}
     </span>
   );
@@ -252,6 +345,15 @@ export default function ActivitiesPage() {
   const [q, setQ] = useState("");
   const [filterType, setFilterType] = useState<string>("Wszystkie");
   const [filterYear, setFilterYear] = useState<string>("Wszystkie");
+
+  const fieldBase =
+    "h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-sm shadow-slate-900/5 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/80";
+
+  const labelBase =
+    "mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500";
+
+  const metaIconBase =
+    "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500";
 
   function clearMessages() {
     setInfo(null);
@@ -670,12 +772,26 @@ export default function ActivitiesPage() {
       return bucket === "ready" ? sum + Number(a.points || 0) : sum;
     }, 0);
 
+    const plannedPoints = items.reduce((sum, a) => {
+      const docsFor = docsByActivity[a.id] ?? [];
+      const bucket = getActivityTab(a, docsFor);
+      return bucket === "planned" ? sum + Number(a.points || 0) : sum;
+    }, 0);
+
+    const missingPoints = items.reduce((sum, a) => {
+      const docsFor = docsByActivity[a.id] ?? [];
+      const bucket = getActivityTab(a, docsFor);
+      return bucket === "todo" ? sum + Number(a.points || 0) : sum;
+    }, 0);
+
     return {
       todo,
       planned,
       ready,
       all: items.length,
       readyPoints,
+      plannedPoints,
+      missingPoints,
     };
   }, [items, docsByActivity]);
 
@@ -711,747 +827,874 @@ export default function ActivitiesPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <div className="rounded-2xl border bg-white p-4 text-sm">Ładuję…</div>
-      </main>
+      <div className="min-h-[calc(100vh-64px)] bg-[#eaf1f8]">
+        <main className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
+          <div className="rounded-[1.35rem] border border-slate-300/80 bg-white p-5 text-sm text-slate-600 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
+            Sprawdzam sesję…
+          </div>
+        </main>
+      </div>
     );
   }
 
   if (!user) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <div className="rounded-2xl border bg-white p-6">
-          <h1 className="text-2xl font-bold text-slate-900">Aktywności</h1>
-          <p className="mt-2 text-sm text-slate-600">Zaloguj się, aby zapisywać aktywności do portfolio.</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link href="/login" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-              Zaloguj się
-            </Link>
-            <Link
-              href="/kalkulator"
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Kalkulator
-            </Link>
+      <div className="min-h-[calc(100vh-64px)] bg-[#eaf1f8]">
+        <main className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white p-6 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
+            <div className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full bg-blue-500" />
+            <h1 className="text-2xl font-bold text-slate-900">Aktywności</h1>
+            <p className="mt-2 text-sm text-slate-600">Zaloguj się, aby zapisywać aktywności do portfolio.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link href="/login" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                Zaloguj się
+              </Link>
+              <Link
+                href="/kalkulator"
+                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Kalkulator
+              </Link>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900">Aktywności</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Porządkuj aktywności CPD: uzupełniaj braki, podpinaj certyfikaty i przygotowuj dane do raportu.
-          </p>
-        </div>
+    <div className="min-h-[calc(100vh-64px)] bg-[#eaf1f8]">
+      <main className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-7 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white px-5 py-4 shadow-[0_6px_16px_rgba(15,23,42,0.08)] sm:px-6">
+          <div className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full bg-blue-500" />
 
-        <div className="flex gap-2">
-          <Link href="/portfolio" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-            Portfolio
-          </Link>
-          <Link href="/kalkulator" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-            Kalkulator
-          </Link>
-        </div>
-      </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700">
+                <ClipboardList className="h-5 w-5" strokeWidth={2.2} />
+              </span>
 
-      {(info || err) && (
-        <div className="mt-3 rounded-2xl border bg-white p-3 text-sm">
-          {info ? <div className="text-emerald-700">{info}</div> : null}
-          {err ? <div className="text-rose-700">{err}</div> : null}
-        </div>
-      )}
-
-      <div className="mt-5 grid gap-5 lg:grid-cols-12">
-        <section className="order-2 rounded-2xl border bg-white p-4 lg:order-1 lg:col-span-8">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <h2 className="text-base font-semibold text-slate-900">Twoje aktywności</h2>
-              <p className="mt-1 text-[13px] text-slate-600">
-                Uzupełniaj braki, kontroluj zaplanowane szkolenia i trzymaj kompletne aktywności gotowe do raportu.
-              </p>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-950">Aktywności</h1>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
+                  Porządkuj aktywności CPD, uzupełniaj braki i trzymaj certyfikaty gotowe do raportu.
+                </p>
+              </div>
             </div>
 
-            <button
-              onClick={load}
-              type="button"
-              className="rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-              disabled={busy || fetching}
-            >
-              {fetching ? "Odświeżam…" : "Odśwież"}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/portfolio"
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+              >
+                Portfolio
+              </Link>
+
+              <Link
+                href="/kalkulator"
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+              >
+                Kalkulator
+              </Link>
+
+              <button
+                onClick={load}
+                className="inline-flex h-9 items-center gap-2 justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-60"
+                disabled={fetching || busy}
+                type="button"
+              >
+                <RefreshCw className={["h-4 w-4", fetching ? "animate-spin" : ""].join(" ")} />
+                {fetching ? "Odświeżam…" : "Odśwież"}
+              </button>
+            </div>
           </div>
+        </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-4">
-            <button
-              type="button"
-              onClick={() => setActiveTab("todo")}
-              className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-left transition hover:bg-amber-100/60"
-            >
-              <div className="text-[11px] font-medium text-amber-800">Do uzupełnienia</div>
-              <div className="mt-1 text-2xl font-extrabold text-amber-900">{activityStats.todo}</div>
-              <div className="mt-1 text-[11px] text-amber-800">Wymagają działania</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("planned")}
-              className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-left transition hover:bg-blue-100/60"
-            >
-              <div className="text-[11px] font-medium text-blue-700">Zaplanowane</div>
-              <div className="mt-1 text-2xl font-extrabold text-blue-900">{activityStats.planned}</div>
-              <div className="mt-1 text-[11px] text-blue-700">Jeszcze nie liczą się do punktów</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("ready")}
-              className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-left transition hover:bg-emerald-100/60"
-            >
-              <div className="text-[11px] font-medium text-emerald-700">Gotowe do raportu</div>
-              <div className="mt-1 text-2xl font-extrabold text-emerald-900">{activityStats.ready}</div>
-              <div className="mt-1 text-[11px] text-emerald-700">{activityStats.readyPoints} pkt kompletne</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("all")}
-              className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-left transition hover:bg-slate-100"
-            >
-              <div className="text-[11px] font-medium text-slate-600">Wszystkie</div>
-              <div className="mt-1 text-2xl font-extrabold text-slate-900">{activityStats.all}</div>
-              <div className="mt-1 text-[11px] text-slate-600">Pełna historia</div>
-            </button>
+        {(info || err) && (
+          <div className="mt-4 rounded-[1.1rem] border border-slate-300/80 bg-white p-3 text-sm shadow-[0_4px_12px_rgba(15,23,42,0.06)]">
+            {info ? <div className="font-medium text-emerald-700">{info}</div> : null}
+            {err ? <div className="font-medium text-rose-700">{err}</div> : null}
           </div>
+        )}
 
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-1">
-            <div className="grid gap-1 sm:grid-cols-4">
-              {ACTIVITY_TABS.map((tab) => {
-                const active = activeTab === tab.key;
+        <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <section className="space-y-4">
+            <div className="rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_6px_16px_rgba(15,23,42,0.075)]">
+              <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">Widok aktywności</div>
+                  <div className="text-xs text-slate-500">Najpierw uzupełnij braki, potem sprawdź wpisy gotowe do raportu.</div>
+                </div>
 
-                return (
+                <div className="text-sm text-slate-500">
+                  Wynik: <span className="font-semibold text-slate-900">{filtered.length}</span>
+                </div>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                {ACTIVITY_TABS.map((tab) => {
+                  const active = activeTab === tab.key;
+                  const tone = tabTone(tab.key);
+                  const Icon =
+                    tab.key === "todo"
+                      ? AlertTriangle
+                      : tab.key === "planned"
+                        ? CalendarDays
+                        : tab.key === "ready"
+                          ? FolderCheck
+                          : Archive;
+
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setActiveTab(tab.key)}
+                      className={[
+                        "relative overflow-hidden rounded-2xl border p-3 text-left transition hover:bg-white hover:shadow-sm",
+                        active ? tone.active : "border-slate-200 bg-slate-50/70",
+                      ].join(" ")}
+                    >
+                      <div className={`absolute bottom-3 left-0 top-3 w-1 rounded-r-full ${active ? tone.stripe : "bg-slate-200"}`} />
+
+                      <div className="flex items-center gap-2 pl-1">
+                        <span className={`inline-flex h-8 w-8 items-center justify-center rounded-xl ring-1 ${tone.icon}`}>
+                          <Icon className="h-4 w-4" strokeWidth={2.2} />
+                        </span>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="truncate text-sm font-semibold text-slate-950">{tab.label}</div>
+                            <div className={`text-lg font-extrabold leading-none ${tone.number}`}>{getTabCount(tab.key)}</div>
+                          </div>
+                          <div className="mt-0.5 line-clamp-1 text-[11px] text-slate-500">{tab.description}</div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 sm:grid-cols-2 lg:grid-cols-12">
+                <div className="lg:col-span-5">
+                  <label className={labelBase}>Szukaj</label>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      className={`${fieldBase} pl-9`}
+                      placeholder="np. kongres, OIL, 2025..."
+                      value={q}
+                      onChange={(e) => setQ(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="lg:col-span-3">
+                  <label className={labelBase}>Typ</label>
+                  <select className={fieldBase} value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+                    <option>Wszystkie</option>
+                    {TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="lg:col-span-2">
+                  <label className={labelBase}>Rok</label>
+                  <select className={fieldBase} value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+                    <option>Wszystkie</option>
+                    {years.map((y) => (
+                      <option key={y} value={String(y)}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-end lg:col-span-2">
                   <button
-                    key={tab.key}
                     type="button"
-                    onClick={() => setActiveTab(tab.key)}
-                    className={[
-                      "rounded-xl px-3 py-2 text-left transition",
-                      active ? "bg-white shadow-sm ring-1 ring-slate-200" : "hover:bg-white/70",
-                    ].join(" ")}
+                    className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                    onClick={() => {
+                      setQ("");
+                      setFilterType("Wszystkie");
+                      setFilterYear("Wszystkie");
+                    }}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={["text-sm font-semibold", active ? "text-slate-950" : "text-slate-700"].join(" ")}>
-                        {tab.label}
-                      </span>
-                      <span
-                        className={[
-                          "rounded-full px-2 py-0.5 text-[11px] font-bold",
-                          active ? "bg-blue-600 text-white" : "bg-white text-slate-600",
-                        ].join(" ")}
-                      >
-                        {getTabCount(tab.key)}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-[11px] leading-4 text-slate-500">{tab.description}</div>
+                    Wyczyść
                   </button>
-                );
-              })}
-            </div>
-          </div>
+                </div>
+              </div>
 
-          <div className="mt-3 grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-12">
-            <div className="sm:col-span-6">
-              <label className="text-[11px] font-medium text-slate-600">Szukaj</label>
-              <input
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                placeholder="np. kongres, OIL, 2025…"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-            </div>
-
-            <div className="sm:col-span-3">
-              <label className="text-[11px] font-medium text-slate-600">Typ</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-              >
-                <option>Wszystkie</option>
-                {TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="sm:col-span-3">
-              <label className="text-[11px] font-medium text-slate-600">Rok</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterYear}
-                onChange={(e) => setFilterYear(e.target.value)}
-              >
-                <option>Wszystkie</option>
-                {years.map((y) => (
-                  <option key={y} value={String(y)}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="sm:col-span-9">
-              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] text-slate-600">
+              <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-xs leading-relaxed text-slate-500">
                 Widok: <span className="font-semibold text-slate-900">{activeTabMeta.label}</span> — {activeTabMeta.description}
               </div>
             </div>
 
-            <div className="sm:col-span-3 flex items-center gap-2">
-              <button
-                type="button"
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                onClick={() => {
-                  setQ("");
-                  setFilterType("Wszystkie");
-                  setFilterYear("Wszystkie");
-                }}
-              >
-                Wyczyść
-              </button>
-              <div className="w-full text-right text-[11px] text-slate-600">
-                Wynik: <span className="font-semibold text-slate-900">{filtered.length}</span>
+            {fetching ? (
+              <div className="rounded-[1.35rem] border border-slate-300/80 bg-white p-5 text-sm text-slate-600 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
+                Pobieram aktywności…
               </div>
-            </div>
-          </div>
-
-          {fetching ? (
-            <div className="mt-3 text-sm text-slate-500">Pobieram…</div>
-          ) : filtered.length === 0 ? (
-            <div className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-center">
-              <div className="text-base font-semibold text-slate-900">Brak wyników</div>
-              <div className="mt-1 text-sm text-slate-600">
-                {activeTab === "todo"
-                  ? "Nie masz aktywności wymagających uzupełnienia. Kompletne wpisy znajdziesz w „Gotowe do raportu”."
-                  : activeTab === "planned"
-                    ? "Nie masz obecnie zaplanowanych szkoleń. Możesz dodać je z bazy szkoleń."
-                    : activeTab === "ready"
-                      ? "Nie masz jeszcze aktywności gotowych do raportu. Uzupełnij certyfikaty i organizatorów."
-                      : "Dodaj pierwszą aktywność lub zmień filtry."}
+            ) : filtered.length === 0 ? (
+              <div className="rounded-[1.35rem] border border-slate-300/80 bg-white p-6 text-center shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-500 ring-1 ring-slate-200">
+                  <FolderOpen className="h-6 w-6" />
+                </div>
+                <div className="mt-3 text-base font-semibold text-slate-900">Brak wyników</div>
+                <div className="mx-auto mt-1 max-w-md text-sm leading-relaxed text-slate-600">
+                  {activeTab === "todo"
+                    ? "Nie masz aktywności wymagających uzupełnienia. Kompletne wpisy znajdziesz w „Gotowe do raportu”."
+                    : activeTab === "planned"
+                      ? "Nie masz obecnie zaplanowanych szkoleń. Możesz dodać je z bazy szkoleń."
+                      : activeTab === "ready"
+                        ? "Nie masz jeszcze aktywności gotowych do raportu. Uzupełnij certyfikaty i organizatorów."
+                        : "Dodaj pierwszą aktywność lub zmień filtry."}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="mt-4 space-y-2">
-              {filtered.map((a) => {
-                const prog = normalizeStatus(a.status);
-                const docsFor = docsByActivity[a.id] ?? [];
-                const { certDocs, otherDocs } = splitDocs(docsFor);
-                const st = getRowStatus(a, docsFor);
+            ) : (
+              <div className="space-y-4">
+                {filtered.map((a) => {
+                  const prog = normalizeStatus(a.status);
+                  const docsFor = docsByActivity[a.id] ?? [];
+                  const { certDocs, otherDocs } = splitDocs(docsFor);
+                  const st = getRowStatus(a, docsFor);
+                  const visual = activityVisual(a, docsFor);
 
-                const legacyCertUrl = a.certificate_path ? legacyCertUrls[a.id] : null;
-                const dleft = prog === "planned" ? daysUntil(a.planned_start_date) : null;
-                const inEdit = editId === a.id;
-                const attachCount = docsFor.length + (a.certificate_path ? 1 : 0);
+                  const legacyCertUrl = a.certificate_path ? legacyCertUrls[a.id] : null;
+                  const dleft = prog === "planned" ? daysUntil(a.planned_start_date) : null;
+                  const inEdit = editId === a.id;
+                  const attachCount = docsFor.length + (a.certificate_path ? 1 : 0);
+                  const VisualIcon = visual.Icon;
 
-                return (
-                  <div
-                    key={a.id}
-                    className={[
-                      "rounded-2xl border px-4 py-3",
-                      prog === "planned"
-                        ? "border-blue-200 bg-blue-50/30"
-                        : st.kind === "missing"
-                          ? "border-amber-200 bg-amber-50/20"
-                          : "border-slate-200 bg-white",
-                    ].join(" ")}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="min-w-0 truncate font-semibold text-slate-900">{a.type}</div>
+                  return (
+                    <article
+                      key={a.id}
+                      className={[
+                        "group relative overflow-hidden rounded-[1.25rem] border p-3 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)] transition-all duration-200 hover:-translate-y-[1px]",
+                        visual.card,
+                      ].join(" ")}
+                    >
+                      <div className={`absolute bottom-0 left-0 top-0 w-1.5 ${visual.stripe}`} />
 
-                          {prog === "planned" ? (
-                            <Badge tone="blue">🗓️ Zaplanowane</Badge>
-                          ) : st.kind === "missing" ? (
-                            <Badge tone="amber">Do uzupełnienia</Badge>
-                          ) : (
-                            <Badge tone="emerald">Gotowe do raportu</Badge>
-                          )}
-
-                          {prog === "planned" && typeof dleft === "number" ? (
-                            dleft > 0 ? (
-                              <Badge tone={dleft <= 7 ? "amber" : "blue"}>⏳ {dleft} dni</Badge>
-                            ) : dleft === 0 ? (
-                              <Badge tone="amber">⏳ dzisiaj</Badge>
-                            ) : (
-                              <Badge tone="amber">⏳ po terminie</Badge>
-                            )
-                          ) : null}
-
-                          {attachCount > 0 ? <Badge tone="slate">📎 Załączniki: {attachCount}</Badge> : null}
+                      <div className="flex w-full gap-3 pl-1.5">
+                        <div className="hidden shrink-0 sm:block">
+                          <div className="flex w-[66px] flex-col items-center rounded-2xl bg-slate-50 px-2 py-2 shadow-inner shadow-slate-900/5 ring-1 ring-slate-300/80">
+                            <span className={`mb-1.5 h-1.5 w-8 rounded-full ${visual.stripe}`} />
+                            <span className="text-2xl font-extrabold leading-none tracking-[-0.06em] text-slate-950">{a.points}</span>
+                            <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">PKT</span>
+                          </div>
                         </div>
 
-                        <div className="mt-1 text-[13px] text-slate-600">
-                          <span className="break-words">{a.organizer ? a.organizer : "Brak organizatora"}</span> •{" "}
-                          <span className="font-medium text-slate-900">{a.year}</span>
-                          {a.created_at ? (
-                            <>
-                              {" "}
-                              • <span className="text-slate-500">Dodano</span>{" "}
-                              <span className="font-medium text-slate-900">{formatDateShort(a.created_at)}</span>
-                            </>
-                          ) : null}
-                          {prog === "planned" ? (
-                            <>
-                              {" "}
-                              • <span className="text-slate-500">Termin</span>{" "}
-                              <span className="font-medium text-slate-900">{formatYMD(a.planned_start_date)}</span>
-                            </>
-                          ) : null}
-                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <Badge className={visual.badge}>
+                                  <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ${visual.iconBox}`}>
+                                    <VisualIcon className="h-3.5 w-3.5" strokeWidth={2.2} />
+                                  </span>
+                                  {visual.label}
+                                </Badge>
 
-                        {st.kind === "missing" ? (
-                          <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-2">
-                            <div className="text-[12px] font-semibold text-amber-900">
-                              Uzupełnij, aby aktywność była gotowa do raportu:
-                            </div>
-                            <div className="mt-1 flex flex-wrap gap-2">
-                              {st.missing.map((m) => (
-                                <span
-                                  key={m}
-                                  className="inline-flex items-center rounded-xl border border-amber-200 bg-white px-2 py-1 text-[11px] text-amber-800"
-                                >
-                                  {m}
+                                {prog === "planned" && typeof dleft === "number" ? (
+                                  dleft > 0 ? (
+                                    <Badge className={dleft <= 7 ? "border-amber-200 bg-amber-50 text-amber-700" : "border-blue-200 bg-blue-50 text-blue-700"}>
+                                      <Clock3 className="h-3.5 w-3.5" strokeWidth={2} />
+                                      {dleft} dni
+                                    </Badge>
+                                  ) : dleft === 0 ? (
+                                    <Badge className="border-amber-200 bg-amber-50 text-amber-700">
+                                      <Clock3 className="h-3.5 w-3.5" strokeWidth={2} />
+                                      dzisiaj
+                                    </Badge>
+                                  ) : (
+                                    <Badge className="border-amber-200 bg-amber-50 text-amber-700">
+                                      <Clock3 className="h-3.5 w-3.5" strokeWidth={2} />
+                                      po terminie
+                                    </Badge>
+                                  )
+                                ) : null}
+
+                                {attachCount > 0 ? (
+                                  <Badge className="border-slate-200 bg-slate-50 text-slate-600">
+                                    <Paperclip className="h-3.5 w-3.5" strokeWidth={2} />
+                                    {attachCount}
+                                  </Badge>
+                                ) : null}
+                              </div>
+
+                              <h3 className="mt-1.5 line-clamp-2 text-[15px] font-bold leading-snug tracking-[-0.015em] text-slate-950">
+                                {a.type}
+                              </h3>
+
+                              <div className="mt-2 grid gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
+                                <span className="inline-flex min-w-0 items-center gap-1.5">
+                                  <span className={metaIconBase}>
+                                    <FileText className="h-3 w-3" strokeWidth={2} />
+                                  </span>
+                                  <span className="truncate font-semibold text-slate-700">{a.organizer ? a.organizer : "Brak organizatora"}</span>
                                 </span>
-                              ))}
+
+                                <span className="inline-flex min-w-0 items-center gap-1.5">
+                                  <span className={metaIconBase}>
+                                    <CalendarDays className="h-3 w-3" strokeWidth={2} />
+                                  </span>
+                                  <span className="truncate">
+                                    Rok <span className="font-semibold text-slate-700">{a.year}</span>
+                                  </span>
+                                </span>
+
+                                {a.created_at ? (
+                                  <span className="inline-flex min-w-0 items-center gap-1.5">
+                                    <span className={metaIconBase}>
+                                      <Clock3 className="h-3 w-3" strokeWidth={2} />
+                                    </span>
+                                    <span className="truncate">Dodano {formatDateShort(a.created_at)}</span>
+                                  </span>
+                                ) : null}
+
+                                {prog === "planned" ? (
+                                  <span className="inline-flex min-w-0 items-center gap-1.5">
+                                    <span className={metaIconBase}>
+                                      <CalendarDays className="h-3 w-3" strokeWidth={2} />
+                                    </span>
+                                    <span className="truncate">
+                                      Termin <span className="font-semibold text-slate-700">{formatYMD(a.planned_start_date)}</span>
+                                    </span>
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                              <button
+                                onClick={() => (inEdit ? cancelEdit() : startEdit(a))}
+                                className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95 disabled:opacity-60"
+                                type="button"
+                                disabled={busy}
+                              >
+                                {inEdit ? "Zamknij" : "Edytuj"}
+                              </button>
+
+                              {prog === "planned" ? (
+                                <button
+                                  onClick={() => markAsDone(a.id)}
+                                  className="inline-flex h-8 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 text-xs font-semibold text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100 hover:text-blue-800 active:scale-95 disabled:opacity-60"
+                                  type="button"
+                                  disabled={busy}
+                                >
+                                  Ukończ
+                                </button>
+                              ) : null}
+
+                              <button
+                                onClick={() => removeActivity(a.id, a.certificate_path ?? null)}
+                                className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 active:scale-95 disabled:opacity-60"
+                                type="button"
+                                disabled={busy}
+                                title="Usuń aktywność"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
                             </div>
                           </div>
-                        ) : null}
-                      </div>
 
-                      <div className="shrink-0">
-                        <div className="flex flex-wrap items-center justify-end gap-2">
-                          <div className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm">
-                            <span className="text-slate-600">Pkt</span>{" "}
-                            <span className="font-semibold text-slate-900">{a.points}</span>
-                          </div>
-
-                          <button
-                            onClick={() => (inEdit ? cancelEdit() : startEdit(a))}
-                            className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                            type="button"
-                            disabled={busy}
-                          >
-                            {inEdit ? "Zamknij" : "Edytuj"}
-                          </button>
-
-                          {prog === "planned" ? (
-                            <button
-                              onClick={() => markAsDone(a.id)}
-                              className="rounded-xl bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-                              type="button"
-                              disabled={busy}
-                            >
-                              Ukończ
-                            </button>
+                          {st.kind === "missing" ? (
+                            <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/70 p-3">
+                              <div className="flex items-start gap-2">
+                                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" strokeWidth={2.2} />
+                                <div>
+                                  <div className="text-xs font-semibold text-amber-900">Uzupełnij, aby aktywność była gotowa do raportu</div>
+                                  <div className="mt-1 flex flex-wrap gap-1.5">
+                                    {st.missing.map((m) => (
+                                      <span
+                                        key={m}
+                                        className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200"
+                                      >
+                                        {m}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           ) : null}
 
-                          <button
-                            onClick={() => removeActivity(a.id, a.certificate_path ?? null)}
-                            className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                            type="button"
-                            disabled={busy}
-                          >
-                            Usuń
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-2 space-y-1 text-[13px]">
-                      {a.certificate_path ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                          {legacyCertUrl ? (
-                            <a href={legacyCertUrl} target="_blank" rel="noreferrer" className="font-medium text-blue-700 hover:underline">
-                              Otwórz certyfikat
-                            </a>
-                          ) : (
-                            <span className="text-slate-500">Generuję link…</span>
-                          )}
-                          {a.certificate_name ? <span className="text-[11px] text-slate-500">{shortFileName(a.certificate_name)}</span> : null}
-                        </div>
-                      ) : null}
-
-                      {certDocs.map((d) => (
-                        <div key={d.id} className="flex flex-wrap items-center gap-2">
-                          {docUrls[d.id] ? (
-                            <a href={docUrls[d.id]} target="_blank" rel="noreferrer" className="font-medium text-blue-700 hover:underline">
-                              Otwórz certyfikat
-                            </a>
-                          ) : (
-                            <span className="text-slate-500">Generuję link…</span>
-                          )}
-                          <span className="text-[11px] text-slate-500">{shortFileName(d.name)}</span>
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => removeDoc(d)}
-                            className="ml-auto rounded-xl border border-slate-300 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                          >
-                            Usuń
-                          </button>
-                        </div>
-                      ))}
-
-                      {otherDocs.length ? (
-                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-2">
-                          <div className="text-[11px] font-semibold text-slate-700">Dokumenty</div>
-                          <div className="mt-1 space-y-1">
-                            {otherDocs.map((d) => (
-                              <div key={d.id} className="flex items-center gap-2">
-                                {docUrls[d.id] ? (
-                                  <a href={docUrls[d.id]} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline">
-                                    {shortFileName(d.name) || "Otwórz dokument"}
+                          <div className="mt-3 space-y-1.5 text-[13px]">
+                            {a.certificate_path ? (
+                              <div className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-200">
+                                <FileCheck2 className="h-4 w-4 text-emerald-600" />
+                                {legacyCertUrl ? (
+                                  <a href={legacyCertUrl} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 hover:underline">
+                                    Otwórz certyfikat
                                   </a>
                                 ) : (
                                   <span className="text-slate-500">Generuję link…</span>
                                 )}
+                                {a.certificate_name ? <span className="text-[11px] text-slate-500">{shortFileName(a.certificate_name)}</span> : null}
+                              </div>
+                            ) : null}
+
+                            {certDocs.map((d) => (
+                              <div key={d.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-200">
+                                <FileCheck2 className="h-4 w-4 text-emerald-600" />
+                                {docUrls[d.id] ? (
+                                  <a href={docUrls[d.id]} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 hover:underline">
+                                    Otwórz certyfikat
+                                  </a>
+                                ) : (
+                                  <span className="text-slate-500">Generuję link…</span>
+                                )}
+                                <span className="text-[11px] text-slate-500">{shortFileName(d.name)}</span>
                                 <button
                                   type="button"
                                   disabled={busy}
                                   onClick={() => removeDoc(d)}
-                                  className="ml-auto rounded-xl border border-slate-300 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                                  className="ml-auto rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                                 >
                                   Usuń
                                 </button>
                               </div>
                             ))}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
 
-                    {inEdit ? (
-                      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="text-[12px] font-semibold text-slate-900">Edycja aktywności</div>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => saveEdit(a.id)}
-                              disabled={busy}
-                              className="rounded-xl bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-                            >
-                              {busy ? "Zapisuję…" : "Zapisz"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={cancelEdit}
-                              disabled={busy}
-                              className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                            >
-                              Anuluj
-                            </button>
-                          </div>
-                        </div>
+                            {otherDocs.length ? (
+                              <div className="rounded-xl border border-slate-200 bg-slate-50 p-2">
+                                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
+                                  <Paperclip className="h-3.5 w-3.5" />
+                                  Dokumenty
+                                </div>
 
-                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                          <div className="sm:col-span-2">
-                            <label className="text-[11px] font-medium text-slate-600">Rodzaj</label>
-                            <select
-                              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                              value={editType}
-                              onChange={(e) => setEditType(e.target.value as any)}
-                              disabled={busy}
-                            >
-                              {TYPES.map((t) => (
-                                <option key={t} value={t}>
-                                  {t}
-                                </option>
-                              ))}
-                            </select>
+                                <div className="mt-1 space-y-1">
+                                  {otherDocs.map((d) => (
+                                    <div key={d.id} className="flex items-center gap-2">
+                                      {docUrls[d.id] ? (
+                                        <a href={docUrls[d.id]} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline">
+                                          {shortFileName(d.name) || "Otwórz dokument"}
+                                        </a>
+                                      ) : (
+                                        <span className="text-slate-500">Generuję link…</span>
+                                      )}
+
+                                      <button
+                                        type="button"
+                                        disabled={busy}
+                                        onClick={() => removeDoc(d)}
+                                        className="ml-auto rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                                      >
+                                        Usuń
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null}
                           </div>
 
-                          <div>
-                            <label className="text-[11px] font-medium text-slate-600">Punkty</label>
-                            <input
-                              type="number"
-                              min={0}
-                              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                              value={editPoints}
-                              onChange={(e) => setEditPoints(Math.max(0, Number(e.target.value || 0)))}
-                              disabled={busy}
-                            />
-                          </div>
+                          {inEdit ? (
+                            <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="text-[12px] font-semibold text-slate-900">Edycja aktywności</div>
 
-                          <div>
-                            <label className="text-[11px] font-medium text-slate-600">Rok</label>
-                            <input
-                              type="number"
-                              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                              value={editYear}
-                              onChange={(e) => setEditYear(Number(e.target.value || new Date().getFullYear()))}
-                              disabled={busy}
-                            />
-                          </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => saveEdit(a.id)}
+                                    disabled={busy}
+                                    className="inline-flex h-8 items-center justify-center rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 disabled:opacity-60"
+                                  >
+                                    {busy ? "Zapisuję…" : "Zapisz"}
+                                  </button>
 
-                          <div className="sm:col-span-2">
-                            <label className="text-[11px] font-medium text-slate-600">Organizator</label>
-                            <input
-                              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                              value={editOrganizer}
-                              onChange={(e) => setEditOrganizer(e.target.value)}
-                              placeholder="np. OIL / towarzystwo"
-                              disabled={busy}
-                            />
-                          </div>
+                                  <button
+                                    type="button"
+                                    onClick={cancelEdit}
+                                    disabled={busy}
+                                    className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+                                  >
+                                    Anuluj
+                                  </button>
+                                </div>
+                              </div>
 
-                          {prog === "planned" ? (
-                            <div className="sm:col-span-2">
-                              <label className="text-[11px] font-medium text-slate-600">Termin szkolenia</label>
-                              <input
-                                type="date"
-                                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                                value={editPlannedDate}
-                                onChange={(e) => setEditPlannedDate(e.target.value)}
-                                disabled={busy}
-                              />
+                              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                <div className="sm:col-span-2">
+                                  <label className={labelBase}>Rodzaj</label>
+                                  <select
+                                    className={fieldBase}
+                                    value={editType}
+                                    onChange={(e) => setEditType(e.target.value as any)}
+                                    disabled={busy}
+                                  >
+                                    {TYPES.map((t) => (
+                                      <option key={t} value={t}>
+                                        {t}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                <div>
+                                  <label className={labelBase}>Punkty</label>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    className={fieldBase}
+                                    value={editPoints}
+                                    onChange={(e) => setEditPoints(Math.max(0, Number(e.target.value || 0)))}
+                                    disabled={busy}
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className={labelBase}>Rok</label>
+                                  <input
+                                    type="number"
+                                    className={fieldBase}
+                                    value={editYear}
+                                    onChange={(e) => setEditYear(Number(e.target.value || new Date().getFullYear()))}
+                                    disabled={busy}
+                                  />
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                  <label className={labelBase}>Organizator</label>
+                                  <input
+                                    className={fieldBase}
+                                    value={editOrganizer}
+                                    onChange={(e) => setEditOrganizer(e.target.value)}
+                                    placeholder="np. OIL / towarzystwo"
+                                    disabled={busy}
+                                  />
+                                </div>
+
+                                {prog === "planned" ? (
+                                  <div className="sm:col-span-2">
+                                    <label className={labelBase}>Termin szkolenia</label>
+                                    <input
+                                      type="date"
+                                      className={fieldBase}
+                                      value={editPlannedDate}
+                                      onChange={(e) => setEditPlannedDate(e.target.value)}
+                                      disabled={busy}
+                                    />
+                                  </div>
+                                ) : null}
+                              </div>
+
+                              <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
+                                <div className="flex items-center gap-2 text-[12px] font-semibold text-slate-900">
+                                  <UploadCloud className="h-4 w-4 text-blue-600" />
+                                  Dodaj załącznik
+                                </div>
+
+                                <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                                  <div>
+                                    <label className={labelBase}>Typ</label>
+                                    <select
+                                      className={fieldBase}
+                                      value={editUploadKind}
+                                      onChange={(e) => setEditUploadKind(e.target.value as DocKind)}
+                                      disabled={busy}
+                                    >
+                                      <option value="certificate">Certyfikat</option>
+                                      <option value="document">Dokument</option>
+                                    </select>
+                                  </div>
+
+                                  <div className="sm:col-span-2">
+                                    <label className={labelBase}>Plik</label>
+                                    <input
+                                      key={editUploadKey}
+                                      type="file"
+                                      accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                                      className={fieldBase}
+                                      disabled={busy}
+                                      onChange={(e) => {
+                                        clearMessages();
+                                        const f = e.target.files?.[0] || null;
+                                        if (!f) return setEditUploadFile(null);
+                                        const ve = validateFile(f);
+                                        if (ve) {
+                                          setErr(ve);
+                                          setEditUploadFile(null);
+                                          return;
+                                        }
+                                        setEditUploadFile(f);
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="mt-2 flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => uploadInsideEdit(a.id)}
+                                    disabled={busy || !editUploadFile}
+                                    className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+                                  >
+                                    {busy ? "Dodaję…" : "Dodaj"}
+                                  </button>
+                                  <div className="text-[11px] text-slate-500">Limit {MAX_MB} MB. PDF/JPG/PNG/WEBP.</div>
+                                </div>
+                              </div>
                             </div>
                           ) : null}
                         </div>
-
-                        <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
-                          <div className="text-[12px] font-semibold text-slate-900">Dodaj załącznik</div>
-
-                          <div className="mt-2 grid gap-2 sm:grid-cols-3">
-                            <div className="sm:col-span-1">
-                              <label className="text-[11px] font-medium text-slate-600">Typ</label>
-                              <select
-                                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                                value={editUploadKind}
-                                onChange={(e) => setEditUploadKind(e.target.value as DocKind)}
-                                disabled={busy}
-                              >
-                                <option value="certificate">Certyfikat</option>
-                                <option value="document">Dokument</option>
-                              </select>
-                            </div>
-
-                            <div className="sm:col-span-2">
-                              <label className="text-[11px] font-medium text-slate-600">Plik</label>
-                              <input
-                                key={editUploadKey}
-                                type="file"
-                                accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
-                                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                                disabled={busy}
-                                onChange={(e) => {
-                                  clearMessages();
-                                  const f = e.target.files?.[0] || null;
-                                  if (!f) return setEditUploadFile(null);
-                                  const ve = validateFile(f);
-                                  if (ve) {
-                                    setErr(ve);
-                                    setEditUploadFile(null);
-                                    return;
-                                  }
-                                  setEditUploadFile(f);
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="mt-2 flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => uploadInsideEdit(a.id)}
-                              disabled={busy || !editUploadFile}
-                              className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                            >
-                              {busy ? "Dodaję…" : "Dodaj"}
-                            </button>
-                            <div className="text-[11px] text-slate-500">Limit {MAX_MB} MB. PDF/JPG/PNG/WEBP.</div>
-                          </div>
-                        </div>
                       </div>
-                    ) : null}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          <aside className="space-y-4">
+            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">Porządkowanie</p>
+
+              <h2 className="mt-1 text-base font-semibold tracking-[-0.02em] text-slate-950">Podsumowanie CPD</h2>
+
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                Najważniejsze statusy z Twojej listy aktywności.
+              </p>
+
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("todo")}
+                  className="flex min-h-[58px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-left transition hover:bg-amber-50"
+                >
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                    <AlertTriangle className="h-4 w-4" strokeWidth={2.2} />
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
 
-        <section className="order-1 rounded-2xl border bg-white p-4 lg:order-2 lg:col-span-4">
-          <h2 className="text-base font-semibold text-slate-900">Dodaj aktywność</h2>
-          <p className="mt-1 text-[13px] text-slate-600">
-            Dodaj aktywność, którą już ukończyłeś. Certyfikat możesz dołączyć teraz albo później.
-          </p>
+                  <div className="min-w-0">
+                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">{activityStats.todo}</div>
+                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">braki</div>
+                  </div>
+                </button>
 
-          <div className="mt-3 space-y-2">
-            <div>
-              <label className="text-[11px] font-medium text-slate-600">Rodzaj</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={type}
-                onChange={(e) => setType(e.target.value as any)}
-                disabled={busy}
-              >
-                {TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("planned")}
+                  className="flex min-h-[58px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-left transition hover:bg-blue-50"
+                >
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <CalendarDays className="h-4 w-4" strokeWidth={2.2} />
+                  </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-[11px] font-medium text-slate-600">Punkty</label>
-                <input
-                  type="number"
-                  min={0}
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                  value={points}
-                  onChange={(e) => setPoints(Math.max(0, Number(e.target.value || 0)))}
-                  disabled={busy}
-                />
+                  <div className="min-w-0">
+                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">{activityStats.planned}</div>
+                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">plan</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("ready")}
+                  className="flex min-h-[58px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-left transition hover:bg-emerald-50"
+                >
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <FolderCheck className="h-4 w-4" strokeWidth={2.2} />
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">{activityStats.ready}</div>
+                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">gotowe</div>
+                  </div>
+                </button>
               </div>
 
-              <div>
-                <label className="text-[11px] font-medium text-slate-600">Rok</label>
-                <input
-                  type="number"
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                  value={year}
-                  onChange={(e) => setYear(Number(e.target.value || new Date().getFullYear()))}
-                  disabled={busy}
-                />
+              <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-semibold text-slate-950">Gotowe punkty</div>
+                    <div className="mt-1 text-xs text-slate-500">Kompletne aktywności</div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-2xl font-extrabold tracking-[-0.05em] text-emerald-700">{activityStats.readyPoints}</div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">pkt</div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="text-[11px] font-medium text-slate-600">Organizator</label>
-              <input
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={organizer}
-                onChange={(e) => setOrganizer(e.target.value)}
-                placeholder="np. OIL / towarzystwo"
-                disabled={busy}
-              />
-              <div className="mt-1 text-[11px] text-slate-500">Ważne w raportach. Jeśli nie uzupełnisz teraz, wpis trafi do braków.</div>
+            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
+              <div className="flex items-start gap-3">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700">
+                  <Plus className="h-4 w-4" strokeWidth={2.2} />
+                </span>
+
+                <div>
+                  <h2 className="text-base font-semibold text-slate-950">Dodaj aktywność</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                    Dodaj aktywność, którą już ukończyłeś. Certyfikat możesz dołączyć teraz albo później.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                <div>
+                  <label className={labelBase}>Rodzaj</label>
+                  <select className={fieldBase} value={type} onChange={(e) => setType(e.target.value as any)} disabled={busy}>
+                    {TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className={labelBase}>Punkty</label>
+                    <input
+                      type="number"
+                      min={0}
+                      className={fieldBase}
+                      value={points}
+                      onChange={(e) => setPoints(Math.max(0, Number(e.target.value || 0)))}
+                      disabled={busy}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelBase}>Rok</label>
+                    <input
+                      type="number"
+                      className={fieldBase}
+                      value={year}
+                      onChange={(e) => setYear(Number(e.target.value || new Date().getFullYear()))}
+                      disabled={busy}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelBase}>Organizator</label>
+                  <input
+                    className={fieldBase}
+                    value={organizer}
+                    onChange={(e) => setOrganizer(e.target.value)}
+                    placeholder="np. OIL / towarzystwo"
+                    disabled={busy}
+                  />
+                  <div className="mt-1 text-[11px] text-slate-500">Jeśli nie uzupełnisz teraz, wpis trafi do braków.</div>
+                </div>
+
+                <div>
+                  <label className={labelBase}>Certyfikat opcjonalnie</label>
+                  <input
+                    key={fileInputKey}
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                    className={fieldBase}
+                    disabled={busy}
+                    onChange={(e) => {
+                      clearMessages();
+                      const f = e.target.files?.[0] || null;
+                      if (!f) return setFile(null);
+                      const ve = validateFile(f);
+                      if (ve) {
+                        setErr(ve);
+                        setFile(null);
+                        return;
+                      }
+                      setFile(f);
+                    }}
+                  />
+                  <div className="mt-1 text-[11px] text-slate-500">Limit: {MAX_MB} MB. PDF/JPG/PNG/WEBP.</div>
+                </div>
+
+                <button
+                  onClick={addActivity}
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-95 disabled:opacity-60"
+                  type="button"
+                  disabled={busy}
+                >
+                  <FilePlus2 className="h-4 w-4" />
+                  {busy ? "Zapisuję…" : "Zapisz aktywność"}
+                </button>
+              </div>
             </div>
 
-            <div>
-              <label className="text-[11px] font-medium text-slate-600">Certyfikat opcjonalnie</label>
-              <input
-                key={fileInputKey}
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                disabled={busy}
-                onChange={(e) => {
-                  clearMessages();
-                  const f = e.target.files?.[0] || null;
-                  if (!f) return setFile(null);
-                  const ve = validateFile(f);
-                  if (ve) {
-                    setErr(ve);
-                    setFile(null);
-                    return;
-                  }
-                  setFile(f);
-                }}
-              />
-              <div className="mt-1 text-[11px] text-slate-500">Limit: {MAX_MB} MB. PDF/JPG/PNG/WEBP.</div>
+            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
+              <div className="flex items-start gap-3">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-600">
+                  <UploadCloud className="h-4 w-4" strokeWidth={2.2} />
+                </span>
+
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-950">Dodaj plik do wpisu</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                    Podpinaj certyfikaty i dodatkowe dokumenty do istniejących aktywności.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                <select className={fieldBase} value={attachToId ?? ""} onChange={(e) => setAttachToId(e.target.value || null)} disabled={busy}>
+                  <option value="">Wybierz aktywność…</option>
+                  {items.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {normalizeStatus(a.status) === "planned" ? "🗓️ Zaplanowane" : "✓ Ukończone"} • {a.year} • {a.type}
+                      {a.organizer ? ` • ${a.organizer}` : ""}
+                    </option>
+                  ))}
+                </select>
+
+                <select className={fieldBase} value={attachKind} onChange={(e) => setAttachKind(e.target.value as DocKind)} disabled={busy}>
+                  <option value="certificate">Certyfikat</option>
+                  <option value="document">Dokument</option>
+                </select>
+
+                <input
+                  key={attachInputKey}
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                  className={fieldBase}
+                  disabled={busy}
+                  onChange={(e) => {
+                    clearMessages();
+                    const f = e.target.files?.[0] || null;
+                    if (!f) return setAttachFile(null);
+                    const ve = validateFile(f);
+                    if (ve) {
+                      setErr(ve);
+                      setAttachFile(null);
+                      return;
+                    }
+                    setAttachFile(f);
+                  }}
+                />
+
+                <button
+                  type="button"
+                  onClick={attachFileToExisting}
+                  disabled={busy || !attachToId || !attachFile}
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+                >
+                  <Paperclip className="h-4 w-4" />
+                  {busy ? "Dodaję…" : attachKind === "certificate" ? "Dodaj certyfikat" : "Dodaj dokument"}
+                </button>
+              </div>
             </div>
 
-            <button
-              onClick={addActivity}
-              className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-              type="button"
-              disabled={busy}
-            >
-              {busy ? "Zapisuję…" : "+ Zapisz aktywność"}
-            </button>
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-            <div className="text-sm font-semibold text-slate-900">Dodaj plik do istniejącej aktywności</div>
-            <div className="mt-1 text-[11px] text-slate-600">
-              Użyj, gdy masz już wpis i chcesz tylko podpiąć certyfikat albo dodatkowy dokument.
+            <div className="rounded-[1.45rem] border border-blue-100 bg-blue-50/80 p-4 text-xs leading-relaxed text-blue-800 shadow-[0_7px_16px_rgba(37,99,235,0.08)]">
+              <div className="flex items-center gap-2 font-semibold">
+                <Award className="h-4 w-4" />
+                Jak korzystać?
+              </div>
+              <p className="mt-2">
+                Zacznij od widoku <span className="font-semibold">Do uzupełnienia</span>. Gdy aktywność ma organizatora i certyfikat,
+                automatycznie przejdzie do <span className="font-semibold">Gotowe do raportu</span>.
+              </p>
             </div>
-
-            <div className="mt-2 space-y-2">
-              <select
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={attachToId ?? ""}
-                onChange={(e) => setAttachToId(e.target.value || null)}
-                disabled={busy}
-              >
-                <option value="">Wybierz aktywność…</option>
-                {items.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {normalizeStatus(a.status) === "planned" ? "🗓️ Zaplanowane" : "✓ Ukończone"} • {a.year} • {a.type}
-                    {a.organizer ? ` • ${a.organizer}` : ""}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={attachKind}
-                onChange={(e) => setAttachKind(e.target.value as DocKind)}
-                disabled={busy}
-              >
-                <option value="certificate">Certyfikat</option>
-                <option value="document">Dokument</option>
-              </select>
-
-              <input
-                key={attachInputKey}
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                disabled={busy}
-                onChange={(e) => {
-                  clearMessages();
-                  const f = e.target.files?.[0] || null;
-                  if (!f) return setAttachFile(null);
-                  const ve = validateFile(f);
-                  if (ve) {
-                    setErr(ve);
-                    setAttachFile(null);
-                    return;
-                  }
-                  setAttachFile(f);
-                }}
-              />
-
-              <button
-                type="button"
-                onClick={attachFileToExisting}
-                disabled={busy || !attachToId || !attachFile}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-              >
-                {busy ? "Dodaję…" : attachKind === "certificate" ? "Dodaj certyfikat" : "Dodaj dokument"}
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-3 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-[12px] text-blue-800">
-            <div className="font-semibold">Jak korzystać z tej zakładki?</div>
-            <div className="mt-1">
-              Najpierw sprawdź „Do uzupełnienia”. Gdy wpis ma organizatora i certyfikat, automatycznie przejdzie do „Gotowe do raportu”.
-            </div>
-          </div>
-        </section>
-      </div>
-    </main>
+          </aside>
+        </div>
+      </main>
+    </div>
   );
 }
