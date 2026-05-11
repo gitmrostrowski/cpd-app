@@ -158,12 +158,20 @@ function shortFileName(name?: string | null) {
 
 function daysUntil(ymd: string | null | undefined) {
   if (!ymd) return null;
+
   const [y, m, d] = ymd.split("-").map((x) => Number(x));
   if (!y || !m || !d) return null;
 
   const target = new Date(y, m - 1, d, 12, 0, 0);
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    12,
+    0,
+    0,
+  );
 
   const diffMs = target.getTime() - today.getTime();
   const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
@@ -171,12 +179,19 @@ function daysUntil(ymd: string | null | undefined) {
 }
 
 function splitDocs(docsForActivity: ActivityDocRow[]) {
-  const certDocs = docsForActivity.filter((d) => String(d.kind).toLowerCase() === "certificate");
-  const otherDocs = docsForActivity.filter((d) => String(d.kind).toLowerCase() !== "certificate");
+  const certDocs = docsForActivity.filter(
+    (d) => String(d.kind).toLowerCase() === "certificate",
+  );
+  const otherDocs = docsForActivity.filter(
+    (d) => String(d.kind).toLowerCase() !== "certificate",
+  );
   return { certDocs, otherDocs };
 }
 
-function getRowStatus(a: ActivityRow, docsForActivity: ActivityDocRow[]): { kind: StatusKind; missing: string[] } {
+function getRowStatus(
+  a: ActivityRow,
+  docsForActivity: ActivityDocRow[],
+): { kind: StatusKind; missing: string[] } {
   const missing: string[] = [];
   const orgOk = Boolean(a.organizer && String(a.organizer).trim());
 
@@ -193,7 +208,10 @@ function getRowStatus(a: ActivityRow, docsForActivity: ActivityDocRow[]): { kind
   return { kind: missing.length === 0 ? "complete" : "missing", missing };
 }
 
-function getActivityTab(a: ActivityRow, docsForActivity: ActivityDocRow[]): Exclude<ActivityTab, "all"> {
+function getActivityTab(
+  a: ActivityRow,
+  docsForActivity: ActivityDocRow[],
+): Exclude<ActivityTab, "all"> {
   const prog = normalizeStatus(a.status);
   const st = getRowStatus(a, docsForActivity);
 
@@ -207,8 +225,8 @@ function tabTone(tab: ActivityTab) {
     return {
       stripe: "bg-amber-400",
       icon: "bg-amber-50 text-amber-700 ring-amber-100",
-      pill: "border-amber-200 bg-amber-50 text-amber-700",
-      active: "border-amber-200 bg-white shadow-sm ring-1 ring-amber-100",
+      pill: "border-amber-200 bg-white text-amber-700",
+      active: "border-slate-300 bg-white shadow-sm ring-1 ring-slate-200",
       number: "text-amber-700",
     };
   }
@@ -264,7 +282,7 @@ function activityVisual(a: ActivityRow, docsForActivity: ActivityDocRow[]) {
       label: "Do uzupełnienia",
       stripe: "bg-amber-400",
       card: "border-slate-300/80 bg-white hover:border-amber-200 hover:shadow-[0_1px_0_rgba(245,158,11,0.08),0_7px_14px_rgba(245,158,11,0.12)]",
-      badge: "border-amber-200 bg-amber-50 text-amber-700",
+      badge: "border-amber-200 bg-white text-amber-700",
       iconBox: "bg-amber-50 text-amber-700 ring-amber-100",
       Icon: AlertTriangle,
     };
@@ -289,7 +307,12 @@ function Badge({
   children: React.ReactNode;
 }) {
   return (
-    <span className={["inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none shadow-sm", className].join(" ")}>
+    <span
+      className={[
+        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none shadow-sm",
+        className,
+      ].join(" ")}
+    >
       {children}
     </span>
   );
@@ -326,7 +349,8 @@ export default function ActivitiesPage() {
   const [editOrganizer, setEditOrganizer] = useState<string>("");
   const [editPlannedDate, setEditPlannedDate] = useState<string>("");
 
-  const [editUploadKind, setEditUploadKind] = useState<DocKind>("certificate");
+  const [editUploadKind, setEditUploadKind] =
+    useState<DocKind>("certificate");
   const [editUploadFile, setEditUploadFile] = useState<File | null>(null);
   const [editUploadKey, setEditUploadKey] = useState(0);
 
@@ -338,7 +362,9 @@ export default function ActivitiesPage() {
   }, [docs]);
 
   const [docUrls, setDocUrls] = useState<Record<string, string>>({});
-  const [legacyCertUrls, setLegacyCertUrls] = useState<Record<string, string>>({});
+  const [legacyCertUrls, setLegacyCertUrls] = useState<Record<string, string>>(
+    {},
+  );
 
   const [activeTab, setActiveTab] = useState<ActivityTab>("todo");
 
@@ -369,7 +395,9 @@ export default function ActivitiesPage() {
   function validateFile(f: File) {
     if (!ALLOWED_MIME.has(f.type)) return "Dozwolone: PDF, JPG, PNG, WEBP.";
     const sizeMb = f.size / (1024 * 1024);
-    if (sizeMb > MAX_MB) return `Plik jest za duży (${sizeMb.toFixed(1)} MB). Limit: ${MAX_MB} MB.`;
+    if (sizeMb > MAX_MB) {
+      return `Plik jest za duży (${sizeMb.toFixed(1)} MB). Limit: ${MAX_MB} MB.`;
+    }
     return null;
   }
 
@@ -409,7 +437,9 @@ export default function ActivitiesPage() {
       const withLegacy = rows.filter((r) => r.certificate_path);
       const legacyResults = await Promise.all(
         withLegacy.map(async (r) => {
-          const { data: urlData } = await supabase.storage.from(BUCKET).createSignedUrl(r.certificate_path!, 60 * 60);
+          const { data: urlData } = await supabase.storage
+            .from(BUCKET)
+            .createSignedUrl(r.certificate_path!, 60 * 60);
           return { activityId: r.id, url: urlData?.signedUrl ?? "" };
         }),
       );
@@ -442,7 +472,9 @@ export default function ActivitiesPage() {
 
         const urlResults = await Promise.all(
           docRows.map(async (d) => {
-            const { data: urlData } = await supabase.storage.from(BUCKET).createSignedUrl(d.path, 60 * 60);
+            const { data: urlData } = await supabase.storage
+              .from(BUCKET)
+              .createSignedUrl(d.path, 60 * 60);
             return { docId: d.id, url: urlData?.signedUrl ?? "" };
           }),
         );
@@ -510,8 +542,13 @@ export default function ActivitiesPage() {
     const p = Number(points);
     const y = Number(year);
 
-    if (!Number.isFinite(p) || p < 0) return setErr("Punkty muszą być liczbą ≥ 0.");
-    if (!Number.isFinite(y) || y < 1900 || y > 2100) return setErr("Rok wygląda na nieprawidłowy.");
+    if (!Number.isFinite(p) || p < 0) {
+      return setErr("Punkty muszą być liczbą ≥ 0.");
+    }
+
+    if (!Number.isFinite(y) || y < 1900 || y > 2100) {
+      return setErr("Rok wygląda na nieprawidłowy.");
+    }
 
     if (file) {
       const fe = validateFile(file);
@@ -532,7 +569,12 @@ export default function ActivitiesPage() {
     setBusy(true);
 
     try {
-      const { data, error } = await supabase.from("activities").insert(payload).select("id").single();
+      const { data, error } = await supabase
+        .from("activities")
+        .insert(payload)
+        .select("id")
+        .single();
+
       if (error) return setErr(error.message);
 
       const newId = (data?.id as string | undefined) ?? undefined;
@@ -593,10 +635,18 @@ export default function ActivitiesPage() {
 
       if (myDocs.length) {
         await supabase.storage.from(BUCKET).remove(myDocs.map((d) => d.path));
-        await supabase.from("activity_documents").delete().eq("activity_id", id).eq("user_id", user.id);
+        await supabase
+          .from("activity_documents")
+          .delete()
+          .eq("activity_id", id)
+          .eq("user_id", user.id);
       }
 
-      const { error } = await supabase.from("activities").delete().eq("id", id).eq("user_id", user.id);
+      const { error } = await supabase
+        .from("activities")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
 
       if (error) {
         setErr(error.message);
@@ -621,7 +671,10 @@ export default function ActivitiesPage() {
     setBusy(true);
 
     try {
-      const { error: storErr } = await supabase.storage.from(BUCKET).remove([doc.path]);
+      const { error: storErr } = await supabase.storage
+        .from(BUCKET)
+        .remove([doc.path]);
+
       if (storErr) return setErr(storErr.message);
 
       const { error: delErr } = await supabase
@@ -692,8 +745,13 @@ export default function ActivitiesPage() {
     const p = Number(editPoints);
     const y = Number(editYear);
 
-    if (!Number.isFinite(p) || p < 0) return setErr("Punkty muszą być liczbą ≥ 0.");
-    if (!Number.isFinite(y) || y < 1900 || y > 2100) return setErr("Rok wygląda na nieprawidłowy.");
+    if (!Number.isFinite(p) || p < 0) {
+      return setErr("Punkty muszą być liczbą ≥ 0.");
+    }
+
+    if (!Number.isFinite(y) || y < 1900 || y > 2100) {
+      return setErr("Rok wygląda na nieprawidłowy.");
+    }
 
     const current = items.find((x) => x.id === activityId);
     const prog = current ? normalizeStatus(current.status) : "done";
@@ -707,12 +765,19 @@ export default function ActivitiesPage() {
       organizer: org.length ? org : null,
     };
 
-    if (prog === "planned") upd.planned_start_date = editPlannedDate ? editPlannedDate : null;
+    if (prog === "planned") {
+      upd.planned_start_date = editPlannedDate ? editPlannedDate : null;
+    }
 
     setBusy(true);
 
     try {
-      const { error } = await supabase.from("activities").update(upd).eq("id", activityId).eq("user_id", user.id);
+      const { error } = await supabase
+        .from("activities")
+        .update(upd)
+        .eq("id", activityId)
+        .eq("user_id", user.id);
+
       if (error) return setErr(error.message);
 
       setInfo("Zapisano zmiany.");
@@ -812,10 +877,14 @@ export default function ActivitiesPage() {
       if (activeTab !== "all" && bucket !== activeTab) return false;
 
       if (filterType !== "Wszystkie" && a.type !== filterType) return false;
-      if (filterYear !== "Wszystkie" && String(a.year) !== filterYear) return false;
+      if (filterYear !== "Wszystkie" && String(a.year) !== filterYear) {
+        return false;
+      }
 
       if (query) {
-        const hay = `${a.type} ${a.organizer ?? ""} ${a.year} ${a.points} ${a.status ?? ""}`.toLowerCase();
+        const hay =
+          `${a.type} ${a.organizer ?? ""} ${a.year} ${a.points} ${a.status ?? ""}`.toLowerCase();
+
         if (!hay.includes(query)) return false;
       }
 
@@ -823,7 +892,8 @@ export default function ActivitiesPage() {
     });
   }, [items, activeTab, q, filterType, filterYear, docsByActivity]);
 
-  const activeTabMeta = ACTIVITY_TABS.find((t) => t.key === activeTab) ?? ACTIVITY_TABS[0];
+  const activeTabMeta =
+    ACTIVITY_TABS.find((t) => t.key === activeTab) ?? ACTIVITY_TABS[0];
 
   if (loading) {
     return (
@@ -844,9 +914,14 @@ export default function ActivitiesPage() {
           <div className="relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white p-6 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
             <div className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full bg-blue-500" />
             <h1 className="text-2xl font-bold text-slate-900">Aktywności</h1>
-            <p className="mt-2 text-sm text-slate-600">Zaloguj się, aby zapisywać aktywności do portfolio.</p>
+            <p className="mt-2 text-sm text-slate-600">
+              Zaloguj się, aby zapisywać aktywności do portfolio.
+            </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Link href="/login" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+              <Link
+                href="/login"
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
                 Zaloguj się
               </Link>
               <Link
@@ -875,9 +950,12 @@ export default function ActivitiesPage() {
               </span>
 
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-950">Aktywności</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+                  Aktywności
+                </h1>
                 <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
-                  Porządkuj aktywności CPD, uzupełniaj braki i trzymaj certyfikaty gotowe do raportu.
+                  Porządkuj aktywności CPD, uzupełniaj braki i trzymaj
+                  certyfikaty gotowe do raportu.
                 </p>
               </div>
             </div>
@@ -899,11 +977,13 @@ export default function ActivitiesPage() {
 
               <button
                 onClick={load}
-                className="inline-flex h-9 items-center gap-2 justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-60"
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-60"
                 disabled={fetching || busy}
                 type="button"
               >
-                <RefreshCw className={["h-4 w-4", fetching ? "animate-spin" : ""].join(" ")} />
+                <RefreshCw
+                  className={["h-4 w-4", fetching ? "animate-spin" : ""].join(" ")}
+                />
                 {fetching ? "Odświeżam…" : "Odśwież"}
               </button>
             </div>
@@ -922,12 +1002,20 @@ export default function ActivitiesPage() {
             <div className="rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_6px_16px_rgba(15,23,42,0.075)]">
               <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">Widok aktywności</div>
-                  <div className="text-xs text-slate-500">Najpierw uzupełnij braki, potem sprawdź wpisy gotowe do raportu.</div>
+                  <div className="text-sm font-semibold text-slate-900">
+                    Widok aktywności
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Najpierw uzupełnij braki, potem sprawdź wpisy gotowe do
+                    raportu.
+                  </div>
                 </div>
 
                 <div className="text-sm text-slate-500">
-                  Wynik: <span className="font-semibold text-slate-900">{filtered.length}</span>
+                  Wynik:{" "}
+                  <span className="font-semibold text-slate-900">
+                    {filtered.length}
+                  </span>
                 </div>
               </div>
 
@@ -951,22 +1039,38 @@ export default function ActivitiesPage() {
                       onClick={() => setActiveTab(tab.key)}
                       className={[
                         "relative overflow-hidden rounded-2xl border p-3 text-left transition hover:bg-white hover:shadow-sm",
-                        active ? tone.active : "border-slate-200 bg-slate-50/70",
+                        active
+                          ? tone.active
+                          : "border-slate-200 bg-slate-50/70",
                       ].join(" ")}
                     >
-                      <div className={`absolute bottom-3 left-0 top-3 w-1 rounded-r-full ${active ? tone.stripe : "bg-slate-200"}`} />
+                      <div
+                        className={`absolute bottom-3 left-0 top-3 w-1 rounded-r-full ${
+                          active ? tone.stripe : "bg-slate-200"
+                        }`}
+                      />
 
                       <div className="flex items-center gap-2 pl-1">
-                        <span className={`inline-flex h-8 w-8 items-center justify-center rounded-xl ring-1 ${tone.icon}`}>
+                        <span
+                          className={`inline-flex h-8 w-8 items-center justify-center rounded-xl ring-1 ${tone.icon}`}
+                        >
                           <Icon className="h-4 w-4" strokeWidth={2.2} />
                         </span>
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
-                            <div className="truncate text-sm font-semibold text-slate-950">{tab.label}</div>
-                            <div className={`text-lg font-extrabold leading-none ${tone.number}`}>{getTabCount(tab.key)}</div>
+                            <div className="truncate text-sm font-semibold text-slate-950">
+                              {tab.label}
+                            </div>
+                            <div
+                              className={`text-lg font-extrabold leading-none ${tone.number}`}
+                            >
+                              {getTabCount(tab.key)}
+                            </div>
                           </div>
-                          <div className="mt-0.5 line-clamp-1 text-[11px] text-slate-500">{tab.description}</div>
+                          <div className="mt-0.5 line-clamp-1 text-[11px] text-slate-500">
+                            {tab.description}
+                          </div>
                         </div>
                       </div>
                     </button>
@@ -990,7 +1094,11 @@ export default function ActivitiesPage() {
 
                 <div className="lg:col-span-3">
                   <label className={labelBase}>Typ</label>
-                  <select className={fieldBase} value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+                  <select
+                    className={fieldBase}
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                  >
                     <option>Wszystkie</option>
                     {TYPES.map((t) => (
                       <option key={t} value={t}>
@@ -1002,7 +1110,11 @@ export default function ActivitiesPage() {
 
                 <div className="lg:col-span-2">
                   <label className={labelBase}>Rok</label>
-                  <select className={fieldBase} value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+                  <select
+                    className={fieldBase}
+                    value={filterYear}
+                    onChange={(e) => setFilterYear(e.target.value)}
+                  >
                     <option>Wszystkie</option>
                     {years.map((y) => (
                       <option key={y} value={String(y)}>
@@ -1027,8 +1139,39 @@ export default function ActivitiesPage() {
                 </div>
               </div>
 
-              <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-xs leading-relaxed text-slate-500">
-                Widok: <span className="font-semibold text-slate-900">{activeTabMeta.label}</span> — {activeTabMeta.description}
+              <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600">
+                {activeTab === "todo" ? (
+                  <>
+                    Masz{" "}
+                    <span className="font-semibold text-slate-900">
+                      {activityStats.todo}
+                    </span>{" "}
+                    aktywności do uzupełnienia. Najpierw dodaj certyfikaty i
+                    organizatorów — wtedy wpisy automatycznie trafią do{" "}
+                    <span className="font-semibold text-slate-900">
+                      „Gotowe do raportu”
+                    </span>
+                    .
+                  </>
+                ) : activeTab === "planned" ? (
+                  <>
+                    Zaplanowane aktywności nie liczą się jeszcze do punktów. Po
+                    szkoleniu oznacz je jako ukończone i dodaj certyfikat.
+                  </>
+                ) : activeTab === "ready" ? (
+                  <>
+                    Te aktywności są kompletne i gotowe do raportu. Łącznie:{" "}
+                    <span className="font-semibold text-emerald-700">
+                      {activityStats.readyPoints} pkt
+                    </span>
+                    .
+                  </>
+                ) : (
+                  <>
+                    Pełna historia aktywności CPD — zaplanowane, do
+                    uzupełnienia i gotowe do raportu.
+                  </>
+                )}
               </div>
             </div>
 
@@ -1041,7 +1184,9 @@ export default function ActivitiesPage() {
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-500 ring-1 ring-slate-200">
                   <FolderOpen className="h-6 w-6" />
                 </div>
-                <div className="mt-3 text-base font-semibold text-slate-900">Brak wyników</div>
+                <div className="mt-3 text-base font-semibold text-slate-900">
+                  Brak wyników
+                </div>
                 <div className="mx-auto mt-1 max-w-md text-sm leading-relaxed text-slate-600">
                   {activeTab === "todo"
                     ? "Nie masz aktywności wymagających uzupełnienia. Kompletne wpisy znajdziesz w „Gotowe do raportu”."
@@ -1061,8 +1206,13 @@ export default function ActivitiesPage() {
                   const st = getRowStatus(a, docsFor);
                   const visual = activityVisual(a, docsFor);
 
-                  const legacyCertUrl = a.certificate_path ? legacyCertUrls[a.id] : null;
-                  const dleft = prog === "planned" ? daysUntil(a.planned_start_date) : null;
+                  const legacyCertUrl = a.certificate_path
+                    ? legacyCertUrls[a.id]
+                    : null;
+
+                  const dleft =
+                    prog === "planned" ? daysUntil(a.planned_start_date) : null;
+
                   const inEdit = editId === a.id;
                   const attachCount = docsFor.length + (a.certificate_path ? 1 : 0);
                   const VisualIcon = visual.Icon;
@@ -1075,14 +1225,22 @@ export default function ActivitiesPage() {
                         visual.card,
                       ].join(" ")}
                     >
-                      <div className={`absolute bottom-0 left-0 top-0 w-1.5 ${visual.stripe}`} />
+                      <div
+                        className={`absolute bottom-0 left-0 top-0 w-1.5 ${visual.stripe}`}
+                      />
 
                       <div className="flex w-full gap-3 pl-1.5">
                         <div className="hidden shrink-0 sm:block">
                           <div className="flex w-[66px] flex-col items-center rounded-2xl bg-slate-50 px-2 py-2 shadow-inner shadow-slate-900/5 ring-1 ring-slate-300/80">
-                            <span className={`mb-1.5 h-1.5 w-8 rounded-full ${visual.stripe}`} />
-                            <span className="text-2xl font-extrabold leading-none tracking-[-0.06em] text-slate-950">{a.points}</span>
-                            <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">PKT</span>
+                            <span
+                              className={`mb-1.5 h-1.5 w-8 rounded-full ${visual.stripe}`}
+                            />
+                            <span className="text-2xl font-extrabold leading-none tracking-[-0.06em] text-slate-950">
+                              {a.points}
+                            </span>
+                            <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                              PKT
+                            </span>
                           </div>
                         </div>
 
@@ -1091,15 +1249,27 @@ export default function ActivitiesPage() {
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-1.5">
                                 <Badge className={visual.badge}>
-                                  <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ${visual.iconBox}`}>
-                                    <VisualIcon className="h-3.5 w-3.5" strokeWidth={2.2} />
+                                  <span
+                                    className={`inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ${visual.iconBox}`}
+                                  >
+                                    <VisualIcon
+                                      className="h-3.5 w-3.5"
+                                      strokeWidth={2.2}
+                                    />
                                   </span>
                                   {visual.label}
                                 </Badge>
 
-                                {prog === "planned" && typeof dleft === "number" ? (
+                                {prog === "planned" &&
+                                typeof dleft === "number" ? (
                                   dleft > 0 ? (
-                                    <Badge className={dleft <= 7 ? "border-amber-200 bg-amber-50 text-amber-700" : "border-blue-200 bg-blue-50 text-blue-700"}>
+                                    <Badge
+                                      className={
+                                        dleft <= 7
+                                          ? "border-amber-200 bg-amber-50 text-amber-700"
+                                          : "border-blue-200 bg-blue-50 text-blue-700"
+                                      }
+                                    >
                                       <Clock3 className="h-3.5 w-3.5" strokeWidth={2} />
                                       {dleft} dni
                                     </Badge>
@@ -1133,7 +1303,9 @@ export default function ActivitiesPage() {
                                   <span className={metaIconBase}>
                                     <FileText className="h-3 w-3" strokeWidth={2} />
                                   </span>
-                                  <span className="truncate font-semibold text-slate-700">{a.organizer ? a.organizer : "Brak organizatora"}</span>
+                                  <span className="truncate font-semibold text-slate-700">
+                                    {a.organizer ? a.organizer : "Brak organizatora"}
+                                  </span>
                                 </span>
 
                                 <span className="inline-flex min-w-0 items-center gap-1.5">
@@ -1141,7 +1313,10 @@ export default function ActivitiesPage() {
                                     <CalendarDays className="h-3 w-3" strokeWidth={2} />
                                   </span>
                                   <span className="truncate">
-                                    Rok <span className="font-semibold text-slate-700">{a.year}</span>
+                                    Rok{" "}
+                                    <span className="font-semibold text-slate-700">
+                                      {a.year}
+                                    </span>
                                   </span>
                                 </span>
 
@@ -1150,7 +1325,9 @@ export default function ActivitiesPage() {
                                     <span className={metaIconBase}>
                                       <Clock3 className="h-3 w-3" strokeWidth={2} />
                                     </span>
-                                    <span className="truncate">Dodano {formatDateShort(a.created_at)}</span>
+                                    <span className="truncate">
+                                      Dodano {formatDateShort(a.created_at)}
+                                    </span>
                                   </span>
                                 ) : null}
 
@@ -1160,7 +1337,10 @@ export default function ActivitiesPage() {
                                       <CalendarDays className="h-3 w-3" strokeWidth={2} />
                                     </span>
                                     <span className="truncate">
-                                      Termin <span className="font-semibold text-slate-700">{formatYMD(a.planned_start_date)}</span>
+                                      Termin{" "}
+                                      <span className="font-semibold text-slate-700">
+                                        {formatYMD(a.planned_start_date)}
+                                      </span>
                                     </span>
                                   </span>
                                 ) : null}
@@ -1174,7 +1354,11 @@ export default function ActivitiesPage() {
                                 type="button"
                                 disabled={busy}
                               >
-                                {inEdit ? "Zamknij" : "Edytuj"}
+                                {inEdit
+                                  ? "Zamknij"
+                                  : st.kind === "missing"
+                                    ? "Uzupełnij"
+                                    : "Edytuj"}
                               </button>
 
                               {prog === "planned" ? (
@@ -1189,7 +1373,9 @@ export default function ActivitiesPage() {
                               ) : null}
 
                               <button
-                                onClick={() => removeActivity(a.id, a.certificate_path ?? null)}
+                                onClick={() =>
+                                  removeActivity(a.id, a.certificate_path ?? null)
+                                }
                                 className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 active:scale-95 disabled:opacity-60"
                                 type="button"
                                 disabled={busy}
@@ -1201,23 +1387,23 @@ export default function ActivitiesPage() {
                           </div>
 
                           {st.kind === "missing" ? (
-                            <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/70 p-3">
-                              <div className="flex items-start gap-2">
-                                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" strokeWidth={2.2} />
-                                <div>
-                                  <div className="text-xs font-semibold text-amber-900">Uzupełnij, aby aktywność była gotowa do raportu</div>
-                                  <div className="mt-1 flex flex-wrap gap-1.5">
-                                    {st.missing.map((m) => (
-                                      <span
-                                        key={m}
-                                        className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200"
-                                      >
-                                        {m}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
+                            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200">
+                                <AlertTriangle
+                                  className="h-3.5 w-3.5 text-amber-500"
+                                  strokeWidth={2.2}
+                                />
+                                Braki
+                              </span>
+
+                              {st.missing.map((m) => (
+                                <span
+                                  key={m}
+                                  className="rounded-full bg-white px-2 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200"
+                                >
+                                  {m}
+                                </span>
+                              ))}
                             </div>
                           ) : null}
 
@@ -1226,27 +1412,46 @@ export default function ActivitiesPage() {
                               <div className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-200">
                                 <FileCheck2 className="h-4 w-4 text-emerald-600" />
                                 {legacyCertUrl ? (
-                                  <a href={legacyCertUrl} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 hover:underline">
+                                  <a
+                                    href={legacyCertUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="font-semibold text-blue-700 hover:underline"
+                                  >
                                     Otwórz certyfikat
                                   </a>
                                 ) : (
                                   <span className="text-slate-500">Generuję link…</span>
                                 )}
-                                {a.certificate_name ? <span className="text-[11px] text-slate-500">{shortFileName(a.certificate_name)}</span> : null}
+                                {a.certificate_name ? (
+                                  <span className="text-[11px] text-slate-500">
+                                    {shortFileName(a.certificate_name)}
+                                  </span>
+                                ) : null}
                               </div>
                             ) : null}
 
                             {certDocs.map((d) => (
-                              <div key={d.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-200">
+                              <div
+                                key={d.id}
+                                className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-200"
+                              >
                                 <FileCheck2 className="h-4 w-4 text-emerald-600" />
                                 {docUrls[d.id] ? (
-                                  <a href={docUrls[d.id]} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 hover:underline">
+                                  <a
+                                    href={docUrls[d.id]}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="font-semibold text-blue-700 hover:underline"
+                                  >
                                     Otwórz certyfikat
                                   </a>
                                 ) : (
                                   <span className="text-slate-500">Generuję link…</span>
                                 )}
-                                <span className="text-[11px] text-slate-500">{shortFileName(d.name)}</span>
+                                <span className="text-[11px] text-slate-500">
+                                  {shortFileName(d.name)}
+                                </span>
                                 <button
                                   type="button"
                                   disabled={busy}
@@ -1269,11 +1474,18 @@ export default function ActivitiesPage() {
                                   {otherDocs.map((d) => (
                                     <div key={d.id} className="flex items-center gap-2">
                                       {docUrls[d.id] ? (
-                                        <a href={docUrls[d.id]} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline">
+                                        <a
+                                          href={docUrls[d.id]}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="text-blue-700 hover:underline"
+                                        >
                                           {shortFileName(d.name) || "Otwórz dokument"}
                                         </a>
                                       ) : (
-                                        <span className="text-slate-500">Generuję link…</span>
+                                        <span className="text-slate-500">
+                                          Generuję link…
+                                        </span>
                                       )}
 
                                       <button
@@ -1294,7 +1506,9 @@ export default function ActivitiesPage() {
                           {inEdit ? (
                             <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
                               <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div className="text-[12px] font-semibold text-slate-900">Edycja aktywności</div>
+                                <div className="text-[12px] font-semibold text-slate-900">
+                                  Edycja aktywności
+                                </div>
 
                                 <div className="flex gap-2">
                                   <button
@@ -1323,7 +1537,9 @@ export default function ActivitiesPage() {
                                   <select
                                     className={fieldBase}
                                     value={editType}
-                                    onChange={(e) => setEditType(e.target.value as any)}
+                                    onChange={(e) =>
+                                      setEditType(e.target.value as any)
+                                    }
                                     disabled={busy}
                                   >
                                     {TYPES.map((t) => (
@@ -1341,7 +1557,11 @@ export default function ActivitiesPage() {
                                     min={0}
                                     className={fieldBase}
                                     value={editPoints}
-                                    onChange={(e) => setEditPoints(Math.max(0, Number(e.target.value || 0)))}
+                                    onChange={(e) =>
+                                      setEditPoints(
+                                        Math.max(0, Number(e.target.value || 0)),
+                                      )
+                                    }
                                     disabled={busy}
                                   />
                                 </div>
@@ -1352,7 +1572,13 @@ export default function ActivitiesPage() {
                                     type="number"
                                     className={fieldBase}
                                     value={editYear}
-                                    onChange={(e) => setEditYear(Number(e.target.value || new Date().getFullYear()))}
+                                    onChange={(e) =>
+                                      setEditYear(
+                                        Number(
+                                          e.target.value || new Date().getFullYear(),
+                                        ),
+                                      )
+                                    }
                                     disabled={busy}
                                   />
                                 </div>
@@ -1362,7 +1588,9 @@ export default function ActivitiesPage() {
                                   <input
                                     className={fieldBase}
                                     value={editOrganizer}
-                                    onChange={(e) => setEditOrganizer(e.target.value)}
+                                    onChange={(e) =>
+                                      setEditOrganizer(e.target.value)
+                                    }
                                     placeholder="np. OIL / towarzystwo"
                                     disabled={busy}
                                   />
@@ -1370,12 +1598,16 @@ export default function ActivitiesPage() {
 
                                 {prog === "planned" ? (
                                   <div className="sm:col-span-2">
-                                    <label className={labelBase}>Termin szkolenia</label>
+                                    <label className={labelBase}>
+                                      Termin szkolenia
+                                    </label>
                                     <input
                                       type="date"
                                       className={fieldBase}
                                       value={editPlannedDate}
-                                      onChange={(e) => setEditPlannedDate(e.target.value)}
+                                      onChange={(e) =>
+                                        setEditPlannedDate(e.target.value)
+                                      }
                                       disabled={busy}
                                     />
                                   </div>
@@ -1394,7 +1626,11 @@ export default function ActivitiesPage() {
                                     <select
                                       className={fieldBase}
                                       value={editUploadKind}
-                                      onChange={(e) => setEditUploadKind(e.target.value as DocKind)}
+                                      onChange={(e) =>
+                                        setEditUploadKind(
+                                          e.target.value as DocKind,
+                                        )
+                                      }
                                       disabled={busy}
                                     >
                                       <option value="certificate">Certyfikat</option>
@@ -1435,7 +1671,9 @@ export default function ActivitiesPage() {
                                   >
                                     {busy ? "Dodaję…" : "Dodaj"}
                                   </button>
-                                  <div className="text-[11px] text-slate-500">Limit {MAX_MB} MB. PDF/JPG/PNG/WEBP.</div>
+                                  <div className="text-[11px] text-slate-500">
+                                    Limit {MAX_MB} MB. PDF/JPG/PNG/WEBP.
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -1451,9 +1689,13 @@ export default function ActivitiesPage() {
 
           <aside className="space-y-4">
             <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">Porządkowanie</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
+                Porządkowanie
+              </p>
 
-              <h2 className="mt-1 text-base font-semibold tracking-[-0.02em] text-slate-950">Podsumowanie CPD</h2>
+              <h2 className="mt-1 text-base font-semibold tracking-[-0.02em] text-slate-950">
+                Podsumowanie CPD
+              </h2>
 
               <p className="mt-1 text-xs leading-relaxed text-slate-500">
                 Najważniejsze statusy z Twojej listy aktywności.
@@ -1470,8 +1712,12 @@ export default function ActivitiesPage() {
                   </div>
 
                   <div className="min-w-0">
-                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">{activityStats.todo}</div>
-                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">braki</div>
+                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
+                      {activityStats.todo}
+                    </div>
+                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                      braki
+                    </div>
                   </div>
                 </button>
 
@@ -1485,8 +1731,12 @@ export default function ActivitiesPage() {
                   </div>
 
                   <div className="min-w-0">
-                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">{activityStats.planned}</div>
-                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">plan</div>
+                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
+                      {activityStats.planned}
+                    </div>
+                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                      plan
+                    </div>
                   </div>
                 </button>
 
@@ -1500,8 +1750,12 @@ export default function ActivitiesPage() {
                   </div>
 
                   <div className="min-w-0">
-                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">{activityStats.ready}</div>
-                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">gotowe</div>
+                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
+                      {activityStats.ready}
+                    </div>
+                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                      gotowe
+                    </div>
                   </div>
                 </button>
               </div>
@@ -1509,114 +1763,23 @@ export default function ActivitiesPage() {
               <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-xs font-semibold text-slate-950">Gotowe punkty</div>
-                    <div className="mt-1 text-xs text-slate-500">Kompletne aktywności</div>
+                    <div className="text-xs font-semibold text-slate-950">
+                      Gotowe punkty
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      Kompletne aktywności
+                    </div>
                   </div>
 
                   <div className="text-right">
-                    <div className="text-2xl font-extrabold tracking-[-0.05em] text-emerald-700">{activityStats.readyPoints}</div>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">pkt</div>
+                    <div className="text-2xl font-extrabold tracking-[-0.05em] text-emerald-700">
+                      {activityStats.readyPoints}
+                    </div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                      pkt
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
-              <div className="flex items-start gap-3">
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700">
-                  <Plus className="h-4 w-4" strokeWidth={2.2} />
-                </span>
-
-                <div>
-                  <h2 className="text-base font-semibold text-slate-950">Dodaj aktywność</h2>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                    Dodaj aktywność, którą już ukończyłeś. Certyfikat możesz dołączyć teraz albo później.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-3">
-                <div>
-                  <label className={labelBase}>Rodzaj</label>
-                  <select className={fieldBase} value={type} onChange={(e) => setType(e.target.value as any)} disabled={busy}>
-                    {TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className={labelBase}>Punkty</label>
-                    <input
-                      type="number"
-                      min={0}
-                      className={fieldBase}
-                      value={points}
-                      onChange={(e) => setPoints(Math.max(0, Number(e.target.value || 0)))}
-                      disabled={busy}
-                    />
-                  </div>
-
-                  <div>
-                    <label className={labelBase}>Rok</label>
-                    <input
-                      type="number"
-                      className={fieldBase}
-                      value={year}
-                      onChange={(e) => setYear(Number(e.target.value || new Date().getFullYear()))}
-                      disabled={busy}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className={labelBase}>Organizator</label>
-                  <input
-                    className={fieldBase}
-                    value={organizer}
-                    onChange={(e) => setOrganizer(e.target.value)}
-                    placeholder="np. OIL / towarzystwo"
-                    disabled={busy}
-                  />
-                  <div className="mt-1 text-[11px] text-slate-500">Jeśli nie uzupełnisz teraz, wpis trafi do braków.</div>
-                </div>
-
-                <div>
-                  <label className={labelBase}>Certyfikat opcjonalnie</label>
-                  <input
-                    key={fileInputKey}
-                    type="file"
-                    accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
-                    className={fieldBase}
-                    disabled={busy}
-                    onChange={(e) => {
-                      clearMessages();
-                      const f = e.target.files?.[0] || null;
-                      if (!f) return setFile(null);
-                      const ve = validateFile(f);
-                      if (ve) {
-                        setErr(ve);
-                        setFile(null);
-                        return;
-                      }
-                      setFile(f);
-                    }}
-                  />
-                  <div className="mt-1 text-[11px] text-slate-500">Limit: {MAX_MB} MB. PDF/JPG/PNG/WEBP.</div>
-                </div>
-
-                <button
-                  onClick={addActivity}
-                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-95 disabled:opacity-60"
-                  type="button"
-                  disabled={busy}
-                >
-                  <FilePlus2 className="h-4 w-4" />
-                  {busy ? "Zapisuję…" : "Zapisz aktywność"}
-                </button>
               </div>
             </div>
 
@@ -1627,25 +1790,41 @@ export default function ActivitiesPage() {
                 </span>
 
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-950">Dodaj plik do wpisu</h2>
+                  <h2 className="text-sm font-semibold text-slate-950">
+                    Dodaj plik do wpisu
+                  </h2>
                   <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                    Podpinaj certyfikaty i dodatkowe dokumenty do istniejących aktywności.
+                    Podpinaj certyfikaty i dodatkowe dokumenty do istniejących
+                    aktywności.
                   </p>
                 </div>
               </div>
 
               <div className="mt-3 space-y-2">
-                <select className={fieldBase} value={attachToId ?? ""} onChange={(e) => setAttachToId(e.target.value || null)} disabled={busy}>
+                <select
+                  className={fieldBase}
+                  value={attachToId ?? ""}
+                  onChange={(e) => setAttachToId(e.target.value || null)}
+                  disabled={busy}
+                >
                   <option value="">Wybierz aktywność…</option>
                   {items.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {normalizeStatus(a.status) === "planned" ? "🗓️ Zaplanowane" : "✓ Ukończone"} • {a.year} • {a.type}
+                      {normalizeStatus(a.status) === "planned"
+                        ? "🗓️ Zaplanowane"
+                        : "✓ Ukończone"}{" "}
+                      • {a.year} • {a.type}
                       {a.organizer ? ` • ${a.organizer}` : ""}
                     </option>
                   ))}
                 </select>
 
-                <select className={fieldBase} value={attachKind} onChange={(e) => setAttachKind(e.target.value as DocKind)} disabled={busy}>
+                <select
+                  className={fieldBase}
+                  value={attachKind}
+                  onChange={(e) => setAttachKind(e.target.value as DocKind)}
+                  disabled={busy}
+                >
                   <option value="certificate">Certyfikat</option>
                   <option value="document">Dokument</option>
                 </select>
@@ -1677,7 +1856,126 @@ export default function ActivitiesPage() {
                   className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
                 >
                   <Paperclip className="h-4 w-4" />
-                  {busy ? "Dodaję…" : attachKind === "certificate" ? "Dodaj certyfikat" : "Dodaj dokument"}
+                  {busy
+                    ? "Dodaję…"
+                    : attachKind === "certificate"
+                      ? "Dodaj certyfikat"
+                      : "Dodaj dokument"}
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
+              <div className="flex items-start gap-3">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700">
+                  <Plus className="h-4 w-4" strokeWidth={2.2} />
+                </span>
+
+                <div>
+                  <h2 className="text-base font-semibold text-slate-950">
+                    Dodaj aktywność
+                  </h2>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                    Dodaj aktywność, którą już ukończyłeś. Certyfikat możesz
+                    dołączyć teraz albo później.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                <div>
+                  <label className={labelBase}>Rodzaj</label>
+                  <select
+                    className={fieldBase}
+                    value={type}
+                    onChange={(e) => setType(e.target.value as any)}
+                    disabled={busy}
+                  >
+                    {TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className={labelBase}>Punkty</label>
+                    <input
+                      type="number"
+                      min={0}
+                      className={fieldBase}
+                      value={points}
+                      onChange={(e) =>
+                        setPoints(Math.max(0, Number(e.target.value || 0)))
+                      }
+                      disabled={busy}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelBase}>Rok</label>
+                    <input
+                      type="number"
+                      className={fieldBase}
+                      value={year}
+                      onChange={(e) =>
+                        setYear(Number(e.target.value || new Date().getFullYear()))
+                      }
+                      disabled={busy}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelBase}>Organizator</label>
+                  <input
+                    className={fieldBase}
+                    value={organizer}
+                    onChange={(e) => setOrganizer(e.target.value)}
+                    placeholder="np. OIL / towarzystwo"
+                    disabled={busy}
+                  />
+                  <div className="mt-1 text-[11px] text-slate-500">
+                    Jeśli nie uzupełnisz teraz, wpis trafi do braków.
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelBase}>Certyfikat opcjonalnie</label>
+                  <input
+                    key={fileInputKey}
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                    className={fieldBase}
+                    disabled={busy}
+                    onChange={(e) => {
+                      clearMessages();
+                      const f = e.target.files?.[0] || null;
+                      if (!f) return setFile(null);
+                      const ve = validateFile(f);
+                      if (ve) {
+                        setErr(ve);
+                        setFile(null);
+                        return;
+                      }
+                      setFile(f);
+                    }}
+                  />
+                  <div className="mt-1 text-[11px] text-slate-500">
+                    Limit: {MAX_MB} MB. PDF/JPG/PNG/WEBP.
+                  </div>
+                </div>
+
+                <button
+                  onClick={addActivity}
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-95 disabled:opacity-60"
+                  type="button"
+                  disabled={busy}
+                >
+                  <FilePlus2 className="h-4 w-4" />
+                  {busy ? "Zapisuję…" : "Zapisz aktywność"}
                 </button>
               </div>
             </div>
@@ -1688,8 +1986,10 @@ export default function ActivitiesPage() {
                 Jak korzystać?
               </div>
               <p className="mt-2">
-                Zacznij od widoku <span className="font-semibold">Do uzupełnienia</span>. Gdy aktywność ma organizatora i certyfikat,
-                automatycznie przejdzie do <span className="font-semibold">Gotowe do raportu</span>.
+                Zacznij od widoku{" "}
+                <span className="font-semibold">Do uzupełnienia</span>. Gdy
+                aktywność ma organizatora i certyfikat, automatycznie przejdzie
+                do <span className="font-semibold">Gotowe do raportu</span>.
               </p>
             </div>
           </aside>
