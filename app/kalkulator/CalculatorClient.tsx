@@ -71,7 +71,7 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
         label: "Szkolenie wewnętrzne",
         mode: "per_item",
         maxPoints: 6,
-        note: "Limit dotyczy jednego szkolenia. Jeśli masz więcej takich szkoleń, każde oceniaj osobno.",
+        note: "Za jedno szkolenie wewnętrzne możesz zaliczyć maksymalnie 6 pkt. Jeśli masz więcej takich szkoleń, każde oceniaj osobno.",
       },
       {
         key: "JOURNAL_SUBSCRIPTION",
@@ -98,7 +98,7 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
         label: "Szkolenie wewnętrzne",
         mode: "per_item",
         maxPoints: 6,
-        note: "Limit dotyczy jednego szkolenia. Jeśli masz więcej takich szkoleń, każde oceniaj osobno.",
+        note: "Za jedno szkolenie wewnętrzne możesz zaliczyć maksymalnie 6 pkt. Jeśli masz więcej takich szkoleń, każde oceniaj osobno.",
       },
       {
         key: "JOURNAL_SUBSCRIPTION",
@@ -337,6 +337,7 @@ function MiniIcon({
     | "user"
     | "bell"
     | "walk"
+    | "doctorWalk"
     | "hourglass";
   className?: string;
 }) {
@@ -394,6 +395,31 @@ function MiniIcon({
         <path d="M16 2c0 4-4 5-4 8s4 4 4 8" />
         <path d="M9 6h6" />
         <path d="M9 18h6" />
+      </svg>
+    );
+  }
+
+  if (name === "doctorWalk") {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.05"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="4.2" r="2" />
+        <path d="M10.2 7.2h3.6" />
+        <path d="M12 7.2v5.1" />
+        <path d="M9.4 10.2l2.6 2.1 2.8-2.1" />
+        <path d="M12 12.3l-2.2 7.1" />
+        <path d="M12.4 13.1l4.1 6.3" />
+        <path d="M6.8 20.4h4.2" />
+        <path d="M14.7 20.4h4.1" />
+        <path d="M18.2 5.2v3.4" />
+        <path d="M16.5 6.9h3.4" />
       </svg>
     );
   }
@@ -505,14 +531,14 @@ function StatMiniCard({
 }) {
   const toneWrap =
     tone === "amber"
-      ? "bg-amber-50/45 border-amber-200"
+      ? "bg-amber-50/35 border-amber-200"
       : tone === "blue"
         ? "bg-blue-50/35 border-blue-200"
         : "bg-white border-slate-200";
 
   const toneValue =
     tone === "amber"
-      ? "text-amber-600"
+      ? "text-amber-700"
       : tone === "blue"
         ? "text-blue-700"
         : "text-slate-950";
@@ -521,11 +547,11 @@ function StatMiniCard({
     <div className={`rounded-2xl border p-3 ${toneWrap}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
             {label}
           </div>
           <div className={`mt-2 flex items-end gap-1 ${toneValue}`}>
-            <div className="text-[1.65rem] font-extrabold leading-none tracking-[-0.04em]">
+            <div className="text-[1.55rem] font-extrabold leading-none tracking-[-0.04em]">
               {value}
             </div>
             {suffix ? (
@@ -543,7 +569,7 @@ function StatMiniCard({
 
         {icon ? (
           <div
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
               tone === "amber"
                 ? "bg-amber-100 text-amber-700"
                 : tone === "blue"
@@ -748,7 +774,7 @@ export default function CalculatorClient() {
         ? "Dobry zapas"
         : paceDelta >= -10
           ? "Tempo stabilne"
-          : "Warto nadrobić";
+          : "Do nadrobienia";
 
   const limitsUsage = useMemo(() => {
     const limits = RULES_BY_PROFESSION[profession]?.limits ?? [];
@@ -1417,9 +1443,9 @@ export default function CalculatorClient() {
 
                   <StatMiniCard
                     label="Tempo"
-                    value={paceLabel}
-                    subtitle="względem upływu okresu"
-                    tone={paceDelta < -10 ? "amber" : "slate"}
+                    value={paceDelta < -10 ? "Do nadrobienia" : paceLabel}
+                    subtitle="spokojnie, krok po kroku"
+                    tone="slate"
                     icon={<MiniIcon name="hourglass" className="h-5 w-5" />}
                   />
 
@@ -1443,18 +1469,20 @@ export default function CalculatorClient() {
                         </div>
                       </div>
 
-                      <div className="relative pt-5">
-                        <div className="absolute left-0 right-0 top-[1.18rem] h-2.5 rounded-full bg-slate-100" />
+                      <div className="relative pt-6">
+                        <div className="absolute left-0 right-0 top-[1.45rem] h-2.5 rounded-full bg-slate-100" />
                         <div
-                          className="absolute left-0 top-[1.18rem] h-2.5 rounded-full bg-blue-600 transition-all duration-700"
+                          className="absolute left-0 top-[1.45rem] h-2.5 rounded-full bg-blue-600 transition-all duration-700"
                           style={{ width: `${Math.max(progress, 2)}%` }}
                         />
                         <div
                           className="absolute top-0 -translate-x-1/2 transition-all duration-700"
                           style={{ left: `${clamp(progress, 4, 96)}%` }}
                         >
-                          <div className="flex h-11 w-11 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-700 shadow-[0_4px_12px_rgba(37,99,235,0.18)] ring-4 ring-blue-50">
-                            <MiniIcon name="walk" className="h-5 w-5" />
+                          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-200 bg-white text-blue-700 shadow-[0_8px_18px_rgba(37,99,235,0.20)] ring-4 ring-blue-50">
+                            <div className="animate-bounce">
+                              <MiniIcon name="doctorWalk" className="h-7 w-7" />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1665,7 +1693,7 @@ export default function CalculatorClient() {
                   >
                     <div className={`absolute inset-y-4 left-0 w-1 rounded-r-full ${accentBar}`} />
 
-                    <div className="grid gap-4 pl-2 xl:grid-cols-[minmax(0,1.2fr)_230px_320px_auto] xl:items-start">
+                    <div className="grid gap-4 pl-2 xl:grid-cols-[minmax(0,1.2fr)_170px_320px_auto] xl:items-start">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-[1.05rem] font-bold tracking-tight text-slate-950">
@@ -1680,10 +1708,17 @@ export default function CalculatorClient() {
 
                         <div className="mt-1 text-sm text-slate-500">
                           {r.mode === "per_item"
-                            ? `Limit: ${r.cap} pkt za jedną aktywność`
+                            ? `Limit: maks. ${r.cap} pkt za jedną aktywność`
                             : r.mode === "per_year"
-                              ? `Limit: ${r.maxPoints} pkt rocznie`
-                              : `Limit: ${r.cap} pkt w okresie`}
+                              ? `Limit: maks. ${r.maxPoints} pkt rocznie`
+                              : `Limit: maks. ${r.cap} pkt w okresie`}
+                        </div>
+
+                        <div className="mt-3 inline-flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">
+                          <span className="text-[10px] uppercase tracking-[0.12em] text-blue-400">
+                            Maksymalnie
+                          </span>
+                          <span>{r.cap} pkt</span>
                         </div>
 
                         {r.note ? (
@@ -1693,28 +1728,19 @@ export default function CalculatorClient() {
                         ) : null}
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-2 gap-2">
                         <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-center shadow-sm">
-                          <div className="text-[1.3rem] font-extrabold leading-none tracking-[-0.04em] text-slate-950">
+                          <div className="text-[1.35rem] font-extrabold leading-none tracking-[-0.04em] text-slate-950">
                             {r.used}
                           </div>
                           <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                            użyte
-                          </div>
-                        </div>
-
-                        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-center shadow-sm">
-                          <div className="text-[1.3rem] font-extrabold leading-none tracking-[-0.04em] text-slate-950">
-                            {r.cap}
-                          </div>
-                          <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                            limit
+                            zdobyte
                           </div>
                         </div>
 
                         <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-center shadow-sm">
                           <div
-                            className={`text-[1.3rem] font-extrabold leading-none tracking-[-0.04em] ${
+                            className={`text-[1.35rem] font-extrabold leading-none tracking-[-0.04em] ${
                               isMax
                                 ? "text-slate-500"
                                 : nearMax
@@ -1725,7 +1751,7 @@ export default function CalculatorClient() {
                             {Math.round(r.remaining)}
                           </div>
                           <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                            zostało
+                            pozostało
                           </div>
                         </div>
                       </div>
