@@ -691,24 +691,6 @@ export default function TrainingHubClient() {
     return items.filter((item) => item.start_date === selectedCalendarDateKey);
   }, [items, nextTrainings, selectedCalendarDateKey]);
 
-  const selectedCalendarTraining = useMemo(() => {
-    if (!selectedCalendarTrainingId) {
-      return selectedCalendarDateTrainings[0] ?? nextTrainings[0] ?? null;
-    }
-
-    return (
-      items.find((item) => item.id === selectedCalendarTrainingId) ??
-      selectedCalendarDateTrainings[0] ??
-      nextTrainings[0] ??
-      null
-    );
-  }, [
-    items,
-    nextTrainings,
-    selectedCalendarDateTrainings,
-    selectedCalendarTrainingId,
-  ]);
-
   const visibleItems = useMemo(() => {
     if (!selectedCalendarDateKey) return items;
     return items.filter((item) => item.start_date === selectedCalendarDateKey);
@@ -1261,7 +1243,7 @@ export default function TrainingHubClient() {
                 <article
                   key={t.id}
                   onClick={(e) => e.stopPropagation()}
-                  className="group relative flex overflow-hidden rounded-[1.25rem] border border-slate-300/80 bg-white p-3.5 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)] transition-all duration-200 hover:-translate-y-[1px] hover:border-blue-200 hover:shadow-[0_1px_0_rgba(37,99,235,0.08),0_7px_14px_rgba(37,99,235,0.12)]"
+                  className="group relative flex overflow-hidden rounded-[1.25rem] border border-slate-300/80 bg-white p-3 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)] transition-all duration-200 hover:-translate-y-[1px] hover:border-blue-200 hover:shadow-[0_1px_0_rgba(37,99,235,0.08),0_7px_14px_rgba(37,99,235,0.12)]"
                 >
                   <div
                     className={`absolute bottom-0 left-0 top-0 w-1.5 ${tone.stripe}`}
@@ -1269,21 +1251,21 @@ export default function TrainingHubClient() {
 
                   <div className="flex w-full gap-3 pl-1.5">
                     <div className="shrink-0">
-                      <div className="flex w-[70px] flex-col items-center rounded-2xl bg-slate-50 px-2.5 py-2.5 shadow-inner shadow-slate-900/5 ring-1 ring-slate-300/80">
+                      <div className="flex w-[66px] flex-col items-center rounded-2xl bg-slate-50 px-2 py-2 shadow-inner shadow-slate-900/5 ring-1 ring-slate-300/80">
                         <span
-                          className={`mb-2 h-1.5 w-8 rounded-full ${tone.dateTop}`}
+                          className={`mb-1.5 h-1.5 w-8 rounded-full ${tone.dateTop}`}
                         />
                         <span className="text-2xl font-extrabold leading-none tracking-[-0.06em] text-slate-950">
                           {date.day}
                         </span>
-                        <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                           {date.month}
                         </span>
                       </div>
                     </div>
 
                     <div className="flex min-w-0 flex-1 flex-col">
-                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span className={`${pillBase} ${tone.badge}`}>
@@ -1343,7 +1325,7 @@ export default function TrainingHubClient() {
                         </div>
                       </div>
 
-                      <div className="mt-2.5 grid gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
+                      <div className="mt-2 grid gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
                         {range ? (
                           <span className="inline-flex min-w-0 items-center gap-1.5">
                             <span className={metaIconBase}>
@@ -1398,43 +1380,43 @@ export default function TrainingHubClient() {
                         </span>
                       </div>
 
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
-                          {labelProfession(t.profession)}
-                        </span>
-
-                        {capacityText ? (
+                      <div className="mt-2 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex min-w-0 flex-wrap gap-1.5">
                           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
-                            {capacityText}
+                            {labelProfession(t.profession)}
                           </span>
-                        ) : null}
 
-                        {Array.isArray(t.topics)
-                          ? t.topics.slice(0, 3).map((x) => (
-                              <span
-                                key={x}
-                                className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200"
-                              >
-                                {x}
-                              </span>
-                            ))
-                          : null}
-                      </div>
+                          {capacityText ? (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
+                              {capacityText}
+                            </span>
+                          ) : null}
 
-                      <div className="mt-2.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-                        <div className="flex flex-col gap-2 sm:flex-row">
+                          {Array.isArray(t.topics)
+                            ? t.topics.slice(0, 3).map((x) => (
+                                <span
+                                  key={x}
+                                  className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200"
+                                >
+                                  {x}
+                                </span>
+                              ))
+                            : null}
+                        </div>
+
+                        <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
                           {t.url ? (
                             <a
                               href={t.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
+                              className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
                             >
                               Organizator
                             </a>
                           ) : (
                             <button
-                              className="inline-flex h-9 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-400 shadow-sm"
+                              className="inline-flex h-8 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-400 shadow-sm"
                               disabled
                               type="button"
                             >
@@ -1444,7 +1426,7 @@ export default function TrainingHubClient() {
 
                           <button
                             onClick={() => chooseTraining(t)}
-                            className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-slate-50 px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
+                            className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-300 bg-slate-50 px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
                             type="button"
                             title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
                           >
@@ -1466,7 +1448,7 @@ export default function TrainingHubClient() {
           </div>
 
           <aside className="space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex min-h-[148px] flex-col overflow-hidden rounded-[1.25rem] border border-slate-300/80 bg-white p-3.5 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)]">
+            <div className="flex min-h-[154px] flex-col overflow-hidden rounded-[1.25rem] border border-slate-300/80 bg-white p-3 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)]">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
                   Planowanie
@@ -1481,7 +1463,7 @@ export default function TrainingHubClient() {
                 </p>
               </div>
 
-              <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="mt-2.5 grid grid-cols-3 gap-2">
                 <div className="rounded-xl border border-slate-200 bg-white px-2.5 py-2">
                   <div className="mb-1.5 text-blue-600">
                     <Award className="h-4 w-4" strokeWidth={2.2} />
