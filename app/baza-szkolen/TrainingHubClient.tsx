@@ -1261,19 +1261,19 @@ export default function TrainingHubClient() {
                 <article
                   key={t.id}
                   onClick={(e) => e.stopPropagation()}
-                  className="group relative flex min-h-[168px] overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.05),0_5px_13px_rgba(15,23,42,0.09)] transition-all duration-200 hover:-translate-y-[1px] hover:border-blue-200 hover:shadow-[0_1px_0_rgba(37,99,235,0.08),0_8px_18px_rgba(37,99,235,0.13)]"
+                  className="group relative flex overflow-hidden rounded-[1.25rem] border border-slate-300/80 bg-white p-3.5 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)] transition-all duration-200 hover:-translate-y-[1px] hover:border-blue-200 hover:shadow-[0_1px_0_rgba(37,99,235,0.08),0_7px_14px_rgba(37,99,235,0.12)]"
                 >
                   <div
                     className={`absolute bottom-0 left-0 top-0 w-1.5 ${tone.stripe}`}
                   />
 
-                  <div className="flex w-full gap-4 pl-1.5">
+                  <div className="flex w-full gap-3 pl-1.5">
                     <div className="shrink-0">
-                      <div className="flex w-[78px] flex-col items-center rounded-2xl bg-slate-50 px-3 py-3 shadow-inner shadow-slate-900/5 ring-1 ring-slate-300/80">
+                      <div className="flex w-[70px] flex-col items-center rounded-2xl bg-slate-50 px-2.5 py-2.5 shadow-inner shadow-slate-900/5 ring-1 ring-slate-300/80">
                         <span
                           className={`mb-2 h-1.5 w-8 rounded-full ${tone.dateTop}`}
                         />
-                        <span className="text-3xl font-extrabold leading-none tracking-[-0.06em] text-slate-950">
+                        <span className="text-2xl font-extrabold leading-none tracking-[-0.06em] text-slate-950">
                           {date.day}
                         </span>
                         <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -1325,7 +1325,7 @@ export default function TrainingHubClient() {
                             ) : null}
                           </div>
 
-                          <h3 className="mt-2 line-clamp-2 text-[16px] font-bold leading-snug tracking-[-0.015em] text-slate-950">
+                          <h3 className="mt-1.5 line-clamp-2 text-[15px] font-bold leading-snug tracking-[-0.015em] text-slate-950">
                             {t.title}
                           </h3>
                         </div>
@@ -1343,7 +1343,7 @@ export default function TrainingHubClient() {
                         </div>
                       </div>
 
-                      <div className="mt-3 grid gap-x-4 gap-y-2 text-xs font-medium text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
+                      <div className="mt-2.5 grid gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
                         {range ? (
                           <span className="inline-flex min-w-0 items-center gap-1.5">
                             <span className={metaIconBase}>
@@ -1398,7 +1398,7 @@ export default function TrainingHubClient() {
                         </span>
                       </div>
 
-                      <div className="mt-3 flex flex-wrap gap-1.5">
+                      <div className="mt-2 flex flex-wrap gap-1.5">
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
                           {labelProfession(t.profession)}
                         </span>
@@ -1421,7 +1421,7 @@ export default function TrainingHubClient() {
                           : null}
                       </div>
 
-                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                      <div className="mt-2.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
                         <div className="flex flex-col gap-2 sm:flex-row">
                           {t.url ? (
                             <a
@@ -1466,60 +1466,60 @@ export default function TrainingHubClient() {
           </div>
 
           <aside className="space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex h-[168px] flex-col overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.05),0_5px_13px_rgba(15,23,42,0.09)]">
+            <div className="flex min-h-[148px] flex-col overflow-hidden rounded-[1.25rem] border border-slate-300/80 bg-white p-3.5 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)]">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
                   Planowanie
                 </p>
 
-                <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em] text-slate-950">
+                <h2 className="mt-1 text-base font-semibold tracking-[-0.02em] text-slate-950">
                   Podsumowanie filtrów
                 </h2>
 
                 <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                  Potencjał punktów i formaty szkoleń z aktualnej listy.
+                  Potencjał punktów i formaty z aktualnej listy.
                 </p>
               </div>
 
               <div className="mt-3 grid grid-cols-3 gap-2">
-                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
-                  <div className="mb-2 text-blue-600">
-                    <Award className="h-5 w-5" strokeWidth={2.2} />
+                <div className="rounded-xl border border-slate-200 bg-white px-2.5 py-2">
+                  <div className="mb-1.5 text-blue-600">
+                    <Award className="h-4 w-4" strokeWidth={2.2} />
                   </div>
 
-                  <div className="text-lg font-bold leading-none tracking-[-0.03em] text-slate-950">
+                  <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
                     {sidebarStats.totalPoints}
                   </div>
 
-                  <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                  <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
                     pkt
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
-                  <div className="mb-2 text-blue-600">
-                    <MonitorPlay className="h-5 w-5" strokeWidth={2.2} />
+                <div className="rounded-xl border border-slate-200 bg-white px-2.5 py-2">
+                  <div className="mb-1.5 text-blue-600">
+                    <MonitorPlay className="h-4 w-4" strokeWidth={2.2} />
                   </div>
 
-                  <div className="text-lg font-bold leading-none tracking-[-0.03em] text-slate-950">
+                  <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
                     {sidebarStats.online}
                   </div>
 
-                  <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                  <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
                     online
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
-                  <div className="mb-2 text-amber-600">
-                    <MapPin className="h-5 w-5" strokeWidth={2.2} />
+                <div className="rounded-xl border border-slate-200 bg-white px-2.5 py-2">
+                  <div className="mb-1.5 text-amber-600">
+                    <MapPin className="h-4 w-4" strokeWidth={2.2} />
                   </div>
 
-                  <div className="text-lg font-bold leading-none tracking-[-0.03em] text-slate-950">
+                  <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
                     {sidebarStats.stationary}
                   </div>
 
-                  <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                  <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
                     stacj.
                   </div>
                 </div>
