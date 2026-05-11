@@ -964,8 +964,8 @@ export default function TrainingHubClient() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
-            <div className="lg:col-span-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
+            <div className="lg:col-span-2">
               <label className={labelBase}>Szukaj</label>
               <input
                 value={q}
@@ -1020,7 +1020,7 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-2">
               <label className={labelBase}>Forma</label>
               <select
                 value={format}
@@ -1468,7 +1468,7 @@ export default function TrainingHubClient() {
           </div>
 
           <aside className="space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="overflow-hidden rounded-[1.45rem] border border-blue-200/80 bg-gradient-to-br from-blue-50 via-white to-white p-4 shadow-[0_12px_32px_rgba(37,99,235,0.10)]">
+            <div className="flex min-h-[166px] flex-col justify-between overflow-hidden rounded-[1.45rem] border border-blue-200/80 bg-gradient-to-br from-blue-50 via-white to-white p-4 shadow-[0_12px_32px_rgba(37,99,235,0.10)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
@@ -1484,9 +1484,9 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-2">
-                <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200/90">
-                  <div className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
-                    <Award className="h-4 w-4" strokeWidth={2.2} />
+                <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200/90">
+                  <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                    <Award className="h-5 w-5" strokeWidth={2.2} />
                   </div>
                   <div className="text-lg font-semibold text-slate-950">
                     {sidebarStats.totalPoints}
@@ -1496,9 +1496,9 @@ export default function TrainingHubClient() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200/90">
-                  <div className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
-                    <MonitorPlay className="h-4 w-4" strokeWidth={2.2} />
+                <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200/90">
+                  <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                    <MonitorPlay className="h-5 w-5" strokeWidth={2.2} />
                   </div>
                   <div className="text-lg font-semibold text-slate-950">
                     {sidebarStats.online}
@@ -1508,9 +1508,9 @@ export default function TrainingHubClient() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200/90">
-                  <div className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
-                    <MapPin className="h-4 w-4" strokeWidth={2.2} />
+                <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200/90">
+                  <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+                    <MapPin className="h-5 w-5" strokeWidth={2.2} />
                   </div>
                   <div className="text-lg font-semibold text-slate-950">
                     {sidebarStats.stationary}
