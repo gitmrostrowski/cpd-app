@@ -1261,7 +1261,7 @@ export default function TrainingHubClient() {
                 <article
                   key={t.id}
                   onClick={(e) => e.stopPropagation()}
-                  className="group relative flex min-h-[236px] overflow-hidden rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.05),0_7px_16px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:border-blue-200 hover:shadow-[0_1px_0_rgba(37,99,235,0.08),0_10px_20px_rgba(37,99,235,0.14)]"
+                  className="group relative flex min-h-[168px] overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.05),0_5px_13px_rgba(15,23,42,0.09)] transition-all duration-200 hover:-translate-y-[1px] hover:border-blue-200 hover:shadow-[0_1px_0_rgba(37,99,235,0.08),0_8px_18px_rgba(37,99,235,0.13)]"
                 >
                   <div
                     className={`absolute bottom-0 left-0 top-0 w-1.5 ${tone.stripe}`}
@@ -1421,9 +1421,7 @@ export default function TrainingHubClient() {
                           : null}
                       </div>
 
-                      <div className="mt-auto flex flex-col gap-2 border-t border-slate-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="hidden sm:block" />
-
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
                         <div className="flex flex-col gap-2 sm:flex-row">
                           {t.url ? (
                             <a
@@ -1468,7 +1466,7 @@ export default function TrainingHubClient() {
           </div>
 
           <aside className="space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex h-[236px] flex-col overflow-hidden rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.05),0_7px_16px_rgba(15,23,42,0.10)]">
+            <div className="flex h-[168px] flex-col overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.05),0_5px_13px_rgba(15,23,42,0.09)]">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
                   Planowanie
@@ -1483,13 +1481,13 @@ export default function TrainingHubClient() {
                 </p>
               </div>
 
-              <div className="mt-auto grid grid-cols-3 gap-2">
-                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
                   <div className="mb-2 text-blue-600">
                     <Award className="h-5 w-5" strokeWidth={2.2} />
                   </div>
 
-                  <div className="text-xl font-bold leading-none tracking-[-0.03em] text-slate-950">
+                  <div className="text-lg font-bold leading-none tracking-[-0.03em] text-slate-950">
                     {sidebarStats.totalPoints}
                   </div>
 
@@ -1498,12 +1496,12 @@ export default function TrainingHubClient() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
                   <div className="mb-2 text-blue-600">
                     <MonitorPlay className="h-5 w-5" strokeWidth={2.2} />
                   </div>
 
-                  <div className="text-xl font-bold leading-none tracking-[-0.03em] text-slate-950">
+                  <div className="text-lg font-bold leading-none tracking-[-0.03em] text-slate-950">
                     {sidebarStats.online}
                   </div>
 
@@ -1512,12 +1510,12 @@ export default function TrainingHubClient() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
                   <div className="mb-2 text-amber-600">
                     <MapPin className="h-5 w-5" strokeWidth={2.2} />
                   </div>
 
-                  <div className="text-xl font-bold leading-none tracking-[-0.03em] text-slate-950">
+                  <div className="text-lg font-bold leading-none tracking-[-0.03em] text-slate-950">
                     {sidebarStats.stationary}
                   </div>
 
