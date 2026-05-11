@@ -18,10 +18,9 @@ type ActivityRow = {
   created_at: string;
 
   status?: ActivityStatus;
-  planned_start_date?: string | null; // YYYY-MM-DD
+  planned_start_date?: string | null;
   training_id?: string | null;
 
-  // legacy single cert fields (kompatybilność)
   certificate_path?: string | null;
   certificate_name?: string | null;
   certificate_mime?: string | null;
@@ -35,7 +34,7 @@ type ActivityDocRow = {
   id: string;
   user_id: string;
   activity_id: string;
-  kind: string; // <-- celowo string, żeby UI było odporne na różne wartości w DB
+  kind: string;
   path: string;
   name: string | null;
   mime: string | null;
@@ -97,7 +96,7 @@ function shortFileName(name?: string | null) {
   if (!n) return "";
   if (n.length <= 30) return n;
   const ext = n.includes(".") ? "." + n.split(".").pop() : "";
-  const base = ext ? n.slice(0, -(ext.length)) : n;
+  const base = ext ? n.slice(0, -ext.length) : n;
   const cut = base.slice(0, 18);
   return `${cut}…${ext}`;
 }
@@ -117,8 +116,35 @@ function daysUntil(ymd: string | null | undefined) {
 }
 
 type StatusKind = "complete" | "missing";
+type ActivityTab = "todo" | "planned" | "ready" | "all";
 
-// Uwaga: traktujemy wszystko co nie jest "certificate" jako dokument (odporność na dane z DB)
+const ACTIVITY_TABS: {
+  key: ActivityTab;
+  label: string;
+  description: string;
+}[] = [
+  {
+    key: "todo",
+    label: "Do uzupełnienia",
+    description: "Brakujące dane, certyfikaty lub dokumenty.",
+  },
+  {
+    key: "planned",
+    label: "Zaplanowane",
+    description: "Szkolenia w planie. Jeszcze nie liczą się do punktów.",
+  },
+  {
+    key: "ready",
+    label: "Gotowe do raportu",
+    description: "Kompletne aktywności gotowe do rozliczenia.",
+  },
+  {
+    key: "all",
+    label: "Wszystkie",
+    description: "Pełna historia aktywności.",
+  },
+];
+
 function splitDocs(docsForActivity: ActivityDocRow[]) {
   const certDocs = docsForActivity.filter((d) => String(d.kind).toLowerCase() === "certificate");
   const otherDocs = docsForActivity.filter((d) => String(d.kind).toLowerCase() !== "certificate");
@@ -128,6 +154,7 @@ function splitDocs(docsForActivity: ActivityDocRow[]) {
 function getRowStatus(a: ActivityRow, docsForActivity: ActivityDocRow[]): { kind: StatusKind; missing: string[] } {
   const missing: string[] = [];
   const orgOk = Boolean(a.organizer && String(a.organizer).trim());
+
   if (!orgOk) missing.push("Brak organizatora");
 
   const prog = normalizeStatus(a.status);
@@ -141,11 +168,20 @@ function getRowStatus(a: ActivityRow, docsForActivity: ActivityDocRow[]): { kind
   return { kind: missing.length === 0 ? "complete" : "missing", missing };
 }
 
+function getActivityTab(a: ActivityRow, docsForActivity: ActivityDocRow[]): Exclude<ActivityTab, "all"> {
+  const prog = normalizeStatus(a.status);
+  const st = getRowStatus(a, docsForActivity);
+
+  if (prog === "planned") return "planned";
+  if (st.kind === "missing") return "todo";
+  return "ready";
+}
+
 function Badge({
   tone,
   children,
 }: {
-  tone: "blue" | "emerald" | "amber" | "slate";
+  tone: "blue" | "emerald" | "amber" | "slate" | "rose";
   children: React.ReactNode;
 }) {
   const styles =
@@ -155,7 +191,9 @@ function Badge({
         ? "border-emerald-200 bg-emerald-50 text-emerald-700"
         : tone === "amber"
           ? "border-amber-200 bg-amber-50 text-amber-800"
-          : "border-slate-200 bg-slate-50 text-slate-700";
+          : tone === "rose"
+            ? "border-rose-200 bg-rose-50 text-rose-700"
+            : "border-slate-200 bg-slate-50 text-slate-700";
 
   return (
     <span className={["inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] leading-4", styles].join(" ")}>
@@ -175,7 +213,6 @@ export default function ActivitiesPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  // form (dodaj)
   const [type, setType] = useState<(typeof TYPES)[number]>(TYPES[1]);
   const [points, setPoints] = useState<number>(10);
   const [year, setYear] = useState<number>(new Date().getFullYear());
@@ -184,26 +221,22 @@ export default function ActivitiesPage() {
   const [file, setFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
 
-  // attach file (prawy panel)
   const [attachToId, setAttachToId] = useState<string | null>(null);
   const [attachKind, setAttachKind] = useState<DocKind>("certificate");
   const [attachFile, setAttachFile] = useState<File | null>(null);
   const [attachInputKey, setAttachInputKey] = useState(0);
 
-  // EDIT inline
   const [editId, setEditId] = useState<string | null>(null);
   const [editType, setEditType] = useState<(typeof TYPES)[number]>(TYPES[1]);
   const [editPoints, setEditPoints] = useState<number>(0);
   const [editYear, setEditYear] = useState<number>(new Date().getFullYear());
   const [editOrganizer, setEditOrganizer] = useState<string>("");
-  const [editPlannedDate, setEditPlannedDate] = useState<string>(""); // YYYY-MM-DD
+  const [editPlannedDate, setEditPlannedDate] = useState<string>("");
 
-  // upload inside EDIT
   const [editUploadKind, setEditUploadKind] = useState<DocKind>("certificate");
   const [editUploadFile, setEditUploadFile] = useState<File | null>(null);
   const [editUploadKey, setEditUploadKey] = useState(0);
 
-  // docs
   const [docs, setDocs] = useState<ActivityDocRow[]>([]);
   const docsByActivity = useMemo(() => {
     const map: Record<string, ActivityDocRow[]> = {};
@@ -211,17 +244,14 @@ export default function ActivitiesPage() {
     return map;
   }, [docs]);
 
-  // signed urls
   const [docUrls, setDocUrls] = useState<Record<string, string>>({});
   const [legacyCertUrls, setLegacyCertUrls] = useState<Record<string, string>>({});
 
-  // filters
+  const [activeTab, setActiveTab] = useState<ActivityTab>("todo");
+
   const [q, setQ] = useState("");
   const [filterType, setFilterType] = useState<string>("Wszystkie");
   const [filterYear, setFilterYear] = useState<string>("Wszystkie");
-  const [filterCert, setFilterCert] = useState<"all" | "yes" | "no">("all");
-  const [filterStatus, setFilterStatus] = useState<"all" | "complete" | "missing">("all");
-  const [filterProgress, setFilterProgress] = useState<"all" | "planned" | "done">("all");
 
   function clearMessages() {
     setInfo(null);
@@ -249,6 +279,7 @@ export default function ActivitiesPage() {
       setLegacyCertUrls({});
       return;
     }
+
     setFetching(true);
     setErr(null);
 
@@ -273,7 +304,6 @@ export default function ActivitiesPage() {
       const rows = ((data ?? []) as unknown as ActivityRow[]) ?? [];
       setItems(rows);
 
-      // legacy cert signed urls
       const withLegacy = rows.filter((r) => r.certificate_path);
       const legacyResults = await Promise.all(
         withLegacy.map(async (r) => {
@@ -281,12 +311,13 @@ export default function ActivitiesPage() {
           return { activityId: r.id, url: urlData?.signedUrl ?? "" };
         }),
       );
+
       const legacyMap: Record<string, string> = {};
       for (const x of legacyResults) if (x.url) legacyMap[x.activityId] = x.url;
       setLegacyCertUrls(legacyMap);
 
-      // docs
       const ids = rows.map((r) => r.id);
+
       if (!ids.length) {
         setDocs([]);
         setDocUrls({});
@@ -313,6 +344,7 @@ export default function ActivitiesPage() {
             return { docId: d.id, url: urlData?.signedUrl ?? "" };
           }),
         );
+
         const docMap: Record<string, string> = {};
         for (const x of urlResults) if (x.url) docMap[x.docId] = x.url;
         setDocUrls(docMap);
@@ -336,6 +368,7 @@ export default function ActivitiesPage() {
       setLegacyCertUrls({});
       return;
     }
+
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -346,19 +379,19 @@ export default function ActivitiesPage() {
     const mime = f.type || "application/octet-stream";
     const ext = extFromMime(mime);
     const safeName = (f.name || `file.${ext}`).slice(0, 180);
-
     const path = `${user.id}/${activityId}/${kind}-${Date.now()}.${ext}`;
 
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, f, {
       upsert: true,
       contentType: mime,
     });
+
     if (upErr) throw new Error(upErr.message);
 
     const { error: insErr } = await supabase.from("activity_documents").insert({
       user_id: user.id,
       activity_id: activityId,
-      kind, // "certificate" | "document"
+      kind,
       path,
       name: safeName,
       mime,
@@ -395,6 +428,7 @@ export default function ActivitiesPage() {
     };
 
     setBusy(true);
+
     try {
       const { data, error } = await supabase.from("activities").insert(payload).select("id").single();
       if (error) return setErr(error.message);
@@ -404,9 +438,9 @@ export default function ActivitiesPage() {
 
       if (file) {
         await uploadDoc(newId, "certificate", file);
-        setInfo("Dodano aktywność + certyfikat ✅");
+        setInfo("Dodano aktywność i certyfikat.");
       } else {
-        setInfo("Dodano aktywność ✅");
+        setInfo("Dodano aktywność. Możesz uzupełnić certyfikat później.");
       }
 
       resetForm();
@@ -422,6 +456,7 @@ export default function ActivitiesPage() {
     if (!user || busy) return;
     clearMessages();
     setBusy(true);
+
     try {
       const { error } = await supabase
         .from("activities")
@@ -431,7 +466,7 @@ export default function ActivitiesPage() {
 
       if (error) return setErr(error.message);
 
-      setInfo("Oznaczono jako ukończone ✅");
+      setInfo("Oznaczono jako ukończone. Sprawdź, czy aktywność ma kompletne dane.");
       await load();
     } catch (e: any) {
       setErr(e?.message || "Nie udało się zmienić statusu.");
@@ -448,23 +483,26 @@ export default function ActivitiesPage() {
     setItems((cur) => cur.filter((x) => x.id !== id));
 
     setBusy(true);
+
     try {
       if (legacyCertPath) await supabase.storage.from(BUCKET).remove([legacyCertPath]);
 
       const myDocs = docs.filter((d) => d.activity_id === id);
+
       if (myDocs.length) {
         await supabase.storage.from(BUCKET).remove(myDocs.map((d) => d.path));
         await supabase.from("activity_documents").delete().eq("activity_id", id).eq("user_id", user.id);
       }
 
       const { error } = await supabase.from("activities").delete().eq("id", id).eq("user_id", user.id);
+
       if (error) {
         setErr(error.message);
         setItems(prev);
         return;
       }
 
-      setInfo("Usunięto ✅");
+      setInfo("Usunięto aktywność.");
     } catch (e: any) {
       setErr(e?.message || "Nie udało się usunąć.");
       setItems(prev);
@@ -479,6 +517,7 @@ export default function ActivitiesPage() {
 
     clearMessages();
     setBusy(true);
+
     try {
       const { error: storErr } = await supabase.storage.from(BUCKET).remove([doc.path]);
       if (storErr) return setErr(storErr.message);
@@ -491,7 +530,7 @@ export default function ActivitiesPage() {
 
       if (delErr) return setErr(delErr.message);
 
-      setInfo("Usunięto plik ✅");
+      setInfo("Usunięto plik.");
       await load();
     } catch (e: any) {
       setErr(e?.message || "Nie udało się usunąć pliku.");
@@ -510,9 +549,10 @@ export default function ActivitiesPage() {
 
     clearMessages();
     setBusy(true);
+
     try {
       await uploadDoc(attachToId, attachKind, attachFile);
-      setInfo(attachKind === "certificate" ? "Dodano certyfikat ✅" : "Dodano dokument ✅");
+      setInfo(attachKind === "certificate" ? "Dodano certyfikat." : "Dodano dokument.");
       setAttachFile(null);
       setAttachInputKey((k) => k + 1);
       await load();
@@ -546,6 +586,7 @@ export default function ActivitiesPage() {
     if (!user || busy) return;
 
     clearMessages();
+
     const p = Number(editPoints);
     const y = Number(editYear);
 
@@ -556,20 +597,23 @@ export default function ActivitiesPage() {
     const prog = current ? normalizeStatus(current.status) : "done";
 
     const org = editOrganizer.trim();
+
     const upd: any = {
       type: editType,
       points: p,
       year: y,
       organizer: org.length ? org : null,
     };
+
     if (prog === "planned") upd.planned_start_date = editPlannedDate ? editPlannedDate : null;
 
     setBusy(true);
+
     try {
       const { error } = await supabase.from("activities").update(upd).eq("id", activityId).eq("user_id", user.id);
       if (error) return setErr(error.message);
 
-      setInfo("Zapisano zmiany ✅");
+      setInfo("Zapisano zmiany.");
       setEditId(null);
       await load();
     } catch (e: any) {
@@ -582,14 +626,16 @@ export default function ActivitiesPage() {
   async function uploadInsideEdit(activityId: string) {
     if (!user || busy) return;
     if (!editUploadFile) return setErr("Wybierz plik.");
+
     const fe = validateFile(editUploadFile);
     if (fe) return setErr(fe);
 
     clearMessages();
     setBusy(true);
+
     try {
       await uploadDoc(activityId, editUploadKind, editUploadFile);
-      setInfo(editUploadKind === "certificate" ? "Dodano certyfikat ✅" : "Dodano dokument ✅");
+      setInfo(editUploadKind === "certificate" ? "Dodano certyfikat." : "Dodano dokument.");
       setEditUploadFile(null);
       setEditUploadKey((k) => k + 1);
       await load();
@@ -604,33 +650,64 @@ export default function ActivitiesPage() {
     return Array.from(new Set(items.map((i) => i.year))).sort((a, b) => b - a);
   }, [items]);
 
+  const activityStats = useMemo(() => {
+    let todo = 0;
+    let planned = 0;
+    let ready = 0;
+
+    for (const a of items) {
+      const docsFor = docsByActivity[a.id] ?? [];
+      const bucket = getActivityTab(a, docsFor);
+
+      if (bucket === "todo") todo += 1;
+      if (bucket === "planned") planned += 1;
+      if (bucket === "ready") ready += 1;
+    }
+
+    const readyPoints = items.reduce((sum, a) => {
+      const docsFor = docsByActivity[a.id] ?? [];
+      const bucket = getActivityTab(a, docsFor);
+      return bucket === "ready" ? sum + Number(a.points || 0) : sum;
+    }, 0);
+
+    return {
+      todo,
+      planned,
+      ready,
+      all: items.length,
+      readyPoints,
+    };
+  }, [items, docsByActivity]);
+
+  function getTabCount(tab: ActivityTab) {
+    if (tab === "todo") return activityStats.todo;
+    if (tab === "planned") return activityStats.planned;
+    if (tab === "ready") return activityStats.ready;
+    return activityStats.all;
+  }
+
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
 
     return items.filter((a) => {
+      const docsForTab = docsByActivity[a.id] ?? [];
+      const bucket = getActivityTab(a, docsForTab);
+
+      if (activeTab !== "all" && bucket !== activeTab) return false;
+
       if (filterType !== "Wszystkie" && a.type !== filterType) return false;
       if (filterYear !== "Wszystkie" && String(a.year) !== filterYear) return false;
-
-      const prog = normalizeStatus(a.status);
-      if (filterProgress !== "all" && prog !== filterProgress) return false;
-
-      const docsFor = docsByActivity[a.id] ?? [];
-      const { certDocs } = splitDocs(docsFor);
-      const hasCert = Boolean(a.certificate_path) || certDocs.length > 0;
-
-      if (filterCert === "yes" && !hasCert) return false;
-      if (filterCert === "no" && hasCert) return false;
-
-      const st = getRowStatus(a, docsFor).kind;
-      if (filterStatus !== "all" && st !== filterStatus) return false;
 
       if (query) {
         const hay = `${a.type} ${a.organizer ?? ""} ${a.year} ${a.points} ${a.status ?? ""}`.toLowerCase();
         if (!hay.includes(query)) return false;
       }
+
       return true;
     });
-  }, [items, q, filterType, filterYear, filterCert, filterStatus, filterProgress, docsByActivity]);
+  }, [items, activeTab, q, filterType, filterYear, docsByActivity]);
+
+  const activeTabMeta = ACTIVITY_TABS.find((t) => t.key === activeTab) ?? ACTIVITY_TABS[0];
 
   if (loading) {
     return (
@@ -654,7 +731,7 @@ export default function ActivitiesPage() {
               href="/kalkulator"
               className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              Kalkulator (tryb gościa)
+              Kalkulator
             </Link>
           </div>
         </div>
@@ -667,8 +744,11 @@ export default function ActivitiesPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Aktywności</h1>
-          <p className="mt-1 text-sm text-slate-600">Logbook CPD: dodawaj aktywności, porządkuj dane i podpinaj certyfikaty/dokumenty.</p>
+          <p className="mt-1 text-sm text-slate-600">
+            Porządkuj aktywności CPD: uzupełniaj braki, podpinaj certyfikaty i przygotowuj dane do raportu.
+          </p>
         </div>
+
         <div className="flex gap-2">
           <Link href="/portfolio" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             Portfolio
@@ -687,13 +767,15 @@ export default function ActivitiesPage() {
       )}
 
       <div className="mt-5 grid gap-5 lg:grid-cols-12">
-        {/* LEFT: LIST */}
         <section className="order-2 rounded-2xl border bg-white p-4 lg:order-1 lg:col-span-8">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h2 className="text-base font-semibold text-slate-900">Twoje aktywności</h2>
-              <p className="mt-1 text-[13px] text-slate-600">Zaplanowane nie liczą się do punktów, dopóki nie oznaczysz ich jako ukończone.</p>
+              <p className="mt-1 text-[13px] text-slate-600">
+                Uzupełniaj braki, kontroluj zaplanowane szkolenia i trzymaj kompletne aktywności gotowe do raportu.
+              </p>
             </div>
+
             <button
               onClick={load}
               type="button"
@@ -704,9 +786,84 @@ export default function ActivitiesPage() {
             </button>
           </div>
 
-          {/* Filters — WYMUSZONE 2 WIERSZE (12 kolumn) */}
+          <div className="mt-4 grid gap-2 sm:grid-cols-4">
+            <button
+              type="button"
+              onClick={() => setActiveTab("todo")}
+              className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-left transition hover:bg-amber-100/60"
+            >
+              <div className="text-[11px] font-medium text-amber-800">Do uzupełnienia</div>
+              <div className="mt-1 text-2xl font-extrabold text-amber-900">{activityStats.todo}</div>
+              <div className="mt-1 text-[11px] text-amber-800">Wymagają działania</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("planned")}
+              className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-left transition hover:bg-blue-100/60"
+            >
+              <div className="text-[11px] font-medium text-blue-700">Zaplanowane</div>
+              <div className="mt-1 text-2xl font-extrabold text-blue-900">{activityStats.planned}</div>
+              <div className="mt-1 text-[11px] text-blue-700">Jeszcze nie liczą się do punktów</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("ready")}
+              className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-left transition hover:bg-emerald-100/60"
+            >
+              <div className="text-[11px] font-medium text-emerald-700">Gotowe do raportu</div>
+              <div className="mt-1 text-2xl font-extrabold text-emerald-900">{activityStats.ready}</div>
+              <div className="mt-1 text-[11px] text-emerald-700">{activityStats.readyPoints} pkt kompletne</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("all")}
+              className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-left transition hover:bg-slate-100"
+            >
+              <div className="text-[11px] font-medium text-slate-600">Wszystkie</div>
+              <div className="mt-1 text-2xl font-extrabold text-slate-900">{activityStats.all}</div>
+              <div className="mt-1 text-[11px] text-slate-600">Pełna historia</div>
+            </button>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-1">
+            <div className="grid gap-1 sm:grid-cols-4">
+              {ACTIVITY_TABS.map((tab) => {
+                const active = activeTab === tab.key;
+
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    className={[
+                      "rounded-xl px-3 py-2 text-left transition",
+                      active ? "bg-white shadow-sm ring-1 ring-slate-200" : "hover:bg-white/70",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={["text-sm font-semibold", active ? "text-slate-950" : "text-slate-700"].join(" ")}>
+                        {tab.label}
+                      </span>
+                      <span
+                        className={[
+                          "rounded-full px-2 py-0.5 text-[11px] font-bold",
+                          active ? "bg-blue-600 text-white" : "bg-white text-slate-600",
+                        ].join(" ")}
+                      >
+                        {getTabCount(tab.key)}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[11px] leading-4 text-slate-500">{tab.description}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="mt-3 grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-12">
-            {/* ROW 1 */}
             <div className="sm:col-span-6">
               <label className="text-[11px] font-medium text-slate-600">Szukaj</label>
               <input
@@ -749,47 +906,13 @@ export default function ActivitiesPage() {
               </select>
             </div>
 
-            {/* ROW 2 */}
-            <div className="sm:col-span-3">
-              <label className="text-[11px] font-medium text-slate-600">Realizacja</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterProgress}
-                onChange={(e) => setFilterProgress(e.target.value as any)}
-              >
-                <option value="all">Wszystkie</option>
-                <option value="planned">Zaplanowane</option>
-                <option value="done">Ukończone</option>
-              </select>
+            <div className="sm:col-span-9">
+              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] text-slate-600">
+                Widok: <span className="font-semibold text-slate-900">{activeTabMeta.label}</span> — {activeTabMeta.description}
+              </div>
             </div>
 
-            <div className="sm:col-span-3">
-              <label className="text-[11px] font-medium text-slate-600">Certyfikat</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterCert}
-                onChange={(e) => setFilterCert(e.target.value as any)}
-              >
-                <option value="all">Wszystkie</option>
-                <option value="yes">Tylko z</option>
-                <option value="no">Tylko bez</option>
-              </select>
-            </div>
-
-            <div className="sm:col-span-3">
-              <label className="text-[11px] font-medium text-slate-600">Kompletność</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
-              >
-                <option value="all">Wszystkie</option>
-                <option value="complete">OK</option>
-                <option value="missing">Braki</option>
-              </select>
-            </div>
-
-            <div className="sm:col-span-3 flex items-end gap-2">
+            <div className="sm:col-span-3 flex items-center gap-2">
               <button
                 type="button"
                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
@@ -797,9 +920,6 @@ export default function ActivitiesPage() {
                   setQ("");
                   setFilterType("Wszystkie");
                   setFilterYear("Wszystkie");
-                  setFilterCert("all");
-                  setFilterStatus("all");
-                  setFilterProgress("all");
                 }}
               >
                 Wyczyść
@@ -815,7 +935,15 @@ export default function ActivitiesPage() {
           ) : filtered.length === 0 ? (
             <div className="mt-5 rounded-2xl border border-dashed border-slate-300 p-6 text-center">
               <div className="text-base font-semibold text-slate-900">Brak wyników</div>
-              <div className="mt-1 text-sm text-slate-600">Zmień filtry albo dodaj nową aktywność po prawej.</div>
+              <div className="mt-1 text-sm text-slate-600">
+                {activeTab === "todo"
+                  ? "Nie masz aktywności wymagających uzupełnienia. Kompletne wpisy znajdziesz w „Gotowe do raportu”."
+                  : activeTab === "planned"
+                    ? "Nie masz obecnie zaplanowanych szkoleń. Możesz dodać je z bazy szkoleń."
+                    : activeTab === "ready"
+                      ? "Nie masz jeszcze aktywności gotowych do raportu. Uzupełnij certyfikaty i organizatorów."
+                      : "Dodaj pierwszą aktywność lub zmień filtry."}
+              </div>
             </div>
           ) : (
             <div className="mt-4 space-y-2">
@@ -828,7 +956,6 @@ export default function ActivitiesPage() {
                 const legacyCertUrl = a.certificate_path ? legacyCertUrls[a.id] : null;
                 const dleft = prog === "planned" ? daysUntil(a.planned_start_date) : null;
                 const inEdit = editId === a.id;
-
                 const attachCount = docsFor.length + (a.certificate_path ? 1 : 0);
 
                 return (
@@ -836,7 +963,11 @@ export default function ActivitiesPage() {
                     key={a.id}
                     className={[
                       "rounded-2xl border px-4 py-3",
-                      prog === "planned" ? "border-blue-200 bg-blue-50/30" : "border-slate-200 bg-white",
+                      prog === "planned"
+                        ? "border-blue-200 bg-blue-50/30"
+                        : st.kind === "missing"
+                          ? "border-amber-200 bg-amber-50/20"
+                          : "border-slate-200 bg-white",
                     ].join(" ")}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -844,8 +975,13 @@ export default function ActivitiesPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="min-w-0 truncate font-semibold text-slate-900">{a.type}</div>
 
-                          {prog === "planned" ? <Badge tone="blue">🗓️ Zaplanowane</Badge> : <Badge tone="emerald">✓ Ukończone</Badge>}
-                          {st.kind === "complete" ? <Badge tone="emerald">OK</Badge> : <Badge tone="amber">Braki</Badge>}
+                          {prog === "planned" ? (
+                            <Badge tone="blue">🗓️ Zaplanowane</Badge>
+                          ) : st.kind === "missing" ? (
+                            <Badge tone="amber">Do uzupełnienia</Badge>
+                          ) : (
+                            <Badge tone="emerald">Gotowe do raportu</Badge>
+                          )}
 
                           {prog === "planned" && typeof dleft === "number" ? (
                             dleft > 0 ? (
@@ -880,21 +1016,26 @@ export default function ActivitiesPage() {
                         </div>
 
                         {st.kind === "missing" ? (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {st.missing.map((m) => (
-                              <span
-                                key={m}
-                                className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-800"
-                              >
-                                {m}
-                              </span>
-                            ))}
+                          <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-2">
+                            <div className="text-[12px] font-semibold text-amber-900">
+                              Uzupełnij, aby aktywność była gotowa do raportu:
+                            </div>
+                            <div className="mt-1 flex flex-wrap gap-2">
+                              {st.missing.map((m) => (
+                                <span
+                                  key={m}
+                                  className="inline-flex items-center rounded-xl border border-amber-200 bg-white px-2 py-1 text-[11px] text-amber-800"
+                                >
+                                  {m}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         ) : null}
                       </div>
 
                       <div className="shrink-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center justify-end gap-2">
                           <div className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm">
                             <span className="text-slate-600">Pkt</span>{" "}
                             <span className="font-semibold text-slate-900">{a.points}</span>
@@ -902,11 +1043,11 @@ export default function ActivitiesPage() {
 
                           <button
                             onClick={() => (inEdit ? cancelEdit() : startEdit(a))}
-                            className="rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                            className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                             type="button"
                             disabled={busy}
                           >
-                            Edytuj
+                            {inEdit ? "Zamknij" : "Edytuj"}
                           </button>
 
                           {prog === "planned" ? (
@@ -922,7 +1063,7 @@ export default function ActivitiesPage() {
 
                           <button
                             onClick={() => removeActivity(a.id, a.certificate_path ?? null)}
-                            className="rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                            className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                             type="button"
                             disabled={busy}
                           >
@@ -932,7 +1073,6 @@ export default function ActivitiesPage() {
                       </div>
                     </div>
 
-                    {/* FILES */}
                     <div className="mt-2 space-y-1 text-[13px]">
                       {a.certificate_path ? (
                         <div className="flex flex-wrap items-center gap-2">
@@ -968,7 +1108,6 @@ export default function ActivitiesPage() {
                         </div>
                       ))}
 
-                      {/* Dokumenty — zawsze pokaż sekcję jeśli są jakiekolwiek "inne" załączniki */}
                       {otherDocs.length ? (
                         <div className="rounded-xl border border-slate-200 bg-slate-50 p-2">
                           <div className="text-[11px] font-semibold text-slate-700">Dokumenty</div>
@@ -997,11 +1136,10 @@ export default function ActivitiesPage() {
                       ) : null}
                     </div>
 
-                    {/* EDIT */}
                     {inEdit ? (
                       <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="text-[12px] font-semibold text-slate-900">Edycja</div>
+                          <div className="text-[12px] font-semibold text-slate-900">Edycja aktywności</div>
                           <div className="flex gap-2">
                             <button
                               type="button"
@@ -1087,7 +1225,6 @@ export default function ActivitiesPage() {
                           ) : null}
                         </div>
 
-                        {/* Upload inside edit */}
                         <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
                           <div className="text-[12px] font-semibold text-slate-900">Dodaj załącznik</div>
 
@@ -1150,11 +1287,10 @@ export default function ActivitiesPage() {
           )}
         </section>
 
-        {/* RIGHT: FORM */}
         <section className="order-1 rounded-2xl border bg-white p-4 lg:order-2 lg:col-span-4">
           <h2 className="text-base font-semibold text-slate-900">Dodaj aktywność</h2>
           <p className="mt-1 text-[13px] text-slate-600">
-            Dodana ręcznie aktywność jest domyślnie <span className="font-semibold">ukończona</span>.
+            Dodaj aktywność, którą już ukończyłeś. Certyfikat możesz dołączyć teraz albo później.
           </p>
 
           <div className="mt-3 space-y-2">
@@ -1186,6 +1322,7 @@ export default function ActivitiesPage() {
                   disabled={busy}
                 />
               </div>
+
               <div>
                 <label className="text-[11px] font-medium text-slate-600">Rok</label>
                 <input
@@ -1207,11 +1344,11 @@ export default function ActivitiesPage() {
                 placeholder="np. OIL / towarzystwo"
                 disabled={busy}
               />
-              <div className="mt-1 text-[11px] text-slate-500">Ważne w raportach.</div>
+              <div className="mt-1 text-[11px] text-slate-500">Ważne w raportach. Jeśli nie uzupełnisz teraz, wpis trafi do braków.</div>
             </div>
 
             <div>
-              <label className="text-[11px] font-medium text-slate-600">Certyfikat (opcjonalnie)</label>
+              <label className="text-[11px] font-medium text-slate-600">Certyfikat opcjonalnie</label>
               <input
                 key={fileInputKey}
                 type="file"
@@ -1244,10 +1381,11 @@ export default function ActivitiesPage() {
             </button>
           </div>
 
-          {/* Attach file global */}
           <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-            <div className="text-sm font-semibold text-slate-900">Dodaj plik do wpisu</div>
-            <div className="mt-1 text-[11px] text-slate-600">Możesz dodać wiele plików: certyfikaty i dokumenty.</div>
+            <div className="text-sm font-semibold text-slate-900">Dodaj plik do istniejącej aktywności</div>
+            <div className="mt-1 text-[11px] text-slate-600">
+              Użyj, gdy masz już wpis i chcesz tylko podpiąć certyfikat albo dodatkowy dokument.
+            </div>
 
             <div className="mt-2 space-y-2">
               <select
@@ -1306,8 +1444,11 @@ export default function ActivitiesPage() {
             </div>
           </div>
 
-          <div className="mt-3 text-[11px] text-slate-500">
-            OCR: rozdzielenie na <span className="font-medium">Dokumenty</span> i <span className="font-medium">Certyfikat</span> jest najlepsze.
+          <div className="mt-3 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-[12px] text-blue-800">
+            <div className="font-semibold">Jak korzystać z tej zakładki?</div>
+            <div className="mt-1">
+              Najpierw sprawdź „Do uzupełnienia”. Gdy wpis ma organizatora i certyfikat, automatycznie przejdzie do „Gotowe do raportu”.
+            </div>
           </div>
         </section>
       </div>
