@@ -275,7 +275,7 @@ function buildNextSteps(
   if (missingEvidenceCount > 0) {
     steps.push({
       title: "Uzupełnij dokumenty",
-      description: `Masz ${missingEvidenceCount} brakujących dokumentów. To najszybszy sposób uporządkowania panelu.`,
+      description: `Masz ${missingEvidenceCount} brakujących dokumentów. To najszybszy krok do uporządkowania panelu.`,
       ctaHref: "/aktywnosci",
       tone: "amber",
       priority: "high",
@@ -285,7 +285,7 @@ function buildNextSteps(
   if (missingPoints > 0) {
     steps.push({
       title: limitWarning ? "Dobierz inną aktywność" : "Zaplanuj szkolenie",
-      description: limitWarning || "Wybierz szkolenia, które realnie pomogą domknąć brakujące punkty.",
+      description: limitWarning || "Wybierz aktywność, która realnie przybliży Cię do wymaganej liczby punktów.",
       ctaHref: "/baza-szkolen",
       tone: "blue",
       priority: missingEvidenceCount === 0 ? "high" : "normal",
@@ -394,7 +394,7 @@ function CircularProgress({
   value: number;
   label?: string;
   size?: "normal" | "small";
-  tone?: "blue" | "slate" | "amber";
+  tone?: "blue" | "slate" | "amber" | "indigo";
 }) {
   const isSmall = size === "small";
   const svgSize = isSmall ? 80 : 112;
@@ -405,7 +405,13 @@ function CircularProgress({
   const circumference = normalizedRadius * 2 * Math.PI;
   const offset = circumference - (clamp(value, 0, 100) / 100) * circumference;
   const strokeTone =
-    tone === "amber" ? "text-amber-500" : tone === "slate" ? "text-slate-500" : "text-blue-500";
+    tone === "amber"
+      ? "text-amber-500"
+      : tone === "slate"
+        ? "text-slate-500"
+        : tone === "indigo"
+          ? "text-indigo-500"
+          : "text-blue-500";
 
   return (
     <div className={`relative shrink-0 ${isSmall ? "h-20 w-20" : "h-28 w-28"}`}>
@@ -604,6 +610,16 @@ export default function CalculatorClient() {
     if (end <= start) return 0;
     return clamp(((now - start) / (end - start)) * 100, 0, 100);
   }, [periodStart, periodEnd]);
+
+  const paceDelta = Math.round(progress - periodTimeProgress);
+  const paceLabel =
+    progress <= 0
+      ? "Start okresu"
+      : paceDelta >= 10
+        ? "Wyprzedzasz tempo"
+        : paceDelta >= -10
+          ? "Tempo jest stabilne"
+          : "Warto nadrobić";
 
   const limitsUsage = useMemo(() => {
     const limits = RULES_BY_PROFESSION[profession]?.limits ?? [];
@@ -1105,7 +1121,7 @@ export default function CalculatorClient() {
 
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900">Realizacja celu</h2>
-                  <p className="text-xs text-slate-500">Najważniejszy widok: punkty, dokumenty i czas do końca okresu</p>
+                  <p className="text-xs text-slate-500">Najpierw sprawdź braki, potem dobierz punkty</p>
                 </div>
               </div>
 
@@ -1123,97 +1139,100 @@ export default function CalculatorClient() {
               </Link>
             </div>
 
-            <div className="p-5">
-              <div className="grid gap-4 lg:grid-cols-[310px_1fr]">
-                <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    Aktualny wynik
-                  </div>
+            <div className="grid gap-5 p-5 lg:grid-cols-[330px_1fr]">
+              <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/70 p-4">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Aktualny wynik
+                </div>
 
-                  <div className="mt-3 flex items-center gap-4">
-                    <CircularProgress value={progress} label="pkt" />
-                    <div className="min-w-0">
-                      <div className="text-3xl font-extrabold leading-none tracking-[-0.05em] text-slate-950">
-                        {donePoints}
-                        <span className="text-base font-semibold text-slate-400"> / {requiredPoints}</span>
-                      </div>
-                      <div className="mt-1 text-xs leading-relaxed text-slate-500">
-                        punktów zaliczonych w okresie {periodStart}–{periodEnd}
-                      </div>
+                <div className="mt-3 flex items-center gap-4">
+                  <CircularProgress value={progress} label="pkt" />
+                  <div className="min-w-0">
+                    <div className="text-3xl font-extrabold leading-none tracking-[-0.05em] text-slate-950">
+                      {donePoints}
+                      <span className="text-base font-semibold text-slate-400"> / {requiredPoints}</span>
                     </div>
-                  </div>
-
-                  <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3">
-                    <div className="text-xs font-semibold text-slate-900">Co teraz?</div>
-                    <div className="mt-1 text-xs leading-relaxed text-slate-600">{mainAction.description}</div>
+                    <div className="mt-1 text-xs leading-relaxed text-slate-500">
+                      punktów zaliczonych w okresie {periodStart}–{periodEnd}
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid gap-4">
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Brakuje</div>
-                      <div className={`mt-1 text-2xl font-extrabold tracking-[-0.04em] ${missingPoints > 0 ? "text-red-500" : "text-emerald-600"}`}>
-                        {missingPoints}
-                        <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
-                      </div>
-                    </div>
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3">
+                  <div className="text-xs font-semibold text-slate-900">Najbliższy krok</div>
+                  <div className="mt-1 text-xs leading-relaxed text-slate-600">{mainAction.description}</div>
+                </div>
+              </div>
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Dokumenty</div>
-                      <div className={`mt-1 text-2xl font-extrabold tracking-[-0.04em] ${missingEvidenceCount > 0 ? "text-amber-600" : "text-emerald-600"}`}>
-                        {missingEvidenceCount}
-                        <span className="ml-1 text-xs font-semibold text-slate-400">braków</span>
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Do końca</div>
-                      <div className="mt-1 text-2xl font-extrabold tracking-[-0.04em] text-slate-950">
-                        {daysLeft}
-                        <span className="ml-1 text-xs font-semibold text-slate-400">dni</span>
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Zawód</div>
-                      <div className="mt-1 truncate text-base font-extrabold tracking-[-0.03em] text-slate-950">
-                        {displayProfession(profession, professionOther)}
-                      </div>
+              <div className="grid gap-4">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Do celu</div>
+                    <div className={`mt-1 text-2xl font-extrabold tracking-[-0.04em] ${missingPoints > 0 ? "text-red-500" : "text-emerald-600"}`}>
+                      {missingPoints}
+                      <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
                     </div>
                   </div>
 
-                  <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
-                    <div className="mb-1 flex justify-between text-xs font-medium text-slate-500">
-                      <span>Postęp punktów</span>
-                      <span>
-                        {donePoints} / {requiredPoints} pkt
-                      </span>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Dokumenty</div>
+                    <div className={`mt-1 text-2xl font-extrabold tracking-[-0.04em] ${missingEvidenceCount > 0 ? "text-amber-600" : "text-emerald-600"}`}>
+                      {missingEvidenceCount}
+                      <span className="ml-1 text-xs font-semibold text-slate-400">braków</span>
                     </div>
-                    <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full bg-blue-600 transition-all duration-700"
-                        style={{ width: `${Math.max(progress, 2)}%` }}
-                      />
-                    </div>
+                  </div>
 
-                    <div className="mt-4 mb-1 flex justify-between text-xs font-medium text-slate-500">
-                      <span>Upływ czasu</span>
-                      <span>
-                        {Math.round(periodTimeProgress)}% minęło · {Math.round(100 - periodTimeProgress)}% zostało
-                      </span>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Tempo</div>
+                    <div className={`mt-1 truncate text-base font-extrabold tracking-[-0.03em] ${paceDelta < -10 ? "text-amber-600" : "text-slate-950"}`}>
+                      {paceLabel}
                     </div>
-                    <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full bg-amber-500 transition-all duration-700"
-                        style={{ width: `${periodTimeProgress}%` }}
-                      />
-                    </div>
+                  </div>
 
-                    <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
-                      <span>{periodStart} start</span>
-                      <span>koniec {periodEnd}</span>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Zawód</div>
+                    <div className="mt-1 truncate text-base font-extrabold tracking-[-0.03em] text-slate-950">
+                      {displayProfession(profession, professionOther)}
                     </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
+                  <div className="mb-1 flex justify-between text-xs font-medium text-slate-500">
+                    <span>Postęp punktów</span>
+                    <span>
+                      {donePoints} / {requiredPoints} pkt
+                    </span>
+                  </div>
+                  <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-blue-600 transition-all duration-700"
+                      style={{ width: `${Math.max(progress, 2)}%` }}
+                    />
+                  </div>
+
+                  <div className="mt-4 mb-1 flex justify-between text-xs font-medium text-slate-500">
+                    <span>Upływ okresu</span>
+                    <span>
+                      {Math.round(periodTimeProgress)}% okresu minęło
+                    </span>
+                  </div>
+                  <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-indigo-500 transition-all duration-700"
+                      style={{ width: `${periodTimeProgress}%` }}
+                    />
+                  </div>
+
+                  <div className="mt-2 flex flex-col gap-1 text-[11px] leading-relaxed text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                    <span>Okres: {periodStart}–{periodEnd}</span>
+                    <span>
+                      {paceDelta < -10
+                        ? "Punkty rosną wolniej niż upływa okres."
+                        : paceDelta >= 10
+                          ? "Masz dobry zapas względem upływu okresu."
+                          : "Postęp punktów jest zbliżony do upływu okresu."}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1425,7 +1444,7 @@ export default function CalculatorClient() {
                           type="button"
                           disabled={isBusy || planningKey === r.key}
                           onClick={() => planForRule(r)}
-                          className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 active:scale-95 disabled:opacity-40"
+                          className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 active:scale-95 disabled:opacity-40"
                         >
                           {planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}
                         </button>
