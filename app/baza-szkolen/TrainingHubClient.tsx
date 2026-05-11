@@ -1426,7 +1426,7 @@ export default function TrainingHubClient() {
 
                           <button
                             onClick={() => chooseTraining(t)}
-                            className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-300 bg-slate-50 px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
+                            className="inline-flex h-8 items-center justify-center rounded-xl border border-blue-600 bg-blue-600 px-4 text-xs font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.24)] transition hover:border-blue-700 hover:bg-blue-700 active:scale-95"
                             type="button"
                             title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
                           >
@@ -1464,45 +1464,48 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="mt-2.5 grid grid-cols-3 gap-2">
-                <div className="rounded-xl border border-slate-200 bg-white px-2.5 py-2">
-                  <div className="mb-1.5 text-blue-600">
+                <div className="flex min-h-[57px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                     <Award className="h-4 w-4" strokeWidth={2.2} />
                   </div>
 
-                  <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
-                    {sidebarStats.totalPoints}
-                  </div>
-
-                  <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
-                    pkt
+                  <div className="min-w-0">
+                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
+                      {sidebarStats.totalPoints}
+                    </div>
+                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                      pkt
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white px-2.5 py-2">
-                  <div className="mb-1.5 text-blue-600">
+                <div className="flex min-h-[57px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                     <MonitorPlay className="h-4 w-4" strokeWidth={2.2} />
                   </div>
 
-                  <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
-                    {sidebarStats.online}
-                  </div>
-
-                  <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
-                    online
+                  <div className="min-w-0">
+                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
+                      {sidebarStats.online}
+                    </div>
+                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                      online
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white px-2.5 py-2">
-                  <div className="mb-1.5 text-amber-600">
+                <div className="flex min-h-[57px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
                     <MapPin className="h-4 w-4" strokeWidth={2.2} />
                   </div>
 
-                  <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
-                    {sidebarStats.stationary}
-                  </div>
-
-                  <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
-                    stacj.
+                  <div className="min-w-0">
+                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
+                      {sidebarStats.stationary}
+                    </div>
+                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                      stacj.
+                    </div>
                   </div>
                 </div>
               </div>
