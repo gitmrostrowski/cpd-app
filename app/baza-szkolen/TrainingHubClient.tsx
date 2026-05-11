@@ -247,8 +247,8 @@ function formatTone(format: TrainingType | null) {
   if (format === "stacjonarne") {
     return {
       stripe: "bg-amber-400",
-      badge: "border-amber-200 bg-amber-50 text-amber-700",
-      iconBox: "border-amber-200 bg-amber-50 text-amber-700",
+      badge: "border-amber-200 bg-amber-50 text-amber-800",
+      iconBox: "border-amber-200 bg-amber-100 text-amber-800",
       dateTop: "bg-amber-400",
     };
   }
@@ -256,36 +256,36 @@ function formatTone(format: TrainingType | null) {
   if (format === "hybrydowe") {
     return {
       stripe: "bg-indigo-500",
-      badge: "border-indigo-200 bg-indigo-50 text-indigo-700",
-      iconBox: "border-indigo-200 bg-indigo-50 text-indigo-700",
+      badge: "border-indigo-200 bg-indigo-50 text-indigo-800",
+      iconBox: "border-indigo-200 bg-indigo-100 text-indigo-800",
       dateTop: "bg-indigo-500",
     };
   }
 
   return {
     stripe: "bg-blue-500",
-    badge: "border-blue-100 bg-blue-50 text-blue-700",
-    iconBox: "border-blue-100 bg-blue-50 text-blue-700",
+    badge: "border-blue-200 bg-blue-50 text-blue-800",
+    iconBox: "border-blue-200 bg-blue-100 text-blue-800",
     dateTop: "bg-blue-500",
   };
 }
 
 function FormatIcon({
   format,
-  className = "h-3 w-3",
+  className = "h-4 w-4",
 }: {
   format: TrainingType | null;
   className?: string;
 }) {
   if (format === "stacjonarne") {
-    return <MapPin className={className} strokeWidth={2} />;
+    return <MapPin className={className} strokeWidth={2.2} />;
   }
 
   if (format === "hybrydowe") {
-    return <Building2 className={className} strokeWidth={2} />;
+    return <Building2 className={className} strokeWidth={2.2} />;
   }
 
-  return <MonitorPlay className={className} strokeWidth={2} />;
+  return <MonitorPlay className={className} strokeWidth={2.2} />;
 }
 
 function toYYYYMMDD(dt: Date) {
@@ -890,7 +890,7 @@ export default function TrainingHubClient() {
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-300/80 bg-white p-5 text-sm text-slate-600 shadow-[0_10px_28px_rgba(15,23,42,0.055)]">
+        <div className="rounded-2xl border border-slate-300/80 bg-white p-5 text-sm text-slate-600 shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
           Sprawdzam sesję…
         </div>
       </div>
@@ -904,15 +904,15 @@ export default function TrainingHubClient() {
     "mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500";
 
   const pillBase =
-    "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium leading-none";
+    "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none shadow-sm";
 
   const metaIconBase =
     "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500";
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-[linear-gradient(180deg,#edf3f9_0%,#f1f5f9_46%,#e9eff6_100%)]">
+    <div className="min-h-[calc(100vh-64px)] bg-[linear-gradient(180deg,#eaf1f8_0%,#f1f5f9_44%,#e7eef6_100%)]">
       <div className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-7 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white px-5 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:px-6">
+        <div className="relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white px-5 py-4 shadow-[0_12px_34px_rgba(15,23,42,0.075)] sm:px-6">
           <div className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full bg-amber-400" />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -952,7 +952,7 @@ export default function TrainingHubClient() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.055)]">
+        <div className="mt-5 rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.065)]">
           <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="text-sm font-semibold text-slate-900">
@@ -1035,7 +1035,7 @@ export default function TrainingHubClient() {
               </select>
             </div>
 
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-2">
               <label className={labelBase}>Punkty</label>
               <select
                 value={minPoints}
@@ -1048,17 +1048,6 @@ export default function TrainingHubClient() {
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div className="flex items-end lg:col-span-1">
-              <button
-                onClick={load}
-                className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95 disabled:opacity-60"
-                disabled={fetching}
-                type="button"
-              >
-                Filtruj
-              </button>
             </div>
           </div>
 
@@ -1169,7 +1158,7 @@ export default function TrainingHubClient() {
             </div>
           ) : null}
 
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-slate-500">
               Wynik:{" "}
               <span className="font-semibold text-slate-900">
@@ -1177,21 +1166,30 @@ export default function TrainingHubClient() {
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <button
                 type="button"
                 onClick={() => setShowMoreFilters((v) => !v)}
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
               >
                 {showMoreFilters ? "Mniej filtrów" : "Więcej filtrów"}
               </button>
 
               <button
                 onClick={() => setAddOpen(true)}
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-sm font-semibold text-amber-800 shadow-sm transition hover:bg-amber-100 active:scale-95"
+                className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-800 shadow-sm transition hover:bg-amber-100 active:scale-95"
                 type="button"
               >
                 Dodaj szkolenie
+              </button>
+
+              <button
+                onClick={load}
+                className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 active:scale-95 disabled:opacity-60"
+                disabled={fetching}
+                type="button"
+              >
+                {fetching ? "Filtruję…" : "Filtruj"}
               </button>
             </div>
           </div>
@@ -1216,7 +1214,7 @@ export default function TrainingHubClient() {
           >
             {selectedCalendarDateKey ? (
               <div
-                className="flex flex-col gap-3 rounded-[1.35rem] border border-blue-200 bg-blue-50/80 p-4 text-sm text-slate-700 shadow-[0_8px_22px_rgba(37,99,235,0.08)] sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-[1.35rem] border border-blue-200 bg-blue-50/80 p-4 text-sm text-slate-700 shadow-[0_10px_26px_rgba(37,99,235,0.10)] sm:flex-row sm:items-center sm:justify-between"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div>
@@ -1263,7 +1261,7 @@ export default function TrainingHubClient() {
                 <article
                   key={t.id}
                   onClick={(e) => e.stopPropagation()}
-                  className="group relative overflow-hidden rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.055)] transition-all duration-200 hover:-translate-y-[1px] hover:border-blue-200 hover:shadow-[0_14px_34px_rgba(37,99,235,0.12)]"
+                  className="group relative overflow-hidden rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_2px_0_rgba(15,23,42,0.045),0_12px_28px_rgba(15,23,42,0.08),0_28px_46px_rgba(15,23,42,0.045)] transition-all duration-200 hover:-translate-y-[2px] hover:border-blue-200 hover:shadow-[0_3px_0_rgba(37,99,235,0.08),0_18px_38px_rgba(37,99,235,0.14),0_34px_60px_rgba(15,23,42,0.08)]"
                 >
                   <div
                     className={`absolute bottom-0 left-0 top-0 w-1.5 ${tone.stripe}`}
@@ -1289,10 +1287,14 @@ export default function TrainingHubClient() {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span className={`${pillBase} ${tone.badge}`}>
-                              <FormatIcon
-                                format={t.format}
-                                className="mr-1 h-3 w-3"
-                              />
+                              <span
+                                className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${tone.iconBox}`}
+                              >
+                                <FormatIcon
+                                  format={t.format}
+                                  className="h-3.5 w-3.5"
+                                />
+                              </span>
                               {labelType(t.format)}
                             </span>
 
@@ -1303,7 +1305,7 @@ export default function TrainingHubClient() {
                                 )}`}
                               >
                                 <CheckCircle2
-                                  className="mr-1 h-3 w-3"
+                                  className="h-3.5 w-3.5"
                                   strokeWidth={2}
                                 />
                                 {enr}
@@ -1315,7 +1317,7 @@ export default function TrainingHubClient() {
                                 className={`${pillBase} border-amber-200 bg-amber-50 text-amber-700`}
                               >
                                 <Clock3
-                                  className="mr-1 h-3 w-3"
+                                  className="h-3.5 w-3.5"
                                   strokeWidth={2}
                                 />
                                 Wkrótce
@@ -1328,7 +1330,7 @@ export default function TrainingHubClient() {
                           </h3>
                         </div>
 
-                        <div className="hidden shrink-0 rounded-2xl bg-blue-50/80 px-3 py-2 text-right ring-1 ring-blue-100 md:block">
+                        <div className="hidden shrink-0 rounded-2xl bg-blue-50/90 px-3 py-2 text-right ring-1 ring-blue-100 md:block">
                           <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-blue-500">
                             CPD
                           </div>
@@ -1459,14 +1461,14 @@ export default function TrainingHubClient() {
             })}
 
             {!fetching && visibleItems.length === 0 && (
-              <div className="rounded-[1.35rem] border border-slate-300/80 bg-white p-6 text-sm text-slate-600 shadow-[0_8px_24px_rgba(15,23,42,0.055)]">
+              <div className="rounded-[1.35rem] border border-slate-300/80 bg-white p-6 text-sm text-slate-600 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
                 Brak wyników. Zmień filtry albo wybierz „Dowolnie” w Terminie.
               </div>
             )}
           </div>
 
           <aside className="space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="overflow-hidden rounded-[1.45rem] border border-blue-200/80 bg-gradient-to-br from-blue-50 via-white to-white p-4 shadow-[0_10px_28px_rgba(37,99,235,0.08)]">
+            <div className="overflow-hidden rounded-[1.45rem] border border-blue-200/80 bg-gradient-to-br from-blue-50 via-white to-white p-4 shadow-[0_12px_32px_rgba(37,99,235,0.10)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
@@ -1483,6 +1485,9 @@ export default function TrainingHubClient() {
 
               <div className="mt-4 grid grid-cols-3 gap-2">
                 <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200/90">
+                  <div className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                    <Award className="h-4 w-4" strokeWidth={2.2} />
+                  </div>
                   <div className="text-lg font-semibold text-slate-950">
                     {sidebarStats.totalPoints}
                   </div>
@@ -1492,6 +1497,9 @@ export default function TrainingHubClient() {
                 </div>
 
                 <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200/90">
+                  <div className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                    <MonitorPlay className="h-4 w-4" strokeWidth={2.2} />
+                  </div>
                   <div className="text-lg font-semibold text-slate-950">
                     {sidebarStats.online}
                   </div>
@@ -1501,6 +1509,9 @@ export default function TrainingHubClient() {
                 </div>
 
                 <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200/90">
+                  <div className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+                    <MapPin className="h-4 w-4" strokeWidth={2.2} />
+                  </div>
                   <div className="text-lg font-semibold text-slate-950">
                     {sidebarStats.stationary}
                   </div>
@@ -1511,7 +1522,7 @@ export default function TrainingHubClient() {
               </div>
             </div>
 
-            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.055)]">
+            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.075)]">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-slate-950">
@@ -1619,7 +1630,7 @@ export default function TrainingHubClient() {
               ) : null}
             </div>
 
-            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.055)]">
+            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.075)]">
               <div className="text-sm font-semibold text-slate-950">
                 Najbliżej w planie
               </div>
