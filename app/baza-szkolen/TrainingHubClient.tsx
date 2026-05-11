@@ -890,7 +890,7 @@ export default function TrainingHubClient() {
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-300/80 bg-white p-5 text-sm text-slate-600 shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
+        <div className="rounded-2xl border border-slate-300/80 bg-white p-5 text-sm text-slate-600 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
           Sprawdzam sesję…
         </div>
       </div>
@@ -910,9 +910,9 @@ export default function TrainingHubClient() {
     "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500";
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-[linear-gradient(180deg,#eaf1f8_0%,#f1f5f9_44%,#e7eef6_100%)]">
+    <div className="min-h-[calc(100vh-64px)] bg-[#eaf1f8]">
       <div className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-7 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white px-5 py-4 shadow-[0_12px_34px_rgba(15,23,42,0.075)] sm:px-6">
+        <div className="relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white px-5 py-4 shadow-[0_6px_16px_rgba(15,23,42,0.08)] sm:px-6">
           <div className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full bg-amber-400" />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -952,7 +952,7 @@ export default function TrainingHubClient() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.065)]">
+        <div className="mt-5 rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_6px_16px_rgba(15,23,42,0.075)]">
           <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="text-sm font-semibold text-slate-900">
@@ -1185,7 +1185,7 @@ export default function TrainingHubClient() {
 
               <button
                 onClick={load}
-                className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 active:scale-95 disabled:opacity-60"
+                className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-95 disabled:opacity-60"
                 disabled={fetching}
                 type="button"
               >
@@ -1214,7 +1214,7 @@ export default function TrainingHubClient() {
           >
             {selectedCalendarDateKey ? (
               <div
-                className="flex flex-col gap-3 rounded-[1.35rem] border border-blue-200 bg-blue-50/80 p-4 text-sm text-slate-700 shadow-[0_10px_26px_rgba(37,99,235,0.10)] sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-[1.35rem] border border-blue-200 bg-blue-50/80 p-4 text-sm text-slate-700 shadow-[0_6px_14px_rgba(37,99,235,0.10)] sm:flex-row sm:items-center sm:justify-between"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div>
@@ -1261,13 +1261,13 @@ export default function TrainingHubClient() {
                 <article
                   key={t.id}
                   onClick={(e) => e.stopPropagation()}
-                  className="group relative overflow-hidden rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_2px_0_rgba(15,23,42,0.045),0_12px_28px_rgba(15,23,42,0.08),0_28px_46px_rgba(15,23,42,0.045)] transition-all duration-200 hover:-translate-y-[2px] hover:border-blue-200 hover:shadow-[0_3px_0_rgba(37,99,235,0.08),0_18px_38px_rgba(37,99,235,0.14),0_34px_60px_rgba(15,23,42,0.08)]"
+                  className="group relative flex min-h-[236px] overflow-hidden rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.05),0_7px_16px_rgba(15,23,42,0.10)] transition-all duration-200 hover:-translate-y-[1px] hover:border-blue-200 hover:shadow-[0_1px_0_rgba(37,99,235,0.08),0_10px_20px_rgba(37,99,235,0.14)]"
                 >
                   <div
                     className={`absolute bottom-0 left-0 top-0 w-1.5 ${tone.stripe}`}
                   />
 
-                  <div className="flex gap-4 pl-1.5">
+                  <div className="flex w-full gap-4 pl-1.5">
                     <div className="shrink-0">
                       <div className="flex w-[78px] flex-col items-center rounded-2xl bg-slate-50 px-3 py-3 shadow-inner shadow-slate-900/5 ring-1 ring-slate-300/80">
                         <span
@@ -1282,7 +1282,7 @@ export default function TrainingHubClient() {
                       </div>
                     </div>
 
-                    <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 flex-1 flex-col">
                       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
@@ -1421,7 +1421,7 @@ export default function TrainingHubClient() {
                           : null}
                       </div>
 
-                      <div className="mt-3 flex flex-col gap-2 border-t border-slate-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="mt-auto flex flex-col gap-2 border-t border-slate-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="hidden sm:block" />
 
                         <div className="flex flex-col gap-2 sm:flex-row">
@@ -1461,14 +1461,14 @@ export default function TrainingHubClient() {
             })}
 
             {!fetching && visibleItems.length === 0 && (
-              <div className="rounded-[1.35rem] border border-slate-300/80 bg-white p-6 text-sm text-slate-600 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+              <div className="rounded-[1.35rem] border border-slate-300/80 bg-white p-6 text-sm text-slate-600 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
                 Brak wyników. Zmień filtry albo wybierz „Dowolnie” w Terminie.
               </div>
             )}
           </div>
 
           <aside className="space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex h-[194px] flex-col justify-between overflow-hidden rounded-[1.45rem] border border-blue-200/80 bg-gradient-to-br from-blue-50 via-white to-white p-4 shadow-[0_2px_0_rgba(37,99,235,0.05),0_12px_28px_rgba(37,99,235,0.10),0_24px_42px_rgba(15,23,42,0.045)]">
+            <div className="flex h-[236px] flex-col overflow-hidden rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.05),0_7px_16px_rgba(15,23,42,0.10)]">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
                   Planowanie
@@ -1483,13 +1483,13 @@ export default function TrainingHubClient() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-2xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200/90">
-                  <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+              <div className="mt-auto grid grid-cols-3 gap-2">
+                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+                  <div className="mb-2 text-blue-600">
                     <Award className="h-5 w-5" strokeWidth={2.2} />
                   </div>
 
-                  <div className="text-lg font-semibold leading-none text-slate-950">
+                  <div className="text-xl font-bold leading-none tracking-[-0.03em] text-slate-950">
                     {sidebarStats.totalPoints}
                   </div>
 
@@ -1498,12 +1498,12 @@ export default function TrainingHubClient() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200/90">
-                  <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+                  <div className="mb-2 text-blue-600">
                     <MonitorPlay className="h-5 w-5" strokeWidth={2.2} />
                   </div>
 
-                  <div className="text-lg font-semibold leading-none text-slate-950">
+                  <div className="text-xl font-bold leading-none tracking-[-0.03em] text-slate-950">
                     {sidebarStats.online}
                   </div>
 
@@ -1512,12 +1512,12 @@ export default function TrainingHubClient() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-white px-3 py-3 shadow-sm ring-1 ring-slate-200/90">
-                  <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+                  <div className="mb-2 text-amber-600">
                     <MapPin className="h-5 w-5" strokeWidth={2.2} />
                   </div>
 
-                  <div className="text-lg font-semibold leading-none text-slate-950">
+                  <div className="text-xl font-bold leading-none tracking-[-0.03em] text-slate-950">
                     {sidebarStats.stationary}
                   </div>
 
@@ -1528,7 +1528,7 @@ export default function TrainingHubClient() {
               </div>
             </div>
 
-            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.075)]">
+            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-slate-950">
@@ -1636,7 +1636,7 @@ export default function TrainingHubClient() {
               ) : null}
             </div>
 
-            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.075)]">
+            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
               <div className="text-sm font-semibold text-slate-950">
                 Najbliżej w planie
               </div>
