@@ -2552,4 +2552,3 @@ export default function CalculatorClient() {
     </div>
   );
 }
- 
