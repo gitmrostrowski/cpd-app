@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Footprints } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
@@ -336,8 +337,6 @@ function MiniIcon({
     | "doc"
     | "user"
     | "bell"
-    | "walk"
-    | "doctorWalk"
     | "hourglass";
   className?: string;
 }) {
@@ -395,44 +394,6 @@ function MiniIcon({
         <path d="M16 2c0 4-4 5-4 8s4 4 4 8" />
         <path d="M9 6h6" />
         <path d="M9 18h6" />
-      </svg>
-    );
-  }
-
-  if (name === "doctorWalk") {
-    return (
-      <svg
-        viewBox="0 0 24 24"
-        className={className}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.05"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="4.2" r="2" />
-        <path d="M10.2 7.2h3.6" />
-        <path d="M12 7.2v5.1" />
-        <path d="M9.4 10.2l2.6 2.1 2.8-2.1" />
-        <path d="M12 12.3l-2.2 7.1" />
-        <path d="M12.4 13.1l4.1 6.3" />
-        <path d="M6.8 20.4h4.2" />
-        <path d="M14.7 20.4h4.1" />
-        <path d="M18.2 5.2v3.4" />
-        <path d="M16.5 6.9h3.4" />
-      </svg>
-    );
-  }
-
-  if (name === "walk") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="14" cy="4.5" r="2" />
-        <path d="M10.5 22l1.8-6.7" />
-        <path d="M16.6 21.8l-3.1-5.2" />
-        <path d="M9.5 10.2l3.2-2.1 3.1 1.9" />
-        <path d="M12.5 8.2l1 5 4.3 1.2" />
-        <path d="M8 15.8l4.1-2.5" />
       </svg>
     );
   }
@@ -545,6 +506,13 @@ function StatMiniCard({
         ? "text-blue-700"
         : "text-slate-950";
 
+  const iconTone =
+    tone === "amber"
+      ? "text-amber-600"
+      : tone === "blue"
+        ? "text-blue-600"
+        : "text-slate-500";
+
   return (
     <div className={`rounded-2xl border ${compact ? "p-2.5" : "p-3"} ${toneWrap}`}>
       <div className="flex items-start justify-between gap-2">
@@ -555,7 +523,7 @@ function StatMiniCard({
           <div className={`mt-1.5 flex items-end gap-1 ${toneValue}`}>
             <div
               className={`font-extrabold leading-none tracking-[-0.04em] ${
-                compact ? "text-[1.18rem]" : "text-[1.38rem]"
+                compact ? "text-[1.08rem]" : "text-[1.25rem]"
               }`}
             >
               {value}
@@ -574,15 +542,7 @@ function StatMiniCard({
         </div>
 
         {icon ? (
-          <div
-            className={`flex ${compact ? "h-8 w-8" : "h-9 w-9"} shrink-0 items-center justify-center rounded-xl ${
-              tone === "amber"
-                ? "bg-amber-100 text-amber-700"
-                : tone === "blue"
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-slate-100 text-slate-600"
-            }`}
-          >
+          <div className={`shrink-0 ${iconTone}`}>
             {icon}
           </div>
         ) : null}
@@ -784,9 +744,9 @@ export default function CalculatorClient() {
 
   const paceDescription =
     paceDelta < -10
-      ? "Punkty rosną wolniej niż upływa okres."
+      ? "Punkty rosną wolniej niż okres."
       : paceDelta >= 10
-        ? "Masz zapas względem upływu okresu."
+        ? "Masz zapas względem okresu."
         : "Postęp jest blisko tempa okresu.";
 
   const limitsUsage = useMemo(() => {
@@ -1065,18 +1025,18 @@ export default function CalculatorClient() {
   return (
     <div className="space-y-5">
       <style jsx global>{`
-        @keyframes cpdWalkStep {
+        @keyframes cpdFootsteps {
           0%, 100% {
-            transform: translateY(0) rotate(-2deg);
+            transform: translateY(0) rotate(-8deg);
           }
           50% {
-            transform: translateY(-2px) rotate(2deg);
+            transform: translateY(-2px) rotate(8deg);
           }
         }
 
-        .cpd-walker {
-          animation: cpdWalkStep 0.95s ease-in-out infinite;
-          transform-origin: center bottom;
+        .cpd-footsteps {
+          animation: cpdFootsteps 1.05s ease-in-out infinite;
+          transform-origin: center;
         }
       `}</style>
 
@@ -1468,7 +1428,7 @@ export default function CalculatorClient() {
                         : "kompletne"
                     }
                     tone={missingEvidenceCount > 0 ? "amber" : "blue"}
-                    icon={<MiniIcon name="doc" className="h-4.5 w-4.5" />}
+                    icon={<MiniIcon name="doc" className="h-7 w-7" />}
                     compact
                   />
 
@@ -1477,7 +1437,7 @@ export default function CalculatorClient() {
                     value={paceLabel}
                     subtitle={paceDescription}
                     tone="slate"
-                    icon={<MiniIcon name="hourglass" className="h-4.5 w-4.5" />}
+                    icon={<MiniIcon name="hourglass" className="h-7 w-7" />}
                     compact
                   />
 
@@ -1512,8 +1472,8 @@ export default function CalculatorClient() {
                           className="absolute top-0 -translate-x-1/2 transition-all duration-700"
                           style={{ left: `${clamp(progress, 4, 96)}%` }}
                         >
-                          <div className="cpd-walker text-blue-700 drop-shadow-sm">
-                            <MiniIcon name="doctorWalk" className="h-8 w-8" />
+                          <div className="cpd-footsteps text-blue-700 drop-shadow-sm">
+                            <Footprints className="h-8 w-8" strokeWidth={2.3} />
                           </div>
                         </div>
                       </div>
@@ -1522,8 +1482,8 @@ export default function CalculatorClient() {
                     <div>
                       <div className="mb-2 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-md bg-slate-100 text-slate-600">
-                            <MiniIcon name="hourglass" className="h-3.5 w-3.5" />
+                          <span className="text-slate-600">
+                            <MiniIcon name="hourglass" className="h-4 w-4" />
                           </span>
                           Upływ okresu
                         </div>
@@ -1645,7 +1605,7 @@ export default function CalculatorClient() {
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Twoje limity</h2>
               <p className="text-xs text-slate-500">
-                Ile punktów możesz jeszcze bezpiecznie zaliczyć z wybranych kategorii
+                Sprawdź, które kategorie nadal mogą pomóc zdobyć punkty
               </p>
             </div>
           </div>
@@ -1660,7 +1620,7 @@ export default function CalculatorClient() {
         <div className="p-4">
           <div className="mb-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs leading-relaxed text-slate-600">
             <span className="font-semibold text-slate-900">Limity nie są brakami.</span>{" "}
-            Pokazują tylko, czy dana kategoria nadal może pomóc zebrać punkty.
+            Pokazują maksymalnie, ile punktów możesz jeszcze zaliczyć z danej kategorii.
           </div>
 
           {planInfo || planErr ? (
@@ -1670,9 +1630,9 @@ export default function CalculatorClient() {
             </div>
           ) : null}
 
-          <div className="space-y-2.5">
+          <div className="grid gap-3 xl:grid-cols-3">
             {limitsUsage.length === 0 ? (
-              <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500 xl:col-span-3">
                 Brak zdefiniowanych limitów dla tego zawodu.
               </div>
             ) : (
@@ -1712,52 +1672,52 @@ export default function CalculatorClient() {
                       : `maks. ${r.cap} pkt / okres`;
 
                 return (
-                  <div
+                  <article
                     key={r.key}
-                    className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-[0_2px_8px_rgba(15,23,42,0.035)]"
+                    className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.035)]"
                   >
-                    <div className={`absolute inset-y-3 left-0 w-1 rounded-r-full ${accentBar}`} />
+                    <div className={`absolute bottom-4 left-0 top-4 w-1 rounded-r-full ${accentBar}`} />
 
-                    <div className="grid gap-3 pl-2 lg:grid-cols-[minmax(0,1.45fr)_150px_220px_92px] lg:items-center">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
+                    <div className="pl-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
                           <h3 className="text-sm font-bold tracking-tight text-slate-950">
                             {r.label}
                           </h3>
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${badgeClass}`}
-                          >
-                            {badgeLabel}
-                          </span>
+                          <div className="mt-1 text-xs text-slate-500">
+                            Limit: {limitText}
+                          </div>
                         </div>
 
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                          <span>Limit: {limitText}</span>
-                          <span className="rounded-lg border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-blue-600">
-                            maks. {r.cap} pkt
-                          </span>
-                        </div>
-
-                        {r.note ? (
-                          <p className="mt-2 max-w-2xl text-xs leading-relaxed text-slate-500">
-                            {r.note}
-                          </p>
-                        ) : null}
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${badgeClass}`}
+                        >
+                          {badgeLabel}
+                        </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="flex h-[58px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50/70 text-center">
-                          <div className="text-lg font-extrabold leading-none tracking-[-0.04em] text-slate-950">
+                      <div className="mt-3 grid grid-cols-3 gap-2">
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-2 py-2 text-center">
+                          <div className="text-base font-extrabold leading-none text-slate-950">
                             {r.used}
                           </div>
-                          <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                          <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                             zdobyte
                           </div>
                         </div>
 
-                        <div className="flex h-[58px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50/70 text-center">
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-2 py-2 text-center">
+                          <div className="text-base font-extrabold leading-none text-slate-950">
+                            {r.cap}
+                          </div>
+                          <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                            limit
+                          </div>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-2 py-2 text-center">
                           <div
-                            className={`text-lg font-extrabold leading-none tracking-[-0.04em] ${
+                            className={`text-base font-extrabold leading-none ${
                               isMax
                                 ? "text-slate-500"
                                 : nearMax
@@ -1767,19 +1727,19 @@ export default function CalculatorClient() {
                           >
                             {Math.round(r.remaining)}
                           </div>
-                          <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                          <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                             zostało
                           </div>
                         </div>
                       </div>
 
-                      <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5">
+                      <div className="mt-3">
                         <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-600">
                           <span>Wykorzystanie</span>
                           <span>{Math.round(r.usedPct)}%</span>
                         </div>
 
-                        <div className="h-2 overflow-hidden rounded-full bg-white">
+                        <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${accentBar}`}
                             style={{
@@ -1787,17 +1747,27 @@ export default function CalculatorClient() {
                             }}
                           />
                         </div>
-
-                        <div className="mt-2 text-[11px] leading-relaxed text-slate-600">
-                          {recommendation}
-                        </div>
                       </div>
 
-                      <div className="flex lg:justify-end">
+                      <p className="mt-3 min-h-[34px] text-xs leading-relaxed text-slate-600">
+                        {recommendation}
+                      </p>
+
+                      {r.note ? (
+                        <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
+                          {r.note}
+                        </p>
+                      ) : null}
+
+                      <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                        <span className="rounded-lg border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-blue-600">
+                          maks. {r.cap} pkt
+                        </span>
+
                         {isMax ? (
                           <Link
                             href="/aktywnosci"
-                            className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 lg:w-auto"
+                            className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50"
                           >
                             Zobacz
                           </Link>
@@ -1806,14 +1776,14 @@ export default function CalculatorClient() {
                             type="button"
                             disabled={isBusy || planningKey === r.key}
                             onClick={() => planForRule(r)}
-                            className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95 disabled:opacity-40 lg:w-auto"
+                            className="inline-flex h-8 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95 disabled:opacity-40"
                           >
                             {planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}
                           </button>
                         )}
                       </div>
                     </div>
-                  </div>
+                  </article>
                 );
               })
             )}
