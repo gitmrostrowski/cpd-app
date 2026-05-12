@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Footprints } from "lucide-react";
+import { Target } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
@@ -72,7 +72,7 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
         label: "Szkolenie wewnętrzne",
         mode: "per_item",
         maxPoints: 6,
-        note: "Maks. 6 pkt za jedno szkolenie. Jeśli masz więcej takich szkoleń, każde oceniaj osobno.",
+        note: "Maks. 6 pkt za jedno szkolenie. Możesz dodawać kolejne takie wpisy, ale każdy oceniaj osobno.",
       },
       {
         key: "JOURNAL_SUBSCRIPTION",
@@ -99,7 +99,7 @@ const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
         label: "Szkolenie wewnętrzne",
         mode: "per_item",
         maxPoints: 6,
-        note: "Maks. 6 pkt za jedno szkolenie. Jeśli masz więcej takich szkoleń, każde oceniaj osobno.",
+        note: "Maks. 6 pkt za jedno szkolenie. Możesz dodawać kolejne takie wpisy, ale każdy oceniaj osobno.",
       },
       {
         key: "JOURNAL_SUBSCRIPTION",
@@ -483,6 +483,7 @@ function StatMiniCard({
   tone = "slate",
   icon,
   compact = false,
+  emphasis = false,
 }: {
   label: string;
   value: React.ReactNode;
@@ -491,6 +492,7 @@ function StatMiniCard({
   tone?: "slate" | "amber" | "blue";
   icon?: React.ReactNode;
   compact?: boolean;
+  emphasis?: boolean;
 }) {
   const toneWrap =
     tone === "amber"
@@ -523,7 +525,11 @@ function StatMiniCard({
           <div className={`mt-1.5 flex items-end gap-1 ${toneValue}`}>
             <div
               className={`font-extrabold leading-none tracking-[-0.04em] ${
-                compact ? "text-[1.08rem]" : "text-[1.25rem]"
+                emphasis
+                  ? "text-[1.55rem]"
+                  : compact
+                    ? "text-[1.08rem]"
+                    : "text-[1.25rem]"
               }`}
             >
               {value}
@@ -1025,17 +1031,19 @@ export default function CalculatorClient() {
   return (
     <div className="space-y-5">
       <style jsx global>{`
-        @keyframes cpdFootsteps {
+        @keyframes cpdTargetPulse {
           0%, 100% {
-            transform: translateY(0) rotate(-8deg);
+            transform: scale(1);
+            opacity: 1;
           }
           50% {
-            transform: translateY(-2px) rotate(8deg);
+            transform: scale(1.08);
+            opacity: 0.9;
           }
         }
 
-        .cpd-footsteps {
-          animation: cpdFootsteps 1.05s ease-in-out infinite;
+        .cpd-target-marker {
+          animation: cpdTargetPulse 1.2s ease-in-out infinite;
           transform-origin: center;
         }
       `}</style>
@@ -1419,7 +1427,7 @@ export default function CalculatorClient() {
                   />
 
                   <StatMiniCard
-                    label="Dokumenty"
+                    label="Brakujące dokumenty"
                     value={missingEvidenceCount}
                     suffix="braków"
                     subtitle={
@@ -1430,6 +1438,7 @@ export default function CalculatorClient() {
                     tone={missingEvidenceCount > 0 ? "amber" : "blue"}
                     icon={<MiniIcon name="doc" className="h-7 w-7" />}
                     compact
+                    emphasis
                   />
 
                   <StatMiniCard
@@ -1472,8 +1481,8 @@ export default function CalculatorClient() {
                           className="absolute top-0 -translate-x-1/2 transition-all duration-700"
                           style={{ left: `${clamp(progress, 4, 96)}%` }}
                         >
-                          <div className="cpd-footsteps text-blue-700 drop-shadow-sm">
-                            <Footprints className="h-8 w-8" strokeWidth={2.3} />
+                          <div className="cpd-target-marker text-blue-700 drop-shadow-sm">
+                            <Target className="h-8 w-8" strokeWidth={2.4} />
                           </div>
                         </div>
                       </div>
@@ -1620,7 +1629,7 @@ export default function CalculatorClient() {
         <div className="p-4">
           <div className="mb-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs leading-relaxed text-slate-600">
             <span className="font-semibold text-slate-900">Limity nie są brakami.</span>{" "}
-            Pokazują maksymalnie, ile punktów możesz jeszcze zaliczyć z danej kategorii.
+            Pokazują, gdzie jeszcze możesz bezpiecznie doliczać punkty, a gdzie lepiej wybrać inną aktywność.
           </div>
 
           {planInfo || planErr ? (
@@ -1658,18 +1667,26 @@ export default function CalculatorClient() {
                     ? "Blisko limitu"
                     : "Można planować";
 
-                const recommendation = isMax
-                  ? "Limit zamknięty — wybierz inną kategorię."
-                  : nearMax
-                    ? `Zostało ${Math.round(r.remaining)} pkt. To końcówka limitu.`
-                    : `Zostało ${Math.round(r.remaining)} pkt. Ta kategoria nadal może pomóc.`;
+                const availableText =
+                  r.mode === "per_item"
+                    ? `Do ${r.cap} pkt za kolejny wpis`
+                    : isMax
+                      ? "Ta kategoria jest zamknięta"
+                      : `Jeszcze ${Math.round(r.remaining)} pkt dostępne`;
 
                 const limitText =
                   r.mode === "per_item"
-                    ? `maks. ${r.cap} pkt / aktywność`
+                    ? `Limit za jedną aktywność`
                     : r.mode === "per_year"
-                      ? `maks. ${r.maxPoints} pkt / rok`
-                      : `maks. ${r.cap} pkt / okres`;
+                      ? `Limit roczny`
+                      : `Limit w okresie`;
+
+                const ruleValue =
+                  r.mode === "per_item"
+                    ? `${r.cap} pkt / wpis`
+                    : r.mode === "per_year"
+                      ? `${r.maxPoints} pkt / rok`
+                      : `${r.cap} pkt / okres`;
 
                 return (
                   <article
@@ -1685,7 +1702,7 @@ export default function CalculatorClient() {
                             {r.label}
                           </h3>
                           <div className="mt-1 text-xs text-slate-500">
-                            Limit: {limitText}
+                            {limitText}: <span className="font-semibold text-slate-700">{ruleValue}</span>
                           </div>
                         </div>
 
@@ -1696,62 +1713,62 @@ export default function CalculatorClient() {
                         </span>
                       </div>
 
-                      <div className="mt-3 grid grid-cols-3 gap-2">
-                        <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-2 py-2 text-center">
-                          <div className="text-base font-extrabold leading-none text-slate-950">
-                            {r.used}
+                      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+                        <div className="flex items-end justify-between gap-3">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                              Zdobyte
+                            </div>
+                            <div className="mt-1 text-xl font-extrabold leading-none text-slate-950">
+                              {r.used}
+                              <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
+                            </div>
                           </div>
-                          <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                            zdobyte
+
+                          <div className="text-right">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                              Możesz jeszcze
+                            </div>
+                            <div
+                              className={`mt-1 text-xl font-extrabold leading-none ${
+                                isMax
+                                  ? "text-slate-500"
+                                  : nearMax
+                                    ? "text-amber-600"
+                                    : "text-blue-700"
+                              }`}
+                            >
+                              {r.mode === "per_item" ? r.cap : Math.round(r.remaining)}
+                              <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-2 py-2 text-center">
-                          <div className="text-base font-extrabold leading-none text-slate-950">
-                            {r.cap}
+                        <div className="mt-3">
+                          <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-600">
+                            <span>Wykorzystanie limitu</span>
+                            <span>{Math.round(r.usedPct)}%</span>
                           </div>
-                          <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                            limit
-                          </div>
-                        </div>
 
-                        <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-2 py-2 text-center">
-                          <div
-                            className={`text-base font-extrabold leading-none ${
-                              isMax
-                                ? "text-slate-500"
-                                : nearMax
-                                  ? "text-amber-600"
-                                  : "text-blue-700"
-                            }`}
-                          >
-                            {Math.round(r.remaining)}
+                          <div className="h-2 overflow-hidden rounded-full bg-white">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${accentBar}`}
+                              style={{
+                                width: `${Math.max(r.usedPct, r.used > 0 ? 5 : 0)}%`,
+                              }}
+                            />
                           </div>
-                          <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                            zostało
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-3">
-                        <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-600">
-                          <span>Wykorzystanie</span>
-                          <span>{Math.round(r.usedPct)}%</span>
-                        </div>
-
-                        <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${accentBar}`}
-                            style={{
-                              width: `${Math.max(r.usedPct, r.used > 0 ? 5 : 0)}%`,
-                            }}
-                          />
                         </div>
                       </div>
 
-                      <p className="mt-3 min-h-[34px] text-xs leading-relaxed text-slate-600">
-                        {recommendation}
-                      </p>
+                      <div className="mt-3 rounded-xl border border-slate-100 bg-white px-3 py-2 text-xs leading-relaxed text-slate-600">
+                        <span className="font-semibold text-slate-900">{availableText}.</span>{" "}
+                        {r.mode === "per_item"
+                          ? "Nie ma tu limitu łącznego w okresie — limit dotyczy pojedynczego wpisu."
+                          : isMax
+                            ? "Lepiej zaplanować inną kategorię."
+                            : "Ta kategoria nadal może pomóc domknąć punkty."}
+                      </div>
 
                       {r.note ? (
                         <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
