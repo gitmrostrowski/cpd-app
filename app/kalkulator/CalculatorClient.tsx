@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Target } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
@@ -475,6 +474,55 @@ function CircularProgress({
   );
 }
 
+function ProgressBuddy({ progress }: { progress: number }) {
+  const mood =
+    progress >= 100
+      ? "done"
+      : progress >= 70
+        ? "happy"
+        : progress >= 35
+          ? "steady"
+          : "start";
+
+  return (
+    <div className="relative">
+      <div className="absolute -inset-1 rounded-full bg-blue-200/70 blur-sm" />
+
+      <div className="relative grid h-10 w-10 place-items-center rounded-full border-2 border-white bg-blue-600 text-white shadow-[0_8px_18px_rgba(37,99,235,0.28)]">
+        {mood === "done" ? (
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.4">
+            <path d="M7 11.5 10.5 15 17 8" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 32 32" className="h-7 w-7" fill="none">
+            <circle cx="16" cy="16" r="10" fill="currentColor" opacity="0.18" />
+            <circle cx="12.5" cy="14" r="1.6" fill="white" />
+            <circle cx="19.5" cy="14" r="1.6" fill="white" />
+            <path
+              d={
+                mood === "start"
+                  ? "M12 20c2-1 6-1 8 0"
+                  : "M11.5 19c2.5 3 6.5 3 9 0"
+              }
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M16 5.5v-2M10 7 8.5 5.5M22 7l1.5-1.5"
+              stroke="white"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              opacity="0.85"
+            />
+          </svg>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function StatMiniCard({
   label,
   value,
@@ -496,9 +544,9 @@ function StatMiniCard({
 }) {
   const toneWrap =
     tone === "amber"
-      ? "bg-amber-50/30 border-amber-200"
+      ? "bg-amber-50/50 border-amber-200"
       : tone === "blue"
-        ? "bg-blue-50/30 border-blue-200"
+        ? "bg-blue-50/50 border-blue-200"
         : "bg-white border-slate-200";
 
   const toneValue =
@@ -516,7 +564,9 @@ function StatMiniCard({
         : "text-slate-500";
 
   return (
-    <div className={`rounded-2xl border ${compact ? "p-2.5" : "p-3"} ${toneWrap}`}>
+    <div
+      className={`h-full rounded-2xl border ${compact ? "p-2.5" : "p-4"} ${toneWrap}`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
@@ -526,7 +576,7 @@ function StatMiniCard({
             <div
               className={`font-extrabold leading-none tracking-[-0.04em] ${
                 emphasis
-                  ? "text-[1.55rem]"
+                  ? "text-[2rem]"
                   : compact
                     ? "text-[1.08rem]"
                     : "text-[1.25rem]"
@@ -541,7 +591,7 @@ function StatMiniCard({
             ) : null}
           </div>
           {subtitle ? (
-            <div className="mt-1 text-[11px] leading-relaxed text-slate-500">
+            <div className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
               {subtitle}
             </div>
           ) : null}
@@ -750,36 +800,77 @@ export default function CalculatorClient() {
 
   const paceDescription =
     paceDelta < -10
-      ? "Punkty rosną wolniej niż okres."
+      ? `Jesteś ${Math.abs(paceDelta)} pp. za upływem czasu.`
       : paceDelta >= 10
-        ? "Masz zapas względem okresu."
-        : "Postęp jest blisko tempa okresu.";
+        ? `Masz ${paceDelta} pp. zapasu względem czasu.`
+        : "Postęp punktów jest blisko upływu okresu.";
 
   const limitsUsage = useMemo(() => {
     const limits = RULES_BY_PROFESSION[profession]?.limits ?? [];
     const usage = new Map<string, number>();
+    const counts = new Map<string, number>();
 
     for (const a of inPeriodDone) {
       const key = mapTypeToRuleKey(a.type);
       if (!key) continue;
       usage.set(key, (usage.get(key) || 0) + (Number(a.points) || 0));
+      counts.set(key, (counts.get(key) || 0) + 1);
     }
 
     const yearsInPeriod = Math.max(1, periodEnd - periodStart + 1);
 
     return limits.map((l) => {
       const used = usage.get(l.key) || 0;
-      const cap = l.mode === "per_year" ? l.maxPoints * yearsInPeriod : l.maxPoints;
-      const remaining = Math.max(0, cap - used);
-      const usedPct = cap > 0 ? clamp((used / cap) * 100, 0, 100) : 0;
-      return { ...l, used, cap, remaining, usedPct, yearsInPeriod };
+      const count = counts.get(l.key) || 0;
+      const cap =
+        l.mode === "per_year"
+          ? l.maxPoints * yearsInPeriod
+          : l.maxPoints;
+
+      const remaining =
+        l.mode === "per_item"
+          ? l.maxPoints
+          : Math.max(0, cap - used);
+
+      const usedPct =
+        l.mode === "per_item"
+          ? 0
+          : cap > 0
+            ? clamp((used / cap) * 100, 0, 100)
+            : 0;
+
+      return { ...l, used, count, cap, remaining, usedPct, yearsInPeriod };
     });
   }, [profession, inPeriodDone, periodStart, periodEnd]);
 
   const limitWarning = useMemo(() => {
-    const hit = limitsUsage.find((x) => (x.usedPct ?? 0) >= 100);
+    const hit = limitsUsage.find((x) => x.mode !== "per_item" && (x.usedPct ?? 0) >= 100);
     return hit ? `Limit "${hit.label}" jest osiągnięty.` : null;
   }, [limitsUsage]);
+
+  const usableLimits = useMemo(
+    () =>
+      limitsUsage.filter(
+        (r) => r.mode === "per_item" || Number(r.remaining) > 0,
+      ),
+    [limitsUsage],
+  );
+
+  const blockedLimits = useMemo(
+    () =>
+      limitsUsage.filter(
+        (r) => r.mode !== "per_item" && Number(r.remaining) <= 0,
+      ),
+    [limitsUsage],
+  );
+
+  const bestLimit = useMemo(() => {
+    const periodBased = usableLimits
+      .filter((r) => r.mode !== "per_item")
+      .sort((a, b) => Number(b.remaining) - Number(a.remaining));
+
+    return periodBased[0] ?? usableLimits[0] ?? null;
+  }, [usableLimits]);
 
   const nextSteps = useMemo(
     () => buildNextSteps(missingPoints, missingEvidenceCount, limitWarning),
@@ -1031,19 +1122,17 @@ export default function CalculatorClient() {
   return (
     <div className="space-y-5">
       <style jsx global>{`
-        @keyframes cpdTargetPulse {
+        @keyframes cpdBuddyFloat {
           0%, 100% {
-            transform: scale(1);
-            opacity: 1;
+            transform: translateY(0) scale(1);
           }
           50% {
-            transform: scale(1.08);
-            opacity: 0.9;
+            transform: translateY(-2px) scale(1.04);
           }
         }
 
         .cpd-target-marker {
-          animation: cpdTargetPulse 1.2s ease-in-out infinite;
+          animation: cpdBuddyFloat 1.45s ease-in-out infinite;
           transform-origin: center;
         }
       `}</style>
@@ -1363,7 +1452,7 @@ export default function CalculatorClient() {
                     Realizacja celu
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Jeden widok: gdzie jesteś, czego brakuje i co zrobić dalej
+                    Sprawdź, ile brakuje punktów, dokumentów i jaki jest następny krok.
                   </p>
                 </div>
               </div>
@@ -1416,44 +1505,52 @@ export default function CalculatorClient() {
               </div>
 
               <div className="grid gap-3">
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                  <StatMiniCard
-                    label="Do celu"
-                    value={missingPoints}
-                    suffix="pkt"
-                    subtitle="jeszcze do zebrania"
-                    tone="blue"
-                    compact
-                  />
+                <div className="grid gap-3 xl:grid-cols-4">
+                  <div className="xl:col-span-2">
+                    <StatMiniCard
+                      label="Brakuje do celu"
+                      value={missingPoints}
+                      suffix="pkt"
+                      subtitle={
+                        missingPoints > 0
+                          ? `Zbierz jeszcze ${missingPoints} pkt, aby domknąć okres.`
+                          : "Cel punktowy jest osiągnięty."
+                      }
+                      tone={missingPoints > 0 ? "blue" : "slate"}
+                      icon={<MiniIcon name="chart" className="h-7 w-7" />}
+                      emphasis
+                    />
+                  </div>
+
+                  <div className="xl:col-span-2">
+                    <StatMiniCard
+                      label="Dokumenty do uzupełnienia"
+                      value={missingEvidenceCount}
+                      suffix={missingEvidenceCount === 1 ? "brak" : "braki"}
+                      subtitle={
+                        missingEvidenceCount > 0
+                          ? "Bez nich punkty mogą nie przejść w raporcie."
+                          : "Dokumentacja wygląda dobrze."
+                      }
+                      tone={missingEvidenceCount > 0 ? "amber" : "blue"}
+                      icon={<MiniIcon name="doc" className="h-7 w-7" />}
+                      emphasis
+                    />
+                  </div>
 
                   <StatMiniCard
-                    label="Brakujące dokumenty"
-                    value={missingEvidenceCount}
-                    suffix="braków"
-                    subtitle={
-                      missingEvidenceCount > 0
-                        ? "uzupełnij najpierw"
-                        : "kompletne"
-                    }
-                    tone={missingEvidenceCount > 0 ? "amber" : "blue"}
-                    icon={<MiniIcon name="doc" className="h-7 w-7" />}
-                    compact
-                    emphasis
-                  />
-
-                  <StatMiniCard
-                    label="Tempo"
+                    label="Tempo względem okresu"
                     value={paceLabel}
                     subtitle={paceDescription}
                     tone="slate"
-                    icon={<MiniIcon name="hourglass" className="h-7 w-7" />}
+                    icon={<MiniIcon name="hourglass" className="h-6 w-6" />}
                     compact
                   />
 
                   <StatMiniCard
-                    label="Zawód"
+                    label="Zasady"
                     value={displayProfession(profession, professionOther)}
-                    subtitle="aktualny profil"
+                    subtitle={`${requiredPoints} pkt · okres ${periodStart}–${periodEnd}`}
                     tone="slate"
                     compact
                   />
@@ -1471,18 +1568,18 @@ export default function CalculatorClient() {
                         </div>
                       </div>
 
-                      <div className="relative h-8">
-                        <div className="absolute left-0 right-0 top-3.5 h-2.5 rounded-full bg-slate-100" />
+                      <div className="relative h-10">
+                        <div className="absolute left-0 right-0 top-4 h-2.5 rounded-full bg-slate-100" />
                         <div
-                          className="absolute left-0 top-3.5 h-2.5 rounded-full bg-blue-600 transition-all duration-700"
+                          className="absolute left-0 top-4 h-2.5 rounded-full bg-blue-600 transition-all duration-700"
                           style={{ width: `${Math.max(progress, 2)}%` }}
                         />
                         <div
                           className="absolute top-0 -translate-x-1/2 transition-all duration-700"
                           style={{ left: `${clamp(progress, 4, 96)}%` }}
                         >
-                          <div className="cpd-target-marker text-blue-700 drop-shadow-sm">
-                            <Target className="h-8 w-8" strokeWidth={2.4} />
+                          <div className="cpd-target-marker">
+                            <ProgressBuddy progress={progress} />
                           </div>
                         </div>
                       </div>
@@ -1614,7 +1711,11 @@ export default function CalculatorClient() {
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Twoje limity</h2>
               <p className="text-xs text-slate-500">
-                Sprawdź, które kategorie nadal mogą pomóc zdobyć punkty
+                Limity dla:{" "}
+                <span className="font-semibold text-slate-700">
+                  {displayProfession(profession, professionOther)}
+                </span>{" "}
+                · okres {periodStart}–{periodEnd} · cel {requiredPoints} pkt
               </p>
             </div>
           </div>
@@ -1627,10 +1728,56 @@ export default function CalculatorClient() {
         </div>
 
         <div className="p-4">
-          <div className="mb-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs leading-relaxed text-slate-600">
-            <span className="font-semibold text-slate-900">Limity nie są brakami.</span>{" "}
-            Pokazują, gdzie jeszcze możesz bezpiecznie doliczać punkty, a gdzie lepiej wybrać inną aktywność.
+          <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs leading-relaxed text-slate-600">
+            <span className="font-semibold text-slate-900">
+              Limity pokazują, ile punktów możesz jeszcze bezpiecznie doliczyć.
+            </span>{" "}
+            To nie są braki — to podpowiedź, które kategorie nadal mają sens, a gdzie lepiej wybrać inną aktywność.
           </div>
+
+          {limitsUsage.length > 0 ? (
+            <div className="mb-4 grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700">
+                  Najlepsza opcja teraz
+                </div>
+                <div className="mt-1 text-lg font-extrabold tracking-tight text-slate-950">
+                  {bestLimit ? bestLimit.label : "Sprawdź aktywności"}
+                </div>
+                <div className="mt-1 text-xs leading-relaxed text-slate-600">
+                  {bestLimit
+                    ? bestLimit.mode === "per_item"
+                      ? `Możesz dodać kolejny wpis, maks. ${bestLimit.cap} pkt za jeden.`
+                      : `Możesz jeszcze doliczyć ${Math.round(bestLimit.remaining)} pkt.`
+                    : "Brak oczywistej kategorii z dostępnym limitem."}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  Kategorie dostępne
+                </div>
+                <div className="mt-1 text-2xl font-extrabold text-slate-950">
+                  {usableLimits.length}
+                </div>
+                <div className="mt-1 text-xs leading-relaxed text-slate-600">
+                  Tyle kategorii nadal może pomóc w zdobyciu punktów.
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-700">
+                  Uwaga na limity
+                </div>
+                <div className="mt-1 text-2xl font-extrabold text-slate-950">
+                  {blockedLimits.length}
+                </div>
+                <div className="mt-1 text-xs leading-relaxed text-slate-600">
+                  Tyle kategorii jest już wykorzystanych lub zamkniętych.
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {planInfo || planErr ? (
             <div className="mb-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs">
@@ -1646,8 +1793,8 @@ export default function CalculatorClient() {
               </div>
             ) : (
               limitsUsage.map((r) => {
-                const isMax = r.usedPct >= 100 || (Number(r.remaining) || 0) <= 0;
-                const nearMax = r.usedPct >= 70 && !isMax;
+                const isMax = r.mode !== "per_item" && (r.usedPct >= 100 || (Number(r.remaining) || 0) <= 0);
+                const nearMax = r.mode !== "per_item" && r.usedPct >= 70 && !isMax;
 
                 const accentBar = isMax
                   ? "bg-slate-400"
@@ -1661,18 +1808,21 @@ export default function CalculatorClient() {
                     ? "bg-amber-50 text-amber-700 ring-amber-100"
                     : "bg-blue-50 text-blue-700 ring-blue-100";
 
-                const badgeLabel = isMax
-                  ? "Limit wykorzystany"
-                  : nearMax
-                    ? "Blisko limitu"
-                    : "Można planować";
+                const badgeLabel =
+                  r.mode === "per_item"
+                    ? "Dostępne"
+                    : isMax
+                      ? "Nie doliczaj więcej"
+                      : nearMax
+                        ? "Kończy się limit"
+                        : "Dostępne";
 
                 const availableText =
                   r.mode === "per_item"
-                    ? `Do ${r.cap} pkt za kolejny wpis`
+                    ? `Każdy kolejny wpis może mieć maks. ${r.cap} pkt`
                     : isMax
-                      ? "Ta kategoria jest zamknięta"
-                      : `Jeszcze ${Math.round(r.remaining)} pkt dostępne`;
+                      ? "Nie doliczaj już więcej w tej kategorii"
+                      : `Możesz jeszcze doliczyć ${Math.round(r.remaining)} pkt`;
 
                 const limitText =
                   r.mode === "per_item"
@@ -1687,6 +1837,30 @@ export default function CalculatorClient() {
                     : r.mode === "per_year"
                       ? `${r.maxPoints} pkt / rok`
                       : `${r.cap} pkt / okres`;
+
+                const remainingLabel =
+                  r.mode === "per_item" ? "Maks. za wpis" : "Możesz doliczyć";
+
+                const recommendation =
+                  r.mode === "per_item"
+                    ? {
+                        label: "Bezpieczna opcja",
+                        text: `Możesz dodać kolejny wpis, maks. ${r.cap} pkt za jeden.`,
+                      }
+                    : isMax
+                      ? {
+                          label: "Nie wybieraj teraz",
+                          text: "Limit jest wykorzystany. Lepiej wybrać inną kategorię.",
+                        }
+                      : nearMax
+                        ? {
+                            label: "Ostrożnie",
+                            text: `Zostało tylko ${Math.round(r.remaining)} pkt w tej kategorii.`,
+                          }
+                        : {
+                            label: "Dobra opcja",
+                            text: `Ta kategoria może jeszcze dać ${Math.round(r.remaining)} pkt.`,
+                          };
 
                 return (
                   <article
@@ -1717,17 +1891,22 @@ export default function CalculatorClient() {
                         <div className="flex items-end justify-between gap-3">
                           <div>
                             <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                              Zdobyte
+                              Masz już
                             </div>
                             <div className="mt-1 text-xl font-extrabold leading-none text-slate-950">
                               {r.used}
                               <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
                             </div>
+                            {r.mode === "per_item" && r.count > 0 ? (
+                              <div className="mt-1 text-[10px] font-medium text-slate-500">
+                                {r.count} wpisów w tej kategorii
+                              </div>
+                            ) : null}
                           </div>
 
                           <div className="text-right">
                             <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                              Możesz jeszcze
+                              {remainingLabel}
                             </div>
                             <div
                               className={`mt-1 text-xl font-extrabold leading-none ${
@@ -1744,30 +1923,45 @@ export default function CalculatorClient() {
                           </div>
                         </div>
 
-                        <div className="mt-3">
-                          <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-600">
-                            <span>Wykorzystanie limitu</span>
-                            <span>{Math.round(r.usedPct)}%</span>
+                        {r.mode === "per_item" ? (
+                          <div className="mt-3 rounded-xl border border-blue-100 bg-white px-3 py-2 text-[11px] leading-relaxed text-slate-600">
+                            Limit nie sumuje się w okresie — dotyczy pojedynczego wpisu.
                           </div>
+                        ) : (
+                          <div className="mt-3">
+                            <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-600">
+                              <span>Stan limitu</span>
+                              <span>{Math.round(r.usedPct)}%</span>
+                            </div>
 
-                          <div className="h-2 overflow-hidden rounded-full bg-white">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ${accentBar}`}
-                              style={{
-                                width: `${Math.max(r.usedPct, r.used > 0 ? 5 : 0)}%`,
-                              }}
-                            />
+                            <div className="h-2 overflow-hidden rounded-full bg-white">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${accentBar}`}
+                                style={{
+                                  width: `${Math.max(r.usedPct, r.used > 0 ? 5 : 0)}%`,
+                                }}
+                              />
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
 
                       <div className="mt-3 rounded-xl border border-slate-100 bg-white px-3 py-2 text-xs leading-relaxed text-slate-600">
                         <span className="font-semibold text-slate-900">{availableText}.</span>{" "}
                         {r.mode === "per_item"
-                          ? "Nie ma tu limitu łącznego w okresie — limit dotyczy pojedynczego wpisu."
+                          ? "Możesz dodawać kolejne wpisy, ale każdy oceniaj osobno."
                           : isMax
                             ? "Lepiej zaplanować inną kategorię."
                             : "Ta kategoria nadal może pomóc domknąć punkty."}
+                      </div>
+
+                      <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                        <div className="text-xs font-bold text-slate-900">
+                          {recommendation.label}
+                        </div>
+                        <div className="mt-0.5 text-xs leading-relaxed text-slate-600">
+                          {recommendation.text}
+                        </div>
                       </div>
 
                       {r.note ? (
@@ -1778,7 +1972,7 @@ export default function CalculatorClient() {
 
                       <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
                         <span className="rounded-lg border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-blue-600">
-                          maks. {r.cap} pkt
+                          {r.mode === "per_item" ? `maks. ${r.cap} pkt / wpis` : `maks. ${r.cap} pkt`}
                         </span>
 
                         {isMax ? (
@@ -1795,7 +1989,7 @@ export default function CalculatorClient() {
                             onClick={() => planForRule(r)}
                             className="inline-flex h-8 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95 disabled:opacity-40"
                           >
-                            {planningKey === r.key ? "Dodaję..." : "+ Zaplanuj"}
+                            {planningKey === r.key ? "Dodaję..." : "Zaplanuj tutaj"}
                           </button>
                         )}
                       </div>
