@@ -468,6 +468,31 @@ function PulsingTargetMarker({ progress }: { progress: number }) {
   );
 }
 
+function TimelineDot({
+  left,
+  tone,
+  title,
+}: {
+  left: number;
+  tone: "amber" | "green" | "blue";
+  title: string;
+}) {
+  const cls =
+    tone === "amber"
+      ? "border-amber-200 bg-amber-400 shadow-amber-200/70"
+      : tone === "green"
+        ? "border-emerald-200 bg-emerald-500 shadow-emerald-200/70"
+        : "border-blue-200 bg-blue-400 shadow-blue-200/70";
+
+  return (
+    <span
+      title={title}
+      className={`absolute top-1/2 z-10 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-sm ${cls}`}
+      style={{ left: `${clamp(left, 1, 99)}%` }}
+    />
+  );
+}
+
 function StatMiniCard({
   label,
   value,
@@ -778,6 +803,40 @@ export default function CalculatorClient() {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
   }, [activities, periodStart, periodEnd, activityFilter]);
+
+  const timelineEvents = useMemo(() => {
+    const periodStartMs = new Date(periodStart, 0, 1).getTime();
+    const periodEndMs = new Date(periodEnd, 11, 31, 23, 59, 59).getTime();
+    const range = Math.max(1, periodEndMs - periodStartMs);
+
+    return activities
+      .map((a) => {
+        const prog = normalizeStatus(a.status);
+        const missing = getRowMissing(a);
+        const y = prog === "planned" && a.planned_start_date
+          ? Number(String(a.planned_start_date).slice(0, 4))
+          : Number(a.year);
+
+        if (y < periodStart || y > periodEnd) return null;
+
+        const rawDate = prog === "planned" && a.planned_start_date
+          ? a.planned_start_date
+          : a.created_at
+            ? String(a.created_at).slice(0, 10)
+            : `${a.year}-07-01`;
+
+        const dateMs = new Date(`${rawDate}T12:00:00`).getTime();
+        if (!Number.isFinite(dateMs)) return null;
+
+        const left = ((dateMs - periodStartMs) / range) * 100;
+        const tone = prog === "planned" ? "blue" : missing.length > 0 ? "amber" : "green";
+        const title = `${a.type} · ${prog === "planned" ? "zaplanowane" : missing.length > 0 ? "do uzupełnienia" : "kompletne"} · ${a.points} pkt`;
+
+        return { id: a.id, left: clamp(left, 1, 99), tone, title };
+      })
+      .filter(Boolean)
+      .slice(0, 24) as { id: string; left: number; tone: "amber" | "green" | "blue"; title: string }[];
+  }, [activities, periodStart, periodEnd]);
 
   const isBusy = authLoading || loading;
   const pwzIssueDate = profile?.pwz_issue_date ?? null;
@@ -1115,60 +1174,210 @@ export default function CalculatorClient() {
 
             <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-3">
-                <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
+                <IconBubble tone="blue">
+                  <MiniIcon name="chart" />
+                </IconBubble>
+
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-900">Realizacja celu</h2>
-                  <p className="text-xs text-slate-500">Najpierw braki, potem tempo i szczegóły.</p>
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    Realizacja celu
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Najważniejsze: punkty, dokumenty i postęp w czasie.
+                  </p>
                 </div>
               </div>
 
-              <Link href={mainAction.href} className={`inline-flex h-10 shrink-0 items-center justify-center rounded-xl border px-4 text-sm font-semibold shadow-sm transition active:scale-95 ${mainAction.tone === "amber" ? "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100" : mainAction.tone === "green" ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"}`}>
+              <Link
+                href={mainAction.href}
+                className={`inline-flex h-10 shrink-0 items-center justify-center rounded-xl border px-4 text-sm font-semibold shadow-sm transition active:scale-95 ${
+                  mainAction.tone === "amber"
+                    ? "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                    : mainAction.tone === "green"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      : "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                }`}
+              >
                 {mainAction.label} →
               </Link>
             </div>
 
-            <div className="grid gap-4 p-4 xl:grid-cols-[310px_1fr]">
-              <div className="rounded-[1.15rem] border border-slate-200 bg-slate-50/70 p-4">
-                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-500" />Aktualny wynik</div>
-                <div className="mt-3 flex items-center gap-3">
-                  <CircularProgress value={progress} label="pkt" />
-                  <div className="min-w-0">
-                    <div className="text-2xl font-extrabold leading-none tracking-[-0.05em] text-slate-950">{donePoints}<span className="text-sm font-semibold text-slate-400"> / {requiredPoints}</span></div>
-                    <div className="mt-1 text-xs leading-relaxed text-slate-600">punktów w okresie {periodStart}–{periodEnd}</div>
+            <div className="grid gap-4 p-4 xl:grid-cols-[360px_minmax(0,1fr)]">
+              <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4">
+                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                  <span className="h-2 w-2 rounded-full bg-blue-500" />
+                  Aktualny wynik
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm shadow-slate-900/5">
+                    <CircularProgress value={progress} label="cel" />
+                    <div className="mt-2 text-2xl font-extrabold tracking-[-0.05em] text-slate-950">
+                      {donePoints}
+                      <span className="ml-1 text-sm font-semibold text-slate-400">/ {requiredPoints}</span>
+                    </div>
+                    <div className="mt-1 text-[11px] leading-relaxed text-slate-500">
+                      punkty
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm shadow-slate-900/5">
+                    <CircularProgress value={periodTimeProgress} label="okres" tone="slate" />
+                    <div className="mt-2 text-2xl font-extrabold tracking-[-0.05em] text-slate-950">
+                      {Math.round(periodTimeProgress)}%
+                    </div>
+                    <div className="mt-1 text-[11px] leading-relaxed text-slate-500">
+                      {periodStart}–{periodEnd}
+                    </div>
                   </div>
                 </div>
-                <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
-                  <div className="text-xs font-semibold text-slate-900">Najbliższy krok</div>
-                  <div className="mt-1 text-xs leading-relaxed text-slate-600">{mainAction.description}</div>
+
+                <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-900/5">
+                  <div className="text-xs font-semibold text-slate-900">
+                    Najbliższy krok
+                  </div>
+                  <div className="mt-1 text-xs leading-relaxed text-slate-600">
+                    {mainAction.description}
+                  </div>
                 </div>
               </div>
 
               <div className="grid gap-3">
-                <div className="grid gap-3 lg:grid-cols-4">
-                  <div className="lg:col-span-2"><StatMiniCard label="Brakuje punktów" value={missingPoints} suffix="pkt" subtitle={missingPoints > 0 ? `Do celu zostało ${missingPoints} pkt.` : "Cel punktowy jest osiągnięty."} tone={missingPoints > 0 ? "blue" : "green"} icon={<MiniIcon name="chart" className="h-7 w-7" />} emphasis /></div>
-                  <div className="lg:col-span-2"><StatMiniCard label="Brakujące dokumenty" value={missingEvidenceCount} suffix={missingEvidenceCount === 1 ? "brak" : "braki"} subtitle={missingEvidenceCount > 0 ? "To najważniejsza blokada raportu." : "Dokumentacja wygląda dobrze."} tone={missingEvidenceCount > 0 ? "amber" : "green"} icon={<MiniIcon name="doc" className="h-7 w-7" />} emphasis /></div>
-                  <StatMiniCard label="Tempo" value={paceLabel} subtitle={paceDescription} tone="slate" icon={<MiniIcon name="hourglass" className="h-6 w-6" />} compact />
-                  <StatMiniCard label="Zasady" value={displayProfession(profession, professionOther)} subtitle={`${requiredPoints} pkt · ${periodStart}–${periodEnd}`} tone="slate" compact />
+                <div className="grid gap-3 lg:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection("limity")}
+                    className="relative overflow-hidden rounded-2xl border border-blue-200 bg-blue-50/70 p-4 text-left transition hover:bg-blue-50 hover:shadow-sm"
+                  >
+                    <div className="absolute bottom-3 left-0 top-3 w-1 rounded-r-full bg-blue-500" />
+                    <div className="pl-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700">
+                            Brakuje punktów
+                          </div>
+                          <div className="mt-2 text-3xl font-extrabold tracking-[-0.06em] text-blue-700">
+                            {missingPoints}
+                            <span className="ml-1 text-sm font-semibold text-blue-400">pkt</span>
+                          </div>
+                          <div className="mt-1 text-xs leading-relaxed text-slate-600">
+                            {missingPoints > 0 ? "Tyle zostało do zamknięcia celu." : "Cel punktowy jest osiągnięty."}
+                          </div>
+                        </div>
+                        <MiniIcon name="chart" className="h-7 w-7 text-blue-600" />
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => filterActivities("missing")}
+                    className={`relative overflow-hidden rounded-2xl border p-4 text-left transition hover:shadow-sm ${
+                      missingEvidenceCount > 0
+                        ? "border-amber-200 bg-amber-50/70 hover:bg-amber-50"
+                        : "border-emerald-200 bg-emerald-50/70 hover:bg-emerald-50"
+                    }`}
+                  >
+                    <div className={`absolute bottom-3 left-0 top-3 w-1 rounded-r-full ${missingEvidenceCount > 0 ? "bg-amber-400" : "bg-emerald-500"}`} />
+                    <div className="pl-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${missingEvidenceCount > 0 ? "text-amber-700" : "text-emerald-700"}`}>
+                            Brakujące dokumenty
+                          </div>
+                          <div className={`mt-2 text-3xl font-extrabold tracking-[-0.06em] ${missingEvidenceCount > 0 ? "text-amber-700" : "text-emerald-700"}`}>
+                            {missingEvidenceCount}
+                            <span className="ml-1 text-sm font-semibold opacity-60">
+                              {missingEvidenceCount === 1 ? "brak" : "braki"}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-xs leading-relaxed text-slate-600">
+                            {missingEvidenceCount > 0 ? "To blokuje gotowość raportu." : "Dokumentacja wygląda dobrze."}
+                          </div>
+                        </div>
+                        <MiniIcon name="doc" className={`h-7 w-7 ${missingEvidenceCount > 0 ? "text-amber-600" : "text-emerald-600"}`} />
+                      </div>
+                    </div>
+                  </button>
                 </div>
 
-                <div className="rounded-[1.15rem] border border-slate-200 bg-white p-4">
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <div className="text-xs font-semibold text-slate-700">Postęp punktów</div>
-                    <div className="text-xs font-medium text-slate-500">{donePoints} / {requiredPoints} pkt</div>
-                  </div>
-
-                  <div className="relative h-12">
-                    <div className="absolute left-0 right-0 top-5 h-2.5 rounded-full bg-slate-100" />
-                    <div className="absolute left-0 top-5 h-2.5 rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${Math.max(progress, 2)}%` }} />
-                    <PulsingTargetMarker progress={progress} />
-                  </div>
-
-                  <div className="mt-2 grid gap-2 md:grid-cols-[1fr_1fr]">
-                    <div>
-                      <div className="mb-1 flex items-center justify-between text-[11px] font-medium text-slate-500"><span>Upływ okresu</span><span>{Math.round(periodTimeProgress)}%</span></div>
-                      <div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-slate-500 transition-all duration-700" style={{ width: `${periodTimeProgress}%` }} /></div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      Zasady rozliczenia
                     </div>
-                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-600">{paceDescription}</div>
+                    <div className="mt-1 text-base font-extrabold text-slate-950">
+                      {displayProfession(profession, professionOther)}
+                    </div>
+                    <div className="mt-1 text-xs leading-relaxed text-slate-500">
+                      {requiredPoints} pkt · okres {periodStart}–{periodEnd}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      Priorytet teraz
+                    </div>
+                    <div className="mt-1 text-base font-extrabold text-slate-950">
+                      {missingEvidenceCount > 0 ? "Dokumenty" : missingPoints > 0 ? "Punkty" : "Raport"}
+                    </div>
+                    <div className="mt-1 text-xs leading-relaxed text-slate-500">
+                      {missingEvidenceCount > 0
+                        ? "Najpierw uzupełnij braki w certyfikatach."
+                        : missingPoints > 0
+                          ? "Dobierz aktywność do brakujących punktów."
+                          : "Sprawdź kompletność raportu."}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[1.2rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-xs font-semibold text-slate-900">Oś postępu</div>
+                      <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                        Punkty i czas na tej samej skali. Kropki oznaczają aktywności.
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-[10px] font-semibold text-slate-500">
+                      <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> do uzupełnienia</span>
+                      <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> kompletne</span>
+                      <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-blue-400" /> zaplanowane</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-4">
+                    <div>
+                      <div className="mb-1.5 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-600">
+                        <span>Postęp punktów</span>
+                        <span>{donePoints} / {requiredPoints} pkt</span>
+                      </div>
+                      <div className="relative h-5">
+                        <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-100" />
+                        <div
+                          className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-blue-600 transition-all duration-700"
+                          style={{ width: `${Math.max(progress, 2)}%` }}
+                        />
+                        <PulsingTargetMarker progress={progress} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="mb-1.5 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-600">
+                        <span>Upływ okresu</span>
+                        <span>{Math.round(periodTimeProgress)}%</span>
+                      </div>
+                      <div className="relative h-5">
+                        <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-100" />
+                        <div
+                          className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-400 transition-all duration-700"
+                          style={{ width: `${periodTimeProgress}%` }}
+                        />
+                        {timelineEvents.map((ev) => (
+                          <TimelineDot key={ev.id} left={ev.left} tone={ev.tone} title={ev.title} />
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
