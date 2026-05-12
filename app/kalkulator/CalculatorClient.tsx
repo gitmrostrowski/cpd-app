@@ -226,13 +226,19 @@ function getPeriodFromPwzIssueDate(
 
 function getRowMissing(a: ActivityRow) {
   const missing: string[] = [];
-  if (!Boolean(a.organizer && String(a.organizer).trim())) missing.push("Brak organizatora");
+
+  if (!Boolean(a.organizer && String(a.organizer).trim())) {
+    missing.push("Brak organizatora");
+  }
+
   const prog = normalizeStatus(a.status);
+
   if (prog === "planned") {
     if (!a.planned_start_date) missing.push("Brak daty");
   } else {
     if (!a.certificate_path) missing.push("Brak certyfikatu");
   }
+
   return missing;
 }
 
@@ -321,7 +327,7 @@ function MiniIcon({
   name,
   className = "h-4 w-4",
 }: {
-  name: "calendar" | "shield" | "chart" | "doc" | "user" | "bell" | "hourglass";
+  name: "calendar" | "shield" | "chart" | "doc" | "user" | "bell" | "hourglass" | "target" | "school";
   className?: string;
 }) {
   if (name === "calendar") {
@@ -382,6 +388,25 @@ function MiniIcon({
     );
   }
 
+  if (name === "target") {
+    return (
+      <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="8" />
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+      </svg>
+    );
+  }
+
+  if (name === "school") {
+    return (
+      <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="m3 10 9-5 9 5-9 5-9-5Z" />
+        <path d="M7 12v5c0 1.5 2.2 3 5 3s5-1.5 5-3v-5" />
+      </svg>
+    );
+  }
+
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M6 8a6 6 0 0 1 12 0c0 7 3 6 3 8H3c0-2 3-1 3-8" />
@@ -402,19 +427,32 @@ function CircularProgress({
   tone?: "blue" | "slate" | "amber";
 }) {
   const isSmall = size === "small";
-  const svgSize = isSmall ? 72 : 96;
+  const svgSize = isSmall ? 76 : 104;
   const center = svgSize / 2;
-  const radius = isSmall ? 28 : 36;
-  const stroke = isSmall ? 7 : 8;
+  const radius = isSmall ? 29 : 40;
+  const stroke = isSmall ? 8 : 10;
   const normalizedRadius = radius - stroke / 2;
   const circumference = normalizedRadius * 2 * Math.PI;
   const offset = circumference - (clamp(value, 0, 100) / 100) * circumference;
-  const strokeTone = tone === "amber" ? "text-amber-500" : tone === "slate" ? "text-slate-500" : "text-blue-600";
+  const strokeTone =
+    tone === "amber"
+      ? "text-amber-500"
+      : tone === "slate"
+        ? "text-slate-500"
+        : "text-blue-600";
 
   return (
-    <div className={`relative shrink-0 ${isSmall ? "h-[72px] w-[72px]" : "h-24 w-24"}`}>
+    <div className={`relative mx-auto shrink-0 ${isSmall ? "h-[76px] w-[76px]" : "h-[104px] w-[104px]"}`}>
       <svg className="-rotate-90" height={svgSize} width={svgSize}>
-        <circle stroke="currentColor" className="text-slate-200" fill="transparent" strokeWidth={stroke} r={normalizedRadius} cx={center} cy={center} />
+        <circle
+          stroke="currentColor"
+          className="text-slate-200/80"
+          fill="transparent"
+          strokeWidth={stroke}
+          r={normalizedRadius}
+          cx={center}
+          cy={center}
+        />
         <circle
           stroke="currentColor"
           className={`${strokeTone} transition-all duration-700`}
@@ -430,7 +468,7 @@ function CircularProgress({
       </svg>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className={`${isSmall ? "text-base" : "text-xl"} font-semibold tracking-tight text-slate-900`}>
+        <div className={`${isSmall ? "text-base" : "text-2xl"} font-extrabold tracking-[-0.05em] text-slate-950`}>
           {Math.round(value)}%
         </div>
         <div className="mt-0.5 text-center text-[10px] font-medium leading-tight text-slate-500">
@@ -444,7 +482,7 @@ function CircularProgress({
 function PulsingTargetMarker({ progress }: { progress: number }) {
   return (
     <div
-      className="pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-700"
+      className="pointer-events-none absolute top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 transition-all duration-700"
       style={{ left: `${clamp(progress, 4, 96)}%` }}
     >
       <div className="relative grid h-9 w-9 place-items-center text-blue-700">
@@ -468,28 +506,66 @@ function PulsingTargetMarker({ progress }: { progress: number }) {
   );
 }
 
-function TimelineDot({
+function TimeNowMarker({ progress }: { progress: number }) {
+  return (
+    <div
+      className="pointer-events-none absolute top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 transition-all duration-700"
+      style={{ left: `${clamp(progress, 4, 96)}%` }}
+    >
+      <div className="grid h-7 w-7 place-items-center rounded-full bg-white text-blue-700 shadow-sm ring-2 ring-blue-100">
+        <span className="grid h-4.5 w-4.5 place-items-center rounded-full bg-blue-600 text-white">
+          <span className="h-1.5 w-1.5 rounded-full bg-white" />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function TriangleMarker({
   left,
   tone,
   title,
+  top = -15,
 }: {
   left: number;
   tone: "amber" | "green" | "blue";
   title: string;
+  top?: number;
 }) {
-  const cls =
-    tone === "amber"
-      ? "border-amber-200 bg-amber-400 shadow-amber-200/70"
-      : tone === "green"
-        ? "border-emerald-200 bg-emerald-500 shadow-emerald-200/70"
-        : "border-blue-200 bg-blue-400 shadow-blue-200/70";
+  const stroke =
+    tone === "amber" ? "#f59e0b" : tone === "green" ? "#10b981" : "#60a5fa";
 
   return (
-    <span
+    <svg
       title={title}
-      className={`absolute top-1/2 z-10 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-sm ${cls}`}
-      style={{ left: `${clamp(left, 1, 99)}%` }}
-    />
+      viewBox="0 0 18 16"
+      className="absolute z-10 h-4 w-4 -translate-x-1/2"
+      style={{ left: `${clamp(left, 1, 99)}%`, top }}
+      fill="white"
+      stroke={stroke}
+      strokeWidth="2"
+      strokeLinejoin="round"
+    >
+      <path d="M2 2h14L9 14Z" />
+    </svg>
+  );
+}
+
+function LegendTriangle({ tone }: { tone: "amber" | "green" | "blue" }) {
+  const stroke =
+    tone === "amber" ? "#f59e0b" : tone === "green" ? "#10b981" : "#60a5fa";
+
+  return (
+    <svg
+      viewBox="0 0 18 16"
+      className="h-4 w-4"
+      fill="white"
+      stroke={stroke}
+      strokeWidth="2"
+      strokeLinejoin="round"
+    >
+      <path d="M2 2h14L9 14Z" />
+    </svg>
   );
 }
 
@@ -559,24 +635,30 @@ function StatMiniCard({
   );
 }
 
-function LimitStatusPill({ status }: { status: "available" | "warning" | "blocked" | "per_item" }) {
+function LimitStatusBadge({ kind }: { kind: "available" | "warning" | "blocked" | "per_item" }) {
   const cls =
-    status === "blocked"
+    kind === "blocked"
       ? "border-slate-200 bg-slate-100 text-slate-700"
-      : status === "warning"
+      : kind === "warning"
         ? "border-amber-200 bg-amber-50 text-amber-700"
-        : "border-blue-200 bg-blue-50 text-blue-700";
+        : kind === "per_item"
+          ? "border-blue-200 bg-blue-50 text-blue-700"
+          : "border-emerald-200 bg-emerald-50 text-emerald-700";
 
   const label =
-    status === "blocked"
-      ? "Nie doliczaj"
-      : status === "warning"
-        ? "Kończy się"
-        : status === "per_item"
-          ? "Na wpis"
-          : "Dostępne";
+    kind === "blocked"
+      ? "Limit wykorzystany"
+      : kind === "warning"
+        ? "Blisko limitu"
+        : kind === "per_item"
+          ? "Limit na wpis"
+          : "Możesz użyć";
 
-  return <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold ${cls}`}>{label}</span>;
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold ${cls}`}>
+      {label}
+    </span>
+  );
 }
 
 export default function CalculatorClient() {
@@ -590,7 +672,9 @@ export default function CalculatorClient() {
   const [professionOther, setProfessionOther] = useState("");
   const [periodStart, setPeriodStart] = useState(2023);
   const [periodEnd, setPeriodEnd] = useState(2026);
-  const [requiredPoints, setRequiredPoints] = useState(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200);
+  const [requiredPoints, setRequiredPoints] = useState(
+    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200,
+  );
   const [periodMode, setPeriodMode] = useState<"preset" | "custom">("preset");
 
   const [savingProfile, setSavingProfile] = useState(false);
@@ -600,7 +684,15 @@ export default function CalculatorClient() {
   const [planErr, setPlanErr] = useState<string | null>(null);
   const [planningKey, setPlanningKey] = useState<string | null>(null);
   const [activityFilter, setActivityFilter] = useState<"all" | "planned" | "missing" | "complete">("all");
-  const [activeNav, setActiveNav] = useState<"ustawienia" | "status" | "kroki" | "limity" | "aktywnosci" | "powiadomienia">("ustawienia");
+  const [selectedLimitKey, setSelectedLimitKey] = useState<string | null>(null);
+  const [activeNav, setActiveNav] = useState<
+    | "ustawienia"
+    | "status"
+    | "kroki"
+    | "limity"
+    | "aktywnosci"
+    | "powiadomienia"
+  >("ustawienia");
 
   const supabase = useMemo(() => supabaseClient(), []);
 
@@ -609,7 +701,9 @@ export default function CalculatorClient() {
 
     const { data, error } = await supabase
       .from("activities")
-      .select("id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at")
+      .select(
+        "id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at",
+      )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -633,7 +727,9 @@ export default function CalculatorClient() {
 
       const { data: p, error: pErr } = await supabase
         .from("profiles")
-        .select("user_id, profession, profession_other, pwz_number, pwz_issue_date, period_start, period_end, required_points")
+        .select(
+          "user_id, profession, profession_other, pwz_number, pwz_issue_date, period_start, period_end, required_points",
+        )
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -702,30 +798,55 @@ export default function CalculatorClient() {
   const periodLabel = `${periodStart}-${periodEnd}`;
 
   const inPeriodDone = useMemo(
-    () => activities.filter((x) => normalizeStatus(x.status) === "done" && x.year >= periodStart && x.year <= periodEnd),
+    () =>
+      activities.filter(
+        (x) =>
+          normalizeStatus(x.status) === "done" &&
+          x.year >= periodStart &&
+          x.year <= periodEnd,
+      ),
     [activities, periodStart, periodEnd],
   );
 
-  const donePoints = useMemo(() => inPeriodDone.reduce((sum, a) => sum + (Number(a.points) || 0), 0), [inPeriodDone]);
-  const missingPoints = useMemo(() => Math.max(0, (Number(requiredPoints) || 0) - donePoints), [requiredPoints, donePoints]);
+  const donePoints = useMemo(
+    () => inPeriodDone.reduce((sum, a) => sum + (Number(a.points) || 0), 0),
+    [inPeriodDone],
+  );
+
+  const missingPoints = useMemo(
+    () => Math.max(0, (Number(requiredPoints) || 0) - donePoints),
+    [requiredPoints, donePoints],
+  );
 
   const progress = useMemo(() => {
     const req = Number(requiredPoints) || 0;
     return req <= 0 ? 0 : clamp((donePoints / req) * 100, 0, 100);
   }, [requiredPoints, donePoints]);
 
-  const missingEvidenceCount = useMemo(() => inPeriodDone.filter((a) => !a.certificate_path).length, [inPeriodDone]);
+  const missingEvidenceCount = useMemo(
+    () => inPeriodDone.filter((a) => !a.certificate_path).length,
+    [inPeriodDone],
+  );
 
   const periodTimeProgress = useMemo(() => {
     const start = new Date(periodStart, 0, 1).getTime();
     const end = new Date(periodEnd, 11, 31, 23, 59, 59).getTime();
     const now = Date.now();
+
     if (end <= start) return 0;
     return clamp(((now - start) / (end - start)) * 100, 0, 100);
   }, [periodStart, periodEnd]);
 
   const paceDelta = Math.round(progress - periodTimeProgress);
-  const paceLabel = progress <= 0 ? "Start" : paceDelta >= 10 ? "Zapas" : paceDelta >= -10 ? "Równo" : "Do nadrobienia";
+  const paceLabel =
+    progress <= 0
+      ? "Start"
+      : paceDelta >= 10
+        ? "Zapas"
+        : paceDelta >= -10
+          ? "Równo"
+          : "Do nadrobienia";
+
   const paceDescription =
     paceDelta < -10
       ? `Jesteś ${Math.abs(paceDelta)} pp. za upływem czasu.`
@@ -752,33 +873,148 @@ export default function CalculatorClient() {
       const count = counts.get(l.key) || 0;
       const cap = l.mode === "per_year" ? l.maxPoints * yearsInPeriod : l.maxPoints;
       const remaining = l.mode === "per_item" ? l.maxPoints : Math.max(0, cap - used);
-      const usedPct = l.mode === "per_item" ? 0 : cap > 0 ? clamp((used / cap) * 100, 0, 100) : 0;
-      const status: "available" | "warning" | "blocked" | "per_item" =
-        l.mode === "per_item" ? "per_item" : remaining <= 0 ? "blocked" : usedPct >= 70 ? "warning" : "available";
+      const usedPct =
+        l.mode === "per_item" ? 0 : cap > 0 ? clamp((used / cap) * 100, 0, 100) : 0;
 
-      return { ...l, used, count, cap, remaining, usedPct, yearsInPeriod, status };
+      const status: "available" | "warning" | "blocked" | "per_item" =
+        l.mode === "per_item"
+          ? "per_item"
+          : remaining <= 0
+            ? "blocked"
+            : usedPct >= 70
+              ? "warning"
+              : "available";
+
+      return {
+        ...l,
+        used,
+        count,
+        cap,
+        remaining,
+        usedPct,
+        yearsInPeriod,
+        status,
+      };
     });
   }, [profession, inPeriodDone, periodStart, periodEnd]);
+
+  const bestLimit = useMemo(() => {
+    const sorted = [...limitsUsage].sort((a, b) => {
+      const score = (x: (typeof limitsUsage)[number]) => {
+        if (x.status === "available") return 400 + Number(x.remaining || 0);
+        if (x.status === "warning") return 300 + Number(x.remaining || 0);
+        if (x.status === "per_item") return 200 + Number(x.cap || 0);
+        return 0;
+      };
+
+      return score(b) - score(a);
+    });
+
+    return sorted[0] ?? null;
+  }, [limitsUsage]);
+
+  useEffect(() => {
+    if (!limitsUsage.length) {
+      setSelectedLimitKey(null);
+      return;
+    }
+
+    const exists = selectedLimitKey
+      ? limitsUsage.some((x) => x.key === selectedLimitKey)
+      : false;
+
+    if (!exists) {
+      setSelectedLimitKey(bestLimit?.key ?? limitsUsage[0].key);
+    }
+  }, [limitsUsage, selectedLimitKey, bestLimit]);
+
+  const selectedLimit = useMemo(
+    () =>
+      limitsUsage.find((x) => x.key === selectedLimitKey) ??
+      bestLimit ??
+      limitsUsage[0] ??
+      null,
+    [limitsUsage, selectedLimitKey, bestLimit],
+  );
+
+  const usableLimitsCount = useMemo(
+    () => limitsUsage.filter((x) => x.status !== "blocked").length,
+    [limitsUsage],
+  );
+
+  const blockedLimitsCount = useMemo(
+    () => limitsUsage.filter((x) => x.status === "blocked").length,
+    [limitsUsage],
+  );
 
   const limitWarning = useMemo(() => {
     const hit = limitsUsage.find((x) => x.status === "blocked");
     return hit ? `Limit "${hit.label}" jest osiągnięty.` : null;
   }, [limitsUsage]);
 
-  const bestLimit = useMemo(() => {
-    const normal = limitsUsage.filter((r) => r.status === "available" || r.status === "warning").sort((a, b) => Number(b.remaining) - Number(a.remaining));
-    return normal[0] ?? limitsUsage.find((r) => r.status === "per_item") ?? null;
-  }, [limitsUsage]);
+  const nextSteps = useMemo(
+    () => buildNextSteps(missingPoints, missingEvidenceCount, limitWarning),
+    [missingPoints, missingEvidenceCount, limitWarning],
+  );
 
-  const usableLimits = useMemo(() => limitsUsage.filter((r) => r.status !== "blocked"), [limitsUsage]);
-  const blockedLimits = useMemo(() => limitsUsage.filter((r) => r.status === "blocked"), [limitsUsage]);
+  const timelineEvents = useMemo(() => {
+    const periodStartMs = new Date(periodStart, 0, 1).getTime();
+    const periodEndMs = new Date(periodEnd, 11, 31, 23, 59, 59).getTime();
+    const range = Math.max(1, periodEndMs - periodStartMs);
 
-  const nextSteps = useMemo(() => buildNextSteps(missingPoints, missingEvidenceCount, limitWarning), [missingPoints, missingEvidenceCount, limitWarning]);
+    const raw = activities
+      .map((a) => {
+        const prog = normalizeStatus(a.status);
+        const missing = getRowMissing(a);
+        const y =
+          prog === "planned" && a.planned_start_date
+            ? Number(String(a.planned_start_date).slice(0, 4))
+            : Number(a.year);
+
+        if (y < periodStart || y > periodEnd) return null;
+
+        const rawDate =
+          prog === "planned" && a.planned_start_date
+            ? a.planned_start_date
+            : a.created_at
+              ? String(a.created_at).slice(0, 10)
+              : `${a.year}-07-01`;
+
+        const dateMs = new Date(`${rawDate}T12:00:00`).getTime();
+        if (!Number.isFinite(dateMs)) return null;
+
+        const left = ((dateMs - periodStartMs) / range) * 100;
+        const tone = prog === "planned" ? "blue" : missing.length > 0 ? "amber" : "green";
+        const title = `${a.type} · ${
+          prog === "planned" ? "zaplanowane" : missing.length > 0 ? "do uzupełnienia" : "kompletne"
+        } · ${a.points} pkt`;
+
+        return { id: a.id, left: clamp(left, 1, 99), tone, title };
+      })
+      .filter(Boolean)
+      .sort((a, b) => (a!.left === b!.left ? a!.id.localeCompare(b!.id) : a!.left - b!.left)) as {
+        id: string;
+        left: number;
+        tone: "amber" | "green" | "blue";
+        title: string;
+      }[];
+
+    const adjusted: typeof raw = [];
+    for (const ev of raw.slice(0, 32)) {
+      const prev = adjusted[adjusted.length - 1];
+      let left = ev.left;
+      if (prev && left - prev.left < 1.35) left = Math.min(99, prev.left + 1.35);
+      adjusted.push({ ...ev, left });
+    }
+
+    return adjusted;
+  }, [activities, periodStart, periodEnd]);
 
   const recentRows = useMemo(() => {
     const rank = (a: ActivityRow) => {
       const prog = normalizeStatus(a.status);
       const missing = getRowMissing(a);
+
       if (prog !== "planned" && missing.length > 0) return 0;
       if (prog === "planned") return 1;
       return 2;
@@ -787,11 +1023,17 @@ export default function CalculatorClient() {
     return activities
       .filter((a) => {
         const prog = normalizeStatus(a.status);
-        const y = prog === "planned" && a.planned_start_date ? Number(String(a.planned_start_date).slice(0, 4)) : a.year;
+        const y =
+          prog === "planned" && a.planned_start_date
+            ? Number(String(a.planned_start_date).slice(0, 4))
+            : a.year;
         const inPeriod = y >= periodStart && y <= periodEnd;
+
         if (!inPeriod) return false;
+
         const missing = getRowMissing(a);
         const hasMissing = prog !== "planned" && missing.length > 0;
+
         if (activityFilter === "planned") return prog === "planned";
         if (activityFilter === "missing") return hasMissing;
         if (activityFilter === "complete") return prog !== "planned" && !hasMissing;
@@ -804,57 +1046,50 @@ export default function CalculatorClient() {
       });
   }, [activities, periodStart, periodEnd, activityFilter]);
 
-  const timelineEvents = useMemo(() => {
-    const periodStartMs = new Date(periodStart, 0, 1).getTime();
-    const periodEndMs = new Date(periodEnd, 11, 31, 23, 59, 59).getTime();
-    const range = Math.max(1, periodEndMs - periodStartMs);
-
-    return activities
-      .map((a) => {
-        const prog = normalizeStatus(a.status);
-        const missing = getRowMissing(a);
-        const y = prog === "planned" && a.planned_start_date
-          ? Number(String(a.planned_start_date).slice(0, 4))
-          : Number(a.year);
-
-        if (y < periodStart || y > periodEnd) return null;
-
-        const rawDate = prog === "planned" && a.planned_start_date
-          ? a.planned_start_date
-          : a.created_at
-            ? String(a.created_at).slice(0, 10)
-            : `${a.year}-07-01`;
-
-        const dateMs = new Date(`${rawDate}T12:00:00`).getTime();
-        if (!Number.isFinite(dateMs)) return null;
-
-        const left = ((dateMs - periodStartMs) / range) * 100;
-        const tone = prog === "planned" ? "blue" : missing.length > 0 ? "amber" : "green";
-        const title = `${a.type} · ${prog === "planned" ? "zaplanowane" : missing.length > 0 ? "do uzupełnienia" : "kompletne"} · ${a.points} pkt`;
-
-        return { id: a.id, left: clamp(left, 1, 99), tone, title };
-      })
-      .filter(Boolean)
-      .slice(0, 24) as { id: string; left: number; tone: "amber" | "green" | "blue"; title: string }[];
-  }, [activities, periodStart, periodEnd]);
-
   const isBusy = authLoading || loading;
   const pwzIssueDate = profile?.pwz_issue_date ?? null;
   const otherRequired = isOtherProfession(profession);
-  const otherValid = !otherRequired || normalizeOtherProfession(professionOther).length >= 2;
+  const otherValid =
+    !otherRequired || normalizeOtherProfession(professionOther).length >= 2;
   const trybLabel = pwzIssueDate ? "Tryb okresu — zgodny z PWZ" : "Tryb okresu";
-  const okresLabel = pwzIssueDate ? `Okres liczony z PWZ (${formatYMD(pwzIssueDate)})` : periodMode === "preset" ? "Okres rozliczeniowy" : "Okres indywidualny";
+  const okresLabel = pwzIssueDate
+    ? `Okres liczony z PWZ (${formatYMD(pwzIssueDate)})`
+    : periodMode === "preset"
+      ? "Okres rozliczeniowy"
+      : "Okres indywidualny";
 
-  async function saveProfilePatch(patch: Partial<ProfileRow> & { profession_other?: string | null }) {
+  async function saveProfilePatch(
+    patch: Partial<ProfileRow> & { profession_other?: string | null },
+  ) {
     if (!user?.id) return;
+
     setSavingProfile(true);
 
     const nextProfession = (patch.profession ?? profession) as Profession;
-    const rawOther = patch.profession_other !== undefined ? patch.profession_other : professionOther;
-    const nextOther = isOtherProfession(nextProfession) ? normalizeOtherProfession(rawOther) || null : null;
-    const ps = Number(patch.period_start !== undefined ? patch.period_start : periodStart) || 2023;
-    const pe = Math.max(Number(patch.period_end !== undefined ? patch.period_end : periodEnd) || ps, ps);
-    const rp = Math.max(0, Number(patch.required_points !== undefined ? patch.required_points : requiredPoints) || 0);
+    const rawOther =
+      patch.profession_other !== undefined
+        ? patch.profession_other
+        : professionOther;
+    const nextOther = isOtherProfession(nextProfession)
+      ? normalizeOtherProfession(rawOther) || null
+      : null;
+    const ps =
+      Number(
+        patch.period_start !== undefined ? patch.period_start : periodStart,
+      ) || 2023;
+    const pe = Math.max(
+      Number(patch.period_end !== undefined ? patch.period_end : periodEnd) ||
+        ps,
+      ps,
+    );
+    const rp = Math.max(
+      0,
+      Number(
+        patch.required_points !== undefined
+          ? patch.required_points
+          : requiredPoints,
+      ) || 0,
+    );
 
     const payload: ProfileUpsert = {
       user_id: user.id,
@@ -868,6 +1103,7 @@ export default function CalculatorClient() {
     };
 
     const { error } = await supabase.from("profiles").upsert(payload);
+
     setSavingProfile(false);
 
     if (!error) {
@@ -878,13 +1114,16 @@ export default function CalculatorClient() {
 
   async function saveAllSettings() {
     if (!user?.id || !otherValid) return;
+
     const ps = Number(periodStart) || 0;
     const pe = Math.max(Number(periodEnd) || 0, ps);
     setPeriodEnd(pe);
 
     await saveProfilePatch({
       profession,
-      profession_other: isOtherProfession(profession) ? normalizeOtherProfession(professionOther) || null : null,
+      profession_other: isOtherProfession(profession)
+        ? normalizeOtherProfession(professionOther) || null
+        : null,
       period_start: ps,
       period_end: pe,
       required_points: requiredPoints,
@@ -893,6 +1132,7 @@ export default function CalculatorClient() {
 
   async function planForRule(r: (typeof limitsUsage)[number]) {
     if (!user?.id || (Number(r.remaining) || 0) <= 0) return;
+
     setPlanInfo(null);
     setPlanErr(null);
     setPlanningKey(r.key);
@@ -900,7 +1140,10 @@ export default function CalculatorClient() {
     try {
       const nowY = new Date().getFullYear();
       const y = clamp(nowY, periodStart, periodEnd);
-      const pts = suggestPlannedPoints({ mode: r.mode, remaining: r.remaining });
+      const pts = suggestPlannedPoints({
+        mode: r.mode,
+        remaining: r.remaining,
+      });
 
       const { error } = await supabase.from("activities").insert({
         user_id: user.id,
@@ -926,13 +1169,26 @@ export default function CalculatorClient() {
     }
   }
 
-  const inputCls = "h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-sm shadow-slate-900/5 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/80 disabled:bg-slate-50 disabled:text-slate-400";
-  const cardCls = "scroll-mt-44 relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white shadow-[0_6px_16px_rgba(15,23,42,0.075)] transition-shadow hover:shadow-[0_8px_18px_rgba(15,23,42,0.09)]";
+  const inputCls =
+    "h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-sm shadow-slate-900/5 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/80 disabled:bg-slate-50 disabled:text-slate-400";
 
-  function scrollToSection(id: "ustawienia" | "status" | "kroki" | "limity" | "aktywnosci" | "powiadomienia") {
+  const cardCls =
+    "scroll-mt-44 relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white shadow-[0_6px_16px_rgba(15,23,42,0.075)] transition-shadow hover:shadow-[0_8px_18px_rgba(15,23,42,0.09)]";
+
+  function scrollToSection(
+    id:
+      | "ustawienia"
+      | "status"
+      | "kroki"
+      | "limity"
+      | "aktywnosci"
+      | "powiadomienia",
+  ) {
     const el = document.getElementById(id);
     if (!el) return;
+
     setActiveNav(id);
+
     const offset = 140;
     const targetTop = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
@@ -941,13 +1197,24 @@ export default function CalculatorClient() {
   function filterActivities(next: "all" | "planned" | "missing" | "complete") {
     setActivityFilter(next);
     setActiveNav("aktywnosci");
-    window.requestAnimationFrame(() => window.requestAnimationFrame(() => scrollToSection("aktywnosci")));
+    window.requestAnimationFrame(() =>
+      window.requestAnimationFrame(() => scrollToSection("aktywnosci")),
+    );
   }
 
-  const navBase = "shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:border-blue-300 hover:text-blue-700 focus:outline-none";
-  const navActive = "shrink-0 border-b-2 border-blue-600 px-3 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none";
+  const navBase =
+    "shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:border-blue-300 hover:text-blue-700 focus:outline-none";
 
-  const emptyStateHref = activityFilter === "planned" ? "/aktywnosci?new=1" : activityFilter === "missing" ? "/aktywnosci" : "/aktywnosci?new=1";
+  const navActive =
+    "shrink-0 border-b-2 border-blue-600 px-3 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none";
+
+  const emptyStateHref =
+    activityFilter === "planned"
+      ? "/aktywnosci?new=1"
+      : activityFilter === "missing"
+        ? "/aktywnosci"
+        : "/aktywnosci?new=1";
+
   const emptyStateMsg =
     activityFilter === "planned"
       ? "Nie masz zaplanowanych aktywności."
@@ -956,14 +1223,34 @@ export default function CalculatorClient() {
         : activityFilter === "complete"
           ? "Brak kompletnych wpisów w tym okresie."
           : "Nie masz jeszcze żadnych aktywności w tym okresie.";
-  const emptyStateCta = activityFilter === "missing" ? "Uzupełnij dokumenty" : "Dodaj pierwszą aktywność";
+
+  const emptyStateCta =
+    activityFilter === "missing" ? "Uzupełnij dokumenty" : "Dodaj pierwszą aktywność";
 
   const mainAction =
     missingEvidenceCount > 0
-      ? { label: "Uzupełnij dokumenty", href: "/aktywnosci", tone: "amber" as const, description: "Najpierw domknij braki w certyfikatach i organizatorach." }
+      ? {
+          label: "Uzupełnij dokumenty",
+          href: "/aktywnosci",
+          tone: "amber" as const,
+          description:
+            "Najpierw domknij braki w certyfikatach i organizatorach.",
+        }
       : missingPoints > 0
-        ? { label: "Zaplanuj szkolenie", href: "/baza-szkolen", tone: "blue" as const, description: "Następny krok to dobranie aktywności za brakujące punkty." }
-        : { label: "Sprawdź raport", href: "/portfolio", tone: "green" as const, description: "Punkty są domknięte. Sprawdź kompletność raportu." };
+        ? {
+            label: "Zaplanuj szkolenie",
+            href: "/baza-szkolen",
+            tone: "blue" as const,
+            description:
+              "Następny krok to dobranie aktywności za brakujące punkty.",
+          }
+        : {
+            label: "Sprawdź raport",
+            href: "/portfolio",
+            tone: "green" as const,
+            description:
+              "Punkty są domknięte. Sprawdź kompletność raportu.",
+          };
 
   return (
     <div className="space-y-5">
@@ -989,25 +1276,52 @@ export default function CalculatorClient() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
+            <IconBubble tone="blue">
+              <MiniIcon name="chart" />
+            </IconBubble>
+
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-950">Panel CPD</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+                Panel CPD
+              </h1>
               <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
-                Podgląd postępu w okresie rozliczeniowym. Dodawanie, edycja i certyfikaty są w <span className="font-semibold text-slate-800">Aktywnościach</span>.
+                Podgląd postępu w okresie rozliczeniowym. Dodawanie, edycja i
+                certyfikaty są w{" "}
+                <span className="font-semibold text-slate-800">Aktywnościach</span>.
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Link href="/aktywnosci" className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">Aktywności</Link>
-            <Link href="/baza-szkolen" className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">Baza szkoleń</Link>
+            <Link
+              href="/aktywnosci"
+              className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+            >
+              Aktywności
+            </Link>
+
+            <Link
+              href="/baza-szkolen"
+              className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+            >
+              Baza szkoleń
+            </Link>
           </div>
         </div>
       </div>
 
       <nav className="sticky top-[76px] z-30 overflow-x-auto rounded-[1.1rem] border border-slate-300/80 bg-white shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
         <div className="flex min-w-max">
-          {(["ustawienia", "status", "kroki", "limity", "aktywnosci", "powiadomienia"] as const).map((id) => {
+          {(
+            [
+              "ustawienia",
+              "status",
+              "kroki",
+              "limity",
+              "aktywnosci",
+              "powiadomienia",
+            ] as const
+          ).map((id) => {
             const labels: Record<string, string> = {
               ustawienia: "Ustawienia",
               status: "Realizacja celu",
@@ -1018,7 +1332,12 @@ export default function CalculatorClient() {
             };
 
             return (
-              <button key={id} type="button" onClick={() => scrollToSection(id)} className={activeNav === id ? navActive : navBase}>
+              <button
+                key={id}
+                type="button"
+                onClick={() => scrollToSection(id)}
+                className={activeNav === id ? navActive : navBase}
+              >
                 {labels[id]}
               </button>
             );
@@ -1031,13 +1350,24 @@ export default function CalculatorClient() {
 
         <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <IconBubble tone="blue"><MiniIcon name="calendar" /></IconBubble>
+            <IconBubble tone="blue">
+              <MiniIcon name="calendar" />
+            </IconBubble>
+
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Ustawienia okresu i zawodu</h2>
+              <h2 className="text-sm font-semibold text-slate-900">
+                Ustawienia okresu i zawodu
+              </h2>
               <p className="text-xs text-slate-500">
                 Zmień preferencje w dowolnym momencie.
-                {savedAt && !dirty && !savingProfile ? <span className="ml-1 font-medium text-blue-600">Zapisano</span> : null}
-                {!otherValid ? <span className="ml-1 font-medium text-red-500">Uzupełnij zawód</span> : null}
+                {savedAt && !dirty && !savingProfile ? (
+                  <span className="ml-1 font-medium text-blue-600">Zapisano</span>
+                ) : null}
+                {!otherValid ? (
+                  <span className="ml-1 font-medium text-red-500">
+                    Uzupełnij zawód
+                  </span>
+                ) : null}
               </p>
             </div>
           </div>
@@ -1052,7 +1382,9 @@ export default function CalculatorClient() {
                 setProfessionOther("");
                 setPeriodStart(derived?.start ?? 2023);
                 setPeriodEnd(derived?.end ?? 2026);
-                setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200);
+                setRequiredPoints(
+                  DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200,
+                );
                 setPeriodMode(derived ? "custom" : "preset");
                 setDirty(true);
               }}
@@ -1061,24 +1393,40 @@ export default function CalculatorClient() {
               Domyślne
             </button>
 
-            <button type="button" onClick={saveAllSettings} disabled={isBusy || savingProfile || !dirty || !otherValid} className="inline-flex h-9 w-28 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50">
+            <button
+              type="button"
+              onClick={saveAllSettings}
+              disabled={isBusy || savingProfile || !dirty || !otherValid}
+              className="inline-flex h-9 w-28 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            >
               {savingProfile ? "Zapisuję..." : "Zapisz"}
             </button>
 
-            <Link href="/profil" className="inline-flex h-9 w-28 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95">Profil →</Link>
+            <Link
+              href="/profil"
+              className="inline-flex h-9 w-28 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95"
+            >
+              Profil →
+            </Link>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-2 xl:grid-cols-4">
           <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Zawód</label>
+            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Zawód
+            </label>
             <select
               value={profession}
               onChange={(e) => {
                 const v = e.target.value as Profession;
                 setProfession(v);
                 if (!isOtherProfession(v)) setProfessionOther("");
-                setRequiredPoints(RULES_BY_PROFESSION[v]?.requiredPoints ?? DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ?? 200);
+                setRequiredPoints(
+                  RULES_BY_PROFESSION[v]?.requiredPoints ??
+                    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ??
+                    200,
+                );
 
                 if (pwzIssueDate) {
                   const d = getPeriodFromPwzIssueDate(v, pwzIssueDate);
@@ -1093,12 +1441,18 @@ export default function CalculatorClient() {
               }}
               className={`mt-1.5 ${inputCls}`}
             >
-              {PROFESSION_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+              {PROFESSION_OPTIONS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{trybLabel}</label>
+            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              {trybLabel}
+            </label>
             <select
               value={periodMode}
               onChange={(e) => {
@@ -1124,7 +1478,9 @@ export default function CalculatorClient() {
 
           {periodMode === "preset" && !pwzIssueDate ? (
             <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{okresLabel}</label>
+              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                {okresLabel}
+              </label>
               <select
                 value={periodLabel}
                 onChange={(e) => {
@@ -1142,31 +1498,78 @@ export default function CalculatorClient() {
             </div>
           ) : (
             <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{okresLabel}</label>
+              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                {okresLabel}
+              </label>
               <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                <input value={periodStart} onChange={(e) => { setPeriodStart(Number(e.target.value || 0)); setDirty(true); }} type="number" disabled={Boolean(pwzIssueDate)} className={inputCls} />
+                <input
+                  value={periodStart}
+                  onChange={(e) => {
+                    setPeriodStart(Number(e.target.value || 0));
+                    setDirty(true);
+                  }}
+                  type="number"
+                  disabled={Boolean(pwzIssueDate)}
+                  className={inputCls}
+                />
                 <span className="text-slate-400">–</span>
-                <input value={periodEnd} onChange={(e) => { setPeriodEnd(Number(e.target.value || 0)); setDirty(true); }} type="number" disabled={Boolean(pwzIssueDate)} className={inputCls} />
+                <input
+                  value={periodEnd}
+                  onChange={(e) => {
+                    setPeriodEnd(Number(e.target.value || 0));
+                    setDirty(true);
+                  }}
+                  type="number"
+                  disabled={Boolean(pwzIssueDate)}
+                  className={inputCls}
+                />
               </div>
             </div>
           )}
 
           <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Wymagane punkty</label>
-            <input value={requiredPoints} onChange={(e) => { setRequiredPoints(Number(e.target.value || 0)); setDirty(true); }} type="number" min={0} className={`mt-1.5 ${inputCls}`} />
+            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Wymagane punkty
+            </label>
+            <input
+              value={requiredPoints}
+              onChange={(e) => {
+                setRequiredPoints(Number(e.target.value || 0));
+                setDirty(true);
+              }}
+              type="number"
+              min={0}
+              className={`mt-1.5 ${inputCls}`}
+            />
           </div>
 
           {otherRequired ? (
             <div className="md:col-span-2 xl:col-span-4">
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Jaki zawód?</label>
-              <input value={professionOther} onChange={(e) => { setProfessionOther(e.target.value); setDirty(true); }} placeholder="np. Psycholog, Logopeda..." className={`mt-1.5 ${inputCls} ${!otherValid ? "border-red-300 focus:border-red-400 focus:ring-red-100" : ""}`} />
+              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Jaki zawód?
+              </label>
+              <input
+                value={professionOther}
+                onChange={(e) => {
+                  setProfessionOther(e.target.value);
+                  setDirty(true);
+                }}
+                placeholder="np. Psycholog, Logopeda..."
+                className={`mt-1.5 ${inputCls} ${
+                  !otherValid
+                    ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                    : ""
+                }`}
+              />
             </div>
           ) : null}
         </div>
       </section>
 
       {isBusy ? (
-        <div className={`${cardCls} p-8 text-center text-sm font-medium text-slate-500`}>Wczytuję dane...</div>
+        <div className={`${cardCls} p-8 text-center text-sm font-medium text-slate-500`}>
+          Wczytuję dane...
+        </div>
       ) : (
         <>
           <section id="status" className={cardCls}>
@@ -1183,7 +1586,7 @@ export default function CalculatorClient() {
                     Realizacja celu
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Najważniejsze: punkty, dokumenty i postęp w czasie.
+                    Jeden widok: gdzie jesteś, czego brakuje i co zrobić dalej.
                   </p>
                 </div>
               </div>
@@ -1202,52 +1605,134 @@ export default function CalculatorClient() {
               </Link>
             </div>
 
-            <div className="grid gap-4 p-4 xl:grid-cols-[360px_minmax(0,1fr)]">
-              <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4">
-                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                  <span className="h-2 w-2 rounded-full bg-blue-500" />
-                  Aktualny wynik
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm shadow-slate-900/5">
-                    <CircularProgress value={progress} label="cel" />
-                    <div className="mt-2 text-2xl font-extrabold tracking-[-0.05em] text-slate-950">
-                      {donePoints}
-                      <span className="ml-1 text-sm font-semibold text-slate-400">/ {requiredPoints}</span>
+            <div className="grid gap-4 p-4 xl:grid-cols-[460px_minmax(0,1fr)]">
+              <div className="grid gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 text-center shadow-sm shadow-slate-900/5">
+                    <div className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                      Punkty zdobyte
                     </div>
-                    <div className="mt-1 text-[11px] leading-relaxed text-slate-500">
-                      punkty
+                    <CircularProgress value={progress} label="celu" />
+                    <div className="mt-3 text-2xl font-extrabold tracking-[-0.05em] text-blue-700">
+                      {donePoints}
+                      <span className="ml-1 text-base font-semibold text-slate-500">
+                        / {requiredPoints} pkt
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs leading-relaxed text-slate-500">
+                      punkty w okresie {periodStart}–{periodEnd}
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm shadow-slate-900/5">
-                    <CircularProgress value={periodTimeProgress} label="okres" tone="slate" />
-                    <div className="mt-2 text-2xl font-extrabold tracking-[-0.05em] text-slate-950">
+                  <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 text-center shadow-sm shadow-slate-900/5">
+                    <div className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                      Upływ okresu
+                    </div>
+                    <CircularProgress value={periodTimeProgress} label="okresu" tone="slate" />
+                    <div className="mt-3 text-2xl font-extrabold tracking-[-0.05em] text-slate-950">
                       {Math.round(periodTimeProgress)}%
                     </div>
-                    <div className="mt-1 text-[11px] leading-relaxed text-slate-500">
-                      {periodStart}–{periodEnd}
+                    <div className="mt-1 text-xs leading-relaxed text-slate-500">
+                      okres {periodStart}–{periodEnd}
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-900/5">
-                  <div className="text-xs font-semibold text-slate-900">
-                    Najbliższy krok
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          Zasady rozliczenia
+                        </div>
+                        <div className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-slate-950">
+                          <span className="grid h-7 w-7 place-items-center rounded-xl bg-blue-600 text-white">
+                            <MiniIcon name="shield" className="h-4 w-4" />
+                          </span>
+                          Okres zgodny z PWZ / profilem
+                        </div>
+                        <div className="mt-3 text-lg font-extrabold tracking-tight text-slate-950">
+                          {displayProfession(profession, professionOther)}
+                        </div>
+                        <div className="mt-1 text-sm text-slate-500">
+                          {requiredPoints} pkt · okres {periodStart}–{periodEnd}
+                        </div>
+                      </div>
+                      <MiniIcon name="user" className="h-5 w-5 text-slate-500" />
+                    </div>
                   </div>
-                  <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                    {mainAction.description}
+
+                  <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          Priorytety teraz
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          <Link
+                            href="/aktywnosci"
+                            className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-950 shadow-sm transition hover:bg-amber-50"
+                          >
+                            <span className="inline-flex min-w-0 items-center gap-2">
+                              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+                                <MiniIcon name="doc" className="h-4 w-4" />
+                              </span>
+                              Uzupełnij dokumentację
+                            </span>
+                            <span className="text-slate-400">›</span>
+                          </Link>
+
+                          <Link
+                            href="/baza-szkolen"
+                            className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-950 shadow-sm transition hover:bg-blue-50"
+                          >
+                            <span className="inline-flex min-w-0 items-center gap-2">
+                              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-xl bg-blue-600 text-white">
+                                <MiniIcon name="school" className="h-4 w-4" />
+                              </span>
+                              Zaplanuj szkolenia
+                            </span>
+                            <span className="text-slate-400">›</span>
+                          </Link>
+                        </div>
+                      </div>
+                      <MiniIcon name="target" className="h-5 w-5 text-slate-500" />
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="grid gap-3">
-                <div className="grid gap-3 lg:grid-cols-2">
+                <div className="grid gap-3 lg:grid-cols-3">
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection("aktywnosci")}
+                    className="relative overflow-hidden rounded-[1.25rem] border border-blue-200 bg-blue-50/70 p-4 text-left shadow-sm shadow-blue-100/40 transition hover:bg-blue-50 hover:shadow-md"
+                  >
+                    <div className="absolute bottom-3 left-0 top-3 w-1 rounded-r-full bg-blue-500" />
+                    <div className="pl-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700">
+                            Punkty zdobyte
+                          </div>
+                          <div className="mt-2 text-3xl font-extrabold tracking-[-0.06em] text-blue-700">
+                            {donePoints}
+                            <span className="ml-1 text-sm font-semibold text-blue-400">pkt</span>
+                          </div>
+                          <div className="mt-1 text-xs leading-relaxed text-slate-600">
+                            To już liczy się do celu.
+                          </div>
+                        </div>
+                        <MiniIcon name="chart" className="h-7 w-7 text-blue-600" />
+                      </div>
+                    </div>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => scrollToSection("limity")}
-                    className="relative overflow-hidden rounded-2xl border border-blue-200 bg-blue-50/70 p-4 text-left transition hover:bg-blue-50 hover:shadow-sm"
+                    className="relative overflow-hidden rounded-[1.25rem] border border-blue-200 bg-white p-4 text-left shadow-sm shadow-slate-900/5 transition hover:bg-blue-50/50 hover:shadow-md"
                   >
                     <div className="absolute bottom-3 left-0 top-3 w-1 rounded-r-full bg-blue-500" />
                     <div className="pl-2">
@@ -1256,12 +1741,12 @@ export default function CalculatorClient() {
                           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700">
                             Brakuje punktów
                           </div>
-                          <div className="mt-2 text-3xl font-extrabold tracking-[-0.06em] text-blue-700">
+                          <div className="mt-2 text-3xl font-extrabold tracking-[-0.06em] text-slate-950">
                             {missingPoints}
-                            <span className="ml-1 text-sm font-semibold text-blue-400">pkt</span>
+                            <span className="ml-1 text-sm font-semibold text-blue-500">pkt</span>
                           </div>
                           <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                            {missingPoints > 0 ? "Tyle zostało do zamknięcia celu." : "Cel punktowy jest osiągnięty."}
+                            Do celu zostało {missingPoints} pkt.
                           </div>
                         </div>
                         <MiniIcon name="chart" className="h-7 w-7 text-blue-600" />
@@ -1272,7 +1757,7 @@ export default function CalculatorClient() {
                   <button
                     type="button"
                     onClick={() => filterActivities("missing")}
-                    className={`relative overflow-hidden rounded-2xl border p-4 text-left transition hover:shadow-sm ${
+                    className={`relative overflow-hidden rounded-[1.25rem] border p-4 text-left shadow-sm transition hover:shadow-md ${
                       missingEvidenceCount > 0
                         ? "border-amber-200 bg-amber-50/70 hover:bg-amber-50"
                         : "border-emerald-200 bg-emerald-50/70 hover:bg-emerald-50"
@@ -1287,12 +1772,12 @@ export default function CalculatorClient() {
                           </div>
                           <div className={`mt-2 text-3xl font-extrabold tracking-[-0.06em] ${missingEvidenceCount > 0 ? "text-amber-700" : "text-emerald-700"}`}>
                             {missingEvidenceCount}
-                            <span className="ml-1 text-sm font-semibold opacity-60">
+                            <span className="ml-1 text-sm font-semibold opacity-70">
                               {missingEvidenceCount === 1 ? "brak" : "braki"}
                             </span>
                           </div>
                           <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                            {missingEvidenceCount > 0 ? "To blokuje gotowość raportu." : "Dokumentacja wygląda dobrze."}
+                            To blokuje gotowość raportu.
                           </div>
                         </div>
                         <MiniIcon name="doc" className={`h-7 w-7 ${missingEvidenceCount > 0 ? "text-amber-600" : "text-emerald-600"}`} />
@@ -1301,58 +1786,43 @@ export default function CalculatorClient() {
                   </button>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      Zasady rozliczenia
-                    </div>
-                    <div className="mt-1 text-base font-extrabold text-slate-950">
-                      {displayProfession(profession, professionOther)}
-                    </div>
-                    <div className="mt-1 text-xs leading-relaxed text-slate-500">
-                      {requiredPoints} pkt · okres {periodStart}–{periodEnd}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      Priorytet teraz
-                    </div>
-                    <div className="mt-1 text-base font-extrabold text-slate-950">
-                      {missingEvidenceCount > 0 ? "Dokumenty" : missingPoints > 0 ? "Punkty" : "Raport"}
-                    </div>
-                    <div className="mt-1 text-xs leading-relaxed text-slate-500">
-                      {missingEvidenceCount > 0
-                        ? "Najpierw uzupełnij braki w certyfikatach."
-                        : missingPoints > 0
-                          ? "Dobierz aktywność do brakujących punktów."
-                          : "Sprawdź kompletność raportu."}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-[1.2rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <div className="text-xs font-semibold text-slate-900">Oś postępu</div>
-                      <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
-                        Punkty i czas na tej samej skali. Kropki oznaczają aktywności.
+                      <div className="text-sm font-extrabold uppercase tracking-[0.02em] text-slate-950">
+                        Postęp i oś czasu
+                      </div>
+                      <div className="mt-1 text-sm leading-relaxed text-slate-500">
+                        Punkty i czas na tej samej skali. Trójkąty oznaczają aktywności.
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3 text-[10px] font-semibold text-slate-500">
-                      <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> do uzupełnienia</span>
-                      <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> kompletne</span>
-                      <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-blue-400" /> zaplanowane</span>
+
+                    <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500">
+                      <span className="inline-flex items-center gap-1.5">
+                        <LegendTriangle tone="amber" />
+                        do uzupełnienia
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <LegendTriangle tone="green" />
+                        kompletne
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <LegendTriangle tone="blue" />
+                        zaplanowane
+                      </span>
                     </div>
                   </div>
 
-                  <div className="mt-4 space-y-4">
+                  <div className="mt-5 space-y-7">
                     <div>
-                      <div className="mb-1.5 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-600">
+                      <div className="mb-2 flex items-center justify-between gap-3 text-sm font-semibold text-slate-900">
                         <span>Postęp punktów</span>
-                        <span>{donePoints} / {requiredPoints} pkt</span>
+                        <span className="font-medium text-slate-700">
+                          {donePoints} / {requiredPoints} pkt
+                        </span>
                       </div>
-                      <div className="relative h-5">
+
+                      <div className="relative h-8">
                         <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-100" />
                         <div
                           className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-blue-600 transition-all duration-700"
@@ -1363,19 +1833,44 @@ export default function CalculatorClient() {
                     </div>
 
                     <div>
-                      <div className="mb-1.5 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-600">
+                      <div className="mb-2 flex items-center justify-between gap-3 text-sm font-semibold text-slate-900">
                         <span>Upływ okresu</span>
-                        <span>{Math.round(periodTimeProgress)}%</span>
+                        <span className="font-medium text-slate-700">
+                          {Math.round(periodTimeProgress)}% okresu minęło
+                        </span>
                       </div>
-                      <div className="relative h-5">
-                        <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-100" />
+
+                      <div className="relative h-12">
+                        <div className="absolute left-0 right-0 top-5 h-2 rounded-full bg-slate-100" />
                         <div
-                          className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-400 transition-all duration-700"
+                          className="absolute left-0 top-5 h-2 rounded-full bg-blue-600 transition-all duration-700"
                           style={{ width: `${periodTimeProgress}%` }}
                         />
-                        {timelineEvents.map((ev) => (
-                          <TimelineDot key={ev.id} left={ev.left} tone={ev.tone} title={ev.title} />
+                        <div
+                          className="absolute top-5 h-2 rounded-full bg-slate-400/70 transition-all duration-700"
+                          style={{
+                            left: `${periodTimeProgress}%`,
+                            right: 0,
+                          }}
+                        />
+                        <TimeNowMarker progress={periodTimeProgress} />
+
+                        {timelineEvents.map((ev, i) => (
+                          <TriangleMarker
+                            key={ev.id}
+                            left={ev.left}
+                            tone={ev.tone}
+                            title={ev.title}
+                            top={i % 2 === 0 ? -6 : -14}
+                          />
                         ))}
+
+                        <div className="absolute left-0 right-0 top-9 grid grid-cols-4 text-center text-xs font-medium text-slate-500">
+                          <span>{periodStart}</span>
+                          <span>{periodStart + 1}</span>
+                          <span>{periodStart + 2}</span>
+                          <span>{periodEnd}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1386,28 +1881,79 @@ export default function CalculatorClient() {
 
           <section id="kroki" className={cardCls}>
             <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
+
             <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
-              <IconBubble tone="blue"><MiniIcon name="chart" /></IconBubble>
-              <div><h2 className="text-sm font-semibold text-slate-900">Co dalej?</h2><p className="text-xs text-slate-500">Krótka lista kolejnych działań — bez zgadywania</p></div>
+              <IconBubble tone="blue">
+                <MiniIcon name="chart" />
+              </IconBubble>
+
+              <div>
+                <h2 className="text-sm font-semibold text-slate-900">Co dalej?</h2>
+                <p className="text-xs text-slate-500">
+                  Krótka lista kolejnych działań — bez zgadywania
+                </p>
+              </div>
             </div>
 
             <div className="grid gap-3 p-5 md:grid-cols-3">
               {nextSteps.map((step, index) => {
                 const tone =
                   step.tone === "amber"
-                    ? { card: "border-amber-200 bg-amber-50/70 hover:bg-amber-50", icon: "bg-white text-amber-700 ring-amber-200", badge: "bg-amber-100 text-amber-800", arrow: "border-amber-200 text-amber-700" }
+                    ? {
+                        card: "border-amber-200 bg-amber-50/70 hover:bg-amber-50",
+                        icon: "bg-white text-amber-700 ring-amber-200",
+                        badge: "bg-amber-100 text-amber-800",
+                        arrow: "border-amber-200 text-amber-700",
+                      }
                     : step.tone === "green"
-                      ? { card: "border-emerald-200 bg-emerald-50/60 hover:bg-emerald-50", icon: "bg-white text-emerald-700 ring-emerald-200", badge: "bg-emerald-100 text-emerald-800", arrow: "border-emerald-200 text-emerald-700" }
-                      : { card: "border-blue-200 bg-blue-50/60 hover:bg-blue-50", icon: "bg-white text-blue-700 ring-blue-200", badge: "bg-blue-100 text-blue-800", arrow: "border-blue-200 text-blue-700" };
+                      ? {
+                          card: "border-emerald-200 bg-emerald-50/60 hover:bg-emerald-50",
+                          icon: "bg-white text-emerald-700 ring-emerald-200",
+                          badge: "bg-emerald-100 text-emerald-800",
+                          arrow: "border-emerald-200 text-emerald-700",
+                        }
+                      : {
+                          card: "border-blue-200 bg-blue-50/60 hover:bg-blue-50",
+                          icon: "bg-white text-blue-700 ring-blue-200",
+                          badge: "bg-blue-100 text-blue-800",
+                          arrow: "border-blue-200 text-blue-700",
+                        };
 
                 return (
-                  <Link key={step.title} href={step.ctaHref} className={`group flex min-h-[104px] items-start gap-3 rounded-2xl border p-4 transition active:scale-[0.99] ${tone.card}`}>
-                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold ring-1 ${tone.icon}`}>{index + 1}</span>
+                  <Link
+                    key={step.title}
+                    href={step.ctaHref}
+                    className={`group flex min-h-[104px] items-start gap-3 rounded-2xl border p-4 transition active:scale-[0.99] ${tone.card}`}
+                  >
+                    <span
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold ring-1 ${tone.icon}`}
+                    >
+                      {index + 1}
+                    </span>
+
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2"><div className="text-sm font-bold text-slate-950">{step.title}</div>{step.priority === "high" ? <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone.badge}`}>najpierw</span> : null}</div>
-                      <div className="mt-1 text-xs leading-relaxed text-slate-600">{step.description}</div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="text-sm font-bold text-slate-950">
+                          {step.title}
+                        </div>
+                        {step.priority === "high" ? (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone.badge}`}
+                          >
+                            najpierw
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-1 text-xs leading-relaxed text-slate-600">
+                        {step.description}
+                      </div>
                     </div>
-                    <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border bg-white text-sm font-bold transition group-hover:translate-x-0.5 ${tone.arrow}`}>→</span>
+
+                    <span
+                      className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border bg-white text-sm font-bold transition group-hover:translate-x-0.5 ${tone.arrow}`}
+                    >
+                      →
+                    </span>
                   </Link>
                 );
               })}
@@ -1421,147 +1967,356 @@ export default function CalculatorClient() {
 
         <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <IconBubble tone="blue"><MiniIcon name="shield" /></IconBubble>
+            <IconBubble tone="blue">
+              <MiniIcon name="shield" />
+            </IconBubble>
+
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Twoje limity</h2>
-              <p className="text-xs text-slate-500">Najpierw widzisz decyzję, potem szczegóły kategorii.</p>
+              <h2 className="text-sm font-semibold text-slate-900">
+                Twoje limity
+              </h2>
+              <p className="text-xs text-slate-500">
+                Wybierz kategorię i sprawdź, ile możesz jeszcze bezpiecznie doliczyć.
+              </p>
             </div>
           </div>
 
           <div className="pl-12 text-xs text-slate-500 sm:pl-0">
-            Zaliczone: <strong className="text-slate-900">{donePoints} pkt</strong><span className="mx-2 text-slate-300">|</span>Brakuje: <strong className="text-slate-900">{missingPoints} pkt</strong>
+            Zaliczone: <strong className="text-slate-900">{donePoints} pkt</strong>
+            <span className="mx-2 text-slate-300">|</span>
+            Brakuje: <strong className="text-slate-900">{missingPoints} pkt</strong>
           </div>
         </div>
 
         <div className="p-4">
           {planInfo || planErr ? (
             <div className="mb-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs">
-              {planInfo ? <p className="font-semibold text-blue-700">{planInfo}</p> : null}
-              {planErr ? <p className="font-semibold text-red-600">{planErr}</p> : null}
+              {planInfo ? (
+                <p className="font-semibold text-blue-700">{planInfo}</p>
+              ) : null}
+              {planErr ? (
+                <p className="font-semibold text-red-600">{planErr}</p>
+              ) : null}
             </div>
           ) : null}
 
           {limitsUsage.length === 0 ? (
-            <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">Brak zdefiniowanych limitów dla tego zawodu.</div>
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">
+              Brak zdefiniowanych limitów dla tego zawodu.
+            </div>
           ) : (
             <div className="space-y-4">
-              <div className="grid gap-3 lg:grid-cols-[1.35fr_0.75fr_0.75fr]">
-                <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700">Najlepszy następny ruch</div>
-                  <div className="mt-1 text-xl font-extrabold tracking-tight text-slate-950">{bestLimit ? bestLimit.label : "Sprawdź aktywności"}</div>
-                  <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                    {bestLimit
-                      ? bestLimit.mode === "per_item"
-                        ? `Możesz dodać kolejny wpis. Maksymalnie ${bestLimit.cap} pkt za jeden wpis.`
-                        : `W tej kategorii możesz jeszcze doliczyć ${Math.round(bestLimit.remaining)} pkt.`
-                      : "Brak oczywistej kategorii z dostępnym limitem."}
-                  </div>
-                </div>
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                {limitsUsage.map((r) => {
+                  const active = selectedLimit?.key === r.key;
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Możesz użyć</div>
-                  <div className="mt-1 text-2xl font-extrabold text-slate-950">{usableLimits.length}</div>
-                  <div className="mt-1 text-xs text-slate-600">kategorii bez blokady</div>
-                </div>
+                  const tone =
+                    r.status === "blocked"
+                      ? {
+                          stripe: "bg-slate-400",
+                          active: "border-slate-300 bg-white shadow-sm ring-1 ring-slate-200",
+                          number: "text-slate-900",
+                        }
+                      : r.status === "warning"
+                        ? {
+                            stripe: "bg-amber-400",
+                            active: "border-amber-200 bg-white shadow-sm ring-1 ring-amber-100",
+                            number: "text-amber-700",
+                          }
+                        : {
+                            stripe: "bg-blue-500",
+                            active: "border-blue-200 bg-white shadow-sm ring-1 ring-blue-100",
+                            number: "text-blue-700",
+                          };
 
-                <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-700">Zablokowane</div>
-                  <div className="mt-1 text-2xl font-extrabold text-slate-950">{blockedLimits.length}</div>
-                  <div className="mt-1 text-xs text-slate-600">kategorii po limicie</div>
-                </div>
-              </div>
+                  const value = r.mode === "per_item" ? r.cap : Math.round(r.remaining);
+                  const suffix =
+                    r.mode === "per_item"
+                      ? "pkt / wpis"
+                      : r.status === "blocked"
+                        ? "pkt"
+                        : "pkt wolne";
 
-              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                <div className="grid grid-cols-[1.4fr_0.9fr_0.75fr_0.75fr_0.9fr_auto] gap-3 border-b border-slate-100 bg-slate-50 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 max-lg:hidden">
-                  <div>Kategoria</div>
-                  <div>Zasada</div>
-                  <div className="text-right">Masz</div>
-                  <div className="text-right">Doliczysz</div>
-                  <div>Status</div>
-                  <div />
-                </div>
+                  return (
+                    <button
+                      key={r.key}
+                      type="button"
+                      onClick={() => setSelectedLimitKey(r.key)}
+                      className={[
+                        "relative overflow-hidden rounded-2xl border p-3 text-left transition hover:bg-white hover:shadow-sm",
+                        active ? tone.active : "border-slate-200 bg-slate-50/70",
+                      ].join(" ")}
+                    >
+                      <div
+                        className={`absolute bottom-3 left-0 top-3 w-1 rounded-r-full ${
+                          active ? tone.stripe : "bg-slate-200"
+                        }`}
+                      />
 
-                <div className="divide-y divide-slate-100">
-                  {limitsUsage.map((r) => {
-                    const blocked = r.status === "blocked";
-                    const warning = r.status === "warning";
-                    const accent = blocked ? "bg-slate-400" : warning ? "bg-amber-400" : "bg-blue-500";
-                    const ruleLabel = r.mode === "per_item" ? `${r.cap} pkt / wpis` : r.mode === "per_year" ? `${r.maxPoints} pkt / rok` : `${r.cap} pkt / okres`;
-                    const canAddLabel = r.mode === "per_item" ? `${r.cap} pkt / wpis` : blocked ? "0 pkt" : `${Math.round(r.remaining)} pkt`;
-                    const advice =
-                      r.mode === "per_item"
-                        ? "Limit dotyczy pojedynczego wpisu. Możesz dodawać kolejne, każdy licz osobno."
-                        : blocked
-                          ? "Ta kategoria jest już po limicie. Wybierz inną aktywność."
-                          : warning
-                            ? "Zostało niewiele miejsca w limicie — planuj ostrożnie."
-                            : "Ta kategoria nadal może pomóc domknąć brakujące punkty.";
-
-                    return (
-                      <article key={r.key} className="relative grid gap-3 px-4 py-4 lg:grid-cols-[1.4fr_0.9fr_0.75fr_0.75fr_0.9fr_auto] lg:items-center">
-                        <div className={`absolute bottom-3 left-0 top-3 w-1 rounded-r-full ${accent}`} />
-
-                        <div className="pl-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-sm font-bold text-slate-950">{r.label}</h3>
-                            <LimitStatusPill status={r.status} />
-                          </div>
-                          <p className="mt-1 text-xs leading-relaxed text-slate-500 lg:hidden">{advice}</p>
-                          {r.note ? <p className="mt-1 hidden text-[11px] leading-relaxed text-slate-500 lg:block">{r.note}</p> : null}
-                        </div>
-
-                        <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 lg:bg-white">
-                          {ruleLabel}
-                        </div>
-
-                        <div className="flex items-center justify-between gap-3 lg:block lg:text-right">
-                          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 lg:hidden">Masz</span>
-                          <span className="text-sm font-extrabold text-slate-950">{r.used} pkt</span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-3 lg:block lg:text-right">
-                          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 lg:hidden">Doliczysz</span>
-                          <span className={`text-sm font-extrabold ${blocked ? "text-slate-500" : warning ? "text-amber-600" : "text-blue-700"}`}>{canAddLabel}</span>
-                        </div>
-
-                        <div>
-                          {r.mode === "per_item" ? (
-                            <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] leading-relaxed text-blue-800">Nie sumuje się w okresie.</div>
-                          ) : (
-                            <div>
-                              <div className="mb-1 flex justify-between text-[10px] font-semibold text-slate-500"><span>Limit</span><span>{Math.round(r.usedPct)}%</span></div>
-                              <div className="h-2 rounded-full bg-slate-100"><div className={`h-full rounded-full ${accent}`} style={{ width: `${Math.max(r.usedPct, r.used > 0 ? 5 : 0)}%` }} /></div>
+                      <div className="pl-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold text-slate-950">
+                              {r.label}
                             </div>
-                          )}
+                            <div className="mt-0.5 text-[11px] text-slate-500">
+                              {r.mode === "per_item"
+                                ? "limit pojedynczego wpisu"
+                                : r.mode === "per_year"
+                                  ? "limit roczny"
+                                  : "limit w okresie"}
+                            </div>
+                          </div>
+
+                          <div className={`text-lg font-extrabold leading-none ${tone.number}`}>
+                            {value}
+                          </div>
                         </div>
 
-                        <div className="flex justify-end">
-                          {blocked ? (
-                            <Link href="/aktywnosci" className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50">Zobacz</Link>
-                          ) : (
-                            <button type="button" disabled={isBusy || planningKey === r.key} onClick={() => planForRule(r)} className="inline-flex h-8 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95 disabled:opacity-40">
-                              {planningKey === r.key ? "Dodaję..." : "Zaplanuj"}
-                            </button>
-                          )}
+                        <div className="mt-2 text-[11px] font-medium text-slate-500">
+                          {suffix}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedLimit ? (
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                  <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          Wybrana kategoria
+                        </div>
+                        <h3 className="mt-1 text-2xl font-extrabold tracking-[-0.04em] text-slate-950">
+                          {selectedLimit.label}
+                        </h3>
+                        <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-600">
+                          {selectedLimit.note ||
+                            "Ta kategoria może pomóc w domknięciu brakujących punktów."}
+                        </p>
+                      </div>
+
+                      <LimitStatusBadge kind={selectedLimit.status} />
+                    </div>
+
+                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          Maksymalnie
+                        </div>
+                        <div className="mt-2 text-2xl font-extrabold tracking-[-0.05em] text-slate-950">
+                          {selectedLimit.cap}
+                          <span className="ml-1 text-xs font-semibold text-slate-400">
+                            pkt
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {selectedLimit.mode === "per_item"
+                            ? "za jeden wpis"
+                            : selectedLimit.mode === "per_year"
+                              ? "w okresie z limitów rocznych"
+                              : "w całym okresie"}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          Masz już
+                        </div>
+                        <div className="mt-2 text-2xl font-extrabold tracking-[-0.05em] text-slate-950">
+                          {selectedLimit.used}
+                          <span className="ml-1 text-xs font-semibold text-slate-400">
+                            pkt
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {selectedLimit.count > 0
+                            ? `${selectedLimit.count} wpisów`
+                            : "brak wpisów"}
+                        </div>
+                      </div>
+
+                      <div
+                        className={`rounded-2xl border p-4 ${
+                          selectedLimit.status === "blocked"
+                            ? "border-slate-200 bg-slate-50/80"
+                            : selectedLimit.status === "warning"
+                              ? "border-amber-200 bg-amber-50/70"
+                              : "border-blue-200 bg-blue-50/70"
+                        }`}
+                      >
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          Możesz jeszcze
+                        </div>
+                        <div
+                          className={`mt-2 text-2xl font-extrabold tracking-[-0.05em] ${
+                            selectedLimit.status === "blocked"
+                              ? "text-slate-500"
+                              : selectedLimit.status === "warning"
+                                ? "text-amber-700"
+                                : "text-blue-700"
+                          }`}
+                        >
+                          {selectedLimit.mode === "per_item"
+                            ? selectedLimit.cap
+                            : Math.round(selectedLimit.remaining)}
+                          <span className="ml-1 text-xs font-semibold opacity-60">
+                            pkt
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs text-slate-600">
+                          {selectedLimit.mode === "per_item"
+                            ? "w kolejnym wpisie"
+                            : selectedLimit.status === "blocked"
+                              ? "limit wykorzystany"
+                              : "bezpiecznego zapasu"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <div className="text-xs font-semibold text-slate-900">
+                            Co to oznacza?
+                          </div>
+                          <div className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
+                            {selectedLimit.mode === "per_item"
+                              ? `Ten limit działa na pojedynczy wpis. Każdą aktywność oceniasz osobno, maksymalnie do ${selectedLimit.cap} pkt.`
+                              : selectedLimit.status === "blocked"
+                                ? "Ta kategoria jest już wykorzystana. Nie planuj jej dalej pod brakujące punkty."
+                                : selectedLimit.status === "warning"
+                                  ? `Możesz jeszcze skorzystać z tej kategorii, ale zostało tylko ${Math.round(selectedLimit.remaining)} pkt miejsca.`
+                                  : `To dobra kategoria do dalszego uzupełniania. Możesz jeszcze doliczyć ${Math.round(selectedLimit.remaining)} pkt.`}
+                          </div>
                         </div>
 
-                        <div className="pl-2 text-xs leading-relaxed text-slate-500 lg:col-span-6 lg:hidden">{advice}</div>
-                      </article>
-                    );
-                  })}
+                        {selectedLimit.status === "blocked" ? (
+                          <Link
+                            href="/aktywnosci"
+                            className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                          >
+                            Zobacz wpisy
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={isBusy || planningKey === selectedLimit.key}
+                            onClick={() => planForRule(selectedLimit)}
+                            className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white px-3.5 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95 disabled:opacity-40"
+                          >
+                            {planningKey === selectedLimit.key
+                              ? "Dodaję..."
+                              : "Zaplanuj tę kategorię"}
+                          </button>
+                        )}
+                      </div>
+
+                      {selectedLimit.mode !== "per_item" ? (
+                        <div className="mt-4">
+                          <div className="mb-1.5 flex items-center justify-between gap-3 text-[11px] font-medium text-slate-500">
+                            <span>Wykorzystanie limitu</span>
+                            <span>{Math.round(selectedLimit.usedPct)}%</span>
+                          </div>
+
+                          <div className="h-2 overflow-hidden rounded-full bg-white">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                selectedLimit.status === "blocked"
+                                  ? "bg-slate-400"
+                                  : selectedLimit.status === "warning"
+                                    ? "bg-amber-400"
+                                    : "bg-blue-600"
+                              }`}
+                              style={{
+                                width: `${Math.max(
+                                  selectedLimit.usedPct,
+                                  selectedLimit.used > 0 ? 5 : 0,
+                                )}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <aside className="space-y-3">
+                    <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        Najlepszy ruch
+                      </div>
+                      <div className="mt-2 text-base font-bold text-slate-950">
+                        {bestLimit?.label ?? "Sprawdź aktywności"}
+                      </div>
+                      <div className="mt-1 text-sm leading-relaxed text-slate-600">
+                        {bestLimit
+                          ? bestLimit.mode === "per_item"
+                            ? `Możesz dodać kolejny wpis do ${bestLimit.cap} pkt.`
+                            : `Możesz jeszcze doliczyć ${Math.round(bestLimit.remaining)} pkt.`
+                          : "Brak oczywistej rekomendacji."}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          Dostępne
+                        </div>
+                        <div className="mt-1 text-2xl font-extrabold text-slate-950">
+                          {usableLimitsCount}
+                        </div>
+                        <div className="mt-1 text-[11px] text-slate-500">
+                          kategorie
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-3">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-700">
+                          Po limicie
+                        </div>
+                        <div className="mt-1 text-2xl font-extrabold text-slate-950">
+                          {blockedLimitsCount}
+                        </div>
+                        <div className="mt-1 text-[11px] text-slate-500">
+                          kategorie
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[1.35rem] border border-blue-100 bg-blue-50/70 p-4 text-xs leading-relaxed text-blue-900">
+                      <span className="font-semibold">Jak korzystać?</span>{" "}
+                      Najpierw wybierz kategorię z kafelków. W środku zobaczysz limit,
+                      swój stan i konkretną decyzję: planować dalej czy wybrać coś innego.
+                    </div>
+                  </aside>
                 </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
-                <span className="font-semibold text-slate-900">Jak to czytać?</span> „Doliczysz” pokazuje bezpieczne miejsce w limicie. Przy limicie „na wpis” liczysz każdy wpis osobno, dlatego nie pokazujemy procentowego wykorzystania okresu.
-              </div>
+              ) : null}
             </div>
           )}
 
           <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-            <Link href="/aktywnosci" className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50">Aktywności →</Link>
-            <Link href="/aktywnosci?new=1" className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50">+ Dodaj aktywność</Link>
-            <Link href="/portfolio" className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50">Raport / PDF →</Link>
+            <Link
+              href="/aktywnosci"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+            >
+              Aktywności →
+            </Link>
+            <Link
+              href="/aktywnosci?new=1"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+            >
+              + Dodaj aktywność
+            </Link>
+            <Link
+              href="/portfolio"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+            >
+              Raport / PDF →
+            </Link>
           </div>
         </div>
       </section>
@@ -1571,22 +2326,59 @@ export default function CalculatorClient() {
 
         <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <IconBubble tone="blue"><MiniIcon name="calendar" /></IconBubble>
+            <IconBubble tone="blue">
+              <MiniIcon name="calendar" />
+            </IconBubble>
+
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-slate-900">Ostatnie aktywności</h2>
-                {recentRows.length > 0 && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">{recentRows.length}</span>}
+                <h2 className="text-sm font-semibold text-slate-900">
+                  Ostatnie aktywności
+                </h2>
+                {recentRows.length > 0 && (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                    {recentRows.length}
+                  </span>
+                )}
               </div>
 
               <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
                 {(["all", "missing", "planned", "complete"] as const).map((f) => {
-                  const labels = { all: "wszystkie", missing: "brakująca dokumentacja", planned: "zaplanowane", complete: "kompletne" };
-                  const dots = { all: "", missing: "bg-amber-400", planned: "bg-slate-400", complete: "bg-emerald-400" };
-                  const active = { all: "bg-slate-100 text-slate-800", missing: "bg-amber-50 text-amber-700", planned: "bg-slate-100 text-slate-800", complete: "bg-emerald-50 text-emerald-700" };
+                  const labels = {
+                    all: "wszystkie",
+                    missing: "brakująca dokumentacja",
+                    planned: "zaplanowane",
+                    complete: "kompletne",
+                  };
+
+                  const dots = {
+                    all: "",
+                    missing: "bg-amber-400",
+                    planned: "bg-slate-400",
+                    complete: "bg-emerald-400",
+                  };
+
+                  const active = {
+                    all: "bg-slate-100 text-slate-800",
+                    missing: "bg-amber-50 text-amber-700",
+                    planned: "bg-slate-100 text-slate-800",
+                    complete: "bg-emerald-50 text-emerald-700",
+                  };
 
                   return (
-                    <button key={f} type="button" onClick={() => filterActivities(f)} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${activityFilter === f ? active[f] : "text-slate-500 hover:bg-slate-50"}`}>
-                      {dots[f] ? <span className={`h-2 w-2 rounded-full ${dots[f]}`} /> : null}
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => filterActivities(f)}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${
+                        activityFilter === f
+                          ? active[f]
+                          : "text-slate-500 hover:bg-slate-50"
+                      }`}
+                    >
+                      {dots[f] ? (
+                        <span className={`h-2 w-2 rounded-full ${dots[f]}`} />
+                      ) : null}
                       {labels[f]}
                     </button>
                   );
@@ -1595,45 +2387,119 @@ export default function CalculatorClient() {
             </div>
           </div>
 
-          <Link href="/aktywnosci" className="shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700">Przejdź do aktywności</Link>
+          <Link
+            href="/aktywnosci"
+            className="shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700"
+          >
+            Przejdź do aktywności
+          </Link>
         </div>
 
         <div className="p-5">
           <div className="space-y-3">
             {recentRows.length === 0 ? (
               <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-8 text-center">
-                <div className="text-sm font-medium text-slate-700">{emptyStateMsg}</div>
-                <Link href={emptyStateHref} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 active:scale-95">{emptyStateCta}</Link>
+                <div className="text-sm font-medium text-slate-700">
+                  {emptyStateMsg}
+                </div>
+                <Link
+                  href={emptyStateHref}
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 active:scale-95"
+                >
+                  {emptyStateCta}
+                </Link>
               </div>
             ) : (
               recentRows.slice(0, 8).map((a) => {
                 const prog = normalizeStatus(a.status);
                 const missing = getRowMissing(a);
                 const hasMissing = prog !== "planned" && missing.length > 0;
-                const stripe = prog === "planned" ? "bg-slate-400" : hasMissing ? "bg-amber-500" : "bg-emerald-500";
+                const stripe =
+                  prog === "planned"
+                    ? "bg-slate-400"
+                    : hasMissing
+                      ? "bg-amber-500"
+                      : "bg-emerald-500";
 
                 return (
-                  <div key={a.id} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 pl-6 transition hover:border-blue-200 hover:shadow-sm active:scale-[0.99]">
-                    <div className={`absolute inset-y-3 left-0 w-1.5 rounded-r-full ${stripe}`} />
+                  <div
+                    key={a.id}
+                    className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 pl-6 transition hover:border-blue-200 hover:shadow-sm active:scale-[0.99]"
+                  >
+                    <div
+                      className={`absolute inset-y-3 left-0 w-1.5 rounded-r-full ${stripe}`}
+                    />
+
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <h3 className="text-sm font-semibold text-slate-900">{a.type}</h3>
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${prog === "planned" ? "bg-slate-100 text-slate-600 ring-slate-200" : "bg-slate-50 text-slate-500 ring-slate-100"}`}>{prog === "planned" ? "Zaplanowane" : "Ukończone"}</span>
-                          {prog !== "planned" ? <span className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${hasMissing ? "bg-amber-50 text-amber-700 ring-amber-100" : "bg-emerald-50 text-emerald-700 ring-emerald-100"}`}>{hasMissing ? "Brakująca dokumentacja" : "Kompletne"}</span> : null}
+                          <h3 className="text-sm font-semibold text-slate-900">
+                            {a.type}
+                          </h3>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
+                              prog === "planned"
+                                ? "bg-slate-100 text-slate-600 ring-slate-200"
+                                : "bg-slate-50 text-slate-500 ring-slate-100"
+                            }`}
+                          >
+                            {prog === "planned" ? "Zaplanowane" : "Ukończone"}
+                          </span>
+
+                          {prog !== "planned" ? (
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
+                                hasMissing
+                                  ? "bg-amber-50 text-amber-700 ring-amber-100"
+                                  : "bg-emerald-50 text-emerald-700 ring-emerald-100"
+                              }`}
+                            >
+                              {hasMissing
+                                ? "Brakująca dokumentacja"
+                                : "Kompletne"}
+                            </span>
+                          ) : null}
                         </div>
 
                         <p className="mt-1 text-xs text-slate-500">
-                          {a.organizer ? `${a.organizer} · ` : ""}Rok: <span className="font-medium text-slate-700">{a.year}</span>
-                          {prog === "planned" && a.planned_start_date ? <> · Termin: <span className="font-medium text-slate-700">{formatYMD(a.planned_start_date)}</span></> : null}
+                          {a.organizer ? `${a.organizer} · ` : ""}
+                          Rok:{" "}
+                          <span className="font-medium text-slate-700">{a.year}</span>
+                          {prog === "planned" && a.planned_start_date ? (
+                            <>
+                              {" "}
+                              · Termin:{" "}
+                              <span className="font-medium text-slate-700">
+                                {formatYMD(a.planned_start_date)}
+                              </span>
+                            </>
+                          ) : null}
                         </p>
 
-                        {hasMissing ? <div className="mt-1.5 flex flex-wrap gap-1">{missing.map((m) => <span key={m} className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200">{m}</span>)}</div> : null}
+                        {hasMissing ? (
+                          <div className="mt-1.5 flex flex-wrap gap-1">
+                            {missing.map((m) => (
+                              <span
+                                key={m}
+                                className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
+                              >
+                                {m}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
 
                       <div className="flex shrink-0 flex-col items-end gap-2">
-                        <span className="text-sm font-semibold text-slate-900">+{a.points} pkt</span>
-                        <Link href="/aktywnosci" className="rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50">Otwórz →</Link>
+                        <span className="text-sm font-semibold text-slate-900">
+                          +{a.points} pkt
+                        </span>
+                        <Link
+                          href="/aktywnosci"
+                          className="rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                        >
+                          Otwórz →
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -1644,7 +2510,12 @@ export default function CalculatorClient() {
 
           {recentRows.length > 8 && (
             <div className="mt-3 border-t border-slate-100 pt-3 text-center">
-              <Link href="/aktywnosci" className="text-sm font-medium text-blue-600 hover:text-blue-700">Zobacz wszystkie {recentRows.length} aktywności →</Link>
+              <Link
+                href="/aktywnosci"
+                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                Zobacz wszystkie {recentRows.length} aktywności →
+              </Link>
             </div>
           )}
         </div>
@@ -1652,16 +2523,30 @@ export default function CalculatorClient() {
 
       <section id="powiadomienia" className={`${cardCls} scroll-mt-44`}>
         <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
+
         <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <IconBubble tone="blue"><MiniIcon name="bell" /></IconBubble>
+            <IconBubble tone="blue">
+              <MiniIcon name="bell" />
+            </IconBubble>
+
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Bądź na bieżąco i nie przegap ważnych terminów</h2>
-              <p className="mt-0.5 text-xs text-slate-500">Włącz powiadomienia, aby otrzymywać przypomnienia o szkoleniach i terminach.</p>
+              <h2 className="text-sm font-semibold text-slate-900">
+                Bądź na bieżąco i nie przegap ważnych terminów
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Włącz powiadomienia, aby otrzymywać przypomnienia o szkoleniach
+                i terminach.
+              </p>
             </div>
           </div>
 
-          <Link href="/profil" className="shrink-0 rounded-xl border border-blue-100 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95">Ustawienia powiadomień →</Link>
+          <Link
+            href="/profil"
+            className="shrink-0 rounded-xl border border-blue-100 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95"
+          >
+            Ustawienia powiadomień →
+          </Link>
         </div>
       </section>
     </div>
