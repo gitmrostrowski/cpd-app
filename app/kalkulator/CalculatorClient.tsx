@@ -537,7 +537,6 @@ function TriangleMarker({
 
   return (
     <svg
-      title={title}
       viewBox="0 0 18 16"
       className="absolute z-10 h-4 w-4 -translate-x-1/2"
       style={{ left: `${clamp(left, 1, 99)}%`, top }}
@@ -545,7 +544,10 @@ function TriangleMarker({
       stroke={stroke}
       strokeWidth="2"
       strokeLinejoin="round"
+      role="img"
+      aria-label={title}
     >
+      <title>{title}</title>
       <path d="M2 2h14L9 14Z" />
     </svg>
   );
