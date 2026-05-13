@@ -2031,7 +2031,171 @@ export default function CalculatorClient() {
             </div>
           ) : (
             <div className="space-y-4">
-<section id="limity" className={`${cardCls} scroll-mt-44`}>
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="grid gap-0 overflow-hidden rounded-[1.35rem] border border-slate-200 bg-slate-50/60 shadow-sm shadow-slate-900/[0.03] md:grid-cols-3">
+                  {limitsUsage.map((r, index) => {
+                    const active = selectedLimit?.key === r.key;
+
+                    const value = r.mode === "per_item" ? r.cap : Math.round(r.remaining);
+                    const suffix =
+                      r.mode === "per_item"
+                        ? "pkt / wpis"
+                        : r.status === "blocked"
+                          ? "pkt"
+                          : "pkt wolne";
+
+                    const description =
+                      r.mode === "per_item"
+                        ? "limit pojedynczego wpisu"
+                        : r.mode === "per_year"
+                          ? "limit roczny"
+                          : "limit w okresie";
+
+                    return (
+                      <button
+                        key={r.key}
+                        type="button"
+                        onClick={() => setSelectedLimitKey(r.key)}
+                        className={[
+                          "group relative min-h-[128px] border-slate-200 px-5 py-4 text-left transition",
+                          index > 0 ? "border-t md:border-l md:border-t-0" : "",
+                          active
+                            ? "z-10 border-blue-300 bg-white shadow-[0_8px_18px_rgba(37,99,235,0.10)]"
+                            : "bg-white/70 hover:bg-white",
+                        ].join(" ")}
+                      >
+                        <div
+                          className={[
+                            "absolute left-0 right-0 top-0 h-1.5 transition",
+                            active ? "bg-blue-600" : "bg-transparent group-hover:bg-blue-200",
+                          ].join(" ")}
+                        />
+
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={[
+                              "mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl border",
+                              active
+                                ? "border-blue-100 bg-blue-50 text-blue-700"
+                                : "border-slate-200 bg-slate-50 text-slate-500",
+                            ].join(" ")}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-5 w-5"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9Z" />
+                              <path d="M3 10h18" />
+                            </svg>
+                          </span>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div
+                                  className={[
+                                    "truncate text-sm font-extrabold tracking-[-0.02em]",
+                                    active ? "text-slate-950" : "text-slate-800",
+                                  ].join(" ")}
+                                >
+                                  {r.label}
+                                </div>
+
+                                <div
+                                  className={[
+                                    "mt-1 text-[11px] font-medium",
+                                    active ? "text-blue-700" : "text-slate-500",
+                                  ].join(" ")}
+                                >
+                                  {description}
+                                </div>
+                              </div>
+
+                              <div
+                                className={[
+                                  "text-2xl font-extrabold leading-none tracking-[-0.05em]",
+                                  active ? "text-blue-700" : "text-blue-600",
+                                ].join(" ")}
+                              >
+                                {value}
+                              </div>
+                            </div>
+
+                            <div className="mt-3 text-sm font-semibold text-blue-700">
+                              {suffix}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                  <div className="flex items-start gap-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 10v6" />
+                        <path d="M12 7h.01" />
+                      </svg>
+                    </span>
+
+                    <div>
+                      <div className="text-sm font-extrabold text-slate-950">
+                        Skąd wynikają te limity?
+                      </div>
+
+                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                        Limity wynikają z przepisów i wymagań właściwego samorządu
+                        zawodowego, np. rozporządzeń, uchwał izby lekarskiej lub
+                        innych organów regulujących doskonalenie zawodowe.
+                      </p>
+
+                      <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70">
+                        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-3 py-2">
+                          <span className="text-xs font-semibold text-slate-700">
+                            Dostępne kategorie
+                          </span>
+                          <span className="text-sm font-extrabold text-blue-700">
+                            {usableLimitsCount}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3 px-3 py-2">
+                          <span className="text-xs font-semibold text-slate-700">
+                            Limit wykorzystany
+                          </span>
+                          <span
+                            className={[
+                              "text-sm font-extrabold",
+                              blockedLimitsCount > 0 ? "text-amber-700" : "text-slate-500",
+                            ].join(" ")}
+                          >
+                            {blockedLimitsCount}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Link
+                        href="/profil"
+                        className="mt-3 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-800"
+                      >
+                        Sprawdź profil i wymagania →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {selectedLimit ? (
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -2195,7 +2359,28 @@ export default function CalculatorClient() {
                     </div>
                   </div>
 
+                  <aside className="space-y-3">
+                    <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        Najlepszy ruch
+                      </div>
+                      <div className="mt-2 text-base font-bold text-slate-950">
+                        {bestLimit?.label ?? "Sprawdź aktywności"}
+                      </div>
+                      <div className="mt-1 text-sm leading-relaxed text-slate-600">
+                        {bestLimit
+                          ? bestLimit.mode === "per_item"
+                            ? `Możesz dodać kolejny wpis do ${bestLimit.cap} pkt.`
+                            : `Możesz jeszcze doliczyć ${Math.round(bestLimit.remaining)} pkt.`
+                          : "Brak oczywistej rekomendacji."}
+                      </div>
+                    </div>
 
+                    <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/80 p-4 text-xs leading-relaxed text-slate-700">
+                      <span className="font-semibold text-slate-950">Jak korzystać?</span>{" "}
+                      Najpierw wybierz kategorię z zakładek. W środku zobaczysz limit,
+                      swój stan i konkretną decyzję: planować dalej czy wybrać coś innego.
+                    </div>
                   </aside>
                 </div>
               ) : null}
