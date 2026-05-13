@@ -2138,16 +2138,18 @@ export default function CalculatorClient() {
                   </div>
                 </div>
                 {selectedLimit ? (
-                  <div className="rounded-b-[1.35rem] rounded-tr-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm shadow-blue-100/40">
+                  <div className="relative overflow-hidden rounded-b-[1.35rem] rounded-tr-[1.35rem] border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50/40 p-3.5 shadow-sm shadow-blue-100/40">
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-transparent" />
+
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700">
                           Wybrana kategoria
                         </div>
-                        <h3 className="mt-1 text-2xl font-extrabold tracking-[-0.04em] text-slate-950">
+                        <h3 className="mt-1 text-xl font-extrabold tracking-[-0.035em] text-slate-950 sm:text-2xl">
                           {selectedLimit.label}
                         </h3>
-                        <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-600">
+                        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
                           {selectedLimit.note ||
                             "Ta kategoria może pomóc w domknięciu brakujących punktów."}
                         </p>
@@ -2156,85 +2158,91 @@ export default function CalculatorClient() {
                       <LimitStatusBadge kind={selectedLimit.status} />
                     </div>
 
-                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                          Maksymalnie
-                        </div>
-                        <div className="mt-2 text-2xl font-extrabold tracking-[-0.05em] text-slate-950">
-                          {selectedLimit.cap}
-                          <span className="ml-1 text-xs font-semibold text-slate-400">
-                            pkt
-                          </span>
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {selectedLimit.mode === "per_item"
-                            ? "za jeden wpis"
-                            : selectedLimit.mode === "per_year"
-                              ? "w okresie z limitów rocznych"
-                              : "w całym okresie"}
+                    <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                      <div className="rounded-[1.05rem] border border-slate-200 bg-white/80 px-3 py-3 shadow-sm shadow-slate-900/[0.03]">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              Maksymalnie
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              {selectedLimit.mode === "per_item"
+                                ? "za jeden wpis"
+                                : selectedLimit.mode === "per_year"
+                                  ? "z limitów rocznych"
+                                  : "w całym okresie"}
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-right text-2xl font-extrabold tracking-[-0.05em] text-slate-950">
+                            {selectedLimit.cap}
+                            <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                          Masz już
-                        </div>
-                        <div className="mt-2 text-2xl font-extrabold tracking-[-0.05em] text-slate-950">
-                          {selectedLimit.used}
-                          <span className="ml-1 text-xs font-semibold text-slate-400">
-                            pkt
-                          </span>
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {selectedLimit.count > 0
-                            ? `${selectedLimit.count} wpisów`
-                            : "brak wpisów"}
+                      <div className="rounded-[1.05rem] border border-slate-200 bg-white/80 px-3 py-3 shadow-sm shadow-slate-900/[0.03]">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              Masz już
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              {selectedLimit.count > 0
+                                ? `${selectedLimit.count} wpisów`
+                                : "brak wpisów"}
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-right text-2xl font-extrabold tracking-[-0.05em] text-slate-950">
+                            {selectedLimit.used}
+                            <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
+                          </div>
                         </div>
                       </div>
 
                       <div
-                        className={`rounded-2xl border p-4 ${
+                        className={`rounded-[1.05rem] border px-3 py-3 shadow-sm ${
                           selectedLimit.status === "blocked"
-                            ? "border-slate-200 bg-slate-50/80"
+                            ? "border-slate-200 bg-white/80 shadow-slate-900/[0.03]"
                             : selectedLimit.status === "warning"
-                              ? "border-amber-200 bg-amber-50/70"
-                              : "border-blue-200 bg-blue-50/70"
+                              ? "border-amber-200 bg-amber-50/70 shadow-amber-100/40"
+                              : "border-blue-200 bg-blue-50/80 shadow-blue-100/40"
                         }`}
                       >
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                          Możesz jeszcze
-                        </div>
-                        <div
-                          className={`mt-2 text-2xl font-extrabold tracking-[-0.05em] ${
-                            selectedLimit.status === "blocked"
-                              ? "text-slate-500"
-                              : selectedLimit.status === "warning"
-                                ? "text-amber-700"
-                                : "text-blue-700"
-                          }`}
-                        >
-                          {selectedLimit.mode === "per_item"
-                            ? selectedLimit.cap
-                            : Math.round(selectedLimit.remaining)}
-                          <span className="ml-1 text-xs font-semibold opacity-60">
-                            pkt
-                          </span>
-                        </div>
-                        <div className="mt-1 text-xs text-slate-600">
-                          {selectedLimit.mode === "per_item"
-                            ? "w kolejnym wpisie"
-                            : selectedLimit.status === "blocked"
-                              ? "limit wykorzystany"
-                              : "bezpiecznego zapasu"}
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              Możesz jeszcze
+                            </div>
+                            <div className="mt-1 text-xs text-slate-600">
+                              {selectedLimit.mode === "per_item"
+                                ? "w kolejnym wpisie"
+                                : selectedLimit.status === "blocked"
+                                  ? "limit wykorzystany"
+                                  : "bezpiecznego zapasu"}
+                            </div>
+                          </div>
+                          <div
+                            className={`shrink-0 text-right text-2xl font-extrabold tracking-[-0.05em] ${
+                              selectedLimit.status === "blocked"
+                                ? "text-slate-500"
+                                : selectedLimit.status === "warning"
+                                  ? "text-amber-700"
+                                  : "text-blue-700"
+                            }`}
+                          >
+                            {selectedLimit.mode === "per_item"
+                              ? selectedLimit.cap
+                              : Math.round(selectedLimit.remaining)}
+                            <span className="ml-1 text-xs font-semibold opacity-60">pkt</span>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <div className="text-xs font-semibold text-slate-900">
+                    <div className="mt-3 rounded-[1.05rem] border border-slate-200 bg-white/85 p-3 shadow-sm shadow-slate-900/[0.03]">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-slate-950">
                             Co to oznacza?
                           </div>
                           <div className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
@@ -2270,13 +2278,13 @@ export default function CalculatorClient() {
                       </div>
 
                       {selectedLimit.mode !== "per_item" ? (
-                        <div className="mt-4">
+                        <div className="mt-3">
                           <div className="mb-1.5 flex items-center justify-between gap-3 text-[11px] font-medium text-slate-500">
                             <span>Wykorzystanie limitu</span>
                             <span>{Math.round(selectedLimit.usedPct)}%</span>
                           </div>
 
-                          <div className="h-2 overflow-hidden rounded-full bg-white">
+                          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                             <div
                               className={`h-full rounded-full transition-all duration-500 ${
                                 selectedLimit.status === "blocked"
