@@ -2031,81 +2031,7 @@ export default function CalculatorClient() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                {limitsUsage.map((r) => {
-                  const active = selectedLimit?.key === r.key;
-
-                  const tone =
-                    r.status === "blocked"
-                      ? {
-                          stripe: "bg-slate-400",
-                          active: "border-slate-300 bg-white shadow-sm ring-1 ring-slate-200",
-                          number: "text-slate-900",
-                        }
-                      : r.status === "warning"
-                        ? {
-                            stripe: "bg-amber-400",
-                            active: "border-amber-200 bg-white shadow-sm ring-1 ring-amber-100",
-                            number: "text-amber-700",
-                          }
-                        : {
-                            stripe: "bg-blue-500",
-                            active: "border-blue-200 bg-white shadow-sm ring-1 ring-blue-100",
-                            number: "text-blue-700",
-                          };
-
-                  const value = r.mode === "per_item" ? r.cap : Math.round(r.remaining);
-                  const suffix =
-                    r.mode === "per_item"
-                      ? "pkt / wpis"
-                      : r.status === "blocked"
-                        ? "pkt"
-                        : "pkt wolne";
-
-                  return (
-                    <button
-                      key={r.key}
-                      type="button"
-                      onClick={() => setSelectedLimitKey(r.key)}
-                      className={[
-                        "relative overflow-hidden rounded-2xl border p-3 text-left transition hover:bg-white hover:shadow-sm",
-                        active ? tone.active : "border-slate-200 bg-slate-50/70",
-                      ].join(" ")}
-                    >
-                      <div
-                        className={`absolute bottom-3 left-0 top-3 w-1 rounded-r-full ${
-                          active ? tone.stripe : "bg-slate-200"
-                        }`}
-                      />
-
-                      <div className="pl-2">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold text-slate-950">
-                              {r.label}
-                            </div>
-                            <div className="mt-0.5 text-[11px] text-slate-500">
-                              {r.mode === "per_item"
-                                ? "limit pojedynczego wpisu"
-                                : r.mode === "per_year"
-                                  ? "limit roczny"
-                                  : "limit w okresie"}
-                            </div>
-                          </div>
-
-                          <div className={`text-lg font-extrabold leading-none ${tone.number}`}>
-                            {value}
-                          </div>
-                        </div>
-
-                        <div className="mt-2 text-[11px] font-medium text-slate-500">
-                          {suffix}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+<section id="limity" className={`${cardCls} scroll-mt-44`}>
 
               {selectedLimit ? (
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -2269,54 +2195,7 @@ export default function CalculatorClient() {
                     </div>
                   </div>
 
-                  <aside className="space-y-3">
-                    <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                        Najlepszy ruch
-                      </div>
-                      <div className="mt-2 text-base font-bold text-slate-950">
-                        {bestLimit?.label ?? "Sprawdź aktywności"}
-                      </div>
-                      <div className="mt-1 text-sm leading-relaxed text-slate-600">
-                        {bestLimit
-                          ? bestLimit.mode === "per_item"
-                            ? `Możesz dodać kolejny wpis do ${bestLimit.cap} pkt.`
-                            : `Możesz jeszcze doliczyć ${Math.round(bestLimit.remaining)} pkt.`
-                          : "Brak oczywistej rekomendacji."}
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                          Dostępne
-                        </div>
-                        <div className="mt-1 text-2xl font-extrabold text-slate-950">
-                          {usableLimitsCount}
-                        </div>
-                        <div className="mt-1 text-[11px] text-slate-500">
-                          kategorie
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-3">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-700">
-                          Po limicie
-                        </div>
-                        <div className="mt-1 text-2xl font-extrabold text-slate-950">
-                          {blockedLimitsCount}
-                        </div>
-                        <div className="mt-1 text-[11px] text-slate-500">
-                          kategorie
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="rounded-[1.35rem] border border-blue-100 bg-blue-50/70 p-4 text-xs leading-relaxed text-blue-900">
-                      <span className="font-semibold">Jak korzystać?</span>{" "}
-                      Najpierw wybierz kategorię z kafelków. W środku zobaczysz limit,
-                      swój stan i konkretną decyzję: planować dalej czy wybrać coś innego.
-                    </div>
                   </aside>
                 </div>
               ) : null}
