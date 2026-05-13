@@ -2030,8 +2030,8 @@ export default function CalculatorClient() {
               Brak zdefiniowanych limitów dla tego zawodu.
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="space-y-4">
                 <div className="h-fit">
                   <div className="flex items-end gap-2 overflow-x-auto border-b border-slate-200 px-0.5 pt-1">
                     {limitsUsage.map((r) => {
@@ -2133,71 +2133,7 @@ export default function CalculatorClient() {
                   </div>
                 </div>
 
-                <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-                  <div className="flex items-start gap-3">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <circle cx="12" cy="12" r="9" />
-                        <path d="M12 10v6" />
-                        <path d="M12 7h.01" />
-                      </svg>
-                    </span>
-
-                    <div>
-                      <div className="text-sm font-extrabold text-slate-950">
-                        Skąd wynikają te limity?
-                      </div>
-
-                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                        Limity wynikają z przepisów i wymagań właściwego samorządu
-                        zawodowego, np. rozporządzeń, uchwał izby lekarskiej lub
-                        innych organów regulujących doskonalenie zawodowe.
-                      </p>
-
-                      <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70">
-                        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-3 py-2">
-                          <span className="text-xs font-semibold text-slate-700">
-                            Dostępne kategorie
-                          </span>
-                          <span className="text-sm font-extrabold text-blue-700">
-                            {usableLimitsCount}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-3 px-3 py-2">
-                          <span className="text-xs font-semibold text-slate-700">
-                            Limit wykorzystany
-                          </span>
-                          <span
-                            className={[
-                              "text-sm font-extrabold",
-                              blockedLimitsCount > 0 ? "text-amber-700" : "text-slate-500",
-                            ].join(" ")}
-                          >
-                            {blockedLimitsCount}
-                          </span>
-                        </div>
-                      </div>
-
-                      <Link
-                        href="/profil"
-                        className="mt-3 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-800"
-                      >
-                        Sprawdź profil i wymagania →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {selectedLimit ? (
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                {selectedLimit ? (
                   <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
@@ -2358,31 +2294,94 @@ export default function CalculatorClient() {
                     </div>
                   </div>
 
-                  <aside className="space-y-3">
-                    <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                        Najlepszy ruch
-                      </div>
-                      <div className="mt-2 text-base font-bold text-slate-950">
-                        {bestLimit?.label ?? "Sprawdź aktywności"}
-                      </div>
-                      <div className="mt-1 text-sm leading-relaxed text-slate-600">
-                        {bestLimit
-                          ? bestLimit.mode === "per_item"
-                            ? `Możesz dodać kolejny wpis do ${bestLimit.cap} pkt.`
-                            : `Możesz jeszcze doliczyć ${Math.round(bestLimit.remaining)} pkt.`
-                          : "Brak oczywistej rekomendacji."}
-                      </div>
-                    </div>
+                ) : null}
+              </div>
 
-                    <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/80 p-4 text-xs leading-relaxed text-slate-700">
-                      <span className="font-semibold text-slate-950">Jak korzystać?</span>{" "}
-                      Najpierw wybierz kategorię z zakładek. W środku zobaczysz limit,
-                      swój stan i konkretną decyzję: planować dalej czy wybrać coś innego.
+              <aside className="space-y-3">
+                <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                  <div className="flex items-start gap-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 10v6" />
+                        <path d="M12 7h.01" />
+                      </svg>
+                    </span>
+
+                    <div>
+                      <div className="text-sm font-extrabold text-slate-950">
+                        Skąd wynikają te limity?
+                      </div>
+
+                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                        Limity wynikają z przepisów i wymagań właściwego samorządu
+                        zawodowego, np. rozporządzeń, uchwał izby lekarskiej lub
+                        innych organów regulujących doskonalenie zawodowe.
+                      </p>
+
+                      <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70">
+                        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-3 py-2">
+                          <span className="text-xs font-semibold text-slate-700">
+                            Dostępne kategorie
+                          </span>
+                          <span className="text-sm font-extrabold text-blue-700">
+                            {usableLimitsCount}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3 px-3 py-2">
+                          <span className="text-xs font-semibold text-slate-700">
+                            Limit wykorzystany
+                          </span>
+                          <span
+                            className={[
+                              "text-sm font-extrabold",
+                              blockedLimitsCount > 0 ? "text-amber-700" : "text-slate-500",
+                            ].join(" ")}
+                          >
+                            {blockedLimitsCount}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Link
+                        href="/profil"
+                        className="mt-3 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-800"
+                      >
+                        Sprawdź profil i wymagania →
+                      </Link>
                     </div>
-                  </aside>
+                  </div>
                 </div>
-              ) : null}
+
+                <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Najlepszy ruch
+                  </div>
+                  <div className="mt-2 text-base font-bold text-slate-950">
+                    {bestLimit?.label ?? "Sprawdź aktywności"}
+                  </div>
+                  <div className="mt-1 text-sm leading-relaxed text-slate-600">
+                    {bestLimit
+                      ? bestLimit.mode === "per_item"
+                        ? `Możesz dodać kolejny wpis do ${bestLimit.cap} pkt.`
+                        : `Możesz jeszcze doliczyć ${Math.round(bestLimit.remaining)} pkt.`
+                      : "Brak oczywistej rekomendacji."}
+                  </div>
+                </div>
+
+                <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/80 p-4 text-xs leading-relaxed text-slate-700">
+                  <span className="font-semibold text-slate-950">Jak korzystać?</span>{" "}
+                  Najpierw wybierz kategorię z zakładek. W środku zobaczysz limit,
+                  swój stan i konkretną decyzję: planować dalej czy wybrać coś innego.
+                </div>
+              </aside>
             </div>
           )}
 
