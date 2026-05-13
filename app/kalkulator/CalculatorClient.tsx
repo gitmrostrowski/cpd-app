@@ -2138,8 +2138,8 @@ export default function CalculatorClient() {
                   </div>
                 </div>
                 {selectedLimit ? (
-                  <div className="relative overflow-hidden rounded-b-[1.35rem] rounded-tr-[1.35rem] border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50/40 p-3.5 shadow-sm shadow-blue-100/40">
-                    <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-transparent" />
+                  <div className="relative overflow-hidden rounded-b-[1.35rem] rounded-tr-[1.35rem] border border-emerald-100 bg-gradient-to-br from-emerald-50/55 via-white to-blue-50/25 p-3.5 shadow-sm shadow-emerald-100/50">
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-emerald-300 to-transparent" />
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
@@ -2309,76 +2309,70 @@ export default function CalculatorClient() {
                 ) : null}
               </div>
 
-              <aside className="space-y-3">
-                <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-                  <div className="flex items-start gap-3">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <circle cx="12" cy="12" r="9" />
-                        <path d="M12 10v6" />
-                        <path d="M12 7h.01" />
-                      </svg>
-                    </span>
+              <aside className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                <div className="flex items-start gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 10v6" />
+                      <path d="M12 7h.01" />
+                    </svg>
+                  </span>
 
-                    <div>
-                      <div className="text-sm font-bold text-slate-950">
-                        Skąd wynikają te limity?
-                      </div>
-
-                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                        Limity wynikają z przepisów i wymagań właściwego samorządu
-                        zawodowego, np. rozporządzeń, uchwał izby lekarskiej lub
-                        innych organów regulujących doskonalenie zawodowe.
-                      </p>
-
-                      <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                          Status limitów
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-white px-2.5 py-1 font-semibold text-slate-700">
-                            <span className="text-emerald-700">{usableLimitsCount}</span>
-                            dostępne
-                          </span>
-
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 font-semibold text-slate-700">
-                            <span className={blockedLimitsCount > 0 ? "text-amber-700" : "text-slate-500"}>
-                              {blockedLimitsCount}
-                            </span>
-                            zamknięte limitem
-                          </span>
-                        </div>
-
-                        <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-                          „Zamknięte” to kategorie, w których osiągnięto maksymalny limit punktów.
-                        </p>
-                      </div>
-
-                      <Link
-                        href="/profil"
-                        className="mt-3 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-800"
-                      >
-                        Sprawdź profil i wymagania →
-                      </Link>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-bold text-slate-950">
+                      Skąd wynikają te limity?
                     </div>
+                    <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                      Limity wynikają z przepisów i wymagań właściwego samorządu
+                      zawodowego, np. rozporządzeń, uchwał izby lekarskiej lub
+                      innych organów regulujących doskonalenie zawodowe.
+                    </p>
                   </div>
                 </div>
 
-                <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Status limitów
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div className="rounded-xl border border-emerald-100 bg-white px-3 py-2">
+                      <div className="text-[10px] font-medium text-slate-500">Dostępne</div>
+                      <div className="mt-0.5 text-lg font-bold leading-none text-emerald-700">
+                        {usableLimitsCount}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <div className="text-[10px] font-medium text-slate-500">Zamknięte limitem</div>
+                      <div
+                        className={[
+                          "mt-0.5 text-lg font-bold leading-none",
+                          blockedLimitsCount > 0 ? "text-amber-700" : "text-slate-500",
+                        ].join(" ")}
+                      >
+                        {blockedLimitsCount}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                    „Zamknięte” oznacza kategorie, w których osiągnięto już maksymalny limit punktów.
+                  </p>
+                </div>
+
+                <div className="mt-3 border-t border-slate-100 pt-3">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                     Najlepszy ruch
                   </div>
-                  <div className="mt-2 text-base font-bold text-slate-950">
+                  <div className="mt-1 text-sm font-bold text-slate-950">
                     {bestLimit?.label ?? "Sprawdź aktywności"}
                   </div>
-                  <div className="mt-1 text-sm leading-relaxed text-slate-600">
+                  <div className="mt-0.5 text-xs leading-relaxed text-slate-600">
                     {bestLimit
                       ? bestLimit.mode === "per_item"
                         ? `Możesz dodać kolejny wpis do ${bestLimit.cap} pkt.`
@@ -2387,11 +2381,18 @@ export default function CalculatorClient() {
                   </div>
                 </div>
 
-                <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/80 p-4 text-xs leading-relaxed text-slate-700">
+                <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 px-3 py-2.5 text-xs leading-relaxed text-slate-700">
                   <span className="font-semibold text-slate-950">Jak korzystać?</span>{" "}
-                  Najpierw wybierz kategorię z zakładek. W środku zobaczysz limit,
-                  swój stan i konkretną decyzję: planować dalej czy wybrać coś innego.
+                  Wybierz zakładkę kategorii. W środku zobaczysz limit, swój stan
+                  i decyzję: planować dalej czy wybrać coś innego.
                 </div>
+
+                <Link
+                  href="/profil"
+                  className="mt-3 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-800"
+                >
+                  Sprawdź profil i wymagania →
+                </Link>
               </aside>
             </div>
           )}
