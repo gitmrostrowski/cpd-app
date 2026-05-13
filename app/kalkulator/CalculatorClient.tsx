@@ -1799,14 +1799,8 @@ export default function CalculatorClient() {
                       </div>
                     </div>
 
-<div>
-  <div className="text-sm font-extrabold uppercase tracking-[0.02em] text-slate-950">
-    Postęp i oś czasu
-  </div>
-  <div className="mt-1 text-sm leading-relaxed text-slate-500">
-    Punkty i czas na tej samej skali. Trójkąty oznaczają aktywności.
-  </div>
-</div>
+
+                  </div>
 
                   <div className="mt-5 space-y-7">
                     <div>
@@ -1827,63 +1821,62 @@ export default function CalculatorClient() {
                       </div>
                     </div>
 
+                    <div>
+                      <div className="mb-2 flex items-center justify-between gap-3 text-sm font-semibold text-slate-900">
+                        <span>Upływ okresu</span>
+                        <span className="font-medium text-slate-700">
+                          {Math.round(periodTimeProgress)}% okresu minęło
+                        </span>
+                      </div>
 
-<div>
-  <div className="mb-2 flex items-center justify-between gap-3 text-sm font-semibold text-slate-900">
-    <span>Upływ okresu</span>
-    <span className="font-medium text-slate-700">
-      {Math.round(periodTimeProgress)}% okresu minęło
-    </span>
-  </div>
+                      <div className="relative h-12">
+                        <div className="absolute left-0 right-0 top-5 h-2 rounded-full bg-slate-100" />
+                        <div
+                          className="absolute left-0 top-5 h-2 rounded-full bg-slate-500 transition-all duration-700"
+                          style={{ width: `${periodTimeProgress}%` }}
+                        />
+                        <div
+                          className="absolute top-5 h-2 rounded-full bg-slate-300/80 transition-all duration-700"
+                          style={{
+                            left: `${periodTimeProgress}%`,
+                            right: 0,
+                          }}
+                        />
+                        <TimeNowMarker progress={periodTimeProgress} />
 
-  <div className="relative h-12">
-    <div className="absolute left-0 right-0 top-5 h-2 rounded-full bg-slate-100" />
-    <div
-      className="absolute left-0 top-5 h-2 rounded-full bg-slate-500 transition-all duration-700"
-      style={{ width: `${periodTimeProgress}%` }}
-    />
-    <div
-      className="absolute top-5 h-2 rounded-full bg-slate-300/80 transition-all duration-700"
-      style={{
-        left: `${periodTimeProgress}%`,
-        right: 0,
-      }}
-    />
-    <TimeNowMarker progress={periodTimeProgress} />
+                        {timelineEvents.map((ev, i) => (
+                          <TriangleMarker
+                            key={ev.id}
+                            left={ev.left}
+                            tone={ev.tone}
+                            title={ev.title}
+                            top={i % 2 === 0 ? -6 : -14}
+                          />
+                        ))}
 
-    {timelineEvents.map((ev, i) => (
-      <TriangleMarker
-        key={ev.id}
-        left={ev.left}
-        tone={ev.tone}
-        title={ev.title}
-        top={i % 2 === 0 ? -6 : -14}
-      />
-    ))}
+                        <div className="absolute left-0 right-0 top-9 grid grid-cols-4 text-center text-xs font-medium text-slate-500">
+                          <span>{periodStart}</span>
+                          <span>{periodStart + 1}</span>
+                          <span>{periodStart + 2}</span>
+                          <span>{periodEnd}</span>
+                        </div>
+                      </div>
 
-    <div className="absolute left-0 right-0 top-9 grid grid-cols-4 text-center text-xs font-medium text-slate-500">
-      <span>{periodStart}</span>
-      <span>{periodStart + 1}</span>
-      <span>{periodStart + 2}</span>
-      <span>{periodEnd}</span>
-    </div>
-  </div>
-
-  <div className="mt-7 flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500">
-    <span className="inline-flex items-center gap-1.5">
-      <LegendTriangle tone="amber" />
-      do uzupełnienia
-    </span>
-    <span className="inline-flex items-center gap-1.5">
-      <LegendTriangle tone="green" />
-      kompletne
-    </span>
-    <span className="inline-flex items-center gap-1.5">
-      <LegendTriangle tone="blue" />
-      zaplanowane
-    </span>
-  </div>
-</div>
+                      <div className="mt-7 flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500">
+                        <span className="inline-flex items-center gap-1.5">
+                          <LegendTriangle tone="amber" />
+                          do uzupełnienia
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <LegendTriangle tone="green" />
+                          kompletne
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <LegendTriangle tone="blue" />
+                          zaplanowane
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
