@@ -2033,7 +2033,7 @@ export default function CalculatorClient() {
             <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
               <div className="space-y-4">
                 <div className="h-fit">
-                  <div className="flex items-end gap-2 overflow-x-auto border-b border-slate-200 px-0.5 pt-1">
+                  <div className="grid gap-2 border-b border-slate-200 px-0.5 pt-1 md:grid-cols-3">
                     {limitsUsage.map((r) => {
                       const active = selectedLimit?.key === r.key;
 
@@ -2058,7 +2058,7 @@ export default function CalculatorClient() {
                           type="button"
                           onClick={() => setSelectedLimitKey(r.key)}
                           className={[
-                            "group relative min-h-[82px] min-w-[210px] flex-1 rounded-t-[1.15rem] border px-4 py-3 text-left transition active:scale-[0.995]",
+                            "group relative min-h-[76px] rounded-t-[1.05rem] border px-4 py-3 text-left transition active:scale-[0.995]",
                             active
                               ? "z-10 -mb-px border-blue-300 border-b-white bg-white shadow-[0_-2px_14px_rgba(37,99,235,0.08)]"
                               : "border-slate-200 bg-slate-50/70 text-slate-700 hover:border-blue-200 hover:bg-white",
@@ -2067,7 +2067,7 @@ export default function CalculatorClient() {
                           <div
                             className={[
                               "absolute inset-x-4 top-0 h-1 rounded-b-full transition",
-                              active ? "bg-blue-600" : "bg-transparent group-hover:bg-blue-200",
+                              active ? "bg-blue-600" : "bg-transparent group-hover:bg-blue-100",
                             ].join(" ")}
                           />
 
@@ -2096,7 +2096,7 @@ export default function CalculatorClient() {
 
                                 <div
                                   className={[
-                                    "truncate text-sm font-extrabold tracking-[-0.02em]",
+                                    "truncate text-sm font-semibold tracking-[-0.01em]",
                                     active ? "text-slate-950" : "text-slate-800",
                                   ].join(" ")}
                                 >
@@ -2113,14 +2113,14 @@ export default function CalculatorClient() {
                                 {description}
                               </div>
 
-                              <div className="mt-2 text-sm font-semibold leading-none text-blue-700">
+                              <div className="mt-2 text-[13px] font-semibold leading-none text-blue-700">
                                 {suffix}
                               </div>
                             </div>
 
                             <div
                               className={[
-                                "shrink-0 text-2xl font-extrabold leading-none tracking-[-0.05em]",
+                                "shrink-0 text-xl font-bold leading-none tracking-[-0.03em]",
                                 active ? "text-blue-700" : "text-blue-600",
                               ].join(" ")}
                             >
@@ -2315,7 +2315,7 @@ export default function CalculatorClient() {
                     </span>
 
                     <div>
-                      <div className="text-sm font-extrabold text-slate-950">
+                      <div className="text-sm font-bold text-slate-950">
                         Skąd wynikają te limity?
                       </div>
 
@@ -2325,29 +2325,39 @@ export default function CalculatorClient() {
                         innych organów regulujących doskonalenie zawodowe.
                       </p>
 
-                      <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70">
-                        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-3 py-2">
-                          <span className="text-xs font-semibold text-slate-700">
-                            Dostępne kategorie
-                          </span>
-                          <span className="text-sm font-extrabold text-blue-700">
-                            {usableLimitsCount}
-                          </span>
+                      <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                          Status limitów
                         </div>
 
-                        <div className="flex items-center justify-between gap-3 px-3 py-2">
-                          <span className="text-xs font-semibold text-slate-700">
-                            Limit wykorzystany
-                          </span>
-                          <span
-                            className={[
-                              "text-sm font-extrabold",
-                              blockedLimitsCount > 0 ? "text-amber-700" : "text-slate-500",
-                            ].join(" ")}
-                          >
-                            {blockedLimitsCount}
-                          </span>
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          <div className="rounded-lg bg-white px-2.5 py-2 ring-1 ring-slate-200">
+                            <div className="text-[11px] font-medium text-slate-500">
+                              Dostępne
+                            </div>
+                            <div className="mt-0.5 text-base font-bold text-blue-700">
+                              {usableLimitsCount}
+                            </div>
+                          </div>
+
+                          <div className="rounded-lg bg-white px-2.5 py-2 ring-1 ring-slate-200">
+                            <div className="text-[11px] font-medium text-slate-500">
+                              Zamknięte
+                            </div>
+                            <div
+                              className={[
+                                "mt-0.5 text-base font-bold",
+                                blockedLimitsCount > 0 ? "text-amber-700" : "text-slate-500",
+                              ].join(" ")}
+                            >
+                              {blockedLimitsCount}
+                            </div>
+                          </div>
                         </div>
+
+                        <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                          „Zamknięte” oznacza kategorie, w których osiągnięto już maksymalny limit punktów.
+                        </p>
                       </div>
 
                       <Link
