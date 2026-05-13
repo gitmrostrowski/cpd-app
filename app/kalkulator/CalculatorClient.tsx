@@ -1884,86 +1884,107 @@ export default function CalculatorClient() {
           </section>
 
           <section id="kroki" className={cardCls}>
-            <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
+  <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
 
-            <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
-              <IconBubble tone="blue">
-                <MiniIcon name="chart" />
-              </IconBubble>
+  <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
+    <IconBubble tone="blue">
+      <MiniIcon name="chart" />
+    </IconBubble>
 
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900">Co dalej?</h2>
-                <p className="text-xs text-slate-500">
-                  Krótka lista kolejnych działań — bez zgadywania
-                </p>
+    <div>
+      <h2 className="text-sm font-semibold text-slate-900">Co dalej?</h2>
+      <p className="text-xs text-slate-500">
+        Krótka lista kolejnych działań — bez zgadywania
+      </p>
+    </div>
+  </div>
+
+  <div className="p-5">
+    <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/80 p-1 shadow-inner shadow-slate-900/[0.03]">
+      <div className="grid gap-1 md:grid-cols-3">
+        {nextSteps.map((step, index) => {
+          const tone =
+            step.tone === "amber"
+              ? {
+                  icon: "bg-white text-amber-700 ring-amber-200",
+                  badge: "bg-amber-100 text-amber-800",
+                  arrow: "border-amber-200 text-amber-700",
+                  active: "border-amber-200 bg-white shadow-sm ring-1 ring-amber-100",
+                  marker: "bg-amber-400",
+                }
+              : step.tone === "green"
+                ? {
+                    icon: "bg-white text-emerald-700 ring-emerald-200",
+                    badge: "bg-emerald-100 text-emerald-800",
+                    arrow: "border-emerald-200 text-emerald-700",
+                    active: "border-emerald-200 bg-white shadow-sm ring-1 ring-emerald-100",
+                    marker: "bg-emerald-500",
+                  }
+                : {
+                    icon: "bg-white text-blue-700 ring-blue-200",
+                    badge: "bg-blue-100 text-blue-800",
+                    arrow: "border-blue-200 text-blue-700",
+                    active: "border-blue-200 bg-white shadow-sm ring-1 ring-blue-100",
+                    marker: "bg-blue-500",
+                  };
+
+          const isHigh = step.priority === "high";
+
+          return (
+            <Link
+              key={step.title}
+              href={step.ctaHref}
+              className={[
+                "group relative flex min-h-[96px] items-start gap-3 rounded-[1.1rem] border p-4 transition active:scale-[0.99]",
+                isHigh
+                  ? tone.active
+                  : "border-transparent bg-transparent hover:bg-white/80 hover:shadow-sm",
+              ].join(" ")}
+            >
+              {isHigh ? (
+                <div
+                  className={`absolute inset-x-4 -bottom-[5px] h-[3px] rounded-full ${tone.marker}`}
+                />
+              ) : null}
+
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold ring-1 ${tone.icon}`}
+              >
+                {index + 1}
+              </span>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-sm font-bold text-slate-950">
+                    {step.title}
+                  </div>
+
+                  {isHigh ? (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone.badge}`}
+                    >
+                      najpierw
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="mt-1 text-xs leading-relaxed text-slate-600">
+                  {step.description}
+                </div>
               </div>
-            </div>
 
-            <div className="grid gap-3 p-5 md:grid-cols-3">
-              {nextSteps.map((step, index) => {
-                const tone =
-                  step.tone === "amber"
-                    ? {
-                        card: "border-amber-200 bg-amber-50/70 hover:bg-amber-50",
-                        icon: "bg-white text-amber-700 ring-amber-200",
-                        badge: "bg-amber-100 text-amber-800",
-                        arrow: "border-amber-200 text-amber-700",
-                      }
-                    : step.tone === "green"
-                      ? {
-                          card: "border-emerald-200 bg-emerald-50/60 hover:bg-emerald-50",
-                          icon: "bg-white text-emerald-700 ring-emerald-200",
-                          badge: "bg-emerald-100 text-emerald-800",
-                          arrow: "border-emerald-200 text-emerald-700",
-                        }
-                      : {
-                          card: "border-blue-200 bg-blue-50/60 hover:bg-blue-50",
-                          icon: "bg-white text-blue-700 ring-blue-200",
-                          badge: "bg-blue-100 text-blue-800",
-                          arrow: "border-blue-200 text-blue-700",
-                        };
-
-                return (
-                  <Link
-                    key={step.title}
-                    href={step.ctaHref}
-                    className={`group flex min-h-[104px] items-start gap-3 rounded-2xl border p-4 transition active:scale-[0.99] ${tone.card}`}
-                  >
-                    <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold ring-1 ${tone.icon}`}
-                    >
-                      {index + 1}
-                    </span>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="text-sm font-bold text-slate-950">
-                          {step.title}
-                        </div>
-                        {step.priority === "high" ? (
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone.badge}`}
-                          >
-                            najpierw
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                        {step.description}
-                      </div>
-                    </div>
-
-                    <span
-                      className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border bg-white text-sm font-bold transition group-hover:translate-x-0.5 ${tone.arrow}`}
-                    >
-                      →
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        </>
+              <span
+                className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border bg-white text-sm font-bold transition group-hover:translate-x-0.5 ${tone.arrow}`}
+              >
+                →
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+</section>        </>
       )}
 
       <section id="limity" className={`${cardCls} scroll-mt-44`}>
