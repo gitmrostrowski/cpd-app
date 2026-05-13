@@ -246,27 +246,27 @@ function statusTone(status: EnrollmentStatus | null | undefined) {
 function formatTone(format: TrainingType | null) {
   if (format === "stacjonarne") {
     return {
-      stripe: "bg-amber-400",
+      stripe: "bg-amber-50",
       badge: "border-amber-200 bg-amber-50 text-amber-800",
       iconBox: "border-amber-200 bg-amber-100 text-amber-800",
-      dateTop: "bg-amber-400",
+      dateTop: "bg-amber-50",
     };
   }
 
   if (format === "hybrydowe") {
     return {
-      stripe: "bg-indigo-500",
+      stripe: "bg-indigo-50",
       badge: "border-indigo-200 bg-indigo-50 text-indigo-800",
       iconBox: "border-indigo-200 bg-indigo-100 text-indigo-800",
-      dateTop: "bg-indigo-500",
+      dateTop: "bg-indigo-50",
     };
   }
 
   return {
-    stripe: "bg-blue-500",
+    stripe: "bg-blue-50",
     badge: "border-blue-200 bg-blue-50 text-blue-800",
     iconBox: "border-blue-200 bg-blue-100 text-blue-800",
-    dateTop: "bg-blue-500",
+    dateTop: "bg-blue-50",
   };
 }
 
@@ -1523,9 +1523,9 @@ export default function TrainingHubClient() {
                 </div>
 
                 <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                  <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                  <span className="inline-flex h-2 w-2 rounded-full bg-blue-50 ring-1 ring-blue-200" />
                   online
-                  <span className="inline-flex h-2 w-2 rounded-full bg-amber-400" />
+                  <span className="inline-flex h-2 w-2 rounded-full bg-amber-50 ring-1 ring-amber-200" />
                   stacj.
                 </div>
               </div>
@@ -1566,11 +1566,11 @@ export default function TrainingHubClient() {
 
                         const dayTone =
                           format === "stacjonarne"
-                            ? "bg-amber-100 text-amber-800 ring-amber-200 hover:bg-amber-200"
+                            ? "bg-amber-50 text-amber-800 ring-amber-200 hover:bg-amber-100"
                             : format === "hybrydowe"
-                            ? "bg-indigo-100 text-indigo-800 ring-indigo-200 hover:bg-indigo-200"
+                            ? "bg-indigo-50 text-indigo-800 ring-indigo-200 hover:bg-indigo-100"
                             : hasEvent
-                            ? "bg-blue-100 text-blue-800 ring-blue-200 hover:bg-blue-200"
+                            ? "bg-blue-50 text-blue-800 ring-blue-200 hover:bg-blue-100"
                             : "bg-slate-50 text-slate-400 ring-slate-100";
 
                         return (
@@ -1584,7 +1584,7 @@ export default function TrainingHubClient() {
                             }}
                             className={`relative flex aspect-square items-center justify-center rounded-xl text-[11px] font-semibold ring-1 transition disabled:cursor-default ${dayTone} ${
                               isSelected
-                                ? "outline outline-2 outline-blue-400"
+                                ? "outline outline-2 outline-blue-300"
                                 : ""
                             }`}
                             title={
