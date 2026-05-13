@@ -2031,8 +2031,8 @@ export default function CalculatorClient() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-                <div className="grid gap-0 overflow-hidden rounded-[1.35rem] border border-slate-200 bg-slate-50/60 shadow-sm shadow-slate-900/[0.03] md:grid-cols-3">
+              <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="grid h-fit gap-0 overflow-hidden rounded-[1.35rem] border border-slate-200 bg-slate-50/60 shadow-sm shadow-slate-900/[0.03] md:grid-cols-3">
                   {limitsUsage.map((r, index) => {
                     const active = selectedLimit?.key === r.key;
 
@@ -2057,7 +2057,7 @@ export default function CalculatorClient() {
                         type="button"
                         onClick={() => setSelectedLimitKey(r.key)}
                         className={[
-                          "group relative min-h-[128px] border-slate-200 px-5 py-4 text-left transition",
+                          "group relative min-h-[104px] border-slate-200 px-4 py-3 text-left transition",
                           index > 0 ? "border-t md:border-l md:border-t-0" : "",
                           active
                             ? "z-10 border-blue-300 bg-white shadow-[0_8px_18px_rgba(37,99,235,0.10)]"
@@ -2074,7 +2074,7 @@ export default function CalculatorClient() {
                         <div className="flex items-start gap-3">
                           <span
                             className={[
-                              "mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl border",
+                              "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl border",
                               active
                                 ? "border-blue-100 bg-blue-50 text-blue-700"
                                 : "border-slate-200 bg-slate-50 text-slate-500",
@@ -2082,7 +2082,7 @@ export default function CalculatorClient() {
                           >
                             <svg
                               viewBox="0 0 24 24"
-                              className="h-5 w-5"
+                              className="h-4 w-4"
                               fill="none"
                               stroke="currentColor"
                               strokeWidth="2"
@@ -2124,7 +2124,7 @@ export default function CalculatorClient() {
                               </div>
                             </div>
 
-                            <div className="mt-3 text-sm font-semibold text-blue-700">
+                            <div className="mt-2 text-sm font-semibold text-blue-700">
                               {suffix}
                             </div>
                           </div>
