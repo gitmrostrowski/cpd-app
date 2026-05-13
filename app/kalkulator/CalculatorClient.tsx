@@ -2032,8 +2032,8 @@ export default function CalculatorClient() {
           ) : (
             <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
               <div className="space-y-4">
-                <div className="h-fit">
-                  <div className="grid gap-2 border-b border-slate-200 px-0.5 pt-1 md:grid-cols-3">
+                <div className="rounded-[1.25rem] border border-slate-200 bg-slate-100/70 p-1.5 shadow-inner shadow-slate-900/[0.03]">
+                  <div className="grid gap-1.5 md:grid-cols-3">
                     {limitsUsage.map((r) => {
                       const active = selectedLimit?.key === r.key;
 
@@ -2058,16 +2058,16 @@ export default function CalculatorClient() {
                           type="button"
                           onClick={() => setSelectedLimitKey(r.key)}
                           className={[
-                            "group relative min-h-[76px] rounded-t-[1.05rem] border px-4 py-3 text-left transition active:scale-[0.995]",
+                            "group relative min-h-[78px] rounded-[1rem] border px-4 py-3 text-left transition active:scale-[0.995]",
                             active
-                              ? "z-10 -mb-px border-blue-300 border-b-white bg-white shadow-[0_-2px_14px_rgba(37,99,235,0.08)]"
-                              : "border-slate-200 bg-slate-50/70 text-slate-700 hover:border-blue-200 hover:bg-white",
+                              ? "border-emerald-200 bg-white shadow-sm ring-1 ring-emerald-200"
+                              : "border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-white/80",
                           ].join(" ")}
                         >
                           <div
                             className={[
                               "absolute inset-x-4 top-0 h-1 rounded-b-full transition",
-                              active ? "bg-blue-600" : "bg-transparent group-hover:bg-blue-100",
+                              active ? "bg-emerald-500" : "bg-transparent group-hover:bg-slate-300",
                             ].join(" ")}
                           />
 
@@ -2076,10 +2076,10 @@ export default function CalculatorClient() {
                               <div className="flex items-center gap-2">
                                 <span
                                   className={[
-                                    "grid h-7 w-7 shrink-0 place-items-center rounded-lg border",
+                                    "grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition",
                                     active
-                                      ? "border-blue-100 bg-blue-50 text-blue-700"
-                                      : "border-slate-200 bg-white text-slate-500 group-hover:text-blue-600",
+                                      ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+                                      : "border-slate-200 bg-white text-slate-500 group-hover:text-slate-700",
                                   ].join(" ")}
                                 >
                                   <svg
@@ -2097,7 +2097,7 @@ export default function CalculatorClient() {
                                 <div
                                   className={[
                                     "truncate text-sm font-semibold tracking-[-0.01em]",
-                                    active ? "text-slate-950" : "text-slate-800",
+                                    active ? "text-slate-950" : "text-slate-700",
                                   ].join(" ")}
                                 >
                                   {r.label}
@@ -2107,13 +2107,18 @@ export default function CalculatorClient() {
                               <div
                                 className={[
                                   "mt-2 text-[11px] font-medium leading-none",
-                                  active ? "text-blue-700" : "text-slate-500",
+                                  active ? "text-emerald-700" : "text-slate-500",
                                 ].join(" ")}
                               >
                                 {description}
                               </div>
 
-                              <div className="mt-2 text-[13px] font-semibold leading-none text-blue-700">
+                              <div
+                                className={[
+                                  "mt-2 text-[13px] font-semibold leading-none",
+                                  active ? "text-emerald-700" : "text-slate-600",
+                                ].join(" ")}
+                              >
                                 {suffix}
                               </div>
                             </div>
@@ -2121,7 +2126,7 @@ export default function CalculatorClient() {
                             <div
                               className={[
                                 "shrink-0 text-xl font-bold leading-none tracking-[-0.03em]",
-                                active ? "text-blue-700" : "text-blue-600",
+                                active ? "text-emerald-700" : "text-slate-500",
                               ].join(" ")}
                             >
                               {value}
@@ -2132,9 +2137,8 @@ export default function CalculatorClient() {
                     })}
                   </div>
                 </div>
-
                 {selectedLimit ? (
-                  <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
+                  <div className="rounded-[1.35rem] border border-blue-100 bg-blue-50/30 p-4 shadow-sm shadow-blue-100/40">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
@@ -2342,7 +2346,7 @@ export default function CalculatorClient() {
 
                           <div className="rounded-lg bg-white px-2.5 py-2 ring-1 ring-slate-200">
                             <div className="text-[11px] font-medium text-slate-500">
-                              Zamknięte
+                              Zamknięte limitem
                             </div>
                             <div
                               className={[
@@ -2356,7 +2360,7 @@ export default function CalculatorClient() {
                         </div>
 
                         <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-                          „Zamknięte” oznacza kategorie, w których osiągnięto już maksymalny limit punktów.
+                          „Zamknięte limitem” oznacza kategorie, w których osiągnięto już maksymalny limit punktów.
                         </p>
                       </div>
 
