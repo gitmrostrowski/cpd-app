@@ -2032,69 +2032,68 @@ export default function CalculatorClient() {
           ) : (
             <div className="space-y-4">
               <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-                <div className="grid h-fit gap-0 overflow-hidden rounded-[1.35rem] border border-slate-200 bg-slate-50/60 shadow-sm shadow-slate-900/[0.03] md:grid-cols-3">
-                  {limitsUsage.map((r, index) => {
-                    const active = selectedLimit?.key === r.key;
+                <div className="h-fit">
+                  <div className="flex items-end gap-2 overflow-x-auto border-b border-slate-200 px-0.5 pt-1">
+                    {limitsUsage.map((r) => {
+                      const active = selectedLimit?.key === r.key;
 
-                    const value = r.mode === "per_item" ? r.cap : Math.round(r.remaining);
-                    const suffix =
-                      r.mode === "per_item"
-                        ? "pkt / wpis"
-                        : r.status === "blocked"
-                          ? "pkt"
-                          : "pkt wolne";
+                      const value = r.mode === "per_item" ? r.cap : Math.round(r.remaining);
+                      const suffix =
+                        r.mode === "per_item"
+                          ? "pkt / wpis"
+                          : r.status === "blocked"
+                            ? "pkt"
+                            : "pkt wolne";
 
-                    const description =
-                      r.mode === "per_item"
-                        ? "limit pojedynczego wpisu"
-                        : r.mode === "per_year"
-                          ? "limit roczny"
-                          : "limit w okresie";
+                      const description =
+                        r.mode === "per_item"
+                          ? "limit pojedynczego wpisu"
+                          : r.mode === "per_year"
+                            ? "limit roczny"
+                            : "limit w okresie";
 
-                    return (
-                      <button
-                        key={r.key}
-                        type="button"
-                        onClick={() => setSelectedLimitKey(r.key)}
-                        className={[
-                          "group relative min-h-[104px] border-slate-200 px-4 py-3 text-left transition",
-                          index > 0 ? "border-t md:border-l md:border-t-0" : "",
-                          active
-                            ? "z-10 border-blue-300 bg-white shadow-[0_8px_18px_rgba(37,99,235,0.10)]"
-                            : "bg-white/70 hover:bg-white",
-                        ].join(" ")}
-                      >
-                        <div
+                      return (
+                        <button
+                          key={r.key}
+                          type="button"
+                          onClick={() => setSelectedLimitKey(r.key)}
                           className={[
-                            "absolute left-0 right-0 top-0 h-1.5 transition",
-                            active ? "bg-blue-600" : "bg-transparent group-hover:bg-blue-200",
+                            "group relative min-h-[82px] min-w-[210px] flex-1 rounded-t-[1.15rem] border px-4 py-3 text-left transition active:scale-[0.995]",
+                            active
+                              ? "z-10 -mb-px border-blue-300 border-b-white bg-white shadow-[0_-2px_14px_rgba(37,99,235,0.08)]"
+                              : "border-slate-200 bg-slate-50/70 text-slate-700 hover:border-blue-200 hover:bg-white",
                           ].join(" ")}
-                        />
-
-                        <div className="flex items-start gap-3">
-                          <span
+                        >
+                          <div
                             className={[
-                              "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl border",
-                              active
-                                ? "border-blue-100 bg-blue-50 text-blue-700"
-                                : "border-slate-200 bg-slate-50 text-slate-500",
+                              "absolute inset-x-4 top-0 h-1 rounded-b-full transition",
+                              active ? "bg-blue-600" : "bg-transparent group-hover:bg-blue-200",
                             ].join(" ")}
-                          >
-                            <svg
-                              viewBox="0 0 24 24"
-                              className="h-4 w-4"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9Z" />
-                              <path d="M3 10h18" />
-                            </svg>
-                          </span>
+                          />
 
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
+                          <div className="flex h-full items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={[
+                                    "grid h-7 w-7 shrink-0 place-items-center rounded-lg border",
+                                    active
+                                      ? "border-blue-100 bg-blue-50 text-blue-700"
+                                      : "border-slate-200 bg-white text-slate-500 group-hover:text-blue-600",
+                                  ].join(" ")}
+                                >
+                                  <svg
+                                    viewBox="0 0 24 24"
+                                    className="h-3.5 w-3.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                  >
+                                    <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9Z" />
+                                    <path d="M3 10h18" />
+                                  </svg>
+                                </span>
+
                                 <div
                                   className={[
                                     "truncate text-sm font-extrabold tracking-[-0.02em]",
@@ -2103,35 +2102,35 @@ export default function CalculatorClient() {
                                 >
                                   {r.label}
                                 </div>
-
-                                <div
-                                  className={[
-                                    "mt-1 text-[11px] font-medium",
-                                    active ? "text-blue-700" : "text-slate-500",
-                                  ].join(" ")}
-                                >
-                                  {description}
-                                </div>
                               </div>
 
                               <div
                                 className={[
-                                  "text-2xl font-extrabold leading-none tracking-[-0.05em]",
-                                  active ? "text-blue-700" : "text-blue-600",
+                                  "mt-2 text-[11px] font-medium leading-none",
+                                  active ? "text-blue-700" : "text-slate-500",
                                 ].join(" ")}
                               >
-                                {value}
+                                {description}
+                              </div>
+
+                              <div className="mt-2 text-sm font-semibold leading-none text-blue-700">
+                                {suffix}
                               </div>
                             </div>
 
-                            <div className="mt-2 text-sm font-semibold text-blue-700">
-                              {suffix}
+                            <div
+                              className={[
+                                "shrink-0 text-2xl font-extrabold leading-none tracking-[-0.05em]",
+                                active ? "text-blue-700" : "text-blue-600",
+                              ].join(" ")}
+                            >
+                              {value}
                             </div>
                           </div>
-                        </div>
-                      </button>
-                    );
-                  })}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
