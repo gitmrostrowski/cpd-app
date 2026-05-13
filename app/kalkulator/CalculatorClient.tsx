@@ -1883,7 +1883,7 @@ export default function CalculatorClient() {
             </div>
           </section>
 
-          <section id="kroki" className={cardCls}>
+         <section id="kroki" className={cardCls}>
   <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
 
   <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
