@@ -246,27 +246,27 @@ function statusTone(status: EnrollmentStatus | null | undefined) {
 function formatTone(format: TrainingType | null) {
   if (format === "stacjonarne") {
     return {
-      stripe: "bg-amber-200",
+      stripe: "bg-amber-300",
       badge: "border-amber-200 bg-amber-50 text-amber-800",
       iconBox: "border-amber-200 bg-amber-100 text-amber-800",
-      dateTop: "bg-amber-200",
+      dateTop: "bg-amber-300",
     };
   }
 
   if (format === "hybrydowe") {
     return {
-      stripe: "bg-indigo-200",
+      stripe: "bg-indigo-300",
       badge: "border-indigo-200 bg-indigo-50 text-indigo-800",
       iconBox: "border-indigo-200 bg-indigo-100 text-indigo-800",
-      dateTop: "bg-indigo-200",
+      dateTop: "bg-indigo-300",
     };
   }
 
   return {
-    stripe: "bg-blue-200",
+    stripe: "bg-blue-300",
     badge: "border-blue-200 bg-blue-50 text-blue-800",
     iconBox: "border-blue-200 bg-blue-100 text-blue-800",
-    dateTop: "bg-blue-200",
+    dateTop: "bg-blue-300",
   };
 }
 
