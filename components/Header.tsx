@@ -92,10 +92,10 @@ export default function Header() {
 
   const linkCls = (href: string) =>
     cx(
-      "inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors",
+      "inline-flex items-center gap-2 px-3 py-2 text-[13px] font-bold transition-colors",
       isActive(href)
-        ? "bg-slate-100 text-slate-900"
-        : "text-slate-900 hover:bg-slate-50"
+        ? "text-blue-700"
+        : "text-slate-700 hover:text-blue-700"
     );
 
   const emailShort = useMemo(() => {
@@ -118,16 +118,16 @@ export default function Header() {
   const logoHref = user ? "/kalkulator" : "/";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 shadow-sm shadow-slate-900/5 backdrop-blur">
-      <div className="mx-auto max-w-[1140px] px-4 sm:px-6 lg:px-8">
-        <div className="flex h-14 items-center gap-4">
+    <header className="relative z-50 border-b border-slate-200/80 bg-white">
+      <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center gap-5">
           <Link href={logoHref} className="flex shrink-0 items-center gap-2">
             <Image src="/logo.svg" alt="Logo" width={30} height={30} />
             <span className="text-base font-black tracking-tight text-slate-900">CRPE</span>
           </Link>
 
           <nav className="hidden flex-1 items-center justify-end sm:flex">
-            <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-white px-1 py-1 shadow-sm shadow-slate-900/5">
+            <div className="flex items-center gap-2">
               {NAV.map(({ href, label }) => (
                 <Link
                   key={href}
@@ -243,13 +243,13 @@ export default function Header() {
               <>
                 <Link
                   href={LOGIN_HREF}
-                  className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 transition hover:text-blue-700"
                 >
                   Zaloguj się
                 </Link>
                 <Link
                   href={LOGIN_HREF}
-                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                  className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(37,99,235,0.20)] transition hover:bg-blue-700"
                 >
                   Załóż konto
                 </Link>
