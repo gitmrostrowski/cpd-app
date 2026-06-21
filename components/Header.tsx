@@ -92,7 +92,7 @@ export default function Header() {
 
   const linkCls = (href: string) =>
     cx(
-      "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors",
+      "inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors",
       isActive(href)
         ? "bg-slate-100 text-slate-900"
         : "text-slate-900 hover:bg-slate-50"
@@ -118,16 +118,16 @@ export default function Header() {
   const logoHref = user ? "/kalkulator" : "/";
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/90 shadow-sm backdrop-blur">
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="flex h-16 items-center gap-4">
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 shadow-sm shadow-slate-900/5 backdrop-blur">
+      <div className="mx-auto max-w-[1140px] px-4 sm:px-6 lg:px-8">
+        <div className="flex h-14 items-center gap-4">
           <Link href={logoHref} className="flex shrink-0 items-center gap-2">
-            <Image src="/logo.svg" alt="Logo" width={32} height={32} />
-            <span className="text-lg font-semibold text-slate-900">CRPE</span>
+            <Image src="/logo.svg" alt="Logo" width={30} height={30} />
+            <span className="text-base font-black tracking-tight text-slate-900">CRPE</span>
           </Link>
 
           <nav className="hidden flex-1 items-center justify-end sm:flex">
-            <div className="flex items-center gap-1 rounded-2xl border border-blue-200/60 bg-white px-1 py-1 shadow-sm">
+            <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-white px-1 py-1 shadow-sm shadow-slate-900/5">
               {NAV.map(({ href, label }) => (
                 <Link
                   key={href}
