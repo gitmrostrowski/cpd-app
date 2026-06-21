@@ -15,11 +15,10 @@ type NavItem = {
 };
 
 const NAV: NavItem[] = [
-  { href: "/", label: "Home" },
-  { href: "/kalkulator", label: "Panel CPD" },
-  { href: "/aktywnosci", label: "Aktywności" },
-  { href: "/raporty", label: "Raporty" },
-  { href: "/baza-szkolen", label: "Baza szkoleń" },
+  { href: "/#jak-to-dziala", label: "Jak to działa" },
+  { href: "/#funkcje", label: "Funkcje" },
+  { href: "/#profile", label: "Profile" },
+  { href: "/#faq", label: "FAQ" },
 ];
 
 type ProfileRoleRow = { role: string | null };
@@ -241,12 +240,20 @@ export default function Header() {
                 </div>
               </>
             ) : (
-              <Link
-                href={LOGIN_HREF}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-              >
-                Zaloguj
-              </Link>
+              <>
+                <Link
+                  href={LOGIN_HREF}
+                  className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Zaloguj się
+                </Link>
+                <Link
+                  href={LOGIN_HREF}
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                >
+                  Załóż konto
+                </Link>
+              </>
             )}
           </div>
 
@@ -316,13 +323,22 @@ export default function Header() {
                     </button>
                   </>
                 ) : (
-                  <Link
-                    href={LOGIN_HREF}
-                    className="rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700"
-                    onClick={() => setOpenMobile(false)}
-                  >
-                    Zaloguj
-                  </Link>
+                  <>
+                    <Link
+                      href={LOGIN_HREF}
+                      className="rounded-xl border border-slate-200 px-4 py-2 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      onClick={() => setOpenMobile(false)}
+                    >
+                      Zaloguj się
+                    </Link>
+                    <Link
+                      href={LOGIN_HREF}
+                      className="rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700"
+                      onClick={() => setOpenMobile(false)}
+                    >
+                      Załóż konto
+                    </Link>
+                  </>
                 )}
               </div>
             </div>
