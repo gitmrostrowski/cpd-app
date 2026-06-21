@@ -34,9 +34,9 @@ type ProfileRow = {
   required_points: number | null;
 };
 
-const pageWrap = "mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-8";
-const panel = "rounded-[26px] border border-[#d7e3ee] bg-white shadow-[0_20px_55px_rgba(15,45,75,0.08)]";
-const innerCard = "rounded-[18px] border border-[#dce7f1] bg-white shadow-[0_12px_30px_rgba(15,45,75,0.055)]";
+const pageWrap = "mx-auto w-full max-w-[1140px] px-4 sm:px-6 lg:px-8";
+const panel = "rounded-[28px] border border-[#c9dbe9] bg-white shadow-[0_22px_60px_rgba(22,55,90,0.11)]";
+const innerCard = "rounded-[20px] border border-[#ccdeeb] bg-white shadow-[0_14px_34px_rgba(22,55,90,0.075)]";
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.24em] text-cyan-700">{children}</p>;
@@ -115,16 +115,16 @@ function HeroProfiles() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#f3f8fc] pb-16 pt-9">
-      <div className="pointer-events-none absolute right-[-220px] top-[-180px] h-[520px] w-[520px] rounded-full bg-blue-100/70 blur-3xl" />
+    <section className="relative overflow-hidden bg-[linear-gradient(180deg,#f7fbff_0%,#edf5fb_100%)] pb-16 pt-9">
+      <div className="pointer-events-none absolute right-[-220px] top-[-180px] h-[520px] w-[520px] rounded-full bg-blue-100/55 blur-3xl" />
       <div className={`${pageWrap} relative`}>
-        <div className={`${panel} overflow-hidden`}>
-          <div className="grid min-h-[520px] lg:grid-cols-[0.94fr_1.06fr]">
+        <div className={`${panel} overflow-hidden bg-[linear-gradient(105deg,#ffffff_0%,#ffffff_48%,#eef6fb_100%)] ring-1 ring-white/80`}>
+          <div className="grid min-h-[500px] lg:grid-cols-[0.96fr_1.04fr]">
             <div className="relative z-10 flex flex-col justify-center px-7 py-10 sm:px-10 lg:px-12">
               <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50/80 px-3 py-1.5 text-[11px] font-bold text-blue-800">
                 <ShieldCheck className="h-3.5 w-3.5" /> Bezpieczeństwo, punkty i certyfikaty w jednym miejscu
               </div>
-              <h1 className="max-w-[560px] text-[34px] font-black leading-[1.08] tracking-[-0.035em] text-slate-950 sm:text-[44px] lg:text-[50px]">
+              <h1 className="max-w-[560px] text-[32px] font-black leading-[1.08] tracking-[-0.035em] text-slate-950 sm:text-[42px] lg:text-[47px]">
                 Punkty CPD pod kontrolą. <span className="text-blue-600">Bez stresu.</span>
               </h1>
               <p className="mt-5 max-w-[520px] text-[15px] leading-7 text-slate-600">
@@ -146,7 +146,7 @@ function Hero() {
                 ].map(([Icon, title, text]) => {
                   const LucideIcon = Icon as typeof Sparkles;
                   return (
-                    <div key={String(title)} className="rounded-[18px] border border-[#dce7f1] bg-white/80 p-3.5">
+                    <div key={String(title)} className="rounded-[18px] border border-[#cfdfea] bg-white/90 p-3.5 shadow-[0_10px_22px_rgba(22,55,90,0.055)]">
                       <LucideIcon className="mb-2 h-4 w-4 text-cyan-700" strokeWidth={2} />
                       <p className="text-[12px] font-extrabold text-slate-950">{String(title)}</p>
                       <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{String(text)}</p>
@@ -156,7 +156,7 @@ function Hero() {
               </div>
             </div>
 
-            <div className="relative min-h-[460px] overflow-hidden bg-[#eaf3f9]">
+            <div className="relative m-3 min-h-[450px] overflow-hidden rounded-[24px] border border-[#d1e0ec] bg-[#eaf3f9] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] lg:m-0 lg:rounded-l-none lg:rounded-r-[28px] lg:border-y-0 lg:border-r-0">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_45%_20%,#ffffff_0%,rgba(255,255,255,0)_32%)]" />
               <Image
                 src="/lekarka_z_tabletem.png"
@@ -229,7 +229,7 @@ function HowItWorks() {
         <div className="grid gap-4 md:grid-cols-3">
           {steps.map(({ n, icon: Icon, title, text }) => (
             <div key={n} className={`${innerCard} relative p-6 text-center`}>
-              <div className="mx-auto flex h-[68px] w-[68px] items-center justify-center rounded-full border border-cyan-100 bg-cyan-50 ring-[10px] ring-[#f3f8fc]">
+              <div className="mx-auto flex h-[68px] w-[68px] items-center justify-center rounded-full border border-cyan-200 bg-cyan-50 ring-[10px] ring-[#f6f9fc]">
                 <Icon className="h-7 w-7 text-cyan-700" strokeWidth={1.8} />
               </div>
               <span className="absolute left-1/2 top-5 ml-5 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-black text-white shadow-lg shadow-blue-600/20">{n}</span>
@@ -243,84 +243,100 @@ function HowItWorks() {
   );
 }
 
-function DashboardMockup() {
+function PracticeVisual() {
+  const floatingCards = [
+    { icon: ShieldCheck, title: "Bezpieczne archiwum", text: "Certyfikaty i dokumenty w jednym miejscu", pos: "right-0 top-7" },
+    { icon: ClipboardCheck, title: "Status na bieżąco", text: "Postęp i braki widoczne od razu", pos: "left-0 bottom-8" },
+  ];
+
   return (
-    <div className="relative mx-auto w-full max-w-[520px] rounded-[28px] border border-[#d6e2ec] bg-white p-4 shadow-[0_26px_70px_rgba(22,55,90,0.13)]">
-      <div className="grid gap-4 sm:grid-cols-[120px_1fr]">
-        <div className="hidden rounded-[20px] bg-[#f4f8fb] p-3 sm:block">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="h-7 w-7 rounded-lg bg-blue-600" />
-            <span className="text-xs font-black text-slate-900">CRPE</span>
-          </div>
-          {['Panel', 'Aktywności', 'Certyfikaty', 'Raporty'].map((item, i) => (
-            <div key={item} className={`mb-2 rounded-xl px-3 py-2 text-[11px] font-bold ${i === 0 ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500'}`}>{item}</div>
-          ))}
+    <div className="relative min-h-[420px] lg:min-h-[500px]">
+      <div className="absolute -right-8 top-0 h-48 w-48 rounded-full bg-blue-200/45 blur-3xl" />
+      <div className="absolute bottom-0 left-4 h-56 w-56 rounded-full bg-cyan-200/45 blur-3xl" />
+
+      <div className="relative ml-auto max-w-[600px] rounded-[30px] border border-[#bfd4e5] bg-white p-3 shadow-[0_32px_80px_rgba(20,55,90,0.18)]">
+        <div className="flex h-9 items-center gap-2 border-b border-[#e2ebf3] px-3">
+          <span className="h-2.5 w-2.5 rounded-full bg-red-200" />
+          <span className="h-2.5 w-2.5 rounded-full bg-amber-200" />
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-200" />
+          <span className="ml-3 rounded-full bg-[#f2f7fb] px-3 py-1 text-[10px] font-bold text-slate-500">panel.crpe.pl</span>
         </div>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-black text-slate-950">Panel użytkownika</p>
-              <p className="text-xs text-slate-500">Aktualny okres rozliczeniowy</p>
-            </div>
-            <span className="rounded-full bg-cyan-50 px-3 py-1 text-[11px] font-extrabold text-cyan-700 ring-1 ring-cyan-100">Aktualne</span>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {[["110", "pkt"], ["200", "cel"], ["90", "brak"]].map(([value, label]) => (
-              <div key={label} className="rounded-2xl border border-[#dfe9f2] bg-[#f8fbfd] p-3 text-center">
-                <div className="text-[19px] font-black text-slate-950">{value}</div>
-                <div className="text-[11px] font-semibold text-slate-500">{label}</div>
-              </div>
-            ))}
-          </div>
-          <div>
-            <div className="mb-2 flex justify-between text-[11px] font-bold text-slate-500"><span>Postęp</span><span>55%</span></div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full w-[55%] rounded-full bg-blue-600" /></div>
-          </div>
-          <div className="space-y-2.5">
-            {["Konferencja kardiologiczna +20 pkt", "Kurs online +15 pkt", "Webinar medyczny +10 pkt"].map((x) => (
-              <div key={x} className="flex items-center gap-3 rounded-2xl border border-[#dfe9f2] bg-white px-4 py-3 text-[13px] font-bold text-slate-700">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" /> {x}
-              </div>
-            ))}
-          </div>
+        <div className="relative mt-3 overflow-hidden rounded-[22px] border border-[#d4e2ed] bg-[#f6f9fc]">
+          <Image
+            src="/crpe_reka2b.png"
+            alt="Widok panelu CRPE"
+            width={940}
+            height={416}
+            className="h-[320px] w-full object-cover object-left-top opacity-95 md:h-[390px]"
+            sizes="(max-width: 1024px) 100vw, 600px"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/45" />
         </div>
       </div>
+
+      {floatingCards.map(({ icon: Icon, title, text, pos }) => (
+        <div
+          key={title}
+          className={`absolute ${pos} hidden w-[230px] rounded-[20px] border border-[#c9dbe9] bg-white/96 p-4 shadow-[0_20px_48px_rgba(22,55,90,0.16)] backdrop-blur md:block`}
+        >
+          <div className="flex gap-3">
+            <IconTile tone="cyan"><Icon className="h-4 w-4" /></IconTile>
+            <div>
+              <p className="text-[13px] font-black text-slate-950">{title}</p>
+              <p className="mt-1 text-[12px] leading-relaxed text-slate-600">{text}</p>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
 function FeatureSection() {
   const features = [
-    { icon: BookOpen, title: "Historia aktywności", text: "Szkolenia, kursy i wydarzenia zawsze pod ręką." },
-    { icon: Award, title: "Certyfikaty przy wpisach", text: "Każdy dokument przypięty do konkretnej aktywności." },
-    { icon: BarChart3, title: "Przejrzysty status", text: "Od razu wiesz, ile masz i ile jeszcze brakuje." },
-    { icon: FileText, title: "Raporty i podsumowania", text: "Eksporty i dokumenty bez szukania plików." },
+    { icon: BookOpen, title: "Historia aktywności", text: "Szkolenia, kursy i wydarzenia uporządkowane chronologicznie." },
+    { icon: Award, title: "Certyfikaty przy wpisach", text: "Każdy dokument przypięty dokładnie do właściwej aktywności." },
+    { icon: BarChart3, title: "Status punktów", text: "Od razu widać postęp, braki i dystans do wymaganego celu." },
+    { icon: FileText, title: "Raporty bez chaosu", text: "Eksporty i podsumowania gotowe wtedy, kiedy ich potrzebujesz." },
   ];
 
   return (
-    <section id="funkcje" className="scroll-mt-24 bg-[#eef3f7] py-16">
+    <section id="funkcje" className="scroll-mt-24 bg-[linear-gradient(180deg,#eef3f7_0%,#f7fbff_100%)] py-16 md:py-20">
       <div className={pageWrap}>
-        <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
-          <div>
-            <Eyebrow>CRPE w praktyce</Eyebrow>
-            <h2 className="max-w-xl text-[28px] font-black leading-tight tracking-[-0.025em] text-slate-950 md:text-[36px]">Wszystko, czego potrzebujesz do zarządzania CPD</h2>
-            <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-600">
-              Prosty panel dla aktywności, certyfikatów i punktów. Mniej ręcznego sprawdzania, więcej pewności przed końcem okresu rozliczeniowego.
-            </p>
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              {features.map(({ icon: Icon, title, text }) => (
-                <div key={title} className="rounded-[18px] border border-[#d2dfe9] bg-white/80 p-4 shadow-[0_10px_28px_rgba(15,45,75,0.055)]">
-                  <IconTile tone="blue"><Icon className="h-4 w-4" /></IconTile>
-                  <h3 className="mt-3 text-[14px] font-extrabold text-slate-950">{title}</h3>
-                  <p className="mt-1 text-[12px] leading-relaxed text-slate-600">{text}</p>
-                </div>
-              ))}
+        <div className="relative overflow-hidden rounded-[34px] border border-[#c7d9e8] bg-white shadow-[0_28px_80px_rgba(22,55,90,0.12)]">
+          <div className="pointer-events-none absolute right-[-140px] top-[-120px] h-[360px] w-[360px] rounded-full bg-blue-100 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-[-120px] left-[-120px] h-[320px] w-[320px] rounded-full bg-cyan-100/80 blur-3xl" />
+
+          <div className="relative grid gap-10 p-6 md:p-9 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:p-11">
+            <div>
+              <div className="mb-5 h-1 w-14 rounded-full bg-cyan-500" />
+              <Eyebrow>CRPE w praktyce</Eyebrow>
+              <h2 className="max-w-xl text-[27px] font-black leading-[1.12] tracking-[-0.025em] text-slate-950 md:text-[34px]">
+                Jeden panel zamiast arkuszy, folderów i ręcznego sprawdzania.
+              </h2>
+              <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-600">
+                CRPE zbiera aktywności, punkty i certyfikaty w uporządkowanym widoku. Widzisz, co jest gotowe, czego brakuje i jakie dokumenty są potrzebne przed rozliczeniem.
+              </p>
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                {features.map(({ icon: Icon, title, text }) => (
+                  <div
+                    key={title}
+                    className="group rounded-[20px] border border-[#c9dbe9] bg-white p-4 shadow-[0_14px_34px_rgba(22,55,90,0.075)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(22,55,90,0.105)]"
+                  >
+                    <div className="flex items-start gap-3">
+                      <IconTile tone="blue"><Icon className="h-4 w-4" /></IconTile>
+                      <div>
+                        <h3 className="text-[14px] font-extrabold text-slate-950">{title}</h3>
+                        <p className="mt-1 text-[12.5px] leading-relaxed text-slate-600">{text}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="relative">
-            <div className="absolute -right-8 -top-8 h-44 w-44 rounded-full bg-blue-100 blur-3xl" />
-            <div className="absolute -bottom-10 left-4 h-44 w-44 rounded-full bg-cyan-100 blur-3xl" />
-            <DashboardMockup />
+
+            <PracticeVisual />
           </div>
         </div>
       </div>
@@ -418,7 +434,7 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f8fc]">
+    <div className="min-h-screen bg-[#f6f9fc]">
       <Hero />
       <HeroProfiles />
       <BenefitStrip />
