@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CRPE
 
-## Getting Started
+Aplikacja Next.js do prowadzenia ewidencji aktywności edukacyjnych, punktów i dokumentów.
 
-First, run the development server:
+## Uruchomienie lokalne
+
+1. Utwórz w głównym folderze plik `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://twoj-projekt.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=twoj_publiczny_klucz_anon_lub_publishable
+```
+
+Nie używaj klucza `service_role`, `secret key` ani `sb_secret_...`.
+
+2. Zainstaluj zależności:
+
+```bash
+npm ci
+```
+
+3. Uruchom aplikację:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Otwórz:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Sprawdzenie wersji produkcyjnej
 
-## Learn More
+```bash
+npm run build
+npm run start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Najważniejsze pliki strony publicznej
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `app/page.tsx` — strona główna,
+- `components/Header.tsx` — nagłówek i nawigacja,
+- `components/BottomCTA.tsx` — końcowe wezwanie do działania,
+- `components/Footer.tsx` — stopka,
+- `app/layout.tsx` — metadane i wspólny układ.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Bezpieczeństwo
 
-## Deploy on Vercel
+Pliki `.env*`, folder `node_modules` oraz folder `.next` są wykluczone z repozytorium. Przed wysłaniem zmian na GitHub sprawdź, czy `.env.local` nie znajduje się na liście zmienionych plików.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Strona główna — wersja zwarta mobilnie
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+W tej wersji skrócono pierwszy ekran i cały rytm pionowy strony:
+
+- wybór „Kim jesteś?” mieści się wysoko na pierwszym ekranie telefonu,
+- trzy role są pokazane w jednym, zwartym rzędzie,
+- na telefonie pełny dashboard zastępują trzy krótkie wskaźniki,
+- sekcje, karty, FAQ, CTA i stopka mają mniejsze odstępy pionowe,
+- powtarzające się komunikaty zostały skrócone,
+- pełny podgląd panelu pozostaje widoczny na komputerze.
+
+## Strona główna — wersja v4
+
+Pierwszy ekran został przebudowany w jeden spójny układ produktowy:
+
+- wybór roli jest lekkim przełącznikiem, a nie osobną dużą kartą,
+- opis wybranej roli i korzyści są bezpośrednio pod przełącznikiem,
+- panel po prawej ma formę okna aplikacji i zmienia się razem z rolą,
+- widok placówki pokazuje konkretne braki w dokumentacji osób,
+- uproszczono nawigację do: „Jak to działa”, „Dla kogo”, „Bezpieczeństwo” i „FAQ”,
+- usunięto oznaczenie kroku „1 z 3” oraz drobne podpisy pod panelem.
+
+## Animacje i interakcje
+
+Po ponownej analizie prototypu wizualnego dodano oszczędne animacje produktowe:
+
+- stopniowe wejście treści i panelu na pierwszym ekranie,
+- miękkie przejście treści oraz dashboardu przy zmianie roli,
+- rosnące paski postępu i sekwencyjne pojawianie się wierszy,
+- delikatne unoszenie kart i paneli na urządzeniach z kursorem,
+- pojawianie się sekcji dopiero po wejściu w obszar ekranu,
+- cień nagłówka aktywowany po rozpoczęciu przewijania,
+- pełna obsługa ustawienia systemowego `prefers-reduced-motion`.
+
+Animacje nie wymagają dodatkowej biblioteki i są zdefiniowane w `app/globals.css`.

@@ -8,6 +8,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
 const LOGIN_HREF = "/login";
+const REGISTER_HREF = "/rejestracja";
 
 type NavItem = {
   href: string;
@@ -16,8 +17,8 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { href: "/#jak-to-dziala", label: "Jak to działa" },
-  { href: "/#funkcje", label: "Funkcje" },
-  { href: "/#profile", label: "Profile" },
+  { href: "/#dla-kogo", label: "Dla kogo" },
+  { href: "/#bezpieczenstwo", label: "Bezpieczeństwo" },
   { href: "/#faq", label: "FAQ" },
 ];
 
@@ -32,6 +33,7 @@ export default function Header() {
 
   const [openMobile, setOpenMobile] = useState(false);
   const [openUser, setOpenUser] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   const { user, loading, signOut } = useAuth();
@@ -41,10 +43,17 @@ export default function Header() {
 
   useEffect(() => {
     const onResize = () => {
-      if (window.innerWidth >= 640) setOpenMobile(false);
+      if (window.innerWidth >= 1024) setOpenMobile(false);
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
@@ -118,15 +127,22 @@ export default function Header() {
   const logoHref = user ? "/kalkulator" : "/";
 
   return (
-    <header className="relative z-50 border-b border-slate-200/80 bg-white">
-      <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center gap-5">
+    <header
+      className={cx(
+        "sticky top-0 z-50 border-b bg-white/95 backdrop-blur transition-[box-shadow,border-color,background-color] duration-300",
+        scrolled
+          ? "border-slate-200 shadow-[0_10px_30px_rgba(15,45,75,0.08)]"
+          : "border-slate-200/80",
+      )}
+    >
+      <div className="mx-auto max-w-[1160px] px-4 sm:px-6 lg:px-8">
+        <div className="flex h-14 items-center gap-4 sm:h-16 sm:gap-5">
           <Link href={logoHref} className="flex shrink-0 items-center gap-2">
             <Image src="/logo.svg" alt="Logo" width={30} height={30} />
             <span className="text-base font-black tracking-tight text-slate-900">CRPE</span>
           </Link>
 
-          <nav className="hidden flex-1 items-center justify-end sm:flex">
+          <nav className="hidden flex-1 items-center justify-end lg:flex">
             <div className="flex items-center gap-2">
               {NAV.map(({ href, label }) => (
                 <Link
@@ -141,14 +157,14 @@ export default function Header() {
             </div>
           </nav>
 
-          <div className="hidden items-center gap-2 sm:flex">
+          <div className="hidden items-center gap-2 lg:flex">
             {loading ? (
               <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
                 Sprawdzam sesję…
               </div>
             ) : user ? (
               <>
-                <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 md:flex">
+                <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 xl:flex">
                   <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
                   <span className="font-medium">{emailShort}</span>
                 </div>
@@ -248,7 +264,7 @@ export default function Header() {
                   Zaloguj się
                 </Link>
                 <Link
-                  href={LOGIN_HREF}
+                  href={REGISTER_HREF}
                   className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(37,99,235,0.20)] transition hover:bg-blue-700"
                 >
                   Załóż konto
@@ -258,9 +274,10 @@ export default function Header() {
           </div>
 
           <button
-            className="ml-auto inline-flex items-center rounded-xl border border-slate-300 px-3 py-2 text-slate-700 sm:hidden"
+            className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-700 lg:hidden"
             onClick={() => setOpenMobile((v) => !v)}
-            aria-label="Menu"
+            aria-label={openMobile ? "Zamknij menu" : "Otwórz menu"}
+            aria-expanded={openMobile}
             type="button"
           >
             ☰
@@ -268,7 +285,7 @@ export default function Header() {
         </div>
 
         {openMobile && (
-          <nav className="pb-4 pt-2 sm:hidden">
+          <nav className="pb-4 pt-2 lg:hidden">
             <div className="flex flex-col gap-1">
               {NAV.map(({ href, label }) => (
                 <Link
@@ -332,11 +349,11 @@ export default function Header() {
                       Zaloguj się
                     </Link>
                     <Link
-                      href={LOGIN_HREF}
+                      href={REGISTER_HREF}
                       className="rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700"
                       onClick={() => setOpenMobile(false)}
                     >
-                      Załóż konto
+                      Załóż darmowe konto
                     </Link>
                   </>
                 )}

@@ -1,30 +1,29 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
+import React, { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createBrowserSupabase } from "@/lib/supabaseBrowser";
-import BottomCTA from "@/components/BottomCTA";
 import {
   ArrowRight,
-  Award,
   BarChart3,
-  BookOpen,
   Building2,
-  CalendarCheck,
+  CalendarCheck2,
+  Check,
   CheckCircle2,
   ClipboardCheck,
+  FileCheck2,
   FileText,
   FolderOpen,
   HelpCircle,
   LockKeyhole,
   ShieldCheck,
-  Sparkles,
+  Smartphone,
   Stethoscope,
   UploadCloud,
   UserRound,
 } from "lucide-react";
+import { createBrowserSupabase } from "@/lib/supabaseBrowser";
+import BottomCTA from "@/components/BottomCTA";
 
 type ProfileRow = {
   user_id: string;
@@ -34,208 +33,713 @@ type ProfileRow = {
   required_points: number | null;
 };
 
-const pageWrap = "mx-auto w-full max-w-[1140px] px-4 sm:px-6 lg:px-8";
-const panel = "rounded-[28px] border border-[#c9dbe9] bg-white shadow-[0_22px_60px_rgba(22,55,90,0.11)]";
-const innerCard = "rounded-[20px] border border-[#ccdeeb] bg-white shadow-[0_14px_34px_rgba(22,55,90,0.075)]";
+type AudienceKey = "medyk" | "placowka" | "organizator";
 
-function Eyebrow({ children }: { children: React.ReactNode }) {
-  return <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.24em] text-cyan-700">{children}</p>;
+type AudienceOption = {
+  key: AudienceKey;
+  label: string;
+  mobileLabel: string;
+  shortLabel: string;
+  icon: typeof Stethoscope;
+  status: string;
+  statusTone: string;
+  title: string;
+  description: string;
+  cta: string;
+  href: string;
+  facts: [string, string, string];
+  benefits: [string, string, string];
+};
+
+const pageWrap = "mx-auto w-full max-w-[1160px] px-4 sm:px-6 lg:px-8";
+const panel =
+  "rounded-[24px] border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,45,75,0.08)]";
+
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      setVisible(true);
+      return;
+    }
+
+    if (!("IntersectionObserver" in window)) {
+      setVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        setVisible(true);
+        observer.disconnect();
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -60px 0px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`crpe-scroll-reveal ${visible ? "is-visible" : ""} ${className}`}
+      style={{ "--crpe-delay": `${delay}ms` } as CSSProperties}
+    >
+      {children}
+    </div>
+  );
 }
 
-function IconTile({ children, tone = "blue" }: { children: React.ReactNode; tone?: "blue" | "cyan" | "emerald" | "amber" }) {
-  const styles = {
-    blue: "border-blue-100 bg-blue-50 text-blue-700",
-    cyan: "border-cyan-100 bg-cyan-50 text-cyan-700",
-    emerald: "border-emerald-100 bg-emerald-50 text-emerald-700",
-    amber: "border-amber-100 bg-amber-50 text-amber-700",
-  };
-  return <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${styles[tone]}`}>{children}</span>;
+const audiences: AudienceOption[] = [
+  {
+    key: "medyk",
+    label: "Medyk",
+    mobileLabel: "Medyk",
+    shortLabel: "Prowadzę własną ewidencję",
+    icon: Stethoscope,
+    status: "Dostępne teraz",
+    statusTone: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    title: "Prowadź własną ewidencję bez arkuszy i osobnych folderów.",
+    description:
+      "Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj aktualny status w jednym panelu.",
+    cta: "Załóż konto medyka",
+    href: "/rejestracja",
+    facts: ["110/200 pkt", "18 certyfikatów", "2 wpisy do uzupełnienia"],
+    benefits: ["Punkty i aktywności w jednym widoku", "Certyfikat przy właściwym wpisie", "Czytelny status i brakujące elementy"],
+  },
+  {
+    key: "placowka",
+    label: "Placówka / jednostka",
+    mobileLabel: "Placówka",
+    shortLabel: "Wspieram zespół",
+    icon: Building2,
+    status: "Moduł w rozwoju",
+    statusTone: "bg-amber-50 text-amber-800 ring-amber-100",
+    title: "Uporządkuj ewidencję zespołu i szybciej wychwytuj braki.",
+    description:
+      "Indywidualna ewidencja pracowników działa już dziś. Zbiorczy widok jednostki i kompletności dokumentów jest rozwijany.",
+    cta: "Zakres dla placówki",
+    href: "#dla-placowki",
+    facts: ["24 osoby", "19 kompletnych", "5 do sprawdzenia"],
+    benefits: ["Indywidualne konta pracowników", "Kontrola kompletności dokumentów", "Przygotowanie danych do weryfikacji"],
+  },
+  {
+    key: "organizator",
+    label: "Organizator kształcenia",
+    mobileLabel: "Organizator",
+    shortLabel: "Organizuję szkolenia",
+    icon: UserRound,
+    status: "Zakres ustalany indywidualnie",
+    statusTone: "bg-blue-50 text-blue-700 ring-blue-100",
+    title: "Porządkuj szkolenia, uczestników i dokumentację edukacyjną.",
+    description:
+      "CRPE rozwija obsługę wydarzeń, uczestników i certyfikatów. Zakres modułu ustalamy indywidualnie.",
+    cta: "Poznaj zakres modułu",
+    href: "mailto:kontakt@crpe.pl?subject=CRPE%20dla%20organizatora",
+    facts: ["3 wydarzenia", "86 uczestników", "72 certyfikaty"],
+    benefits: ["Dane wydarzeń edukacyjnych", "Uczestnicy i dokumentacja", "Planowana obsługa certyfikatów"],
+  },
+];
+
+function SectionHeading({
+  eyebrow,
+  title,
+  text,
+  centered = false,
+}: {
+  eyebrow: string;
+  title: string;
+  text?: string;
+  centered?: boolean;
+}) {
+  return (
+    <div className={centered ? "mx-auto max-w-3xl text-center" : "max-w-2xl"}>
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-blue-700">
+        {eyebrow}
+      </p>
+      <h2 className="mt-2 text-[27px] font-black leading-[1.1] tracking-[-0.035em] text-slate-950 sm:mt-3 sm:text-[37px]">
+        {title}
+      </h2>
+      {text ? (
+        <p className="mt-3 text-[15px] leading-6 text-slate-600 sm:mt-4 sm:text-[16px] sm:leading-7">
+          {text}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
-function HeroProfiles() {
-  const profiles = [
-    {
-      title: "Placówka medyczna",
-      text: "Personel, punkty i dokumentacja w jednym miejscu.",
-      icon: Building2,
-      href: "/login?profile=facility",
-      cta: "Wybierz placówkę",
-      tone: "blue" as const,
-    },
-    {
-      title: "Organizator",
-      text: "Szkolenia, uczestnicy i raportowanie aktywności.",
-      icon: CalendarCheck,
-      href: "/login?profile=organizer",
-      cta: "Wybierz organizatora",
-      tone: "cyan" as const,
-      highlighted: true,
-    },
-    {
-      title: "Medyk",
-      text: "Punkty CPD, aktywności i certyfikaty pod ręką.",
-      icon: Stethoscope,
-      href: "/login?profile=medic",
-      cta: "Wybierz medyka",
-      tone: "blue" as const,
-    },
+function DashboardHeader({ title, note }: { title: string; note: string }) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+          Przykładowy widok CRPE
+        </p>
+        <p className="mt-1 text-sm font-extrabold text-slate-900">{title}</p>
+      </div>
+      <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold text-blue-700 ring-1 ring-blue-100">
+        {note}
+      </span>
+    </div>
+  );
+}
+
+function Metric({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: typeof FileCheck2;
+  label: string;
+  value: string;
+  tone: "cyan" | "amber";
+}) {
+  const toneClass =
+    tone === "cyan" ? "bg-cyan-50 text-cyan-700" : "bg-amber-50 text-amber-700";
+  return (
+    <div className="rounded-2xl border border-slate-200 p-3.5">
+      <div className="flex items-center gap-3">
+        <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${toneClass}`}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <div>
+          <p className="text-[11px] font-bold text-slate-400">{label}</p>
+          <p className="text-sm font-extrabold text-slate-900">{value}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BigMetric({
+  label,
+  value,
+  accent = "blue",
+}: {
+  label: string;
+  value: string;
+  accent?: "blue" | "emerald" | "amber";
+}) {
+  const valueClass =
+    accent === "emerald"
+      ? "text-emerald-700"
+      : accent === "amber"
+        ? "text-amber-700"
+        : "text-blue-700";
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
+      <p className="text-[10px] font-bold leading-4 text-slate-500">{label}</p>
+      <p className={`mt-1 text-2xl font-black ${valueClass}`}>{value}</p>
+    </div>
+  );
+}
+
+function MedykDashboard() {
+  return (
+    <>
+      <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold text-slate-500">Twój postęp</p>
+            <p className="mt-1 text-[30px] font-black tracking-tight text-slate-950">
+              110 <span className="text-sm font-bold text-slate-500">/ 200 pkt</span>
+            </p>
+          </div>
+          <div className="rounded-xl bg-white px-3 py-2 text-right shadow-sm ring-1 ring-blue-100">
+            <p className="text-[10px] font-bold text-slate-400">Brakuje</p>
+            <p className="text-sm font-black text-blue-700">90 pkt</p>
+          </div>
+        </div>
+        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white ring-1 ring-blue-100">
+          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-blue-600" />
+        </div>
+        <div className="mt-2 flex justify-between text-[11px] font-semibold text-slate-500">
+          <span>55% celu</span>
+          <span>2025–2028</span>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <Metric icon={FileCheck2} label="Certyfikaty" value="18 dokumentów" tone="cyan" />
+        <Metric icon={ClipboardCheck} label="Braki" value="2 aktywności" tone="amber" />
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-extrabold text-slate-900">Konferencja medyczna</p>
+            <p className="mt-1 text-[11px] text-slate-500">20 pkt • certyfikat dołączony</p>
+          </div>
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+        </div>
+      </div>
+    </>
+  );
+}
+
+function PlacowkaDashboard() {
+  const alerts = [
+    ["Anna Kowalska", "Brak certyfikatu", "Dokumentacja: 7/8"],
+    ["Jan Nowak", "Aktywność bez dokumentu", "Dokumentacja: 6/8"],
   ];
 
   return (
-    <section id="profile" className={`${pageWrap} -mt-8 scroll-mt-24 pb-10`}>
-      <div className={`${panel} p-3 md:p-4`}>
-        <div className="grid gap-3 md:grid-cols-3">
-          {profiles.map(({ title, text, icon: Icon, href, cta, tone, highlighted }) => (
-            <Link
-              key={title}
-              href={href}
-              className={`group relative flex min-h-[138px] flex-col justify-between rounded-[20px] border p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(0,92,180,0.12)] ${
-                highlighted
-                  ? "border-cyan-300 bg-[linear-gradient(180deg,#f3ffff_0%,#ffffff_80%)] shadow-[inset_0_3px_0_rgba(0,169,181,0.65)]"
-                  : "border-[#dfe9f2] bg-white"
-              }`}
-            >
-              <div className="flex items-start gap-4">
-                <IconTile tone={tone}><Icon className="h-5 w-5" strokeWidth={1.8} /></IconTile>
-                <div>
-                  <h3 className="text-[15px] font-extrabold text-slate-950">{title}</h3>
-                  <p className="mt-1.5 max-w-[260px] text-[13px] leading-relaxed text-slate-600">{text}</p>
-                </div>
+    <>
+      <div className="grid grid-cols-3 gap-3">
+        <BigMetric label="Pracownicy" value="24" />
+        <BigMetric label="Kompletne" value="19" accent="emerald" />
+        <BigMetric label="Wymaga uwagi" value="5" accent="amber" />
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-slate-200 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-extrabold text-slate-950">Kompletność dokumentacji</p>
+            <p className="mt-1 text-[11px] text-slate-500">Zbiorczy status zespołu</p>
+          </div>
+          <span className="text-lg font-black text-blue-700">79%</span>
+        </div>
+        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
+          <div className="crpe-progress-fill h-full w-[79%] rounded-full bg-blue-600" />
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">Wymaga uwagi</p>
+            <p className="mt-1 text-[11px] text-slate-500">Najważniejsze braki do sprawdzenia</p>
+          </div>
+          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-extrabold text-amber-800 ring-1 ring-amber-100">5 osób</span>
+        </div>
+
+        <div className="mt-3 space-y-2">
+          {alerts.map(([name, issue, progress]) => (
+            <div key={name} className="crpe-row-in flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-extrabold text-slate-900">{name}</p>
+                <p className="mt-0.5 truncate text-[10px] font-semibold text-amber-700">{issue}</p>
               </div>
-              <span className={`mt-4 inline-flex items-center gap-1.5 text-[13px] font-extrabold ${highlighted ? "text-cyan-700" : "text-blue-700"}`}>
-                {cta} <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
-              </span>
-            </Link>
+              <span className="shrink-0 text-[10px] font-bold text-slate-500">{progress}</span>
+            </div>
           ))}
         </div>
       </div>
-    </section>
+    </>
   );
 }
 
-function Hero() {
+function OrganizatorDashboard() {
   return (
-    <section className="relative overflow-hidden bg-[linear-gradient(180deg,#f7fbff_0%,#edf5fb_100%)] pb-16 pt-9">
-      <div className="pointer-events-none absolute right-[-220px] top-[-180px] h-[520px] w-[520px] rounded-full bg-blue-100/55 blur-3xl" />
-      <div className={`${pageWrap} relative`}>
-        <div className={`${panel} overflow-hidden bg-[linear-gradient(105deg,#ffffff_0%,#ffffff_48%,#eef6fb_100%)] ring-1 ring-white/80`}>
-          <div className="grid min-h-[500px] lg:grid-cols-[0.96fr_1.04fr]">
-            <div className="relative z-10 flex flex-col justify-center px-7 py-10 sm:px-10 lg:px-12">
-              <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50/80 px-3 py-1.5 text-[11px] font-bold text-blue-800">
-                <ShieldCheck className="h-3.5 w-3.5" /> Bezpieczeństwo, punkty i certyfikaty w jednym miejscu
+    <>
+      <div className="mt-4 rounded-2xl border border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_100%)] p-4">
+        <p className="text-[11px] font-bold text-slate-500">Aktywne wydarzenia</p>
+        <div className="mt-1 flex items-end justify-between gap-4">
+          <p className="text-[32px] font-black tracking-tight text-slate-950">3</p>
+          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-blue-700 ring-1 ring-blue-100">
+            86 uczestników
+          </span>
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <Metric icon={FileCheck2} label="Wydane" value="72 certyfikaty" tone="cyan" />
+        <Metric icon={ClipboardCheck} label="Do przygotowania" value="14 dokumentów" tone="amber" />
+      </div>
+      <div className="mt-3 space-y-2">
+        {[
+          ["Diagnostyka obrazowa", "12.09.2026", "32 osoby"],
+          ["Bezpieczeństwo pacjenta", "19.09.2026", "28 osób"],
+        ].map(([name, date, people]) => (
+          <div key={name} className="crpe-row-in rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-extrabold text-slate-900">{name}</p>
+                <p className="mt-1 text-[11px] text-slate-500">{date}</p>
               </div>
-              <h1 className="max-w-[560px] text-[32px] font-black leading-[1.08] tracking-[-0.035em] text-slate-950 sm:text-[42px] lg:text-[47px]">
-                Punkty CPD pod kontrolą. <span className="text-blue-600">Bez stresu.</span>
-              </h1>
-              <p className="mt-5 max-w-[520px] text-[15px] leading-7 text-slate-600">
-                Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj postęp w aktualnym okresie rozliczeniowym. Prosto, spokojnie, bez Excela.
+              <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-slate-600 ring-1 ring-slate-200">
+                {people}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function HeroDashboard({ selected }: { selected: AudienceKey }) {
+  const labels: Record<AudienceKey, { title: string; note: string }> = {
+    medyk: { title: "Profil medyka", note: "Dostępne teraz" },
+    placowka: { title: "Placówka / jednostka", note: "Moduł w rozwoju" },
+    organizator: { title: "Organizator kształcenia", note: "Zakres indywidualny" },
+  };
+  const meta = labels[selected];
+
+  return (
+    <div className="crpe-hero-panel relative mx-auto hidden w-full max-w-[610px] lg:block" aria-live="polite">
+      <div className="pointer-events-none absolute -right-10 -top-8 h-40 w-40 rounded-full bg-blue-200/55 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-10 -left-8 h-44 w-44 rounded-full bg-cyan-200/45 blur-3xl" />
+
+      <div className="crpe-dashboard-shell relative overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_30px_85px_rgba(15,45,75,0.16)]">
+        <div className="flex h-11 items-center gap-2 border-b border-slate-200 bg-slate-50 px-4">
+          <span className="h-2.5 w-2.5 rounded-full bg-rose-300" />
+          <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
+          <div className="ml-3 flex h-7 flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-400">
+            panel.crpe.pl
+          </div>
+        </div>
+
+        <div key={selected} className="crpe-role-swap p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">
+                Widok dopasowany do roli
               </p>
-              <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Link href="#profile" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-[0_12px_24px_rgba(37,99,235,0.24)] transition hover:bg-blue-700">
-                  Wybierz profil <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link href="#jak-to-dziala" className="inline-flex items-center gap-2 rounded-xl border border-[#d6e2ec] bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50/40">
-                  Jak to działa
-                </Link>
-              </div>
-              <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                {[
-                  [Sparkles, "Szybki start", "Wpis w kilka minut"],
-                  [FolderOpen, "Pełny porządek", "Dokumenty przy wpisach"],
-                  [LockKeyhole, "Bezpieczne dane", "Dostęp pod kontrolą"],
-                ].map(([Icon, title, text]) => {
-                  const LucideIcon = Icon as typeof Sparkles;
-                  return (
-                    <div key={String(title)} className="rounded-[18px] border border-[#cfdfea] bg-white/90 p-3.5 shadow-[0_10px_22px_rgba(22,55,90,0.055)]">
-                      <LucideIcon className="mb-2 h-4 w-4 text-cyan-700" strokeWidth={2} />
-                      <p className="text-[12px] font-extrabold text-slate-950">{String(title)}</p>
-                      <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{String(text)}</p>
-                    </div>
-                  );
-                })}
-              </div>
+              <p className="mt-1 text-[15px] font-black text-slate-950">{meta.title}</p>
+            </div>
+            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-extrabold text-blue-700 ring-1 ring-blue-100">
+              {meta.note}
+            </span>
+          </div>
+
+          {selected === "medyk" ? <MedykDashboard /> : null}
+          {selected === "placowka" ? <PlacowkaDashboard /> : null}
+          {selected === "organizator" ? <OrganizatorDashboard /> : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RolePicker({
+  selected,
+  onSelect,
+}: {
+  selected: AudienceKey;
+  onSelect: (key: AudienceKey) => void;
+}) {
+  return (
+    <div>
+      <p className="text-[13px] font-black text-slate-950 sm:text-sm">Kim jesteś?</p>
+      <div className="crpe-role-picker mt-2 inline-flex w-full rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_30px_rgba(15,45,75,0.07)] sm:w-auto">
+        {audiences.map(({ key, mobileLabel, icon: Icon }) => {
+          const isSelected = selected === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => onSelect(key)}
+              className={`crpe-role-button flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-extrabold transition sm:flex-none sm:px-4 sm:text-[13px] ${
+                isSelected
+                  ? "bg-blue-600 text-white shadow-[0_8px_18px_rgba(37,99,235,0.24)]"
+                  : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+              }`}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className="truncate">{mobileLabel}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MobileRolePreview({ active }: { active: AudienceOption }) {
+  const labels: Record<AudienceKey, [string, string, string]> = {
+    medyk: ["Postęp", "Certyfikaty", "Do uzupełnienia"],
+    placowka: ["Zespół", "Kompletne", "Do sprawdzenia"],
+    organizator: ["Wydarzenia", "Uczestnicy", "Certyfikaty"],
+  };
+  const progress: Record<AudienceKey, string> = {
+    medyk: "55%",
+    placowka: "79%",
+    organizator: "84%",
+  };
+
+  return (
+    <div
+      className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_38px_rgba(15,45,75,0.09)] lg:hidden"
+      aria-label="Przykładowy podgląd dla wybranej roli"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-blue-600">Podgląd profilu</p>
+          <p className="mt-1 text-[14px] font-black text-slate-950">{active.label}</p>
+        </div>
+        <span className={`rounded-full px-2 py-1 text-[9px] font-extrabold ring-1 ${active.statusTone}`}>
+          {active.status}
+        </span>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {active.facts.map((fact, index) => (
+          <div key={fact} className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2.5">
+            <p className="text-[9px] font-bold leading-4 text-slate-500">{labels[active.key][index]}</p>
+            <p className={`mt-0.5 text-[12px] font-black leading-4 ${index === 0 ? "text-blue-700" : "text-slate-900"}`}>
+              {fact}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className="crpe-progress-fill h-full rounded-full bg-blue-600" style={{ width: progress[active.key] }} />
+      </div>
+    </div>
+  );
+}
+
+function Hero({
+  selected,
+  onSelect,
+}: {
+  selected: AudienceKey;
+  onSelect: (key: AudienceKey) => void;
+}) {
+  const active = audiences.find((item) => item.key === selected) ?? audiences[0];
+
+  return (
+    <section className="relative overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#eef6fc_100%)] py-7 sm:py-11 lg:py-14">
+      <div className="pointer-events-none absolute -left-36 top-0 h-[360px] w-[360px] rounded-full bg-blue-100/70 blur-3xl" />
+      <div className="pointer-events-none absolute -right-24 top-12 h-[340px] w-[340px] rounded-full bg-cyan-100/55 blur-3xl" />
+
+      <div className={`${pageWrap} relative`}>
+        <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-14">
+          <div className="lg:pt-2">
+            <div className="crpe-hero-in inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 text-[11px] font-extrabold text-blue-800 shadow-sm [--hero-delay:40ms]">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              CRPE dla medyków i organizacji
             </div>
 
-            <div className="relative m-3 min-h-[450px] overflow-hidden rounded-[24px] border border-[#d1e0ec] bg-[#eaf3f9] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] lg:m-0 lg:rounded-l-none lg:rounded-r-[28px] lg:border-y-0 lg:border-r-0">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_45%_20%,#ffffff_0%,rgba(255,255,255,0)_32%)]" />
-              <Image
-                src="/lekarka_z_tabletem.png"
-                alt="Lekarka prezentująca panel CPD"
-                fill
-                priority
-                className="object-cover object-[52%_14%]"
-                sizes="(max-width: 1024px) 100vw, 590px"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-white/35 via-transparent to-transparent" />
-              <div className="absolute bottom-7 left-7 right-7 rounded-[20px] border border-white/80 bg-white/92 p-4 shadow-[0_18px_38px_rgba(15,45,75,0.18)] backdrop-blur sm:left-auto sm:w-[300px]">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">Twój status</p>
-                    <div className="mt-1 text-[25px] font-black text-slate-950">110 / 200 pkt</div>
-                  </div>
-                  <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-xs font-bold text-cyan-700 ring-1 ring-cyan-100">55%</span>
-                </div>
-                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
-                  <div className="h-full w-[55%] rounded-full bg-blue-600" />
-                </div>
+            <h1 className="crpe-hero-in mt-4 max-w-[590px] text-[35px] font-black leading-[1.02] tracking-[-0.046em] text-slate-950 sm:mt-5 sm:text-[48px] lg:text-[54px] [--hero-delay:110ms]">
+              Punkty i dokumenty
+              <span className="block text-blue-600">w jednym miejscu.</span>
+            </h1>
+
+            <p className="crpe-hero-in mt-3 max-w-[570px] text-[15px] leading-6 text-slate-600 sm:mt-4 sm:text-[17px] sm:leading-7 [--hero-delay:180ms]">
+              Prowadź ewidencję aktywności, certyfikatów i danych potrzebnych do rozliczeń — w zakresie dopasowanym do Twojej roli.
+            </p>
+
+            <div className="crpe-hero-in mt-5 [--hero-delay:250ms]">
+              <RolePicker selected={selected} onSelect={onSelect} />
+            </div>
+
+            <div key={selected} className="crpe-role-swap mt-4" aria-live="polite">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[14px] font-black text-slate-950">{active.label}</span>
+                <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${active.statusTone}`}>
+                  {active.status}
+                </span>
+              </div>
+
+              <h2 className="mt-2.5 max-w-[580px] text-[22px] font-black leading-[1.18] tracking-[-0.03em] text-slate-950 sm:text-[25px]">
+                {active.title}
+              </h2>
+              <p className="mt-2 max-w-[590px] text-[14px] leading-6 text-slate-600 sm:text-[15px]">
+                {active.description}
+              </p>
+
+              <ul className="mt-3.5 grid gap-2 sm:grid-cols-2">
+                {active.benefits.map((item) => (
+                  <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-slate-700">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                      <Check className="h-3 w-3" />
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <MobileRolePreview active={active} />
+
+              <div className="mt-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
+                <Link
+                  href={active.href}
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-[14px] font-extrabold text-white shadow-[0_12px_25px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 sm:w-auto"
+                >
+                  {active.cta} <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="#jak-to-dziala"
+                  className="inline-flex min-h-10 items-center justify-center gap-1.5 px-2 text-[14px] font-extrabold text-blue-700 underline decoration-blue-200 underline-offset-4 hover:text-blue-800"
+                >
+                  Jak działa CRPE <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </div>
             </div>
           </div>
+
+          <HeroDashboard selected={selected} />
         </div>
       </div>
     </section>
   );
 }
 
-function BenefitStrip() {
-  const items = [
-    { icon: Sparkles, title: "Szybka reakcja", text: "Pierwszy wpis od razu po szkoleniu.", tone: "blue" as const },
-    { icon: FolderOpen, title: "Profesjonalny porządek", text: "Aktywności, certyfikaty i raporty w jednym panelu.", tone: "cyan" as const },
-    { icon: ClipboardCheck, title: "Gotowość do kontroli", text: "Status punktów i braków widoczny na bieżąco.", tone: "emerald" as const },
+function AudienceSection() {
+  const cards = [
+    {
+      id: "dla-medyka",
+      icon: Stethoscope,
+      title: "Medyk",
+      status: "Dostępne teraz",
+      statusClass: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+      text: "Prowadź własną ewidencję punktów, aktywności i certyfikatów w jednym panelu.",
+      benefits: ["Postęp i brakujące punkty", "Dokumenty przy aktywnościach", "Raport użytkownika"],
+      cta: "Załóż konto",
+      href: "/rejestracja",
+      featured: true,
+    },
+    {
+      id: "dla-placowki",
+      icon: Building2,
+      title: "Placówka / jednostka",
+      status: "Moduł w rozwoju",
+      statusClass: "bg-amber-50 text-amber-800 ring-amber-100",
+      text: "Ujednolicaj indywidualną ewidencję zespołu. Rozwijamy zbiorczy podgląd kompletności i raportów.",
+      benefits: ["Konta pracowników", "Planowany widok zespołu", "Planowany eksport jednostki"],
+      cta: "Zapytaj o moduł",
+      href: "mailto:kontakt@crpe.pl?subject=CRPE%20dla%20plac%C3%B3wki",
+    },
+    {
+      id: "dla-organizatora",
+      icon: UserRound,
+      title: "Organizator kształcenia",
+      status: "Zakres ustalany indywidualnie",
+      statusClass: "bg-blue-50 text-blue-700 ring-blue-100",
+      text: "Porządkuj informacje o wydarzeniach. Narzędzia administracyjne są udostępniane zależnie od uprawnień.",
+      benefits: ["Baza wydarzeń", "Dane uczestników", "Obsługa dokumentacji"],
+      cta: "Zapytaj o zakres",
+      href: "mailto:kontakt@crpe.pl?subject=CRPE%20dla%20organizatora",
+    },
   ];
 
   return (
-    <section className={`${pageWrap} pb-14`}>
-      <div className="grid gap-4 md:grid-cols-3">
-        {items.map(({ icon: Icon, title, text, tone }) => (
-          <div key={title} className={`${innerCard} flex gap-4 p-5`}>
-            <IconTile tone={tone}><Icon className="h-5 w-5" /></IconTile>
-            <div>
-              <h3 className="text-[15px] font-extrabold text-slate-950">{title}</h3>
-              <p className="mt-1 text-[13px] leading-relaxed text-slate-600">{text}</p>
+    <section id="dla-kogo" className={`${pageWrap} scroll-mt-24 py-11 sm:py-14`}>
+      <Reveal>
+        <SectionHeading
+          eyebrow="Dla kogo jest CRPE"
+          title="Porównaj zakres CRPE dla każdej roli."
+          text="Profil medyka działa już teraz. Moduły organizacyjne rozwijamy etapami i jasno oznaczamy ich aktualny zakres."
+          centered
+        />
+      </Reveal>
+
+      <div className="mt-7 grid gap-4 lg:mt-9 lg:grid-cols-3">
+        {cards.map(({ id, icon: Icon, title, status, statusClass, text, benefits, cta, href, featured }, index) => (
+          <Reveal key={id} delay={index * 90} className="h-full">
+            <article
+              id={id}
+              className={`crpe-interactive-card h-full scroll-mt-24 rounded-[22px] border bg-white p-5 shadow-[0_14px_40px_rgba(15,45,75,0.06)] sm:p-6 ${
+                featured ? "border-blue-200 ring-2 ring-blue-100" : "border-slate-200"
+              }`}
+            >
+            <div className="flex items-center justify-between gap-3">
+              <span className={`crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl ${featured ? "bg-blue-600 text-white" : "bg-slate-50 text-slate-600 ring-1 ring-slate-200"}`}>
+                <Icon className="h-5 w-5" />
+              </span>
+              <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${statusClass}`}>
+                {status}
+              </span>
             </div>
-          </div>
+            <h3 className="mt-4 text-lg font-black tracking-[-0.02em] text-slate-950">{title}</h3>
+            <p className="mt-2 text-[14px] leading-6 text-slate-600">{text}</p>
+            <ul className="mt-4 grid gap-2">
+              {benefits.map((item) => (
+                <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-slate-700">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                    <Check className="h-3 w-3" />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href={href}
+              className={`mt-5 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-[14px] font-extrabold transition sm:min-h-11 sm:text-sm ${
+                featured
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "border border-slate-300 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50"
+              }`}
+            >
+              {cta} <ArrowRight className="h-4 w-4" />
+            </Link>
+            </article>
+          </Reveal>
         ))}
       </div>
     </section>
   );
 }
 
-function HowItWorks() {
-  const steps = [
-    { n: "1", icon: UserRound, title: "Wybierasz profil", text: "Placówka, organizator albo medyk — od razu właściwa ścieżka." },
-    { n: "2", icon: UploadCloud, title: "Uzupełniasz dane", text: "Dodajesz aktywności, punkty i certyfikaty bez arkuszy." },
-    { n: "3", icon: BarChart3, title: "Widzisz status", text: "Masz podgląd postępu, braków i dokumentów do rozliczenia." },
+function CoreBenefits() {
+  const benefits = [
+    {
+      icon: CalendarCheck2,
+      title: "Pełny kontekst aktywności",
+      text: "Rodzaj, termin, punkty, organizator i status w jednym miejscu.",
+    },
+    {
+      icon: FolderOpen,
+      title: "Dokument przy właściwym wpisie",
+      text: "Certyfikat nie ginie w osobnym folderze i łatwo go odnaleźć.",
+    },
+    {
+      icon: BarChart3,
+      title: "Widoczny status i braki",
+      text: "Panel wskazuje postęp i elementy wymagające działania.",
+    },
   ];
 
   return (
-    <section id="jak-to-dziala" className={`${pageWrap} pb-16 scroll-mt-24`}>
-      <div className="text-center">
-        <Eyebrow>Jak to działa</Eyebrow>
-        <h2 className="text-[28px] font-black tracking-[-0.025em] text-slate-950 md:text-[34px]">Etapy pracy z CRPE</h2>
-      </div>
-      <div className="relative mt-9">
-        <div className="absolute left-[15%] right-[15%] top-[34px] hidden h-px bg-cyan-300 md:block" />
-        <div className="grid gap-4 md:grid-cols-3">
-          {steps.map(({ n, icon: Icon, title, text }) => (
-            <div key={n} className={`${innerCard} relative p-6 text-center`}>
-              <div className="mx-auto flex h-[68px] w-[68px] items-center justify-center rounded-full border border-cyan-200 bg-cyan-50 ring-[10px] ring-[#f6f9fc]">
-                <Icon className="h-7 w-7 text-cyan-700" strokeWidth={1.8} />
-              </div>
-              <span className="absolute left-1/2 top-5 ml-5 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-black text-white shadow-lg shadow-blue-600/20">{n}</span>
-              <h3 className="mt-5 text-[16px] font-extrabold text-slate-950">{title}</h3>
-              <p className="mx-auto mt-2 max-w-[260px] text-[13px] leading-relaxed text-slate-600">{text}</p>
-            </div>
+    <section id="funkcje" className="scroll-mt-24 bg-blue-50/55 py-12 sm:py-16">
+      <div className={pageWrap}>
+        <Reveal>
+          <SectionHeading
+            eyebrow="Wspólny rdzeń CRPE"
+            title="Mniej pilnowania. Więcej pewności, że dane są kompletne."
+            text="Niezależnie od roli porządek jest ten sam: aktywność, właściwy dokument i czytelny status."
+            centered
+          />
+        </Reveal>
+
+        <div className="mt-7 grid gap-3 lg:mt-9 lg:grid-cols-3 lg:gap-5">
+          {benefits.map(({ icon: Icon, title, text }, index) => (
+            <Reveal key={title} delay={index * 90} className="h-full">
+              <article className={`${panel} crpe-benefit-card flex h-full gap-4 p-4 sm:block sm:p-6`}>
+                <div className="flex shrink-0 items-start justify-between sm:items-center">
+                  <span className="crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 sm:h-11 sm:w-11 sm:rounded-2xl">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span className="hidden text-xs font-black tracking-[0.18em] text-slate-300 sm:block">0{index + 1}</span>
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-black tracking-[-0.02em] text-slate-950 sm:mt-4 sm:text-lg">{title}</h3>
+                  <p className="mt-1.5 text-[14px] leading-6 text-slate-600 sm:mt-2 sm:text-[15px] sm:leading-6">{text}</p>
+                </div>
+              </article>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -243,143 +747,286 @@ function HowItWorks() {
   );
 }
 
-function PracticeVisual() {
-  const floatingCards = [
-    { icon: ShieldCheck, title: "Bezpieczne archiwum", text: "Certyfikaty i dokumenty w jednym miejscu", pos: "right-0 top-7" },
-    { icon: ClipboardCheck, title: "Status na bieżąco", text: "Postęp i braki widoczne od razu", pos: "left-0 bottom-8" },
+function PracticeSection() {
+  const rows = [
+    ["Kurs specjalistyczny", "25 pkt", "Certyfikat dodany"],
+    ["Webinar", "8 pkt", "Uzupełnij dokument"],
   ];
 
   return (
-    <div className="relative min-h-[420px] lg:min-h-[500px]">
-      <div className="absolute -right-8 top-0 h-48 w-48 rounded-full bg-blue-200/45 blur-3xl" />
-      <div className="absolute bottom-0 left-4 h-56 w-56 rounded-full bg-cyan-200/45 blur-3xl" />
-
-      <div className="relative ml-auto max-w-[600px] rounded-[30px] border border-[#bfd4e5] bg-white p-3 shadow-[0_32px_80px_rgba(20,55,90,0.18)]">
-        <div className="flex h-9 items-center gap-2 border-b border-[#e2ebf3] px-3">
-          <span className="h-2.5 w-2.5 rounded-full bg-red-200" />
-          <span className="h-2.5 w-2.5 rounded-full bg-amber-200" />
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-200" />
-          <span className="ml-3 rounded-full bg-[#f2f7fb] px-3 py-1 text-[10px] font-bold text-slate-500">panel.crpe.pl</span>
-        </div>
-        <div className="relative mt-3 overflow-hidden rounded-[22px] border border-[#d4e2ed] bg-[#f6f9fc]">
-          <Image
-            src="/crpe_reka2b.png"
-            alt="Widok panelu CRPE"
-            width={940}
-            height={416}
-            className="h-[320px] w-full object-cover object-left-top opacity-95 md:h-[390px]"
-            sizes="(max-width: 1024px) 100vw, 600px"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/45" />
-        </div>
-      </div>
-
-      {floatingCards.map(({ icon: Icon, title, text, pos }) => (
-        <div
-          key={title}
-          className={`absolute ${pos} hidden w-[230px] rounded-[20px] border border-[#c9dbe9] bg-white/96 p-4 shadow-[0_20px_48px_rgba(22,55,90,0.16)] backdrop-blur md:block`}
-        >
-          <div className="flex gap-3">
-            <IconTile tone="cyan"><Icon className="h-4 w-4" /></IconTile>
-            <div>
-              <p className="text-[13px] font-black text-slate-950">{title}</p>
-              <p className="mt-1 text-[12px] leading-relaxed text-slate-600">{text}</p>
-            </div>
+    <section className="bg-slate-950 py-12 text-white sm:py-16">
+      <div className={`${pageWrap} grid gap-7 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:gap-12`}>
+        <Reveal>
+          <div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-cyan-300/10 px-2.5 py-1 text-[10px] font-extrabold text-cyan-200 ring-1 ring-cyan-300/20">
+            Przykład: profil medyka
           </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+          <p className="mt-4 text-[11px] font-extrabold uppercase tracking-[0.18em] text-cyan-300">CRPE w praktyce</p>
+          <h2 className="mt-2 text-[28px] font-black leading-[1.1] tracking-[-0.035em] sm:text-[39px]">
+            Jeden panel zamiast arkuszy i osobnych folderów.
+          </h2>
+          <p className="mt-3 text-[15px] leading-6 text-slate-300 sm:mt-4 sm:text-[16px] sm:leading-7">
+            Aktywność, punkty i dokument są połączone. Od razu widzisz, co jest kompletne i jaki powinien być kolejny krok.
+          </p>
 
-function FeatureSection() {
-  const features = [
-    { icon: BookOpen, title: "Historia aktywności", text: "Szkolenia, kursy i wydarzenia uporządkowane chronologicznie." },
-    { icon: Award, title: "Certyfikaty przy wpisach", text: "Każdy dokument przypięty dokładnie do właściwej aktywności." },
-    { icon: BarChart3, title: "Status punktów", text: "Od razu widać postęp, braki i dystans do wymaganego celu." },
-    { icon: FileText, title: "Raporty bez chaosu", text: "Eksporty i podsumowania gotowe wtedy, kiedy ich potrzebujesz." },
-  ];
+          <ul className="mt-5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-1">
+            {["Dokument przy konkretnym wpisie", "Braki oznaczone przed rozliczeniem"].map((item) => (
+              <li key={item} className="flex gap-3 text-[13px] leading-5 text-slate-200 sm:text-sm">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-300/30">
+                  <Check className="h-3 w-3" />
+                </span>
+                {item}
+              </li>
+            ))}
+          </ul>
+          </div>
+        </Reveal>
 
-  return (
-    <section id="funkcje" className="scroll-mt-24 bg-[linear-gradient(180deg,#eef3f7_0%,#f7fbff_100%)] py-16 md:py-20">
-      <div className={pageWrap}>
-        <div className="relative overflow-hidden rounded-[34px] border border-[#c7d9e8] bg-white shadow-[0_28px_80px_rgba(22,55,90,0.12)]">
-          <div className="pointer-events-none absolute right-[-140px] top-[-120px] h-[360px] w-[360px] rounded-full bg-blue-100 blur-3xl" />
-          <div className="pointer-events-none absolute bottom-[-120px] left-[-120px] h-[320px] w-[320px] rounded-full bg-cyan-100/80 blur-3xl" />
+        <Reveal delay={120}>
+          <div className="crpe-dashboard-shell overflow-hidden rounded-[24px] border border-white/10 bg-white p-3 text-slate-900 shadow-[0_26px_70px_rgba(0,0,0,0.32)] sm:p-5">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-300" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
+            <span className="ml-2 text-[10px] font-bold text-slate-400 sm:text-xs">panel.crpe.pl</span>
+          </div>
 
-          <div className="relative grid gap-10 p-6 md:p-9 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:p-11">
-            <div>
-              <div className="mb-5 h-1 w-14 rounded-full bg-cyan-500" />
-              <Eyebrow>CRPE w praktyce</Eyebrow>
-              <h2 className="max-w-xl text-[27px] font-black leading-[1.12] tracking-[-0.025em] text-slate-950 md:text-[34px]">
-                Jeden panel zamiast arkuszy, folderów i ręcznego sprawdzania.
-              </h2>
-              <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-600">
-                CRPE zbiera aktywności, punkty i certyfikaty w uporządkowanym widoku. Widzisz, co jest gotowe, czego brakuje i jakie dokumenty są potrzebne przed rozliczeniem.
-              </p>
-
-              <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                {features.map(({ icon: Icon, title, text }) => (
-                  <div
-                    key={title}
-                    className="group rounded-[20px] border border-[#c9dbe9] bg-white p-4 shadow-[0_14px_34px_rgba(22,55,90,0.075)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(22,55,90,0.105)]"
-                  >
-                    <div className="flex items-start gap-3">
-                      <IconTile tone="blue"><Icon className="h-4 w-4" /></IconTile>
+          <div className="mt-3 grid gap-3 sm:grid-cols-[0.64fr_0.36fr]">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 sm:p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-600">Status dokumentacji</p>
+              <div className="mt-2 flex items-end gap-2">
+                <span className="text-[30px] font-black tracking-tight text-slate-950">110/200</span>
+                <span className="pb-1 text-xs font-bold text-slate-500">pkt</span>
+              </div>
+              <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white ring-1 ring-slate-200">
+                <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-blue-600" />
+              </div>
+              <div className="mt-3 space-y-2">
+                {rows.map(([name, points, status], index) => (
+                  <div key={name} className="rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="text-[14px] font-extrabold text-slate-950">{title}</h3>
-                        <p className="mt-1 text-[12.5px] leading-relaxed text-slate-600">{text}</p>
+                        <p className="text-[13px] font-extrabold text-slate-900">{name}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">{points}</p>
                       </div>
+                      <span className={`rounded-full px-2 py-1 text-[9px] font-extrabold ${index === 1 ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>
+                        {status}
+                      </span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <PracticeVisual />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3.5">
+                <p className="text-[10px] font-bold text-slate-500">Najbliższy krok</p>
+                <p className="mt-1.5 text-[13px] font-black text-slate-950">Uzupełnij 1 dokument</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 p-3.5">
+                <UploadCloud className="h-5 w-5 text-blue-600" />
+                <p className="mt-2 text-[13px] font-black text-slate-950">Dodaj PDF lub zdjęcie</p>
+              </div>
+            </div>
           </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+function HowItWorks({ selected }: { selected: AudienceKey }) {
+  const variants: Record<AudienceKey, {
+    title: string;
+    text: string;
+    steps: Array<{ icon: typeof UserRound; title: string; text: string }>;
+  }> = {
+    medyk: {
+      title: "Zacznij prowadzić własną ewidencję w czterech krokach.",
+      text: "Profil medyka jest dostępny od razu — bez wdrożenia i bez przenoszenia wszystkiego jednego dnia.",
+      steps: [
+        { icon: UserRound, title: "Załóż konto", text: "Ustaw okres i wymagany cel." },
+        { icon: CalendarCheck2, title: "Dodaj aktywność", text: "Wpisz wydarzenie i punkty." },
+        { icon: UploadCloud, title: "Dołącz dokument", text: "Dodaj PDF lub zdjęcie." },
+        { icon: ClipboardCheck, title: "Sprawdź status", text: "Zobacz postęp i braki." },
+      ],
+    },
+    placowka: {
+      title: "Uporządkuj sposób pracy zespołu w czterech krokach.",
+      text: "Indywidualne konta pracowników są dostępne teraz. Zakres widoku zbiorczego ustalamy zgodnie z etapem rozwoju modułu.",
+      steps: [
+        { icon: ClipboardCheck, title: "Ustal zakres", text: "Określ potrzeby jednostki." },
+        { icon: Building2, title: "Dodaj strukturę", text: "Przygotuj zespoły i role." },
+        { icon: UserRound, title: "Zaproś pracowników", text: "Każdy prowadzi własne dane." },
+        { icon: BarChart3, title: "Sprawdzaj kompletność", text: "Wychwytuj braki i terminy." },
+      ],
+    },
+    organizator: {
+      title: "Ustal zakres obsługi szkoleń w czterech krokach.",
+      text: "Funkcje organizatora rozwijamy indywidualnie — od danych wydarzenia po dokumentację uczestników.",
+      steps: [
+        { icon: ClipboardCheck, title: "Ustal zakres", text: "Określ rodzaj wydarzeń i danych." },
+        { icon: CalendarCheck2, title: "Dodaj wydarzenie", text: "Uzupełnij program i terminy." },
+        { icon: UserRound, title: "Dodaj uczestników", text: "Uporządkuj listy i statusy." },
+        { icon: FileCheck2, title: "Przygotuj dokumenty", text: "Zarządzaj certyfikatami i historią." },
+      ],
+    },
+  };
+  const active = variants[selected];
+
+  return (
+    <section id="jak-to-dziala" className="scroll-mt-24 bg-blue-50/60 py-12 sm:py-16">
+      <div className={pageWrap}>
+        <Reveal>
+          <SectionHeading
+            eyebrow="Jak to działa"
+            title={active.title}
+            text={active.text}
+            centered
+          />
+        </Reveal>
+
+        <div key={selected} className={`${panel} crpe-role-swap mt-7 grid gap-0 overflow-hidden p-2 sm:mt-9 sm:grid-cols-2 sm:gap-3 sm:p-3 xl:grid-cols-4`}>
+          {active.steps.map(({ icon: Icon, title, text }, index) => (
+            <Reveal key={title} delay={index * 90} className="h-full last:[&>article]:border-b-0">
+              <article className="crpe-step-card flex min-h-16 h-full items-center gap-3 border-b border-slate-100 p-3.5 sm:items-start sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-slate-50 sm:p-4">
+                <span className="crpe-card-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-blue-300">0{index + 1}</span>
+                    <h3 className="text-[15px] font-black text-slate-950">{title}</h3>
+                  </div>
+                  <p className="mt-1 text-[14px] leading-5 text-slate-600">{text}</p>
+                </div>
+              </article>
+            </Reveal>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-function FaqSection() {
+function TrustSection() {
   const items = [
-    ["Czy CRPE jest połączone z systemami państwowymi?", "Nie. CRPE służy do Twojej kontroli i uporządkowania danych. Systemy państwowe są zamknięte."],
-    ["Czy moje certyfikaty są bezpieczne?", "Tak. Dane są zabezpieczone, a dostęp do nich masz tylko Ty."],
-    ["Czy mogę korzystać z telefonu?", "Tak. Certyfikat możesz dodać od razu po szkoleniu, również jako zdjęcie z telefonu."],
-    ["Czy korzystanie jest darmowe?", "Podstawowe funkcje są darmowe. Rozszerzone funkcje mogą pojawić się jako pakiet PRO."],
+    {
+      icon: LockKeyhole,
+      title: "Dane na Twoim koncie",
+      text: "Dostęp do aktywności i dokumentów wymaga zalogowania.",
+    },
+    {
+      icon: FileText,
+      title: "Dokument przy aktywności",
+      text: "Certyfikat pozostaje przypisany do właściwego wpisu.",
+    },
+    {
+      icon: ShieldCheck,
+      title: "Jasna rola systemu",
+      text: "CRPE nie jest państwowym rejestrem ani automatycznym rozliczeniem obowiązku.",
+    },
   ];
 
   return (
-    <section id="faq" className={`${pageWrap} py-16 scroll-mt-24`}>
-      <div className="grid gap-6 lg:grid-cols-[1.18fr_0.82fr]">
-        <div className={`${panel} p-6 md:p-8`}>
-          <Eyebrow>FAQ</Eyebrow>
-          <h2 className="text-[27px] font-black tracking-[-0.025em] text-slate-950 md:text-[32px]">Najczęstsze pytania</h2>
-          <div className="mt-6 space-y-3">
-            {items.map(([q, a]) => (
-              <details key={q} className="group rounded-2xl border border-[#dce7f1] bg-white px-5 py-4 open:shadow-[0_12px_30px_rgba(15,45,75,0.06)]">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[14px] font-extrabold text-slate-950">
-                  {q}
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-600 ring-1 ring-blue-100 group-open:rotate-45">+</span>
-                </summary>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">{a}</p>
-              </details>
-            ))}
+    <section id="bezpieczenstwo" className={`${pageWrap} scroll-mt-24 py-11 sm:py-14`}>
+      <Reveal>
+        <div className={`${panel} overflow-hidden p-5 sm:p-8 lg:p-9`}>
+          <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-10">
+            <div>
+              <SectionHeading
+                eyebrow="Zakres i bezpieczeństwo"
+                title="CRPE pomaga prowadzić własną ewidencję."
+                text="System porządkuje aktywności, punkty i dokumenty, ale nie zastępuje oficjalnych rejestrów ani wymaganej procedury rozliczenia."
+              />
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link href="/polityka-prywatnosci" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-[14px] font-extrabold text-slate-700 hover:border-blue-200 hover:bg-blue-50">
+                  Polityka prywatności
+                </Link>
+                <Link href="/regulamin" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-[14px] font-extrabold text-slate-700 hover:border-blue-200 hover:bg-blue-50">
+                  Regulamin
+                </Link>
+              </div>
+            </div>
+
+            <div className="divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-slate-50 px-4 sm:px-5">
+              {items.map(({ icon: Icon, title, text }) => (
+                <div key={title} className="flex gap-3 py-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm ring-1 ring-slate-200">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <h3 className="text-[15px] font-black text-slate-950">{title}</h3>
+                    <p className="mt-1 text-[14px] leading-5 text-slate-600">{text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        <div className={`${panel} flex flex-col justify-between p-6 md:p-8`}>
+      </Reveal>
+    </section>
+  );
+}
+
+function FaqSection() {
+  const items = [
+    [
+      "Czy CRPE jest połączone z systemem państwowym?",
+      "Nie. CRPE służy do prowadzenia własnej ewidencji aktywności, punktów i dokumentów. Nie zastępuje oficjalnych rejestrów ani wymaganej procedury rozliczenia.",
+    ],
+    [
+      "Co CRPE oferuje medykowi już teraz?",
+      "Medyk może prowadzić ewidencję aktywności, punktów i dokumentów, kontrolować postęp oraz przygotować raport użytkownika.",
+    ],
+    [
+      "Co CRPE daje placówce lub jednostce?",
+      "Pomaga ujednolicić indywidualną ewidencję w zespole. Zbiorczy moduł organizacyjny z podglądem statusów i raportami jest rozwijany.",
+    ],
+    [
+      "Czy CRPE jest dla organizatorów kształcenia?",
+      "CRPE rozwija funkcje związane z wydarzeniami, uczestnikami i dokumentacją. Rozszerzone narzędzia są udostępniane zależnie od uprawnień.",
+    ],
+    [
+      "Czy mogę dodać certyfikat z telefonu?",
+      "Tak. Dokument możesz dodać jako plik PDF lub zdjęcie i przypisać do konkretnej aktywności.",
+    ],
+  ];
+
+  return (
+    <section id="faq" className={`${pageWrap} scroll-mt-24 py-12 sm:py-16`}>
+      <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-8">
+        <Reveal>
           <div>
-            <IconTile tone="cyan"><HelpCircle className="h-5 w-5" /></IconTile>
-            <h3 className="mt-5 text-[25px] font-black leading-tight tracking-[-0.02em] text-slate-950">Nie wiesz, który profil wybrać?</h3>
-            <p className="mt-3 text-[14px] leading-7 text-slate-600">Porównaj role albo skontaktuj się z nami. Dobierzemy ścieżkę do Twojego sposobu pracy.</p>
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 sm:h-11 sm:w-11">
+              <HelpCircle className="h-5 w-5" />
+            </span>
+            <div className="mt-3">
+              <SectionHeading
+                eyebrow="FAQ"
+                title="Najczęstsze pytania przed wyborem swojej ścieżki."
+                text="Najważniejsze informacje dla medyka, placówki i organizatora kształcenia."
+              />
+            </div>
+            <Link href="mailto:kontakt@crpe.pl" className="mt-4 inline-flex items-center gap-2 text-[13px] font-extrabold text-blue-700 underline decoration-blue-200 underline-offset-4 sm:mt-5 sm:text-sm">
+              Masz inne pytanie? Napisz do nas <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Link href="#profile" className="inline-flex rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-[0_12px_24px_rgba(37,99,235,0.22)]">Porównaj profile</Link>
-            <Link href="mailto:kontakt@crpe.pl" className="text-sm font-extrabold text-slate-700 underline decoration-slate-300 underline-offset-4 hover:text-blue-700">Skontaktuj się</Link>
-          </div>
+        </Reveal>
+
+        <div className="space-y-2.5">
+          {items.map(([question, answer], index) => (
+            <Reveal key={question} delay={index * 55}>
+              <details className="group rounded-2xl border border-slate-200 bg-white px-4 py-2.5 shadow-[0_10px_30px_rgba(15,45,75,0.05)] transition hover:border-blue-200 hover:shadow-[0_14px_36px_rgba(15,45,75,0.08)] sm:px-5 sm:py-4">
+                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-black leading-5 text-slate-950 sm:text-[15px]">
+                  {question}
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700 transition group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-2 max-w-3xl pb-2 pr-7 text-[14px] leading-6 text-slate-600">{answer}</p>
+              </details>
+            </Reveal>
+          ))}
         </div>
       </div>
     </section>
@@ -391,26 +1038,32 @@ export default function Page() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [selectedAudience, setSelectedAudience] = useState<AudienceKey>("medyk");
 
   useEffect(() => {
     let alive = true;
+
     async function run() {
       const { data: auth, error: authError } = await supabase.auth.getUser();
       if (!alive) return;
+
       if (authError || !auth?.user) {
         setIsLoggedIn(false);
         setChecking(false);
         return;
       }
+
       setIsLoggedIn(true);
       const { data: profile } = await supabase
         .from("profiles")
         .select("user_id, profession, period_start, period_end, required_points")
         .eq("user_id", auth.user.id)
         .maybeSingle<ProfileRow>();
+
       if (!alive) return;
       router.replace(profile ? "/kalkulator" : "/start");
     }
+
     run();
     return () => {
       alive = false;
@@ -419,29 +1072,30 @@ export default function Page() {
 
   if (checking) {
     return (
-      <div className={`${pageWrap} py-10`}>
-        <div className={`${panel} p-6 text-slate-500`}>Sprawdzam sesję…</div>
+      <div className={`${pageWrap} py-8`}>
+        <div className={`${panel} p-5 text-sm text-slate-500`}>Sprawdzam sesję…</div>
       </div>
     );
   }
 
   if (isLoggedIn) {
     return (
-      <div className={`${pageWrap} py-10`}>
-        <div className={`${panel} p-6 text-slate-500`}>Przenoszę…</div>
+      <div className={`${pageWrap} py-8`}>
+        <div className={`${panel} p-5 text-sm text-slate-500`}>Przenoszę do panelu…</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f9fc]">
-      <Hero />
-      <HeroProfiles />
-      <BenefitStrip />
-      <HowItWorks />
-      <FeatureSection />
+    <div className="min-h-screen bg-[#f8fafc]">
+      <Hero selected={selectedAudience} onSelect={setSelectedAudience} />
+      <CoreBenefits />
+      <PracticeSection />
+      <HowItWorks selected={selectedAudience} />
+      <AudienceSection />
+      <TrustSection />
       <FaqSection />
-      <BottomCTA />
+      <BottomCTA selected={selectedAudience} />
     </div>
   );
 }
