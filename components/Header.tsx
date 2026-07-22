@@ -4,6 +4,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import {
+  BarChart3,
+  ClipboardList,
+  FileBarChart,
+  GraduationCap,
+  LogOut,
+  Menu,
+  Settings,
+  UserRound,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
@@ -13,6 +25,8 @@ const REGISTER_HREF = "/rejestracja";
 type NavItem = {
   href: string;
   label: string;
+  mobileDescription?: string;
+  icon?: LucideIcon;
 };
 
 const PUBLIC_NAV: NavItem[] = [
@@ -24,10 +38,30 @@ const PUBLIC_NAV: NavItem[] = [
 ];
 
 const APP_NAV: NavItem[] = [
-  { href: "/kalkulator", label: "Panel CPD" },
-  { href: "/aktywnosci", label: "Aktywności" },
-  { href: "/raporty", label: "Raporty" },
-  { href: "/baza-szkolen", label: "Baza szkoleń" },
+  {
+    href: "/kalkulator",
+    label: "Panel CPD",
+    mobileDescription: "Cel, postęp i limity",
+    icon: BarChart3,
+  },
+  {
+    href: "/aktywnosci",
+    label: "Aktywności",
+    mobileDescription: "Wpisy i certyfikaty",
+    icon: ClipboardList,
+  },
+  {
+    href: "/baza-szkolen",
+    label: "Baza szkoleń",
+    mobileDescription: "Znajdź kolejną aktywność",
+    icon: GraduationCap,
+  },
+  {
+    href: "/raporty",
+    label: "Raporty",
+    mobileDescription: "Podsumowania i eksport",
+    icon: FileBarChart,
+  },
 ];
 
 type ProfileRoleRow = { role: string | null };
@@ -38,14 +72,11 @@ function cx(...classes: Array<string | false | undefined | null>) {
 
 export default function Header() {
   const pathname = usePathname();
-
   const [openMobile, setOpenMobile] = useState(false);
   const [openUser, setOpenUser] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
-
   const { user, loading, signOut } = useAuth();
-
   const [role, setRole] = useState<string | null>(null);
   const isAdmin = role === "admin";
 
@@ -83,7 +114,6 @@ export default function Header() {
       }
 
       const sb = supabaseClient();
-
       const { data, error } = await sb
         .from("profiles" as any)
         .select("role")
@@ -91,7 +121,6 @@ export default function Header() {
         .maybeSingle();
 
       if (cancelled) return;
-
       const profile = (data as ProfileRoleRow | null) ?? null;
       setRole(!error && profile ? (profile.role ?? null) : null);
     })();
@@ -101,19 +130,16 @@ export default function Header() {
     };
   }, [user?.id]);
 
+  useEffect(() => {
+    setOpenMobile(false);
+    setOpenUser(false);
+  }, [pathname]);
+
   const isActive = (href: string) => {
     if (!pathname) return false;
     if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(href + "/");
   };
-
-  const linkCls = (href: string) =>
-    cx(
-      "inline-flex items-center gap-2 px-3 py-2 text-[13px] font-bold transition-colors",
-      isActive(href)
-        ? "text-blue-700"
-        : "text-slate-700 hover:text-blue-700"
-    );
 
   const emailShort = useMemo(() => {
     const em = user?.email || "";
@@ -144,25 +170,39 @@ export default function Header() {
           : "border-slate-200/80",
       )}
     >
-      <div className="mx-auto max-w-[1160px] px-4 sm:px-6 lg:px-8">
-        <div className="flex h-14 items-center gap-4 sm:h-16 sm:gap-5">
-          <Link href={logoHref} className="flex shrink-0 items-center gap-2">
-            <Image src="/logo.svg" alt="Logo" width={30} height={30} />
-            <span className="text-base font-black tracking-tight text-slate-900">CRPE</span>
+      <div className="mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8">
+        <div className="flex h-14 items-center gap-4 sm:h-16">
+          <Link href={logoHref} className="flex shrink-0 items-center gap-2.5">
+            <Image src="/logo.svg" alt="Logo CRPE" width={30} height={30} />
+            <span className="text-base font-black tracking-tight text-slate-950">CRPE</span>
           </Link>
 
           <nav className="hidden flex-1 items-center justify-end lg:flex">
-            <div className="flex items-center gap-2">
-              {navItems.map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={linkCls(href)}
-                  aria-current={isActive(href) ? "page" : undefined}
-                >
-                  <span>{label}</span>
-                </Link>
-              ))}
+            <div className={cx("flex items-center", user ? "gap-1" : "gap-2")}>
+              {navItems.map(({ href, label, icon: Icon }) => {
+                const active = isActive(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cx(
+                      "inline-flex items-center gap-2 text-[13px] font-bold transition",
+                      user
+                        ? "rounded-xl px-3 py-2.5"
+                        : "px-3 py-2 text-slate-700 hover:text-blue-700",
+                      user && active
+                        ? "bg-blue-50 text-blue-700 ring-1 ring-blue-100"
+                        : user
+                          ? "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                          : "",
+                    )}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    {Icon ? <Icon className="h-4 w-4" strokeWidth={2.2} /> : null}
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
             </div>
           </nav>
 
@@ -173,7 +213,7 @@ export default function Header() {
               </div>
             ) : user ? (
               <>
-                <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 xl:flex">
+                <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 2xl:flex">
                   <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
                   <span className="font-medium">{emailShort}</span>
                 </div>
@@ -183,39 +223,43 @@ export default function Header() {
                     type="button"
                     onClick={() => setOpenUser((v) => !v)}
                     className={cx(
-                      "inline-flex h-10 w-10 items-center justify-center rounded-full border transition",
-                      openUser ? "border-blue-200 bg-slate-50" : "border-slate-200 hover:bg-slate-50"
+                      "inline-flex h-10 w-10 items-center justify-center rounded-xl border transition",
+                      openUser
+                        ? "border-blue-200 bg-blue-50 text-blue-700"
+                        : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-950",
                     )}
                     aria-label="Menu użytkownika"
-                    title="Menu"
+                    title="Profil i ustawienia"
                   >
-                    👤
+                    <UserRound className="h-5 w-5" />
                   </button>
 
                   {openUser ? (
-                    <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
-                      <div className="px-3 py-2 text-xs text-slate-500">
+                    <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_55px_rgba(15,45,75,0.16)]">
+                      <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
                         Zalogowany jako
-                        <div className="mt-1 text-sm font-medium text-slate-800">{user.email}</div>
+                        <div className="mt-1 break-all text-sm font-semibold text-slate-900">
+                          {user.email}
+                        </div>
                       </div>
 
                       <div className="my-2 h-px bg-slate-100" />
 
                       <Link
                         href="/profil"
-                        className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                         onClick={() => setOpenUser(false)}
                       >
-                        Profil i ustawienia
+                        <Settings className="h-4 w-4" /> Profil i ustawienia
                       </Link>
 
                       {isAdmin ? (
                         <Link
                           href="/admin/szkolenia"
-                          className="flex items-center rounded-xl px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                          className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50"
                           onClick={() => setOpenUser(false)}
                         >
-                          Szkolenia (admin)
+                          <GraduationCap className="h-4 w-4" /> Szkolenia (admin)
                         </Link>
                       ) : null}
 
@@ -224,9 +268,9 @@ export default function Header() {
                       <button
                         type="button"
                         onClick={handleSignOut}
-                        className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"
                       >
-                        Wyloguj
+                        <LogOut className="h-4 w-4" /> Wyloguj
                       </button>
                     </div>
                   ) : null}
@@ -251,93 +295,116 @@ export default function Header() {
           </div>
 
           <button
-            className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-700 lg:hidden"
+            className="ml-auto inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-50 lg:hidden"
             onClick={() => setOpenMobile((v) => !v)}
             aria-label={openMobile ? "Zamknij menu" : "Otwórz menu"}
             aria-expanded={openMobile}
             type="button"
           >
-            ☰
+            {openMobile ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
 
-        {openMobile && (
-          <nav className="pb-4 pt-2 lg:hidden">
-            <div className="flex flex-col gap-1">
-              {navItems.map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={linkCls(href)}
-                  aria-current={isActive(href) ? "page" : undefined}
-                  onClick={() => setOpenMobile(false)}
-                >
-                  <span>{label}</span>
-                </Link>
-              ))}
-
-              <div className="mt-3 flex flex-col gap-2">
-                {loading ? (
-                  <div className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600">
-                    Sprawdzam sesję…
-                  </div>
-                ) : user ? (
-                  <>
-                    <div className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700">
-                      <span className="inline-flex items-center gap-2">
-                        <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                        <span className="font-medium">{user.email}</span>
-                      </span>
-                    </div>
-
+        {openMobile ? (
+          <nav className="border-t border-slate-100 pb-4 pt-3 lg:hidden">
+            {user ? (
+              <div className="grid grid-cols-2 gap-2">
+                {navItems.map(({ href, label, mobileDescription, icon: Icon }) => {
+                  const active = isActive(href);
+                  return (
                     <Link
-                      href="/profil"
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-center text-sm font-semibold hover:bg-slate-50"
-                      onClick={() => setOpenMobile(false)}
+                      key={href}
+                      href={href}
+                      className={cx(
+                        "rounded-2xl border p-3 transition",
+                        active
+                          ? "border-blue-200 bg-blue-50 text-blue-700"
+                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                      )}
+                      aria-current={active ? "page" : undefined}
                     >
-                      Profil
+                      <div className="flex items-center gap-2 text-sm font-extrabold">
+                        {Icon ? <Icon className="h-4 w-4" /> : null}
+                        {label}
+                      </div>
+                      <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                        {mobileDescription}
+                      </p>
                     </Link>
-
-                    {isAdmin ? (
-                      <Link
-                        href="/admin/szkolenia"
-                        className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-center text-sm font-semibold text-blue-700 hover:bg-blue-100"
-                        onClick={() => setOpenMobile(false)}
-                      >
-                        Szkolenia (admin)
-                      </Link>
-                    ) : null}
-
-                    <button
-                      onClick={handleSignOut}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-                      type="button"
-                    >
-                      Wyloguj
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      href={LOGIN_HREF}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                      onClick={() => setOpenMobile(false)}
-                    >
-                      Zaloguj się
-                    </Link>
-                    <Link
-                      href={REGISTER_HREF}
-                      className="rounded-xl bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700"
-                      onClick={() => setOpenMobile(false)}
-                    >
-                      Załóż darmowe konto
-                    </Link>
-                  </>
-                )}
+                  );
+                })}
               </div>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {navItems.map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-blue-700"
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3">
+              {loading ? (
+                <div className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600">
+                  Sprawdzam sesję…
+                </div>
+              ) : user ? (
+                <>
+                  <div className="rounded-xl bg-slate-50 px-4 py-2.5 text-sm text-slate-700">
+                    <span className="inline-flex items-center gap-2">
+                      <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                      <span className="truncate font-medium">{user.email}</span>
+                    </span>
+                  </div>
+
+                  <Link
+                    href="/profil"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold hover:bg-slate-50"
+                  >
+                    <Settings className="h-4 w-4" /> Profil i ustawienia
+                  </Link>
+
+                  {isAdmin ? (
+                    <Link
+                      href="/admin/szkolenia"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                    >
+                      <GraduationCap className="h-4 w-4" /> Szkolenia (admin)
+                    </Link>
+                  ) : null}
+
+                  <button
+                    onClick={handleSignOut}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold hover:bg-slate-50"
+                    type="button"
+                  >
+                    <LogOut className="h-4 w-4" /> Wyloguj
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href={LOGIN_HREF}
+                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Zaloguj się
+                  </Link>
+                  <Link
+                    href={REGISTER_HREF}
+                    className="rounded-xl bg-blue-600 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-blue-700"
+                  >
+                    Załóż darmowe konto
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
-        )}
+        ) : null}
       </div>
     </header>
   );

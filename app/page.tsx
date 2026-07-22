@@ -1,6 +1,6 @@
 "use client";
 
-import React, { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -57,52 +57,12 @@ const panel =
 function Reveal({
   children,
   className = "",
-  delay = 0,
 }: {
   children: React.ReactNode;
   className?: string;
   delay?: number;
 }) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-
-    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) {
-      setVisible(true);
-      return;
-    }
-
-    if (!("IntersectionObserver" in window)) {
-      setVisible(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) return;
-        setVisible(true);
-        observer.disconnect();
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -60px 0px" },
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={`crpe-scroll-reveal ${visible ? "is-visible" : ""} ${className}`}
-      style={{ "--crpe-delay": `${delay}ms` } as CSSProperties}
-    >
-      {children}
-    </div>
-  );
+  return <div className={`crpe-scroll-reveal is-visible ${className}`}>{children}</div>;
 }
 
 const audiences: AudienceOption[] = [

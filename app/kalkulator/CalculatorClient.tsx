@@ -1049,6 +1049,43 @@ export default function CalculatorClient() {
   }, [activities, periodStart, periodEnd, activityFilter]);
 
   const isBusy = authLoading || loading;
+
+  useEffect(() => {
+    if (isBusy) return;
+
+    const ids = [
+      "ustawienia",
+      "status",
+      "kroki",
+      "limity",
+      "aktywnosci",
+      "powiadomienia",
+    ] as const;
+
+    const nodes = ids
+      .map((id) => document.getElementById(id))
+      .filter((node): node is HTMLElement => Boolean(node));
+
+    if (!nodes.length || !("IntersectionObserver" in window)) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        const id = visible?.target?.id as (typeof ids)[number] | undefined;
+        if (id) setActiveNav(id);
+      },
+      {
+        rootMargin: "-145px 0px -62% 0px",
+        threshold: [0.02, 0.12, 0.28],
+      },
+    );
+
+    nodes.forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  }, [isBusy]);
   const pwzIssueDate = profile?.pwz_issue_date ?? null;
   const otherRequired = isOtherProfession(profession);
   const otherValid =
@@ -1172,10 +1209,10 @@ export default function CalculatorClient() {
   }
 
   const inputCls =
-    "h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-sm shadow-slate-900/5 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/80 disabled:bg-slate-50 disabled:text-slate-400";
+    "h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-[0_3px_10px_rgba(15,45,75,0.04)] transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100/80 disabled:bg-slate-50 disabled:text-slate-400";
 
   const cardCls =
-    "scroll-mt-44 relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white shadow-[0_6px_16px_rgba(15,23,42,0.075)] transition-shadow hover:shadow-[0_8px_18px_rgba(15,23,42,0.09)]";
+    "scroll-mt-44 relative overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(15,45,75,0.07)] transition-shadow hover:shadow-[0_18px_44px_rgba(15,45,75,0.09)]";
 
   function scrollToSection(
     id:
@@ -1204,12 +1241,6 @@ export default function CalculatorClient() {
     );
   }
 
-  const navBase =
-    "shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:border-blue-300 hover:text-blue-700 focus:outline-none";
-
-  const navActive =
-    "shrink-0 border-b-2 border-blue-600 px-3 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none";
-
   const emptyStateHref =
     activityFilter === "planned"
       ? "/aktywnosci?new=1"
@@ -1228,6 +1259,15 @@ export default function CalculatorClient() {
 
   const emptyStateCta =
     activityFilter === "missing" ? "Uzupełnij dokumenty" : "Dodaj pierwszą aktywność";
+
+  const panelSections = [
+    { id: "ustawienia", label: "Ustawienia", mobileLabel: "Ustawienia", icon: "user" as const },
+    { id: "status", label: "Realizacja celu", mobileLabel: "Postęp", icon: "chart" as const },
+    { id: "kroki", label: "Co dalej?", mobileLabel: "Co dalej", icon: "target" as const },
+    { id: "limity", label: "Limity", mobileLabel: "Limity", icon: "shield" as const },
+    { id: "aktywnosci", label: "Aktywności", mobileLabel: "Wpisy", icon: "calendar" as const },
+    { id: "powiadomienia", label: "Powiadomienia", mobileLabel: "Alerty", icon: "bell" as const },
+  ] as const;
 
   const mainAction =
     missingEvidenceCount > 0
@@ -1255,7 +1295,7 @@ export default function CalculatorClient() {
           };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       <style jsx global>{`
         @keyframes cpdTargetPulse {
           0% { transform: scale(0.72); opacity: 0.55; }
@@ -1273,74 +1313,64 @@ export default function CalculatorClient() {
         .cpd-target-pulse-delay { animation: cpdTargetPulseDelay 1.55s ease-out infinite; animation-delay: 0.28s; }
       `}</style>
 
-      <div className="relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white px-5 py-4 shadow-[0_6px_16px_rgba(15,23,42,0.08)] sm:px-6">
-        <div className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full bg-blue-500" />
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
+      <div className="relative overflow-hidden rounded-[24px] border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50/80 px-5 py-5 shadow-[0_18px_48px_rgba(15,45,75,0.08)] sm:px-6 sm:py-6">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-cyan-200/30 blur-3xl" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3.5">
             <IconBubble tone="blue">
-              <MiniIcon name="chart" />
+              <MiniIcon name="chart" className="h-5 w-5" />
             </IconBubble>
 
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-blue-700">
+                Twój pulpit edukacyjny
+              </p>
+              <h1 className="mt-1 text-[28px] font-black tracking-[-0.035em] text-slate-950 sm:text-[32px]">
                 Panel CPD
               </h1>
-              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
-                Podgląd postępu w okresie rozliczeniowym. Dodawanie, edycja i
-                certyfikaty są w{" "}
-                <span className="font-semibold text-slate-800">Aktywnościach</span>.
+              <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-[15px]">
+                W jednym miejscu sprawdzasz postęp, braki w dokumentach, limity i kolejne kroki.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Link
-              href="/aktywnosci"
-              className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+              href="/aktywnosci?new=1"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white shadow-[0_10px_22px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 active:scale-95"
             >
-              Aktywności
+              <span className="text-base leading-none">+</span> Dodaj aktywność
             </Link>
 
             <Link
               href="/baza-szkolen"
-              className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
             >
-              Baza szkoleń
+              <MiniIcon name="school" /> Znajdź szkolenie
             </Link>
           </div>
         </div>
       </div>
 
-      <nav className="sticky top-[76px] z-30 overflow-x-auto rounded-[1.1rem] border border-slate-300/80 bg-white shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
-        <div className="flex min-w-max">
-          {(
-            [
-              "ustawienia",
-              "status",
-              "kroki",
-              "limity",
-              "aktywnosci",
-              "powiadomienia",
-            ] as const
-          ).map((id) => {
-            const labels: Record<string, string> = {
-              ustawienia: "Ustawienia",
-              status: "Realizacja celu",
-              kroki: "Co dalej?",
-              limity: "Limity",
-              aktywnosci: "Aktywności",
-              powiadomienia: "Powiadomienia",
-            };
-
+      <nav className="sticky top-[62px] z-30 rounded-[18px] border border-slate-200 bg-white/95 p-1.5 shadow-[0_12px_32px_rgba(15,45,75,0.09)] backdrop-blur sm:top-[70px]">
+        <div className="grid grid-cols-3 gap-1 sm:flex sm:items-center">
+          {panelSections.map(({ id, label, mobileLabel, icon }) => {
+            const active = activeNav === id;
             return (
               <button
                 key={id}
                 type="button"
                 onClick={() => scrollToSection(id)}
-                className={activeNav === id ? navActive : navBase}
+                className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-[11px] font-bold transition sm:flex-1 sm:px-3 sm:text-[13px] ${
+                  active
+                    ? "bg-blue-600 text-white shadow-[0_7px_16px_rgba(37,99,235,0.22)]"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+                aria-current={active ? "location" : undefined}
               >
-                {labels[id]}
+                <MiniIcon name={icon} className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                <span className="truncate sm:hidden">{mobileLabel}</span>
+                <span className="hidden truncate sm:inline">{label}</span>
               </button>
             );
           })}
@@ -1348,8 +1378,6 @@ export default function CalculatorClient() {
       </nav>
 
       <section id="ustawienia" className={cardCls}>
-        <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-
         <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <IconBubble tone="blue">
@@ -1357,10 +1385,10 @@ export default function CalculatorClient() {
             </IconBubble>
 
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2 className="text-base font-extrabold tracking-tight text-slate-950">
                 Ustawienia okresu i zawodu
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
                 Zmień preferencje w dowolnym momencie.
                 {savedAt && !dirty && !savingProfile ? (
                   <span className="ml-1 font-medium text-blue-600">Zapisano</span>
@@ -1575,19 +1603,17 @@ export default function CalculatorClient() {
       ) : (
         <>
           <section id="status" className={cardCls}>
-            <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-
-            <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-3">
                 <IconBubble tone="blue">
                   <MiniIcon name="chart" />
                 </IconBubble>
 
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-900">
+                  <h2 className="text-base font-extrabold tracking-tight text-slate-950">
                     Realizacja celu
                   </h2>
-                  <p className="text-xs text-slate-500">
+                  <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
                     Jeden widok: gdzie jesteś, czego brakuje i co zrobić dalej.
                   </p>
                 </div>
@@ -1884,16 +1910,14 @@ export default function CalculatorClient() {
           </section>
 
          <section id="kroki" className={cardCls}>
-  <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-
   <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
     <IconBubble tone="blue">
       <MiniIcon name="chart" />
     </IconBubble>
 
     <div>
-      <h2 className="text-sm font-semibold text-slate-900">Co dalej?</h2>
-      <p className="text-xs text-slate-500">
+      <h2 className="text-base font-extrabold tracking-tight text-slate-950">Co dalej?</h2>
+      <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
         Krótka lista kolejnych działań — bez zgadywania
       </p>
     </div>
@@ -1988,8 +2012,6 @@ export default function CalculatorClient() {
       )}
 
       <section id="limity" className={`${cardCls} scroll-mt-44`}>
-        <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-
         <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <IconBubble tone="blue">
@@ -1997,10 +2019,10 @@ export default function CalculatorClient() {
             </IconBubble>
 
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2 className="text-base font-extrabold tracking-tight text-slate-950">
                 Twoje limity
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
                 Wybierz kategorię i sprawdź, ile możesz jeszcze bezpiecznie doliczyć.
               </p>
             </div>
@@ -2421,8 +2443,6 @@ export default function CalculatorClient() {
       </section>
 
       <section id="aktywnosci" className={`${cardCls} scroll-mt-44`}>
-        <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-
         <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <IconBubble tone="blue">
@@ -2431,7 +2451,7 @@ export default function CalculatorClient() {
 
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-slate-900">
+                <h2 className="text-base font-extrabold tracking-tight text-slate-950">
                   Ostatnie aktywności
                 </h2>
                 {recentRows.length > 0 && (
@@ -2621,8 +2641,6 @@ export default function CalculatorClient() {
       </section>
 
       <section id="powiadomienia" className={`${cardCls} scroll-mt-44`}>
-        <div className="pointer-events-none absolute left-0 top-4 h-14 w-1 rounded-r-full bg-blue-500" />
-
         <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <IconBubble tone="blue">
@@ -2630,10 +2648,10 @@ export default function CalculatorClient() {
             </IconBubble>
 
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2 className="text-base font-extrabold tracking-tight text-slate-950">
                 Bądź na bieżąco i nie przegap ważnych terminów
               </h2>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
                 Włącz powiadomienia, aby otrzymywać przypomnienia o szkoleniach
                 i terminach.
               </p>
