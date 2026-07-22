@@ -15,11 +15,19 @@ type NavItem = {
   label: string;
 };
 
-const NAV: NavItem[] = [
+const PUBLIC_NAV: NavItem[] = [
+  { href: "/#narzedzia", label: "Narzędzia" },
   { href: "/#jak-to-dziala", label: "Jak to działa" },
   { href: "/#dla-kogo", label: "Dla kogo" },
   { href: "/#bezpieczenstwo", label: "Bezpieczeństwo" },
   { href: "/#faq", label: "FAQ" },
+];
+
+const APP_NAV: NavItem[] = [
+  { href: "/kalkulator", label: "Panel CPD" },
+  { href: "/aktywnosci", label: "Aktywności" },
+  { href: "/raporty", label: "Raporty" },
+  { href: "/baza-szkolen", label: "Baza szkoleń" },
 ];
 
 type ProfileRoleRow = { role: string | null };
@@ -125,6 +133,7 @@ export default function Header() {
   }
 
   const logoHref = user ? "/kalkulator" : "/";
+  const navItems = user ? APP_NAV : PUBLIC_NAV;
 
   return (
     <header
@@ -144,7 +153,7 @@ export default function Header() {
 
           <nav className="hidden flex-1 items-center justify-end lg:flex">
             <div className="flex items-center gap-2">
-              {NAV.map(({ href, label }) => (
+              {navItems.map(({ href, label }) => (
                 <Link
                   key={href}
                   href={href}
@@ -212,38 +221,6 @@ export default function Header() {
 
                       <div className="my-2 h-px bg-slate-100" />
 
-                      <Link
-                        href="/kalkulator"
-                        className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                        onClick={() => setOpenUser(false)}
-                      >
-                        Kalkulator
-                      </Link>
-
-                      <Link
-                        href="/aktywnosci"
-                        className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                        onClick={() => setOpenUser(false)}
-                      >
-                        Aktywności
-                      </Link>
-
-                      <Link
-                        href="/raporty"
-                        className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                        onClick={() => setOpenUser(false)}
-                      >
-                        Raporty
-                      </Link>
-
-                      <Link
-                        href="/baza-szkolen"
-                        className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                        onClick={() => setOpenUser(false)}
-                      >
-                        Baza szkoleń
-                      </Link>
-
                       <button
                         type="button"
                         onClick={handleSignOut}
@@ -287,7 +264,7 @@ export default function Header() {
         {openMobile && (
           <nav className="pb-4 pt-2 lg:hidden">
             <div className="flex flex-col gap-1">
-              {NAV.map(({ href, label }) => (
+              {navItems.map(({ href, label }) => (
                 <Link
                   key={href}
                   href={href}

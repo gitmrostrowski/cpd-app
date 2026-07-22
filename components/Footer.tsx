@@ -13,6 +13,8 @@ export default function Footer() {
         </div>
 
         <nav className="flex flex-wrap gap-x-5 gap-y-3 text-[13px] font-bold text-slate-700 sm:text-sm">
+          <Link className="hover:text-blue-700" href="/#narzedzia">Narzędzia</Link>
+          <Link className="hover:text-blue-700" href="/#dla-kogo">Dla kogo</Link>
           <Link className="hover:text-blue-700" href="mailto:kontakt@crpe.pl">Kontakt</Link>
           <Link className="hover:text-blue-700" href="/regulamin">Regulamin</Link>
           <Link className="hover:text-blue-700" href="/polityka-prywatnosci">Polityka prywatności</Link>

@@ -14,8 +14,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "CRPE – ewidencja edukacji dla medyków i organizacji",
-  description: "CRPE pomaga medykom prowadzić ewidencję aktywności, punktów i certyfikatów, a organizacjom przygotować uporządkowany sposób pracy z danymi edukacyjnymi.",
+  title: "CRPE – panel CPD, aktywności, certyfikaty i raporty",
+  description: "CRPE łączy panel CPD i kalkulator, ewidencję aktywności, certyfikaty, raport użytkownika oraz bazę szkoleń w jednym koncie.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -85,3 +85,14 @@ Po ponownej analizie prototypu wizualnego dodano oszczędne animacje produktowe:
 - pełna obsługa ustawienia systemowego `prefers-reduced-motion`.
 
 Animacje nie wymagają dodatkowej biblioteki i są zdefiniowane w `app/globals.css`.
+
+## Widoczność narzędzi — wersja v6
+
+W tej wersji strona i nawigacja pokazują rzeczywisty zakres działającej aplikacji:
+
+- publiczna strona główna prezentuje Panel CPD i kalkulator, Aktywności i certyfikaty, Raport użytkownika oraz Bazę szkoleń,
+- po zalogowaniu główne menu zmienia się na bezpośrednie odnośniki do tych czterech narzędzi,
+- narzędzia są widoczne także w menu mobilnym,
+- Profil i ustawienia pozostają pod ikoną użytkownika,
+- widok organizacji i funkcje organizatora są nadal jasno oznaczone jako rozwijane lub ustalane indywidualnie,
+- Baza szkoleń jest opisana jako narzędzie do wyszukiwania i planowania; dodanie pozycji do planu nie oznacza zapisu u organizatora.

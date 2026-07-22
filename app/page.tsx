@@ -17,7 +17,6 @@ import {
   HelpCircle,
   LockKeyhole,
   ShieldCheck,
-  Smartphone,
   Stethoscope,
   UploadCloud,
   UserRound,
@@ -121,7 +120,7 @@ const audiences: AudienceOption[] = [
     cta: "Załóż konto medyka",
     href: "/rejestracja",
     facts: ["110/200 pkt", "18 certyfikatów", "2 wpisy do uzupełnienia"],
-    benefits: ["Punkty i aktywności w jednym widoku", "Certyfikat przy właściwym wpisie", "Czytelny status i brakujące elementy"],
+    benefits: ["Panel CPD i kalkulator celu", "Aktywności z certyfikatami", "Raport użytkownika i baza szkoleń"],
   },
   {
     key: "placowka",
@@ -408,6 +407,32 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
           </div>
         </div>
 
+        {selected === "medyk" ? (
+          <div className="grid grid-cols-4 border-b border-slate-200 bg-white px-3">
+            {[
+              [BarChart3, "Panel CPD"],
+              [CalendarCheck2, "Aktywności"],
+              [FileText, "Raporty"],
+              [FolderOpen, "Szkolenia"],
+            ].map(([Icon, label], index) => {
+              const ToolIcon = Icon as typeof BarChart3;
+              return (
+                <div
+                  key={label as string}
+                  className={`flex min-w-0 items-center justify-center gap-1.5 border-b-2 px-2 py-2.5 text-[10px] font-extrabold ${
+                    index === 0
+                      ? "border-blue-600 text-blue-700"
+                      : "border-transparent text-slate-500"
+                  }`}
+                >
+                  <ToolIcon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{label as string}</span>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
         <div key={selected} className="crpe-role-swap p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
@@ -693,55 +718,132 @@ function AudienceSection() {
   );
 }
 
-function CoreBenefits() {
-  const benefits = [
+function ProductToolsSection() {
+  const tools = [
+    {
+      icon: BarChart3,
+      title: "Panel CPD i kalkulator",
+      status: "Dostępne",
+      text: "Ustaw okres i wymagany cel, sprawdzaj postęp, limity oraz podpowiedź kolejnego kroku.",
+      bullets: ["Cel i okres rozliczeniowy", "Postęp, limity i braki"],
+    },
     {
       icon: CalendarCheck2,
-      title: "Pełny kontekst aktywności",
-      text: "Rodzaj, termin, punkty, organizator i status w jednym miejscu.",
+      title: "Aktywności i certyfikaty",
+      status: "Dostępne",
+      text: "Dodawaj i edytuj aktywności, wpisuj punkty oraz dołączaj PDF lub zdjęcie certyfikatu.",
+      bullets: ["Dokument przy właściwym wpisie", "Edycja i kontrola kompletności"],
+    },
+    {
+      icon: FileText,
+      title: "Raport użytkownika",
+      status: "Dostępne",
+      text: "Przygotuj zestawienie aktywności, punktów i załączników oraz eksportuj dokumenty.",
+      bullets: ["Podsumowanie wybranego okresu", "Eksport PDF i ZIP"],
     },
     {
       icon: FolderOpen,
-      title: "Dokument przy właściwym wpisie",
-      text: "Certyfikat nie ginie w osobnym folderze i łatwo go odnaleźć.",
-    },
-    {
-      icon: BarChart3,
-      title: "Widoczny status i braki",
-      text: "Panel wskazuje postęp i elementy wymagające działania.",
+      title: "Baza szkoleń",
+      status: "Dostępne",
+      text: "Wyszukuj kursy, webinary i wydarzenia, filtruj je i dodawaj wybrane pozycje do planu CPD.",
+      bullets: ["Filtry zawodu, miejsca i terminu", "Plan CPD bez automatycznego zapisu"],
     },
   ];
 
   return (
-    <section id="funkcje" className="scroll-mt-24 bg-blue-50/55 py-12 sm:py-16">
+    <section id="narzedzia" className="scroll-mt-24 bg-blue-50/55 py-12 sm:py-16">
       <div className={pageWrap}>
         <Reveal>
           <SectionHeading
-            eyebrow="Wspólny rdzeń CRPE"
-            title="Mniej pilnowania. Więcej pewności, że dane są kompletne."
-            text="Niezależnie od roli porządek jest ten sam: aktywność, właściwy dokument i czytelny status."
+            eyebrow="Dostępne narzędzia"
+            title="Po zalogowaniu widzisz cały warsztat CRPE, nie tylko kalkulator."
+            text="Panel, aktywności, dokumenty, raport i baza szkoleń działają w jednym koncie i prowadzą użytkownika przez kolejne etapy ewidencji."
             centered
           />
         </Reveal>
 
-        <div className="mt-7 grid gap-3 lg:mt-9 lg:grid-cols-3 lg:gap-5">
-          {benefits.map(({ icon: Icon, title, text }, index) => (
-            <Reveal key={title} delay={index * 90} className="h-full">
-              <article className={`${panel} crpe-benefit-card flex h-full gap-4 p-4 sm:block sm:p-6`}>
-                <div className="flex shrink-0 items-start justify-between sm:items-center">
-                  <span className="crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 sm:h-11 sm:w-11 sm:rounded-2xl">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <span className="hidden text-xs font-black tracking-[0.18em] text-slate-300 sm:block">0{index + 1}</span>
-                </div>
+        <Reveal delay={70}>
+          <div className={`${panel} mt-7 overflow-hidden sm:mt-9`}>
+            <div className="bg-slate-950 px-4 py-4 text-white sm:px-6 sm:py-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="text-[16px] font-black tracking-[-0.02em] text-slate-950 sm:mt-4 sm:text-lg">{title}</h3>
-                  <p className="mt-1.5 text-[14px] leading-6 text-slate-600 sm:mt-2 sm:text-[15px] sm:leading-6">{text}</p>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-cyan-300">
+                    Stałe menu aplikacji
+                  </p>
+                  <p className="mt-1 text-[15px] font-black sm:text-base">
+                    Najważniejsze funkcje są widoczne od razu po zalogowaniu.
+                  </p>
                 </div>
-              </article>
-            </Reveal>
-          ))}
-        </div>
+                <span className="inline-flex w-fit rounded-full bg-emerald-400/10 px-2.5 py-1 text-[10px] font-extrabold text-emerald-200 ring-1 ring-emerald-300/20">
+                  Profil medyka dostępny teraz
+                </span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {tools.map(({ icon: Icon, title }, index) => (
+                  <div
+                    key={title}
+                    className={`flex min-h-12 items-center gap-2 rounded-xl border px-3 py-2.5 text-[12px] font-extrabold ${
+                      index === 0
+                        ? "border-blue-400/40 bg-blue-500/20 text-white"
+                        : "border-white/10 bg-white/5 text-slate-200"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0 text-cyan-300" />
+                    <span>{title.replace(" i kalkulator", "")}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-0 p-2 sm:grid-cols-2 sm:gap-3 sm:p-3 lg:grid-cols-4">
+              {tools.map(({ icon: Icon, title, status, text, bullets }, index) => (
+                <Reveal key={title} delay={index * 70} className="h-full last:[&>article]:border-b-0">
+                  <article className="crpe-interactive-card flex h-full flex-col border-b border-slate-100 p-4 sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-slate-50 sm:p-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                        {status}
+                      </span>
+                    </div>
+                    <h3 className="mt-4 text-[17px] font-black tracking-[-0.02em] text-slate-950">{title}</h3>
+                    <p className="mt-2 text-[14px] leading-6 text-slate-600">{text}</p>
+                    <ul className="mt-4 grid gap-2">
+                      {bullets.map((item) => (
+                        <li key={item} className="flex gap-2 text-[13px] leading-5 text-slate-700">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                </Reveal>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-slate-200 bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <p className="max-w-2xl text-[13px] leading-5 text-slate-600 sm:text-sm">
+                Dane osobiste i dokumenty są dostępne po zalogowaniu. Baza szkoleń pomaga planować aktywności, ale dodanie pozycji do planu nie oznacza zapisu u organizatora.
+              </p>
+              <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                <Link
+                  href="/login"
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-[14px] font-extrabold text-slate-700 hover:border-blue-200 hover:bg-blue-50"
+                >
+                  Mam konto
+                </Link>
+                <Link
+                  href="/rejestracja"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[14px] font-extrabold text-white shadow-[0_10px_24px_rgba(37,99,235,0.2)] hover:bg-blue-700"
+                >
+                  Załóż konto i otwórz panel <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -763,14 +865,14 @@ function PracticeSection() {
           </div>
           <p className="mt-4 text-[11px] font-extrabold uppercase tracking-[0.18em] text-cyan-300">CRPE w praktyce</p>
           <h2 className="mt-2 text-[28px] font-black leading-[1.1] tracking-[-0.035em] sm:text-[39px]">
-            Jeden panel zamiast arkuszy i osobnych folderów.
+            Panel CPD łączy kalkulator, aktywności i dokumenty.
           </h2>
           <p className="mt-3 text-[15px] leading-6 text-slate-300 sm:mt-4 sm:text-[16px] sm:leading-7">
-            Aktywność, punkty i dokument są połączone. Od razu widzisz, co jest kompletne i jaki powinien być kolejny krok.
+            Kalkulator pokazuje postęp, Aktywności przechowują wpisy i certyfikaty, a Raport zbiera wszystko w jedno zestawienie.
           </p>
 
           <ul className="mt-5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-1">
-            {["Dokument przy konkretnym wpisie", "Braki oznaczone przed rozliczeniem"].map((item) => (
+            {["Stały dostęp do Aktywności i Raportów", "Braki oznaczone przed rozliczeniem"].map((item) => (
               <li key={item} className="flex gap-3 text-[13px] leading-5 text-slate-200 sm:text-sm">
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-300/30">
                   <Check className="h-3 w-3" />
@@ -981,6 +1083,10 @@ function FaqSection() {
       "Medyk może prowadzić ewidencję aktywności, punktów i dokumentów, kontrolować postęp oraz przygotować raport użytkownika.",
     ],
     [
+      "Czy kalkulator, aktywności i raport działają w jednym koncie?",
+      "Tak. Panel CPD pokazuje postęp, Aktywności przechowują wpisy i certyfikaty, Raport przygotowuje zestawienie, a Baza szkoleń pomaga planować kolejne działania.",
+    ],
+    [
       "Co CRPE daje placówce lub jednostce?",
       "Pomaga ujednolicić indywidualną ewidencję w zespole. Zbiorczy moduł organizacyjny z podglądem statusów i raportami jest rozwijany.",
     ],
@@ -1089,7 +1195,7 @@ export default function Page() {
   return (
     <div className="min-h-screen bg-[#f8fafc]">
       <Hero selected={selectedAudience} onSelect={setSelectedAudience} />
-      <CoreBenefits />
+      <ProductToolsSection />
       <PracticeSection />
       <HowItWorks selected={selectedAudience} />
       <AudienceSection />
