@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   BarChart3,
@@ -21,16 +20,7 @@ import {
   UploadCloud,
   UserRound,
 } from "lucide-react";
-import { createBrowserSupabase } from "@/lib/supabaseBrowser";
 import BottomCTA from "@/components/BottomCTA";
-
-type ProfileRow = {
-  user_id: string;
-  profession: string | null;
-  period_start: number | null;
-  period_end: number | null;
-  required_points: number | null;
-};
 
 type AudienceKey = "medyk" | "placowka" | "organizator";
 
@@ -46,6 +36,8 @@ type AudienceOption = {
   description: string;
   cta: string;
   href: string;
+  detailsHref: string;
+  detailsLabel: string;
   facts: [string, string, string];
   benefits: [string, string, string];
 };
@@ -79,6 +71,8 @@ const audiences: AudienceOption[] = [
       "Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj aktualny status w jednym panelu.",
     cta: "Załóż konto medyka",
     href: "/rejestracja",
+    detailsHref: "#dla-medyka",
+    detailsLabel: "Dowiedz się więcej o profilu medyka",
     facts: ["110/200 pkt", "18 certyfikatów", "2 wpisy do uzupełnienia"],
     benefits: ["Panel CPD i kalkulator celu", "Aktywności z certyfikatami", "Raport użytkownika i baza szkoleń"],
   },
@@ -93,8 +87,10 @@ const audiences: AudienceOption[] = [
     title: "Uporządkuj ewidencję zespołu i szybciej wychwytuj braki.",
     description:
       "Indywidualna ewidencja pracowników działa już dziś. Zbiorczy widok jednostki i kompletności dokumentów jest rozwijany.",
-    cta: "Zakres dla placówki",
-    href: "#dla-placowki",
+    cta: "Zapytaj o moduł",
+    href: "mailto:kontakt@crpe.pl?subject=CRPE%20dla%20plac%C3%B3wki",
+    detailsHref: "#dla-placowki",
+    detailsLabel: "Dowiedz się więcej o rozwiązaniu dla placówki",
     facts: ["24 osoby", "19 kompletnych", "5 do sprawdzenia"],
     benefits: ["Indywidualne konta pracowników", "Kontrola kompletności dokumentów", "Przygotowanie danych do weryfikacji"],
   },
@@ -111,6 +107,8 @@ const audiences: AudienceOption[] = [
       "CRPE rozwija obsługę wydarzeń, uczestników i certyfikatów. Zakres modułu ustalamy indywidualnie.",
     cta: "Poznaj zakres modułu",
     href: "mailto:kontakt@crpe.pl?subject=CRPE%20dla%20organizatora",
+    detailsHref: "#dla-organizatora",
+    detailsLabel: "Dowiedz się więcej o rozwiązaniu dla organizatora",
     facts: ["3 wydarzenia", "86 uczestników", "72 certyfikaty"],
     benefits: ["Dane wydarzeń edukacyjnych", "Uczestnicy i dokumentacja", "Planowana obsługa certyfikatów"],
   },
@@ -214,11 +212,11 @@ function BigMetric({
 function MedykDashboard() {
   return (
     <>
-      <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+      <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-bold text-slate-500">Twój postęp</p>
-            <p className="mt-1 text-[30px] font-black tracking-tight text-slate-950">
+            <p className="mt-1 text-[28px] font-black tracking-tight text-slate-950">
               110 <span className="text-sm font-bold text-slate-500">/ 200 pkt</span>
             </p>
           </div>
@@ -240,16 +238,6 @@ function MedykDashboard() {
         <Metric icon={FileCheck2} label="Certyfikaty" value="18 dokumentów" tone="cyan" />
         <Metric icon={ClipboardCheck} label="Braki" value="2 aktywności" tone="amber" />
       </div>
-
-      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-extrabold text-slate-900">Konferencja medyczna</p>
-            <p className="mt-1 text-[11px] text-slate-500">20 pkt • certyfikat dołączony</p>
-          </div>
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
-        </div>
-      </div>
     </>
   );
 }
@@ -257,7 +245,6 @@ function MedykDashboard() {
 function PlacowkaDashboard() {
   const alerts = [
     ["Anna Kowalska", "Brak certyfikatu", "Dokumentacja: 7/8"],
-    ["Jan Nowak", "Aktywność bez dokumentu", "Dokumentacja: 6/8"],
   ];
 
   return (
@@ -268,7 +255,7 @@ function PlacowkaDashboard() {
         <BigMetric label="Wymaga uwagi" value="5" accent="amber" />
       </div>
 
-      <div className="mt-3 rounded-2xl border border-slate-200 p-4">
+      <div className="mt-3 rounded-2xl border border-slate-200 p-3.5">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-extrabold text-slate-950">Kompletność dokumentacji</p>
@@ -281,7 +268,7 @@ function PlacowkaDashboard() {
         </div>
       </div>
 
-      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
+      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">Wymaga uwagi</p>
@@ -309,7 +296,7 @@ function PlacowkaDashboard() {
 function OrganizatorDashboard() {
   return (
     <>
-      <div className="mt-4 rounded-2xl border border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_100%)] p-4">
+      <div className="rounded-2xl border border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_100%)] p-4">
         <p className="text-[11px] font-bold text-slate-500">Aktywne wydarzenia</p>
         <div className="mt-1 flex items-end justify-between gap-4">
           <p className="text-[32px] font-black tracking-tight text-slate-950">3</p>
@@ -325,7 +312,6 @@ function OrganizatorDashboard() {
       <div className="mt-3 space-y-2">
         {[
           ["Diagnostyka obrazowa", "12.09.2026", "32 osoby"],
-          ["Bezpieczeństwo pacjenta", "19.09.2026", "28 osób"],
         ].map(([name, date, people]) => (
           <div key={name} className="crpe-row-in rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
             <div className="flex items-start justify-between gap-3">
@@ -345,70 +331,58 @@ function OrganizatorDashboard() {
 }
 
 function HeroDashboard({ selected }: { selected: AudienceKey }) {
-  const labels: Record<AudienceKey, { title: string; note: string }> = {
-    medyk: { title: "Profil medyka", note: "Dostępne teraz" },
-    placowka: { title: "Placówka / jednostka", note: "Moduł w rozwoju" },
-    organizator: { title: "Organizator kształcenia", note: "Zakres indywidualny" },
-  };
-  const meta = labels[selected];
+  const active = audiences.find((item) => item.key === selected) ?? audiences[0];
 
   return (
-    <div className="crpe-hero-panel relative mx-auto hidden w-full max-w-[610px] lg:block" aria-live="polite">
+    <div
+      className="crpe-hero-panel relative mx-auto hidden w-full max-w-[570px] lg:block"
+      aria-live="polite"
+    >
       <div className="pointer-events-none absolute -right-10 -top-8 h-40 w-40 rounded-full bg-blue-200/55 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-10 -left-8 h-44 w-44 rounded-full bg-cyan-200/45 blur-3xl" />
 
-      <div className="crpe-dashboard-shell relative overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_30px_85px_rgba(15,45,75,0.16)]">
-        <div className="flex h-11 items-center gap-2 border-b border-slate-200 bg-slate-50 px-4">
-          <span className="h-2.5 w-2.5 rounded-full bg-rose-300" />
-          <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
-          <div className="ml-3 flex h-7 flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-400">
-            panel.crpe.pl
+      <div className="crpe-dashboard-shell relative overflow-hidden rounded-[24px] border border-blue-100/80 bg-white shadow-[0_28px_75px_rgba(15,45,75,0.14)]">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)]">
+              {selected === "medyk" ? (
+                <Stethoscope className="h-5 w-5" />
+              ) : selected === "placowka" ? (
+                <Building2 className="h-5 w-5" />
+              ) : (
+                <UserRound className="h-5 w-5" />
+              )}
+            </span>
+            <div className="min-w-0">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-600">
+                Podgląd CRPE
+              </p>
+              <p className="mt-0.5 truncate text-[15px] font-black text-slate-950">
+                {active.label}
+              </p>
+            </div>
           </div>
+          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold ring-1 ${active.statusTone}`}>
+            {active.status}
+          </span>
         </div>
 
-        {selected === "medyk" ? (
-          <div className="grid grid-cols-4 border-b border-slate-200 bg-white px-3">
-            {[
-              [BarChart3, "Panel CPD"],
-              [CalendarCheck2, "Aktywności"],
-              [FileText, "Raporty"],
-              [FolderOpen, "Szkolenia"],
-            ].map(([Icon, label], index) => {
-              const ToolIcon = Icon as typeof BarChart3;
-              return (
-                <div
-                  key={label as string}
-                  className={`flex min-w-0 items-center justify-center gap-1.5 border-b-2 px-2 py-2.5 text-[10px] font-extrabold ${
-                    index === 0
-                      ? "border-blue-600 text-blue-700"
-                      : "border-transparent text-slate-500"
-                  }`}
-                >
-                  <ToolIcon className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{label as string}</span>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-
-        <div key={selected} className="crpe-role-swap p-5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-400">
-                Widok dopasowany do roli
-              </p>
-              <p className="mt-1 text-[15px] font-black text-slate-950">{meta.title}</p>
-            </div>
-            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-extrabold text-blue-700 ring-1 ring-blue-100">
-              {meta.note}
-            </span>
-          </div>
-
+        <div key={selected} className="crpe-role-swap p-4">
           {selected === "medyk" ? <MedykDashboard /> : null}
           {selected === "placowka" ? <PlacowkaDashboard /> : null}
           {selected === "organizator" ? <OrganizatorDashboard /> : null}
+        </div>
+
+        <div className="flex items-center justify-between gap-4 border-t border-slate-100 bg-slate-50/70 px-5 py-3.5">
+          <p className="max-w-[310px] text-[12px] font-semibold leading-5 text-slate-600">
+            Zobacz dokładnie, czym różni się zakres CRPE dla wybranej roli.
+          </p>
+          <Link
+            href={active.detailsHref}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-[12px] font-extrabold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
+          >
+            Dowiedz się więcej <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
       </div>
     </div>
@@ -425,7 +399,7 @@ function RolePicker({
   return (
     <div>
       <p className="text-[13px] font-black text-slate-950 sm:text-sm">Kim jesteś?</p>
-      <div className="crpe-role-picker mt-2 inline-flex w-full rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_30px_rgba(15,45,75,0.07)] sm:w-auto">
+      <div className="crpe-role-picker mt-2 grid w-full max-w-[590px] grid-cols-3 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_30px_rgba(15,45,75,0.07)]">
         {audiences.map(({ key, mobileLabel, icon: Icon }) => {
           const isSelected = selected === key;
           return (
@@ -434,7 +408,7 @@ function RolePicker({
               type="button"
               aria-pressed={isSelected}
               onClick={() => onSelect(key)}
-              className={`crpe-role-button flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-extrabold transition sm:flex-none sm:px-4 sm:text-[13px] ${
+              className={`crpe-role-button flex min-w-0 w-full items-center justify-center gap-2 rounded-xl px-2 py-2.5 text-[11px] font-extrabold transition sm:px-3 sm:text-[13px] ${
                 isSelected
                   ? "bg-blue-600 text-white shadow-[0_8px_18px_rgba(37,99,235,0.24)]"
                   : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
@@ -491,6 +465,13 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
         <div className="crpe-progress-fill h-full rounded-full bg-blue-600" style={{ width: progress[active.key] }} />
       </div>
+
+      <Link
+        href={active.detailsHref}
+        className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[12px] font-extrabold text-blue-700"
+      >
+        Dowiedz się więcej <ArrowRight className="h-3.5 w-3.5" />
+      </Link>
     </div>
   );
 }
@@ -564,12 +545,6 @@ function Hero({
                   className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-[14px] font-extrabold text-white shadow-[0_12px_25px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 sm:w-auto"
                 >
                   {active.cta} <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="#jak-to-dziala"
-                  className="inline-flex min-h-10 items-center justify-center gap-1.5 px-2 text-[14px] font-extrabold text-blue-700 underline decoration-blue-200 underline-offset-4 hover:text-blue-800"
-                >
-                  Jak działa CRPE <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </div>
@@ -1100,57 +1075,7 @@ function FaqSection() {
 }
 
 export default function Page() {
-  const supabase = useMemo(() => createBrowserSupabase(), []);
-  const router = useRouter();
-  const [checking, setChecking] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedAudience, setSelectedAudience] = useState<AudienceKey>("medyk");
-
-  useEffect(() => {
-    let alive = true;
-
-    async function run() {
-      const { data: auth, error: authError } = await supabase.auth.getUser();
-      if (!alive) return;
-
-      if (authError || !auth?.user) {
-        setIsLoggedIn(false);
-        setChecking(false);
-        return;
-      }
-
-      setIsLoggedIn(true);
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("user_id, profession, period_start, period_end, required_points")
-        .eq("user_id", auth.user.id)
-        .maybeSingle<ProfileRow>();
-
-      if (!alive) return;
-      router.replace(profile ? "/kalkulator" : "/start");
-    }
-
-    run();
-    return () => {
-      alive = false;
-    };
-  }, [router, supabase]);
-
-  if (checking) {
-    return (
-      <div className={`${pageWrap} py-8`}>
-        <div className={`${panel} p-5 text-sm text-slate-500`}>Sprawdzam sesję…</div>
-      </div>
-    );
-  }
-
-  if (isLoggedIn) {
-    return (
-      <div className={`${pageWrap} py-8`}>
-        <div className={`${panel} p-5 text-sm text-slate-500`}>Przenoszę do panelu…</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">

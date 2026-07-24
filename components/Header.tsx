@@ -9,6 +9,7 @@ import {
   ClipboardList,
   FileBarChart,
   GraduationCap,
+  House,
   LogOut,
   Menu,
   Settings,
@@ -38,6 +39,12 @@ const PUBLIC_NAV: NavItem[] = [
 ];
 
 const APP_NAV: NavItem[] = [
+  {
+    href: "/",
+    label: "Home",
+    mobileDescription: "Strona główna CRPE",
+    icon: House,
+  },
   {
     href: "/kalkulator",
     label: "Panel CPD",
@@ -158,7 +165,7 @@ export default function Header() {
     setRole(null);
   }
 
-  const logoHref = user ? "/kalkulator" : "/";
+  const logoHref = "/";
   const navItems = user ? APP_NAV : PUBLIC_NAV;
 
   return (
@@ -172,7 +179,12 @@ export default function Header() {
     >
       <div className="mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center gap-4 sm:h-16">
-          <Link href={logoHref} className="flex shrink-0 items-center gap-2.5">
+          <Link
+            href={logoHref}
+            className="flex shrink-0 items-center gap-2.5"
+            aria-label="CRPE — strona główna"
+            title="Wróć na stronę główną"
+          >
             <Image src="/logo.svg" alt="Logo CRPE" width={30} height={30} />
             <span className="text-base font-black tracking-tight text-slate-950">CRPE</span>
           </Link>
@@ -317,6 +329,7 @@ export default function Header() {
                       href={href}
                       className={cx(
                         "rounded-2xl border p-3 transition",
+                        href === "/" && "col-span-2",
                         active
                           ? "border-blue-200 bg-blue-50 text-blue-700"
                           : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
