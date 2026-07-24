@@ -499,7 +499,8 @@ function Hero({
             </div>
 
             <h1 className="crpe-hero-in mt-4 max-w-[590px] text-[35px] font-black leading-[1.02] tracking-[-0.046em] text-slate-950 sm:mt-5 sm:text-[48px] lg:text-[54px] [--hero-delay:110ms]">
-              Punkty i dokumenty
+              <span className="block">Punkty</span>
+              <span className="block">i dokumenty</span>
               <span className="block text-blue-600">w jednym miejscu.</span>
             </h1>
 
@@ -507,11 +508,11 @@ function Hero({
               Prowadź ewidencję aktywności, certyfikatów i danych potrzebnych do rozliczeń — w zakresie dopasowanym do Twojej roli.
             </p>
 
-            <div className="crpe-hero-in mt-5 [--hero-delay:250ms]">
+            <div className="crpe-hero-in mt-5 lg:hidden [--hero-delay:250ms]">
               <RolePicker selected={selected} onSelect={onSelect} />
             </div>
 
-            <div key={selected} className="crpe-role-swap mt-4" aria-live="polite">
+            <div key={selected} className="crpe-role-swap mt-5 lg:mt-6" aria-live="polite">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[14px] font-black text-slate-950">{active.label}</span>
                 <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${active.statusTone}`}>
@@ -550,7 +551,12 @@ function Hero({
             </div>
           </div>
 
-          <HeroDashboard selected={selected} />
+          <div className="hidden lg:block">
+            <div className="crpe-hero-in mx-auto mb-4 w-full max-w-[570px] [--hero-delay:230ms]">
+              <RolePicker selected={selected} onSelect={onSelect} />
+            </div>
+            <HeroDashboard selected={selected} />
+          </div>
         </div>
       </div>
     </section>
