@@ -1,4 +1,5 @@
 import Link from "next/link";
+import RoleContactModal from "@/components/RoleContactModal";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 type AudienceKey = "medyk" | "placowka" | "organizator";
@@ -67,14 +68,22 @@ export default function BottomCTA({ selected }: { selected: AudienceKey }) {
           </div>
 
           <div className="flex flex-col items-stretch gap-3 lg:items-center">
-            <Link
-              href={active.href}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-[14px] font-black text-blue-700 shadow-lg transition hover:bg-blue-50"
-            >
-              {active.cta} <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link href="#faq" className="text-center text-[13px] font-bold text-blue-100 underline decoration-blue-300/60 underline-offset-4 hover:text-white">
-              Najpierw zobacz odpowiedzi w FAQ
+            {selected === "medyk" ? (
+              <Link
+                href={active.href}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-[14px] font-black text-blue-700 shadow-lg transition hover:bg-blue-50"
+              >
+                {active.cta} <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <RoleContactModal
+                role={selected}
+                triggerLabel={active.cta}
+                triggerClassName="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-[14px] font-black text-blue-700 shadow-lg transition hover:bg-blue-50"
+              />
+            )}
+            <Link href="/pomoc" className="text-center text-[13px] font-bold text-blue-100 underline decoration-blue-300/60 underline-offset-4 hover:text-white">
+              Najpierw zobacz centrum pomocy
             </Link>
           </div>
         </div>
