@@ -165,7 +165,7 @@ export default function Header() {
   }
 
   const logoHref = "/";
-  const navItems = user ? APP_NAV : PUBLIC_NAV;
+  const navItems = loading ? [] : user ? APP_NAV : PUBLIC_NAV;
 
   return (
     <header
@@ -177,7 +177,7 @@ export default function Header() {
       )}
     >
       <div className="mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8">
-        <div className="flex h-14 items-center gap-4 sm:h-16">
+        <div className="grid h-14 grid-cols-[auto_1fr_auto] items-center gap-3 sm:h-16 sm:gap-4">
           <Link
             href={logoHref}
             className="flex shrink-0 items-center gap-2.5"
@@ -188,9 +188,20 @@ export default function Header() {
             <span className="text-base font-black tracking-tight text-slate-950">CRPE</span>
           </Link>
 
-          <nav className="hidden flex-1 items-center justify-end lg:flex">
-            <div className={cx("flex items-center", user ? "gap-1" : "gap-2")}>
-              {navItems.map(({ href, label, icon: Icon }) => {
+          <nav className="hidden min-w-0 items-center justify-center lg:flex" aria-label="Główna nawigacja">
+            {loading ? (
+              <div className="flex items-center gap-2" aria-hidden="true">
+                {[84, 96, 108, 82].map((width) => (
+                  <span
+                    key={width}
+                    className="h-9 animate-pulse rounded-xl bg-slate-100"
+                    style={{ width }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className={cx("flex items-center", user ? "gap-1" : "gap-2")}>
+                {navItems.map(({ href, label, icon: Icon }) => {
                 const active = isActive(href);
                 return (
                   <Link
@@ -213,14 +224,16 @@ export default function Header() {
                     <span>{label}</span>
                   </Link>
                 );
-              })}
-            </div>
+                })}
+              </div>
+            )}
           </nav>
 
           <div className="hidden items-center gap-2 lg:flex">
             {loading ? (
-              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-                Sprawdzam sesję…
+              <div className="flex items-center gap-2" aria-hidden="true">
+                <span className="h-10 w-24 animate-pulse rounded-xl bg-slate-100" />
+                <span className="h-10 w-10 animate-pulse rounded-xl bg-slate-100" />
               </div>
             ) : user ? (
               <>
@@ -305,20 +318,36 @@ export default function Header() {
             )}
           </div>
 
-          <button
-            className="ml-auto inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-50 lg:hidden"
-            onClick={() => setOpenMobile((v) => !v)}
-            aria-label={openMobile ? "Zamknij menu" : "Otwórz menu"}
-            aria-expanded={openMobile}
-            type="button"
-          >
-            {openMobile ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          <div className="ml-auto flex items-center gap-2 lg:hidden">
+            {!loading && !user ? (
+              <Link
+                href={LOGIN_HREF}
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 px-3 text-[12px] font-extrabold text-blue-700"
+              >
+                Zaloguj
+              </Link>
+            ) : null}
+            <button
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+              onClick={() => setOpenMobile((v) => !v)}
+              aria-label={openMobile ? "Zamknij menu" : "Otwórz menu"}
+              aria-expanded={openMobile}
+              type="button"
+            >
+              {openMobile ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
 
         {openMobile ? (
           <nav className="border-t border-slate-100 pb-4 pt-3 lg:hidden">
-            {user ? (
+            {loading ? (
+              <div className="grid grid-cols-2 gap-2" aria-hidden="true">
+                {[0, 1, 2, 3].map((item) => (
+                  <div key={item} className="h-20 animate-pulse rounded-2xl bg-slate-100" />
+                ))}
+              </div>
+            ) : user ? (
               <div className="grid grid-cols-2 gap-2">
                 {navItems.map(({ href, label, mobileDescription, icon: Icon }) => {
                   const active = isActive(href);
@@ -362,9 +391,7 @@ export default function Header() {
 
             <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3">
               {loading ? (
-                <div className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600">
-                  Sprawdzam sesję…
-                </div>
+                <div className="h-11 animate-pulse rounded-xl bg-slate-100" aria-hidden="true" />
               ) : user ? (
                 <>
                   <div className="rounded-xl bg-slate-50 px-4 py-2.5 text-sm text-slate-700">

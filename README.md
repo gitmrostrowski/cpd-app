@@ -110,3 +110,13 @@ Treść strony publicznej została uporządkowana według zaakceptowanego materi
 7. końcowe CTA i stopka.
 
 Przyciski w komunikacie startowym są dopasowane do stanu sesji: osoba zalogowana otrzymuje przejście do Panelu CPD i Bazy szkoleń, a osoba niezalogowana — logowanie i rejestrację.
+
+## Zmiany v12 — nawigacja i wybór roli
+
+- nawigacja desktopowa jest wyśrodkowana pomiędzy logo i przyciskami konta,
+- podczas sprawdzania sesji wyświetlane są neutralne szkielety, dzięki czemu stare menu nie miga,
+- na telefonie przycisk „Zaloguj” jest widoczny bez otwierania menu,
+- wybór Medyk / Placówka / Organizator ma mocniejszy i jednoznaczny stan aktywny,
+- po zmianie roli aktualizuje się duży blok opisu, korzyści, status i link do szczegółów,
+- cały moduł „Kim jesteś?” ma wspólną, symetryczną kompozycję.
+

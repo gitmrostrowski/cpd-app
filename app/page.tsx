@@ -397,26 +397,31 @@ function RolePicker({
   onSelect: (key: AudienceKey) => void;
 }) {
   return (
-    <div className="crpe-role-picker grid w-full grid-cols-3 gap-1.5 rounded-[22px] border border-blue-100 bg-blue-50/75 p-1.5 shadow-[0_12px_34px_rgba(15,45,75,0.08)] sm:gap-2 sm:p-2">
-        {audiences.map(({ key, mobileLabel, icon: Icon }) => {
-          const isSelected = selected === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              aria-pressed={isSelected}
-              onClick={() => onSelect(key)}
-              className={`crpe-role-button flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl border px-2 py-3 text-[11px] font-extrabold transition sm:px-4 sm:py-4 sm:text-[15px] ${
-                isSelected
-                  ? "border-blue-700 bg-blue-600 text-white shadow-[0_8px_18px_rgba(37,99,235,0.24)]"
-                  : "border-blue-100 bg-white/90 text-slate-700 shadow-sm hover:border-blue-200 hover:bg-blue-100/80 hover:text-blue-800"
-              }`}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{mobileLabel}</span>
-            </button>
-          );
-        })}
+    <div className="crpe-role-picker grid w-full grid-cols-3 gap-2 rounded-[22px] bg-slate-100/90 p-1.5 ring-1 ring-slate-200/80 sm:gap-2.5 sm:p-2">
+      {audiences.map(({ key, mobileLabel, icon: Icon }) => {
+        const isSelected = selected === key;
+        return (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={isSelected}
+            onClick={() => onSelect(key)}
+            className={`crpe-role-button relative flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl border px-2 py-3 text-[11px] font-extrabold transition sm:px-4 sm:py-4 sm:text-[15px] ${
+              isSelected
+                ? "border-blue-600 bg-blue-600 text-white shadow-[0_10px_22px_rgba(37,99,235,0.24)] ring-4 ring-blue-100"
+                : "border-white bg-white/85 text-slate-700 shadow-sm hover:border-blue-100 hover:bg-blue-50 hover:text-blue-800"
+            }`}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            <span className="truncate">{mobileLabel}</span>
+            {isSelected ? (
+              <span className="absolute right-2 flex h-5 w-5 items-center justify-center rounded-full bg-white/18 sm:right-3" aria-hidden="true">
+                <Check className="h-3 w-3" strokeWidth={3} />
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -428,50 +433,59 @@ function SelectedRoleSummary({ selected }: { selected: AudienceKey }) {
   return (
     <div
       key={selected}
-      className="crpe-role-swap mt-4 overflow-hidden rounded-[24px] border border-blue-100 bg-[linear-gradient(135deg,#ffffff_0%,#f2f7ff_100%)] p-5 shadow-[0_18px_48px_rgba(15,45,75,0.08)] sm:mt-5 sm:p-6"
+      className="crpe-role-swap mt-4 overflow-hidden rounded-[24px] border border-blue-100 bg-white shadow-[0_18px_48px_rgba(15,45,75,0.08)] sm:mt-5"
       aria-live="polite"
     >
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_10px_22px_rgba(37,99,235,0.2)]">
-          <Icon className="h-5 w-5" />
-        </span>
+      <div className="h-1.5 bg-[linear-gradient(90deg,#2563eb_0%,#38bdf8_65%,#a5f3fc_100%)]" />
+      <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.17em] text-blue-600">
-            Wybrana ścieżka
-          </p>
-          <p className="mt-0.5 text-[17px] font-black text-slate-950 sm:text-[19px]">
-            {active.label}
-          </p>
-        </div>
-        <span className={`ml-auto rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${active.statusTone}`}>
-          {active.status}
-        </span>
-      </div>
-
-      <h3 className="mt-4 max-w-3xl text-[21px] font-black leading-[1.15] tracking-[-0.03em] text-slate-950 sm:text-[26px]">
-        {active.title}
-      </h3>
-      <p className="mt-2 max-w-3xl text-[14px] leading-6 text-slate-600 sm:text-[15px]">
-        {active.description}
-      </p>
-
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        {active.benefits.map((item) => (
-          <div key={item} className="flex items-start gap-2 rounded-xl border border-blue-100 bg-white/90 px-3 py-2.5 text-[13px] font-semibold leading-5 text-slate-700 shadow-sm">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
-              <Check className="h-3 w-3" />
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_10px_22px_rgba(37,99,235,0.2)]">
+              <Icon className="h-5 w-5" />
             </span>
-            {item}
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.17em] text-blue-600">
+                Treść dopasowana do wyboru
+              </p>
+              <p className="mt-0.5 text-[17px] font-black text-slate-950 sm:text-[19px]">
+                {active.label}
+              </p>
+            </div>
+            <span className={`ml-auto rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${active.statusTone}`}>
+              {active.status}
+            </span>
           </div>
-        ))}
-      </div>
 
-      <Link
-        href={active.detailsHref}
-        className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-[13px] font-extrabold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
-      >
-        Zobacz szczegóły tej roli <ArrowRight className="h-4 w-4" />
-      </Link>
+          <h3 className="mt-4 text-[21px] font-black leading-[1.15] tracking-[-0.03em] text-slate-950 sm:text-[25px]">
+            {active.title}
+          </h3>
+          <p className="mt-2 text-[14px] leading-6 text-slate-600 sm:text-[15px]">
+            {active.description}
+          </p>
+
+          <Link
+            href={active.detailsHref}
+            className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-[13px] font-extrabold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
+          >
+            Zobacz szczegóły tej roli <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        <div className="grid gap-2.5">
+          {active.benefits.map((item, index) => (
+            <div
+              key={item}
+              className="crpe-row-in flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-3.5 py-3 text-[13px] font-semibold leading-5 text-slate-700"
+              style={{ animationDelay: `${index * 55}ms` }}
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <Check className="h-3.5 w-3.5" strokeWidth={2.8} />
+              </span>
+              <span className="pt-0.5">{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -662,16 +676,23 @@ function AudienceSection({
   ];
 
   return (
-    <section id="dla-kogo" className="scroll-mt-24 pb-12 pt-8 sm:pb-16 sm:pt-11">
+    <section id="dla-kogo" className="scroll-mt-24 pb-12 pt-6 sm:pb-16 sm:pt-9">
       <div className={pageWrap}>
-        <div className="mx-auto max-w-[940px]">
-          <p className="text-center text-[22px] font-black tracking-[-0.025em] text-slate-950 sm:text-[28px]">
-            Kim jesteś?
-          </p>
-          <p className="mx-auto mt-1.5 max-w-2xl text-center text-[13px] leading-5 text-slate-500 sm:text-[14px]">
-            Wybierz rolę — opis, kolejne kroki i końcowa propozycja dopasują się automatycznie.
-          </p>
-          <div className="mt-3">
+        <div className="mx-auto max-w-[980px] rounded-[28px] border border-slate-200 bg-[linear-gradient(145deg,#ffffff_0%,#f5f9ff_100%)] p-4 shadow-[0_20px_55px_rgba(15,45,75,0.07)] sm:p-6">
+          <div className="flex flex-col gap-2 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-blue-700">
+                Wybierz swoją ścieżkę
+              </p>
+              <h1 className="mt-1.5 text-[25px] font-black tracking-[-0.035em] text-slate-950 sm:text-[31px]">
+                Kim jesteś?
+              </h1>
+            </div>
+            <p className="mx-auto max-w-xl text-[13px] leading-5 text-slate-500 sm:mx-0 sm:max-w-[430px] sm:text-right sm:text-[14px]">
+              Kliknij rolę. Poniższy opis, kolejne kroki i końcowa propozycja zmienią się od razu.
+            </p>
+          </div>
+          <div className="mt-4 sm:mt-5">
             <RolePicker selected={selected} onSelect={onSelect} />
           </div>
           <SelectedRoleSummary selected={selected} />
