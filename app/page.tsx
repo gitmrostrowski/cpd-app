@@ -21,7 +21,6 @@ import {
   UserRound,
 } from "lucide-react";
 import BottomCTA from "@/components/BottomCTA";
-import { useAuth } from "@/components/AuthProvider";
 
 type AudienceKey = "medyk" | "placowka" | "organizator";
 
@@ -398,7 +397,7 @@ function RolePicker({
   onSelect: (key: AudienceKey) => void;
 }) {
   return (
-    <div className="crpe-role-picker grid w-full grid-cols-3 rounded-[22px] border border-slate-200 bg-white p-1.5 shadow-[0_12px_34px_rgba(15,45,75,0.08)] sm:p-2">
+    <div className="crpe-role-picker grid w-full grid-cols-3 gap-1.5 rounded-[22px] border border-blue-100 bg-blue-50/75 p-1.5 shadow-[0_12px_34px_rgba(15,45,75,0.08)] sm:gap-2 sm:p-2">
         {audiences.map(({ key, mobileLabel, icon: Icon }) => {
           const isSelected = selected === key;
           return (
@@ -407,10 +406,10 @@ function RolePicker({
               type="button"
               aria-pressed={isSelected}
               onClick={() => onSelect(key)}
-              className={`crpe-role-button flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl px-2 py-3 text-[11px] font-extrabold transition sm:px-4 sm:py-4 sm:text-[15px] ${
+              className={`crpe-role-button flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl border px-2 py-3 text-[11px] font-extrabold transition sm:px-4 sm:py-4 sm:text-[15px] ${
                 isSelected
-                  ? "bg-blue-600 text-white shadow-[0_8px_18px_rgba(37,99,235,0.24)]"
-                  : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                  ? "border-blue-700 bg-blue-600 text-white shadow-[0_8px_18px_rgba(37,99,235,0.24)]"
+                  : "border-blue-100 bg-white/90 text-slate-700 shadow-sm hover:border-blue-200 hover:bg-blue-100/80 hover:text-blue-800"
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
@@ -418,6 +417,61 @@ function RolePicker({
             </button>
           );
         })}
+    </div>
+  );
+}
+
+function SelectedRoleSummary({ selected }: { selected: AudienceKey }) {
+  const active = audiences.find((item) => item.key === selected) ?? audiences[0];
+  const Icon = active.icon;
+
+  return (
+    <div
+      key={selected}
+      className="crpe-role-swap mt-4 overflow-hidden rounded-[24px] border border-blue-100 bg-[linear-gradient(135deg,#ffffff_0%,#f2f7ff_100%)] p-5 shadow-[0_18px_48px_rgba(15,45,75,0.08)] sm:mt-5 sm:p-6"
+      aria-live="polite"
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_10px_22px_rgba(37,99,235,0.2)]">
+          <Icon className="h-5 w-5" />
+        </span>
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.17em] text-blue-600">
+            Wybrana ścieżka
+          </p>
+          <p className="mt-0.5 text-[17px] font-black text-slate-950 sm:text-[19px]">
+            {active.label}
+          </p>
+        </div>
+        <span className={`ml-auto rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${active.statusTone}`}>
+          {active.status}
+        </span>
+      </div>
+
+      <h3 className="mt-4 max-w-3xl text-[21px] font-black leading-[1.15] tracking-[-0.03em] text-slate-950 sm:text-[26px]">
+        {active.title}
+      </h3>
+      <p className="mt-2 max-w-3xl text-[14px] leading-6 text-slate-600 sm:text-[15px]">
+        {active.description}
+      </p>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        {active.benefits.map((item) => (
+          <div key={item} className="flex items-start gap-2 rounded-xl border border-blue-100 bg-white/90 px-3 py-2.5 text-[13px] font-semibold leading-5 text-slate-700 shadow-sm">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+              <Check className="h-3 w-3" />
+            </span>
+            {item}
+          </div>
+        ))}
+      </div>
+
+      <Link
+        href={active.detailsHref}
+        className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-[13px] font-extrabold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
+      >
+        Zobacz szczegóły tej roli <ArrowRight className="h-4 w-4" />
+      </Link>
     </div>
   );
 }
@@ -561,54 +615,6 @@ function Hero({
   );
 }
 
-function TopNotice() {
-  const { user, loading } = useAuth();
-
-  return (
-    <section className={`${pageWrap} pt-4 sm:pt-6`}>
-      <div className="grid gap-4 rounded-[22px] border border-slate-200 bg-white px-4 py-4 shadow-[0_12px_34px_rgba(15,45,75,0.06)] sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-8">
-        <p className="text-[14px] leading-6 text-slate-600 sm:text-[15px]">
-          Dane osobiste i dokumenty są dostępne po zalogowaniu. Baza szkoleń pomaga planować aktywności, ale dodanie pozycji do planu nie oznacza zapisu u organizatora.
-        </p>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-          {!loading && user ? (
-            <>
-              <Link
-                href="/baza-szkolen"
-                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-[14px] font-extrabold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50"
-              >
-                Baza szkoleń
-              </Link>
-              <Link
-                href="/kalkulator"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-[14px] font-extrabold text-white shadow-[0_10px_24px_rgba(37,99,235,0.2)] transition hover:bg-blue-700"
-              >
-                Otwórz Panel CPD <ArrowRight className="h-4 w-4" />
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-[14px] font-extrabold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50"
-              >
-                Mam konto
-              </Link>
-              <Link
-                href="/rejestracja"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-[14px] font-extrabold text-white shadow-[0_10px_24px_rgba(37,99,235,0.2)] transition hover:bg-blue-700"
-              >
-                Załóż konto i otwórz panel <ArrowRight className="h-4 w-4" />
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function AudienceSection({
   selected,
   onSelect,
@@ -656,19 +662,23 @@ function AudienceSection({
   ];
 
   return (
-    <section id="dla-kogo" className="scroll-mt-24 pb-12 pt-7 sm:pb-16 sm:pt-9">
+    <section id="dla-kogo" className="scroll-mt-24 pb-12 pt-8 sm:pb-16 sm:pt-11">
       <div className={pageWrap}>
         <div className="mx-auto max-w-[940px]">
           <p className="text-center text-[22px] font-black tracking-[-0.025em] text-slate-950 sm:text-[28px]">
             Kim jesteś?
           </p>
+          <p className="mx-auto mt-1.5 max-w-2xl text-center text-[13px] leading-5 text-slate-500 sm:text-[14px]">
+            Wybierz rolę — opis, kolejne kroki i końcowa propozycja dopasują się automatycznie.
+          </p>
           <div className="mt-3">
             <RolePicker selected={selected} onSelect={onSelect} />
           </div>
+          <SelectedRoleSummary selected={selected} />
         </div>
       </div>
 
-      <div className="mt-5 bg-[linear-gradient(180deg,#f6f9fd_0%,#eef4fa_100%)] py-11 sm:mt-7 sm:py-14">
+      <div className="mt-8 bg-[linear-gradient(180deg,#f6f9fd_0%,#eef4fa_100%)] py-11 sm:mt-10 sm:py-14">
         <div className={pageWrap}>
           <Reveal>
             <SectionHeading
@@ -686,9 +696,12 @@ function AudienceSection({
                 <Reveal key={id} delay={index * 90} className="h-full">
                   <article
                     id={id}
-                    className={`crpe-interactive-card flex h-full scroll-mt-24 flex-col rounded-[22px] border bg-white p-5 shadow-[0_14px_40px_rgba(15,45,75,0.06)] sm:p-6 ${
-                      active ? "border-blue-300 ring-2 ring-blue-100" : "border-slate-200"
+                    className={`crpe-interactive-card flex h-full scroll-mt-24 flex-col rounded-[22px] border p-5 shadow-[0_14px_40px_rgba(15,45,75,0.06)] sm:p-6 ${
+                      active
+                        ? "border-blue-300 bg-blue-50/45 ring-2 ring-blue-100"
+                        : "border-slate-200 bg-white"
                     }`}
+                    aria-current={active ? "true" : undefined}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span
@@ -702,6 +715,11 @@ function AudienceSection({
                         {status}
                       </span>
                     </div>
+                    {active ? (
+                      <span className="mt-3 inline-flex w-fit rounded-full bg-blue-600 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.08em] text-white">
+                        Wybrana rola
+                      </span>
+                    ) : null}
                     <h3 className="mt-4 text-lg font-black tracking-[-0.02em] text-slate-950">{title}</h3>
                     <p className="mt-2 text-[14px] leading-6 text-slate-600">{text}</p>
                     <ul className="mt-4 grid gap-2">
@@ -1141,7 +1159,6 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-white">
-      <TopNotice />
       <AudienceSection selected={selectedAudience} onSelect={setSelectedAudience} />
       <HowItWorks selected={selectedAudience} />
       <PracticeSection />
