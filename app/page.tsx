@@ -42,9 +42,9 @@ type AudienceOption = {
   benefits: [string, string, string];
 };
 
-const pageWrap = "mx-auto w-full max-w-[1160px] px-4 sm:px-6 lg:px-8";
+const pageWrap = "mx-auto w-full max-w-[1180px] px-4 sm:px-6 lg:px-8";
 const panel =
-  "rounded-[24px] border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,45,75,0.08)]";
+  "rounded-[20px] border border-slate-200/90 bg-white shadow-[0_16px_45px_rgba(15,45,75,0.065)]";
 
 function Reveal({
   children,
@@ -397,7 +397,7 @@ function RolePicker({
   onSelect: (key: AudienceKey) => void;
 }) {
   return (
-    <div className="crpe-role-picker grid w-full grid-cols-3 gap-1 rounded-[18px] bg-slate-100/90 p-1.5 sm:gap-1.5">
+    <div className="crpe-role-picker grid w-full grid-cols-3 gap-1 rounded-[16px] border border-slate-200/90 bg-white p-1 shadow-[0_10px_28px_rgba(15,45,75,0.045)] sm:gap-1.5">
       {audiences.map(({ key, mobileLabel, icon: Icon }) => {
         const isSelected = selected === key;
         return (
@@ -406,16 +406,18 @@ function RolePicker({
             type="button"
             aria-pressed={isSelected}
             onClick={() => onSelect(key)}
-            className={`crpe-role-button group relative flex min-w-0 w-full items-center justify-center gap-2 rounded-[14px] px-2 py-3 text-[11px] font-extrabold sm:px-4 sm:py-3.5 sm:text-[15px] ${
+            className={`crpe-role-button group relative flex min-w-0 w-full items-center justify-center gap-2 rounded-[12px] px-2 py-2.5 text-[11px] font-extrabold outline-none sm:px-4 sm:py-3 sm:text-[14px] ${
               isSelected
-                ? "bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)]"
-                : "text-slate-700 hover:bg-white/85 hover:text-blue-800"
+                ? "bg-blue-600 text-white shadow-[0_7px_18px_rgba(37,99,235,0.16)]"
+                : "bg-slate-50/65 text-slate-700 hover:bg-blue-50 hover:text-blue-800 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             }`}
           >
             <Icon className={`h-4 w-4 shrink-0 transition-colors duration-200 ${isSelected ? "text-white" : "text-slate-500 group-hover:text-blue-700"}`} />
             <span className="truncate">{mobileLabel}</span>
             {isSelected ? (
-              <Check className="h-3.5 w-3.5 shrink-0 text-blue-100" strokeWidth={3} aria-hidden="true" />
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/14" aria-hidden="true">
+                <Check className="h-3 w-3 text-white" strokeWidth={3} />
+              </span>
             ) : null}
           </button>
         );
@@ -432,55 +434,55 @@ function SelectedRoleSummary({ selected }: { selected: AudienceKey }) {
   return (
     <div
       key={selected}
-      className="crpe-role-swap relative overflow-hidden rounded-[24px] bg-white shadow-[0_18px_48px_rgba(15,45,75,0.085)] ring-1 ring-slate-200/70"
+      className="crpe-role-swap relative overflow-hidden rounded-[20px] border border-slate-200/90 bg-white shadow-[0_16px_46px_rgba(15,45,75,0.065)]"
       aria-live="polite"
     >
-      <div className="absolute inset-x-0 top-0 h-[3px] bg-slate-100" aria-hidden="true" />
+      <div className="absolute inset-x-0 top-0 h-px bg-slate-100" aria-hidden="true" />
       <div
-        className="absolute top-0 h-[3px] w-1/3 bg-[linear-gradient(90deg,#2563eb_0%,#38bdf8_100%)] transition-transform duration-500 ease-out"
+        className="absolute top-0 h-[2px] w-1/3 bg-[linear-gradient(90deg,#2563eb_0%,#38bdf8_100%)] transition-transform duration-500 ease-out"
         style={{ transform: `translateX(${selectedIndex * 100}%)` }}
         aria-hidden="true"
       />
 
-      <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-12 lg:p-8">
+      <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-9 lg:p-8">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.18)]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-[0_7px_18px_rgba(37,99,235,0.14)]">
               <Icon className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.17em] text-blue-600">
+              <p className="text-[9px] font-extrabold uppercase tracking-[0.17em] text-blue-600 sm:text-[10px]">
                 Treść dopasowana do wyboru
               </p>
-              <p className="mt-0.5 text-[17px] font-black text-slate-950 sm:text-[19px]">
-                {active.label}
-              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-2.5">
+                <p className="text-[17px] font-black text-slate-950 sm:text-[18px]">{active.label}</p>
+                <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${active.statusTone}`}>
+                  {active.status}
+                </span>
+              </div>
             </div>
-            <span className={`ml-auto rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${active.statusTone}`}>
-              {active.status}
-            </span>
           </div>
 
-          <h3 className="mt-4 max-w-[590px] text-[21px] font-black leading-[1.16] tracking-[-0.03em] text-slate-950 sm:text-[25px]">
+          <h3 className="mt-4 max-w-[620px] text-[21px] font-black leading-[1.16] tracking-[-0.03em] text-slate-950 sm:text-[25px]">
             {active.title}
           </h3>
-          <p className="mt-2 max-w-[600px] text-[14px] leading-6 text-slate-600 sm:text-[15px]">
+          <p className="mt-2 max-w-[620px] text-[14px] leading-6 text-slate-600 sm:text-[15px]">
             {active.description}
           </p>
 
           <Link
             href={active.detailsHref}
-            className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[13px] font-extrabold text-white shadow-[0_8px_20px_rgba(37,99,235,0.16)] transition hover:-translate-y-0.5 hover:bg-blue-700"
+            className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[13px] font-extrabold text-white shadow-[0_8px_18px_rgba(37,99,235,0.14)] transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
             Zobacz szczegóły tej roli <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
-        <div className="divide-y divide-slate-100 lg:border-l lg:border-slate-200/80 lg:pl-10">
+        <div className="divide-y divide-slate-100 lg:border-l lg:border-slate-200/80 lg:pl-9">
           {active.benefits.map((item, index) => (
             <div
               key={item}
-              className="crpe-row-in flex items-center gap-3 py-3.5 text-[13px] font-semibold leading-5 text-slate-700 first:pt-0 last:pb-0"
+              className="crpe-row-in flex items-center gap-3 py-3 text-[13px] font-semibold leading-5 text-slate-700 first:pt-0 last:pb-0"
               style={{ animationDelay: `${index * 55}ms` }}
             >
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
@@ -681,30 +683,30 @@ function AudienceSection({
   ];
 
   return (
-    <section id="dla-kogo" className="scroll-mt-24 pb-12 pt-8 sm:pb-16 sm:pt-12">
+    <section id="dla-kogo" className="scroll-mt-24 pb-16 pt-10 sm:pb-20 sm:pt-14">
       <div className={pageWrap}>
-        <div className="mx-auto max-w-[860px] text-center">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-blue-700">
+        <div className="mx-auto max-w-[820px] text-center">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.19em] text-blue-700">
             Wybierz swoją ścieżkę
           </p>
-          <h1 className="mt-1.5 text-[25px] font-black tracking-[-0.035em] text-slate-950 sm:text-[31px]">
+          <h1 className="mt-2 text-[27px] font-black tracking-[-0.04em] text-slate-950 sm:text-[34px]">
             Kim jesteś?
           </h1>
-          <p className="mx-auto mt-2 max-w-[620px] text-[13px] leading-5 text-slate-500 sm:text-[14px]">
+          <p className="mx-auto mt-3 max-w-[620px] text-[13px] leading-5 text-slate-500 sm:text-[14px] sm:leading-6">
             Wybierz rolę — opis, kolejne kroki i końcowa propozycja zmienią się od razu.
           </p>
         </div>
 
-        <div className="mx-auto mt-5 max-w-[980px] sm:mt-6">
+        <div className="mx-auto mt-6 max-w-[980px] sm:mt-7">
           <RolePicker selected={selected} onSelect={onSelect} />
         </div>
 
-        <div className="mx-auto mt-4 max-w-[1080px] sm:mt-5">
+        <div className="mx-auto mt-3 max-w-[1080px] sm:mt-4">
           <SelectedRoleSummary selected={selected} />
         </div>
       </div>
 
-      <div className="mt-10 bg-[linear-gradient(180deg,#f6f9fd_0%,#eef4fa_100%)] py-11 sm:mt-12 sm:py-14">
+      <div className="mt-16 bg-[linear-gradient(180deg,#f7faff_0%,#eff5fb_100%)] py-16 sm:mt-20 sm:py-20">
         <div className={pageWrap}>
           <Reveal>
             <SectionHeading
@@ -715,26 +717,21 @@ function AudienceSection({
             />
           </Reveal>
 
-          <div className="mt-7 grid gap-4 lg:mt-9 lg:grid-cols-3">
+          <div className="mt-9 grid gap-4 lg:mt-11 lg:grid-cols-3">
             {cards.map(({ key, id, icon: Icon, title, status, statusClass, text, benefits, cta, href }, index) => {
               const active = selected === key;
               return (
                 <Reveal key={id} delay={index * 90} className="h-full">
                   <article
                     id={id}
-                    className={`crpe-interactive-card flex h-full scroll-mt-24 flex-col rounded-[22px] border p-5 shadow-[0_14px_40px_rgba(15,45,75,0.06)] sm:p-6 ${
-                      active
-                        ? "border-blue-300 bg-blue-50/45 ring-2 ring-blue-100"
-                        : "border-slate-200 bg-white"
+                    className={`crpe-interactive-card relative flex h-full scroll-mt-24 flex-col overflow-hidden rounded-[20px] border p-5 shadow-[0_12px_36px_rgba(15,45,75,0.055)] sm:p-6 ${
+                      active ? "border-slate-200 bg-blue-50/55" : "border-slate-200 bg-white"
                     }`}
                     aria-current={active ? "true" : undefined}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <span
-                        className={`crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl ${
-                          active ? "bg-blue-600 text-white" : "bg-slate-50 text-slate-600 ring-1 ring-slate-200"
-                        }`}
-                      >
+                    {active ? <span className="absolute inset-x-0 top-0 h-[3px] bg-blue-600" aria-hidden="true" /> : null}
+                    <div className="flex items-start justify-between gap-3">
+                      <span className={`crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl ${active ? "bg-blue-600 text-white" : "bg-slate-50 text-slate-600 ring-1 ring-slate-200"}`}>
                         <Icon className="h-5 w-5" />
                       </span>
                       <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${statusClass}`}>
@@ -760,10 +757,10 @@ function AudienceSection({
                     </ul>
                     <Link
                       href={href}
-                      className={`mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 pt-2 text-[14px] font-extrabold transition ${
+                      className={`mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 text-[14px] font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
                         key === "medyk"
-                          ? "mt-5 bg-blue-600 text-white shadow-[0_10px_24px_rgba(37,99,235,0.18)] hover:bg-blue-700"
-                          : "mt-5 border border-slate-300 bg-white text-slate-800 hover:border-blue-200 hover:bg-blue-50"
+                          ? "mt-6 bg-blue-600 text-white shadow-[0_9px_20px_rgba(37,99,235,0.14)] hover:bg-blue-700"
+                          : "mt-6 border border-slate-300 bg-white text-slate-800 hover:border-blue-200 hover:bg-blue-50"
                       }`}
                     >
                       {cta} <ArrowRight className="h-4 w-4" />
@@ -812,7 +809,7 @@ function ProductToolsSection() {
   ];
 
   return (
-    <section id="narzedzia" className="scroll-mt-24 bg-blue-50/55 py-12 sm:py-16">
+    <section id="narzedzia" className="scroll-mt-24 bg-blue-50/50 py-16 sm:py-20">
       <div className={pageWrap}>
         <Reveal>
           <SectionHeading
@@ -824,8 +821,8 @@ function ProductToolsSection() {
         </Reveal>
 
         <Reveal delay={70}>
-          <div className={`${panel} mt-7 overflow-hidden sm:mt-9`}>
-            <div className="bg-slate-950 px-4 py-4 text-white sm:px-6 sm:py-5">
+          <div className={`${panel} mt-9 overflow-hidden sm:mt-11`}>
+            <div className="bg-slate-950 px-5 py-5 text-white sm:px-7 sm:py-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-cyan-300">
@@ -857,10 +854,10 @@ function ProductToolsSection() {
               </div>
             </div>
 
-            <div className="grid gap-0 p-2 sm:grid-cols-2 sm:gap-3 sm:p-3 lg:grid-cols-4">
+            <div className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-4">
               {tools.map(({ icon: Icon, title, status, text, bullets }, index) => (
                 <Reveal key={title} delay={index * 70} className="h-full last:[&>article]:border-b-0">
-                  <article className="crpe-interactive-card flex h-full flex-col border-b border-slate-100 p-4 sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-slate-50 sm:p-5">
+                  <article className="crpe-interactive-card flex h-full min-h-[280px] flex-col rounded-[18px] border border-slate-200 bg-slate-50/75 p-5">
                     <div className="flex items-center justify-between gap-3">
                       <span className="crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
                         <Icon className="h-5 w-5" />
@@ -869,7 +866,7 @@ function ProductToolsSection() {
                         {status}
                       </span>
                     </div>
-                    <h3 className="mt-4 text-[17px] font-black tracking-[-0.02em] text-slate-950">{title}</h3>
+                    <h3 className="mt-4 min-h-[44px] text-[17px] font-black leading-[1.25] tracking-[-0.02em] text-slate-950">{title}</h3>
                     <p className="mt-2 text-[14px] leading-6 text-slate-600">{text}</p>
                     <ul className="mt-4 grid gap-2">
                       {bullets.map((item) => (
@@ -897,7 +894,7 @@ function PracticeSection() {
   ];
 
   return (
-    <section className="bg-slate-950 py-12 text-white sm:py-16">
+    <section className="bg-slate-950 py-16 text-white sm:py-20">
       <div className={`${pageWrap} grid gap-7 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:gap-12`}>
         <Reveal>
           <div>
@@ -926,15 +923,16 @@ function PracticeSection() {
         </Reveal>
 
         <Reveal delay={120}>
-          <div className="crpe-dashboard-shell overflow-hidden rounded-[24px] border border-white/10 bg-white p-3 text-slate-900 shadow-[0_26px_70px_rgba(0,0,0,0.32)] sm:p-5">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-            <span className="h-2.5 w-2.5 rounded-full bg-rose-300" />
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
-            <span className="ml-2 text-[10px] font-bold text-slate-400 sm:text-xs">panel.crpe.pl</span>
+          <div className="crpe-dashboard-shell overflow-hidden rounded-[20px] border border-white/10 bg-white p-4 text-slate-900 shadow-[0_24px_64px_rgba(0,0,0,0.28)] sm:p-6">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-600">Panel CPD</p>
+              <p className="mt-1 text-[13px] font-extrabold text-slate-900">Podgląd statusu dokumentacji</p>
+            </div>
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-extrabold text-emerald-700 ring-1 ring-emerald-100">Dane przykładowe</span>
           </div>
 
-          <div className="mt-3 grid gap-3 sm:grid-cols-[0.64fr_0.36fr]">
+          <div className="mt-4 grid gap-3 sm:grid-cols-[0.64fr_0.36fr]">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 sm:p-4">
               <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-600">Status dokumentacji</p>
               <div className="mt-2 flex items-end gap-2">
@@ -1019,30 +1017,24 @@ function HowItWorks({ selected }: { selected: AudienceKey }) {
   const active = variants[selected];
 
   return (
-    <section id="jak-to-dziala" className="scroll-mt-24 bg-blue-50/60 py-12 sm:py-16">
+    <section id="jak-to-dziala" className="scroll-mt-24 bg-white py-16 sm:py-20">
       <div className={pageWrap}>
         <Reveal>
-          <SectionHeading
-            eyebrow="Jak to działa"
-            title={active.title}
-            text={active.text}
-            centered
-          />
+          <SectionHeading eyebrow="Jak to działa" title={active.title} text={active.text} centered />
         </Reveal>
 
-        <div key={selected} className={`${panel} crpe-role-swap mt-7 grid gap-0 overflow-hidden p-2 sm:mt-9 sm:grid-cols-2 sm:gap-3 sm:p-3 xl:grid-cols-4`}>
+        <div key={selected} className="crpe-role-swap relative mt-10 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:gap-0">
+          <div className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-7 hidden h-px bg-blue-100 xl:block" aria-hidden="true" />
           {active.steps.map(({ icon: Icon, title, text }, index) => (
-            <Reveal key={title} delay={index * 90} className="h-full last:[&>article]:border-b-0">
-              <article className="crpe-step-card flex min-h-16 h-full items-center gap-3 border-b border-slate-100 p-3.5 sm:items-start sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-slate-50 sm:p-4">
-                <span className="crpe-card-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
-                  <Icon className="h-4 w-4" />
+            <Reveal key={title} delay={index * 90} className="relative h-full">
+              <article className="crpe-step-card relative flex h-full min-h-[132px] items-start gap-4 rounded-[18px] border border-slate-200 bg-slate-50/70 p-5 xl:mx-1.5">
+                <span className="crpe-card-icon relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white text-blue-700 shadow-[0_7px_18px_rgba(15,45,75,0.06)] ring-1 ring-blue-100">
+                  <Icon className="h-[18px] w-[18px]" />
                 </span>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-blue-300">0{index + 1}</span>
-                    <h3 className="text-[15px] font-black text-slate-950">{title}</h3>
-                  </div>
-                  <p className="mt-1 text-[14px] leading-5 text-slate-600">{text}</p>
+                <div className="min-w-0 pt-0.5">
+                  <span className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-400">0{index + 1}</span>
+                  <h3 className="mt-1 text-[15px] font-black text-slate-950">{title}</h3>
+                  <p className="mt-1.5 text-[13px] leading-5 text-slate-600">{text}</p>
                 </div>
               </article>
             </Reveal>
@@ -1142,7 +1134,7 @@ function FaqSection() {
   ];
 
   return (
-    <section id="faq" className={`${pageWrap} scroll-mt-24 py-12 sm:py-16`}>
+    <section id="faq" className={`${pageWrap} scroll-mt-24 py-16 sm:py-20`}>
       <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-8">
         <Reveal>
           <div>
@@ -1162,15 +1154,15 @@ function FaqSection() {
           </div>
         </Reveal>
 
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {items.map(([question, answer], index) => (
             <Reveal key={question} delay={index * 55}>
-              <details className="group rounded-2xl border border-slate-200 bg-white px-4 py-2.5 shadow-[0_10px_30px_rgba(15,45,75,0.05)] transition hover:border-blue-200 hover:shadow-[0_14px_36px_rgba(15,45,75,0.08)] sm:px-5 sm:py-4">
-                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-black leading-5 text-slate-950 sm:text-[15px]">
+              <details className="group rounded-[16px] border border-slate-200 bg-white px-4 py-3 shadow-[0_9px_26px_rgba(15,45,75,0.045)] transition hover:border-blue-200 hover:bg-blue-50/20 hover:shadow-[0_13px_32px_rgba(15,45,75,0.065)] sm:px-5 sm:py-3.5">
+                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-black leading-5 text-slate-950 sm:min-h-14 sm:text-[15px]">
                   {question}
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700 transition group-open:rotate-45">+</span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700 transition duration-200 group-open:rotate-45 group-open:bg-blue-100">+</span>
                 </summary>
-                <p className="mt-2 max-w-3xl pb-2 pr-7 text-[14px] leading-6 text-slate-600">{answer}</p>
+                <p className="mt-1 max-w-3xl border-t border-slate-100 pb-2 pt-4 pr-8 text-[14px] leading-6 text-slate-600">{answer}</p>
               </details>
             </Reveal>
           ))}
@@ -1189,6 +1181,7 @@ export default function Page() {
       <HowItWorks selected={selectedAudience} />
       <PracticeSection />
       <ProductToolsSection />
+      <TrustSection />
       <FaqSection />
       <BottomCTA selected={selectedAudience} />
     </div>

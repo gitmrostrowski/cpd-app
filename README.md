@@ -41,3 +41,10 @@ Nie dodawaj do GitHuba:
 - `node_modules`
 - `.next`
 - kluczy `service_role` lub `sb_secret_...`
+
+## Wersja v18 — design polish
+
+- publiczne menu jest stałe na wszystkich stronach informacyjnych, także po zalogowaniu;
+- zalogowany użytkownik otrzymuje przycisk „Otwórz Panel CPD”;
+- dopracowano wybór roli, karty porównawcze, cztery kroki, podgląd Panelu CPD, FAQ, CTA i stopkę;
+- ujednolicono szerokości, odstępy, zaokrąglenia, cienie i stany interakcji.

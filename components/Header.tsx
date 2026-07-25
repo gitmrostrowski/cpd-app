@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
+  ArrowRight,
   BarChart3,
   ClipboardList,
   FileBarChart,
@@ -165,7 +166,22 @@ export default function Header() {
   }
 
   const logoHref = "/";
-  const navItems = loading ? [] : user ? APP_NAV : PUBLIC_NAV;
+  const publicRoutePrefixes = [
+    "/dla-",
+    "/narzedzia",
+    "/bezpieczenstwo",
+    "/pomoc",
+    "/kontakt",
+    "/regulamin",
+    "/polityka-prywatnosci",
+    "/login",
+    "/rejestracja",
+    "/reset-hasla",
+  ];
+  const isPublicRoute = pathname === "/" || publicRoutePrefixes.some((prefix) => pathname?.startsWith(prefix));
+  const showPublicNav = isPublicRoute || !user;
+  const showPanelShortcut = Boolean(user && isPublicRoute);
+  const navItems = loading ? [] : showPublicNav ? PUBLIC_NAV : APP_NAV;
 
   return (
     <header
@@ -200,7 +216,7 @@ export default function Header() {
                 ))}
               </div>
             ) : (
-              <div className={cx("flex items-center", user ? "gap-1" : "gap-2")}>
+              <div className={cx("flex items-center", showPublicNav ? "gap-2" : "gap-1")}>
                 {navItems.map(({ href, label, icon: Icon }) => {
                 const active = isActive(href);
                 return (
@@ -209,12 +225,12 @@ export default function Header() {
                     href={href}
                     className={cx(
                       "inline-flex items-center gap-2 text-[13px] font-bold transition",
-                      user
-                        ? "rounded-xl px-3 py-2.5"
-                        : "px-3 py-2 text-slate-700 hover:text-blue-700",
-                      user && active
+                      showPublicNav
+                        ? "px-3 py-2 text-slate-700 hover:text-blue-700"
+                        : "rounded-xl px-3 py-2.5",
+                      !showPublicNav && active
                         ? "bg-blue-50 text-blue-700 ring-1 ring-blue-100"
-                        : user
+                        : !showPublicNav
                           ? "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
                           : "",
                     )}
@@ -237,10 +253,19 @@ export default function Header() {
               </div>
             ) : user ? (
               <>
+                {showPanelShortcut ? (
+                  <Link
+                    href="/kalkulator"
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-[0_10px_24px_rgba(37,99,235,0.18)] transition hover:bg-blue-700"
+                  >
+                    Otwórz Panel CPD <ArrowRight className="h-4 w-4" />
+                  </Link>
+                ) : (
                 <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 2xl:flex">
                   <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
                   <span className="font-medium">{emailShort}</span>
                 </div>
+                )}
 
                 <div className="relative" ref={userMenuRef}>
                   <button
@@ -326,6 +351,13 @@ export default function Header() {
               >
                 Zaloguj
               </Link>
+            ) : !loading && showPanelShortcut ? (
+              <Link
+                href="/kalkulator"
+                className="inline-flex h-9 items-center justify-center rounded-xl bg-blue-600 px-3 text-[12px] font-extrabold text-white"
+              >
+                Panel CPD
+              </Link>
             ) : null}
             <button
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
@@ -347,7 +379,7 @@ export default function Header() {
                   <div key={item} className="h-20 animate-pulse rounded-2xl bg-slate-100" />
                 ))}
               </div>
-            ) : user ? (
+            ) : !showPublicNav ? (
               <div className="grid grid-cols-2 gap-2">
                 {navItems.map(({ href, label, mobileDescription, icon: Icon }) => {
                   const active = isActive(href);
@@ -394,6 +426,14 @@ export default function Header() {
                 <div className="h-11 animate-pulse rounded-xl bg-slate-100" aria-hidden="true" />
               ) : user ? (
                 <>
+                  {showPanelShortcut ? (
+                    <Link
+                      href="/kalkulator"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-blue-700"
+                    >
+                      Otwórz Panel CPD <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  ) : null}
                   <div className="rounded-xl bg-slate-50 px-4 py-2.5 text-sm text-slate-700">
                     <span className="inline-flex items-center gap-2">
                       <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
