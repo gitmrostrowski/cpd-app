@@ -433,7 +433,7 @@ function SelectedRoleSummary({ selected }: { selected: AudienceKey }) {
   return (
     <div
       key={selected}
-      className="crpe-role-swap mt-4 overflow-hidden rounded-[24px] border border-blue-100 bg-white shadow-[0_18px_48px_rgba(15,45,75,0.08)] sm:mt-5"
+      className="crpe-role-swap overflow-hidden rounded-[24px] border border-blue-100 bg-white shadow-[0_18px_48px_rgba(15,45,75,0.08)]"
       aria-live="polite"
     >
       <div className="h-1.5 bg-[linear-gradient(90deg,#2563eb_0%,#38bdf8_65%,#a5f3fc_100%)]" />
@@ -678,9 +678,9 @@ function AudienceSection({
   return (
     <section id="dla-kogo" className="scroll-mt-24 pb-12 pt-6 sm:pb-16 sm:pt-9">
       <div className={pageWrap}>
-        <div className="mx-auto max-w-[980px] rounded-[28px] border border-slate-200 bg-[linear-gradient(145deg,#ffffff_0%,#f5f9ff_100%)] p-4 shadow-[0_20px_55px_rgba(15,45,75,0.07)] sm:p-6">
-          <div className="flex flex-col gap-2 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
-            <div>
+        <div className="w-full rounded-[28px] border border-slate-200 bg-[linear-gradient(145deg,#ffffff_0%,#f5f9ff_100%)] p-4 shadow-[0_20px_55px_rgba(15,45,75,0.07)] sm:p-7 lg:p-8">
+          <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-end lg:gap-8">
+            <div className="text-center lg:text-left">
               <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-blue-700">
                 Wybierz swoją ścieżkę
               </p>
@@ -688,14 +688,34 @@ function AudienceSection({
                 Kim jesteś?
               </h1>
             </div>
-            <p className="mx-auto max-w-xl text-[13px] leading-5 text-slate-500 sm:mx-0 sm:max-w-[430px] sm:text-right sm:text-[14px]">
-              Kliknij rolę. Poniższy opis, kolejne kroki i końcowa propozycja zmienią się od razu.
-            </p>
+
+            <div>
+              <p className="mx-auto mb-2.5 max-w-xl text-center text-[13px] leading-5 text-slate-500 lg:mx-0 lg:ml-auto lg:max-w-[520px] lg:text-right lg:text-[14px]">
+                Wybierz rolę — opis, kolejne kroki i końcowa propozycja zmienią się od razu.
+              </p>
+              <RolePicker selected={selected} onSelect={onSelect} />
+            </div>
           </div>
-          <div className="mt-4 sm:mt-5">
-            <RolePicker selected={selected} onSelect={onSelect} />
+
+          <div className="hidden h-5 lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8" aria-hidden="true">
+            <span />
+            <div className="grid grid-cols-3 px-2">
+              {audiences.map(({ key }) => (
+                <span key={key} className="relative flex justify-center">
+                  {selected === key ? (
+                    <>
+                      <span className="h-4 w-px bg-blue-500" />
+                      <span className="absolute bottom-0 h-2.5 w-2.5 rotate-45 rounded-[2px] border-b border-r border-blue-400 bg-white shadow-sm" />
+                    </>
+                  ) : null}
+                </span>
+              ))}
+            </div>
           </div>
-          <SelectedRoleSummary selected={selected} />
+
+          <div className="mt-4 lg:mt-0">
+            <SelectedRoleSummary selected={selected} />
+          </div>
         </div>
       </div>
 
