@@ -397,7 +397,7 @@ function RolePicker({
   onSelect: (key: AudienceKey) => void;
 }) {
   return (
-    <div className="crpe-role-picker grid w-full grid-cols-3 gap-2 rounded-[22px] bg-slate-100/90 p-1.5 ring-1 ring-slate-200/80 sm:gap-2.5 sm:p-2">
+    <div className="crpe-role-picker grid w-full grid-cols-3 gap-1.5 rounded-[20px] border border-slate-200/80 bg-slate-100/70 p-1.5 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] sm:gap-2 sm:p-2">
       {audiences.map(({ key, mobileLabel, icon: Icon }) => {
         const isSelected = selected === key;
         return (
@@ -406,18 +406,16 @@ function RolePicker({
             type="button"
             aria-pressed={isSelected}
             onClick={() => onSelect(key)}
-            className={`crpe-role-button relative flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl border px-2 py-3 text-[11px] font-extrabold transition sm:px-4 sm:py-4 sm:text-[15px] ${
+            className={`crpe-role-button group relative flex min-w-0 w-full items-center justify-center gap-2 rounded-[15px] px-2 py-3 text-[11px] font-extrabold sm:px-4 sm:py-3.5 sm:text-[15px] ${
               isSelected
-                ? "border-blue-600 bg-blue-600 text-white shadow-[0_10px_22px_rgba(37,99,235,0.24)] ring-4 ring-blue-100"
-                : "border-white bg-white/85 text-slate-700 shadow-sm hover:border-blue-100 hover:bg-blue-50 hover:text-blue-800"
+                ? "bg-[linear-gradient(135deg,#2563eb_0%,#1d4ed8_100%)] text-white shadow-[0_10px_24px_rgba(37,99,235,0.24),inset_0_1px_0_rgba(255,255,255,0.2)]"
+                : "text-slate-700 hover:bg-white hover:text-blue-800 hover:shadow-[0_5px_16px_rgba(15,45,75,0.07)]"
             }`}
           >
-            <Icon className="h-4 w-4 shrink-0" />
+            <Icon className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isSelected ? "text-white" : "text-slate-500 group-hover:text-blue-700"}`} />
             <span className="truncate">{mobileLabel}</span>
             {isSelected ? (
-              <span className="absolute right-2 flex h-5 w-5 items-center justify-center rounded-full bg-white/18 sm:right-3" aria-hidden="true">
-                <Check className="h-3 w-3" strokeWidth={3} />
-              </span>
+              <Check className="h-3.5 w-3.5 shrink-0 text-blue-100" strokeWidth={3} aria-hidden="true" />
             ) : null}
           </button>
         );
@@ -429,18 +427,25 @@ function RolePicker({
 function SelectedRoleSummary({ selected }: { selected: AudienceKey }) {
   const active = audiences.find((item) => item.key === selected) ?? audiences[0];
   const Icon = active.icon;
+  const selectedIndex = audiences.findIndex((item) => item.key === selected);
 
   return (
     <div
       key={selected}
-      className="crpe-role-swap overflow-hidden rounded-[24px] border border-blue-100 bg-white shadow-[0_18px_48px_rgba(15,45,75,0.08)]"
+      className="crpe-role-swap relative overflow-hidden rounded-[22px] border border-slate-200/80 bg-white/95 shadow-[0_18px_50px_rgba(30,64,175,0.08)] backdrop-blur-sm"
       aria-live="polite"
     >
-      <div className="h-1.5 bg-[linear-gradient(90deg,#2563eb_0%,#38bdf8_65%,#a5f3fc_100%)]" />
-      <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+      <div className="absolute inset-x-0 top-0 h-px bg-slate-200/80" aria-hidden="true" />
+      <div
+        className="absolute top-0 h-[3px] w-1/3 bg-[linear-gradient(90deg,#2563eb_0%,#38bdf8_75%,#67e8f9_100%)] shadow-[0_2px_10px_rgba(37,99,235,0.22)] transition-transform duration-500 ease-out"
+        style={{ transform: `translateX(${selectedIndex * 100}%)` }}
+        aria-hidden="true"
+      />
+
+      <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:gap-10">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_10px_22px_rgba(37,99,235,0.2)]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] bg-[linear-gradient(145deg,#2563eb_0%,#1d4ed8_100%)] text-white shadow-[0_9px_22px_rgba(37,99,235,0.2)]">
               <Icon className="h-5 w-5" />
             </span>
             <div>
@@ -456,32 +461,32 @@ function SelectedRoleSummary({ selected }: { selected: AudienceKey }) {
             </span>
           </div>
 
-          <h3 className="mt-4 text-[21px] font-black leading-[1.15] tracking-[-0.03em] text-slate-950 sm:text-[25px]">
+          <h3 className="mt-4 max-w-[590px] text-[21px] font-black leading-[1.16] tracking-[-0.03em] text-slate-950 sm:text-[25px]">
             {active.title}
           </h3>
-          <p className="mt-2 text-[14px] leading-6 text-slate-600 sm:text-[15px]">
+          <p className="mt-2 max-w-[600px] text-[14px] leading-6 text-slate-600 sm:text-[15px]">
             {active.description}
           </p>
 
           <Link
             href={active.detailsHref}
-            className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-[13px] font-extrabold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
+            className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[13px] font-extrabold text-white shadow-[0_9px_22px_rgba(37,99,235,0.17)] transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_13px_28px_rgba(37,99,235,0.22)]"
           >
             Zobacz szczegóły tej roli <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
-        <div className="grid gap-2.5">
+        <div className="grid gap-2.5 lg:border-l lg:border-slate-200/80 lg:pl-8">
           {active.benefits.map((item, index) => (
             <div
               key={item}
-              className="crpe-row-in flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-3.5 py-3 text-[13px] font-semibold leading-5 text-slate-700"
+              className="crpe-row-in flex items-center gap-3 rounded-[15px] bg-slate-50/85 px-3.5 py-3 text-[13px] font-semibold leading-5 text-slate-700 ring-1 ring-inset ring-slate-200/70 transition hover:bg-white hover:ring-blue-100"
               style={{ animationDelay: `${index * 55}ms` }}
             >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
                 <Check className="h-3.5 w-3.5" strokeWidth={2.8} />
               </span>
-              <span className="pt-0.5">{item}</span>
+              <span>{item}</span>
             </div>
           ))}
         </div>
@@ -678,7 +683,7 @@ function AudienceSection({
   return (
     <section id="dla-kogo" className="scroll-mt-24 pb-12 pt-6 sm:pb-16 sm:pt-9">
       <div className={pageWrap}>
-        <div className="w-full rounded-[28px] border border-slate-200 bg-[linear-gradient(145deg,#ffffff_0%,#f5f9ff_100%)] p-4 shadow-[0_20px_55px_rgba(15,45,75,0.07)] sm:p-7 lg:p-8">
+        <div className="w-full rounded-[28px] border border-slate-200/80 bg-[radial-gradient(circle_at_50%_0%,rgba(219,234,254,0.45),transparent_42%),linear-gradient(180deg,#fbfdff_0%,#f4f8fc_100%)] p-4 shadow-[0_22px_65px_rgba(30,64,175,0.065)] sm:p-7 lg:p-8">
           <div className="mx-auto max-w-[860px] text-center">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-blue-700">
               Wybierz swoją ścieżkę
@@ -694,21 +699,9 @@ function AudienceSection({
           <div className="mx-auto mt-5 max-w-[980px] sm:mt-6">
             <RolePicker selected={selected} onSelect={onSelect} />
 
-            <div className="hidden h-5 grid-cols-3 px-2 lg:grid" aria-hidden="true">
-              {audiences.map(({ key }) => (
-                <span key={key} className="relative flex justify-center">
-                  {selected === key ? (
-                    <>
-                      <span className="h-4 w-px bg-blue-500" />
-                      <span className="absolute bottom-0 h-2.5 w-2.5 rotate-45 rounded-[2px] border-b border-r border-blue-400 bg-white shadow-sm" />
-                    </>
-                  ) : null}
-                </span>
-              ))}
-            </div>
           </div>
 
-          <div className="mt-4 lg:mt-0">
+          <div className="mt-3 sm:mt-4">
             <SelectedRoleSummary selected={selected} />
           </div>
         </div>
