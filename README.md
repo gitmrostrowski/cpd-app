@@ -96,3 +96,17 @@ W tej wersji strona i nawigacja pokazują rzeczywisty zakres działającej aplik
 - Profil i ustawienia pozostają pod ikoną użytkownika,
 - widok organizacji i funkcje organizatora są nadal jasno oznaczone jako rozwijane lub ustalane indywidualnie,
 - Baza szkoleń jest opisana jako narzędzie do wyszukiwania i planowania; dodanie pozycji do planu nie oznacza zapisu u organizatora.
+
+## Strona główna — układ zgodny z analizą v10
+
+Treść strony publicznej została uporządkowana według zaakceptowanego materiału projektowego:
+
+1. komunikat o dostępie do danych i szybkie akcje logowania/rejestracji,
+2. wybór roli „Kim jesteś?” i porównanie trzech zakresów,
+3. cztery kroki rozpoczęcia pracy,
+4. ciemna sekcja pokazująca Panel CPD w praktyce,
+5. pełny warsztat narzędzi dostępny po zalogowaniu,
+6. FAQ,
+7. końcowe CTA i stopka.
+
+Przyciski w komunikacie startowym są dopasowane do stanu sesji: osoba zalogowana otrzymuje przejście do Panelu CPD i Bazy szkoleń, a osoba niezalogowana — logowanie i rejestrację.

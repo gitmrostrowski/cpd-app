@@ -21,6 +21,7 @@ import {
   UserRound,
 } from "lucide-react";
 import BottomCTA from "@/components/BottomCTA";
+import { useAuth } from "@/components/AuthProvider";
 
 type AudienceKey = "medyk" | "placowka" | "organizator";
 
@@ -397,9 +398,7 @@ function RolePicker({
   onSelect: (key: AudienceKey) => void;
 }) {
   return (
-    <div>
-      <p className="text-[13px] font-black text-slate-950 sm:text-sm">Kim jesteś?</p>
-      <div className="crpe-role-picker mt-2 grid w-full max-w-[590px] grid-cols-3 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_30px_rgba(15,45,75,0.07)]">
+    <div className="crpe-role-picker grid w-full grid-cols-3 rounded-[22px] border border-slate-200 bg-white p-1.5 shadow-[0_12px_34px_rgba(15,45,75,0.08)] sm:p-2">
         {audiences.map(({ key, mobileLabel, icon: Icon }) => {
           const isSelected = selected === key;
           return (
@@ -408,7 +407,7 @@ function RolePicker({
               type="button"
               aria-pressed={isSelected}
               onClick={() => onSelect(key)}
-              className={`crpe-role-button flex min-w-0 w-full items-center justify-center gap-2 rounded-xl px-2 py-2.5 text-[11px] font-extrabold transition sm:px-3 sm:text-[13px] ${
+              className={`crpe-role-button flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl px-2 py-3 text-[11px] font-extrabold transition sm:px-4 sm:py-4 sm:text-[15px] ${
                 isSelected
                   ? "bg-blue-600 text-white shadow-[0_8px_18px_rgba(37,99,235,0.24)]"
                   : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
@@ -419,7 +418,6 @@ function RolePicker({
             </button>
           );
         })}
-      </div>
     </div>
   );
 }
@@ -563,9 +561,64 @@ function Hero({
   );
 }
 
-function AudienceSection() {
+function TopNotice() {
+  const { user, loading } = useAuth();
+
+  return (
+    <section className={`${pageWrap} pt-4 sm:pt-6`}>
+      <div className="grid gap-4 rounded-[22px] border border-slate-200 bg-white px-4 py-4 shadow-[0_12px_34px_rgba(15,45,75,0.06)] sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-8">
+        <p className="text-[14px] leading-6 text-slate-600 sm:text-[15px]">
+          Dane osobiste i dokumenty są dostępne po zalogowaniu. Baza szkoleń pomaga planować aktywności, ale dodanie pozycji do planu nie oznacza zapisu u organizatora.
+        </p>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          {!loading && user ? (
+            <>
+              <Link
+                href="/baza-szkolen"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-[14px] font-extrabold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50"
+              >
+                Baza szkoleń
+              </Link>
+              <Link
+                href="/kalkulator"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-[14px] font-extrabold text-white shadow-[0_10px_24px_rgba(37,99,235,0.2)] transition hover:bg-blue-700"
+              >
+                Otwórz Panel CPD <ArrowRight className="h-4 w-4" />
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-[14px] font-extrabold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50"
+              >
+                Mam konto
+              </Link>
+              <Link
+                href="/rejestracja"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-[14px] font-extrabold text-white shadow-[0_10px_24px_rgba(37,99,235,0.2)] transition hover:bg-blue-700"
+              >
+                Załóż konto i otwórz panel <ArrowRight className="h-4 w-4" />
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AudienceSection({
+  selected,
+  onSelect,
+}: {
+  selected: AudienceKey;
+  onSelect: (key: AudienceKey) => void;
+}) {
   const cards = [
     {
+      key: "medyk" as AudienceKey,
       id: "dla-medyka",
       icon: Stethoscope,
       title: "Medyk",
@@ -575,9 +628,9 @@ function AudienceSection() {
       benefits: ["Postęp i brakujące punkty", "Dokumenty przy aktywnościach", "Raport użytkownika"],
       cta: "Załóż konto",
       href: "/rejestracja",
-      featured: true,
     },
     {
+      key: "placowka" as AudienceKey,
       id: "dla-placowki",
       icon: Building2,
       title: "Placówka / jednostka",
@@ -589,6 +642,7 @@ function AudienceSection() {
       href: "mailto:kontakt@crpe.pl?subject=CRPE%20dla%20plac%C3%B3wki",
     },
     {
+      key: "organizator" as AudienceKey,
       id: "dla-organizatora",
       icon: UserRound,
       title: "Organizator kształcenia",
@@ -602,58 +656,80 @@ function AudienceSection() {
   ];
 
   return (
-    <section id="dla-kogo" className={`${pageWrap} scroll-mt-24 py-11 sm:py-14`}>
-      <Reveal>
-        <SectionHeading
-          eyebrow="Dla kogo jest CRPE"
-          title="Porównaj zakres CRPE dla każdej roli."
-          text="Profil medyka działa już teraz. Moduły organizacyjne rozwijamy etapami i jasno oznaczamy ich aktualny zakres."
-          centered
-        />
-      </Reveal>
+    <section id="dla-kogo" className="scroll-mt-24 pb-12 pt-7 sm:pb-16 sm:pt-9">
+      <div className={pageWrap}>
+        <div className="mx-auto max-w-[940px]">
+          <p className="text-center text-[22px] font-black tracking-[-0.025em] text-slate-950 sm:text-[28px]">
+            Kim jesteś?
+          </p>
+          <div className="mt-3">
+            <RolePicker selected={selected} onSelect={onSelect} />
+          </div>
+        </div>
+      </div>
 
-      <div className="mt-7 grid gap-4 lg:mt-9 lg:grid-cols-3">
-        {cards.map(({ id, icon: Icon, title, status, statusClass, text, benefits, cta, href, featured }, index) => (
-          <Reveal key={id} delay={index * 90} className="h-full">
-            <article
-              id={id}
-              className={`crpe-interactive-card h-full scroll-mt-24 rounded-[22px] border bg-white p-5 shadow-[0_14px_40px_rgba(15,45,75,0.06)] sm:p-6 ${
-                featured ? "border-blue-200 ring-2 ring-blue-100" : "border-slate-200"
-              }`}
-            >
-            <div className="flex items-center justify-between gap-3">
-              <span className={`crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl ${featured ? "bg-blue-600 text-white" : "bg-slate-50 text-slate-600 ring-1 ring-slate-200"}`}>
-                <Icon className="h-5 w-5" />
-              </span>
-              <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${statusClass}`}>
-                {status}
-              </span>
-            </div>
-            <h3 className="mt-4 text-lg font-black tracking-[-0.02em] text-slate-950">{title}</h3>
-            <p className="mt-2 text-[14px] leading-6 text-slate-600">{text}</p>
-            <ul className="mt-4 grid gap-2">
-              {benefits.map((item) => (
-                <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-slate-700">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
-                    <Check className="h-3 w-3" />
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href={href}
-              className={`mt-5 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-[14px] font-extrabold transition sm:min-h-11 sm:text-sm ${
-                featured
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
-                  : "border border-slate-300 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50"
-              }`}
-            >
-              {cta} <ArrowRight className="h-4 w-4" />
-            </Link>
-            </article>
+      <div className="mt-5 bg-[linear-gradient(180deg,#f6f9fd_0%,#eef4fa_100%)] py-11 sm:mt-7 sm:py-14">
+        <div className={pageWrap}>
+          <Reveal>
+            <SectionHeading
+              eyebrow="Dla kogo jest CRPE"
+              title="Porównaj zakres CRPE dla każdej roli."
+              text="Profil medyka działa już teraz. Moduły organizacyjne rozwijamy etapami i jasno oznaczamy ich aktualny zakres."
+              centered
+            />
           </Reveal>
-        ))}
+
+          <div className="mt-7 grid gap-4 lg:mt-9 lg:grid-cols-3">
+            {cards.map(({ key, id, icon: Icon, title, status, statusClass, text, benefits, cta, href }, index) => {
+              const active = selected === key;
+              return (
+                <Reveal key={id} delay={index * 90} className="h-full">
+                  <article
+                    id={id}
+                    className={`crpe-interactive-card flex h-full scroll-mt-24 flex-col rounded-[22px] border bg-white p-5 shadow-[0_14px_40px_rgba(15,45,75,0.06)] sm:p-6 ${
+                      active ? "border-blue-300 ring-2 ring-blue-100" : "border-slate-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span
+                        className={`crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl ${
+                          active ? "bg-blue-600 text-white" : "bg-slate-50 text-slate-600 ring-1 ring-slate-200"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${statusClass}`}>
+                        {status}
+                      </span>
+                    </div>
+                    <h3 className="mt-4 text-lg font-black tracking-[-0.02em] text-slate-950">{title}</h3>
+                    <p className="mt-2 text-[14px] leading-6 text-slate-600">{text}</p>
+                    <ul className="mt-4 grid gap-2">
+                      {benefits.map((item) => (
+                        <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-slate-700">
+                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                            <Check className="h-3 w-3" />
+                          </span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      href={href}
+                      className={`mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 pt-2 text-[14px] font-extrabold transition ${
+                        key === "medyk"
+                          ? "mt-5 bg-blue-600 text-white shadow-[0_10px_24px_rgba(37,99,235,0.18)] hover:bg-blue-700"
+                          : "mt-5 border border-slate-300 bg-white text-slate-800 hover:border-blue-200 hover:bg-blue-50"
+                      }`}
+                    >
+                      {cta} <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </article>
+                </Reveal>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -762,26 +838,6 @@ function ProductToolsSection() {
                   </article>
                 </Reveal>
               ))}
-            </div>
-
-            <div className="flex flex-col gap-3 border-t border-slate-200 bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-              <p className="max-w-2xl text-[13px] leading-5 text-slate-600 sm:text-sm">
-                Dane osobiste i dokumenty są dostępne po zalogowaniu. Baza szkoleń pomaga planować aktywności, ale dodanie pozycji do planu nie oznacza zapisu u organizatora.
-              </p>
-              <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                <Link
-                  href="/login"
-                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-[14px] font-extrabold text-slate-700 hover:border-blue-200 hover:bg-blue-50"
-                >
-                  Mam konto
-                </Link>
-                <Link
-                  href="/rejestracja"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[14px] font-extrabold text-white shadow-[0_10px_24px_rgba(37,99,235,0.2)] hover:bg-blue-700"
-                >
-                  Załóż konto i otwórz panel <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
             </div>
           </div>
         </Reveal>
@@ -1084,13 +1140,12 @@ export default function Page() {
   const [selectedAudience, setSelectedAudience] = useState<AudienceKey>("medyk");
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
-      <Hero selected={selectedAudience} onSelect={setSelectedAudience} />
-      <ProductToolsSection />
-      <PracticeSection />
+    <div className="min-h-screen bg-white">
+      <TopNotice />
+      <AudienceSection selected={selectedAudience} onSelect={setSelectedAudience} />
       <HowItWorks selected={selectedAudience} />
-      <AudienceSection />
-      <TrustSection />
+      <PracticeSection />
+      <ProductToolsSection />
       <FaqSection />
       <BottomCTA selected={selectedAudience} />
     </div>
