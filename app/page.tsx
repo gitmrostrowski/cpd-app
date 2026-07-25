@@ -397,7 +397,7 @@ function RolePicker({
   onSelect: (key: AudienceKey) => void;
 }) {
   return (
-    <div className="crpe-role-picker grid w-full grid-cols-3 gap-1.5 rounded-[20px] border border-slate-200/80 bg-slate-100/70 p-1.5 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] sm:gap-2 sm:p-2">
+    <div className="crpe-role-picker grid w-full grid-cols-3 gap-1 rounded-[18px] bg-slate-100/90 p-1.5 sm:gap-1.5">
       {audiences.map(({ key, mobileLabel, icon: Icon }) => {
         const isSelected = selected === key;
         return (
@@ -406,13 +406,13 @@ function RolePicker({
             type="button"
             aria-pressed={isSelected}
             onClick={() => onSelect(key)}
-            className={`crpe-role-button group relative flex min-w-0 w-full items-center justify-center gap-2 rounded-[15px] px-2 py-3 text-[11px] font-extrabold sm:px-4 sm:py-3.5 sm:text-[15px] ${
+            className={`crpe-role-button group relative flex min-w-0 w-full items-center justify-center gap-2 rounded-[14px] px-2 py-3 text-[11px] font-extrabold sm:px-4 sm:py-3.5 sm:text-[15px] ${
               isSelected
-                ? "bg-[linear-gradient(135deg,#2563eb_0%,#1d4ed8_100%)] text-white shadow-[0_10px_24px_rgba(37,99,235,0.24),inset_0_1px_0_rgba(255,255,255,0.2)]"
-                : "text-slate-700 hover:bg-white hover:text-blue-800 hover:shadow-[0_5px_16px_rgba(15,45,75,0.07)]"
+                ? "bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)]"
+                : "text-slate-700 hover:bg-white/85 hover:text-blue-800"
             }`}
           >
-            <Icon className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isSelected ? "text-white" : "text-slate-500 group-hover:text-blue-700"}`} />
+            <Icon className={`h-4 w-4 shrink-0 transition-colors duration-200 ${isSelected ? "text-white" : "text-slate-500 group-hover:text-blue-700"}`} />
             <span className="truncate">{mobileLabel}</span>
             {isSelected ? (
               <Check className="h-3.5 w-3.5 shrink-0 text-blue-100" strokeWidth={3} aria-hidden="true" />
@@ -432,20 +432,20 @@ function SelectedRoleSummary({ selected }: { selected: AudienceKey }) {
   return (
     <div
       key={selected}
-      className="crpe-role-swap relative overflow-hidden rounded-[22px] border border-slate-200/80 bg-white/95 shadow-[0_18px_50px_rgba(30,64,175,0.08)] backdrop-blur-sm"
+      className="crpe-role-swap relative overflow-hidden rounded-[24px] bg-white shadow-[0_18px_48px_rgba(15,45,75,0.085)] ring-1 ring-slate-200/70"
       aria-live="polite"
     >
-      <div className="absolute inset-x-0 top-0 h-px bg-slate-200/80" aria-hidden="true" />
+      <div className="absolute inset-x-0 top-0 h-[3px] bg-slate-100" aria-hidden="true" />
       <div
-        className="absolute top-0 h-[3px] w-1/3 bg-[linear-gradient(90deg,#2563eb_0%,#38bdf8_75%,#67e8f9_100%)] shadow-[0_2px_10px_rgba(37,99,235,0.22)] transition-transform duration-500 ease-out"
+        className="absolute top-0 h-[3px] w-1/3 bg-[linear-gradient(90deg,#2563eb_0%,#38bdf8_100%)] transition-transform duration-500 ease-out"
         style={{ transform: `translateX(${selectedIndex * 100}%)` }}
         aria-hidden="true"
       />
 
-      <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:gap-10">
+      <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-12 lg:p-8">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] bg-[linear-gradient(145deg,#2563eb_0%,#1d4ed8_100%)] text-white shadow-[0_9px_22px_rgba(37,99,235,0.2)]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.18)]">
               <Icon className="h-5 w-5" />
             </span>
             <div>
@@ -470,17 +470,17 @@ function SelectedRoleSummary({ selected }: { selected: AudienceKey }) {
 
           <Link
             href={active.detailsHref}
-            className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[13px] font-extrabold text-white shadow-[0_9px_22px_rgba(37,99,235,0.17)] transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_13px_28px_rgba(37,99,235,0.22)]"
+            className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[13px] font-extrabold text-white shadow-[0_8px_20px_rgba(37,99,235,0.16)] transition hover:-translate-y-0.5 hover:bg-blue-700"
           >
             Zobacz szczegóły tej roli <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
-        <div className="grid gap-2.5 lg:border-l lg:border-slate-200/80 lg:pl-8">
+        <div className="divide-y divide-slate-100 lg:border-l lg:border-slate-200/80 lg:pl-10">
           {active.benefits.map((item, index) => (
             <div
               key={item}
-              className="crpe-row-in flex items-center gap-3 rounded-[15px] bg-slate-50/85 px-3.5 py-3 text-[13px] font-semibold leading-5 text-slate-700 ring-1 ring-inset ring-slate-200/70 transition hover:bg-white hover:ring-blue-100"
+              className="crpe-row-in flex items-center gap-3 py-3.5 text-[13px] font-semibold leading-5 text-slate-700 first:pt-0 last:pb-0"
               style={{ animationDelay: `${index * 55}ms` }}
             >
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
@@ -681,33 +681,30 @@ function AudienceSection({
   ];
 
   return (
-    <section id="dla-kogo" className="scroll-mt-24 pb-12 pt-6 sm:pb-16 sm:pt-9">
+    <section id="dla-kogo" className="scroll-mt-24 pb-12 pt-8 sm:pb-16 sm:pt-12">
       <div className={pageWrap}>
-        <div className="w-full rounded-[28px] border border-slate-200/80 bg-[radial-gradient(circle_at_50%_0%,rgba(219,234,254,0.45),transparent_42%),linear-gradient(180deg,#fbfdff_0%,#f4f8fc_100%)] p-4 shadow-[0_22px_65px_rgba(30,64,175,0.065)] sm:p-7 lg:p-8">
-          <div className="mx-auto max-w-[860px] text-center">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-blue-700">
-              Wybierz swoją ścieżkę
-            </p>
-            <h1 className="mt-1.5 text-[25px] font-black tracking-[-0.035em] text-slate-950 sm:text-[31px]">
-              Kim jesteś?
-            </h1>
-            <p className="mx-auto mt-2 max-w-[620px] text-[13px] leading-5 text-slate-500 sm:text-[14px]">
-              Wybierz rolę — opis, kolejne kroki i końcowa propozycja zmienią się od razu.
-            </p>
-          </div>
+        <div className="mx-auto max-w-[860px] text-center">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-blue-700">
+            Wybierz swoją ścieżkę
+          </p>
+          <h1 className="mt-1.5 text-[25px] font-black tracking-[-0.035em] text-slate-950 sm:text-[31px]">
+            Kim jesteś?
+          </h1>
+          <p className="mx-auto mt-2 max-w-[620px] text-[13px] leading-5 text-slate-500 sm:text-[14px]">
+            Wybierz rolę — opis, kolejne kroki i końcowa propozycja zmienią się od razu.
+          </p>
+        </div>
 
-          <div className="mx-auto mt-5 max-w-[980px] sm:mt-6">
-            <RolePicker selected={selected} onSelect={onSelect} />
+        <div className="mx-auto mt-5 max-w-[980px] sm:mt-6">
+          <RolePicker selected={selected} onSelect={onSelect} />
+        </div>
 
-          </div>
-
-          <div className="mt-3 sm:mt-4">
-            <SelectedRoleSummary selected={selected} />
-          </div>
+        <div className="mx-auto mt-4 max-w-[1080px] sm:mt-5">
+          <SelectedRoleSummary selected={selected} />
         </div>
       </div>
 
-      <div className="mt-8 bg-[linear-gradient(180deg,#f6f9fd_0%,#eef4fa_100%)] py-11 sm:mt-10 sm:py-14">
+      <div className="mt-10 bg-[linear-gradient(180deg,#f6f9fd_0%,#eef4fa_100%)] py-11 sm:mt-12 sm:py-14">
         <div className={pageWrap}>
           <Reveal>
             <SectionHeading

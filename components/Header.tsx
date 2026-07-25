@@ -177,7 +177,7 @@ export default function Header() {
       )}
     >
       <div className="mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8">
-        <div className="grid h-14 grid-cols-[auto_1fr_auto] items-center gap-3 sm:h-16 sm:gap-4">
+        <div className="flex h-14 items-center gap-3 sm:h-16 sm:gap-4">
           <Link
             href={logoHref}
             className="flex shrink-0 items-center gap-2.5"
@@ -188,7 +188,7 @@ export default function Header() {
             <span className="text-base font-black tracking-tight text-slate-950">CRPE</span>
           </Link>
 
-          <nav className="hidden min-w-0 items-center justify-center lg:flex" aria-label="Główna nawigacja">
+          <nav className="ml-auto hidden min-w-0 items-center justify-end lg:flex" aria-label="Główna nawigacja">
             {loading ? (
               <div className="flex items-center gap-2" aria-hidden="true">
                 {[84, 96, 108, 82].map((width) => (
