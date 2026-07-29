@@ -231,34 +231,44 @@ export async function fetchActivities(
   const typeIds = [...new Set(rows.map((row) => row.activity_type_id).filter(Boolean))];
   const trainingIds = [...new Set(rows.map((row) => row.training_id).filter(Boolean))];
 
-  const [pointsResult, typesResult, trainingsResult, documents] =
-    await Promise.all([
-      client
-        .from("activity_point_entries")
-        .select("activity_id,points")
-        .in("activity_id", activityIds),
-      typeIds.length
-        ? client
-            .from("activity_types")
-            .select("id,code,name_pl")
-            .in("id", typeIds)
-        : Promise.resolve({ data: [], error: null }),
-      trainingIds.length
-        ? client
-            .from("trainings")
-            .select(
-              "id,title,organizer_name,points,delivery_format,starts_on,ends_on,category,target_profession_text,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,submitted_by,approved_by,approved_at,reject_reason,description,submitted_email,legacy_data,created_at,updated_at",
-            )
-            .in("id", trainingIds)
-        : Promise.resolve({ data: [], error: null }),
-      options.includeCertificateFields
-        ? fetchActivityDocuments(client, userId, activityIds)
-        : Promise.resolve([]),
-    ]);
-
+  // Punkty są częścią podstawowego wyniku. Pozostałe zapytania służą tylko
+  // do wzbogacenia widoku i nie mogą wyzerować całego panelu, jeśli np.
+  // użytkownik nie ma dostępu do rekordu szkolenia albo dokumentu.
+  const pointsResult = await client
+    .from("activity_point_entries")
+    .select("activity_id,points")
+    .in("activity_id", activityIds);
   if (pointsResult.error) throw new Error(pointsResult.error.message);
-  if (typesResult.error) throw new Error(typesResult.error.message);
-  if (trainingsResult.error) throw new Error(trainingsResult.error.message);
+
+  if (!(pointsResult.data ?? []).length) {
+    throw new Error(
+      "Aktywności są widoczne, ale nie można odczytać ich punktów. Sprawdź politykę SELECT/RLS tabeli activity_point_entries.",
+    );
+  }
+
+  const [typesResult, trainingsResult, documentsResult] = await Promise.all([
+    typeIds.length
+      ? client
+          .from("activity_types")
+          .select("id,code,name_pl")
+          .in("id", typeIds)
+      : Promise.resolve({ data: [], error: null }),
+    trainingIds.length
+      ? client
+          .from("trainings")
+          .select(
+            "id,title,organizer_name,points,delivery_format,starts_on,ends_on,category,target_profession_text,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,submitted_by,approved_by,approved_at,reject_reason,description,submitted_email,legacy_data,created_at,updated_at",
+          )
+          .in("id", trainingIds)
+      : Promise.resolve({ data: [], error: null }),
+    options.includeCertificateFields
+      ? fetchActivityDocuments(client, userId, activityIds)
+          .then((data) => ({ data, error: null }))
+          .catch((error: unknown) => ({ data: [], error }))
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  const documents = documentsResult.data;
 
   const points = new Map<string, number>();
   for (const entry of (pointsResult.data ?? []) as Record<string, any>[]) {
@@ -521,8 +531,7 @@ export async function fetchProfile(
   client: Client,
   userId: string,
 ): Promise<LegacyProfile | null> {
-  const [professionalResult, cyclesResult, identifiersResult, staffResult] =
-    await Promise.all([
+  const [professionalResult, cyclesResult] = await Promise.all([
       client
         .from("medical_professionals")
         .select("user_id,profession_id,professional_status")
@@ -536,6 +545,12 @@ export async function fetchProfile(
         .eq("user_id", userId)
         .is("deleted_at", null)
         .order("starts_on", { ascending: false }),
+    ]);
+
+  // Identyfikator i rola administracyjna są opcjonalne. W szczególności
+  // platform_staff_roles ma celowo restrykcyjne RLS i brak dostępu do tej
+  // tabeli nie może powodować utraty okresu CPD w panelu użytkownika.
+  const [identifiersResult, staffResult] = await Promise.all([
       client
         .from("professional_identifiers")
         .select(
@@ -551,13 +566,11 @@ export async function fetchProfile(
         .select("role_code")
         .eq("user_id", userId)
         .is("revoked_at", null),
-    ]);
+  ]);
 
   if (professionalResult.error)
     throw new Error(professionalResult.error.message);
   if (cyclesResult.error) throw new Error(cyclesResult.error.message);
-  if (identifiersResult.error) throw new Error(identifiersResult.error.message);
-  if (staffResult.error) throw new Error(staffResult.error.message);
   if (!professionalResult.data) return null;
 
   const { data: profession, error: professionError } = await client
@@ -585,11 +598,15 @@ export async function fetchProfile(
     period_start: cycle ? Number(String(cycle.starts_on).slice(0, 4)) : 2023,
     period_end: cycle ? Number(String(cycle.ends_on).slice(0, 4)) : 2026,
     required_points: cycle ? asNumber(cycle.required_points) : 200,
-    pwz_number: identifiersResult.data?.identifier_value ?? null,
-    pwz_issue_date: identifiersResult.data?.issued_on ?? null,
-    role: (staffResult.data ?? []).some(
+    pwz_number: identifiersResult.error
+      ? null
+      : identifiersResult.data?.identifier_value ?? null,
+    pwz_issue_date: identifiersResult.error
+      ? null
+      : identifiersResult.data?.issued_on ?? null,
+    role: (!staffResult.error && (staffResult.data ?? []).some(
       (row: Record<string, any>) => row.role_code === "platform_admin",
-    )
+    ))
       ? "admin"
       : "user",
     can_org_report: false,

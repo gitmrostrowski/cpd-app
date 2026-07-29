@@ -673,6 +673,8 @@ export default function CalculatorClient() {
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [activities, setActivities] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activityLoadError, setActivityLoadError] = useState<string | null>(null);
+  const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
 
   const [profession, setProfession] = useState<Profession>("Lekarz");
   const [professionOther, setProfessionOther] = useState("");
@@ -710,8 +712,13 @@ export default function CalculatorClient() {
         includeCertificateFields: true,
       });
       setActivities(data as ActivityRow[]);
-    } catch {
-      setActivities([]);
+      setActivityLoadError(null);
+    } catch (caught) {
+      setActivityLoadError(
+        caught instanceof Error
+          ? caught.message
+          : "Nie udało się wczytać aktywności i punktów.",
+      );
     }
   }
 
@@ -723,6 +730,8 @@ export default function CalculatorClient() {
         if (!cancelled) {
           setProfile(null);
           setActivities([]);
+          setActivityLoadError(null);
+          setProfileLoadError(null);
           setLoading(false);
         }
         return;
@@ -734,8 +743,14 @@ export default function CalculatorClient() {
       let profileFailed = false;
       try {
         p = await fetchProfile(supabase, user.id);
-      } catch {
+        setProfileLoadError(null);
+      } catch (caught) {
         profileFailed = true;
+        setProfileLoadError(
+          caught instanceof Error
+            ? caught.message
+            : "Nie udało się wczytać ustawień profilu.",
+        );
       }
 
       if (!cancelled) {
@@ -1299,7 +1314,10 @@ export default function CalculatorClient() {
           };
 
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div
+      className="space-y-4 sm:space-y-5"
+      data-crpe-build="frankfurt-fix-v2"
+    >
       <style jsx global>{`
         @keyframes cpdTargetPulse {
           0% { transform: scale(0.72); opacity: 0.55; }
@@ -1606,6 +1624,27 @@ export default function CalculatorClient() {
         </div>
       ) : (
         <>
+          {activityLoadError || profileLoadError ? (
+            <div
+              role="alert"
+              className="rounded-[20px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-950 shadow-sm"
+            >
+              <div className="font-extrabold">
+                Nie udało się wczytać wszystkich danych z bazy Frankfurt.
+              </div>
+              <div className="mt-1 break-words text-[13px] leading-5 text-amber-900">
+                {activityLoadError ?? profileLoadError}
+              </div>
+              <button
+                type="button"
+                onClick={() => void reloadActivities()}
+                className="mt-3 inline-flex h-9 items-center justify-center rounded-xl border border-amber-300 bg-white px-3.5 text-xs font-bold text-amber-900 transition hover:bg-amber-100"
+              >
+                Spróbuj ponownie
+              </button>
+            </div>
+          ) : null}
+
           <section id="status" className={cardCls}>
                 <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-3">

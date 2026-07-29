@@ -2,6 +2,20 @@
 
 Aplikacja Next.js do prowadzenia własnej ewidencji aktywności, punktów i dokumentów.
 
+## Frankfurt fix v2
+
+Wersja naprawia fałszywy wynik `0 pkt`, który pojawiał się, gdy opcjonalny
+odczyt certyfikatu, szkolenia, typu aktywności albo roli administratora był
+blokowany przez RLS. Punkty i okres CPD są teraz ładowane niezależnie od tych
+danych, a prawdziwy błąd jest wyświetlany w panelu zamiast zastępowania go
+pustą listą.
+
+Po wdrożeniu element główny kalkulatora ma znacznik:
+
+```html
+data-crpe-build="frankfurt-fix-v2"
+```
+
 ## Uruchomienie lokalne
 
 1. Utwórz plik `.env.local` w głównym folderze projektu.
