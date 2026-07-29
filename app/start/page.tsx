@@ -251,15 +251,15 @@ export default function StartPage() {
                   </option>
                 ))}
               </select>
-              <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-slate-700">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
                 {suggestedRuleSet ? (
                   <>
-                    Dostępna zweryfikowana reguła podstawowa:{" "}
-                    <span className="font-semibold">
+                    <span className="font-semibold text-slate-800">
+                      Reguła dla zawodu:{" "}
                       {suggestedRuleSet.required_points} pkt /{" "}
                       {suggestedRuleSet.period_months} miesięcy
                     </span>
-                    . Nie zastosujemy jej automatycznie do nowego cyklu.
+                    {" "}· zweryfikowana. Nie zmienimy nią automatycznie celu.
                   </>
                 ) : (
                   <>

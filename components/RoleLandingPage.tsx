@@ -86,22 +86,22 @@ const content: Record<RoleKind, RoleContent> = {
     icon: Building2,
     eyebrow: "CRPE dla placówki i jednostki",
     title: "Ujednolić ewidencję zespołu i szybciej wychwytywać braki.",
-    lead: "Indywidualne konta pracowników mogą działać już dziś. Zbiorczy moduł organizacyjny z podglądem kompletności, alertami i raportami rozwijamy etapami.",
-    status: "Moduł w rozwoju",
-    statusClass: "bg-amber-50 text-amber-800 ring-amber-100",
-    availableTitle: "Co placówka może wykorzystać już teraz",
-    availableText: "Każdy pracownik może prowadzić własną ewidencję, przechowywać dokumenty i przygotować indywidualny raport.",
+    lead: "Panel pilotażowy łączy indywidualne konta pracowników ze strukturą placówki, zaproszeniami i rolami. Dane pracownika pozostają oddzielone i nie są udostępniane automatycznie.",
+    status: "Panel pilotażowy v5",
+    statusClass: "bg-emerald-50 text-emerald-800 ring-emerald-100",
+    availableTitle: "Co obejmuje pierwszy panel placówki",
+    availableText: "Właściciel i administrator mogą zbudować zespół oraz strukturę, a każda osoba nadal korzysta z własnego konta.",
     available: [
       { icon: UserRound, title: "Indywidualne konta", text: "Pracownicy prowadzą własne wpisy, punkty i certyfikaty w spójnym standardzie." },
-      { icon: FileCheck2, title: "Kompletność wpisów", text: "Każdy użytkownik widzi brakujące dokumenty i elementy wymagające uzupełnienia." },
-      { icon: FileText, title: "Raporty użytkowników", text: "Pracownicy mogą przygotować własne zestawienia i eksporty dokumentów." },
-      { icon: ShieldCheck, title: "Rozdzielenie dostępu", text: "Dane osobiste i dokumenty pozostają związane z kontem konkretnego użytkownika." },
+      { icon: FileCheck2, title: "Zespół i jednostki", text: "Placówka tworzy oddziały, zespoły i przypisuje odpowiedzialność na właściwym poziomie." },
+      { icon: FileText, title: "Zaproszenia i role", text: "Dostęp jest nadawany na konkretny e-mail jako właściciel, administrator lub rola operacyjna." },
+      { icon: ShieldCheck, title: "Rozdzielenie danych", text: "Członkostwo nie daje automatycznie dostępu do prywatnych certyfikatów pracownika." },
     ],
-    roadmapTitle: "Zakres rozwijany dla organizacji",
-    roadmapText: "Docelowy moduł powinien wspierać administratora, ale nie odbierać pracownikom kontroli nad ich indywidualną ewidencją.",
+    roadmapTitle: "Kolejny zakres pilotażu",
+    roadmapText: "Fundament dostępu jest gotowy. Kolejne ekrany rozwiną proces pracy na danych dobrowolnie udostępnionych placówce.",
     roadmap: [
       "Widok zbiorczy statusów i kompletności zespołu.",
-      "Zapraszanie pracowników i struktura jednostki.",
+      "Kolejka weryfikacji aktywności i dokumentów.",
       "Alerty o brakach, terminach i dokumentach.",
       "Raport jednostki oraz eksport danych zgodny z uprawnieniami.",
     ],
@@ -114,7 +114,7 @@ const content: Record<RoleKind, RoleContent> = {
     faq: [
       ["Czy placówka może założyć jedno konto dla całego zespołu?", "Nie rekomendujemy wspólnego konta. Docelowy model zakłada indywidualne konta pracowników oraz osobne uprawnienia administratora."],
       ["Czy administrator zobaczy wszystkie dokumenty?", "Zakres dostępu powinien wynikać z roli, uprawnień i zasad wdrożenia. Nie zakładamy automatycznie pełnego dostępu do wszystkich danych."],
-      ["Czy moduł jest już gotowy?", "Profil medyka działa już teraz. Zbiorczy moduł placówki jest rozwijany i wymaga ustalenia zakresu."],
+      ["Czy moduł jest już gotowy?", "Dostępny jest panel pilotażowy z placówką, jednostkami, członkostwami, zaproszeniami i rolami. Weryfikacje oraz raporty zespołu są rozwijane w kolejnych etapach."],
       ["Czy można zacząć od małego zespołu?", "Tak. Rozmowę warto rozpocząć od jednego zespołu lub jednostki pilotażowej."],
     ],
     contactRole: "placowka",
@@ -194,10 +194,17 @@ export default function RoleLandingPage({ role }: Props) {
                     <Link href="/narzedzia" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-extrabold text-slate-700 hover:border-blue-200 hover:bg-blue-50">Zobacz narzędzia</Link>
                   </>
                 ) : (
-                  <>
-                    <RoleContactModal role={active.contactRole} triggerLabel={role === "placowka" ? "Zapytaj o moduł placówki" : "Ustal zakres dla organizatora"} />
-                    <Link href="/kontakt" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-extrabold text-slate-700 hover:border-blue-200 hover:bg-blue-50">Przejdź do kontaktu</Link>
-                  </>
+                  role === "placowka" ? (
+                    <>
+                      <Link href="/placowka" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(37,99,235,0.22)] hover:bg-blue-700">Otwórz panel placówki <ArrowRight className="h-4 w-4" /></Link>
+                      <RoleContactModal role={active.contactRole} triggerLabel="Zapytaj o pilotaż" />
+                    </>
+                  ) : (
+                    <>
+                      <RoleContactModal role={active.contactRole} triggerLabel="Ustal zakres dla organizatora" />
+                      <Link href="/kontakt" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-extrabold text-slate-700 hover:border-blue-200 hover:bg-blue-50">Przejdź do kontaktu</Link>
+                    </>
+                  )
                 )}
               </div>
             </div>

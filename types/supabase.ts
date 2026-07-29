@@ -33,7 +33,14 @@ export type Database = {
       cpd_rule_sources: LooseTable;
       educational_activities: LooseTable;
       medical_professionals: LooseTable;
+      organization_audit_events: LooseTable;
+      organization_invitations: LooseTable;
       organization_memberships: LooseTable;
+      organization_membership_roles: LooseTable;
+      organization_role_permissions: LooseTable;
+      organization_unit_role_assignments: LooseTable;
+      organization_units: LooseTable;
+      organizations: LooseTable;
       platform_staff_roles: LooseTable;
       professional_identifiers: LooseTable;
       professions: LooseTable;
@@ -48,6 +55,67 @@ export type Database = {
           accepted_roles: string[];
         };
         Returns: boolean;
+      };
+      has_organization_permission: {
+        Args: {
+          target_organization_id: string;
+          accepted_permission: string;
+          target_unit_id?: string | null;
+        };
+        Returns: boolean;
+      };
+      get_my_organization_contexts: {
+        Args: Record<string, never>;
+        Returns: Array<{
+          organization_id: string;
+          membership_id: string;
+          display_name: string;
+          organization_status: string;
+          primary_role: string;
+          role_codes: string[];
+        }>;
+      };
+      get_organization_panel: {
+        Args: { p_organization_id: string };
+        Returns: Json;
+      };
+      create_organization_invitation: {
+        Args: {
+          p_organization_id: string;
+          p_email: string;
+          p_role_code?: string;
+          p_unit_id?: string | null;
+        };
+        Returns: Json;
+      };
+      accept_organization_invitation: {
+        Args: { p_token: string };
+        Returns: Json;
+      };
+      create_organization_unit: {
+        Args: {
+          p_organization_id: string;
+          p_name: string;
+          p_unit_type?: string;
+          p_parent_unit_id?: string | null;
+        };
+        Returns: string;
+      };
+      set_organization_role: {
+        Args: {
+          p_membership_id: string;
+          p_role_code: string;
+          p_unit_id?: string | null;
+          p_enabled?: boolean;
+        };
+        Returns: undefined;
+      };
+      set_organization_membership_status: {
+        Args: {
+          p_membership_id: string;
+          p_status: string;
+        };
+        Returns: undefined;
       };
       is_platform_staff: {
         Args: { accepted_roles: string[] };

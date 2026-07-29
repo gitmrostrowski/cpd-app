@@ -1510,52 +1510,52 @@ export default function CalculatorClient() {
           ) : null}
         </div>
 
-        <div className="mx-6 mb-5 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-sm text-slate-700">
+        <div className="mx-6 mb-5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
           {appliedRuleSet ? (
             <>
-              <div className="font-extrabold text-slate-950">
-                Zastosowana reguła: {appliedRuleSet.name_pl}
-              </div>
-              <div className="mt-1 leading-5">
-                Wersja {appliedRuleSet.version}
+              <span className="font-bold text-slate-800">
+                Reguła: {appliedRuleSet.required_points} pkt /{" "}
+                {appliedRuleSet.period_months} miesięcy
+              </span>
+              <span>
+                {" "}· wersja {appliedRuleSet.version}
                 {appliedRuleSet.last_verified_on
                   ? ` · zweryfikowana ${appliedRuleSet.last_verified_on}`
                   : ""}
-                . {appliedRuleSet.summary_pl}
-              </div>
+              </span>
             </>
           ) : suggestedRuleSet ? (
             <>
-              <div className="font-extrabold text-slate-950">
-                Dostępna zweryfikowana reguła podstawowa
-              </div>
-              <div className="mt-1 leading-5">
+              <span className="font-bold text-slate-800">
+                Reguła dla zawodu:{" "}
                 {suggestedRuleSet.required_points} pkt /{" "}
-                {suggestedRuleSet.period_months} miesięcy · wersja{" "}
-                {suggestedRuleSet.version}. Obecny cykl pozostaje własnym celem
-                i nie został automatycznie zmieniony.
-              </div>
+                {suggestedRuleSet.period_months} miesięcy
+              </span>
+              <span> · zweryfikowana</span>
               {suggestedRuleSet.sources[0] ? (
-                <a
-                  href={suggestedRuleSet.sources[0].url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 inline-flex font-bold text-blue-700 hover:text-blue-800"
-                >
-                  Źródło: {suggestedRuleSet.sources[0].title} →
-                </a>
+                <details className="ml-1 inline">
+                  <summary className="inline cursor-pointer font-bold text-blue-700 hover:text-blue-800">
+                    Szczegóły i źródło
+                  </summary>
+                  <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3">
+                    Obecny cykl pozostaje własnym celem i nie został
+                    automatycznie zmieniony. Wersja {suggestedRuleSet.version}.{" "}
+                    <a
+                      href={suggestedRuleSet.sources[0].url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-bold text-blue-700 hover:text-blue-800"
+                    >
+                      {suggestedRuleSet.sources[0].title} →
+                    </a>
+                  </div>
+                </details>
               ) : null}
             </>
           ) : (
             <>
-              <div className="font-extrabold text-slate-950">
-                Cel własny użytkownika
-              </div>
-              <div className="mt-1 leading-5">
-                CRPE nie ma jeszcze aktywnej, zweryfikowanej reguły dla tego
-                zawodu. Wartość powyżej służy do prywatnego planowania i nie
-                jest przedstawiana jako wymóg ustawowy.
-              </div>
+              <span className="font-bold text-slate-800">Cel własny.</span>{" "}
+              Brak aktywnej, zweryfikowanej reguły dla tego zawodu.
             </>
           )}
         </div>

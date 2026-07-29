@@ -24,6 +24,7 @@ export default function LoginPage() {
 
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [nextPath, setNextPath] = useState("/kalkulator");
 
   // cooldown dla maili (otp / signup / reset), żeby nie wpadać w limit
   const [emailCooldownUntil, setEmailCooldownUntil] = useState<number>(0);
@@ -34,14 +35,25 @@ export default function LoginPage() {
   const redirectTo = useMemo(() => {
     // callback endpoint musi istnieć: app/auth/callback/route.ts
     if (typeof window === "undefined") return "";
-    return `${window.location.origin}/auth/callback`;
-  }, []);
+    return `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
+  }, [nextPath]);
 
   const emailTrim = email.trim();
   const canPasswordSubmit = emailTrim.length > 3 && password.length >= 6;
   const canEmailSubmit = emailTrim.length > 3;
 
   // odświeżaj raz na sekundę, tylko gdy cooldown aktywny
+  useEffect(() => {
+    const candidate = new URLSearchParams(window.location.search).get("next");
+    if (
+      candidate &&
+      candidate.startsWith("/") &&
+      !candidate.startsWith("//")
+    ) {
+      setNextPath(candidate);
+    }
+  }, []);
+
   useEffect(() => {
     if (!emailCooldownUntil) return;
     const id = window.setInterval(() => setTick((t) => t + 1), 1000);
@@ -91,7 +103,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.replace("/kalkulator");
+      router.replace(nextPath);
     } catch (err: any) {
       setMsg(err?.message || "Nie udało się zalogować (błąd połączenia).");
     } finally {
@@ -137,7 +149,7 @@ export default function LoginPage() {
       }
 
       if (data.session) {
-        router.replace("/kalkulator");
+        router.replace(nextPath);
         return;
       }
 

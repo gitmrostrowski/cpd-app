@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import {
   ArrowRight,
   BarChart3,
+  Building2,
   ClipboardList,
   FileBarChart,
   GraduationCap,
@@ -83,6 +84,7 @@ export default function Header() {
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const { user, loading, signOut } = useAuth();
   const [role, setRole] = useState<string | null>(null);
+  const [organizationCount, setOrganizationCount] = useState(0);
   const isAdmin = role === "admin";
 
   useEffect(() => {
@@ -115,21 +117,29 @@ export default function Header() {
     (async () => {
       if (!user) {
         setRole(null);
+        setOrganizationCount(0);
         return;
       }
 
       const sb = supabaseClient();
-      const { data, error } = await sb
-        .from("platform_staff_roles")
-        .select("role_code")
-        .eq("user_id", user.id)
-        .eq("role_code", "platform_admin")
-        .is("revoked_at", null)
-        .limit(1)
-        .maybeSingle();
+      const [{ data, error }, { data: organizations, error: organizationsError }] =
+        await Promise.all([
+          sb
+            .from("platform_staff_roles")
+            .select("role_code")
+            .eq("user_id", user.id)
+            .eq("role_code", "platform_admin")
+            .is("revoked_at", null)
+            .limit(1)
+            .maybeSingle(),
+          sb.rpc("get_my_organization_contexts"),
+        ]);
 
       if (cancelled) return;
       setRole(!error && data ? "admin" : null);
+      setOrganizationCount(
+        organizationsError ? 0 : (organizations ?? []).length,
+      );
     })();
 
     return () => {
@@ -163,6 +173,7 @@ export default function Header() {
     setOpenMobile(false);
     setOpenUser(false);
     setRole(null);
+    setOrganizationCount(0);
   }
 
   const logoHref = "/";
@@ -261,10 +272,26 @@ export default function Header() {
                     Otwórz Panel CPD <ArrowRight className="h-4 w-4" />
                   </Link>
                 ) : (
-                <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 2xl:flex">
-                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                  <span className="font-medium">{emailShort}</span>
-                </div>
+                <>
+                  {organizationCount > 0 ? (
+                    <Link
+                      href="/placowka"
+                      className={cx(
+                        "inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-extrabold transition",
+                        pathname?.startsWith("/placowka")
+                          ? "border-blue-200 bg-blue-50 text-blue-700"
+                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                      )}
+                    >
+                      <Building2 className="h-4 w-4" />
+                      Placówka
+                    </Link>
+                  ) : null}
+                  <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 2xl:flex">
+                    <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                    <span className="font-medium">{emailShort}</span>
+                  </div>
+                </>
                 )}
 
                 <div className="relative" ref={userMenuRef}>
@@ -301,6 +328,16 @@ export default function Header() {
                       >
                         <Settings className="h-4 w-4" /> Profil i ustawienia
                       </Link>
+
+                      {organizationCount > 0 ? (
+                        <Link
+                          href="/placowka"
+                          className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                          onClick={() => setOpenUser(false)}
+                        >
+                          <Building2 className="h-4 w-4" /> Panel placówki
+                        </Link>
+                      ) : null}
 
                       {isAdmin ? (
                         <Link
@@ -447,6 +484,15 @@ export default function Header() {
                   >
                     <Settings className="h-4 w-4" /> Profil i ustawienia
                   </Link>
+
+                  {organizationCount > 0 ? (
+                    <Link
+                      href="/placowka"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                    >
+                      <Building2 className="h-4 w-4" /> Panel placówki
+                    </Link>
+                  ) : null}
 
                   {isAdmin ? (
                     <Link
