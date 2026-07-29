@@ -53,6 +53,20 @@ check(
     !api.includes("NEXT_PUBLIC_BREVO"),
 );
 check(
+  "Panel przekazuje sesję do serwerowej wysyłki",
+  panel.includes("supabase.auth.getSession()") &&
+    panel.includes("Authorization: `Bearer ${session.access_token}`") &&
+    panel.includes('invitationRequest("POST"') &&
+    panel.includes('invitationRequest("DELETE"'),
+);
+check(
+  "API weryfikuje przekazany token sesji",
+  api.includes('request.headers.get("authorization")') &&
+    api.includes("Authorization: authorization") &&
+    api.includes("supabaseServer(request)") &&
+    api.includes("authError || !authData.user"),
+);
+check(
   "Wysyłka używa klucza idempotencji",
   api.includes('"Idempotency-Key"') &&
     api.includes('"X-Crpe-Invitation-Id"'),

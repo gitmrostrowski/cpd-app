@@ -266,6 +266,29 @@ export default function OrganizationPanelClient({
     setWorking(false);
   }
 
+  async function invitationRequest(
+    method: "POST" | "DELETE",
+    body: Record<string, unknown>,
+  ) {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session?.access_token) {
+      throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+    }
+
+    return fetch("/api/organizations/invitations", {
+      method,
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+  }
+
   async function createInvitation(event: FormEvent) {
     event.preventDefault();
     const unitId = inviteScope === "organization" ? null : inviteScope;
@@ -282,16 +305,12 @@ export default function OrganizationPanelClient({
     setMessage("");
     setError("");
     try {
-      const response = await fetch("/api/organizations/invitations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "create",
-          organizationId,
-          emails,
-          roleCode: inviteRole,
-          unitId,
-        }),
+      const response = await invitationRequest("POST", {
+        action: "create",
+        organizationId,
+        emails,
+        roleCode: inviteRole,
+        unitId,
       });
       const result = (await response.json()) as {
         sent?: number;
@@ -324,14 +343,10 @@ export default function OrganizationPanelClient({
     setMessage("");
     setError("");
     try {
-      const response = await fetch("/api/organizations/invitations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "resend",
-          invitationId: invitation.id,
-          roleCode: invitation.role_code,
-        }),
+      const response = await invitationRequest("POST", {
+        action: "resend",
+        invitationId: invitation.id,
+        roleCode: invitation.role_code,
       });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Nie udało się ponowić zaproszenia.");
@@ -352,10 +367,8 @@ export default function OrganizationPanelClient({
     setMessage("");
     setError("");
     try {
-      const response = await fetch("/api/organizations/invitations", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invitationId: invitation.id }),
+      const response = await invitationRequest("DELETE", {
+        invitationId: invitation.id,
       });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Nie udało się anulować zaproszenia.");

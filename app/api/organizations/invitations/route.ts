@@ -54,12 +54,20 @@ function escapeHtml(value: string) {
   );
 }
 
-async function supabaseServer() {
+async function supabaseServer(request: Request) {
   const cookieStore = (await cookies()) as any;
+  const authorization = request.headers.get("authorization");
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      global: authorization
+        ? {
+            headers: {
+              Authorization: authorization,
+            },
+          }
+        : undefined,
       cookies: {
         getAll() {
           return cookieStore.getAll();
@@ -179,9 +187,9 @@ async function sendInvitationEmail(
 }
 
 export async function POST(request: Request) {
-  const supabase = await supabaseServer();
-  const { data: authData } = await supabase.auth.getUser();
-  if (!authData.user) {
+  const supabase = await supabaseServer(request);
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) {
     return NextResponse.json({ error: "Zaloguj się ponownie." }, { status: 401 });
   }
 
@@ -338,9 +346,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const supabase = await supabaseServer();
-  const { data: authData } = await supabase.auth.getUser();
-  if (!authData.user) {
+  const supabase = await supabaseServer(request);
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) {
     return NextResponse.json({ error: "Zaloguj się ponownie." }, { status: 401 });
   }
 
