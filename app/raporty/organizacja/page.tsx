@@ -198,7 +198,7 @@ export default function RaportOrganizacjiPage() {
 
               <p>
                 Pracodawcy nie mają wglądu w czasie rzeczywistym w to, czy ich
-                personel spełnia wymagane standardy edukacyjne. Utrudnia to
+                udostępniona ewidencja personelu jest kompletna. Utrudnia to
                 zarządzanie zespołami, wczesne reagowanie i zwiększa ryzyko
                 operacyjne.
               </p>

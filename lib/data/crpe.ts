@@ -1,4 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  FALLBACK_PROFESSION_OPTIONS,
+  type CpdRuleRequirement,
+  type CpdRuleSet,
+  type CpdRuleSource,
+  type ProfessionOption,
+} from "@/lib/cpd/professions";
 
 type Client = SupabaseClient<any>;
 
@@ -73,6 +80,8 @@ export type LegacyProfile = {
   user_id: string;
   profession: string;
   profession_other: string | null;
+  profession_id?: string | null;
+  profession_code?: string | null;
   period_start: number;
   period_end: number;
   required_points: number;
@@ -82,6 +91,11 @@ export type LegacyProfile = {
   can_org_report: boolean;
   cycle_id?: string | null;
   cycle_source?: string | null;
+  cycle_target_mode?: "custom" | "rule_set";
+  cycle_rule_set_id?: string | null;
+  formal_status?: "not_confirmed" | "confirmed_externally";
+  suggested_rule_set?: CpdRuleSet | null;
+  applied_rule_set?: CpdRuleSet | null;
 };
 
 export type ActivityInput = {
@@ -132,6 +146,149 @@ const CODE_BY_OLD_TYPE: Record<string, string> = {
 function asNumber(value: unknown) {
   const parsed = Number(value ?? 0);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function toRuleSource(row: Record<string, any>): CpdRuleSource {
+  return {
+    id: row.id,
+    source_kind: row.source_kind,
+    title: row.title,
+    url: row.url,
+    published_on: row.published_on ?? null,
+    verified_on: row.verified_on,
+    is_primary: Boolean(row.is_primary),
+  };
+}
+
+function toRuleRequirement(row: Record<string, any>): CpdRuleRequirement {
+  return {
+    id: row.id,
+    activity_type_id: row.activity_type_id ?? null,
+    requirement_kind: row.requirement_kind,
+    scope: row.scope,
+    points: asNumber(row.points),
+    note_pl: row.note_pl ?? null,
+    sort_order: Number(row.sort_order ?? 0),
+  };
+}
+
+async function hydrateRuleSet(
+  client: Client,
+  row: Record<string, any> | null | undefined,
+): Promise<CpdRuleSet | null> {
+  if (!row) return null;
+
+  const [sourcesResult, requirementsResult] = await Promise.all([
+    client
+      .from("cpd_rule_sources")
+      .select(
+        "id,source_kind,title,url,published_on,verified_on,is_primary",
+      )
+      .eq("rule_set_id", row.id)
+      .order("is_primary", { ascending: false }),
+    client
+      .from("cpd_rule_requirements")
+      .select(
+        "id,activity_type_id,requirement_kind,scope,points,note_pl,sort_order",
+      )
+      .eq("rule_set_id", row.id)
+      .order("sort_order", { ascending: true }),
+  ]);
+
+  if (sourcesResult.error) throw new Error(sourcesResult.error.message);
+  if (requirementsResult.error)
+    throw new Error(requirementsResult.error.message);
+
+  return {
+    id: row.id,
+    profession_id: row.profession_id,
+    version: row.version,
+    name_pl: row.name_pl,
+    status: row.status,
+    calculation_scope: row.calculation_scope,
+    valid_from: row.valid_from ?? null,
+    valid_to: row.valid_to ?? null,
+    period_months:
+      row.period_months == null ? null : Number(row.period_months),
+    required_points:
+      row.required_points == null ? null : asNumber(row.required_points),
+    formal_confirmation_authority:
+      row.formal_confirmation_authority ?? null,
+    summary_pl: row.summary_pl ?? null,
+    disclaimer_pl: row.disclaimer_pl,
+    last_verified_on: row.last_verified_on ?? null,
+    sources: ((sourcesResult.data ?? []) as Record<string, any>[]).map(
+      toRuleSource,
+    ),
+    requirements: (
+      (requirementsResult.data ?? []) as Record<string, any>[]
+    ).map(toRuleRequirement),
+  };
+}
+
+const RULE_SET_COLUMNS =
+  "id,profession_id,version,name_pl,status,calculation_scope,valid_from,valid_to,period_months,required_points,formal_confirmation_authority,summary_pl,disclaimer_pl,last_verified_on";
+
+export async function fetchProfessionCatalog(
+  client: Client,
+): Promise<ProfessionOption[]> {
+  const { data, error } = await client
+    .from("professions")
+    .select(
+      "id,code,name_pl,name_pl_plural,description_pl,identifier_label,is_other,sort_order",
+    )
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("name_pl", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as Record<string, any>[];
+  if (!rows.length) return [...FALLBACK_PROFESSION_OPTIONS];
+
+  return rows.map((row) => ({
+    id: row.id,
+    code: row.code,
+    name_pl: row.name_pl,
+    name_pl_plural: row.name_pl_plural ?? null,
+    description_pl: row.description_pl ?? null,
+    identifier_label: row.identifier_label ?? null,
+    is_other: Boolean(row.is_other),
+    sort_order: Number(row.sort_order ?? 0),
+  }));
+}
+
+export async function fetchVerifiedRuleSet(
+  client: Client,
+  professionId: string,
+  onDate = new Date().toISOString().slice(0, 10),
+): Promise<CpdRuleSet | null> {
+  const { data, error } = await client
+    .from("cpd_rule_sets")
+    .select(RULE_SET_COLUMNS)
+    .eq("profession_id", professionId)
+    .eq("status", "verified")
+    .lte("valid_from", onDate)
+    .or(`valid_to.is.null,valid_to.gte.${onDate}`)
+    .order("valid_from", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return hydrateRuleSet(client, data as Record<string, any> | null);
+}
+
+async function fetchRuleSetById(
+  client: Client,
+  ruleSetId: string | null | undefined,
+): Promise<CpdRuleSet | null> {
+  if (!ruleSetId) return null;
+  const { data, error } = await client
+    .from("cpd_rule_sets")
+    .select(RULE_SET_COLUMNS)
+    .eq("id", ruleSetId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return hydrateRuleSet(client, data as Record<string, any> | null);
 }
 
 function yearFromActivity(row: Record<string, any>) {
@@ -540,7 +697,7 @@ export async function fetchProfile(
       client
         .from("cpd_cycles")
         .select(
-          "id,profession_id,starts_on,ends_on,required_points,status,source",
+          "id,profession_id,starts_on,ends_on,required_points,status,source,rule_set_id,target_mode,formal_status",
         )
         .eq("user_id", userId)
         .is("deleted_at", null)
@@ -596,14 +753,22 @@ export async function fetchProfile(
     profession?.code === "other_medical_profession"
       ? "Inne"
       : profession?.name_pl ?? "Lekarz";
+  const [appliedRuleSet, suggestedRuleSet] = await Promise.all([
+    fetchRuleSetById(client, cycle?.rule_set_id ?? null),
+    professionId
+      ? fetchVerifiedRuleSet(client, professionId)
+      : Promise.resolve(null),
+  ]);
 
   return {
     user_id: userId,
     profession: professionName,
     profession_other: null,
+    profession_id: professionId ?? null,
+    profession_code: profession?.code ?? null,
     period_start: cycle ? Number(String(cycle.starts_on).slice(0, 4)) : 2023,
     period_end: cycle ? Number(String(cycle.ends_on).slice(0, 4)) : 2026,
-    required_points: cycle ? asNumber(cycle.required_points) : 200,
+    required_points: cycle ? asNumber(cycle.required_points) : 0,
     pwz_number: identifiersResult.error
       ? null
       : identifiersResult.data?.identifier_value ?? null,
@@ -618,21 +783,12 @@ export async function fetchProfile(
     can_org_report: false,
     cycle_id: cycle?.id ?? null,
     cycle_source: cycle?.source ?? null,
+    cycle_target_mode: cycle?.target_mode ?? "custom",
+    cycle_rule_set_id: cycle?.rule_set_id ?? null,
+    formal_status: cycle?.formal_status ?? "not_confirmed",
+    applied_rule_set: appliedRuleSet,
+    suggested_rule_set: suggestedRuleSet,
   };
-}
-
-function professionCode(profession: string) {
-  const normalized = profession.toLocaleLowerCase("pl-PL");
-  if (normalized === "lekarz") return "doctor";
-  if (normalized === "lekarz dentysta") return "dentist";
-  if (normalized === "pielęgniarka") return "nurse";
-  if (normalized === "położna") return "midwife";
-  if (normalized === "fizjoterapeuta") return "physiotherapist";
-  if (normalized === "ratownik medyczny") return "paramedic";
-  if (normalized === "farmaceuta") return "pharmacist";
-  if (normalized === "diagnosta laboratoryjny")
-    return "laboratory_diagnostician";
-  return "other_medical_profession";
 }
 
 export async function saveProfile(
@@ -648,13 +804,18 @@ export async function saveProfile(
     pwz_issue_date?: string | null;
   },
 ) {
-  const code = professionCode(input.profession);
-  const { data: profession, error: professionError } = await client
+  let professionQuery = client
     .from("professions")
     .select("id")
-    .eq("code", code)
-    .eq("is_active", true)
-    .maybeSingle();
+    .eq("is_active", true);
+
+  professionQuery =
+    input.profession === "Inne"
+      ? professionQuery.eq("is_other", true)
+      : professionQuery.eq("name_pl", input.profession);
+
+  const { data: profession, error: professionError } =
+    await professionQuery.maybeSingle();
   if (professionError) throw new Error(professionError.message);
   if (!profession) throw new Error("Wybrany zawód nie istnieje w bazie.");
 

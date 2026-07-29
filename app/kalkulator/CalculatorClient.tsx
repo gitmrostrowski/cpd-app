@@ -7,17 +7,21 @@ import { supabaseClient } from "@/lib/supabase/client";
 import {
   createActivity,
   fetchActivities,
+  fetchProfessionCatalog,
   fetchProfile,
+  fetchVerifiedRuleSet,
   saveProfile,
 } from "@/lib/data/crpe";
 
 import {
+  type CpdRuleSet,
   type Profession,
-  PROFESSION_OPTIONS,
-  DEFAULT_REQUIRED_POINTS_BY_PROFESSION,
+  type ProfessionOption,
+  FALLBACK_PROFESSION_OPTIONS,
   displayProfession,
   isOtherProfession,
   normalizeOtherProfession,
+  professionOptionByName,
 } from "@/lib/cpd/professions";
 
 type ActivityStatus = "planned" | "done" | null;
@@ -49,6 +53,10 @@ type ProfileRow = {
   period_start: number;
   period_end: number;
   required_points: number;
+  cycle_target_mode?: "custom" | "rule_set";
+  suggested_rule_set?: CpdRuleSet | null;
+  applied_rule_set?: CpdRuleSet | null;
+  formal_status?: "not_confirmed" | "confirmed_externally";
 };
 
 type RuleLimit = {
@@ -59,150 +67,12 @@ type RuleLimit = {
   note?: string;
 };
 
-type ProfessionRules = {
-  periodMonths: number;
-  requiredPoints: number;
-  limits: RuleLimit[];
-};
-
-const RULES_BY_PROFESSION: Partial<Record<Profession, ProfessionRules>> = {
-  Lekarz: {
-    periodMonths: 48,
-    requiredPoints: 200,
-    limits: [
-      {
-        key: "INTERNAL_TRAINING",
-        label: "Szkolenie wewnętrzne",
-        mode: "per_item",
-        maxPoints: 6,
-        note: "Maks. 6 pkt za jedno szkolenie. Limit dotyczy pojedynczego wpisu, nie sumy w okresie.",
-      },
-      {
-        key: "JOURNAL_SUBSCRIPTION",
-        label: "Prenumerata czasopisma",
-        mode: "per_period",
-        maxPoints: 10,
-        note: "Po osiągnięciu limitu lepiej wybrać inną aktywność.",
-      },
-      {
-        key: "SCIENTIFIC_SOCIETY",
-        label: "Towarzystwo/Kolegium",
-        mode: "per_period",
-        maxPoints: 20,
-        note: "Pamiętaj o potwierdzeniu członkostwa lub opłacenia składki.",
-      },
-    ],
-  },
-  "Lekarz dentysta": {
-    periodMonths: 48,
-    requiredPoints: 200,
-    limits: [
-      {
-        key: "INTERNAL_TRAINING",
-        label: "Szkolenie wewnętrzne",
-        mode: "per_item",
-        maxPoints: 6,
-        note: "Maks. 6 pkt za jedno szkolenie. Limit dotyczy pojedynczego wpisu, nie sumy w okresie.",
-      },
-      {
-        key: "JOURNAL_SUBSCRIPTION",
-        label: "Prenumerata czasopisma",
-        mode: "per_period",
-        maxPoints: 10,
-        note: "Po osiągnięciu limitu lepiej wybrać inną aktywność.",
-      },
-      {
-        key: "SCIENTIFIC_SOCIETY",
-        label: "Towarzystwo/Kolegium",
-        mode: "per_period",
-        maxPoints: 20,
-        note: "Pamiętaj o potwierdzeniu członkostwa lub opłacenia składki.",
-      },
-    ],
-  },
-  Pielęgniarka: {
-    periodMonths: 60,
-    requiredPoints: 100,
-    limits: [
-      {
-        key: "WEBINAR",
-        label: "Webinary",
-        mode: "per_period",
-        maxPoints: 50,
-        note: "Dobre do uzupełnienia punktów, ale nie opieraj całego okresu tylko na webinarach.",
-      },
-      {
-        key: "INTERNAL_TRAINING",
-        label: "Szkolenie wewnętrzne",
-        mode: "per_period",
-        maxPoints: 50,
-        note: "Dobre do uzupełnienia braków, jeśli masz potwierdzenie udziału.",
-      },
-      {
-        key: "COMMITTEES",
-        label: "Komisje/Zespoły",
-        mode: "per_period",
-        maxPoints: 30,
-        note: "Wymaga dobrej dokumentacji obecności lub udziału.",
-      },
-      {
-        key: "JOURNAL_SUBSCRIPTION",
-        label: "Prenumerata czasopisma",
-        mode: "per_year",
-        maxPoints: 10,
-        note: "Limit liczony rocznie — sprawdź, których lat dotyczy prenumerata.",
-      },
-    ],
-  },
-  Położna: {
-    periodMonths: 60,
-    requiredPoints: 100,
-    limits: [
-      {
-        key: "WEBINAR",
-        label: "Webinary",
-        mode: "per_period",
-        maxPoints: 50,
-        note: "Dobre do uzupełnienia punktów, ale nie opieraj całego okresu tylko na webinarach.",
-      },
-      {
-        key: "INTERNAL_TRAINING",
-        label: "Szkolenie wewnętrzne",
-        mode: "per_period",
-        maxPoints: 50,
-        note: "Dobre do uzupełnienia braków, jeśli masz potwierdzenie udziału.",
-      },
-      {
-        key: "COMMITTEES",
-        label: "Komisje/Zespoły",
-        mode: "per_period",
-        maxPoints: 30,
-        note: "Wymaga dobrej dokumentacji obecności lub udziału.",
-      },
-      {
-        key: "JOURNAL_SUBSCRIPTION",
-        label: "Prenumerata czasopisma",
-        mode: "per_year",
-        maxPoints: 10,
-        note: "Limit liczony rocznie — sprawdź, których lat dotyczy prenumerata.",
-      },
-    ],
-  },
-};
+// v4 nie zawiera żadnych limitów wpisanych na sztywno w kodzie.
+// Karty limitów pojawią się dopiero dla rule setu o calculation_scope="full".
+const VERIFIED_LIMITS: RuleLimit[] = [];
 
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
-}
-
-function mapTypeToRuleKey(type: string): string | null {
-  const t = (type || "").toLowerCase();
-  if (t.includes("webinar")) return "WEBINAR";
-  if (t.includes("kurs online")) return "WEBINAR";
-  if (t.includes("szkolenie wewn")) return "INTERNAL_TRAINING";
-  if (t.includes("prenumer")) return "JOURNAL_SUBSCRIPTION";
-  if (t.includes("towarzyst") || t.includes("kolegium")) return "SCIENTIFIC_SOCIETY";
-  if (t.includes("komisj") || t.includes("zesp")) return "COMMITTEES";
-  return null;
 }
 
 function normalizeStatus(s: ActivityStatus | undefined): "planned" | "done" {
@@ -217,13 +87,17 @@ function formatYMD(d: string | null | undefined) {
 }
 
 function getPeriodFromPwzIssueDate(
-  prof: Profession,
+  ruleSet: CpdRuleSet | null | undefined,
   pwzIssueDate: string | null | undefined,
 ) {
-  if (!pwzIssueDate) return null;
+  if (
+    !pwzIssueDate ||
+    ruleSet?.status !== "verified" ||
+    !ruleSet.period_months
+  ) return null;
   const y = Number(String(pwzIssueDate).slice(0, 4));
   if (!y || Number.isNaN(y)) return null;
-  const months = RULES_BY_PROFESSION[prof]?.periodMonths ?? 48;
+  const months = ruleSet.period_months;
   const years = Math.max(1, Math.round(months / 12));
   return { start: y, end: y + years - 1 };
 }
@@ -675,14 +549,21 @@ export default function CalculatorClient() {
   const [loading, setLoading] = useState(true);
   const [activityLoadError, setActivityLoadError] = useState<string | null>(null);
   const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
+  const [professionOptions, setProfessionOptions] =
+    useState<ProfessionOption[]>([...FALLBACK_PROFESSION_OPTIONS]);
+  const [suggestedRuleSet, setSuggestedRuleSet] =
+    useState<CpdRuleSet | null>(null);
+  const [appliedRuleSet, setAppliedRuleSet] = useState<CpdRuleSet | null>(null);
+  const [cycleTargetMode, setCycleTargetMode] =
+    useState<"custom" | "rule_set">("custom");
+  const [formalStatus, setFormalStatus] =
+    useState<"not_confirmed" | "confirmed_externally">("not_confirmed");
 
   const [profession, setProfession] = useState<Profession>("Lekarz");
   const [professionOther, setProfessionOther] = useState("");
   const [periodStart, setPeriodStart] = useState(2023);
   const [periodEnd, setPeriodEnd] = useState(2026);
-  const [requiredPoints, setRequiredPoints] = useState(
-    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200,
-  );
+  const [requiredPoints, setRequiredPoints] = useState(0);
   const [periodMode, setPeriodMode] = useState<"preset" | "custom">("preset");
 
   const [savingProfile, setSavingProfile] = useState(false);
@@ -742,7 +623,12 @@ export default function CalculatorClient() {
       let p = null;
       let profileFailed = false;
       try {
-        p = await fetchProfile(supabase, user.id);
+        const [profileResult, catalogResult] = await Promise.all([
+          fetchProfile(supabase, user.id),
+          fetchProfessionCatalog(supabase),
+        ]);
+        p = profileResult;
+        setProfessionOptions(catalogResult);
         setProfileLoadError(null);
       } catch (caught) {
         profileFailed = true;
@@ -758,20 +644,26 @@ export default function CalculatorClient() {
           const prof = (p.profession ?? "Lekarz") as Profession;
           const po = normalizeOtherProfession(p.profession_other);
           const pwzIssue = p.pwz_issue_date as string | null;
-          const derived = getPeriodFromPwzIssueDate(prof, pwzIssue);
+          const applied = p.applied_rule_set ?? null;
+          const suggested = p.suggested_rule_set ?? null;
+          const targetMode = p.cycle_target_mode ?? "custom";
+          const derived =
+            targetMode === "rule_set"
+              ? getPeriodFromPwzIssueDate(applied, pwzIssue)
+              : null;
           const start = derived?.start ?? (p.period_start ?? 2023);
           const end = derived?.end ?? (p.period_end ?? 2026);
-          const rp =
-            (p.required_points ?? undefined) ??
-            DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ??
-            RULES_BY_PROFESSION[prof]?.requiredPoints ??
-            200;
+          const rp = Number(p.required_points ?? 0);
 
           setProfession(prof);
           setProfessionOther(po);
           setPeriodStart(start);
           setPeriodEnd(end);
           setRequiredPoints(rp);
+          setSuggestedRuleSet(suggested);
+          setAppliedRuleSet(applied);
+          setCycleTargetMode(targetMode);
+          setFormalStatus(p.formal_status ?? "not_confirmed");
           setPeriodMode(
             derived
               ? "custom"
@@ -789,13 +681,24 @@ export default function CalculatorClient() {
             period_start: start,
             period_end: end,
             required_points: rp,
+            cycle_target_mode: targetMode,
+            suggested_rule_set: suggested,
+            applied_rule_set: applied,
+            formal_status: p.formal_status ?? "not_confirmed",
           });
         } else {
-          setProfession("Lekarz");
+          const firstProfession =
+            professionOptions[0]?.name_pl ??
+            FALLBACK_PROFESSION_OPTIONS[0].name_pl;
+          setProfession(firstProfession);
           setProfessionOther("");
           setPeriodStart(2023);
           setPeriodEnd(2026);
-          setRequiredPoints(DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.Lekarz ?? 200);
+          setRequiredPoints(0);
+          setSuggestedRuleSet(null);
+          setAppliedRuleSet(null);
+          setCycleTargetMode("custom");
+          setFormalStatus("not_confirmed");
           setPeriodMode("preset");
           setProfile(null);
         }
@@ -875,48 +778,30 @@ export default function CalculatorClient() {
         : "Postęp punktów jest blisko upływu okresu.";
 
   const limitsUsage = useMemo(() => {
-    const limits = RULES_BY_PROFESSION[profession]?.limits ?? [];
-    const usage = new Map<string, number>();
-    const counts = new Map<string, number>();
-
-    for (const a of inPeriodDone) {
-      const key = mapTypeToRuleKey(a.type);
-      if (!key) continue;
-      usage.set(key, (usage.get(key) || 0) + (Number(a.points) || 0));
-      counts.set(key, (counts.get(key) || 0) + 1);
+    if (
+      appliedRuleSet?.status !== "verified" ||
+      appliedRuleSet.calculation_scope !== "full"
+    ) {
+      return [];
     }
 
-    const yearsInPeriod = Math.max(1, periodEnd - periodStart + 1);
-
-    return limits.map((l) => {
-      const used = usage.get(l.key) || 0;
-      const count = counts.get(l.key) || 0;
-      const cap = l.mode === "per_year" ? l.maxPoints * yearsInPeriod : l.maxPoints;
-      const remaining = l.mode === "per_item" ? l.maxPoints : Math.max(0, cap - used);
-      const usedPct =
-        l.mode === "per_item" ? 0 : cap > 0 ? clamp((used / cap) * 100, 0, 100) : 0;
-
-      const status: "available" | "warning" | "blocked" | "per_item" =
-        l.mode === "per_item"
-          ? "per_item"
-          : remaining <= 0
-            ? "blocked"
-            : usedPct >= 70
-              ? "warning"
-              : "available";
-
-      return {
-        ...l,
-        used,
-        count,
-        cap,
-        remaining,
-        usedPct,
-        yearsInPeriod,
-        status,
-      };
-    });
-  }, [profession, inPeriodDone, periodStart, periodEnd]);
+    // v4 nie publikuje limitu, dopóki nie ma zweryfikowanego mapowania
+    // cpd_rule_requirements -> activity_types.
+    return VERIFIED_LIMITS.map((limit) => ({
+      ...limit,
+      used: 0,
+      count: 0,
+      cap: limit.maxPoints,
+      remaining: limit.maxPoints,
+      usedPct: 0,
+      yearsInPeriod: Math.max(1, periodEnd - periodStart + 1),
+      status: "available" as
+        | "available"
+        | "warning"
+        | "blocked"
+        | "per_item",
+    }));
+  }, [appliedRuleSet, periodStart, periodEnd]);
 
   const bestLimit = useMemo(() => {
     const sorted = [...limitsUsage].sort((a, b) => {
@@ -1108,7 +993,10 @@ export default function CalculatorClient() {
   const otherRequired = isOtherProfession(profession);
   const otherValid =
     !otherRequired || normalizeOtherProfession(professionOther).length >= 2;
-  const trybLabel = pwzIssueDate ? "Tryb okresu — zgodny z PWZ" : "Tryb okresu";
+  const trybLabel =
+    cycleTargetMode === "rule_set" && pwzIssueDate
+      ? "Tryb okresu — według reguły"
+      : "Tryb okresu";
   const okresLabel = pwzIssueDate
     ? `Okres liczony z PWZ (${formatYMD(pwzIssueDate)})`
     : periodMode === "preset"
@@ -1281,7 +1169,7 @@ export default function CalculatorClient() {
 
   const panelSections = [
     { id: "ustawienia", label: "Ustawienia", mobileLabel: "Ustawienia", icon: "user" as const },
-    { id: "status", label: "Realizacja celu", mobileLabel: "Postęp", icon: "chart" as const },
+    { id: "status", label: "Status ewidencji", mobileLabel: "Postęp", icon: "chart" as const },
     { id: "kroki", label: "Co dalej?", mobileLabel: "Co dalej", icon: "target" as const },
     { id: "limity", label: "Limity", mobileLabel: "Limity", icon: "shield" as const },
     { id: "aktywnosci", label: "Aktywności", mobileLabel: "Wpisy", icon: "calendar" as const },
@@ -1428,16 +1316,18 @@ export default function CalculatorClient() {
             <button
               type="button"
               onClick={() => {
-                const prof: Profession = "Lekarz";
-                const derived = getPeriodFromPwzIssueDate(prof, pwzIssueDate);
+                const prof =
+                  professionOptions[0]?.name_pl ??
+                  FALLBACK_PROFESSION_OPTIONS[0].name_pl;
                 setProfession(prof);
                 setProfessionOther("");
-                setPeriodStart(derived?.start ?? 2023);
-                setPeriodEnd(derived?.end ?? 2026);
-                setRequiredPoints(
-                  DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ?? 200,
-                );
-                setPeriodMode(derived ? "custom" : "preset");
+                setPeriodStart(2023);
+                setPeriodEnd(2026);
+                setRequiredPoints(0);
+                setSuggestedRuleSet(null);
+                setAppliedRuleSet(null);
+                setCycleTargetMode("custom");
+                setPeriodMode("preset");
                 setDirty(true);
               }}
               className="inline-flex h-9 w-28 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
@@ -1470,32 +1360,32 @@ export default function CalculatorClient() {
             </label>
             <select
               value={profession}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const v = e.target.value as Profession;
                 setProfession(v);
                 if (!isOtherProfession(v)) setProfessionOther("");
-                setRequiredPoints(
-                  RULES_BY_PROFESSION[v]?.requiredPoints ??
-                    DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[v] ??
-                    200,
-                );
 
-                if (pwzIssueDate) {
-                  const d = getPeriodFromPwzIssueDate(v, pwzIssueDate);
-                  if (d) {
-                    setPeriodMode("custom");
-                    setPeriodStart(d.start);
-                    setPeriodEnd(d.end);
+                setAppliedRuleSet(null);
+                setCycleTargetMode("custom");
+                const option = professionOptionByName(professionOptions, v);
+                if (option?.id) {
+                  try {
+                    const rule = await fetchVerifiedRuleSet(supabase, option.id);
+                    setSuggestedRuleSet(rule);
+                  } catch {
+                    setSuggestedRuleSet(null);
                   }
+                } else {
+                  setSuggestedRuleSet(null);
                 }
 
                 setDirty(true);
               }}
               className={`mt-1.5 ${inputCls}`}
             >
-              {PROFESSION_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
+              {professionOptions.map((option) => (
+                <option key={option.code} value={option.name_pl}>
+                  {option.name_pl}
                 </option>
               ))}
             </select>
@@ -1512,7 +1402,10 @@ export default function CalculatorClient() {
                 setPeriodMode(v);
 
                 if (v === "custom" && pwzIssueDate) {
-                  const d = getPeriodFromPwzIssueDate(profession, pwzIssueDate);
+                  const d = getPeriodFromPwzIssueDate(
+                    appliedRuleSet,
+                    pwzIssueDate,
+                  );
                   if (d) {
                     setPeriodStart(d.start);
                     setPeriodEnd(d.end);
@@ -1581,7 +1474,7 @@ export default function CalculatorClient() {
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-              Wymagane punkty
+              Własny cel punktowy
             </label>
             <input
               value={requiredPoints}
@@ -1615,6 +1508,56 @@ export default function CalculatorClient() {
               />
             </div>
           ) : null}
+        </div>
+
+        <div className="mx-6 mb-5 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-sm text-slate-700">
+          {appliedRuleSet ? (
+            <>
+              <div className="font-extrabold text-slate-950">
+                Zastosowana reguła: {appliedRuleSet.name_pl}
+              </div>
+              <div className="mt-1 leading-5">
+                Wersja {appliedRuleSet.version}
+                {appliedRuleSet.last_verified_on
+                  ? ` · zweryfikowana ${appliedRuleSet.last_verified_on}`
+                  : ""}
+                . {appliedRuleSet.summary_pl}
+              </div>
+            </>
+          ) : suggestedRuleSet ? (
+            <>
+              <div className="font-extrabold text-slate-950">
+                Dostępna zweryfikowana reguła podstawowa
+              </div>
+              <div className="mt-1 leading-5">
+                {suggestedRuleSet.required_points} pkt /{" "}
+                {suggestedRuleSet.period_months} miesięcy · wersja{" "}
+                {suggestedRuleSet.version}. Obecny cykl pozostaje własnym celem
+                i nie został automatycznie zmieniony.
+              </div>
+              {suggestedRuleSet.sources[0] ? (
+                <a
+                  href={suggestedRuleSet.sources[0].url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex font-bold text-blue-700 hover:text-blue-800"
+                >
+                  Źródło: {suggestedRuleSet.sources[0].title} →
+                </a>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <div className="font-extrabold text-slate-950">
+                Cel własny użytkownika
+              </div>
+              <div className="mt-1 leading-5">
+                CRPE nie ma jeszcze aktywnej, zweryfikowanej reguły dla tego
+                zawodu. Wartość powyżej służy do prywatnego planowania i nie
+                jest przedstawiana jako wymóg ustawowy.
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -1654,10 +1597,11 @@ export default function CalculatorClient() {
 
                 <div>
                   <h2 className="text-base font-extrabold tracking-tight text-slate-950">
-                    Realizacja celu
+                    Status ewidencji według danych w CRPE
                   </h2>
                   <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
-                    Jeden widok: gdzie jesteś, czego brakuje i co zrobić dalej.
+                    Punkty zadeklarowane, dokumenty i postęp względem wybranego
+                    celu.
                   </p>
                 </div>
               </div>
@@ -1676,12 +1620,54 @@ export default function CalculatorClient() {
               </Link>
             </div>
 
+            <div className="mx-4 mt-4 grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                  1. Punkty zadeklarowane
+                </div>
+                <div className="mt-1 text-xl font-extrabold text-slate-950">
+                  {donePoints} pkt
+                </div>
+                <div className="mt-1 text-xs leading-5 text-slate-500">
+                  Suma ukończonych wpisów użytkownika w wybranym okresie.
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                  2. Według reguł CRPE
+                </div>
+                <div className="mt-1 text-base font-extrabold text-slate-950">
+                  {appliedRuleSet?.calculation_scope === "full"
+                    ? `${donePoints} pkt`
+                    : "Nieobliczane"}
+                </div>
+                <div className="mt-1 text-xs leading-5 text-slate-500">
+                  {appliedRuleSet?.calculation_scope === "full"
+                    ? `Zestaw reguł ${appliedRuleSet.version}.`
+                    : "Brak pełnej, zweryfikowanej kwalifikacji form aktywności."}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                  3. Status formalny
+                </div>
+                <div className="mt-1 text-base font-extrabold text-slate-950">
+                  {formalStatus === "confirmed_externally"
+                    ? "Potwierdzony poza CRPE"
+                    : "Niepotwierdzony"}
+                </div>
+                <div className="mt-1 text-xs leading-5 text-slate-500">
+                  Formalnego potwierdzenia dokonuje właściwy organ, nie CRPE.
+                </div>
+              </div>
+            </div>
+
             <div className="grid gap-4 p-4 xl:grid-cols-[460px_minmax(0,1fr)]">
               <div className="grid gap-3">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 text-center shadow-sm shadow-slate-900/5">
                     <div className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                      Punkty zdobyte
+                      Punkty zadeklarowane
                     </div>
                     <CircularProgress value={progress} label="celu" />
                     <div className="mt-3 text-2xl font-extrabold tracking-[-0.05em] text-blue-700">
@@ -1691,7 +1677,7 @@ export default function CalculatorClient() {
                       </span>
                     </div>
                     <div className="mt-1 text-xs leading-relaxed text-slate-500">
-                      punkty w okresie {periodStart}–{periodEnd}
+                      ukończone aktywności w okresie {periodStart}–{periodEnd}
                     </div>
                   </div>
 
@@ -1714,19 +1700,30 @@ export default function CalculatorClient() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                          Zasady rozliczenia
+                          Podstawa obliczenia
                         </div>
                         <div className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-slate-950">
                           <span className="grid h-7 w-7 place-items-center rounded-xl bg-blue-600 text-white">
                             <MiniIcon name="shield" className="h-4 w-4" />
                           </span>
-                          Okres zgodny z PWZ / profilem
+                          {cycleTargetMode === "rule_set"
+                            ? "Wersjonowana reguła CRPE"
+                            : "Własny cel użytkownika"}
                         </div>
                         <div className="mt-3 text-lg font-extrabold tracking-tight text-slate-950">
                           {displayProfession(profession, professionOther)}
                         </div>
                         <div className="mt-1 text-sm text-slate-500">
                           {requiredPoints} pkt · okres {periodStart}–{periodEnd}
+                        </div>
+                        <div className="mt-2 text-xs leading-5 text-slate-500">
+                          {appliedRuleSet
+                            ? `Wersja ${appliedRuleSet.version}. Formalny status: ${
+                                formalStatus === "confirmed_externally"
+                                  ? "potwierdzony poza CRPE"
+                                  : "niepotwierdzony"
+                              }.`
+                            : "To pomocnicza ewidencja, a nie formalne potwierdzenie obowiązku."}
                         </div>
                       </div>
                       <MiniIcon name="user" className="h-5 w-5 text-slate-500" />
@@ -1785,7 +1782,7 @@ export default function CalculatorClient() {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700">
-                            Punkty zdobyte
+                            Punkty zadeklarowane
                           </div>
                           <div className="mt-2 text-3xl font-extrabold tracking-[-0.06em] text-blue-700">
                             {donePoints}
@@ -2456,7 +2453,7 @@ export default function CalculatorClient() {
                   href="/profil"
                   className="mt-3 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-800"
                 >
-                  Sprawdź profil i wymagania →
+                  Sprawdź profil i ustawienia →
                 </Link>
               </aside>
             </div>

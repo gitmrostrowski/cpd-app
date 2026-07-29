@@ -10,6 +10,7 @@ import {
   fetchActivityDocuments,
   fetchProfile,
 } from "@/lib/data/crpe";
+import type { CpdRuleSet } from "@/lib/cpd/professions";
 
 type PeriodMode = "profile" | "current" | "previous" | "custom";
 
@@ -23,6 +24,9 @@ type ProfileRow = {
   pwz_number: string | null;
   pwz_issue_date: string | null;
   role: string;
+  cycle_target_mode?: "custom" | "rule_set";
+  applied_rule_set?: CpdRuleSet | null;
+  formal_status?: "not_confirmed" | "confirmed_externally";
 };
 
 type TrainingLite = {
@@ -212,7 +216,7 @@ export default function RaportUserClient() {
 
   const requiredPoints = useMemo(() => {
     const v = profile?.required_points;
-    return typeof v === "number" && Number.isFinite(v) ? v : 200;
+    return typeof v === "number" && Number.isFinite(v) ? v : 0;
   }, [profile?.required_points]);
 
   const professionLabel = useMemo(() => {
@@ -366,15 +370,15 @@ export default function RaportUserClient() {
 
   const statusBadge = useMemo(() => {
     if (totals.status === "met")
-      return { label: "Wymogi spełnione", cls: "bg-emerald-600/10 text-emerald-700 border-emerald-200" };
+      return { label: "Cel osiągnięty", cls: "bg-emerald-600/10 text-emerald-700 border-emerald-200" };
     if (totals.status === "almost")
-      return { label: "Prawie spełnione", cls: "bg-amber-600/10 text-amber-700 border-amber-200" };
-    return { label: "Wymogi niespełnione", cls: "bg-red-600/10 text-red-700 border-red-200" };
+      return { label: "Blisko celu", cls: "bg-amber-600/10 text-amber-700 border-amber-200" };
+    return { label: "W trakcie", cls: "bg-blue-600/10 text-blue-700 border-blue-200" };
   }, [totals.status]);
 
   const diffText = useMemo(() => {
-    if (totals.diff >= 0) return `Nadwyżka: ${totals.diff} pkt`;
-    return `Brakuje: ${Math.abs(totals.diff)} pkt`;
+    if (totals.diff >= 0) return `Ponad wybrany cel: ${totals.diff} pkt`;
+    return `Do wybranego celu: ${Math.abs(totals.diff)} pkt`;
   }, [totals.diff]);
 
   function resetDefaults() {
@@ -532,7 +536,7 @@ export default function RaportUserClient() {
                   <span className="font-medium">Zawód:</span> {professionLabel}
                 </span>
                 <span>
-                  <span className="font-medium">Wymagane punkty:</span> {requiredPoints}
+                  <span className="font-medium">Wybrany cel:</span> {requiredPoints} pkt
                 </span>
                 {profile?.pwz_issue_date ? (
                   <span>
@@ -548,8 +552,11 @@ export default function RaportUserClient() {
           <div className="rounded-2xl border bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-base font-semibold">Status wymogów</h2>
-                <p className="mt-1 text-xs text-slate-600">Podsumowanie dla wybranego okresu (na razie bez limitów).</p>
+                <h2 className="text-base font-semibold">Status ewidencji</h2>
+                <p className="mt-1 text-xs text-slate-600">
+                  Punkty zadeklarowane dla wybranego okresu. Raport nie stanowi
+                  formalnego potwierdzenia obowiązku zawodowego.
+                </p>
               </div>
               <span className={`inline-flex items-center rounded-full border px-2 py-1 text-xs ${statusBadge.cls}`}>
                 {statusBadge.label}
@@ -558,11 +565,11 @@ export default function RaportUserClient() {
 
             <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
               <div className="rounded-xl border bg-white p-3">
-                <div className="text-xs text-slate-600">Zebrane (po limitach)</div>
+                <div className="text-xs text-slate-600">Punkty zadeklarowane</div>
                 <div className="mt-1 text-lg font-semibold">{totals.pointsAfterLimits}</div>
               </div>
               <div className="rounded-xl border bg-white p-3">
-                <div className="text-xs text-slate-600">Wymagane</div>
+                <div className="text-xs text-slate-600">Wybrany cel</div>
                 <div className="mt-1 text-lg font-semibold">{requiredPoints}</div>
               </div>
               <div className="rounded-xl border bg-white p-3">
@@ -751,7 +758,7 @@ export default function RaportUserClient() {
             <span className="font-medium text-slate-800">{toDate}</span>
           </div>
           <div>
-            Suma (po limitach): <span className="font-semibold text-slate-900">{totals.pointsAfterLimits}</span> pkt
+            Suma zadeklarowana: <span className="font-semibold text-slate-900">{totals.pointsAfterLimits}</span> pkt
           </div>
         </div>
       </div>

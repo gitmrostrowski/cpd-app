@@ -223,11 +223,11 @@ export default function CpdStatusPanel({
 
             {missingPoints > 0 ? (
               <div className="pb-1 text-2xl font-bold text-rose-600">
-                brakuje {missingPoints} pkt
+                do celu {missingPoints} pkt
               </div>
             ) : (
               <div className="pb-1 text-2xl font-bold text-emerald-700">
-                komplet
+                cel osiągnięty
               </div>
             )}
           </div>

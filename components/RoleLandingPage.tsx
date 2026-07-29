@@ -56,7 +56,7 @@ const content: Record<RoleKind, RoleContent> = {
     availableTitle: "Cały podstawowy warsztat medyka jest dostępny od razu.",
     availableText: "CRPE prowadzi od ustawienia celu, przez dodawanie aktywności, aż do przygotowania zestawienia.",
     available: [
-      { icon: BarChart3, title: "Panel CPD i kalkulator", text: "Ustaw okres i cel, obserwuj postęp, limity oraz brakujące punkty." },
+      { icon: BarChart3, title: "Panel CPD i kalkulator", text: "Ustaw okres i własny cel, obserwuj punkty zadeklarowane oraz kompletność dokumentów." },
       { icon: CalendarCheck2, title: "Aktywności i certyfikaty", text: "Dodawaj wpisy, punkty i dokumenty PDF lub zdjęcia certyfikatów." },
       { icon: FileText, title: "Raport użytkownika", text: "Przygotuj zestawienie wybranego okresu oraz eksport dokumentów." },
       { icon: FolderOpen, title: "Baza szkoleń", text: "Wyszukuj wydarzenia i dodawaj wybrane pozycje do własnego planu CPD." },

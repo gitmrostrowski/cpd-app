@@ -1,34 +1,93 @@
-// lib/cpd/professions.ts
-// Centralne miejsce na: lista zawodów, domyślne punkty, helpery oraz limity cząstkowe (MVP).
-// DB trzyma profession jako TEXT (string), więc to jest MVP "source of truth" w kodzie.
+// W v4 źródłem prawdy dla zawodów jest public.professions.
+// Ta lista jest wyłącznie bezpiecznym fallbackiem na czas ładowania/offline.
+// Nie zawiera celów punktowych ani reguł prawnych.
 
 import type { CpdRules } from "@/lib/cpd/calc";
 
-export type Profession =
-  | "Lekarz"
-  | "Lekarz dentysta"
-  | "Pielęgniarka"
-  | "Położna"
-  | "Fizjoterapeuta"
-  | "Ratownik medyczny"
-  | "Farmaceuta"
-  | "Diagnosta laboratoryjny"
-  | "Inne";
+export type Profession = string;
 
-export const PROFESSION_OPTIONS: readonly Profession[] = [
-  "Lekarz",
-  "Lekarz dentysta",
-  "Pielęgniarka",
-  "Położna",
-  "Fizjoterapeuta",
-  "Ratownik medyczny",
-  "Farmaceuta",
-  "Diagnosta laboratoryjny",
-  "Inne",
+export type ProfessionOption = {
+  id: string | null;
+  code: string;
+  name_pl: string;
+  name_pl_plural?: string | null;
+  description_pl?: string | null;
+  identifier_label?: string | null;
+  is_other: boolean;
+  sort_order: number;
+};
+
+export type CpdRuleSource = {
+  id: string;
+  source_kind: string;
+  title: string;
+  url: string;
+  published_on: string | null;
+  verified_on: string;
+  is_primary: boolean;
+};
+
+export type CpdRuleRequirement = {
+  id: string;
+  activity_type_id: string | null;
+  requirement_kind: "minimum" | "maximum" | "fixed";
+  scope: "period" | "year" | "item";
+  points: number;
+  note_pl: string | null;
+  sort_order: number;
+};
+
+export type CpdRuleSet = {
+  id: string;
+  profession_id: string;
+  version: string;
+  name_pl: string;
+  status: "draft" | "verified" | "retired";
+  calculation_scope: "target_only" | "full";
+  valid_from: string | null;
+  valid_to: string | null;
+  period_months: number | null;
+  required_points: number | null;
+  formal_confirmation_authority: string | null;
+  summary_pl: string | null;
+  disclaimer_pl: string;
+  last_verified_on: string | null;
+  sources: CpdRuleSource[];
+  requirements: CpdRuleRequirement[];
+};
+
+export const FALLBACK_PROFESSION_OPTIONS: readonly ProfessionOption[] = [
+  { id: null, code: "doctor", name_pl: "Lekarz", is_other: false, sort_order: 10 },
+  { id: null, code: "dentist", name_pl: "Lekarz dentysta", is_other: false, sort_order: 20 },
+  { id: null, code: "nurse", name_pl: "Pielęgniarka", is_other: false, sort_order: 30 },
+  { id: null, code: "midwife", name_pl: "Położna", is_other: false, sort_order: 40 },
+  { id: null, code: "physiotherapist", name_pl: "Fizjoterapeuta", is_other: false, sort_order: 50 },
+  { id: null, code: "paramedic", name_pl: "Ratownik medyczny", is_other: false, sort_order: 60 },
+  { id: null, code: "pharmacist", name_pl: "Farmaceuta", is_other: false, sort_order: 70 },
+  {
+    id: null,
+    code: "laboratory_diagnostician",
+    name_pl: "Diagnosta laboratoryjny",
+    is_other: false,
+    sort_order: 80,
+  },
+  {
+    id: null,
+    code: "other_medical_profession",
+    name_pl: "Inne",
+    is_other: true,
+    sort_order: 999,
+  },
 ] as const;
 
-// UI helpery: jak wyświetlać "Inne" + doprecyzowanie
-export function displayProfession(profession: Profession | null | undefined, other?: string | null) {
+// Kompatybilność dla starszych komponentów. To nadal tylko nazwy, nie reguły.
+export const PROFESSION_OPTIONS: readonly Profession[] =
+  FALLBACK_PROFESSION_OPTIONS.map((item) => item.name_pl);
+
+export function displayProfession(
+  profession: Profession | null | undefined,
+  other?: string | null,
+) {
   if (!profession) return "—";
   if (profession !== "Inne") return profession;
 
@@ -41,52 +100,57 @@ export function isOtherProfession(profession: Profession | null | undefined) {
 }
 
 export function normalizeOtherProfession(value: unknown) {
-  const v = String(value ?? "").trim();
-  // prosta normalizacja: utnij bardzo długie teksty, usuń „puste”
-  if (!v) return "";
-  return v.slice(0, 80);
+  const normalized = String(value ?? "").trim();
+  return normalized ? normalized.slice(0, 80) : "";
 }
 
-export function isProfession(v: unknown): v is Profession {
-  return typeof v === "string" && (PROFESSION_OPTIONS as readonly string[]).includes(v);
+export function isProfession(value: unknown): value is Profession {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
-// MVP domyślne wymagane punkty per zawód (do podmiany jak będziesz mieć źródło / tabelę w DB)
-export const DEFAULT_REQUIRED_POINTS_BY_PROFESSION: Record<Profession, number> = {
-  Lekarz: 200,
-  "Lekarz dentysta": 200,
-  Pielęgniarka: 120,
-  Położna: 120,
-  Fizjoterapeuta: 100,
-  "Ratownik medyczny": 100,
-  Farmaceuta: 100,
-  "Diagnosta laboratoryjny": 100,
-  Inne: 0,
-};
-
-export function defaultRequiredPointsFor(profession: Profession): number {
-  return DEFAULT_REQUIRED_POINTS_BY_PROFESSION[profession] ?? 0;
+export function professionOptionByName(
+  options: readonly ProfessionOption[],
+  name: string | null | undefined,
+) {
+  return options.find((option) => option.name_pl === name) ?? null;
 }
 
 /**
- * Limity cząstkowe (MVP) – per zawód, per typ aktywności.
- * Klucze MUSZĄ być identyczne jak `activity.type` w DB/UI.
- *
- * Na teraz: przykład – Samokształcenie max 20 pkt / rok.
- * Dopisuj kolejne wiersze, jak będziesz miał pewne reguły prawne/źródło.
+ * Brak zweryfikowanej reguły nie może tworzyć fikcyjnego celu.
+ * Cel pochodzi z cpd_rule_sets albo z własnego cyklu użytkownika.
  */
-export const CPD_RULES_BY_PROFESSION: Record<Profession, CpdRules> = {
-  Lekarz: { yearlyMaxByType: { Samokształcenie: 20 } },
-  "Lekarz dentysta": { yearlyMaxByType: { Samokształcenie: 20 } },
-  Pielęgniarka: { yearlyMaxByType: { Samokształcenie: 20 } },
-  Położna: { yearlyMaxByType: { Samokształcenie: 20 } },
-  Fizjoterapeuta: { yearlyMaxByType: { Samokształcenie: 20 } },
-  "Ratownik medyczny": { yearlyMaxByType: { Samokształcenie: 20 } },
-  Farmaceuta: { yearlyMaxByType: { Samokształcenie: 20 } },
-  "Diagnosta laboratoryjny": { yearlyMaxByType: { Samokształcenie: 20 } },
-  Inne: { yearlyMaxByType: {} },
-};
+export function defaultRequiredPointsFor(
+  _profession: Profession,
+  ruleSet?: CpdRuleSet | null,
+) {
+  return ruleSet?.status === "verified" && ruleSet.required_points != null
+    ? ruleSet.required_points
+    : 0;
+}
 
-export function rulesForProfession(profession: Profession): CpdRules {
-  return CPD_RULES_BY_PROFESSION[profession] ?? { yearlyMaxByType: {} };
+/**
+ * Starsze strony mogą nadal wywoływać ten helper. W v4 limity szczegółowe
+ * powstają wyłącznie z cpd_rule_requirements, więc fallback jest pusty.
+ */
+export function rulesForProfession(
+  _profession: Profession,
+  ruleSet?: CpdRuleSet | null,
+): CpdRules {
+  if (!ruleSet || ruleSet.status !== "verified" || ruleSet.calculation_scope !== "full") {
+    return { yearlyMaxByType: {} };
+  }
+
+  const yearlyMaxByType: Record<string, number> = {};
+  for (const requirement of ruleSet.requirements) {
+    // Do automatycznego mapowania potrzebna jest nazwa/kod typu aktywności.
+    // Dopóki adapter nie zwraca tego mapowania, nie nakładamy limitu po samym UUID.
+    if (
+      requirement.requirement_kind === "maximum" &&
+      requirement.scope === "year" &&
+      !requirement.activity_type_id
+    ) {
+      yearlyMaxByType[""] = requirement.points;
+    }
+  }
+  return { yearlyMaxByType };
 }

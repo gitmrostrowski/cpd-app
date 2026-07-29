@@ -28,6 +28,9 @@ export type Database = {
       activity_point_entries: LooseTable;
       activity_types: LooseTable;
       cpd_cycles: LooseTable;
+      cpd_rule_requirements: LooseTable;
+      cpd_rule_sets: LooseTable;
+      cpd_rule_sources: LooseTable;
       educational_activities: LooseTable;
       medical_professionals: LooseTable;
       organization_memberships: LooseTable;

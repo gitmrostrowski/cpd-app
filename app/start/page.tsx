@@ -5,9 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-import { fetchProfile, saveProfile } from "@/lib/data/crpe";
-
-type Profession = "Lekarz" | "Lekarz dentysta" | "Inne";
+import {
+  fetchProfessionCatalog,
+  fetchProfile,
+  fetchVerifiedRuleSet,
+  saveProfile,
+} from "@/lib/data/crpe";
+import {
+  FALLBACK_PROFESSION_OPTIONS,
+  type CpdRuleSet,
+  type Profession,
+  type ProfessionOption,
+} from "@/lib/cpd/professions";
 
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
@@ -23,11 +32,15 @@ export default function StartPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
   const [profession, setProfession] = useState<Profession>("Lekarz");
+  const [professionOptions, setProfessionOptions] =
+    useState<ProfessionOption[]>([...FALLBACK_PROFESSION_OPTIONS]);
+  const [suggestedRuleSet, setSuggestedRuleSet] =
+    useState<CpdRuleSet | null>(null);
   const [periodMode, setPeriodMode] = useState<"preset" | "custom">("preset");
   const [preset, setPreset] = useState<"2023–2026" | "2022–2025" | "2021–2024">("2023–2026");
   const [customStart, setCustomStart] = useState<number>(currentYear - 1);
   const [customEnd, setCustomEnd] = useState<number>(currentYear + 2);
-  const [requiredPoints, setRequiredPoints] = useState<number>(200);
+  const [requiredPoints, setRequiredPoints] = useState<number>(0);
 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -71,6 +84,29 @@ export default function StartPage() {
     ensureAlreadyHasProfileOrContinue();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadCatalog() {
+      try {
+        const catalog = await fetchProfessionCatalog(supabase);
+        if (!active) return;
+        setProfessionOptions(catalog);
+        if (!catalog.some((item) => item.name_pl === profession)) {
+          setProfession(
+            catalog[0]?.name_pl ??
+              FALLBACK_PROFESSION_OPTIONS[0].name_pl,
+          );
+        }
+      } catch {
+        // Fallback nie zawiera celów ani reguł, więc pozostaje bezpieczny.
+      }
+    }
+    void loadCatalog();
+    return () => {
+      active = false;
+    };
+  }, [supabase, profession]);
 
   function next() {
     clearErr();
@@ -189,13 +225,49 @@ export default function StartPage() {
               <select
                 className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
                 value={profession}
-                onChange={(e) => setProfession(e.target.value as Profession)}
+                onChange={async (e) => {
+                  const nextProfession = e.target.value as Profession;
+                  setProfession(nextProfession);
+                  const option = professionOptions.find(
+                    (item) => item.name_pl === nextProfession,
+                  );
+                  if (!option?.id) {
+                    setSuggestedRuleSet(null);
+                    return;
+                  }
+                  try {
+                    setSuggestedRuleSet(
+                      await fetchVerifiedRuleSet(supabase, option.id),
+                    );
+                  } catch {
+                    setSuggestedRuleSet(null);
+                  }
+                }}
                 disabled={busy}
               >
-                <option>Lekarz</option>
-                <option>Lekarz dentysta</option>
-                <option>Inne</option>
+                {professionOptions.map((option) => (
+                  <option key={option.code} value={option.name_pl}>
+                    {option.name_pl}
+                  </option>
+                ))}
               </select>
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-slate-700">
+                {suggestedRuleSet ? (
+                  <>
+                    Dostępna zweryfikowana reguła podstawowa:{" "}
+                    <span className="font-semibold">
+                      {suggestedRuleSet.required_points} pkt /{" "}
+                      {suggestedRuleSet.period_months} miesięcy
+                    </span>
+                    . Nie zastosujemy jej automatycznie do nowego cyklu.
+                  </>
+                ) : (
+                  <>
+                    Brak aktywnej, zweryfikowanej reguły. Możesz nadal prowadzić
+                    ewidencję i ustawić własny cel.
+                  </>
+                )}
+              </div>
             </div>
           ) : null}
 
@@ -273,9 +345,9 @@ export default function StartPage() {
 
           {step === 3 ? (
             <div className="space-y-3">
-              <div className="text-sm font-semibold text-slate-900">Jaki jest Twój cel punktowy?</div>
+              <div className="text-sm font-semibold text-slate-900">Jaki jest Twój własny cel punktowy?</div>
               <div className="text-sm text-slate-600">
-                To liczba punktów do uzbierania w okresie <span className="font-semibold">{computedPeriod.start}–{computedPeriod.end}</span>.
+                To pomocniczy cel planowania w okresie <span className="font-semibold">{computedPeriod.start}–{computedPeriod.end}</span>, a nie automatyczne potwierdzenie wymogu ustawowego.
               </div>
 
               <input

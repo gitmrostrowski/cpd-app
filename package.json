@@ -6,7 +6,8 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check:v4": "node scripts/check-v4-foundation.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

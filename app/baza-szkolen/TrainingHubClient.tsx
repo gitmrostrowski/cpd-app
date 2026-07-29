@@ -16,9 +16,14 @@ import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 import {
   createActivity,
+  fetchProfessionCatalog,
   fetchTrainings,
   toNormalizedTraining,
 } from "@/lib/data/crpe";
+import {
+  FALLBACK_PROFESSION_OPTIONS,
+  type ProfessionOption,
+} from "@/lib/cpd/professions";
 
 type TrainingType = "online" | "stacjonarne" | "hybrydowe";
 type TrainingCategory =
@@ -93,19 +98,6 @@ const POINTS_OPTIONS: { value: string; label: string }[] = [
   { value: "5", label: "≥ 5 pkt" },
   { value: "10", label: "≥ 10 pkt" },
   { value: "20", label: "≥ 20 pkt" },
-];
-
-const PROFESSION_OPTIONS: { value: string; label: string }[] = [
-  { value: "all", label: "Wszystkie" },
-  { value: "general", label: "Ogólne / dla wszystkich" },
-  { value: "lekarz", label: "Lekarz" },
-  { value: "lekarz dentysta", label: "Lekarz dentysta" },
-  { value: "pielęgniarka", label: "Pielęgniarka / położna" },
-  { value: "farmaceuta", label: "Farmaceuta" },
-  { value: "fizjoterapeuta", label: "Fizjoterapeuta" },
-  { value: "diagnosta", label: "Diagnosta laboratoryjny" },
-  { value: "ratownik", label: "Ratownik medyczny" },
-  { value: "technik", label: "Technik medyczny" },
 ];
 
 const VOIVODESHIP_OPTIONS: { value: string; label: string }[] = [
@@ -462,6 +454,8 @@ export default function TrainingHubClient() {
   const [items, setItems] = useState<Training[]>([]);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [professionOptions, setProfessionOptions] =
+    useState<ProfessionOption[]>([...FALLBACK_PROFESSION_OPTIONS]);
 
   const [q, setQ] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("date_asc");
@@ -611,6 +605,9 @@ export default function TrainingHubClient() {
 
   useEffect(() => {
     load();
+    void fetchProfessionCatalog(supabase)
+      .then(setProfessionOptions)
+      .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -987,7 +984,14 @@ export default function TrainingHubClient() {
                 onChange={(e) => setProfessionFilter(e.target.value)}
                 className={fieldBase}
               >
-                {PROFESSION_OPTIONS.map((o) => (
+                {[
+                  { value: "all", label: "Wszystkie" },
+                  { value: "general", label: "Ogólne / dla wszystkich" },
+                  ...professionOptions.map((option) => ({
+                    value: option.name_pl.toLocaleLowerCase("pl-PL"),
+                    label: option.name_pl,
+                  })),
+                ].map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>

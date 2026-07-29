@@ -48,7 +48,7 @@ const APP_NAV: NavItem[] = [
   {
     href: "/kalkulator",
     label: "Panel CPD",
-    mobileDescription: "Cel, postęp i limity",
+    mobileDescription: "Cel, ewidencja i dokumenty",
     icon: BarChart3,
   },
   {

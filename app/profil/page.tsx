@@ -6,11 +6,17 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 import {
+  fetchProfessionCatalog,
   fetchProfile,
+  fetchVerifiedRuleSet,
   saveProfile as saveCrpeProfile,
 } from "@/lib/data/crpe";
-
-type Profession = "Lekarz" | "Lekarz dentysta" | "Inne";
+import {
+  FALLBACK_PROFESSION_OPTIONS,
+  type CpdRuleSet,
+  type Profession,
+  type ProfessionOption,
+} from "@/lib/cpd/professions";
 
 type ProfileRow = {
   user_id: string;
@@ -37,10 +43,6 @@ function parsePeriodLabel(label: string) {
 
 function makePeriodLabel(start: number, end: number) {
   return `${start}–${end}`;
-}
-
-function isProfession(v: any): v is Profession {
-  return v === "Lekarz" || v === "Lekarz dentysta" || v === "Inne";
 }
 
 function isDoctorLike(p: Profession) {
@@ -105,10 +107,17 @@ export default function ProfilePage() {
   const [info, setInfo] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [professionOptions, setProfessionOptions] =
+    useState<ProfessionOption[]>([...FALLBACK_PROFESSION_OPTIONS]);
+  const [suggestedRuleSet, setSuggestedRuleSet] =
+    useState<CpdRuleSet | null>(null);
+  const [appliedRuleSet, setAppliedRuleSet] = useState<CpdRuleSet | null>(null);
+  const [cycleTargetMode, setCycleTargetMode] =
+    useState<"custom" | "rule_set">("custom");
 
   // formularz (UI)
   const [profession, setProfession] = useState<Profession>("Lekarz");
-  const [requiredPoints, setRequiredPoints] = useState<number>(200);
+  const [requiredPoints, setRequiredPoints] = useState<number>(0);
   const [periodLabel, setPeriodLabel] = useState<string>("2023–2026");
 
   // edycja okresu (gdy "Inny")
@@ -126,7 +135,7 @@ export default function ProfilePage() {
     setErr(null);
   }
 
-  // Wyliczenie okresu "48 miesięcy od PWZ"
+  // Okres jest wyliczany tylko z przypiętej, zweryfikowanej wersji reguły.
   const pwzPeriod = useMemo(() => {
     if (!isDoctorLike(profession)) return null;
     if (!isValidISODate(pwzIssueDate)) return null;
@@ -137,8 +146,17 @@ export default function ProfilePage() {
 
     const startDt = new Date(Date.UTC(parts.y, parts.m - 1, parts.d));
 
-    // +48 miesięcy, minus 1 dzień
-    const endPlus = addMonthsUTC(startISO, 48);
+    if (
+      cycleTargetMode !== "rule_set" ||
+      appliedRuleSet?.status !== "verified" ||
+      !appliedRuleSet.period_months
+    ) {
+      return null;
+    }
+
+    const periodMonths = appliedRuleSet.period_months;
+    // Koniec okresu wynikającego z przypiętej wersji reguły, minus 1 dzień.
+    const endPlus = addMonthsUTC(startISO, periodMonths);
     const endDt = new Date(endPlus.getTime());
     endDt.setUTCDate(endDt.getUTCDate() - 1);
 
@@ -153,9 +171,9 @@ export default function ProfilePage() {
       startYear,
       endYear,
       labelYears: makePeriodLabel(startYear, endYear),
-      labelPretty: `${formatPLDateUTC(startDt)} – ${formatPLDateUTC(endDt)} (48 mies.)`,
+      labelPretty: `${formatPLDateUTC(startDt)} – ${formatPLDateUTC(endDt)} (${periodMonths} mies.)`,
     };
-  }, [profession, pwzIssueDate]);
+  }, [profession, pwzIssueDate, cycleTargetMode, appliedRuleSet]);
 
   // 1) LOAD profilu z DB (z fallback do localStorage)
   useEffect(() => {
@@ -175,7 +193,8 @@ export default function ProfilePage() {
           const p = JSON.parse(raw);
           if (!alive) return;
 
-          if (isProfession(p?.profession)) setProfession(p.profession);
+          if (typeof p?.profession === "string" && p.profession.trim())
+            setProfession(p.profession);
           if (typeof p?.requiredPoints === "number") setRequiredPoints(Math.max(0, p.requiredPoints));
           if (typeof p?.periodLabel === "string") {
             setPeriodLabel(p.periodLabel);
@@ -190,17 +209,23 @@ export default function ProfilePage() {
       };
 
       try {
-        const data = await fetchProfile(supabase, user.id);
+        const [data, catalog] = await Promise.all([
+          fetchProfile(supabase, user.id),
+          fetchProfessionCatalog(supabase),
+        ]);
+        setProfessionOptions(catalog);
 
         if (!alive) return;
 
         if (!data) {
           const defaults: ProfileRow = {
             user_id: user.id,
-            profession: "Lekarz",
+            profession:
+              catalog[0]?.name_pl ??
+              FALLBACK_PROFESSION_OPTIONS[0].name_pl,
             period_start: 2023,
             period_end: 2026,
-            required_points: 200,
+            required_points: 0,
             pwz_number: null,
             pwz_issue_date: null,
           };
@@ -231,10 +256,14 @@ export default function ProfilePage() {
 
         const row = data as any;
 
-        const prof: Profession = isProfession(row.profession) ? row.profession : "Lekarz";
+        const prof: Profession =
+          typeof row.profession === "string" && row.profession.trim()
+            ? row.profession
+            : catalog[0]?.name_pl ??
+              FALLBACK_PROFESSION_OPTIONS[0].name_pl;
         const ps = safeInt(row.period_start, 2023);
         const pe = safeInt(row.period_end, 2026);
-        const rp = safeInt(row.required_points, 200);
+        const rp = safeInt(row.required_points, 0);
 
         const dbPwzNumber = typeof row.pwz_number === "string" ? row.pwz_number : "";
         const dbPwzIssueDate = typeof row.pwz_issue_date === "string" ? row.pwz_issue_date : "";
@@ -246,6 +275,9 @@ export default function ProfilePage() {
         setCustomEnd(pe);
         setPwzNumber(dbPwzNumber || "");
         setPwzIssueDate(dbPwzIssueDate || "");
+        setSuggestedRuleSet(row.suggested_rule_set ?? null);
+        setAppliedRuleSet(row.applied_rule_set ?? null);
+        setCycleTargetMode(row.cycle_target_mode ?? "custom");
 
         try {
           localStorage.setItem(
@@ -268,7 +300,8 @@ export default function ProfilePage() {
           const p = JSON.parse(raw);
           if (!alive) return;
 
-          if (isProfession(p?.profession)) setProfession(p.profession);
+          if (typeof p?.profession === "string" && p.profession.trim())
+            setProfession(p.profession);
           if (typeof p?.requiredPoints === "number") setRequiredPoints(Math.max(0, p.requiredPoints));
           if (typeof p?.periodLabel === "string") {
             setPeriodLabel(p.periodLabel);
@@ -342,7 +375,7 @@ export default function ProfilePage() {
         profession,
         period_start: start,
         period_end: end,
-        required_points: Math.max(0, safeInt(requiredPoints, 200)),
+        required_points: Math.max(0, safeInt(requiredPoints, 0)),
         pwz_number: isDoctorLike(profession) ? (normalizedPwz || null) : null,
         pwz_issue_date: isDoctorLike(profession) ? (isoPwz || null) : null,
       };
@@ -498,7 +531,7 @@ export default function ProfilePage() {
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Preferencje CPD</h2>
             <p className="mt-1 text-sm text-slate-600">
-              Zapis do Supabase (tabela <span className="font-mono">profiles</span>).
+              Zawód, okres i własny cel zapisują się na Twoim koncie.
             </p>
           </div>
 
@@ -517,12 +550,33 @@ export default function ProfilePage() {
             <select
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
               value={profession}
-              onChange={(e) => setProfession(e.target.value as Profession)}
+              onChange={async (e) => {
+                const nextProfession = e.target.value as Profession;
+                setProfession(nextProfession);
+                setAppliedRuleSet(null);
+                setCycleTargetMode("custom");
+                const option = professionOptions.find(
+                  (item) => item.name_pl === nextProfession,
+                );
+                if (!option?.id) {
+                  setSuggestedRuleSet(null);
+                  return;
+                }
+                try {
+                  setSuggestedRuleSet(
+                    await fetchVerifiedRuleSet(supabase, option.id),
+                  );
+                } catch {
+                  setSuggestedRuleSet(null);
+                }
+              }}
               disabled={busy}
             >
-              <option>Lekarz</option>
-              <option>Lekarz dentysta</option>
-              <option>Inne</option>
+              {professionOptions.map((option) => (
+                <option key={option.code} value={option.name_pl}>
+                  {option.name_pl}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -531,7 +585,7 @@ export default function ProfilePage() {
               <label className="text-sm font-medium text-slate-700">Okres domyślny</label>
               {pwzPeriod ? (
                 <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                  liczone od PWZ
+                  według reguły
                 </span>
               ) : null}
             </div>
@@ -541,7 +595,11 @@ export default function ProfilePage() {
               value={(PREDEFINED as readonly string[]).includes(periodLabel) ? periodLabel : "Inny"}
               onChange={(e) => setPeriodLabel(e.target.value)}
               disabled={busy || !!pwzPeriod}
-              title={pwzPeriod ? "Okres jest liczony automatycznie od daty PWZ (48 miesięcy)." : ""}
+              title={
+                pwzPeriod
+                  ? "Okres jest liczony z daty PWZ i przypiętej wersji reguły."
+                  : ""
+              }
             >
               <option>2023–2026</option>
               <option>2022–2025</option>
@@ -582,7 +640,7 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700">Cel punktowy</label>
+            <label className="text-sm font-medium text-slate-700">Własny cel punktowy</label>
             <input
               type="number"
               min={0}
@@ -594,14 +652,59 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-slate-700">
+          {appliedRuleSet ? (
+            <>
+              <div className="font-semibold text-slate-950">
+                Zastosowana reguła: {appliedRuleSet.name_pl}
+              </div>
+              <p className="mt-1 leading-5">
+                Wersja {appliedRuleSet.version}. {appliedRuleSet.summary_pl}
+              </p>
+            </>
+          ) : suggestedRuleSet ? (
+            <>
+              <div className="font-semibold text-slate-950">
+                Dostępna reguła podstawowa: {suggestedRuleSet.required_points} pkt /{" "}
+                {suggestedRuleSet.period_months} miesięcy
+              </div>
+              <p className="mt-1 leading-5">
+                Obecny okres pozostaje celem własnym. CRPE nie zmienia
+                automatycznie danych przeniesionych ani ustawień użytkownika.
+              </p>
+              {suggestedRuleSet.sources[0] ? (
+                <a
+                  href={suggestedRuleSet.sources[0].url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex font-semibold text-blue-700 hover:text-blue-800"
+                >
+                  Zobacz oficjalne źródło →
+                </a>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <div className="font-semibold text-slate-950">
+                Brak aktywnej, zweryfikowanej reguły dla tego zawodu
+              </div>
+              <p className="mt-1 leading-5">
+                Możesz prowadzić ewidencję i ustawić własny cel. CRPE nie
+                przedstawia go jako wymogu ustawowego.
+              </p>
+            </>
+          )}
+        </div>
+
         {/* PWZ PRO */}
         {isDoctorLike(profession) && (
           <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <div className="font-semibold text-slate-900">PWZ (wymagane dla lekarzy)</div>
+                <div className="font-semibold text-slate-900">Dane PWZ</div>
                 <div className="mt-1 text-sm text-slate-600">
-                  Na tej podstawie możemy liczyć pierwszy okres rozliczeniowy (48 miesięcy).
+                  Data może służyć do wyznaczenia okresu tylko wtedy, gdy do
+                  cyklu przypięto zweryfikowaną wersję reguły.
                 </div>
               </div>
               <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
@@ -633,7 +736,7 @@ export default function ProfilePage() {
                   disabled={busy}
                 />
                 <p className="mt-1 text-xs text-slate-500">
-                  Jeśli podasz datę, okres CPD zostanie policzony automatycznie jako 48 miesięcy od PWZ.
+                  Samo podanie daty nie zmienia automatycznie Twojego okresu.
                 </p>
               </div>
             </div>

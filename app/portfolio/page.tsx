@@ -9,7 +9,12 @@ import { fetchActivities, fetchProfile } from "@/lib/data/crpe";
 
 import { applyRules, sumPointsWithRules, summarizeLimits, type ActivityLike } from "@/lib/cpd/calc";
 
-import { displayProfession, rulesForProfession, type Profession } from "@/lib/cpd/professions";
+import {
+  displayProfession,
+  rulesForProfession,
+  type CpdRuleSet,
+  type Profession,
+} from "@/lib/cpd/professions";
 
 type ActivityRow = {
   id: string;
@@ -30,6 +35,10 @@ type ProfileRow = {
   period_start: number;
   period_end: number;
   required_points: number;
+  cycle_target_mode?: "custom" | "rule_set";
+  applied_rule_set?: CpdRuleSet | null;
+  suggested_rule_set?: CpdRuleSet | null;
+  formal_status?: "not_confirmed" | "confirmed_externally";
 };
 
 export default function PortfolioPage() {
@@ -94,7 +103,10 @@ export default function PortfolioPage() {
 
   const rules = useMemo(() => {
     if (!profile) return undefined;
-    return rulesForProfession(profile.profession);
+    return rulesForProfession(
+      profile.profession,
+      profile.applied_rule_set ?? null,
+    );
   }, [profile]);
 
   const applied = useMemo(() => {
@@ -151,13 +163,33 @@ export default function PortfolioPage() {
       {/* PODSUMOWANIE */}
       <div className="rounded-2xl border p-5 bg-white shadow-sm">
         <div className="text-lg font-bold">
-          {totalPoints} / {profile.required_points} pkt
+          {totalPoints} / {profile.required_points} pkt zadeklarowanych
         </div>
         {missing > 0 ? (
-          <div className="text-rose-600 font-semibold">Brakuje {missing} pkt</div>
+          <div className="text-blue-700 font-semibold">
+            Do własnego celu pozostało {missing} pkt
+          </div>
         ) : (
-          <div className="text-emerald-600 font-semibold">Wymagania spełnione ✅</div>
+          <div className="text-emerald-700 font-semibold">
+            Osiągnięto wybrany cel ewidencyjny
+          </div>
         )}
+        <div className="mt-3 text-sm leading-6 text-slate-600">
+          {profile.applied_rule_set ? (
+            <>
+              Reguła {profile.applied_rule_set.version}:{" "}
+              {profile.applied_rule_set.name_pl}. Formalny status:{" "}
+              {profile.formal_status === "confirmed_externally"
+                ? "potwierdzony poza CRPE"
+                : "niepotwierdzony"}.
+            </>
+          ) : (
+            <>
+              To wynik pomocniczy według celu użytkownika. Nie stanowi
+              formalnego potwierdzenia obowiązku zawodowego.
+            </>
+          )}
+        </div>
       </div>
 
       {/* AKTYWNOŚCI */}
@@ -195,7 +227,8 @@ export default function PortfolioPage() {
       </div>
 
       {/* LIMITY */}
-      {limitsSummary ? (
+      {limitsSummary &&
+      profile.applied_rule_set?.calculation_scope === "full" ? (
         <div className="space-y-3">
           <h2 className="font-bold text-lg">Limity cząstkowe</h2>
 
