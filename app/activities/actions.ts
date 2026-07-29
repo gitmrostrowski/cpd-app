@@ -23,8 +23,8 @@ export async function uploadCertificate(activityId: string, formData: FormData) 
   if (file.size > MAX_BYTES) return { ok: false as const, error: "Plik jest za duży (max 10 MB)." };
 
   const { data: activity, error: actErr } = await supabase
-    .from("activities")
-    .select("id,user_id,certificate_path")
+    .from("educational_activities")
+    .select("id,user_id")
     .eq("id", activityId)
     .maybeSingle();
 
@@ -32,13 +32,29 @@ export async function uploadCertificate(activityId: string, formData: FormData) 
   if (!activity) return { ok: false as const, error: "Nie znaleziono aktywności." };
   if (activity.user_id !== user.id) return { ok: false as const, error: "Brak dostępu." };
 
-  // usuń stary plik (jeśli był)
-  if (activity.certificate_path) {
-    await supabase.storage.from(BUCKET).remove([activity.certificate_path]);
+  const { data: oldDocuments, error: documentsError } = await supabase
+    .from("activity_documents")
+    .select("id,path")
+    .eq("activity_id", activityId)
+    .eq("user_id", user.id)
+    .eq("kind", "certificate");
+  if (documentsError)
+    return { ok: false as const, error: documentsError.message };
+
+  if (oldDocuments?.length) {
+    await supabase.storage
+      .from(BUCKET)
+      .remove(oldDocuments.map((document) => document.path));
+    await supabase
+      .from("activity_documents")
+      .delete()
+      .eq("activity_id", activityId)
+      .eq("user_id", user.id)
+      .eq("kind", "certificate");
   }
 
   const safeName = sanitizeFileName(file.name || "certyfikat.pdf");
-  const objectPath = `${user.id}/activities/${activityId}/${Date.now()}_${safeName}`;
+  const objectPath = `${user.id}/${activityId}/certificate-${Date.now()}-${safeName}`;
 
   const up = await supabase.storage.from(BUCKET).upload(objectPath, file, {
     upsert: true,
@@ -47,15 +63,16 @@ export async function uploadCertificate(activityId: string, formData: FormData) 
   if (up.error) return { ok: false as const, error: up.error.message };
 
   const { error: updErr } = await supabase
-    .from("activities")
-    .update({
-      certificate_path: objectPath,
-      certificate_name: file.name,
-      certificate_mime: file.type,
-      certificate_size: file.size,
-      certificate_uploaded_at: new Date().toISOString(),
-    })
-    .eq("id", activityId);
+    .from("activity_documents")
+    .insert({
+      user_id: user.id,
+      activity_id: activityId,
+      kind: "certificate",
+      path: objectPath,
+      name: file.name,
+      mime: file.type,
+      size: file.size,
+    });
 
   if (updErr) {
     await supabase.storage.from(BUCKET).remove([objectPath]);
@@ -74,8 +91,8 @@ export async function deleteCertificate(activityId: string) {
   if (authErr || !user) return { ok: false as const, error: "Brak zalogowanego użytkownika." };
 
   const { data: activity, error: actErr } = await supabase
-    .from("activities")
-    .select("id,user_id,certificate_path")
+    .from("educational_activities")
+    .select("id,user_id")
     .eq("id", activityId)
     .maybeSingle();
 
@@ -83,21 +100,28 @@ export async function deleteCertificate(activityId: string) {
   if (!activity) return { ok: false as const, error: "Nie znaleziono aktywności." };
   if (activity.user_id !== user.id) return { ok: false as const, error: "Brak dostępu." };
 
-  if (activity.certificate_path) {
-    const rm = await supabase.storage.from(BUCKET).remove([activity.certificate_path]);
+  const { data: documents, error: documentsError } = await supabase
+    .from("activity_documents")
+    .select("id,path")
+    .eq("activity_id", activityId)
+    .eq("user_id", user.id)
+    .eq("kind", "certificate");
+  if (documentsError)
+    return { ok: false as const, error: documentsError.message };
+
+  if (documents?.length) {
+    const rm = await supabase.storage
+      .from(BUCKET)
+      .remove(documents.map((document) => document.path));
     if (rm.error) return { ok: false as const, error: rm.error.message };
   }
 
   const { error: updErr } = await supabase
-    .from("activities")
-    .update({
-      certificate_path: null,
-      certificate_name: null,
-      certificate_mime: null,
-      certificate_size: null,
-      certificate_uploaded_at: null,
-    })
-    .eq("id", activityId);
+    .from("activity_documents")
+    .delete()
+    .eq("activity_id", activityId)
+    .eq("user_id", user.id)
+    .eq("kind", "certificate");
 
   if (updErr) return { ok: false as const, error: updErr.message };
 
@@ -105,4 +129,3 @@ export async function deleteCertificate(activityId: string) {
   revalidatePath(`/activities/${activityId}`);
   return { ok: true as const };
 }
-

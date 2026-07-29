@@ -4,6 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
+import {
+  createActivity,
+  fetchActivities,
+  fetchProfile,
+  saveProfile,
+} from "@/lib/data/crpe";
 
 import {
   type Profession,
@@ -44,8 +50,6 @@ type ProfileRow = {
   period_end: number;
   required_points: number;
 };
-
-type ProfileUpsert = ProfileRow;
 
 type RuleLimit = {
   key: string;
@@ -701,15 +705,14 @@ export default function CalculatorClient() {
   async function reloadActivities() {
     if (!user?.id) return;
 
-    const { data, error } = await supabase
-      .from("activities")
-      .select(
-        "id, user_id, type, points, year, organizer, created_at, status, planned_start_date, training_id, certificate_path, certificate_name, certificate_mime, certificate_size, certificate_uploaded_at",
-      )
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-
-    setActivities(!error && data ? (data as ActivityRow[]) : []);
+    try {
+      const data = await fetchActivities(supabase, user.id, {
+        includeCertificateFields: true,
+      });
+      setActivities(data as ActivityRow[]);
+    } catch {
+      setActivities([]);
+    }
   }
 
   useEffect(() => {
@@ -727,24 +730,24 @@ export default function CalculatorClient() {
 
       setLoading(true);
 
-      const { data: p, error: pErr } = await supabase
-        .from("profiles")
-        .select(
-          "user_id, profession, profession_other, pwz_number, pwz_issue_date, period_start, period_end, required_points",
-        )
-        .eq("user_id", user.id)
-        .maybeSingle();
+      let p = null;
+      let profileFailed = false;
+      try {
+        p = await fetchProfile(supabase, user.id);
+      } catch {
+        profileFailed = true;
+      }
 
       if (!cancelled) {
-        if (!pErr && p) {
-          const prof = ((p as any).profession ?? "Lekarz") as Profession;
-          const po = normalizeOtherProfession((p as any).profession_other);
-          const pwzIssue = (p as any).pwz_issue_date as string | null;
+        if (!profileFailed && p) {
+          const prof = (p.profession ?? "Lekarz") as Profession;
+          const po = normalizeOtherProfession(p.profession_other);
+          const pwzIssue = p.pwz_issue_date as string | null;
           const derived = getPeriodFromPwzIssueDate(prof, pwzIssue);
-          const start = derived?.start ?? ((p as any).period_start ?? 2023);
-          const end = derived?.end ?? ((p as any).period_end ?? 2026);
+          const start = derived?.start ?? (p.period_start ?? 2023);
+          const end = derived?.end ?? (p.period_end ?? 2026);
           const rp =
-            ((p as any).required_points ?? undefined) ??
+            (p.required_points ?? undefined) ??
             DEFAULT_REQUIRED_POINTS_BY_PROFESSION?.[prof] ??
             RULES_BY_PROFESSION[prof]?.requiredPoints ??
             200;
@@ -766,7 +769,7 @@ export default function CalculatorClient() {
             user_id: user.id,
             profession: prof,
             profession_other: isOtherProfession(prof) ? po || null : null,
-            pwz_number: (p as any).pwz_number ?? null,
+            pwz_number: p.pwz_number ?? null,
             pwz_issue_date: pwzIssue,
             period_start: start,
             period_end: end,
@@ -1130,8 +1133,7 @@ export default function CalculatorClient() {
       ) || 0,
     );
 
-    const payload: ProfileUpsert = {
-      user_id: user.id,
+    const payload = {
       profession: nextProfession,
       profession_other: nextOther,
       pwz_number: profile?.pwz_number ?? null,
@@ -1141,7 +1143,15 @@ export default function CalculatorClient() {
       required_points: rp,
     };
 
-    const { error } = await supabase.from("profiles").upsert(payload);
+    let error: Error | null = null;
+    try {
+      await saveProfile(supabase, user.id, payload);
+    } catch (caught) {
+      error =
+        caught instanceof Error
+          ? caught
+          : new Error("Nie udało się zapisać profilu.");
+    }
 
     setSavingProfile(false);
 
@@ -1184,20 +1194,14 @@ export default function CalculatorClient() {
         remaining: r.remaining,
       });
 
-      const { error } = await supabase.from("activities").insert({
-        user_id: user.id,
+      await createActivity(supabase, user.id, {
         type: r.label,
         points: pts,
         year: y,
         organizer: null,
-        status: "planned" as const,
-        planned_start_date: null as string | null,
+        status: "planned",
+        planned_start_date: null,
       });
-
-      if (error) {
-        setPlanErr(error.message);
-        return;
-      }
 
       setPlanInfo(`Dodano do planu: ${r.label} (+${pts} pkt)`);
       await reloadActivities();

@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import { fetchTrainings, toNormalizedTraining } from "@/lib/data/crpe";
 
 type TrainingStatus = "pending" | "approved" | "rejected";
 
@@ -47,15 +48,16 @@ async function requireAdmin(supabase: Awaited<ReturnType<typeof supabaseServer>>
   const user = userData?.user;
   if (userErr || !user) return { ok: false as const, status: 401 as const, userId: null };
 
-  // ✅ U Ciebie profiles ma user_id + role
   const { data: profile, error: profErr } = await supabase
-    .from("profiles")
-    .select("role")
+    .from("platform_staff_roles")
+    .select("role_code")
     .eq("user_id", user.id)
+    .eq("role_code", "platform_admin")
+    .is("revoked_at", null)
     .maybeSingle();
 
   if (profErr) return { ok: false as const, status: 500 as const, userId: null };
-  if (!profile || profile.role !== "admin") return { ok: false as const, status: 403 as const, userId: null };
+  if (!profile) return { ok: false as const, status: 403 as const, userId: null };
 
   return { ok: true as const, status: 200 as const, userId: user.id as string };
 }
@@ -71,18 +73,28 @@ export async function GET(req: Request) {
   const status = (url.searchParams.get("status") || "pending").toLowerCase();
   const q = (url.searchParams.get("q") || "").trim();
 
-  let query = supabase
-    .from("trainings")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (status !== "all") query = query.eq("status", status);
-  if (q) query = query.or(`title.ilike.%${q}%,organizer.ilike.%${q}%`);
-
-  const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json({ trainings: data ?? [] });
+  try {
+    let data = await fetchTrainings(supabase);
+    if (status !== "all")
+      data = data.filter((row) => row.approval_status === status);
+    if (q) {
+      const phrase = q.toLocaleLowerCase("pl-PL");
+      data = data.filter((row) =>
+        [row.title, row.organizer].some((value) =>
+          String(value ?? "").toLocaleLowerCase("pl-PL").includes(phrase),
+        ),
+      );
+    }
+    data.sort((a, b) =>
+      String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")),
+    );
+    return NextResponse.json({ trainings: data });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Database error" },
+      { status: 500 },
+    );
+  }
 }
 
 // PATCH /api/admin/trainings  body: { id, ...fields }
@@ -103,27 +115,41 @@ export async function PATCH(req: Request) {
 
   const patch: any = { ...body };
   delete patch.id;
+  const existing = (await fetchTrainings(supabase)).find(
+    (training) => training.id === body.id,
+  );
+  if (!existing)
+    return NextResponse.json(
+      { error: "training not found" },
+      { status: 404 },
+    );
+  const normalized: Record<string, any> = toNormalizedTraining({
+    ...existing,
+    ...patch,
+    title: patch.title ?? existing.title,
+    approval_status: patch.status ?? existing.approval_status,
+  });
 
   // Ślady akceptacji/odrzucenia (jeśli masz te kolumny w trainings)
   if (patch.status === "approved") {
-    patch.reviewed_by = admin.userId;
-    patch.reviewed_at = new Date().toISOString();
-    patch.reject_reason = null;
+    normalized.approved_by = admin.userId;
+    normalized.approved_at = new Date().toISOString();
+    normalized.reject_reason = null;
   }
   if (patch.status === "rejected") {
-    patch.reviewed_by = admin.userId;
-    patch.reviewed_at = new Date().toISOString();
-    if (!("reject_reason" in patch)) patch.reject_reason = "Odrzucone";
+    normalized.approved_by = admin.userId;
+    normalized.approved_at = new Date().toISOString();
+    if (!("reject_reason" in patch)) normalized.reject_reason = "Odrzucone";
   }
   if (patch.status === "pending") {
-    patch.reviewed_by = null;
-    patch.reviewed_at = null;
-    patch.reject_reason = null;
+    normalized.approved_by = null;
+    normalized.approved_at = null;
+    normalized.reject_reason = null;
   }
 
   const { data, error } = await supabase
     .from("trainings")
-    .update(patch)
+    .update(normalized)
     .eq("id", body.id)
     .select("*")
     .maybeSingle();

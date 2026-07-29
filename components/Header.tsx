@@ -71,8 +71,6 @@ const APP_NAV: NavItem[] = [
   },
 ];
 
-type ProfileRoleRow = { role: string | null };
-
 function cx(...classes: Array<string | false | undefined | null>) {
   return classes.filter(Boolean).join(" ");
 }
@@ -122,14 +120,16 @@ export default function Header() {
 
       const sb = supabaseClient();
       const { data, error } = await sb
-        .from("profiles" as any)
-        .select("role")
+        .from("platform_staff_roles")
+        .select("role_code")
         .eq("user_id", user.id)
+        .eq("role_code", "platform_admin")
+        .is("revoked_at", null)
+        .limit(1)
         .maybeSingle();
 
       if (cancelled) return;
-      const profile = (data as ProfileRoleRow | null) ?? null;
-      setRole(!error && profile ? (profile.role ?? null) : null);
+      setRole(!error && data ? "admin" : null);
     })();
 
     return () => {

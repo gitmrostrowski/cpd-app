@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { fetchProfile, saveProfile } from "@/lib/data/crpe";
 
 type Profession = "Lekarz" | "Lekarz dentysta" | "Inne";
 
@@ -58,9 +59,9 @@ export default function StartPage() {
 
   async function ensureAlreadyHasProfileOrContinue() {
     if (!user) return;
-    const { data } = await supabase.from("profiles").select("user_id").eq("user_id", user.id).maybeSingle();
+    const data = await fetchProfile(supabase, user.id);
     // jeśli profil istnieje, nie trzymamy usera na onboardingu
-    if (data?.user_id) {
+    if (data) {
       router.replace("/portfolio");
     }
   }
@@ -94,18 +95,13 @@ export default function StartPage() {
       const req = Math.max(0, Number(requiredPoints) || 0);
 
       const payload = {
-        user_id: user.id,
         profession,
         period_start: start,
         period_end: end,
         required_points: req,
       };
 
-      const { error } = await supabase.from("profiles").upsert(payload, { onConflict: "user_id" });
-      if (error) {
-        setErr(error.message);
-        return;
-      }
+      await saveProfile(supabase, user.id, payload);
 
       // lekki fallback lokalny (MVP)
       try {
@@ -344,4 +340,3 @@ export default function StartPage() {
     </main>
   );
 }
-

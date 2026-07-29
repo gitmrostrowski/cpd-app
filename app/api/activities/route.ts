@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
+import { createActivity, fetchActivities } from "@/lib/data/crpe";
 
 export async function GET() {
   const supabase = await supabaseServer(); // ✅ NAJWAŻNIEJSZA ZMIANA
@@ -13,17 +14,17 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabase
-    .from("activities")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const data = await fetchActivities(supabase, user.id, {
+      includeCertificateFields: true,
+    });
+    return NextResponse.json({ data });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Database error" },
+      { status: 500 },
+    );
   }
-
-  return NextResponse.json({ data });
 }
 
 export async function POST(req: Request) {
@@ -58,21 +59,21 @@ export async function POST(req: Request) {
     );
   }
 
-  const { data, error } = await supabase
-    .from("activities")
-    .insert({
-      user_id: user.id,
+  try {
+    const id = await createActivity(supabase, user.id, {
       type,
       points,
       year,
       organizer,
-    })
-    .select("*")
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    });
+    const data = (await fetchActivities(supabase, user.id)).find(
+      (row) => row.id === id,
+    );
+    return NextResponse.json({ data }, { status: 201 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Database error" },
+      { status: 500 },
+    );
   }
-
-  return NextResponse.json({ data }, { status: 201 });
 }

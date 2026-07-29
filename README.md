@@ -42,6 +42,28 @@ Nie dodawaj do GitHuba:
 - `.next`
 - kluczy `service_role` lub `sb_secret_...`
 
+## Baza danych Frankfurt
+
+Ta wersja aplikacji korzysta ze znormalizowanego schematu CRPE:
+
+- `educational_activities` — dane aktywności,
+- `activity_point_entries` — punkty przypisane do aktywności,
+- `activity_documents` — certyfikaty i pozostałe dokumenty,
+- `cpd_cycles` — okresy rozliczeniowe,
+- `medical_professionals`, `professions` i `professional_identifiers` — profil zawodowy,
+- `platform_staff_roles` — uprawnienia administratora.
+
+Warstwa zgodności w `lib/data/crpe.ts` udostępnia ten schemat istniejącym
+widokom aplikacji. Nie należy ponownie dodawać zapytań do starej tabeli
+`activities`.
+
+Przed wdrożeniem ustaw publiczne zmienne środowiskowe projektu Frankfurt:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://TWOJ-PROJEKT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
 ## Wersja v18 — design polish
 
 - publiczne menu jest stałe na wszystkich stronach informacyjnych, także po zalogowaniu;

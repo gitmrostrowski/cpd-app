@@ -14,9 +14,11 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
-import type { Database } from "@/types/supabase";
-
-type ActivityInsert = Database["public"]["Tables"]["activities"]["Insert"];
+import {
+  createActivity,
+  fetchTrainings,
+  toNormalizedTraining,
+} from "@/lib/data/crpe";
 
 type TrainingType = "online" | "stacjonarne" | "hybrydowe";
 type TrainingCategory =
@@ -509,77 +511,99 @@ export default function TrainingHubClient() {
 
     const todayStr = todayYYYYMMDD();
 
-    let query = supabase
-      .from("trainings")
-      .select("*")
-      .eq("approval_status", "approved")
-      .limit(200);
+    try {
+      let rows = (await fetchTrainings(supabase))
+        .map(normalizeTrainingRow)
+        .filter((row) => row.approval_status === "approved");
+      const includes = (value: string | null | undefined, phrase: string) =>
+        String(value ?? "").toLocaleLowerCase("pl-PL").includes(
+          phrase.toLocaleLowerCase("pl-PL"),
+        );
 
-    if (sortBy === "date_asc")
-      query = query.order("start_date", { ascending: true });
-    if (sortBy === "date_desc")
-      query = query.order("start_date", { ascending: false });
-    if (sortBy === "points_desc")
-      query = query.order("points", { ascending: false, nullsFirst: false });
-    if (sortBy === "points_asc")
-      query = query.order("points", { ascending: true, nullsFirst: false });
-    if (sortBy === "newest")
-      query = query.order("created_at", { ascending: false });
+      if (organizer !== "all")
+        rows = rows.filter((row) => includes(row.organizer, organizer));
+      if (format !== "all")
+        rows = rows.filter((row) => row.format === format);
+      if (category !== "all")
+        rows = rows.filter((row) => row.category === category);
+      if (minPoints !== "all")
+        rows = rows.filter(
+          (row) => Number(row.points ?? 0) >= Number(minPoints),
+        );
+      if (timeWindow !== "all") {
+        const maxDate = addDaysYYYYMMDD(Number(timeWindow));
+        rows = rows.filter(
+          (row) =>
+            Boolean(row.start_date) &&
+            row.start_date! >= todayStr &&
+            row.start_date! <= maxDate,
+        );
+      } else if (onlyUpcoming) {
+        rows = rows.filter(
+          (row) => Boolean(row.start_date) && row.start_date! >= todayStr,
+        );
+      }
+      if (place !== "all")
+        rows = rows.filter((row) => includes(row.voivodeship, place));
+      if (professionFilter !== "all") {
+        rows = rows.filter((row) => {
+          const profession = String(row.profession ?? "");
+          const general =
+            !profession ||
+            includes(profession, "ogól") ||
+            includes(profession, "wszys");
+          return professionFilter === "general"
+            ? general
+            : general || includes(profession, professionFilter);
+        });
+      }
+      if (topic !== "all")
+        rows = rows.filter((row) => row.topics?.includes(topic));
+      if (priceMode === "free")
+        rows = rows.filter((row) => Number(row.price_pln ?? 0) === 0);
+      if (priceMode === "paid")
+        rows = rows.filter((row) => Number(row.price_pln ?? 0) > 0);
+      if (enrollment !== "all")
+        rows = rows.filter((row) => row.enrollment_status === enrollment);
+      if (q.trim()) {
+        const phrase = q.trim();
+        rows = rows.filter((row) =>
+          [
+            row.title,
+            row.organizer,
+            row.category,
+            row.voivodeship,
+            row.profession,
+          ].some((value) => includes(value, phrase)),
+        );
+      }
 
-    if (organizer !== "all") query = query.ilike("organizer", `%${organizer}%`);
-    if (format !== "all") query = query.eq("format", format);
-    if (category !== "all") query = query.eq("category", category);
+      rows.sort((a, b) => {
+        if (sortBy === "points_desc")
+          return Number(b.points ?? 0) - Number(a.points ?? 0);
+        if (sortBy === "points_asc")
+          return Number(a.points ?? 0) - Number(b.points ?? 0);
+        if (sortBy === "newest")
+          return String(b.created_at).localeCompare(String(a.created_at));
+        const direction = sortBy === "date_desc" ? -1 : 1;
+        return (
+          direction *
+          String(a.start_date ?? "9999-12-31").localeCompare(
+            String(b.start_date ?? "9999-12-31"),
+          )
+        );
+      });
 
-    if (minPoints !== "all") query = query.gte("points", Number(minPoints));
-
-    if (timeWindow !== "all") {
-      const maxDate = addDaysYYYYMMDD(Number(timeWindow));
-      query = query.gte("start_date", todayStr).lte("start_date", maxDate);
-    } else if (onlyUpcoming) {
-      query = query.gte("start_date", todayStr);
-    }
-
-    if (place !== "all") query = query.ilike("voivodeship", `%${place}%`);
-
-    if (professionFilter === "general") {
-      query = query.or(
-        "profession.is.null,profession.ilike.%ogól%,profession.ilike.%wszys%"
-      );
-    } else if (professionFilter !== "all") {
-      query = query.or(
-        `profession.is.null,profession.ilike.%ogól%,profession.ilike.%wszys%,profession.ilike.%${professionFilter}%`
-      );
-    }
-
-    if (topic !== "all") query = query.contains("topics", [topic]);
-    if (priceMode === "free") query = query.eq("price_pln", 0);
-    if (priceMode === "paid") query = query.gt("price_pln", 0);
-    if (enrollment !== "all") query = query.eq("enrollment_status", enrollment);
-
-    if (q.trim()) {
-      const qq = q.trim();
-
-      query = query.or(
-        [
-          `title.ilike.%${qq}%`,
-          `organizer.ilike.%${qq}%`,
-          `category.ilike.%${qq}%`,
-          `voivodeship.ilike.%${qq}%`,
-          `profession.ilike.%${qq}%`,
-        ].join(",")
-      );
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      setError(error.message);
-      setItems([]);
-    } else {
-      const rows = ((data ?? []) as any[]).map(normalizeTrainingRow);
-      setItems(rows);
+      setItems(rows.slice(0, 200));
       setSelectedCalendarDateKey(null);
       setSelectedCalendarTrainingId(null);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Nie udało się pobrać szkoleń.",
+      );
+      setItems([]);
     }
 
     setFetching(false);
@@ -732,28 +756,25 @@ export default function TrainingHubClient() {
       ? Number(t.start_date.slice(0, 4))
       : new Date().getFullYear();
 
-    const payload: ActivityInsert = {
-      user_id: user.id,
+    const payload = {
       type: mapToActivityType(t.category, t.format),
       points: typeof t.points === "number" ? t.points : 0,
       year,
       organizer: t.organizer ?? null,
-
-      status: "planned",
+      status: "planned" as const,
       planned_start_date: t.start_date ?? null,
       training_id: t.id,
-
-      certificate_path: null,
-      certificate_name: null,
-      certificate_mime: null,
-      certificate_size: null,
-      certificate_uploaded_at: null,
+      title: t.title,
     };
 
-    const { error } = await supabase.from("activities").insert(payload);
-
-    if (error) {
-      alert(`Nie udało się dodać szkolenia do planu: ${error.message}`);
+    try {
+      await createActivity(supabase, user.id, payload);
+    } catch (caught) {
+      alert(
+        `Nie udało się dodać szkolenia do planu: ${
+          caught instanceof Error ? caught.message : "nieznany błąd"
+        }`,
+      );
       return;
     }
 
@@ -840,7 +861,9 @@ export default function TrainingHubClient() {
       submitted_email: user.email ?? null,
     };
 
-    const { error } = await supabase.from("trainings").insert(payload);
+    const { error } = await supabase
+      .from("trainings")
+      .insert(toNormalizedTraining(payload));
 
     setAddSubmitting(false);
 

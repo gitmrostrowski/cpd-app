@@ -25,6 +25,13 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
+import {
+  createActivity,
+  deleteActivity,
+  fetchActivities,
+  fetchActivityDocuments,
+  updateActivity,
+} from "@/lib/data/crpe";
 
 type ActivityStatus = "planned" | "done" | null;
 
@@ -417,39 +424,9 @@ export default function ActivitiesPage() {
     setErr(null);
 
     try {
-      const { data, error } = await supabase
-        .from("activities")
-        .select(
-          "id,user_id,type,points,year,organizer,created_at,status,planned_start_date,training_id,certificate_path,certificate_name,certificate_mime,certificate_size,certificate_uploaded_at",
-        )
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        setErr(error.message);
-        setItems([]);
-        setDocs([]);
-        setDocUrls({});
-        setLegacyCertUrls({});
-        return;
-      }
-
-      const rows = ((data ?? []) as unknown as ActivityRow[]) ?? [];
+      const rows = (await fetchActivities(supabase, user.id)) as ActivityRow[];
       setItems(rows);
-
-      const withLegacy = rows.filter((r) => r.certificate_path);
-      const legacyResults = await Promise.all(
-        withLegacy.map(async (r) => {
-          const { data: urlData } = await supabase.storage
-            .from(BUCKET)
-            .createSignedUrl(r.certificate_path!, 60 * 60);
-          return { activityId: r.id, url: urlData?.signedUrl ?? "" };
-        }),
-      );
-
-      const legacyMap: Record<string, string> = {};
-      for (const x of legacyResults) if (x.url) legacyMap[x.activityId] = x.url;
-      setLegacyCertUrls(legacyMap);
+      setLegacyCertUrls({});
 
       const ids = rows.map((r) => r.id);
 
@@ -459,33 +436,25 @@ export default function ActivitiesPage() {
         return;
       }
 
-      const { data: docsData, error: docsErr } = await supabase
-        .from("activity_documents")
-        .select("id,user_id,activity_id,kind,path,name,mime,size,uploaded_at")
-        .in("activity_id", ids)
-        .eq("user_id", user.id)
-        .order("uploaded_at", { ascending: false });
+      const docRows = (await fetchActivityDocuments(
+        supabase,
+        user.id,
+        ids,
+      )) as ActivityDocRow[];
+      setDocs(docRows);
 
-      if (docsErr) {
-        setDocs([]);
-        setDocUrls({});
-      } else {
-        const docRows = ((docsData ?? []) as unknown as ActivityDocRow[]) ?? [];
-        setDocs(docRows);
+      const urlResults = await Promise.all(
+        docRows.map(async (d) => {
+          const { data: urlData } = await supabase.storage
+            .from(BUCKET)
+            .createSignedUrl(d.path, 60 * 60);
+          return { docId: d.id, url: urlData?.signedUrl ?? "" };
+        }),
+      );
 
-        const urlResults = await Promise.all(
-          docRows.map(async (d) => {
-            const { data: urlData } = await supabase.storage
-              .from(BUCKET)
-              .createSignedUrl(d.path, 60 * 60);
-            return { docId: d.id, url: urlData?.signedUrl ?? "" };
-          }),
-        );
-
-        const docMap: Record<string, string> = {};
-        for (const x of urlResults) if (x.url) docMap[x.docId] = x.url;
-        setDocUrls(docMap);
-      }
+      const docMap: Record<string, string> = {};
+      for (const x of urlResults) if (x.url) docMap[x.docId] = x.url;
+      setDocUrls(docMap);
     } catch (e: any) {
       setErr(e?.message || "Nie udało się pobrać aktywności.");
       setItems([]);
@@ -561,7 +530,6 @@ export default function ActivitiesPage() {
     const org = organizer.trim();
 
     const payload = {
-      user_id: user.id,
       type,
       points: p,
       year: y,
@@ -572,16 +540,7 @@ export default function ActivitiesPage() {
     setBusy(true);
 
     try {
-      const { data, error } = await supabase
-        .from("activities")
-        .insert(payload)
-        .select("id")
-        .single();
-
-      if (error) return setErr(error.message);
-
-      const newId = (data?.id as string | undefined) ?? undefined;
-      if (!newId) return setErr("Nie udało się odczytać ID nowej aktywności.");
+      const newId = await createActivity(supabase, user.id, payload);
 
       if (file) {
         await uploadDoc(newId, "certificate", file);
@@ -605,13 +564,12 @@ export default function ActivitiesPage() {
     setBusy(true);
 
     try {
-      const { error } = await supabase
-        .from("activities")
-        .update({ status: "done" as const })
-        .eq("id", activityId)
-        .eq("user_id", user.id);
-
-      if (error) return setErr(error.message);
+      const current = items.find((item) => item.id === activityId);
+      await updateActivity(supabase, user.id, activityId, {
+        status: "done",
+        year: current?.year ?? new Date().getFullYear(),
+        planned_start_date: current?.planned_start_date ?? null,
+      });
 
       setInfo("Oznaczono jako ukończone. Sprawdź, czy aktywność ma kompletne dane.");
       await load();
@@ -645,17 +603,7 @@ export default function ActivitiesPage() {
           .eq("user_id", user.id);
       }
 
-      const { error } = await supabase
-        .from("activities")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
-
-      if (error) {
-        setErr(error.message);
-        setItems(prev);
-        return;
-      }
+      await deleteActivity(supabase, user.id, id);
 
       setInfo("Usunięto aktywność.");
     } catch (e: any) {
@@ -775,13 +723,7 @@ export default function ActivitiesPage() {
     setBusy(true);
 
     try {
-      const { error } = await supabase
-        .from("activities")
-        .update(upd)
-        .eq("id", activityId)
-        .eq("user_id", user.id);
-
-      if (error) return setErr(error.message);
+      await updateActivity(supabase, user.id, activityId, upd);
 
       setInfo("Zapisano zmiany.");
       setEditId(null);

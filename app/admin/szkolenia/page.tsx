@@ -5,6 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabaseClient } from "@/lib/supabase/client";
+import {
+  fetchTrainings,
+  toNormalizedTraining,
+} from "@/lib/data/crpe";
 
 type TrainingStatus = "pending" | "approved" | "rejected";
 
@@ -26,8 +30,6 @@ type TrainingRow = {
   created_at: string;
   updated_at: string | null;
 };
-
-type ProfileRoleRow = { role: string | null };
 
 function cls(...xs: Array<string | false | null | undefined>) {
   return xs.filter(Boolean).join(" ");
@@ -119,16 +121,17 @@ export default function AdminTrainingsPage() {
       }
 
       const { data, error } = await sb
-        .from("profiles" as any)
-        .select("role")
+        .from("platform_staff_roles")
+        .select("role_code")
         .eq("user_id", user.id)
+        .eq("role_code", "platform_admin")
+        .is("revoked_at", null)
+        .limit(1)
         .maybeSingle();
 
       if (cancelled) return;
 
-      const profile = (data as ProfileRoleRow | null) ?? null;
-
-      if (error || !profile || profile.role !== "admin") {
+      if (error || !data) {
         setIsAdmin(false);
         router.replace("/profil");
         return;
@@ -147,31 +150,36 @@ export default function AdminTrainingsPage() {
     setErr(null);
 
     try {
-      let query = sb
-        .from("trainings")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (status !== "all") query = query.eq("approval_status", status);
-
-      if (dateFrom) query = query.gte("created_at", `${dateFrom}T00:00:00`);
-      if (dateTo) query = query.lte("created_at", `${dateTo}T23:59:59`);
-
+      let data = (await fetchTrainings(sb)) as TrainingRow[];
+      if (status !== "all")
+        data = data.filter((row) => getStatus(row) === status);
+      if (dateFrom)
+        data = data.filter((row) => row.created_at.slice(0, 10) >= dateFrom);
+      if (dateTo)
+        data = data.filter((row) => row.created_at.slice(0, 10) <= dateTo);
       if (addedByQ.trim()) {
-        query = query.ilike("submitted_email", `%${addedByQ.trim()}%`);
-      }
-
-      if (q.trim()) {
-        const qq = q.trim();
-        query = query.or(
-          `title.ilike.%${qq}%,organizer.ilike.%${qq}%,description.ilike.%${qq}%,submitted_email.ilike.%${qq}%`
+        const phrase = addedByQ.trim().toLocaleLowerCase("pl-PL");
+        data = data.filter((row) =>
+          String(row.submitted_email ?? "")
+            .toLocaleLowerCase("pl-PL")
+            .includes(phrase),
         );
       }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      setRows(((data as any[]) ?? []) as TrainingRow[]);
+      if (q.trim()) {
+        const phrase = q.trim().toLocaleLowerCase("pl-PL");
+        data = data.filter((row) =>
+          [
+            row.title,
+            row.organizer,
+            row.description,
+            row.submitted_email,
+          ].some((value) =>
+            String(value ?? "").toLocaleLowerCase("pl-PL").includes(phrase),
+          ),
+        );
+      }
+      data.sort((a, b) => b.created_at.localeCompare(a.created_at));
+      setRows(data);
     } catch (e: any) {
       setErr(e?.message || "Błąd pobierania danych");
       setRows([]);
@@ -188,16 +196,36 @@ export default function AdminTrainingsPage() {
   const filtered = useMemo(() => rows, [rows]);
 
   async function patch(id: string, patchData: Partial<TrainingRow>) {
-    const { data, error } = await sb
+    const current = rows.find((row) => row.id === id);
+    if (!current) throw new Error("Nie znaleziono szkolenia.");
+    const next = {
+      ...current,
+      ...patchData,
+      approval_status: getStatus({ ...current, ...patchData }),
+    };
+    const normalized: Record<string, unknown> = toNormalizedTraining(next);
+    const { data: auth } = await sb.auth.getUser();
+    if (next.approval_status === "approved") {
+      normalized.approved_by = auth.user?.id ?? null;
+      normalized.approved_at = new Date().toISOString();
+      normalized.reject_reason = null;
+    } else if (next.approval_status === "rejected") {
+      normalized.approved_by = auth.user?.id ?? null;
+      normalized.approved_at = new Date().toISOString();
+    } else {
+      normalized.approved_by = null;
+      normalized.approved_at = null;
+      normalized.reject_reason = null;
+    }
+
+    const { error } = await sb
       .from("trainings")
-      .update(patchData as any)
-      .eq("id", id)
-      .select("*")
-      .maybeSingle();
+      .update(normalized)
+      .eq("id", id);
 
     if (error) throw error;
 
-    const updated = data as any as TrainingRow;
+    const updated = next;
     setRows((prev) => prev.map((x) => (x.id === id ? updated : x)));
     return updated;
   }

@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
+import {
+  fetchProfile,
+  saveProfile as saveCrpeProfile,
+} from "@/lib/data/crpe";
 
 type Profession = "Lekarz" | "Lekarz dentysta" | "Inne";
 
@@ -186,19 +190,9 @@ export default function ProfilePage() {
       };
 
       try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("user_id, profession, period_start, period_end, required_points, pwz_number, pwz_issue_date")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const data = await fetchProfile(supabase, user.id);
 
         if (!alive) return;
-
-        if (error) {
-          setErr(`Profil (DB): ${error.message}`);
-          loadFromLocal();
-          return;
-        }
 
         if (!data) {
           const defaults: ProfileRow = {
@@ -210,16 +204,6 @@ export default function ProfilePage() {
             pwz_number: null,
             pwz_issue_date: null,
           };
-
-          const { error: upErr } = await supabase.from("profiles").upsert(defaults, { onConflict: "user_id" });
-
-          if (!alive) return;
-
-          if (upErr) {
-            setErr(`Profil (DB): ${upErr.message}`);
-            loadFromLocal();
-            return;
-          }
 
           setProfession(defaults.profession);
           setRequiredPoints(defaults.required_points);
@@ -363,11 +347,7 @@ export default function ProfilePage() {
         pwz_issue_date: isDoctorLike(profession) ? (isoPwz || null) : null,
       };
 
-      const { error } = await supabase.from("profiles").upsert(payload, { onConflict: "user_id" });
-      if (error) {
-        setErr(error.message);
-        return;
-      }
+      await saveCrpeProfile(supabase, user.id, payload);
 
       const label =
         pwzPeriod ? pwzPeriod.labelYears : periodLabel === "Inny" ? makePeriodLabel(start, end) : periodLabel;

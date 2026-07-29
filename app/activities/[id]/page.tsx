@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { deleteCertificate, uploadCertificate } from "../actions";
+import { fetchActivity } from "@/lib/data/crpe";
 
 const BUCKET = "certificates";
 
@@ -13,12 +14,17 @@ export default async function ActivityDetailsPage({
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
   const supabase = await supabaseServer();
-
-  const { data: activity, error } = await supabase
-    .from("activities")
-    .select("*")
-    .eq("id", params.id)
-    .maybeSingle();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let activity = null;
+  let loadError: Error | null = null;
+  try {
+    activity = user ? await fetchActivity(supabase, user.id, params.id) : null;
+  } catch (caught) {
+    loadError =
+      caught instanceof Error ? caught : new Error("Nie udało się pobrać aktywności.");
+  }
 
   const errParam = searchParams?.err;
   const errMsg =
@@ -28,11 +34,11 @@ export default async function ActivityDetailsPage({
       ? errParam[0]
       : null;
 
-  if (error) {
+  if (loadError) {
     return (
       <div className="mx-auto max-w-3xl p-6">
         <h1 className="text-2xl font-semibold">Aktywność</h1>
-        <p className="mt-4 text-red-600">Błąd: {error.message}</p>
+        <p className="mt-4 text-red-600">Błąd: {loadError.message}</p>
         <Link className="mt-4 inline-block underline" href="/activities">
           Wróć
         </Link>

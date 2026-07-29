@@ -6,10 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 
-type ProfileAccessRow = {
-  role: string | null;
-  can_org_report: boolean | null;
-};
+type ProfileAccessRow = { role: string | null; can_org_report: boolean | null };
 
 function canAccessOrgReport(profile: ProfileAccessRow | null) {
   if (!profile) return false;
@@ -36,21 +33,35 @@ export default function RaportOrganizacjiPage() {
     async function loadAccess() {
       setLoadingAccess(true);
 
-      const { data, error } = await supabase
-        .from("profiles" as any)
-        .select("role, can_org_report")
-        .eq("user_id", userId)
-        .maybeSingle();
+      const [{ data: staff, error: staffError }, { data: memberships, error: membershipError }] =
+        await Promise.all([
+          supabase
+            .from("platform_staff_roles")
+            .select("role_code")
+            .eq("user_id", userId)
+            .eq("role_code", "platform_admin")
+            .is("revoked_at", null)
+            .limit(1),
+          supabase
+            .from("organization_memberships")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("status", "active")
+            .limit(1),
+        ]);
 
       if (cancelled) return;
 
-      if (error) {
+      if (staffError || membershipError) {
         setProfileAccess(null);
         setLoadingAccess(false);
         return;
       }
 
-      setProfileAccess((data as ProfileAccessRow | null) ?? null);
+      setProfileAccess({
+        role: staff?.length ? "admin" : "user",
+        can_org_report: Boolean(memberships?.length),
+      });
       setLoadingAccess(false);
     }
 

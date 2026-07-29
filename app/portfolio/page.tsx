@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
+import { fetchActivities, fetchProfile } from "@/lib/data/crpe";
 
 import { applyRules, sumPointsWithRules, summarizeLimits, type ActivityLike } from "@/lib/cpd/calc";
 
@@ -54,23 +55,26 @@ export default function PortfolioPage() {
 
       setLoading(true);
 
-      const { data: p, error: pErr } = await supabase
-        .from("profiles")
-        .select("profession, profession_other, period_start, period_end, required_points")
-        .eq("user_id", uid)
-        .maybeSingle();
-
-      const { data: a, error: aErr } = await supabase
-        .from("activities")
-        .select("id, user_id, type, points, year, organizer, created_at, certificate_path, certificate_name")
-        .eq("user_id", uid);
+      let p = null;
+      let a: ActivityRow[] = [];
+      try {
+        [p, a] = await Promise.all([
+          fetchProfile(supabase, uid),
+          fetchActivities(supabase, uid, {
+            includeCertificateFields: true,
+          }) as Promise<ActivityRow[]>,
+        ]);
+      } catch {
+        p = null;
+        a = [];
+      }
 
       if (cancelled) return;
 
-      if (!pErr && p) setProfile(p as ProfileRow);
+      if (p) setProfile(p as ProfileRow);
       else setProfile(null);
 
-      if (!aErr && a) setActivities(a as ActivityRow[]);
+      if (a) setActivities(a as ActivityRow[]);
       else setActivities([]);
 
       setLoading(false);

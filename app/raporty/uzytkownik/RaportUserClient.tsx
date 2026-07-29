@@ -5,6 +5,11 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
+import {
+  fetchActivities,
+  fetchActivityDocuments,
+  fetchProfile,
+} from "@/lib/data/crpe";
 
 type PeriodMode = "profile" | "current" | "previous" | "custom";
 
@@ -153,15 +158,8 @@ export default function RaportUserClient() {
       }
 
       try {
-        const { data, error: pErr } = await supabase
-          .from("profiles")
-          .select(
-            "user_id, profession, profession_other, period_start, period_end, required_points, pwz_number, pwz_issue_date, role"
-          )
-          .eq("user_id", user.id)
-          .single();
-
-        if (pErr) throw pErr;
+        const data = await fetchProfile(supabase, user.id);
+        if (!data) throw new Error("Brak profilu zawodowego.");
         if (cancelled) return;
 
         const p = data as ProfileRow;
@@ -233,52 +231,32 @@ export default function RaportUserClient() {
       setError(null);
 
       try {
-        const fromISO = startOfDayISO(parseISODate(fromDate));
-        const toISO = endOfDayISO(parseISODate(toDate));
-
-        const selectCols =
-          "id,user_id,type,points,year,organizer,created_at,updated_at,status,planned_start_date,training_id,certificate_path,certificate_name,certificate_mime,certificate_size,certificate_uploaded_at,trainings(title,organizer,start_date,end_date,external_url)";
-
-        const q1 = supabase
-          .from("activities")
-          .select(selectCols)
-          .eq("user_id", user.id)
-          .gte("created_at", fromISO)
-          .lte("created_at", toISO)
-          .order("created_at", { ascending: false });
-
-        const q2 = supabase
-          .from("activities")
-          .select(selectCols)
-          .eq("user_id", user.id)
-          .not("planned_start_date", "is", null)
-          .gte("planned_start_date", fromDate)
-          .lte("planned_start_date", toDate)
-          .order("planned_start_date", { ascending: false });
-
-        const [{ data: a1, error: e1 }, { data: a2, error: e2 }] = await Promise.all([q1, q2]);
-
-        if (e1) throw e1;
-        if (e2) throw e2;
+        const allRows = (await fetchActivities(
+          supabase,
+          user.id,
+        )) as ActivityRow[];
         if (cancelled) return;
 
-        const map = new Map<string, ActivityRow>();
-        for (const row of (a1 as ActivityRow[]) ?? []) map.set(row.id, row);
-        for (const row of (a2 as ActivityRow[]) ?? []) map.set(row.id, row);
-
-        const merged = Array.from(map.values());
+        const fromTime = parseISODate(fromDate).getTime();
+        const toTime = parseISODate(toDate).getTime();
+        const merged = allRows.filter((row) => {
+          const rawDate =
+            row.status === "planned" && row.planned_start_date
+              ? row.planned_start_date
+              : `${row.year}-12-31`;
+          const time = parseISODate(rawDate).getTime();
+          return time >= fromTime && time <= toTime;
+        });
         setActivities(merged);
 
         if (merged.length > 0) {
           const ids = merged.map((x) => x.id);
 
-          const { data: docs, error: dErr } = await supabase
-            .from("activity_documents")
-            .select("id,user_id,activity_id,kind,path,name,mime,size,uploaded_at")
-            .eq("user_id", user.id)
-            .in("activity_id", ids);
-
-          if (dErr) throw dErr;
+          const docs = await fetchActivityDocuments(
+            supabase,
+            user.id,
+            ids,
+          );
 
           const counts: Record<string, number> = {};
           for (const d of (docs as ActivityDocRow[]) ?? []) {

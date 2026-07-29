@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
+import {
+  createActivity,
+  deleteActivity as deleteCrpeActivity,
+} from "@/lib/data/crpe";
 
 const ALLOWED_TYPES = [
   "Kurs stacjonarny",
@@ -53,15 +57,12 @@ export async function addActivity(formData: FormData) {
   const year = normalizeYear(formData.get("year"));
   const organizer = normalizeOrganizer(formData.get("organizer"));
 
-  const { error } = await supabase.from("activities").insert({
-    user_id: authData.user.id,
+  await createActivity(supabase, authData.user.id, {
     type,
     points,
     year,
     organizer,
   });
-
-  if (error) throw new Error(error.message);
 
   revalidatePath("/portfolio");
 }
@@ -76,13 +77,7 @@ export async function deleteActivity(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return;
 
-  const { error } = await supabase
-    .from("activities")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", authData.user.id);
-
-  if (error) throw new Error(error.message);
+  await deleteCrpeActivity(supabase, authData.user.id, id);
 
   revalidatePath("/portfolio");
 }
@@ -115,8 +110,9 @@ export async function importFromCalculator(payload: {
 
   if (!rows.length) return;
 
-  const { error } = await supabase.from("activities").insert(rows);
-  if (error) throw new Error(error.message);
+  for (const row of rows) {
+    await createActivity(supabase, authData.user.id, row);
+  }
 
   revalidatePath("/portfolio");
 }
