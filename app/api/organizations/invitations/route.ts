@@ -79,11 +79,11 @@ async function sendInvitationEmail(
   roleCode: string,
   origin: string,
 ) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.CRPE_INVITATION_FROM;
-  if (!apiKey || !from) {
+  const apiKey = process.env.BREVO_API_KEY;
+  const fromEmail = process.env.CRPE_INVITATION_FROM_EMAIL;
+  if (!apiKey || !fromEmail) {
     throw new Error(
-      "Wysyłka e-mail nie jest jeszcze skonfigurowana. Ustaw RESEND_API_KEY i CRPE_INVITATION_FROM.",
+      "Wysyłka e-mail nie jest jeszcze skonfigurowana. Ustaw BREVO_API_KEY i CRPE_INVITATION_FROM_EMAIL.",
     );
   }
 
@@ -138,40 +138,44 @@ async function sendInvitationEmail(
     "Przyjęcie zaproszenia nie udostępnia automatycznie prywatnych aktywności ani certyfikatów.",
   ].join("\n");
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Accept: "application/json",
+      "api-key": apiKey,
       "Content-Type": "application/json",
-      "Idempotency-Key": `crpe-inv-${invitation.id}-${invitation.token}`,
     },
     body: JSON.stringify({
-      from,
-      to: invitation.email,
+      sender: {
+        name: "CRPE",
+        email: fromEmail,
+      },
+      to: [{ email: invitation.email }],
       subject: `Zaproszenie do ${invitation.organization_name} w CRPE`,
-      html,
-      text,
-      tags: [
-        { name: "message_type", value: "organization_invitation" },
-        { name: "invitation_id", value: invitation.id },
-      ],
+      htmlContent: html,
+      textContent: text,
+      headers: {
+        "Idempotency-Key": `crpe-inv-${invitation.id}-${invitation.token}`,
+        "X-Crpe-Invitation-Id": invitation.id,
+      },
+      tags: ["organization_invitation"],
     }),
   });
 
   const responseBody = (await response.json().catch(() => ({}))) as {
-    id?: string;
+    messageId?: string;
     message?: string;
-    error?: string;
+    code?: string;
   };
-  if (!response.ok || !responseBody.id) {
+  if (!response.ok || !responseBody.messageId) {
     throw new Error(
       responseBody.message ||
-        responseBody.error ||
+        responseBody.code ||
         `System pocztowy zwrócił błąd ${response.status}.`,
     );
   }
 
-  return responseBody.id;
+  return responseBody.messageId;
 }
 
 export async function POST(request: Request) {
@@ -191,7 +195,10 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!process.env.RESEND_API_KEY || !process.env.CRPE_INVITATION_FROM) {
+  if (
+    !process.env.BREVO_API_KEY ||
+    !process.env.CRPE_INVITATION_FROM_EMAIL
+  ) {
     return NextResponse.json(
       {
         error:

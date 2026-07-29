@@ -46,14 +46,16 @@ check(
     migration.includes("security definer"),
 );
 check(
-  "API wysyła wiadomość poza przeglądarką",
-  api.includes("https://api.resend.com/emails") &&
-    api.includes("RESEND_API_KEY") &&
-    !api.includes("NEXT_PUBLIC_RESEND"),
+  "API wysyła wiadomość przez Brevo poza przeglądarką",
+  api.includes("https://api.brevo.com/v3/smtp/email") &&
+    api.includes("BREVO_API_KEY") &&
+    api.includes('"api-key": apiKey') &&
+    !api.includes("NEXT_PUBLIC_BREVO"),
 );
 check(
   "Wysyłka używa klucza idempotencji",
-  api.includes("Idempotency-Key"),
+  api.includes('"Idempotency-Key"') &&
+    api.includes('"X-Crpe-Invitation-Id"'),
 );
 check(
   "Formularz przyjmuje wiele adresów",
@@ -121,4 +123,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`\nCRPE v5.1: ${checks.length}/${checks.length} testów OK.`);
+console.log(`\nCRPE v5.1a: ${checks.length}/${checks.length} testów OK.`);
