@@ -11,6 +11,7 @@ import {
   FileBarChart,
   History,
   LayoutDashboard,
+  Mail,
   Plus,
   RefreshCw,
   ShieldCheck,
@@ -66,8 +67,15 @@ type Invitation = {
   unit_id: string | null;
   unit_name: string | null;
   status: string;
+  delivery_status: string;
+  send_attempts: number;
   invited_at: string;
   expires_at: string;
+  last_sent_at: string | null;
+  last_send_error: string | null;
+  opened_at: string | null;
+  authenticated_at: string | null;
+  accepted_at: string | null;
 };
 
 type AuditEvent = {
@@ -127,6 +135,10 @@ const unitTypeLabels: Record<string, string> = {
 
 const eventLabels: Record<string, string> = {
   "invitation.created": "Utworzono zaproszenie",
+  "invitation.sent": "Wysłano zaproszenie",
+  "invitation.send_failed": "Błąd wysyłki zaproszenia",
+  "invitation.resent": "Ponowiono zaproszenie",
+  "invitation.revoked": "Anulowano zaproszenie",
   "invitation.accepted": "Przyjęto zaproszenie",
   "unit.created": "Dodano jednostkę",
   "role.granted": "Nadano rolę",
@@ -152,6 +164,16 @@ function permission(panel: PanelData | null, code: string) {
   return Boolean(panel?.permissions.includes(code));
 }
 
+function invitationWord(count: number) {
+  if (count === 1) return "zaproszenie";
+  const lastTwo = count % 100;
+  const last = count % 10;
+  if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) {
+    return "zaproszenia";
+  }
+  return "zaproszeń";
+}
+
 export default function OrganizationPanelClient({
   organizationId,
 }: {
@@ -169,7 +191,6 @@ export default function OrganizationPanelClient({
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
   const [inviteScope, setInviteScope] = useState("organization");
-  const [newInviteLink, setNewInviteLink] = useState("");
 
   const [unitName, setUnitName] = useState("");
   const [unitType, setUnitType] = useState("department");
@@ -187,16 +208,30 @@ export default function OrganizationPanelClient({
 
     setLoading(true);
     setError("");
-    const { data, error: loadError } = await supabase.rpc(
-      "get_organization_panel",
-      { p_organization_id: organizationId },
-    );
+    const [
+      { data, error: loadError },
+      { data: invitations, error: invitationsError },
+    ] = await Promise.all([
+      supabase.rpc("get_organization_panel", {
+        p_organization_id: organizationId,
+      }),
+      supabase.rpc("get_organization_invitations", {
+        p_organization_id: organizationId,
+      }),
+    ]);
 
     if (loadError) {
       setPanel(null);
       setError(loadError.message);
     } else {
-      setPanel(data as unknown as PanelData);
+      const nextPanel = data as unknown as PanelData;
+      setPanel({
+        ...nextPanel,
+        invitations: invitationsError
+          ? nextPanel.invitations
+          : ((invitations ?? []) as unknown as Invitation[]),
+      });
+      if (invitationsError) setError(invitationsError.message);
     }
     setLoading(false);
   }, [organizationId, supabase, user]);
@@ -234,31 +269,104 @@ export default function OrganizationPanelClient({
   async function createInvitation(event: FormEvent) {
     event.preventDefault();
     const unitId = inviteScope === "organization" ? null : inviteScope;
+    const emails = Array.from(
+      new Set(
+        inviteEmail
+          .split(/[\s,;]+/)
+          .map((email) => email.trim().toLocaleLowerCase("pl-PL"))
+          .filter(Boolean),
+      ),
+    );
 
     setWorking(true);
     setMessage("");
     setError("");
-    const { data, error: inviteError } = await supabase.rpc(
-      "create_organization_invitation",
-      {
-        p_organization_id: organizationId,
-        p_email: inviteEmail,
-        p_role_code: inviteRole,
-        p_unit_id: unitId,
-      },
-    );
+    try {
+      const response = await fetch("/api/organizations/invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          organizationId,
+          emails,
+          roleCode: inviteRole,
+          unitId,
+        }),
+      });
+      const result = (await response.json()) as {
+        sent?: number;
+        failed?: number;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(result.error || "Nie udało się wysłać zaproszeń.");
 
-    if (inviteError) {
-      setError(inviteError.message);
-    } else {
-      const result = data as unknown as { token: string };
-      const link = `${window.location.origin}/placowka/zaproszenie?token=${result.token}`;
-      setNewInviteLink(link);
       setInviteEmail("");
       setMessage(
-        "Zaproszenie utworzone. Skopiuj bezpieczny link i przekaż go tej osobie.",
+        result.failed
+          ? `Wysłano: ${result.sent ?? 0}. Błędy: ${result.failed}. Szczegóły są w rejestrze zaproszeń.`
+          : `Wysłano ${result.sent ?? emails.length} ${invitationWord(
+              result.sent ?? emails.length,
+            )}.`,
       );
       await loadPanel();
+    } catch (inviteError) {
+      setError(
+        inviteError instanceof Error
+          ? inviteError.message
+          : "Nie udało się wysłać zaproszeń.",
+      );
+    }
+    setWorking(false);
+  }
+
+  async function resendInvitation(invitation: Invitation) {
+    setWorking(true);
+    setMessage("");
+    setError("");
+    try {
+      const response = await fetch("/api/organizations/invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "resend",
+          invitationId: invitation.id,
+          roleCode: invitation.role_code,
+        }),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(result.error || "Nie udało się ponowić zaproszenia.");
+      setMessage(`Ponownie wysłano zaproszenie do ${invitation.email}.`);
+      await loadPanel();
+    } catch (resendError) {
+      setError(
+        resendError instanceof Error
+          ? resendError.message
+          : "Nie udało się ponowić zaproszenia.",
+      );
+    }
+    setWorking(false);
+  }
+
+  async function cancelInvitation(invitation: Invitation) {
+    setWorking(true);
+    setMessage("");
+    setError("");
+    try {
+      const response = await fetch("/api/organizations/invitations", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invitationId: invitation.id }),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(result.error || "Nie udało się anulować zaproszenia.");
+      setMessage(`Anulowano zaproszenie do ${invitation.email}.`);
+      await loadPanel();
+    } catch (cancelError) {
+      setError(
+        cancelError instanceof Error
+          ? cancelError.message
+          : "Nie udało się anulować zaproszenia.",
+      );
     }
     setWorking(false);
   }
@@ -478,8 +586,9 @@ export default function OrganizationPanelClient({
       ) : null}
 
       {activeTab === "team" ? (
-        <section className="mt-5 grid gap-5 xl:grid-cols-[1fr_360px]">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="mt-5 space-y-5">
+          <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-black text-slate-950">Zespół</h2>
@@ -577,31 +686,40 @@ export default function OrganizationPanelClient({
                 </article>
               ))}
             </div>
+            </div>
+
+            <div className="space-y-5">
+              {canManageInvites ? (
+                <InviteForm
+                  units={panel.units}
+                  inviteEmail={inviteEmail}
+                  setInviteEmail={setInviteEmail}
+                  inviteRole={inviteRole}
+                  setInviteRole={setInviteRole}
+                  inviteScope={inviteScope}
+                  setInviteScope={setInviteScope}
+                  onSubmit={createInvitation}
+                  working={working}
+                />
+              ) : (
+                <InfoCard
+                  title="Zaproszenia"
+                  text="Zaproszenia może tworzyć właściciel lub administrator placówki."
+                />
+              )}
+            </div>
           </div>
 
-          <div className="space-y-5">
-            {canManageInvites ? (
-              <InviteForm
-                units={panel.units}
-                inviteEmail={inviteEmail}
-                setInviteEmail={setInviteEmail}
-                inviteRole={inviteRole}
-                setInviteRole={setInviteRole}
-                inviteScope={inviteScope}
-                setInviteScope={setInviteScope}
-                onSubmit={createInvitation}
-                working={working}
-                newInviteLink={newInviteLink}
-                onCopy={copyLink}
-                invitations={panel.invitations}
-              />
-            ) : (
-              <InfoCard
-                title="Zaproszenia"
-                text="Zaproszenia może tworzyć właściciel lub administrator placówki."
-              />
-            )}
-          </div>
+          {permission(panel, "invitations.view") ? (
+            <InvitationRegistry
+              invitations={panel.invitations}
+              canManage={canManageInvites}
+              working={working}
+              onResend={resendInvitation}
+              onCancel={cancelInvitation}
+              onCopy={copyLink}
+            />
+          ) : null}
         </section>
       ) : null}
 
@@ -905,9 +1023,6 @@ function InviteForm({
   setInviteScope,
   onSubmit,
   working,
-  newInviteLink,
-  onCopy,
-  invitations,
 }: {
   units: Unit[];
   inviteEmail: string;
@@ -918,12 +1033,15 @@ function InviteForm({
   setInviteScope: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
   working: boolean;
-  newInviteLink: string;
-  onCopy: (link: string) => void;
-  invitations: Invitation[];
 }) {
   const availableRoles =
     inviteScope === "organization" ? INVITATION_ROLES : ASSIGNABLE_UNIT_ROLES;
+  const emailCount = new Set(
+    inviteEmail
+      .split(/[\s,;]+/)
+      .map((email) => email.trim().toLocaleLowerCase("pl-PL"))
+      .filter(Boolean),
+  ).size;
 
   return (
     <form
@@ -931,25 +1049,31 @@ function InviteForm({
       className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
     >
       <div className="flex items-center gap-2">
-        <UserPlus className="h-5 w-5 text-blue-600" />
-        <h2 className="text-lg font-black text-slate-950">Zaproś osobę</h2>
+        <Mail className="h-5 w-5 text-blue-600" />
+        <h2 className="text-lg font-black text-slate-950">
+          Wyślij zaproszenia
+        </h2>
       </div>
       <p className="mt-2 text-xs leading-5 text-slate-500">
-        Zaproszenie działa tylko z kontem CRPE używającym tego samego adresu.
+        Wpisz jeden adres albo wklej listę z Excela lub wiadomości.
       </p>
       <label className="mt-5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">
-        Adres e-mail
-        <input
-          type="email"
+        Adresy e-mail
+        <textarea
           value={inviteEmail}
           onChange={(event) => setInviteEmail(event.target.value)}
           required
-          placeholder="pracownik@placowka.pl"
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-medium normal-case tracking-normal text-slate-900 outline-none focus:border-blue-500"
+          rows={4}
+          placeholder={"anna@placowka.pl\njan@placowka.pl"}
+          className="mt-2 w-full resize-y rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-medium normal-case tracking-normal text-slate-900 outline-none focus:border-blue-500"
         />
       </label>
+      <p className="mt-1.5 text-[11px] leading-5 text-slate-500">
+        Rozdziel adresy przecinkami, średnikami, spacjami lub nowymi wierszami.
+        Powtórzenia zostaną usunięte.
+      </p>
       <label className="mt-4 block text-xs font-extrabold uppercase tracking-wide text-slate-500">
-        Zakres
+        Jednostka i zakres
         <select
           value={inviteScope}
           onChange={(event) => {
@@ -990,66 +1114,216 @@ function InviteForm({
       </label>
       <button
         type="submit"
-        disabled={working}
-        className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-extrabold text-white hover:bg-blue-700 disabled:opacity-50"
+        disabled={working || emailCount === 0}
+        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-extrabold text-white hover:bg-blue-700 disabled:opacity-50"
       >
-        Utwórz zaproszenie
+        <UserPlus className="h-4 w-4" />
+        {working
+          ? "Wysyłanie…"
+          : `Wyślij ${emailCount} ${invitationWord(emailCount)}`}
       </button>
-      {newInviteLink ? (
-        <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
-          <div className="text-xs font-extrabold text-emerald-800">
-            Bezpieczny link ważny 14 dni
-          </div>
-          <button
-            type="button"
-            onClick={() => onCopy(newInviteLink)}
-            className="mt-2 flex w-full items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-left text-xs font-semibold text-slate-700 ring-1 ring-emerald-200"
-          >
-            <span className="truncate">{newInviteLink}</span>
-            <Copy className="h-4 w-4 shrink-0 text-emerald-700" />
-          </button>
-        </div>
-      ) : null}
-      {invitations.length ? (
-        <div className="mt-5 border-t border-slate-100 pt-4">
-          <div className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
-            Ostatnie zaproszenia
-          </div>
-          <div className="mt-3 space-y-2">
-            {invitations.slice(0, 5).map((invitation) => {
-              const link = `/placowka/zaproszenie?token=${invitation.token}`;
-              return (
-                <div
-                  key={invitation.id}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-3"
-                >
-                  <div className="truncate text-xs font-bold text-slate-800">
-                    {invitation.email}
-                  </div>
-                  <div className="mt-1 text-[11px] text-slate-500">
-                    {roleLabel(invitation.role_code)}
-                    {invitation.unit_name ? ` · ${invitation.unit_name}` : ""}
-                    {" · "}
-                    {invitation.status === "pending"
-                      ? `ważne do ${formatDate(invitation.expires_at)}`
-                      : invitation.status}
-                  </div>
-                  {invitation.status === "pending" ? (
-                    <button
-                      type="button"
-                      onClick={() => onCopy(link)}
-                      className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-extrabold text-blue-700"
-                    >
-                      <Copy className="h-3.5 w-3.5" /> Kopiuj link
-                    </button>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
+      <p className="mt-3 text-[11px] leading-5 text-slate-500">
+        Zaproszenie jest ważne 14 dni. Samo przyjęcie nie udostępnia
+        automatycznie prywatnych aktywności ani certyfikatów.
+      </p>
     </form>
+  );
+}
+
+function invitationStatus(invitation: Invitation) {
+  if (invitation.status === "accepted") {
+    return {
+      label: "Powiązana z placówką",
+      className: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    };
+  }
+  if (invitation.status === "revoked") {
+    return {
+      label: "Anulowane",
+      className: "bg-slate-100 text-slate-600 ring-slate-200",
+    };
+  }
+  if (
+    invitation.status === "expired" ||
+    new Date(invitation.expires_at).getTime() <= Date.now()
+  ) {
+    return {
+      label: "Wygasło",
+      className: "bg-amber-50 text-amber-700 ring-amber-200",
+    };
+  }
+  if (invitation.authenticated_at) {
+    return {
+      label: "Zalogowano się",
+      className: "bg-violet-50 text-violet-700 ring-violet-200",
+    };
+  }
+  if (invitation.opened_at) {
+    return {
+      label: "Link otwarty",
+      className: "bg-cyan-50 text-cyan-700 ring-cyan-200",
+    };
+  }
+  if (invitation.delivery_status === "failed") {
+    return {
+      label: "Błąd wysyłki",
+      className: "bg-red-50 text-red-700 ring-red-200",
+    };
+  }
+  if (invitation.delivery_status === "sent") {
+    return {
+      label: "Wysłane",
+      className: "bg-blue-50 text-blue-700 ring-blue-200",
+    };
+  }
+  return {
+    label: "Przygotowane",
+    className: "bg-slate-100 text-slate-600 ring-slate-200",
+  };
+}
+
+function InvitationRegistry({
+  invitations,
+  canManage,
+  working,
+  onResend,
+  onCancel,
+  onCopy,
+}: {
+  invitations: Invitation[];
+  canManage: boolean;
+  working: boolean;
+  onResend: (invitation: Invitation) => void;
+  onCancel: (invitation: Invitation) => void;
+  onCopy: (link: string) => void;
+}) {
+  return (
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3 p-5">
+        <div>
+          <h2 className="text-xl font-black text-slate-950">
+            Rejestr zaproszeń
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            Tutaj sprawdzisz wysyłkę, wejście w link, logowanie i powiązanie
+            konta z placówką.
+          </p>
+        </div>
+        <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600">
+          {invitations.length} {invitationWord(invitations.length)}
+        </span>
+      </div>
+
+      {invitations.length ? (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] border-collapse text-left text-xs">
+            <thead>
+              <tr className="border-y border-slate-200 bg-slate-50 text-slate-600">
+                <th className="px-4 py-3 font-extrabold">Adres e-mail</th>
+                <th className="px-4 py-3 font-extrabold">Jednostka i rola</th>
+                <th className="px-4 py-3 font-extrabold">Wysłano</th>
+                <th className="px-4 py-3 font-extrabold">Status</th>
+                <th className="px-4 py-3 font-extrabold">Ważność</th>
+                <th className="px-4 py-3 text-right font-extrabold">Operacje</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invitations.map((invitation) => {
+                const badge = invitationStatus(invitation);
+                const pending =
+                  invitation.status === "pending" &&
+                  new Date(invitation.expires_at).getTime() > Date.now();
+                const canResend =
+                  invitation.status !== "accepted" &&
+                  invitation.status !== "revoked";
+                const link = `/placowka/zaproszenie?token=${invitation.token}`;
+                return (
+                  <tr key={invitation.id} className="border-b border-slate-100">
+                    <td className="px-4 py-4">
+                      <div className="font-bold text-slate-800">
+                        {invitation.email}
+                      </div>
+                      {invitation.last_send_error ? (
+                        <div
+                          className="mt-1 max-w-[260px] truncate text-[11px] text-red-600"
+                          title={invitation.last_send_error}
+                        >
+                          {invitation.last_send_error}
+                        </div>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-4 text-slate-600">
+                      <div>{invitation.unit_name || "Cała placówka"}</div>
+                      <div className="mt-1 text-[11px] text-slate-500">
+                        {roleLabel(invitation.role_code)}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-slate-600">
+                      <div>{formatDate(invitation.last_sent_at || invitation.invited_at)}</div>
+                      <div className="mt-1 text-[11px] text-slate-500">
+                        {invitation.send_attempts
+                          ? `Próby: ${invitation.send_attempts}`
+                          : "Nie wysłano"}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-1 font-bold ring-1 ${badge.className}`}
+                      >
+                        {badge.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-slate-600">
+                      {invitation.status === "accepted"
+                        ? formatDate(invitation.accepted_at)
+                        : formatDate(invitation.expires_at)}
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex justify-end gap-3">
+                        {canManage && canResend ? (
+                          <button
+                            type="button"
+                            disabled={working}
+                            onClick={() => onResend(invitation)}
+                            className="font-extrabold text-blue-700 hover:text-blue-800 disabled:opacity-50"
+                          >
+                            Ponów
+                          </button>
+                        ) : null}
+                        {pending ? (
+                          <button
+                            type="button"
+                            onClick={() => onCopy(link)}
+                            className="inline-flex items-center gap-1 font-bold text-slate-600 hover:text-slate-900"
+                            title="Awaryjnie skopiuj bezpieczny link"
+                          >
+                            <Copy className="h-3.5 w-3.5" /> Link
+                          </button>
+                        ) : null}
+                        {canManage && pending ? (
+                          <button
+                            type="button"
+                            disabled={working}
+                            onClick={() => onCancel(invitation)}
+                            className="font-bold text-red-600 hover:text-red-700 disabled:opacity-50"
+                          >
+                            Anuluj
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="border-t border-slate-100 px-5 py-8 text-center text-sm text-slate-500">
+          Nie wysłano jeszcze żadnego zaproszenia.
+        </div>
+      )}
+    </div>
   );
 }
 

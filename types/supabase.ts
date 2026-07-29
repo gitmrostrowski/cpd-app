@@ -92,6 +92,52 @@ export type Database = {
         Args: { p_token: string };
         Returns: Json;
       };
+      get_organization_invitations: {
+        Args: { p_organization_id: string };
+        Returns: Array<{
+          id: string;
+          email: string;
+          token: string;
+          role_code: string;
+          unit_id: string | null;
+          unit_name: string | null;
+          status: string;
+          delivery_status: string;
+          send_attempts: number;
+          invited_at: string;
+          expires_at: string;
+          last_sent_at: string | null;
+          last_send_error: string | null;
+          opened_at: string | null;
+          authenticated_at: string | null;
+          accepted_at: string | null;
+        }>;
+      };
+      record_organization_invitation_send: {
+        Args: {
+          p_invitation_id: string;
+          p_sent: boolean;
+          p_provider_message_id?: string | null;
+          p_error?: string | null;
+        };
+        Returns: undefined;
+      };
+      prepare_organization_invitation_resend: {
+        Args: { p_invitation_id: string };
+        Returns: Json;
+      };
+      cancel_organization_invitation: {
+        Args: { p_invitation_id: string };
+        Returns: undefined;
+      };
+      mark_organization_invitation_opened: {
+        Args: { p_token: string };
+        Returns: undefined;
+      };
+      mark_organization_invitation_authenticated: {
+        Args: { p_token: string };
+        Returns: undefined;
+      };
       create_organization_unit: {
         Args: {
           p_organization_id: string;

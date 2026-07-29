@@ -17,8 +17,22 @@ export default function OrganizationInvitationPage() {
   const [accepted, setAccepted] = useState(false);
 
   useEffect(() => {
-    setToken(new URLSearchParams(window.location.search).get("token") ?? "");
-  }, []);
+    const invitationToken =
+      new URLSearchParams(window.location.search).get("token") ?? "";
+    setToken(invitationToken);
+    if (invitationToken) {
+      void supabase.rpc("mark_organization_invitation_opened", {
+        p_token: invitationToken,
+      });
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!user || !token) return;
+    void supabase.rpc("mark_organization_invitation_authenticated", {
+      p_token: token,
+    });
+  }, [supabase, token, user]);
 
   async function acceptInvitation() {
     if (!token) {

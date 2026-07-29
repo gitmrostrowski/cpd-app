@@ -72,11 +72,10 @@ check(
 );
 check(
   "Panel pozwala zaprosić, nadać rolę i utworzyć jednostkę",
-  [
-    "create_organization_invitation",
-    "set_organization_role",
-    "create_organization_unit",
-  ].every((name) => panel.includes(name)),
+  panel.includes("/api/organizations/invitations") &&
+    ["set_organization_role", "create_organization_unit"].every((name) =>
+      panel.includes(name),
+    ),
 );
 check(
   "Nagłówek udostępnia przełącznik placówki",
