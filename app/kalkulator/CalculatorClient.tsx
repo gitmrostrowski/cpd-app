@@ -1316,7 +1316,7 @@ export default function CalculatorClient() {
   return (
     <div
       className="space-y-4 sm:space-y-5"
-      data-crpe-build="frankfurt-fix-v2"
+      data-crpe-build="frankfurt-fix-v3"
     >
       <style jsx global>{`
         @keyframes cpdTargetPulse {

@@ -572,15 +572,21 @@ export async function fetchProfile(
     throw new Error(professionalResult.error.message);
   if (cyclesResult.error) throw new Error(cyclesResult.error.message);
   if (!professionalResult.data) return null;
+  const professionId = professionalResult.data.profession_id;
 
   const { data: profession, error: professionError } = await client
     .from("professions")
     .select("id,code,name_pl")
-    .eq("id", professionalResult.data.profession_id)
+    .eq("id", professionId)
     .maybeSingle();
   if (professionError) throw new Error(professionError.message);
 
-  const cycles = (cyclesResult.data ?? []) as Record<string, any>[];
+  // Użytkownik może mieć historyczne cykle dla więcej niż jednego zawodu.
+  // Profil musi korzystać wyłącznie z cyklu przypisanego do aktualnego zawodu,
+  // inaczej po zmianie zawodu panel może pokazać niewłaściwy okres i limit.
+  const cycles = ((cyclesResult.data ?? []) as Record<string, any>[]).filter(
+    (row) => row.profession_id === professionId,
+  );
   const today = new Date().toISOString().slice(0, 10);
   const cycle =
     cycles.find(
@@ -676,7 +682,10 @@ export async function saveProfile(
     .maybeSingle();
   if (cycleLookupError) throw new Error(cycleLookupError.message);
 
-  if (existingCycle?.source === "user") {
+  if (
+    existingCycle &&
+    ["user", "migration"].includes(existingCycle.source)
+  ) {
     const { error } = await client
       .from("cpd_cycles")
       .update({

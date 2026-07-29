@@ -2,18 +2,27 @@
 
 Aplikacja Next.js do prowadzenia własnej ewidencji aktywności, punktów i dokumentów.
 
-## Frankfurt fix v2
+## Frankfurt fix v3
 
-Wersja naprawia fałszywy wynik `0 pkt`, który pojawiał się, gdy opcjonalny
-odczyt certyfikatu, szkolenia, typu aktywności albo roli administratora był
-blokowany przez RLS. Punkty i okres CPD są teraz ładowane niezależnie od tych
-danych, a prawdziwy błąd jest wyświetlany w panelu zamiast zastępowania go
-pustą listą.
+Wersja zawiera pełną zgodność aplikacji ze znormalizowaną bazą Frankfurt:
+
+- punkty i okres CPD są ładowane niezależnie od opcjonalnych danych;
+- prawdziwe błędy bazy są wyświetlane zamiast fałszywego wyniku `0`;
+- profil wybiera cykl właściwy dla aktualnego zawodu;
+- użytkownik może aktualizować własny cykl przeniesiony z bazy UK;
+- migracja Supabase uzupełnia brakujące granty i bezpieczne polityki RLS;
+- szkolenia zaakceptowane przed migracją są przywracane do katalogu.
 
 Po wdrożeniu element główny kalkulatora ma znacznik:
 
 ```html
-data-crpe-build="frankfurt-fix-v2"
+data-crpe-build="frankfurt-fix-v3"
+```
+
+Przed wdrożeniem kodu uruchom w SQL Editorze projektu Frankfurt migrację:
+
+```text
+supabase/migrations/20260729_crpe_frankfurt_permissions_and_trainings.sql
 ```
 
 ## Uruchomienie lokalne
