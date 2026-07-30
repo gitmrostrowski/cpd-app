@@ -430,7 +430,7 @@ export default function ProfilePage() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/reset-hasla")}`,
       });
 
       if (error) {

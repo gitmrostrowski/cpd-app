@@ -92,6 +92,10 @@ export type Database = {
         Args: { p_token: string };
         Returns: Json;
       };
+      get_organization_invitation_landing: {
+        Args: { p_token: string };
+        Returns: Json;
+      };
       get_organization_invitations: {
         Args: { p_organization_id: string };
         Returns: Array<{

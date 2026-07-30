@@ -14,6 +14,26 @@ function isRateLimitError(message?: string) {
   );
 }
 
+type InvitationLanding = {
+  valid: boolean;
+  account_exists: boolean | null;
+  email?: string;
+};
+
+function authErrorMessage(message?: string) {
+  const normalized = (message ?? "").toLowerCase();
+  if (normalized.includes("invalid login credentials")) {
+    return "Nieprawidłowy e-mail lub hasło. Jeśli nie pamiętasz hasła, użyj linku logowania albo resetu.";
+  }
+  if (normalized.includes("email not confirmed")) {
+    return "Najpierw potwierdź konto przez link wysłany na e-mail.";
+  }
+  if (normalized.includes("signups not allowed")) {
+    return "Tworzenie kont jest chwilowo wyłączone. Administrator CRPE musi włączyć rejestrację w Supabase Auth.";
+  }
+  return message || "Nie udało się wykonać operacji.";
+}
+
 export default function LoginPage() {
   const supabase = supabaseClient();
   const router = useRouter();
@@ -25,6 +45,9 @@ export default function LoginPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [nextPath, setNextPath] = useState("/kalkulator");
+  const [invitationFlow, setInvitationFlow] = useState(false);
+  const [emailLocked, setEmailLocked] = useState(false);
+  const [checkingInvitation, setCheckingInvitation] = useState(true);
 
   // cooldown dla maili (otp / signup / reset), żeby nie wpadać w limit
   const [emailCooldownUntil, setEmailCooldownUntil] = useState<number>(0);
@@ -45,14 +68,57 @@ export default function LoginPage() {
   // odświeżaj raz na sekundę, tylko gdy cooldown aktywny
   useEffect(() => {
     const candidate = new URLSearchParams(window.location.search).get("next");
+    let safeCandidate = "/kalkulator";
     if (
       candidate &&
       candidate.startsWith("/") &&
       !candidate.startsWith("//")
     ) {
-      setNextPath(candidate);
+      safeCandidate = candidate;
+      setNextPath(safeCandidate);
     }
-  }, []);
+
+    const destination = new URL(safeCandidate, window.location.origin);
+    const invitationToken =
+      destination.pathname === "/placowka/zaproszenie"
+        ? destination.searchParams.get("token")
+        : null;
+
+    if (!invitationToken) {
+      setCheckingInvitation(false);
+      return;
+    }
+
+    setInvitationFlow(true);
+    let active = true;
+    void (async () => {
+      const { data, error } = await supabase.rpc(
+        "get_organization_invitation_landing",
+        { p_token: invitationToken },
+      );
+      if (!active) return;
+
+      if (error) {
+        setMsg("Nie udało się sprawdzić zaproszenia. Wróć do linku z wiadomości.");
+      } else {
+        const invitation = data as unknown as InvitationLanding;
+        if (!invitation.valid || !invitation.email) {
+          setMsg("Zaproszenie wygasło albo nie jest już dostępne.");
+        } else if (!invitation.account_exists) {
+          router.replace(`/rejestracja?next=${encodeURIComponent(safeCandidate)}`);
+          return;
+        } else {
+          setEmail(invitation.email);
+          setEmailLocked(true);
+        }
+      }
+      setCheckingInvitation(false);
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [router, supabase]);
 
   useEffect(() => {
     if (!emailCooldownUntil) return;
@@ -92,7 +158,7 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setMsg(error.message || "Nie udało się zalogować.");
+        setMsg(authErrorMessage(error.message));
         return;
       }
 
@@ -144,7 +210,7 @@ export default function LoginPage() {
           setEmailCooldownUntil(Date.now() + 90_000);
           return;
         }
-        setMsg(error.message || "Nie udało się utworzyć konta.");
+        setMsg(authErrorMessage(error.message));
         return;
       }
 
@@ -185,6 +251,7 @@ export default function LoginPage() {
         email: emailTrim,
         options: {
           emailRedirectTo: redirectTo,
+          shouldCreateUser: false,
         },
       });
 
@@ -196,7 +263,7 @@ export default function LoginPage() {
           setEmailCooldownUntil(Date.now() + 90_000);
           return;
         }
-        setMsg(error.message || "Nie udało się wysłać linku.");
+        setMsg(authErrorMessage(error.message));
         return;
       }
 
@@ -227,7 +294,7 @@ export default function LoginPage() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(emailTrim, {
-        redirectTo: `${window.location.origin}/reset-hasla`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/reset-hasla")}`,
       });
 
       if (error) {
@@ -251,6 +318,14 @@ export default function LoginPage() {
     }
   }
 
+  if (checkingInvitation) {
+    return (
+      <section className="mx-auto max-w-xl px-4 py-12">
+        <div className="h-96 animate-pulse rounded-[32px] bg-slate-100" />
+      </section>
+    );
+  }
+
   return (
     <section className="relative overflow-hidden">
       {/* tło spójne z landing */}
@@ -267,10 +342,12 @@ export default function LoginPage() {
             </div>
 
             <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900">
-              Zaloguj się
+              {invitationFlow ? "Zaloguj się i przyjmij zaproszenie" : "Zaloguj się"}
             </h1>
             <p className="mt-2 text-slate-600">
-              Wpisz e-mail i hasło. Jeśli nie masz konta — utworzysz je poniżej.
+              {invitationFlow
+                ? "Konto dla tego adresu już istnieje. Po zalogowaniu wrócisz do zaproszenia."
+                : "Wpisz e-mail i hasło. Jeśli nie masz konta — utworzysz je poniżej."}
             </p>
 
             {msg ? (
@@ -292,7 +369,14 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
+                  readOnly={emailLocked}
+                  aria-readonly={emailLocked}
                 />
+                {emailLocked ? (
+                  <p className="mt-2 text-xs text-slate-500">
+                    Zaproszenie jest przypisane do tego adresu.
+                  </p>
+                ) : null}
               </div>
 
               <div>
@@ -381,7 +465,8 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+              {!invitationFlow ? (
+                <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-sm font-semibold text-slate-900">
                   Nie masz konta?
                 </div>
@@ -412,6 +497,7 @@ export default function LoginPage() {
                   Masz już konto? Po prostu zaloguj się powyżej.
                 </div>
               </div>
+              ) : null}
 
               <div className="pt-2 text-center text-xs text-slate-500">
                 <Link href="/" className="hover:text-slate-700">
@@ -423,8 +509,9 @@ export default function LoginPage() {
 
           {/* mała notka pod kartą */}
           <div className="mt-6 text-center text-xs text-slate-500">
-            Logowanie i rejestracja są w jednym miejscu — w menu zostaje tylko
-            „Zaloguj”.
+            {invitationFlow
+              ? "Po zalogowaniu sprawdzimy zgodność adresu i wrócimy do zaproszenia."
+              : "Logowanie i rejestracja są w jednym miejscu — w menu zostaje tylko „Zaloguj”."}
           </div>
         </div>
       </div>
