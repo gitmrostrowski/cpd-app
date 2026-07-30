@@ -5,9 +5,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  ArrowRight,
   BarChart3,
   Building2,
+  ChevronDown,
   ClipboardList,
   FileBarChart,
   GraduationCap,
@@ -20,6 +20,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import {
+  primaryRoleLabel,
+  type OrganizationContext,
+} from "@/lib/organization";
 import { supabaseClient } from "@/lib/supabase/client";
 
 const LOGIN_HREF = "/login";
@@ -76,15 +80,39 @@ function cx(...classes: Array<string | false | undefined | null>) {
   return classes.filter(Boolean).join(" ");
 }
 
+function accountInitials(
+  firstName?: string | null,
+  lastName?: string | null,
+  email?: string | null,
+) {
+  const first = firstName?.trim().charAt(0) ?? "";
+  const last = lastName?.trim().charAt(0) ?? "";
+  const fromName = `${first}${last}`.toLocaleUpperCase("pl-PL");
+  if (fromName) return fromName;
+
+  const localPart = email?.split("@")[0]?.replace(/[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, "") ?? "";
+  return (localPart.slice(0, 2) || "CR").toLocaleUpperCase("pl-PL");
+}
+
 export default function Header() {
   const pathname = usePathname();
   const [openMobile, setOpenMobile] = useState(false);
   const [openUser, setOpenUser] = useState(false);
+  const [openContext, setOpenContext] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const { user, loading, signOut } = useAuth();
+  const userId = user?.id ?? null;
   const [role, setRole] = useState<string | null>(null);
-  const [organizationCount, setOrganizationCount] = useState(0);
+  const [organizationContexts, setOrganizationContexts] = useState<
+    OrganizationContext[]
+  >([]);
+  const [profileIdentity, setProfileIdentity] = useState<{
+    first_name: string | null;
+    last_name: string | null;
+  }>({ first_name: null, last_name: null });
+  const organizationCount = organizationContexts.length;
   const isAdmin = role === "admin";
 
   useEffect(() => {
@@ -104,8 +132,18 @@ export default function Header() {
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
-      if (!userMenuRef.current) return;
-      if (!userMenuRef.current.contains(e.target as Node)) setOpenUser(false);
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(e.target as Node)
+      ) {
+        setOpenUser(false);
+      }
+      if (
+        contextMenuRef.current &&
+        !contextMenuRef.current.contains(e.target as Node)
+      ) {
+        setOpenContext(false);
+      }
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
@@ -115,41 +153,57 @@ export default function Header() {
     let cancelled = false;
 
     (async () => {
-      if (!user) {
+      if (!userId) {
         setRole(null);
-        setOrganizationCount(0);
+        setOrganizationContexts([]);
+        setProfileIdentity({ first_name: null, last_name: null });
         return;
       }
 
       const sb = supabaseClient();
-      const [{ data, error }, { data: organizations, error: organizationsError }] =
-        await Promise.all([
+      const [
+        { data, error },
+        { data: organizations, error: organizationsError },
+        { data: profile },
+      ] = await Promise.all([
           sb
             .from("platform_staff_roles")
             .select("role_code")
-            .eq("user_id", user.id)
+            .eq("user_id", userId)
             .eq("role_code", "platform_admin")
             .is("revoked_at", null)
             .limit(1)
             .maybeSingle(),
           sb.rpc("get_my_organization_contexts"),
+          sb
+            .from("profiles")
+            .select("first_name,last_name")
+            .eq("id", userId)
+            .maybeSingle(),
         ]);
 
       if (cancelled) return;
       setRole(!error && data ? "admin" : null);
-      setOrganizationCount(
-        organizationsError ? 0 : (organizations ?? []).length,
+      setOrganizationContexts(
+        organizationsError
+          ? []
+          : ((organizations ?? []) as OrganizationContext[]),
       );
+      setProfileIdentity({
+        first_name: profile?.first_name ?? null,
+        last_name: profile?.last_name ?? null,
+      });
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [userId]);
 
   useEffect(() => {
     setOpenMobile(false);
     setOpenUser(false);
+    setOpenContext(false);
   }, [pathname]);
 
   const isActive = (href: string) => {
@@ -158,22 +212,47 @@ export default function Header() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
-  const emailShort = useMemo(() => {
-    const em = user?.email || "";
-    if (!em) return "";
-    if (em.length <= 28) return em;
-    const [name, domain] = em.split("@");
-    if (!domain) return em.slice(0, 28) + "…";
-    const n = name.length > 10 ? name.slice(0, 10) + "…" : name;
-    return `${n}@${domain}`;
-  }, [user?.email]);
+  const currentOrganizationId = useMemo(() => {
+    const match = pathname?.match(/^\/placowka\/([^/]+)/);
+    const candidate = match?.[1] ?? "";
+    return organizationContexts.some(
+      (context) => context.organization_id === candidate,
+    )
+      ? candidate
+      : null;
+  }, [organizationContexts, pathname]);
+
+  const currentOrganization = useMemo(
+    () =>
+      organizationContexts.find(
+        (context) => context.organization_id === currentOrganizationId,
+      ) ?? null,
+    [currentOrganizationId, organizationContexts],
+  );
+
+  const fullName = useMemo(
+    () =>
+      `${profileIdentity.first_name ?? ""} ${profileIdentity.last_name ?? ""}`.trim(),
+    [profileIdentity],
+  );
+  const initials = useMemo(
+    () =>
+      accountInitials(
+        profileIdentity.first_name,
+        profileIdentity.last_name,
+        user?.email,
+      ),
+    [profileIdentity, user?.email],
+  );
 
   async function handleSignOut() {
     await signOut();
     setOpenMobile(false);
     setOpenUser(false);
+    setOpenContext(false);
     setRole(null);
-    setOrganizationCount(0);
+    setOrganizationContexts([]);
+    setProfileIdentity({ first_name: null, last_name: null });
   }
 
   const logoHref = "/";
@@ -191,7 +270,6 @@ export default function Header() {
   ];
   const isPublicRoute = pathname === "/" || publicRoutePrefixes.some((prefix) => pathname?.startsWith(prefix));
   const showPublicNav = isPublicRoute || !user;
-  const showPanelShortcut = Boolean(user && isPublicRoute);
   const navItems = loading ? [] : showPublicNav ? PUBLIC_NAV : APP_NAV;
 
   return (
@@ -264,35 +342,112 @@ export default function Header() {
               </div>
             ) : user ? (
               <>
-                {showPanelShortcut ? (
+                <div className="hidden items-center rounded-xl border border-slate-200 bg-white p-1 xl:flex">
                   <Link
                     href="/kalkulator"
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-[0_10px_24px_rgba(37,99,235,0.18)] transition hover:bg-blue-700"
+                    className={cx(
+                      "inline-flex min-h-8 items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-extrabold transition",
+                      !pathname?.startsWith("/placowka")
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
+                    )}
                   >
-                    Otwórz Panel CPD <ArrowRight className="h-4 w-4" />
+                    <UserRound className="h-3.5 w-3.5" />
+                    Moje CRPE
                   </Link>
-                ) : (
-                <>
+
                   {organizationCount > 0 ? (
-                    <Link
-                      href="/placowka"
-                      className={cx(
-                        "inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-extrabold transition",
-                        pathname?.startsWith("/placowka")
-                          ? "border-blue-200 bg-blue-50 text-blue-700"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
-                      )}
-                    >
-                      <Building2 className="h-4 w-4" />
-                      Placówka
-                    </Link>
+                    <div className="relative" ref={contextMenuRef}>
+                      <button
+                        type="button"
+                        onClick={() => setOpenContext((value) => !value)}
+                        className={cx(
+                          "inline-flex min-h-8 max-w-56 items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-extrabold transition",
+                          pathname?.startsWith("/placowka")
+                            ? "bg-blue-600 text-white"
+                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
+                        )}
+                        aria-expanded={openContext}
+                        aria-haspopup="menu"
+                        title={
+                          currentOrganization?.display_name ??
+                          (organizationCount === 1
+                            ? organizationContexts[0].display_name
+                            : "Wybierz placówkę")
+                        }
+                      >
+                        <Building2 className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">
+                          {currentOrganization?.display_name ??
+                            (organizationCount === 1
+                              ? organizationContexts[0].display_name
+                              : `Placówki (${organizationCount})`)}
+                        </span>
+                        <ChevronDown
+                          className={cx(
+                            "h-3.5 w-3.5 shrink-0 transition",
+                            openContext && "rotate-180",
+                          )}
+                        />
+                      </button>
+
+                      {openContext ? (
+                        <div
+                          className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_55px_rgba(15,45,75,0.16)]"
+                          role="menu"
+                        >
+                          <div className="px-3 pb-2 pt-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400">
+                            Placówki i role
+                          </div>
+                          {organizationContexts.map((context) => (
+                            <Link
+                              key={context.organization_id}
+                              href={`/placowka/${context.organization_id}`}
+                              className={cx(
+                                "flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm transition",
+                                currentOrganizationId === context.organization_id
+                                  ? "bg-blue-50 text-blue-800"
+                                  : "text-slate-700 hover:bg-slate-50",
+                              )}
+                              onClick={() => setOpenContext(false)}
+                              role="menuitem"
+                            >
+                              <span className="min-w-0">
+                                <span className="block truncate font-bold">
+                                  {context.display_name}
+                                </span>
+                                <span className="mt-0.5 block text-xs text-slate-500">
+                                  {primaryRoleLabel(context.role_codes)}
+                                </span>
+                              </span>
+                              {currentOrganizationId ===
+                              context.organization_id ? (
+                                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                              ) : null}
+                            </Link>
+                          ))}
+                          {organizationCount > 1 ? (
+                            <Link
+                              href="/placowka"
+                              className="mt-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                              onClick={() => setOpenContext(false)}
+                            >
+                              Pokaż wszystkie placówki
+                            </Link>
+                          ) : null}
+                          <div className="my-2 h-px bg-slate-100" />
+                          <Link
+                            href="/profil#placowki-i-role"
+                            className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50"
+                            onClick={() => setOpenContext(false)}
+                          >
+                            Zarządzaj widokiem placówek
+                          </Link>
+                        </div>
+                      ) : null}
+                    </div>
                   ) : null}
-                  <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 2xl:flex">
-                    <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                    <span className="font-medium">{emailShort}</span>
-                  </div>
-                </>
-                )}
+                </div>
 
                 <div className="relative" ref={userMenuRef}>
                   <button
@@ -302,18 +457,32 @@ export default function Header() {
                       "inline-flex h-10 w-10 items-center justify-center rounded-xl border transition",
                       openUser
                         ? "border-blue-200 bg-blue-50 text-blue-700"
-                        : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-950",
+                        : "border-slate-200 bg-slate-50 text-blue-800 hover:bg-blue-50",
                     )}
                     aria-label="Menu użytkownika"
                     title="Profil i ustawienia"
                   >
-                    <UserRound className="h-5 w-5" />
+                    <span className="text-xs font-black tracking-wide">
+                      {initials}
+                    </span>
+                    <span
+                      className="absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500"
+                      aria-label="Aktywna sesja"
+                    />
                   </button>
 
                   {openUser ? (
                     <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_55px_rgba(15,45,75,0.16)]">
                       <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
-                        Zalogowany jako
+                        {fullName ? (
+                          <div className="text-sm font-bold text-slate-950">
+                            {fullName}
+                          </div>
+                        ) : (
+                          <div className="font-semibold text-slate-700">
+                            Konto CRPE
+                          </div>
+                        )}
                         <div className="mt-1 break-all text-sm font-semibold text-slate-900">
                           {user.email}
                         </div>
@@ -331,11 +500,25 @@ export default function Header() {
 
                       {organizationCount > 0 ? (
                         <Link
-                          href="/placowka"
+                          href={
+                            organizationCount === 1
+                              ? `/placowka/${organizationContexts[0].organization_id}`
+                              : "/placowka"
+                          }
                           className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50"
                           onClick={() => setOpenUser(false)}
                         >
                           <Building2 className="h-4 w-4" /> Panel placówki
+                        </Link>
+                      ) : null}
+
+                      {organizationCount > 0 ? (
+                        <Link
+                          href="/profil#placowki-i-role"
+                          className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                          onClick={() => setOpenUser(false)}
+                        >
+                          <Building2 className="h-4 w-4" /> Placówki i role
                         </Link>
                       ) : null}
 
@@ -388,13 +571,11 @@ export default function Header() {
               >
                 Zaloguj
               </Link>
-            ) : !loading && showPanelShortcut ? (
-              <Link
-                href="/kalkulator"
-                className="inline-flex h-9 items-center justify-center rounded-xl bg-blue-600 px-3 text-[12px] font-extrabold text-white"
-              >
-                Panel CPD
-              </Link>
+            ) : !loading && user ? (
+              <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-[11px] font-black text-blue-800">
+                {initials}
+                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
+              </span>
             ) : null}
             <button
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
@@ -463,20 +644,32 @@ export default function Header() {
                 <div className="h-11 animate-pulse rounded-xl bg-slate-100" aria-hidden="true" />
               ) : user ? (
                 <>
-                  {showPanelShortcut ? (
-                    <Link
-                      href="/kalkulator"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-blue-700"
-                    >
-                      Otwórz Panel CPD <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  ) : null}
-                  <div className="rounded-xl bg-slate-50 px-4 py-2.5 text-sm text-slate-700">
-                    <span className="inline-flex items-center gap-2">
-                      <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                      <span className="truncate font-medium">{user.email}</span>
+                  <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    <span className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-black text-blue-800">
+                      {initials}
+                      <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-bold text-slate-950">
+                        {fullName || "Konto CRPE"}
+                      </span>
+                      <span className="block truncate text-xs text-slate-500">
+                        {user.email}
+                      </span>
                     </span>
                   </div>
+
+                  <Link
+                    href="/kalkulator"
+                    className={cx(
+                      "inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold",
+                      !pathname?.startsWith("/placowka")
+                        ? "border-blue-200 bg-blue-50 text-blue-700"
+                        : "border-slate-200 hover:bg-slate-50",
+                    )}
+                  >
+                    <UserRound className="h-4 w-4" /> Moje CRPE
+                  </Link>
 
                   <Link
                     href="/profil"
@@ -486,12 +679,28 @@ export default function Header() {
                   </Link>
 
                   {organizationCount > 0 ? (
-                    <Link
-                      href="/placowka"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100"
-                    >
-                      <Building2 className="h-4 w-4" /> Panel placówki
-                    </Link>
+                    <div className="space-y-2 rounded-2xl border border-blue-100 bg-blue-50/60 p-2">
+                      <div className="px-2 pt-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-blue-600">
+                        Placówki i role
+                      </div>
+                      {organizationContexts.map((context) => (
+                        <Link
+                          key={context.organization_id}
+                          href={`/placowka/${context.organization_id}`}
+                          className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5 text-left text-sm text-slate-700 shadow-sm"
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate font-bold">
+                              {context.display_name}
+                            </span>
+                            <span className="block text-xs text-slate-500">
+                              {primaryRoleLabel(context.role_codes)}
+                            </span>
+                          </span>
+                          <Building2 className="h-4 w-4 shrink-0 text-blue-600" />
+                        </Link>
+                      ))}
+                    </div>
                   ) : null}
 
                   {isAdmin ? (

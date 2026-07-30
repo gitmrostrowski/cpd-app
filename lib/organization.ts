@@ -8,6 +8,15 @@ export const ORGANIZATION_ROLE_LABELS: Record<string, string> = {
   member: "Pracownik",
 };
 
+export type OrganizationContext = {
+  organization_id: string;
+  membership_id: string;
+  display_name: string;
+  organization_status: string;
+  primary_role: string;
+  role_codes: string[];
+};
+
 export const ORGANIZATION_ROLE_DESCRIPTIONS: Record<string, string> = {
   owner: "Pełna kontrola nad placówką, administratorami i właścicielami.",
   admin: "Zespół, jednostki, zaproszenia, role operacyjne i ustawienia.",

@@ -55,6 +55,7 @@ export default function LoginPage() {
   const [pending, setPending] = useState(false);
   const [nextPath, setNextPath] = useState("/kalkulator");
   const [invitationFlow, setInvitationFlow] = useState(false);
+  const [useExistingAccount, setUseExistingAccount] = useState(false);
   const [emailLocked, setEmailLocked] = useState(false);
   const [checkingInvitation, setCheckingInvitation] = useState(true);
 
@@ -76,7 +77,10 @@ export default function LoginPage() {
 
   // odświeżaj raz na sekundę, tylko gdy cooldown aktywny
   useEffect(() => {
-    const candidate = new URLSearchParams(window.location.search).get("next");
+    const searchParams = new URLSearchParams(window.location.search);
+    const candidate = searchParams.get("next");
+    const existingAccountMode = searchParams.get("use_existing") === "1";
+    setUseExistingAccount(existingAccountMode);
     let safeCandidate = "/kalkulator";
     if (
       candidate &&
@@ -113,10 +117,10 @@ export default function LoginPage() {
         const invitation = data as unknown as InvitationLanding;
         if (!invitation.valid || !invitation.email) {
           setMsg("Zaproszenie wygasło albo nie jest już dostępne.");
-        } else if (!invitation.account_exists) {
+        } else if (!invitation.account_exists && !existingAccountMode) {
           router.replace(`/rejestracja?next=${encodeURIComponent(safeCandidate)}`);
           return;
-        } else {
+        } else if (!existingAccountMode) {
           setEmail(invitation.email);
           setEmailLocked(true);
         }
@@ -411,7 +415,9 @@ export default function LoginPage() {
             </h1>
             <p className="mt-2 text-slate-600">
               {invitationFlow
-                ? "Konto dla tego adresu już istnieje. Po zalogowaniu wrócisz do zaproszenia."
+                ? useExistingAccount
+                  ? "Zaloguj się adresem używanym w Twoim dotychczasowym koncie CRPE. Po zalogowaniu wrócisz do zaproszenia."
+                  : "Konto dla tego adresu już istnieje. Po zalogowaniu wrócisz do zaproszenia."
                 : "Wpisz e-mail i hasło. Jeśli nie masz konta — utworzysz je poniżej."}
             </p>
 
@@ -489,6 +495,11 @@ export default function LoginPage() {
                 {emailLocked ? (
                   <p className="mt-2 text-xs text-slate-500">
                     Zaproszenie jest przypisane do tego adresu.
+                  </p>
+                ) : invitationFlow && useExistingAccount ? (
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    Wpisz adres swojego istniejącego konta. Może być inny niż
+                    adres, na który placówka wysłała zaproszenie.
                   </p>
                 ) : null}
               </div>
@@ -624,7 +635,9 @@ export default function LoginPage() {
           {/* mała notka pod kartą */}
           <div className="mt-6 text-center text-xs text-slate-500">
             {invitationFlow
-              ? "Po zalogowaniu sprawdzimy zgodność adresu i wrócimy do zaproszenia."
+              ? useExistingAccount
+                ? "Po zalogowaniu wrócisz do zaproszenia i świadomie potwierdzisz przypisanie dostępu do tego konta."
+                : "Po zalogowaniu wrócisz do zaproszenia."
               : "Logowanie i rejestracja są w jednym miejscu — w menu zostaje tylko „Zaloguj”."}
           </div>
         </div>

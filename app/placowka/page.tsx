@@ -2,22 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Building2, ChevronRight, ShieldCheck, UserRound } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
-import { primaryRoleLabel } from "@/lib/organization";
+import {
+  primaryRoleLabel,
+  type OrganizationContext,
+} from "@/lib/organization";
 import { supabaseClient } from "@/lib/supabase/client";
-
-type OrganizationContext = {
-  organization_id: string;
-  membership_id: string;
-  display_name: string;
-  organization_status: string;
-  primary_role: string;
-  role_codes: string[];
-};
 
 export default function PlacowkaPage() {
   const { user, loading } = useAuth();
+  const router = useRouter();
   const supabase = useMemo(() => supabaseClient(), []);
   const [contexts, setContexts] = useState<OrganizationContext[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -42,7 +38,12 @@ export default function PlacowkaPage() {
         setError(loadError.message);
         setContexts([]);
       } else {
-        setContexts((data ?? []) as OrganizationContext[]);
+        const nextContexts = (data ?? []) as OrganizationContext[];
+        setContexts(nextContexts);
+        if (nextContexts.length === 1) {
+          router.replace(`/placowka/${nextContexts[0].organization_id}`);
+          return;
+        }
       }
       setFetching(false);
     }
@@ -51,7 +52,7 @@ export default function PlacowkaPage() {
     return () => {
       cancelled = true;
     };
-  }, [supabase, user]);
+  }, [router, supabase, user]);
 
   if (loading || fetching) {
     return (
@@ -95,7 +96,8 @@ export default function PlacowkaPage() {
             Wybierz placówkę
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Twoje konto osobiste pozostaje oddzielone od panelu pracodawcy.
+            Masz dostęp do kilku placówek. Wybierz kontekst, w którym chcesz
+            teraz pracować.
           </p>
         </div>
         <Link

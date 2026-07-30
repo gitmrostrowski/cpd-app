@@ -89,7 +89,10 @@ export type Database = {
         Returns: Json;
       };
       accept_organization_invitation: {
-        Args: { p_token: string };
+        Args: {
+          p_token: string;
+          p_accept_different_email?: boolean;
+        };
         Returns: Json;
       };
       get_organization_invitation_landing: {

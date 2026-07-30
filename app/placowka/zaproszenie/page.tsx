@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  AlertTriangle,
   Building2,
   CheckCircle2,
   LogIn,
@@ -99,7 +100,10 @@ export default function OrganizationInvitationPage() {
     setError("");
     const { data, error: acceptError } = await supabase.rpc(
       "accept_organization_invitation",
-      { p_token: token },
+      {
+        p_token: token,
+        p_accept_different_email: Boolean(user && !isCorrectUser),
+      },
     );
 
     if (acceptError) {
@@ -112,7 +116,7 @@ export default function OrganizationInvitationPage() {
     setAccepted(true);
     setWorking(false);
     window.setTimeout(() => {
-      router.replace(`/placowka/${result.organization_id}`);
+      router.replace(`/placowka/${result.organization_id}?joined=1`);
     }, 900);
   }
 
@@ -191,13 +195,27 @@ export default function OrganizationInvitationPage() {
               {working ? "Aktywowanie…" : "Przyjmij zaproszenie"}
             </button>
           </>
-        ) : user ? (
+        ) : user && details.account_exists ? (
           <>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              Zaproszenie jest przypisane do <strong>{details.email}</strong>,
-              a obecnie jesteś zalogowany jako <strong>{user.email}</strong>.
-              Wyloguj się i użyj właściwego konta.
-            </p>
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-left text-sm text-amber-950">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+                <div>
+                  <div className="font-bold">
+                    To zaproszenie należy do innego konta
+                  </div>
+                  <p className="mt-1 leading-6">
+                    Dla adresu <strong>{details.email}</strong> istnieje już
+                    konto CRPE, a obecnie jesteś zalogowany jako{" "}
+                    <strong>{user.email}</strong>.
+                  </p>
+                </div>
+              </div>
+              <p className="mt-3 leading-6">
+                Ze względów bezpieczeństwa tego zaproszenia nie można przypisać
+                do drugiego konta. Zaloguj się adresem, na który je wysłano.
+              </p>
+            </div>
             <button
               type="button"
               onClick={switchAccount}
@@ -207,6 +225,53 @@ export default function OrganizationInvitationPage() {
               <LogIn className="h-4 w-4" />
               {working ? "Wylogowywanie…" : "Przejdź do właściwego konta"}
             </button>
+          </>
+        ) : user ? (
+          <>
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-left text-sm text-amber-950">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+                <div>
+                  <div className="font-bold">Adresy e-mail są różne</div>
+                  <p className="mt-1 leading-6">
+                    Zaproszenie wysłano na <strong>{details.email}</strong>, a
+                    jesteś zalogowany jako <strong>{user.email}</strong>.
+                  </p>
+                </div>
+              </div>
+              <p className="mt-3 leading-6">
+                Jeżeli oba adresy należą do Ciebie, możesz przypisać dostęp do
+                tego istniejącego konta CRPE. Nie zmienimy adresu logowania i
+                nie utworzymy drugiego konta.
+              </p>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <button
+                type="button"
+                onClick={acceptInvitation}
+                disabled={working || !token}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-extrabold text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                {working
+                  ? "Przypisywanie…"
+                  : "Przypisz do obecnego konta"}
+              </button>
+              <button
+                type="button"
+                onClick={switchAccount}
+                disabled={working}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                <LogIn className="h-4 w-4" />
+                Użyj innego konta
+              </button>
+            </div>
+            <p className="mt-4 text-xs leading-5 text-slate-500">
+              Ze względów bezpieczeństwa nie dopasowujemy kont automatycznie po
+              nazwisku ani numerze PWZ.
+            </p>
           </>
         ) : details.account_exists ? (
           <>
@@ -235,6 +300,18 @@ export default function OrganizationInvitationPage() {
               <UserPlus className="h-4 w-4" />
               Utwórz konto
             </Link>
+            <div className="mt-5 border-t border-slate-100 pt-5">
+              <p className="text-sm text-slate-600">
+                Masz już konto CRPE pod innym adresem?
+              </p>
+              <Link
+                href={`/login?use_existing=1&next=${encodeURIComponent(invitationPath)}`}
+                className="mt-3 inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-5 py-3 text-sm font-extrabold text-blue-700 hover:bg-blue-50"
+              >
+                <LogIn className="h-4 w-4" />
+                Zaloguj się do istniejącego konta
+              </Link>
+            </div>
           </>
         )}
 

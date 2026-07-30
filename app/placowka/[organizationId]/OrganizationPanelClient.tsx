@@ -176,8 +176,10 @@ function invitationWord(count: number) {
 
 export default function OrganizationPanelClient({
   organizationId,
+  showJoinedNotice = false,
 }: {
   organizationId: string;
+  showJoinedNotice?: boolean;
 }) {
   const { user, loading: authLoading } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
@@ -187,6 +189,7 @@ export default function OrganizationPanelClient({
   const [working, setWorking] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [joinedNotice, setJoinedNotice] = useState(showJoinedNotice);
 
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
@@ -508,6 +511,34 @@ export default function OrganizationPanelClient({
 
   return (
     <main className="mx-auto max-w-[1180px] px-4 py-7 sm:px-6 lg:px-8">
+      {joinedNotice ? (
+        <div
+          className="mb-4 flex items-start justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950 shadow-sm"
+          role="status"
+        >
+          <span className="flex items-start gap-3">
+            <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+            <span>
+              <span className="block font-bold">
+                Dołączyłeś do placówki „{panel.organization.display_name}”
+              </span>
+              <span className="mt-1 block text-sm leading-5 text-emerald-800">
+                Dostęp jest aktywny. Panel placówki znajdziesz od teraz także
+                w stałym przełączniku w górnym menu.
+              </span>
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setJoinedNotice(false)}
+            className="rounded-lg p-1 text-emerald-700 hover:bg-emerald-100"
+            aria-label="Zamknij komunikat"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : null}
+
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-4">
@@ -541,10 +572,10 @@ export default function OrganizationPanelClient({
               Moje CRPE
             </Link>
             <Link
-              href="/placowka"
+              href="/profil#placowki-i-role"
               className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
             >
-              Zmień placówkę
+              Placówki i role
             </Link>
           </div>
         </div>

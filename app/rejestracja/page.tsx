@@ -274,7 +274,8 @@ export default function RegisterPage() {
           />
           {emailLocked ? (
             <p className="text-xs opacity-60">
-              Konto musi mieć ten sam adres, na który wysłano zaproszenie.
+              Nowe konto zostanie utworzone dla adresu, na który wysłano
+              zaproszenie.
             </p>
           ) : null}
         </div>
@@ -338,6 +339,20 @@ export default function RegisterPage() {
         <p className="text-xs opacity-60">
           Klikając „Załóż konto” potwierdzasz, że zapoznałeś(-aś) się z dokumentami.
         </p>
+
+        {invitationFlow ? (
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-center">
+            <p className="text-sm text-slate-700">
+              Masz już konto CRPE pod innym adresem?
+            </p>
+            <Link
+              href={`/login?use_existing=1&next=${encodeURIComponent(nextPath)}`}
+              className="mt-3 inline-flex rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-200 hover:bg-blue-50"
+            >
+              Zaloguj się do istniejącego konta
+            </Link>
+          </div>
+        ) : null}
       </form>
     </main>
   );
