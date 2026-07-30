@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
+import { getSiteUrl } from "@/lib/siteUrl";
 import {
   fetchProfessionCatalog,
   fetchProfile,
@@ -430,7 +431,7 @@ export default function ProfilePage() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/reset-hasla")}`,
+        redirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent("/reset-hasla")}`,
       });
 
       if (error) {

@@ -3,7 +3,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { MailCheck } from "lucide-react";
 import { supabaseClient } from "@/lib/supabase/client";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 function isRateLimitError(message?: string) {
   const m = (message ?? "").toLowerCase();
@@ -12,6 +14,10 @@ function isRateLimitError(message?: string) {
     m.includes("too many requests") ||
     m.includes("throttle")
   );
+}
+
+function isEmailNotConfirmedError(message?: string) {
+  return (message ?? "").toLowerCase().includes("email not confirmed");
 }
 
 type InvitationLanding = {
@@ -43,6 +49,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const [msg, setMsg] = useState<string | null>(null);
+  const [confirmationNotice, setConfirmationNotice] = useState<
+    "required" | "resent" | null
+  >(null);
   const [pending, setPending] = useState(false);
   const [nextPath, setNextPath] = useState("/kalkulator");
   const [invitationFlow, setInvitationFlow] = useState(false);
@@ -58,7 +67,7 @@ export default function LoginPage() {
   const redirectTo = useMemo(() => {
     // callback endpoint musi istnieć: app/auth/callback/route.ts
     if (typeof window === "undefined") return "";
-    return `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
+    return `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(nextPath)}`;
   }, [nextPath]);
 
   const emailTrim = email.trim();
@@ -150,6 +159,7 @@ export default function LoginPage() {
 
     setPending(true);
     setMsg(null);
+    setConfirmationNotice(null);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -158,6 +168,10 @@ export default function LoginPage() {
       });
 
       if (error) {
+        if (isEmailNotConfirmedError(error.message)) {
+          setConfirmationNotice("required");
+          return;
+        }
         setMsg(authErrorMessage(error.message));
         return;
       }
@@ -172,6 +186,57 @@ export default function LoginPage() {
       router.replace(nextPath);
     } catch (err: any) {
       setMsg(err?.message || "Nie udało się zalogować (błąd połączenia).");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function resendConfirmation(
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) {
+    e.preventDefault();
+
+    if (!canEmailSubmit) {
+      setMsg("Wpisz poprawny e-mail.");
+      return;
+    }
+
+    if (emailCooldownActive) {
+      setMsg(`Odczekaj ${cooldownSecondsLeft}s przed kolejną wysyłką e-mail.`);
+      return;
+    }
+
+    setPending(true);
+    setMsg(null);
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: emailTrim,
+        options: {
+          emailRedirectTo: redirectTo,
+        },
+      });
+
+      if (error) {
+        if (isRateLimitError(error.message)) {
+          setMsg(
+            "Za dużo prób wysyłki e-mail. Odczekaj 1–2 minuty i spróbuj ponownie.",
+          );
+          setEmailCooldownUntil(Date.now() + 90_000);
+          return;
+        }
+        setMsg(authErrorMessage(error.message));
+        return;
+      }
+
+      setConfirmationNotice("resent");
+      setEmailCooldownUntil(Date.now() + 60_000);
+    } catch (err: any) {
+      setMsg(
+        err?.message ||
+          "Nie udało się ponownie wysłać wiadomości aktywacyjnej.",
+      );
     } finally {
       setPending(false);
     }
@@ -294,7 +359,7 @@ export default function LoginPage() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(emailTrim, {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/reset-hasla")}`,
+        redirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent("/reset-hasla")}`,
       });
 
       if (error) {
@@ -350,7 +415,56 @@ export default function LoginPage() {
                 : "Wpisz e-mail i hasło. Jeśli nie masz konta — utworzysz je poniżej."}
             </p>
 
-            {msg ? (
+            {confirmationNotice ? (
+              <div
+                className="mt-5 rounded-2xl border-2 border-amber-300 bg-amber-50 p-5 text-amber-950 shadow-sm"
+                role="alert"
+                aria-live="polite"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 rounded-full bg-amber-200 p-2 text-amber-800">
+                    <MailCheck aria-hidden="true" className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-base font-bold">
+                      {confirmationNotice === "resent"
+                        ? "Nowa wiadomość aktywacyjna została wysłana"
+                        : "Konto nie jest jeszcze aktywne"}
+                    </h2>
+                    <p className="mt-1 text-sm leading-6">
+                      Sprawdź skrzynkę dla adresu{" "}
+                      <strong className="break-all">{emailTrim}</strong> i
+                      otwórz wiadomość od CRPE. Kliknij w niej link
+                      potwierdzający adres e-mail.
+                    </p>
+                  </div>
+                </div>
+
+                <ol className="mt-4 list-decimal space-y-1.5 pl-5 text-sm leading-5">
+                  <li>Otwórz wiadomość aktywacyjną od CRPE.</li>
+                  <li>Kliknij link potwierdzający konto.</li>
+                  <li>Wróć tutaj i zaloguj się ponownie.</li>
+                </ol>
+
+                <p className="mt-3 text-xs leading-5 text-amber-800">
+                  Nie widzisz wiadomości? Sprawdź folder Spam, Oferty lub Inne.
+                  Dostarczenie e-maila może potrwać kilka minut.
+                </p>
+
+                <button
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-amber-400 bg-white px-4 py-2.5 text-sm font-semibold text-amber-950 shadow-sm hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={pending || emailCooldownActive}
+                  type="button"
+                  onClick={resendConfirmation}
+                >
+                  {emailCooldownActive
+                    ? `Wyślij ponownie za ${cooldownSecondsLeft}s`
+                    : pending
+                      ? "Wysyłam…"
+                      : "Wyślij wiadomość aktywacyjną ponownie"}
+                </button>
+              </div>
+            ) : msg ? (
               <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
                 {msg}
               </div>

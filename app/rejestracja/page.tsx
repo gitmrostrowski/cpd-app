@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { MailCheck } from "lucide-react";
 import { createBrowserSupabase } from "@/lib/supabaseBrowser";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 const TERMS_VERSION = "1.0";
 const PRIVACY_VERSION = "1.0";
@@ -47,6 +49,9 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [infoMsg, setInfoMsg] = useState<string | null>(null);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+  const [resendingConfirmation, setResendingConfirmation] = useState(false);
+  const [confirmationResent, setConfirmationResent] = useState(false);
 
   useEffect(() => {
     const candidate = safeNextPath(
@@ -112,7 +117,7 @@ export default function RegisterPage() {
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+        emailRedirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(nextPath)}`,
       },
     });
 
@@ -130,6 +135,7 @@ export default function RegisterPage() {
           ? "Konto zostało utworzone. Sprawdź e-mail i kliknij link aktywacyjny — wrócisz wtedy do zaproszenia."
           : "Sprawdź skrzynkę e-mail i potwierdź rejestrację, aby aktywować konto.",
       );
+      setAwaitingConfirmation(true);
       return;
     }
 
@@ -137,10 +143,101 @@ export default function RegisterPage() {
     router.replace(nextPath);
   }
 
+  async function resendConfirmation() {
+    setErrorMsg(null);
+    setResendingConfirmation(true);
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: {
+        emailRedirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+      },
+    });
+
+    setResendingConfirmation(false);
+
+    if (error) {
+      setErrorMsg(registrationError(error.message));
+      return;
+    }
+
+    setConfirmationResent(true);
+  }
+
   if (checkingInvitation) {
     return (
       <main className="mx-auto max-w-md px-4 py-10">
         <div className="h-72 animate-pulse rounded-3xl bg-slate-100" />
+      </main>
+    );
+  }
+
+  if (awaitingConfirmation) {
+    return (
+      <main className="mx-auto max-w-md px-4 py-10">
+        <div
+          className="rounded-3xl border-2 border-amber-300 bg-amber-50 p-6 text-amber-950 shadow-sm"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 rounded-full bg-amber-200 p-2 text-amber-800">
+              <MailCheck aria-hidden="true" className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">
+                {confirmationResent
+                  ? "Nowa wiadomość aktywacyjna została wysłana"
+                  : "Jeszcze jeden krok: potwierdź adres e-mail"}
+              </h1>
+              <p className="mt-2 text-sm leading-6">
+                Konto zostało utworzone, ale nie jest jeszcze aktywne.
+                Wysłaliśmy wiadomość na adres{" "}
+                <strong className="break-all">{email.trim()}</strong>.
+              </p>
+            </div>
+          </div>
+
+          <ol className="mt-5 list-decimal space-y-2 pl-5 text-sm leading-5">
+            <li>Otwórz wiadomość aktywacyjną od CRPE.</li>
+            <li>Kliknij link potwierdzający adres e-mail.</li>
+            <li>
+              {invitationFlow
+                ? "Po potwierdzeniu wrócisz do zaproszenia placówki."
+                : "Po potwierdzeniu wróć do CRPE i zaloguj się."}
+            </li>
+          </ol>
+
+          <p className="mt-4 rounded-xl bg-white/70 p-3 text-xs leading-5 text-amber-800">
+            Nie widzisz wiadomości? Sprawdź folder Spam, Oferty lub Inne.
+            Dostarczenie e-maila może potrwać kilka minut.
+          </p>
+
+          {errorMsg ? (
+            <p className="mt-3 text-sm font-medium text-red-700">{errorMsg}</p>
+          ) : null}
+
+          <button
+            type="button"
+            className="mt-4 w-full rounded-xl border border-amber-400 bg-white px-4 py-2.5 text-sm font-semibold text-amber-950 shadow-sm hover:bg-amber-100 disabled:opacity-60"
+            disabled={resendingConfirmation || confirmationResent}
+            onClick={resendConfirmation}
+          >
+            {resendingConfirmation
+              ? "Wysyłam…"
+              : confirmationResent
+                ? "Wiadomość wysłana ponownie"
+                : "Wyślij wiadomość aktywacyjną ponownie"}
+          </button>
+
+          <Link
+            className="mt-4 block text-center text-sm font-semibold text-amber-900 underline underline-offset-4"
+            href={`/login?next=${encodeURIComponent(nextPath)}`}
+          >
+            Przejdź do logowania
+          </Link>
+        </div>
       </main>
     );
   }
