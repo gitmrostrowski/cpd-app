@@ -354,7 +354,9 @@ function labelEnrollment(s: EnrollmentStatus | null) {
 
 function audienceLabels(training: Training) {
   if (training.audience_scope === "all") return ["Wszystkie zawody medyczne"];
-  if (training.audience_scope === "unknown") return ["Adresaci niezweryfikowani"];
+  if (training.audience_scope === "unknown") {
+    return ["Adresaci nieokreśleni — sprawdź opis szkolenia"];
+  }
   return training.target_professions.map(
     (item) => item.name_pl_plural || item.name_pl,
   );
@@ -365,6 +367,9 @@ function creditPointsFor(
   professionId: string | null,
 ) {
   if (training.credit_status === "none") return 0;
+  if (training.credit_status === "unknown") {
+    return typeof training.points === "number" ? training.points : null;
+  }
   if (training.credit_status !== "awarded") return null;
   if (professionId) {
     const own = training.profession_credits.find(
@@ -378,7 +383,11 @@ function creditPointsFor(
 }
 
 function creditLabel(training: Training, professionId: string | null) {
-  if (training.credit_status === "unknown") return "Brak informacji";
+  if (training.credit_status === "unknown") {
+    return typeof training.points === "number" && training.points > 0
+      ? `${training.points} pkt — wartość historyczna, do weryfikacji`
+      : "Brak zweryfikowanej informacji o punktach";
+  }
   if (training.credit_status === "none") return "Bez punktów";
   const own = professionId
     ? training.profession_credits.find(
@@ -582,12 +591,7 @@ export default function TrainingHubClient() {
     try {
       let rows = (await fetchTrainings(supabase))
         .map(normalizeTrainingRow)
-        .filter(
-          (row) =>
-            row.approval_status === "approved" &&
-            row.audience_scope !== "unknown" &&
-            row.credit_status !== "unknown",
-        );
+        .filter((row) => row.approval_status === "approved");
       const includes = (value: string | null | undefined, phrase: string) =>
         String(value ?? "").toLocaleLowerCase("pl-PL").includes(
           phrase.toLocaleLowerCase("pl-PL"),
@@ -632,6 +636,7 @@ export default function TrainingHubClient() {
               : effectiveProfessionFilter;
           if (!selectedProfessionId) return true;
           return (
+            row.audience_scope === "unknown" ||
             row.audience_scope === "all" ||
             row.target_professions.some(
               (profession) => profession.profession_id === selectedProfessionId,
