@@ -46,6 +46,8 @@ export type Database = {
       professions: LooseTable;
       profiles: LooseTable;
       trainings: LooseTable;
+      training_target_professions: LooseTable;
+      training_profession_credits: LooseTable;
     };
     Views: Record<string, never>;
     Functions: {
@@ -173,6 +175,26 @@ export type Database = {
       is_platform_staff: {
         Args: { accepted_roles: string[] };
         Returns: boolean;
+      };
+      submit_training_v5_2: {
+        Args: {
+          p_training: Json;
+          p_audience_scope: "all" | "selected";
+          p_profession_ids?: string[];
+          p_credit_status?: "unknown" | "none" | "awarded";
+          p_credits?: Json;
+        };
+        Returns: string;
+      };
+      admin_set_training_classification_v5_2: {
+        Args: {
+          p_training_id: string;
+          p_audience_scope: "all" | "selected" | "unknown";
+          p_profession_ids?: string[];
+          p_credit_status?: "unknown" | "none" | "awarded";
+          p_credits?: Json;
+        };
+        Returns: Json;
       };
     };
     Enums: Record<string, never>;

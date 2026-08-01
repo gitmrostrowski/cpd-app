@@ -12,7 +12,8 @@
     "check:v5.1": "node scripts/check-v5-1-invitations-help.mjs",
     "check:v5.1c": "node scripts/check-v5-1c-invitation-onboarding.mjs",
     "check:v5.1d": "node scripts/check-v5-1d-confirmation-notice.mjs",
-    "check:v5.1e": "node scripts/check-v5-1e-organization-context.mjs"
+    "check:v5.1e": "node scripts/check-v5-1e-organization-context.mjs",
+    "check:v5.2": "node scripts/check-v5-2-training-audience.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

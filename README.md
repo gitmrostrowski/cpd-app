@@ -2,6 +2,22 @@
 
 Aplikacja Next.js do prowadzenia własnej ewidencji aktywności, punktów i dokumentów.
 
+## Wersja v5.2 — adresaci szkoleń i punktacja zawodowa
+
+Wersja v5.2 rozdziela informację, dla kogo przeznaczone jest szkolenie, od
+informacji, którym zawodom przysługują punkty. Dodaje wybór wielu zawodów,
+punktację zależną od zawodu, dokładne filtrowanie i moderację w panelu
+operatora.
+
+Przed wdrożeniem kodu uruchom w Supabase Frankfurt migrację:
+
+```text
+supabase/migrations/20260731_crpe_v5_2_training_audience_and_credits.sql
+```
+
+Pełna kolejność wdrożenia i scenariusze testowe znajdują się w pliku
+`CRPE_v5_2_instrukcja_wdrozenia.md`.
+
 ## Frankfurt fix v3
 
 Wersja zawiera pełną zgodność aplikacji ze znormalizowaną bazą Frankfurt:
