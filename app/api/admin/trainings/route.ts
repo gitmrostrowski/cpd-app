@@ -10,6 +10,7 @@ type TrainingPatch = {
   id: string;
   title?: string;
   organizer?: string | null;
+  organizer_logo_url?: string | null;
   points?: number | null;
   start_date?: string | null; // YYYY-MM-DD
   end_date?: string | null;   // YYYY-MM-DD

@@ -45,6 +45,7 @@ export type LegacyTraining = {
   id?: string;
   title: string;
   organizer: string | null;
+  organizer_logo_url?: string | null;
   start_date: string | null;
   end_date: string | null;
   external_url: string | null;
@@ -53,10 +54,6 @@ export type LegacyTraining = {
   format?: string | null;
   category?: string | null;
   profession?: string | null;
-  audience_scope?: "all" | "selected" | "unknown";
-  target_professions?: TrainingProfessionRef[];
-  credit_status?: "unknown" | "none" | "awarded";
-  profession_credits?: TrainingProfessionCredit[];
   voivodeship?: string | null;
   is_partner?: boolean;
   topics?: string[] | null;
@@ -78,22 +75,6 @@ export type LegacyTraining = {
   submitted_email?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
-};
-
-export type TrainingProfessionRef = {
-  profession_id: string;
-  code: string;
-  name_pl: string;
-  name_pl_plural: string | null;
-};
-
-export type TrainingProfessionCredit = TrainingProfessionRef & {
-  id: string;
-  points: number;
-  verification_status: "organizer_declared" | "operator_verified";
-  awarding_body: string | null;
-  basis_reference: string | null;
-  source_url: string | null;
 };
 
 export type LegacyProfile = {
@@ -321,40 +302,17 @@ function yearFromActivity(row: Record<string, any>) {
 
 function toLegacyTraining(row: Record<string, any>): LegacyTraining {
   const legacy = (row.legacy_data ?? {}) as Record<string, unknown>;
-  const targetProfessions = ((row.training_target_professions ?? []) as Record<string, any>[])
-    .map((target) => ({
-      profession_id: target.profession_id,
-      code: target.professions?.code ?? "",
-      name_pl: target.professions?.name_pl ?? "Nieznany zawód",
-      name_pl_plural: target.professions?.name_pl_plural ?? null,
-    }));
-  const professionCredits = ((row.training_profession_credits ?? []) as Record<string, any>[])
-    .map((credit) => ({
-      id: credit.id,
-      profession_id: credit.profession_id,
-      code: credit.professions?.code ?? "",
-      name_pl: credit.professions?.name_pl ?? "Nieznany zawód",
-      name_pl_plural: credit.professions?.name_pl_plural ?? null,
-      points: asNumber(credit.points),
-      verification_status: credit.verification_status,
-      awarding_body: credit.awarding_body ?? null,
-      basis_reference: credit.basis_reference ?? null,
-      source_url: credit.source_url ?? null,
-    }));
   return {
     id: row.id,
     title: row.title,
     organizer: row.organizer_name ?? null,
+    organizer_logo_url: row.organizer_logo_url ?? null,
     points: row.points == null ? null : asNumber(row.points),
     type: (legacy.legacy_type as string | null) ?? null,
     start_date: row.starts_on ?? null,
     end_date: row.ends_on ?? null,
     category: row.category ?? null,
     profession: row.target_profession_text ?? null,
-    audience_scope: row.audience_scope ?? "unknown",
-    target_professions: targetProfessions,
-    credit_status: row.credit_status ?? "unknown",
-    profession_credits: professionCredits,
     voivodeship: row.location ?? null,
     external_url: row.external_url ?? null,
     is_partner: Boolean(row.is_partner),
@@ -958,8 +916,27 @@ export async function fetchTrainings(client: Client): Promise<LegacyTraining[]> 
   const { data, error } = await client
     .from("trainings")
     .select(
-      "id,title,organizer_name,points,delivery_format,starts_on,ends_on,category,target_profession_text,audience_scope,credit_status,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,submitted_by,approved_by,approved_at,reject_reason,description,submitted_email,legacy_data,created_at,updated_at,training_target_professions(profession_id,professions(code,name_pl,name_pl_plural)),training_profession_credits(id,profession_id,points,verification_status,awarding_body,basis_reference,source_url,professions(code,name_pl,name_pl_plural))",
+      "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,category,target_profession_text,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,submitted_by,approved_by,approved_at,reject_reason,description,submitted_email,legacy_data,created_at,updated_at",
     )
+    .order("starts_on", { ascending: true, nullsFirst: false });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, any>[]).map(toLegacyTraining);
+}
+
+/**
+ * Publiczny katalog pobiera wyłącznie kolumny dopuszczone dla roli `anon`.
+ * Dane zgłaszającego, ślady moderacji i legacy_data nigdy nie trafiają do
+ * niezalogowanego klienta. Widoczność wierszy ogranicza dodatkowo RLS.
+ */
+export async function fetchPublicTrainings(
+  client: Client,
+): Promise<LegacyTraining[]> {
+  const { data, error } = await client
+    .from("trainings")
+    .select(
+      "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,category,target_profession_text,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at",
+    )
+    .eq("approval_status", "approved")
     .order("starts_on", { ascending: true, nullsFirst: false });
   if (error) throw new Error(error.message);
   return ((data ?? []) as Record<string, any>[]).map(toLegacyTraining);
@@ -971,6 +948,7 @@ export function toNormalizedTraining(
   return {
     title: input.title,
     organizer_name: input.organizer ?? null,
+    organizer_logo_url: input.organizer_logo_url ?? null,
     points: input.points ?? null,
     delivery_format:
       input.format === "stacjonarne"
@@ -984,8 +962,6 @@ export function toNormalizedTraining(
     ends_on: input.end_date ?? null,
     category: input.category ?? null,
     target_profession_text: input.profession ?? null,
-    audience_scope: input.audience_scope ?? "unknown",
-    credit_status: input.credit_status ?? "unknown",
     location: input.voivodeship ?? null,
     external_url: input.external_url ?? input.url ?? null,
     is_partner: Boolean(input.is_partner),

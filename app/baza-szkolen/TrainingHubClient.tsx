@@ -9,17 +9,18 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
+  ExternalLink,
+  Info,
   MapPin,
   MonitorPlay,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 import {
   createActivity,
   fetchProfessionCatalog,
-  fetchTrainings,
-  type TrainingProfessionCredit,
-  type TrainingProfessionRef,
+  fetchPublicTrainings,
 } from "@/lib/data/crpe";
 import {
   FALLBACK_PROFESSION_OPTIONS,
@@ -37,13 +38,12 @@ type TrainingCategory =
 
 type EnrollmentStatus = "open" | "waiting_list" | "closed";
 type ApprovalStatus = "approved" | "pending" | "rejected";
-type AudienceScope = "all" | "selected" | "unknown";
-type CreditStatus = "unknown" | "none" | "awarded";
 
 type Training = {
   id: string;
   title: string;
   organizer: string | null;
+  organizer_logo_url?: string | null;
   points: number | null;
 
   format: TrainingType | null;
@@ -53,10 +53,6 @@ type Training = {
 
   category: TrainingCategory | null;
   profession: string | null;
-  audience_scope: AudienceScope;
-  target_professions: TrainingProfessionRef[];
-  credit_status: CreditStatus;
-  profession_credits: TrainingProfessionCredit[];
   voivodeship: string | null;
 
   url: string | null;
@@ -72,6 +68,7 @@ type Training = {
 
   approval_status?: ApprovalStatus | null;
   submitted_by?: string | null;
+  description?: string | null;
 
   created_at: string;
   updated_at: string | null;
@@ -352,66 +349,9 @@ function labelEnrollment(s: EnrollmentStatus | null) {
   return s;
 }
 
-function audienceLabels(training: Training) {
-  if (training.audience_scope === "all") return ["Wszystkie zawody medyczne"];
-  if (training.audience_scope === "unknown") {
-    return ["Adresaci nieokreśleni — sprawdź opis szkolenia"];
-  }
-  return training.target_professions.map(
-    (item) => item.name_pl_plural || item.name_pl,
-  );
-}
-
-function creditPointsFor(
-  training: Training,
-  professionId: string | null,
-) {
-  if (training.credit_status === "none") return 0;
-  if (training.credit_status === "unknown") {
-    return typeof training.points === "number" ? training.points : null;
-  }
-  if (training.credit_status !== "awarded") return null;
-  if (professionId) {
-    const own = training.profession_credits.find(
-      (credit) => credit.profession_id === professionId,
-    );
-    return own?.points ?? null;
-  }
-  const values = training.profession_credits.map((credit) => credit.points);
-  if (!values.length) return null;
-  return Math.max(...values);
-}
-
-function creditLabel(training: Training, professionId: string | null) {
-  if (training.credit_status === "unknown") {
-    return typeof training.points === "number" && training.points > 0
-      ? `${training.points} pkt — wartość historyczna, do weryfikacji`
-      : "Brak zweryfikowanej informacji o punktach";
-  }
-  if (training.credit_status === "none") return "Bez punktów";
-  const own = professionId
-    ? training.profession_credits.find(
-        (credit) => credit.profession_id === professionId,
-      )
-    : null;
-  if (own) return `${own.points} pkt dla Twojego zawodu`;
-  if (professionId) return "Punkty tylko dla wybranych zawodów";
-  const values = [...new Set(training.profession_credits.map((credit) => credit.points))];
-  if (!values.length) return "Punkty — szczegóły do weryfikacji";
-  if (values.length === 1) return `${values[0]} pkt`;
-  return `${Math.min(...values)}–${Math.max(...values)} pkt zależnie od zawodu`;
-}
-
-function creditBadgeValue(training: Training, professionId: string | null) {
-  const own = creditPointsFor(training, professionId);
-  if (own != null) return String(own);
-  if (training.credit_status === "none") return "0";
-  if (professionId) return "—";
-  const values = [...new Set(training.profession_credits.map((credit) => credit.points))];
-  if (!values.length) return "—";
-  return values.length === 1
-    ? String(values[0])
-    : `${Math.min(...values)}–${Math.max(...values)}`;
+function labelProfession(p: string | null) {
+  if (!p) return "Dla wszystkich";
+  return p;
 }
 
 function formatPrice(pricePln: number | null) {
@@ -457,6 +397,47 @@ function normalizeUrl(raw: string | null | undefined) {
   return v;
 }
 
+function normalizeLogoUrl(raw: string | null | undefined) {
+  const value = String(raw ?? "").trim();
+  if (!value || !/^https:\/\//i.test(value)) return null;
+  return value;
+}
+
+function OrganizerLogo({
+  name,
+  src,
+  large = false,
+}: {
+  name: string | null;
+  src: string | null | undefined;
+  large?: boolean;
+}) {
+  const logoUrl = normalizeLogoUrl(src);
+  const size = large ? "h-16 w-16 rounded-2xl" : "h-7 w-7 rounded-lg";
+
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden border border-slate-200 bg-white text-slate-400 shadow-sm ${size}`}
+      role="img"
+      aria-label={name ? `Logo organizatora ${name}` : "Logo organizatora"}
+    >
+      {logoUrl ? (
+        // Logo jest moderowane przez operatora CRPE i renderowane jako obraz.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={logoUrl}
+          alt=""
+          className="h-full w-full object-contain p-1"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
+      ) : (
+        <Building2 className={large ? "h-7 w-7" : "h-3.5 w-3.5"} />
+      )}
+    </span>
+  );
+}
+
 function normalizeTrainingRow(r: any): Training {
   const price =
     typeof r.price_pln === "number"
@@ -478,6 +459,7 @@ function normalizeTrainingRow(r: any): Training {
     id: r.id,
     title: r.title,
     organizer: r.organizer ?? null,
+    organizer_logo_url: normalizeLogoUrl(r.organizer_logo_url),
     points: typeof r.points === "number" ? r.points : r.points ?? null,
 
     format: (r.format ?? null) as TrainingType | null,
@@ -487,14 +469,6 @@ function normalizeTrainingRow(r: any): Training {
 
     category: (r.category ?? null) as TrainingCategory | null,
     profession: r.profession ?? null,
-    audience_scope: (r.audience_scope ?? "unknown") as AudienceScope,
-    target_professions: Array.isArray(r.target_professions)
-      ? r.target_professions
-      : [],
-    credit_status: (r.credit_status ?? "unknown") as CreditStatus,
-    profession_credits: Array.isArray(r.profession_credits)
-      ? r.profession_credits
-      : [],
     voivodeship: r.voivodeship ?? null,
 
     url: normalizeUrl(r.url ?? legacyExternal),
@@ -512,6 +486,7 @@ function normalizeTrainingRow(r: any): Training {
 
     approval_status: (r.approval_status ?? null) as ApprovalStatus | null,
     submitted_by: r.submitted_by ?? null,
+    description: r.description ?? null,
 
     created_at: r.created_at,
     updated_at: r.updated_at ?? null,
@@ -519,7 +494,7 @@ function normalizeTrainingRow(r: any): Training {
 }
 
 export default function TrainingHubClient() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
   const calendarMonthRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -528,7 +503,6 @@ export default function TrainingHubClient() {
   const [error, setError] = useState<string | null>(null);
   const [professionOptions, setProfessionOptions] =
     useState<ProfessionOption[]>([...FALLBACK_PROFESSION_OPTIONS]);
-  const [userProfessionId, setUserProfessionId] = useState<string | null>(null);
 
   const [q, setQ] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("date_asc");
@@ -539,7 +513,7 @@ export default function TrainingHubClient() {
   const [minPoints, setMinPoints] = useState("all");
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("90");
   const [place, setPlace] = useState("all");
-  const [professionFilter, setProfessionFilter] = useState("mine");
+  const [professionFilter, setProfessionFilter] = useState("all");
   const [priceMode, setPriceMode] = useState<PriceMode>("all");
 
   const [topic, setTopic] = useState<string>("all");
@@ -549,6 +523,7 @@ export default function TrainingHubClient() {
   const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   const [addOpen, setAddOpen] = useState(false);
+  const [detailsTraining, setDetailsTraining] = useState<Training | null>(null);
   const [addSubmitting, setAddSubmitting] = useState(false);
   const [selectedCalendarTrainingId, setSelectedCalendarTrainingId] = useState<
     string | null
@@ -559,6 +534,7 @@ export default function TrainingHubClient() {
 
   const [fTitle, setFTitle] = useState("");
   const [fOrganizer, setFOrganizer] = useState("");
+  const [fPoints, setFPoints] = useState<string>("0");
   const [fFormat, setFFormat] = useState<TrainingType>("online");
   const [fCategory, setFCategory] = useState<TrainingCategory>("kurs");
   const [fStart, setFStart] = useState("");
@@ -570,26 +546,16 @@ export default function TrainingHubClient() {
   const [fRec, setFRec] = useState(false);
   const [fCap, setFCap] = useState<string>("");
   const [fEnroll, setFEnroll] = useState<EnrollmentStatus | "">("");
-  const [fAudienceScope, setFAudienceScope] = useState<"" | "all" | "selected">("");
-  const [fTargetProfessionIds, setFTargetProfessionIds] = useState<string[]>([]);
-  const [fCreditStatus, setFCreditStatus] = useState<"" | CreditStatus>("");
-  const [fCreditProfessionIds, setFCreditProfessionIds] = useState<string[]>([]);
-  const [fCreditPoints, setFCreditPoints] = useState<Record<string, string>>({});
-  const [fAwardingBody, setFAwardingBody] = useState("");
-  const [fCreditBasis, setFCreditBasis] = useState("");
-  const [fCreditSourceUrl, setFCreditSourceUrl] = useState("");
+  const [fDescription, setFDescription] = useState("");
 
-  const load = async (
-    professionOverride?: string,
-    userProfessionOverride: string | null = userProfessionId,
-  ) => {
+  const load = async () => {
     setFetching(true);
     setError(null);
 
     const todayStr = todayYYYYMMDD();
 
     try {
-      let rows = (await fetchTrainings(supabase))
+      let rows = (await fetchPublicTrainings(supabase))
         .map(normalizeTrainingRow)
         .filter((row) => row.approval_status === "approved");
       const includes = (value: string | null | undefined, phrase: string) =>
@@ -605,9 +571,7 @@ export default function TrainingHubClient() {
         rows = rows.filter((row) => row.category === category);
       if (minPoints !== "all")
         rows = rows.filter(
-          (row) =>
-            Number(creditPointsFor(row, userProfessionOverride) ?? 0) >=
-            Number(minPoints),
+          (row) => Number(row.points ?? 0) >= Number(minPoints),
         );
       if (timeWindow !== "all") {
         const maxDate = addDaysYYYYMMDD(Number(timeWindow));
@@ -624,24 +588,16 @@ export default function TrainingHubClient() {
       }
       if (place !== "all")
         rows = rows.filter((row) => includes(row.voivodeship, place));
-      const effectiveProfessionFilter = professionOverride ?? professionFilter;
-      if (effectiveProfessionFilter !== "all") {
+      if (professionFilter !== "all") {
         rows = rows.filter((row) => {
-          if (effectiveProfessionFilter === "general") {
-            return row.audience_scope === "all";
-          }
-          const selectedProfessionId =
-            effectiveProfessionFilter === "mine"
-              ? userProfessionOverride
-              : effectiveProfessionFilter;
-          if (!selectedProfessionId) return true;
-          return (
-            row.audience_scope === "unknown" ||
-            row.audience_scope === "all" ||
-            row.target_professions.some(
-              (profession) => profession.profession_id === selectedProfessionId,
-            )
-          );
+          const profession = String(row.profession ?? "");
+          const general =
+            !profession ||
+            includes(profession, "ogól") ||
+            includes(profession, "wszys");
+          return professionFilter === "general"
+            ? general
+            : general || includes(profession, professionFilter);
         });
       }
       if (topic !== "all")
@@ -667,9 +623,9 @@ export default function TrainingHubClient() {
 
       rows.sort((a, b) => {
         if (sortBy === "points_desc")
-          return Number(creditPointsFor(b, userProfessionOverride) ?? 0) - Number(creditPointsFor(a, userProfessionOverride) ?? 0);
+          return Number(b.points ?? 0) - Number(a.points ?? 0);
         if (sortBy === "points_asc")
-          return Number(creditPointsFor(a, userProfessionOverride) ?? 0) - Number(creditPointsFor(b, userProfessionOverride) ?? 0);
+          return Number(a.points ?? 0) - Number(b.points ?? 0);
         if (sortBy === "newest")
           return String(b.created_at).localeCompare(String(a.created_at));
         const direction = sortBy === "date_desc" ? -1 : 1;
@@ -685,11 +641,8 @@ export default function TrainingHubClient() {
       setSelectedCalendarDateKey(null);
       setSelectedCalendarTrainingId(null);
     } catch (caught) {
-      setError(
-        caught instanceof Error
-          ? caught.message
-          : "Nie udało się pobrać szkoleń.",
-      );
+      console.error("Public training directory load failed", caught);
+      setError("Nie udało się pobrać szkoleń. Spróbuj ponownie za chwilę.");
       setItems([]);
     }
 
@@ -697,27 +650,12 @@ export default function TrainingHubClient() {
   };
 
   useEffect(() => {
-    void (async () => {
-      const options = await fetchProfessionCatalog(supabase).catch(
-        () => [...FALLBACK_PROFESSION_OPTIONS],
-      );
-      setProfessionOptions(options);
-
-      let professionId: string | null = null;
-      if (user?.id) {
-        const { data } = await supabase
-          .from("medical_professionals")
-          .select("profession_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        professionId = data?.profession_id ?? null;
-        setUserProfessionId(professionId);
-      }
-      setProfessionFilter(professionId ? "mine" : "all");
-      await load(professionId ? "mine" : "all", professionId);
-    })();
+    load();
+    void fetchProfessionCatalog(supabase)
+      .then(setProfessionOptions)
+      .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, []);
 
   const topicOptions = useMemo(() => {
     const set = new Set<string>();
@@ -736,7 +674,7 @@ export default function TrainingHubClient() {
 
   const sidebarStats = useMemo(() => {
     const totalPoints = items.reduce(
-      (sum, t) => sum + (creditPointsFor(t, userProfessionId) ?? 0),
+      (sum, t) => sum + (typeof t.points === "number" ? t.points : 0),
       0
     );
 
@@ -863,7 +801,7 @@ export default function TrainingHubClient() {
 
     const payload = {
       type: mapToActivityType(t.category, t.format),
-      points: creditPointsFor(t, userProfessionId) ?? 0,
+      points: typeof t.points === "number" ? t.points : 0,
       year,
       organizer: t.organizer ?? null,
       status: "planned" as const,
@@ -918,48 +856,13 @@ export default function TrainingHubClient() {
       return;
     }
 
+    const pointsNum = Number(fPoints || 0);
     const priceNum =
       fPrice.trim() === "" ? null : Number(String(fPrice).replace(",", "."));
     const capNum = fCap.trim() === "" ? null : Number(fCap);
 
-    if (!fAudienceScope) {
-      alert("Wskaż, dla kogo jest przeznaczone szkolenie.");
-      return;
-    }
-
-    if (fAudienceScope === "selected" && !fTargetProfessionIds.length) {
-      alert("Wybierz co najmniej jeden zawód.");
-      return;
-    }
-
-    if (!fCreditStatus) {
-      alert("Wskaż, czy szkolenie przyznaje punkty.");
-      return;
-    }
-
-    const credits = fCreditStatus === "awarded"
-      ? fCreditProfessionIds.map((professionId) => ({
-          profession_id: professionId,
-          points: Number(String(fCreditPoints[professionId] ?? "").replace(",", ".")),
-          awarding_body: fAwardingBody.trim() || null,
-          basis_reference: fCreditBasis.trim() || null,
-          source_url: normalizeUrl(fCreditSourceUrl),
-        }))
-      : [];
-
-    if (
-      fCreditStatus === "awarded" &&
-      (!credits.length || credits.some((credit) => !Number.isFinite(credit.points) || credit.points <= 0))
-    ) {
-      alert("Wybierz zawody otrzymujące punkty i wpisz dodatnią liczbę punktów dla każdego z nich.");
-      return;
-    }
-
-    if (
-      fAudienceScope === "selected" &&
-      credits.some((credit) => !fTargetProfessionIds.includes(credit.profession_id))
-    ) {
-      alert("Punkty można przypisać tylko zawodom będącym adresatami szkolenia.");
+    if (Number.isNaN(pointsNum) || pointsNum < 0) {
+      alert("Nieprawidłowa liczba punktów.");
       return;
     }
 
@@ -980,6 +883,7 @@ export default function TrainingHubClient() {
     const payload = {
       title,
       organizer: fOrganizer.trim() || null,
+      points: pointsNum,
       format: fFormat,
       category: fCategory,
       start_date: fStart,
@@ -994,32 +898,23 @@ export default function TrainingHubClient() {
       has_recording: fRec,
       capacity: capNum,
       enrollment_status: fEnroll ? (fEnroll as EnrollmentStatus) : null,
+      description: fDescription.trim() || null,
 
+      approval_status: "pending" as ApprovalStatus,
+      submitted_by: user.id,
+      submitted_email: user.email ?? null,
     };
 
-    const professionIds = professionOptions
-      .filter((option) => fTargetProfessionIds.includes(String(option.id)))
-      .map((option) => option.id)
-      .filter((id): id is string => Boolean(id));
-
-    if (fAudienceScope === "selected" && professionIds.length !== fTargetProfessionIds.length) {
-      setAddSubmitting(false);
-      alert("Nie udało się potwierdzić słownika zawodów. Odśwież stronę i spróbuj ponownie.");
-      return;
-    }
-
-    const { error } = await supabase.rpc("submit_training_v5_2", {
-      p_training: payload,
-      p_audience_scope: fAudienceScope,
-      p_profession_ids: professionIds,
-      p_credit_status: fCreditStatus,
-      p_credits: credits,
+    const response = await fetch("/api/trainings/submissions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
     });
 
     setAddSubmitting(false);
 
-    if (error) {
-      alert(`Nie udało się dodać szkolenia: ${error.message}`);
+    if (!response.ok) {
+      alert("Nie udało się wysłać zgłoszenia. Spróbuj ponownie za chwilę.");
       return;
     }
 
@@ -1027,6 +922,7 @@ export default function TrainingHubClient() {
 
     setFTitle("");
     setFOrganizer("");
+    setFPoints("0");
     setFFormat("online");
     setFCategory("kurs");
     setFStart("");
@@ -1038,27 +934,10 @@ export default function TrainingHubClient() {
     setFRec(false);
     setFCap("");
     setFEnroll("");
-    setFAudienceScope("");
-    setFTargetProfessionIds([]);
-    setFCreditStatus("");
-    setFCreditProfessionIds([]);
-    setFCreditPoints({});
-    setFAwardingBody("");
-    setFCreditBasis("");
-    setFCreditSourceUrl("");
+    setFDescription("");
 
     alert("Wysłano do akceptacji. Po zatwierdzeniu pojawi się w bazie.");
   };
-
-  if (loading) {
-    return (
-      <div className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-300/80 bg-white p-5 text-sm text-slate-600 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
-          Sprawdzam sesję…
-        </div>
-      </div>
-    );
-  }
 
   const fieldBase =
     "h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-sm shadow-slate-900/5 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/80";
@@ -1104,7 +983,7 @@ export default function TrainingHubClient() {
               </Link>
 
               <button
-                onClick={() => void load()}
+                onClick={load}
                 className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-60"
                 disabled={fetching}
                 type="button"
@@ -1139,7 +1018,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="lg:col-span-2">
-              <label className={labelBase}>Zawód</label>
+              <label className={labelBase}>Zawód / specjalizacja</label>
               <select
                 value={professionFilter}
                 onChange={(e) => setProfessionFilter(e.target.value)}
@@ -1147,12 +1026,9 @@ export default function TrainingHubClient() {
               >
                 {[
                   { value: "all", label: "Wszystkie" },
-                  ...(userProfessionId
-                    ? [{ value: "mine", label: "Dla mojego zawodu" }]
-                    : []),
                   { value: "general", label: "Ogólne / dla wszystkich" },
-                  ...professionOptions.filter((option) => option.id).map((option) => ({
-                    value: String(option.id),
+                  ...professionOptions.map((option) => ({
+                    value: option.name_pl.toLocaleLowerCase("pl-PL"),
                     label: option.name_pl,
                   })),
                 ].map((o) => (
@@ -1349,15 +1225,21 @@ export default function TrainingHubClient() {
               </button>
 
               <button
-                onClick={() => setAddOpen(true)}
+                onClick={() => {
+                  if (user) {
+                    setAddOpen(true);
+                    return;
+                  }
+                  window.location.href = "/login";
+                }}
                 className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-800 shadow-sm transition hover:bg-amber-100 active:scale-95"
                 type="button"
               >
-                Dodaj szkolenie
+                {user ? "Zgłoś wydarzenie" : "Zaloguj, aby zgłosić"}
               </button>
 
               <button
-              onClick={() => void load()}
+                onClick={load}
                 className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-95 disabled:opacity-60"
                 disabled={fetching}
                 type="button"
@@ -1507,12 +1389,11 @@ export default function TrainingHubClient() {
                           <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-blue-500">
                             CPD
                           </div>
-                          <div
-                            className="mt-0.5 whitespace-nowrap text-lg font-semibold leading-none tracking-[-0.03em] text-blue-700"
-                            title={creditLabel(t, userProfessionId)}
-                          >
-                            {creditBadgeValue(t, userProfessionId)}
-                            <span className="ml-1 text-xs font-semibold">pkt</span>
+                          <div className="mt-0.5 whitespace-nowrap text-lg font-semibold leading-none tracking-[-0.03em] text-blue-700">
+                            {typeof t.points === "number" ? t.points : "—"}
+                            <span className="ml-1 text-xs font-semibold">
+                              pkt
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1534,9 +1415,10 @@ export default function TrainingHubClient() {
 
                         {t.organizer ? (
                           <span className="inline-flex min-w-0 items-center gap-1.5">
-                            <span className={metaIconBase}>
-                              <Building2 className="h-3 w-3" strokeWidth={2} />
-                            </span>
+                            <OrganizerLogo
+                              name={t.organizer}
+                              src={t.organizer_logo_url}
+                            />
                             <span className="truncate font-semibold text-slate-700">
                               {t.organizer}
                             </span>
@@ -1574,19 +1456,9 @@ export default function TrainingHubClient() {
 
                       <div className="mt-2 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex min-w-0 flex-wrap gap-1.5">
-                          {audienceLabels(t).slice(0, 3).map((label) => (
-                            <span
-                              key={label}
-                              className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200"
-                            >
-                              {label}
-                            </span>
-                          ))}
-                          {audienceLabels(t).length > 3 ? (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
-                              +{audienceLabels(t).length - 3} zawody
-                            </span>
-                          ) : null}
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
+                            {labelProfession(t.profession)}
+                          </span>
 
                           {capacityText ? (
                             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
@@ -1607,6 +1479,14 @@ export default function TrainingHubClient() {
                         </div>
 
                         <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                          <button
+                            onClick={() => setDetailsTraining(t)}
+                            className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
+                            type="button"
+                          >
+                            Szczegóły
+                          </button>
+
                           {t.url ? (
                             <a
                               href={t.url}
@@ -1614,7 +1494,7 @@ export default function TrainingHubClient() {
                               rel="noreferrer"
                               className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
                             >
-                              Organizator
+                              Zapisy u organizatora
                             </a>
                           ) : (
                             <button
@@ -1853,7 +1733,7 @@ export default function TrainingHubClient() {
                           {t.title}
                         </div>
                         <div className="mt-1 text-[11px] text-slate-500">
-                          {creditLabel(t, userProfessionId)} ·{" "}
+                          {typeof t.points === "number" ? t.points : "—"} pkt ·{" "}
                           {labelType(t.format)}
                         </div>
                       </div>
@@ -1879,7 +1759,7 @@ export default function TrainingHubClient() {
             onClick={() => (addSubmitting ? null : setAddOpen(false))}
           />
 
-          <div className="relative max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[1.45rem] border border-slate-300/80 bg-white p-5 shadow-xl shadow-slate-950/10">
+          <div className="relative w-full max-w-2xl rounded-[1.45rem] border border-slate-300/80 bg-white p-5 shadow-xl shadow-slate-950/10">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-lg font-semibold text-slate-950">
@@ -1902,7 +1782,7 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12">
-              <div className="md:col-span-12">
+              <div className="md:col-span-8">
                 <label className={labelBase}>Tytuł *</label>
                 <input
                   value={fTitle}
@@ -1912,145 +1792,14 @@ export default function TrainingHubClient() {
                 />
               </div>
 
-              <div className="md:col-span-12 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-sm font-semibold text-slate-900">Adresaci szkolenia *</div>
-                <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                  Wskaż, dla kogo szkolenie jest przeznaczone. Nie oznacza to automatycznie przyznawania punktów każdemu z wybranych zawodów.
-                </div>
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:gap-5">
-                  {[
-                    { value: "all", label: "Wszystkie zawody medyczne" },
-                    { value: "selected", label: "Wybrane zawody" },
-                  ].map((option) => (
-                    <label key={option.value} className="flex items-center gap-2 text-sm font-medium text-slate-800">
-                      <input
-                        type="radio"
-                        name="training-audience"
-                        value={option.value}
-                        checked={fAudienceScope === option.value}
-                        onChange={() => {
-                          const value = option.value as "all" | "selected";
-                          setFAudienceScope(value);
-                          if (value === "all") setFTargetProfessionIds([]);
-                        }}
-                        className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-200"
-                      />
-                      {option.label}
-                    </label>
-                  ))}
-                </div>
-
-                {fAudienceScope === "selected" ? (
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {professionOptions.filter((option) => option.id).map((option) => {
-                      const id = String(option.id);
-                      const checked = fTargetProfessionIds.includes(id);
-                      return (
-                        <label key={id} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => {
-                              setFTargetProfessionIds((current) =>
-                                checked ? current.filter((item) => item !== id) : [...current, id],
-                              );
-                              if (checked) {
-                                setFCreditProfessionIds((current) => current.filter((item) => item !== id));
-                              }
-                            }}
-                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-200"
-                          />
-                          {option.name_pl}
-                        </label>
-                      );
-                    })}
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="md:col-span-12 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-                <div className="text-sm font-semibold text-slate-900">Punkty edukacyjne *</div>
-                <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                  Oddzielamy adresatów od formalnej punktacji. Dane będą oznaczone jako deklarowane do czasu weryfikacji przez operatora.
-                </div>
-                <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                  {[
-                    { value: "unknown", label: "Brak informacji" },
-                    { value: "none", label: "Bez punktów" },
-                    { value: "awarded", label: "Przyznaje punkty" },
-                  ].map((option) => (
-                    <label key={option.value} className="flex items-center gap-2 text-sm font-medium text-slate-800">
-                      <input
-                        type="radio"
-                        name="training-credit-status"
-                        value={option.value}
-                        checked={fCreditStatus === option.value}
-                        onChange={() => {
-                          setFCreditStatus(option.value as CreditStatus);
-                          if (option.value !== "awarded") setFCreditProfessionIds([]);
-                        }}
-                        className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-200"
-                      />
-                      {option.label}
-                    </label>
-                  ))}
-                </div>
-
-                {fCreditStatus === "awarded" ? (
-                  <div className="mt-4 space-y-3">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-                      Zawód i liczba punktów
-                    </div>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {professionOptions
-                        .filter((option) => option.id)
-                        .filter((option) => fAudienceScope !== "selected" || fTargetProfessionIds.includes(String(option.id)))
-                        .map((option) => {
-                          const id = String(option.id);
-                          const checked = fCreditProfessionIds.includes(id);
-                          return (
-                            <div key={id} className="flex items-center gap-2 rounded-xl border border-blue-100 bg-white p-2">
-                              <label className="flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-700">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={() => setFCreditProfessionIds((current) =>
-                                    checked ? current.filter((item) => item !== id) : [...current, id]
-                                  )}
-                                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-200"
-                                />
-                                <span className="truncate">{option.name_pl}</span>
-                              </label>
-                              {checked ? (
-                                <input
-                                  value={fCreditPoints[id] ?? ""}
-                                  onChange={(event) => setFCreditPoints((current) => ({ ...current, [id]: event.target.value }))}
-                                  className="h-9 w-24 rounded-lg border border-slate-300 px-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                                  inputMode="decimal"
-                                  placeholder="pkt"
-                                  aria-label={`Punkty dla: ${option.name_pl}`}
-                                />
-                              ) : null}
-                            </div>
-                          );
-                        })}
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className={labelBase}>Instytucja / podmiot przyznający</label>
-                        <input value={fAwardingBody} onChange={(e) => setFAwardingBody(e.target.value)} className={fieldBase} placeholder="np. OIL / NIL" />
-                      </div>
-                      <div>
-                        <label className={labelBase}>Numer decyzji / podstawa</label>
-                        <input value={fCreditBasis} onChange={(e) => setFCreditBasis(e.target.value)} className={fieldBase} placeholder="opcjonalnie" />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className={labelBase}>Źródło informacji o punktach</label>
-                        <input value={fCreditSourceUrl} onChange={(e) => setFCreditSourceUrl(e.target.value)} className={fieldBase} placeholder="https://…" />
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
+              <div className="md:col-span-4">
+                <label className={labelBase}>Punkty *</label>
+                <input
+                  value={fPoints}
+                  onChange={(e) => setFPoints(e.target.value)}
+                  className={fieldBase}
+                  inputMode="numeric"
+                />
               </div>
 
               <div className="md:col-span-6">
@@ -2147,6 +1896,17 @@ export default function TrainingHubClient() {
                 </div>
               </div>
 
+              <div className="md:col-span-12">
+                <label className={labelBase}>Opis szkolenia</label>
+                <textarea
+                  value={fDescription}
+                  onChange={(e) => setFDescription(e.target.value)}
+                  className={`${fieldBase} min-h-24 py-2`}
+                  placeholder="Program, grupa docelowa i najważniejsze informacje dla uczestnika"
+                  maxLength={5000}
+                />
+              </div>
+
               <div className="md:col-span-3">
                 <label className={labelBase}>Cena PLN</label>
                 <input
@@ -2216,6 +1976,110 @@ export default function TrainingHubClient() {
           </div>
         </div>
       )}
+
+      {detailsTraining ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-950/45"
+            onClick={() => setDetailsTraining(null)}
+            aria-label="Zamknij szczegóły szkolenia"
+          />
+
+          <article
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="training-details-title"
+            className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-2xl sm:p-7"
+          >
+            <button
+              type="button"
+              onClick={() => setDetailsTraining(null)}
+              className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+              aria-label="Zamknij"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="flex items-start gap-4 pr-11">
+              <OrganizerLogo
+                name={detailsTraining.organizer}
+                src={detailsTraining.organizer_logo_url}
+                large
+              />
+              <div className="min-w-0">
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">
+                  {labelCategory(detailsTraining.category)} · {labelType(detailsTraining.format)}
+                </div>
+                <h2
+                  id="training-details-title"
+                  className="mt-2 text-2xl font-bold tracking-tight text-slate-950"
+                >
+                  {detailsTraining.title}
+                </h2>
+                <p className="mt-1 text-sm font-semibold text-slate-600">
+                  {detailsTraining.organizer || "Organizator niepodany"}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ["Termin", dateRangeShort(detailsTraining.start_date, detailsTraining.end_date) || "—"],
+                ["Miejsce", detailsTraining.voivodeship || (detailsTraining.format === "online" ? "Online" : "—")],
+                ["Punkty", typeof detailsTraining.points === "number" ? `${detailsTraining.points} pkt` : "Do potwierdzenia"],
+                ["Cena", formatPrice(detailsTraining.price_pln ?? null) || "Nie podano"],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                    {label}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-slate-800">{value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-slate-200 p-4">
+              <h3 className="text-sm font-bold text-slate-900">O szkoleniu</h3>
+              <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-600">
+                {detailsTraining.description ||
+                  "Organizator nie przekazał jeszcze szerszego opisu wydarzenia. Szczegóły sprawdzisz na stronie zapisów."}
+              </p>
+            </div>
+
+            <div className="mt-4 flex gap-2 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-blue-800">
+              <Info className="mt-0.5 h-4 w-4 shrink-0" />
+              Dodanie do planu CRPE nie jest zapisem na szkolenie. Rejestrację uczestnika prowadzi organizator.
+            </div>
+
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              {detailsTraining.url ? (
+                <a
+                  href={detailsTraining.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                >
+                  Zapisy u organizatora <ExternalLink className="h-4 w-4" />
+                </a>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => {
+                  if (user) {
+                    void chooseTraining(detailsTraining);
+                    return;
+                  }
+                  window.location.href = "/login";
+                }}
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                {user ? "Dodaj do planu CPD" : "Zaloguj, aby dodać do planu"}
+              </button>
+            </div>
+          </article>
+        </div>
+      ) : null}
     </div>
   );
 }

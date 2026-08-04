@@ -6,30 +6,18 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabaseClient } from "@/lib/supabase/client";
 import {
-  fetchProfessionCatalog,
   fetchTrainings,
-  type TrainingProfessionCredit,
-  type TrainingProfessionRef,
   toNormalizedTraining,
 } from "@/lib/data/crpe";
-import {
-  FALLBACK_PROFESSION_OPTIONS,
-  type ProfessionOption,
-} from "@/lib/cpd/professions";
 
 type TrainingStatus = "pending" | "approved" | "rejected";
-type AudienceScope = "all" | "selected" | "unknown";
-type CreditStatus = "unknown" | "none" | "awarded";
 
 type TrainingRow = {
   id: string;
   title: string;
   organizer: string | null;
+  organizer_logo_url: string | null;
   points: number | null;
-  audience_scope: AudienceScope;
-  target_professions: TrainingProfessionRef[];
-  credit_status: CreditStatus;
-  profession_credits: TrainingProfessionCredit[];
   start_date: string | null;
   end_date: string | null;
   url: string | null;
@@ -102,27 +90,6 @@ function normalizeUrl(raw: string | null | undefined) {
   return v;
 }
 
-function classificationIssue(
-  audienceScope: AudienceScope,
-  targetProfessionIds: string[],
-  creditStatus: CreditStatus,
-  credits: Array<{ profession_id: string; points: number }>,
-) {
-  if (audienceScope === "unknown") return "Ustal adresatów szkolenia.";
-  if (audienceScope === "selected" && !targetProfessionIds.length)
-    return "Wybierz co najmniej jeden zawód.";
-  if (creditStatus === "unknown") return "Ustal status punktów edukacyjnych.";
-  if (creditStatus === "awarded" && !credits.length)
-    return "Dodaj punktację dla co najmniej jednego zawodu.";
-  if (credits.some((credit) => !Number.isFinite(credit.points) || credit.points <= 0))
-    return "Każda liczba punktów musi być większa od zera.";
-  if (
-    audienceScope === "selected" &&
-    credits.some((credit) => !targetProfessionIds.includes(credit.profession_id))
-  ) return "Punkty można przypisać tylko adresatom szkolenia.";
-  return null;
-}
-
 export default function AdminTrainingsPage() {
   const router = useRouter();
   const sb = useMemo(() => supabaseClient(), []);
@@ -136,22 +103,10 @@ export default function AdminTrainingsPage() {
 
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<TrainingRow[]>([]);
-  const [professionOptions, setProfessionOptions] = useState<ProfessionOption[]>([
-    ...FALLBACK_PROFESSION_OPTIONS,
-  ]);
   const [err, setErr] = useState<string | null>(null);
 
   const [editOpen, setEditOpen] = useState(false);
   const [edit, setEdit] = useState<TrainingRow | null>(null);
-  const [editTargetProfessionIds, setEditTargetProfessionIds] = useState<string[]>([]);
-  const [editCreditProfessionIds, setEditCreditProfessionIds] = useState<string[]>([]);
-  const [editCreditPoints, setEditCreditPoints] = useState<Record<string, string>>({});
-  const [editCreditDetails, setEditCreditDetails] = useState<Record<string, {
-    awarding_body: string;
-    basis_reference: string;
-    source_url: string;
-    verification_status: "organizer_declared" | "operator_verified";
-  }>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -239,11 +194,6 @@ export default function AdminTrainingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, status]);
 
-  useEffect(() => {
-    if (!isAdmin) return;
-    void fetchProfessionCatalog(sb).then(setProfessionOptions).catch(() => undefined);
-  }, [isAdmin, sb]);
-
   const filtered = useMemo(() => rows, [rows]);
 
   async function patch(id: string, patchData: Partial<TrainingRow>) {
@@ -255,11 +205,6 @@ export default function AdminTrainingsPage() {
       approval_status: getStatus({ ...current, ...patchData }),
     };
     const normalized: Record<string, unknown> = toNormalizedTraining(next);
-    // Relacje zawodów i ich punktacja są zapisywane atomowo przez dedykowane
-    // RPC. Zwykła edycja pól nie może wyczyścić wyliczonej klasyfikacji.
-    delete normalized.target_profession_text;
-    delete normalized.audience_scope;
-    delete normalized.credit_status;
     const { data: auth } = await sb.auth.getUser();
     if (next.approval_status === "approved") {
       normalized.approved_by = auth.user?.id ?? null;
@@ -297,30 +242,6 @@ export default function AdminTrainingsPage() {
     if (focus === "description" && !base.description) base.description = "";
 
     setEdit(base);
-    setEditTargetProfessionIds(
-      (base.target_professions ?? []).map((item) => item.profession_id),
-    );
-    setEditCreditProfessionIds(
-      (base.profession_credits ?? []).map((item) => item.profession_id),
-    );
-    setEditCreditPoints(
-      Object.fromEntries(
-        (base.profession_credits ?? []).map((item) => [item.profession_id, String(item.points)]),
-      ),
-    );
-    setEditCreditDetails(
-      Object.fromEntries(
-        (base.profession_credits ?? []).map((item) => [
-          item.profession_id,
-          {
-            awarding_body: item.awarding_body ?? "",
-            basis_reference: item.basis_reference ?? "",
-            source_url: item.source_url ?? "",
-            verification_status: item.verification_status,
-          },
-        ]),
-      ),
-    );
     setEditOpen(true);
 
     setTimeout(() => {
@@ -338,10 +259,6 @@ export default function AdminTrainingsPage() {
   function closeEdit() {
     setEditOpen(false);
     setEdit(null);
-    setEditTargetProfessionIds([]);
-    setEditCreditProfessionIds([]);
-    setEditCreditPoints({});
-    setEditCreditDetails({});
   }
 
   async function saveEdit() {
@@ -352,50 +269,13 @@ export default function AdminTrainingsPage() {
 
     try {
       const url = normalizeUrl(edit.url);
-      const credits = edit.credit_status === "awarded"
-        ? editCreditProfessionIds.map((professionId) => ({
-            profession_id: professionId,
-            points: Number(String(editCreditPoints[professionId] ?? "").replace(",", ".")),
-            awarding_body: editCreditDetails[professionId]?.awarding_body || null,
-            basis_reference: editCreditDetails[professionId]?.basis_reference || null,
-            source_url: normalizeUrl(editCreditDetails[professionId]?.source_url),
-            // Zapis wykonany świadomie w panelu operatora kończy weryfikację
-            // klasyfikacji. Wpis organizatora nie może pozostać bez końca jako
-            // organizer_declared po zaakceptowaniu go przez operatora.
-            verification_status: "operator_verified" as const,
-          }))
-        : [];
-      const issue = classificationIssue(
-        edit.audience_scope,
-        editTargetProfessionIds,
-        edit.credit_status,
-        credits,
-      );
-      if (getStatus(edit) === "approved" && issue) throw new Error(issue);
-
-      const { error: classificationError } = await sb.rpc(
-        "admin_set_training_classification_v5_2",
-        {
-          p_training_id: edit.id,
-          p_audience_scope: edit.audience_scope,
-          p_profession_ids:
-            edit.audience_scope === "selected" ? editTargetProfessionIds : [],
-          p_credit_status: edit.credit_status,
-          p_credits: credits,
-        },
-      );
-      if (classificationError) throw classificationError;
-      const derivedPoints =
-        edit.credit_status === "none"
-          ? 0
-          : edit.credit_status === "awarded"
-            ? Math.max(...credits.map((credit) => credit.points))
-            : null;
+      const organizerLogoUrl = normalizeUrl(edit.organizer_logo_url);
 
       const cleaned: Partial<TrainingRow> = {
         title: edit.title?.trim() || edit.title,
         organizer: normOrganizer(edit.organizer) ?? null,
-        points: derivedPoints,
+        organizer_logo_url: organizerLogoUrl,
+        points: edit.points,
         start_date: edit.start_date || null,
         end_date: edit.end_date || null,
         url,
@@ -407,9 +287,10 @@ export default function AdminTrainingsPage() {
           : null,
       };
 
-      await patch(edit.id, cleaned);
+      const updated = await patch(edit.id, cleaned);
       closeEdit();
-      await load();
+
+      if (status !== "all" && getStatus(updated) !== status) load();
     } catch (e: any) {
       setErr(e?.message || "Błąd zapisu");
     } finally {
@@ -421,20 +302,6 @@ export default function AdminTrainingsPage() {
     setErr(null);
 
     try {
-      const issue = classificationIssue(
-        row.audience_scope,
-        (row.target_professions ?? []).map((item) => item.profession_id),
-        row.credit_status,
-        (row.profession_credits ?? []).map((item) => ({
-          profession_id: item.profession_id,
-          points: item.points,
-        })),
-      );
-      if (issue) {
-        setErr(`${issue} Otwórz „Edytuj”, uzupełnij dane i dopiero wtedy zaakceptuj.`);
-        openEdit(row);
-        return;
-      }
       const updated = await patch(row.id, {
         approval_status: "approved",
         reject_reason: null,
@@ -631,7 +498,6 @@ export default function AdminTrainingsPage() {
                 <th className="px-4 py-3">Szkolenie</th>
                 <th className="px-4 py-3">Organizator</th>
                 <th className="px-4 py-3">Daty szkolenia</th>
-                <th className="px-4 py-3">Adresaci / punkty</th>
                 <th className="px-4 py-3">Pkt</th>
                 <th className="px-4 py-3">Dodane przez</th>
                 <th className="px-4 py-3">Data dodania</th>
@@ -643,13 +509,13 @@ export default function AdminTrainingsPage() {
             <tbody className="text-sm text-slate-800">
               {loading ? (
                 <tr>
-                  <td className="px-4 py-4 text-slate-500" colSpan={9}>
+                  <td className="px-4 py-4 text-slate-500" colSpan={8}>
                     Ładuję…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-4 text-slate-500" colSpan={9}>
+                  <td className="px-4 py-4 text-slate-500" colSpan={8}>
                     Brak danych.
                   </td>
                 </tr>
@@ -709,35 +575,23 @@ export default function AdminTrainingsPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        {org || <span className="text-slate-400">—</span>}
+                        <div className="flex items-center gap-2">
+                          {r.organizer_logo_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={r.organizer_logo_url}
+                              alt=""
+                              className="h-8 w-8 rounded-lg border border-slate-200 bg-white object-contain p-1"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : null}
+                          <span>{org || <span className="text-slate-400">—</span>}</span>
+                        </div>
                       </td>
 
                       <td className="px-4 py-4 text-xs text-slate-700">
                         <div className="whitespace-nowrap">{fmtDate(r.start_date)}</div>
                         <div className="whitespace-nowrap text-slate-500">{fmtDate(r.end_date)}</div>
-                      </td>
-
-                      <td className="px-4 py-4 text-xs">
-                        <div className={cls(
-                          "font-semibold",
-                          r.audience_scope === "unknown" ? "text-amber-700" : "text-slate-800",
-                        )}>
-                          {r.audience_scope === "all"
-                            ? "Wszystkie zawody"
-                            : r.audience_scope === "unknown"
-                              ? "Niezweryfikowani"
-                              : (r.target_professions ?? []).map((item) => item.name_pl).join(", ") || "Brak wyboru"}
-                        </div>
-                        <div className={cls(
-                          "mt-1",
-                          r.credit_status === "unknown" ? "text-amber-700" : "text-slate-500",
-                        )}>
-                          {r.credit_status === "unknown"
-                            ? "Punkty: brak informacji"
-                            : r.credit_status === "none"
-                              ? "Bez punktów"
-                              : `Punktacja dla ${(r.profession_credits ?? []).length} zaw.`}
-                        </div>
                       </td>
 
                       <td className="px-4 py-4">
@@ -831,7 +685,7 @@ export default function AdminTrainingsPage() {
 
       {editOpen && edit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-xl">
+          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
                 <div className="text-sm font-semibold text-slate-900">
@@ -872,12 +726,34 @@ export default function AdminTrainingsPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600">Punkty (wyliczane z tabeli poniżej)</label>
+                <label className="text-xs font-semibold text-slate-600">
+                  Logo organizatora (HTTPS)
+                </label>
+                <input
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={edit.organizer_logo_url || ""}
+                  onChange={(e) =>
+                    setEdit({
+                      ...edit,
+                      organizer_logo_url: e.target.value || null,
+                    })
+                  }
+                  placeholder="https://.../logo.svg"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Punkty</label>
                 <input
                   type="number"
-                  readOnly
-                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500"
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.points ?? ""}
+                  onChange={(e) =>
+                    setEdit({
+                      ...edit,
+                      points: e.target.value === "" ? null : Number(e.target.value),
+                    })
+                  }
                 />
               </div>
 
@@ -921,149 +797,6 @@ export default function AdminTrainingsPage() {
                   onChange={(e) => setEdit({ ...edit, description: e.target.value || null })}
                   placeholder="Krótki opis szkolenia..."
                 />
-              </div>
-
-              <div className="sm:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-sm font-semibold text-slate-900">Adresaci szkolenia</div>
-                <div className="mt-2 flex flex-wrap gap-4">
-                  {[
-                    { value: "unknown", label: "Niezweryfikowani" },
-                    { value: "all", label: "Wszystkie zawody medyczne" },
-                    { value: "selected", label: "Wybrane zawody" },
-                  ].map((option) => (
-                    <label key={option.value} className="flex items-center gap-2 text-sm text-slate-700">
-                      <input
-                        type="radio"
-                        name="admin-training-audience"
-                        checked={edit.audience_scope === option.value}
-                        onChange={() => {
-                          const scope = option.value as AudienceScope;
-                          setEdit({ ...edit, audience_scope: scope });
-                          if (scope !== "selected") setEditTargetProfessionIds([]);
-                        }}
-                        className="h-4 w-4 border-slate-300 text-blue-600"
-                      />
-                      {option.label}
-                    </label>
-                  ))}
-                </div>
-                {edit.audience_scope === "selected" ? (
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {professionOptions.filter((option) => option.id).map((option) => {
-                      const id = String(option.id);
-                      const checked = editTargetProfessionIds.includes(id);
-                      return (
-                        <label key={id} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => {
-                              setEditTargetProfessionIds((current) =>
-                                checked ? current.filter((item) => item !== id) : [...current, id],
-                              );
-                              if (checked) setEditCreditProfessionIds((current) => current.filter((item) => item !== id));
-                            }}
-                            className="h-4 w-4 rounded border-slate-300 text-blue-600"
-                          />
-                          {option.name_pl}
-                        </label>
-                      );
-                    })}
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="sm:col-span-2 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-                <div className="text-sm font-semibold text-slate-900">Punktacja według zawodu</div>
-                <div className="mt-2 flex flex-wrap gap-4">
-                  {[
-                    { value: "unknown", label: "Brak informacji" },
-                    { value: "none", label: "Bez punktów" },
-                    { value: "awarded", label: "Przyznaje punkty" },
-                  ].map((option) => (
-                    <label key={option.value} className="flex items-center gap-2 text-sm text-slate-700">
-                      <input
-                        type="radio"
-                        name="admin-training-credit-status"
-                        checked={edit.credit_status === option.value}
-                        onChange={() => {
-                          const creditStatus = option.value as CreditStatus;
-                          setEdit({ ...edit, credit_status: creditStatus });
-                          if (creditStatus !== "awarded") setEditCreditProfessionIds([]);
-                        }}
-                        className="h-4 w-4 border-slate-300 text-blue-600"
-                      />
-                      {option.label}
-                    </label>
-                  ))}
-                </div>
-
-                {edit.credit_status === "awarded" ? (
-                  <div className="mt-4 space-y-3">
-                    {professionOptions
-                      .filter((option) => option.id)
-                      .filter((option) => edit.audience_scope !== "selected" || editTargetProfessionIds.includes(String(option.id)))
-                      .map((option) => {
-                        const id = String(option.id);
-                        const checked = editCreditProfessionIds.includes(id);
-                        const details = editCreditDetails[id] ?? {
-                          awarding_body: "",
-                          basis_reference: "",
-                          source_url: "",
-                          verification_status: "operator_verified" as const,
-                        };
-                        return (
-                          <div key={id} className="rounded-xl border border-blue-100 bg-white p-3">
-                            <div className="flex items-center gap-3">
-                              <label className="flex min-w-0 flex-1 items-center gap-2 text-sm font-semibold text-slate-800">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={() => setEditCreditProfessionIds((current) =>
-                                    checked ? current.filter((item) => item !== id) : [...current, id]
-                                  )}
-                                  className="h-4 w-4 rounded border-slate-300 text-blue-600"
-                                />
-                                {option.name_pl}
-                              </label>
-                              {checked ? (
-                                <input
-                                  value={editCreditPoints[id] ?? ""}
-                                  onChange={(event) => setEditCreditPoints((current) => ({ ...current, [id]: event.target.value }))}
-                                  className="h-9 w-24 rounded-lg border border-slate-300 px-2 text-sm"
-                                  inputMode="decimal"
-                                  placeholder="pkt"
-                                  aria-label={`Punkty dla: ${option.name_pl}`}
-                                />
-                              ) : null}
-                            </div>
-                            {checked ? (
-                              <div className="mt-3 grid gap-2 md:grid-cols-3">
-                                <input
-                                  value={details.awarding_body}
-                                  onChange={(event) => setEditCreditDetails((current) => ({ ...current, [id]: { ...details, awarding_body: event.target.value } }))}
-                                  className="h-9 rounded-lg border border-slate-300 px-2 text-xs"
-                                  placeholder="Podmiot przyznający"
-                                />
-                                <input
-                                  value={details.basis_reference}
-                                  onChange={(event) => setEditCreditDetails((current) => ({ ...current, [id]: { ...details, basis_reference: event.target.value } }))}
-                                  className="h-9 rounded-lg border border-slate-300 px-2 text-xs"
-                                  placeholder="Numer decyzji / podstawa"
-                                />
-                                <input
-                                  value={details.source_url}
-                                  onChange={(event) => setEditCreditDetails((current) => ({ ...current, [id]: { ...details, source_url: event.target.value } }))}
-                                  className="h-9 rounded-lg border border-slate-300 px-2 text-xs"
-                                  placeholder="Link źródłowy"
-                                />
-                              </div>
-                            ) : null}
-                          </div>
-                        );
-                      })}
-                  </div>
-                ) : null}
               </div>
 
               <div>

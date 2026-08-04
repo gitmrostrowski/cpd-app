@@ -10,11 +10,9 @@ export default async function ActivityDetailsPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+  params: { id: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
 }) {
-  const { id: activityId } = await params;
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const supabase = await supabaseServer();
   const {
     data: { user },
@@ -22,13 +20,13 @@ export default async function ActivityDetailsPage({
   let activity = null;
   let loadError: Error | null = null;
   try {
-    activity = user ? await fetchActivity(supabase, user.id, activityId) : null;
+    activity = user ? await fetchActivity(supabase, user.id, params.id) : null;
   } catch (caught) {
     loadError =
       caught instanceof Error ? caught : new Error("Nie udało się pobrać aktywności.");
   }
 
-  const errParam = resolvedSearchParams?.err;
+  const errParam = searchParams?.err;
   const errMsg =
     typeof errParam === "string"
       ? errParam
@@ -72,22 +70,22 @@ export default async function ActivityDetailsPage({
   async function onUpload(formData: FormData): Promise<void> {
     "use server";
 
-    const res = await uploadCertificate(activityId, formData);
+    const res = await uploadCertificate(params.id, formData);
 
     if (!res.ok) {
       redirect(
-        `/activities/${activityId}?err=${encodeURIComponent(res.error)}#certificate`
+        `/activities/${params.id}?err=${encodeURIComponent(res.error)}#certificate`
       );
     }
 
-    redirect(`/activities/${activityId}#certificate`);
+    redirect(`/activities/${params.id}#certificate`);
   }
 
   // ✅ Server Action: (formData) => Promise<void>
   async function onDelete(formData: FormData): Promise<void> {
     "use server";
 
-    const id = String(formData.get("id") || activityId || "").trim();
+    const id = String(formData.get("id") || params.id || "").trim();
     if (!id) return;
 
     const res = await deleteCertificate(id);

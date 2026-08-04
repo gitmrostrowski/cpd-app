@@ -39,7 +39,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# supabase local state (migrations must remain versioned)
-/supabase/.temp/
-/supabase/.branches/
+supabase/

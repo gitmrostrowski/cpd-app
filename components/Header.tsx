@@ -38,6 +38,7 @@ type NavItem = {
 
 const PUBLIC_NAV: NavItem[] = [
   { href: "/#dla-kogo", label: "Dla kogo" },
+  { href: "/baza-szkolen", label: "Baza szkoleń" },
   { href: "/narzedzia", label: "Narzędzia" },
   { href: "/bezpieczenstwo", label: "Bezpieczeństwo" },
   { href: "/pomoc", label: "Pomoc" },
