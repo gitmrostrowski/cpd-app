@@ -2,6 +2,20 @@
 
 Aplikacja Next.js do prowadzenia własnej ewidencji aktywności, punktów i dokumentów.
 
+## Wersja v6.1 — logo organizatora
+
+Aktualny pakiet dodaje opcjonalny upload logo przy zgłaszaniu szkolenia,
+konwersję do WebP po stronie serwera, własny bucket Supabase Storage oraz
+zarządzanie logo w panelu administratora. Instrukcja wdrożenia znajduje się w:
+
+```text
+CRPE_v6_1_LOGO_ORGANIZATORA.md
+```
+
+Migrację `20260804_crpe_v6_1_training_organizer_logos.sql` należy wykonać przed
+wdrożeniem kodu. Produkcja wymaga tajnej zmiennej
+`SUPABASE_SERVICE_ROLE_KEY`.
+
 ## Frankfurt fix v3
 
 Wersja zawiera pełną zgodność aplikacji ze znormalizowaną bazą Frankfurt:

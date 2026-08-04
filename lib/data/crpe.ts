@@ -46,6 +46,7 @@ export type LegacyTraining = {
   title: string;
   organizer: string | null;
   organizer_logo_url?: string | null;
+  organizer_logo_path?: string | null;
   start_date: string | null;
   end_date: string | null;
   external_url: string | null;
@@ -307,6 +308,7 @@ function toLegacyTraining(row: Record<string, any>): LegacyTraining {
     title: row.title,
     organizer: row.organizer_name ?? null,
     organizer_logo_url: row.organizer_logo_url ?? null,
+    organizer_logo_path: row.organizer_logo_path ?? null,
     points: row.points == null ? null : asNumber(row.points),
     type: (legacy.legacy_type as string | null) ?? null,
     start_date: row.starts_on ?? null,
@@ -916,7 +918,7 @@ export async function fetchTrainings(client: Client): Promise<LegacyTraining[]> 
   const { data, error } = await client
     .from("trainings")
     .select(
-      "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,category,target_profession_text,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,submitted_by,approved_by,approved_at,reject_reason,description,submitted_email,legacy_data,created_at,updated_at",
+      "id,title,organizer_name,organizer_logo_url,organizer_logo_path,points,delivery_format,starts_on,ends_on,category,target_profession_text,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,submitted_by,approved_by,approved_at,reject_reason,description,submitted_email,legacy_data,created_at,updated_at",
     )
     .order("starts_on", { ascending: true, nullsFirst: false });
   if (error) throw new Error(error.message);
@@ -949,6 +951,7 @@ export function toNormalizedTraining(
     title: input.title,
     organizer_name: input.organizer ?? null,
     organizer_logo_url: input.organizer_logo_url ?? null,
+    organizer_logo_path: input.organizer_logo_path ?? null,
     points: input.points ?? null,
     delivery_format:
       input.format === "stacjonarne"

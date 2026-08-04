@@ -17,6 +17,7 @@ type TrainingRow = {
   title: string;
   organizer: string | null;
   organizer_logo_url: string | null;
+  organizer_logo_path: string | null;
   points: number | null;
   start_date: string | null;
   end_date: string | null;
@@ -55,7 +56,6 @@ function statusBadgeCls(s: TrainingStatus) {
 function normOrganizer(v: string | null) {
   const t = (v ?? "").trim();
   if (!t) return null;
-  if (t.toLowerCase() === "nil") return null;
   return t;
 }
 
@@ -108,6 +108,19 @@ export default function AdminTrainingsPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [edit, setEdit] = useState<TrainingRow | null>(null);
   const [saving, setSaving] = useState(false);
+  const [editLogoFile, setEditLogoFile] = useState<File | null>(null);
+  const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null);
+  const [removeEditLogo, setRemoveEditLogo] = useState(false);
+
+  useEffect(() => {
+    if (!editLogoFile) {
+      setEditLogoPreview(null);
+      return;
+    }
+    const preview = URL.createObjectURL(editLogoFile);
+    setEditLogoPreview(preview);
+    return () => URL.revokeObjectURL(preview);
+  }, [editLogoFile]);
 
   useEffect(() => {
     let cancelled = false;
@@ -242,6 +255,8 @@ export default function AdminTrainingsPage() {
     if (focus === "description" && !base.description) base.description = "";
 
     setEdit(base);
+    setEditLogoFile(null);
+    setRemoveEditLogo(false);
     setEditOpen(true);
 
     setTimeout(() => {
@@ -259,6 +274,8 @@ export default function AdminTrainingsPage() {
   function closeEdit() {
     setEditOpen(false);
     setEdit(null);
+    setEditLogoFile(null);
+    setRemoveEditLogo(false);
   }
 
   async function saveEdit() {
@@ -268,13 +285,51 @@ export default function AdminTrainingsPage() {
     setErr(null);
 
     try {
+      let organizerLogoUrl = edit.organizer_logo_url;
+      let organizerLogoPath = edit.organizer_logo_path;
+
+      if (editLogoFile) {
+        const formData = new FormData();
+        formData.set("training_id", edit.id);
+        formData.set("organizer_logo", editLogoFile);
+        const response = await fetch("/api/admin/trainings/logo", {
+          method: "POST",
+          body: formData,
+        });
+        const result = (await response.json().catch(() => null)) as {
+          organizer_logo_url?: string | null;
+          organizer_logo_path?: string | null;
+          error?: string;
+        } | null;
+        if (!response.ok) {
+          throw new Error(
+            result?.error === "invalid_logo_type"
+              ? "Logo musi być plikiem PNG, JPG lub WebP."
+              : result?.error === "invalid_logo_size"
+                ? "Logo może mieć maksymalnie 2 MB."
+                : "Nie udało się zapisać logo organizatora.",
+          );
+        }
+        organizerLogoUrl = result?.organizer_logo_url ?? null;
+        organizerLogoPath = result?.organizer_logo_path ?? null;
+      } else if (removeEditLogo && edit.organizer_logo_url) {
+        const response = await fetch("/api/admin/trainings/logo", {
+          method: "DELETE",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ training_id: edit.id }),
+        });
+        if (!response.ok) throw new Error("Nie udało się usunąć logo organizatora.");
+        organizerLogoUrl = null;
+        organizerLogoPath = null;
+      }
+
       const url = normalizeUrl(edit.url);
-      const organizerLogoUrl = normalizeUrl(edit.organizer_logo_url);
 
       const cleaned: Partial<TrainingRow> = {
         title: edit.title?.trim() || edit.title,
         organizer: normOrganizer(edit.organizer) ?? null,
         organizer_logo_url: organizerLogoUrl,
+        organizer_logo_path: organizerLogoPath,
         points: edit.points,
         start_date: edit.start_date || null,
         end_date: edit.end_date || null,
@@ -685,7 +740,7 @@ export default function AdminTrainingsPage() {
 
       {editOpen && edit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
+          <div className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
                 <div className="text-sm font-semibold text-slate-900">
@@ -716,7 +771,7 @@ export default function AdminTrainingsPage() {
                 />
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="text-xs font-semibold text-slate-600">Organizator</label>
                 <input
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
@@ -725,21 +780,63 @@ export default function AdminTrainingsPage() {
                 />
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="text-xs font-semibold text-slate-600">
-                  Logo organizatora (HTTPS)
+                  Logo organizatora (opcjonalnie)
                 </label>
-                <input
-                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                  value={edit.organizer_logo_url || ""}
-                  onChange={(e) =>
-                    setEdit({
-                      ...edit,
-                      organizer_logo_url: e.target.value || null,
-                    })
-                  }
-                  placeholder="https://.../logo.svg"
-                />
+                <div className="mt-1 flex flex-col gap-3 rounded-xl border border-slate-200 p-3 sm:flex-row sm:items-center">
+                  {editLogoPreview || (!removeEditLogo && edit.organizer_logo_url) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={editLogoPreview || edit.organizer_logo_url || ""}
+                      alt="Podgląd logo organizatora"
+                      className="h-16 w-20 shrink-0 rounded-xl border border-slate-200 bg-white object-contain p-1.5"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-20 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-300 text-xs text-slate-400">
+                      brak logo
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="w-full text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
+                      onChange={(event) => {
+                        const file = event.currentTarget.files?.[0] ?? null;
+                        if (!file) return;
+                        if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+                          setErr("Wybierz logo PNG, JPG lub WebP.");
+                          event.currentTarget.value = "";
+                          return;
+                        }
+                        if (file.size > 2 * 1024 * 1024) {
+                          setErr("Logo może mieć maksymalnie 2 MB.");
+                          event.currentTarget.value = "";
+                          return;
+                        }
+                        setErr(null);
+                        setEditLogoFile(file);
+                        setRemoveEditLogo(false);
+                      }}
+                    />
+                    <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-500">
+                      <span>PNG, JPG lub WebP, maks. 2 MB</span>
+                      {(edit.organizer_logo_url || editLogoFile) && !removeEditLogo ? (
+                        <button
+                          type="button"
+                          className="font-semibold text-rose-700 hover:underline"
+                          onClick={() => {
+                            setEditLogoFile(null);
+                            setRemoveEditLogo(true);
+                          }}
+                        >
+                          Usuń logo
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div>

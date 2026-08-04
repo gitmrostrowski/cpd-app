@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { z } from "zod";
 import { toNormalizedTraining } from "@/lib/data/crpe";
+import {
+  removeTrainingLogo,
+  TrainingLogoError,
+  uploadTrainingLogo,
+} from "@/lib/server/trainingOrganizerLogo";
 
 const submissionSchema = z.object({
   title: z.string().trim().min(3).max(240),
@@ -120,11 +125,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (contentLength > 3 * 1024 * 1024) {
+    return NextResponse.json({ error: "invalid_logo_size" }, { status: 413 });
+  }
+
   let rawBody: unknown;
+  let logoFile: File | null = null;
   try {
-    rawBody = await request.json();
+    if (request.headers.get("content-type")?.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      const submission = formData.get("submission");
+      const logo = formData.get("organizer_logo");
+      if (typeof submission !== "string") {
+        return NextResponse.json(
+          { error: "invalid_submission" },
+          { status: 400 },
+        );
+      }
+      rawBody = JSON.parse(submission);
+      logoFile = logo instanceof File && logo.size > 0 ? logo : null;
+    } else {
+      // Zachowujemy zgodność z klientami v6, które wysyłały sam JSON.
+      rawBody = await request.json();
+    }
   } catch {
-    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
+    return NextResponse.json({ error: "invalid_submission" }, { status: 400 });
   }
 
   const parsed = submissionSchema.safeParse(rawBody);
@@ -139,9 +165,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_date_range" }, { status: 400 });
   }
 
+  let uploadedLogo: { path: string; url: string } | null = null;
+  if (logoFile) {
+    try {
+      uploadedLogo = await uploadTrainingLogo(logoFile, user.id);
+    } catch (error) {
+      const code =
+        error instanceof TrainingLogoError
+          ? error.code
+          : "logo_upload_failed";
+      const status = [
+        "logo_configuration_missing",
+        "logo_upload_failed",
+      ].includes(code)
+        ? 500
+        : 400;
+      return NextResponse.json({ error: code }, { status });
+    }
+  }
+
   const normalized = toNormalizedTraining({
     ...parsed.data,
     external_url: parsed.data.url ?? null,
+    organizer_logo_url: uploadedLogo?.url ?? null,
+    organizer_logo_path: uploadedLogo?.path ?? null,
     approval_status: "pending",
     submitted_by: user.id,
     submitted_email: user.email ?? null,
@@ -155,6 +202,7 @@ export async function POST(request: Request) {
 
   if (error) {
     console.error("Training submission insert failed", error);
+    await removeTrainingLogo(uploadedLogo?.path);
     return NextResponse.json({ error: "submission_failed" }, { status: 500 });
   }
 
