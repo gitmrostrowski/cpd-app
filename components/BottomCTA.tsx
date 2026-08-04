@@ -25,7 +25,7 @@ const variants: Record<AudienceKey, {
     title: "Porozmawiajmy o zakresie dla Twojej placówki lub jednostki.",
     text: "Pokażemy, co jest dostępne dziś i jak rozwijamy zbiorczy widok kompletności zespołu.",
     cta: "Zapytaj o rozwiązanie dla placówki",
-    href: "mailto:kontakt@crpe.pl?subject=CRPE%20dla%20plac%C3%B3wki",
+    href: "/kontakt#formularz",
     facts: ["Jasno oznaczony zakres", "Indywidualne konta", "Rozwój etapami"],
   },
   organizator: {
@@ -33,7 +33,7 @@ const variants: Record<AudienceKey, {
     title: "Ustalmy właściwy zakres obsługi szkoleń i dokumentacji.",
     text: "Dopasujemy rozmowę do rodzaju wydarzeń, uczestników i potrzebnej dokumentacji.",
     cta: "Zapytaj o moduł organizatora",
-    href: "mailto:kontakt@crpe.pl?subject=CRPE%20dla%20organizatora",
+    href: "/kontakt#formularz",
     facts: ["Zakres indywidualny", "Dane wydarzeń", "Dokumentacja uczestników"],
   },
 };

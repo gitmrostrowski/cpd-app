@@ -1148,7 +1148,7 @@ function FaqSection() {
                 text="Najważniejsze informacje dla medyka, placówki i organizatora kształcenia."
               />
             </div>
-            <Link href="mailto:kontakt@crpe.pl" className="mt-4 inline-flex items-center gap-2 text-[13px] font-extrabold text-blue-700 underline decoration-blue-200 underline-offset-4 sm:mt-5 sm:text-sm">
+            <Link href="/kontakt#formularz" className="mt-4 inline-flex items-center gap-2 text-[13px] font-extrabold text-blue-700 underline decoration-blue-200 underline-offset-4 sm:mt-5 sm:text-sm">
               Masz inne pytanie? Napisz do nas <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

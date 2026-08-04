@@ -2,6 +2,20 @@
 
 Aplikacja Next.js do prowadzenia własnej ewidencji aktywności, punktów i dokumentów.
 
+## Wersja v6.2 — działający formularz kontaktowy
+
+Formularze dla medyka, placówki i organizatora wysyłają wiadomości serwerowo
+przez Brevo, zapisują status techniczny w Supabase i pokazują użytkownikowi
+numer zgłoszenia. Strona kontaktowa eksponuje także trzy bezpośrednie adresy z
+przyciskiem kopiowania. Instrukcja wdrożenia znajduje się w:
+
+```text
+CRPE_v6_2_FORMULARZ_KONTAKTOWY.md
+```
+
+Przed wdrożeniem kodu uruchom migrację
+`supabase/migrations/20260804_crpe_v6_2_contact_form.sql`.
+
 ## Wersja v6.1 — logo organizatora
 
 Aktualny pakiet dodaje opcjonalny upload logo przy zgłaszaniu szkolenia,
@@ -68,7 +82,9 @@ Strona lokalna: `http://localhost:3000`.
 - `/pomoc`
 - `/kontakt`
 
-Formularze kontaktowe przygotowują wiadomość w domyślnym programie pocztowym użytkownika i nie zapisują danych w serwisie.
+Formularze kontaktowe wysyłają wiadomości przez chroniony endpoint serwerowy.
+Bezpośrednie adresy na stronie `/kontakt` nadal można otworzyć w programie
+pocztowym albo skopiować jednym przyciskiem.
 
 ## Bezpieczeństwo repozytorium
 

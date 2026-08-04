@@ -14,7 +14,8 @@
     "check:v5.1d": "node scripts/check-v5-1d-confirmation-notice.mjs",
     "check:v5.1e": "node scripts/check-v5-1e-organization-context.mjs",
     "check:v6": "node scripts/check-v6-public-training-directory.mjs",
-    "check:v6.1": "node scripts/check-v6-1-training-organizer-logos.mjs"
+    "check:v6.1": "node scripts/check-v6-1-training-organizer-logos.mjs",
+    "check:v6.2": "node scripts/check-v6-2-contact-form.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

@@ -1,9 +1,19 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Building2, CheckCircle2, Mail, UserRound, X } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  LoaderCircle,
+  Mail,
+  Stethoscope,
+  UserRound,
+  X,
+} from "lucide-react";
 
-type ContactRole = "placowka" | "organizator" | "ogolne";
+type ContactRole = "medyk" | "placowka" | "organizator";
 
 type Props = {
   role?: ContactRole;
@@ -16,38 +26,54 @@ const roleCopy: Record<ContactRole, {
   title: string;
   eyebrow: string;
   description: string;
-  subject: string;
+  recipient: string;
   icon: typeof Building2;
   questions: string[];
+  organisationLabel?: string;
+  scaleLabel?: string;
+  scalePlaceholder?: string;
 }> = {
+  medyk: {
+    title: "Napisz do pomocy CRPE",
+    eyebrow: "Kontakt dla medyka",
+    description: "Opisz pytanie lub problem. Wiadomość wyślemy bezpośrednio do zespołu pomocy CRPE.",
+    recipient: "pomoc@crpe.pl",
+    icon: Stethoscope,
+    questions: ["Czego dotyczy pytanie", "Na którym kroku pojawił się problem", "Jaki komunikat widzisz"],
+  },
   placowka: {
     title: "Zapytaj o CRPE dla placówki",
     eyebrow: "Moduł organizacyjny",
     description: "Opisz wielkość zespołu i najważniejszy problem. Przygotujemy rozmowę wokół realnego zakresu wdrożenia.",
-    subject: "CRPE dla placówki / jednostki",
+    recipient: "kontakt@crpe.pl",
     icon: Building2,
     questions: ["Liczba pracowników", "Sposób prowadzenia ewidencji dziś", "Najważniejszy oczekiwany efekt"],
+    organisationLabel: "Nazwa placówki / jednostki",
+    scaleLabel: "Wielkość zespołu",
+    scalePlaceholder: "np. 45 pracowników",
   },
   organizator: {
     title: "Porozmawiajmy o zakresie dla organizatora",
     eyebrow: "Obsługa wydarzeń",
     description: "Podaj skalę wydarzeń, liczbę uczestników i najważniejsze potrzeby związane z dokumentacją.",
-    subject: "CRPE dla organizatora kształcenia",
+    recipient: "zgloszenia@crpe.pl",
     icon: UserRound,
     questions: ["Liczba wydarzeń rocznie", "Orientacyjna liczba uczestników", "Potrzebne funkcje"],
-  },
-  ogolne: {
-    title: "Skontaktuj się z CRPE",
-    eyebrow: "Kontakt",
-    description: "Napisz krótko, czego potrzebujesz. Przygotujemy odpowiedź dopasowaną do Twojej sytuacji.",
-    subject: "Pytanie dotyczące CRPE",
-    icon: Mail,
-    questions: ["Twoja rola", "Temat pytania", "Najważniejsze informacje"],
+    organisationLabel: "Nazwa organizatora",
+    scaleLabel: "Skala działalności",
+    scalePlaceholder: "np. 30 wydarzeń rocznie",
   },
 };
 
+const errorMessages: Record<string, string> = {
+  invalid_request: "Sprawdź poprawność pól i spróbuj ponownie.",
+  rate_limited: "Wysłano już kilka wiadomości. Spróbuj ponownie za godzinę lub napisz bezpośrednio na podany adres.",
+  contact_unavailable: "Formularz jest chwilowo niedostępny. Skorzystaj z bezpośredniego adresu e-mail.",
+  delivery_failed: "Nie udało się przekazać wiadomości. Skorzystaj z bezpośredniego adresu e-mail.",
+};
+
 export default function RoleContactModal({
-  role = "ogolne",
+  role = "medyk",
   triggerLabel = "Napisz do nas",
   triggerClassName = "",
   compact = false,
@@ -58,9 +84,26 @@ export default function RoleContactModal({
   const [email, setEmail] = useState("");
   const [scale, setScale] = useState("");
   const [message, setMessage] = useState("");
+  const [website, setWebsite] = useState("");
+  const [startedAt, setStartedAt] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [reference, setReference] = useState("");
   const closeRef = useRef<HTMLButtonElement>(null);
   const copy = useMemo(() => roleCopy[role], [role]);
   const Icon = copy.icon;
+
+  function openModal() {
+    setError("");
+    setReference("");
+    setStartedAt(Date.now());
+    setOpen(true);
+  }
+
+  function closeModal() {
+    if (submitting) return;
+    setOpen(false);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -69,36 +112,65 @@ export default function RoleContactModal({
     closeRef.current?.focus();
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape" && !submitting) setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [open, submitting]);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const body = [
-      `Imię i nazwisko: ${name || "—"}`,
-      `Organizacja / placówka: ${organisation || "—"}`,
-      `E-mail: ${email || "—"}`,
-      `Skala / liczba osób lub wydarzeń: ${scale || "—"}`,
-      "",
-      "Wiadomość:",
-      message || "—",
-    ].join("\n");
+    setSubmitting(true);
+    setError("");
 
-    window.location.href = `mailto:kontakt@crpe.pl?subject=${encodeURIComponent(copy.subject)}&body=${encodeURIComponent(body)}`;
-    setOpen(false);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role,
+          name,
+          email,
+          organisation: role === "medyk" ? undefined : organisation,
+          scale: role === "medyk" ? undefined : scale,
+          message,
+          website,
+          startedAt,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        reference?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "delivery_failed");
+      }
+
+      setReference(payload.reference || "CRPE");
+      setName("");
+      setEmail("");
+      setOrganisation("");
+      setScale("");
+      setMessage("");
+    } catch (submitError) {
+      const code = submitError instanceof Error ? submitError.message : "delivery_failed";
+      setError(errorMessages[code] || errorMessages.delivery_failed);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openModal}
+        aria-haspopup="dialog"
         className={triggerClassName || "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-[0_12px_25px_rgba(37,99,235,0.2)] transition hover:-translate-y-0.5 hover:bg-blue-700"}
       >
         {triggerLabel}
@@ -112,7 +184,7 @@ export default function RoleContactModal({
           aria-modal="true"
           aria-labelledby="contact-modal-title"
           onMouseDown={(event) => {
-            if (event.currentTarget === event.target) setOpen(false);
+            if (event.currentTarget === event.target) closeModal();
           }}
         >
           <div className="max-h-[94vh] w-full overflow-y-auto rounded-t-[28px] border border-white/70 bg-white shadow-[0_35px_110px_rgba(15,23,42,0.32)] sm:max-w-[680px] sm:rounded-[28px]">
@@ -120,8 +192,9 @@ export default function RoleContactModal({
               <button
                 ref={closeRef}
                 type="button"
-                onClick={() => setOpen(false)}
-                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white/90 text-slate-600 transition hover:bg-white hover:text-slate-950"
+                onClick={closeModal}
+                disabled={submitting}
+                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white/90 text-slate-600 transition hover:bg-white hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Zamknij formularz"
               >
                 <X className="h-5 w-5" />
@@ -141,83 +214,130 @@ export default function RoleContactModal({
               </div>
             </div>
 
-            <form onSubmit={submit} className="grid gap-5 p-5 sm:p-7">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="grid gap-1.5 text-sm font-bold text-slate-800">
-                  Imię i nazwisko
-                  <input
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    required
-                    className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-3.5 font-medium outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                    autoComplete="name"
-                  />
-                </label>
-                <label className="grid gap-1.5 text-sm font-bold text-slate-800">
-                  E-mail
-                  <input
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    required
-                    type="email"
-                    className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-3.5 font-medium outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                    autoComplete="email"
-                  />
-                </label>
-                <label className="grid gap-1.5 text-sm font-bold text-slate-800">
-                  Organizacja / placówka
-                  <input
-                    value={organisation}
-                    onChange={(event) => setOrganisation(event.target.value)}
-                    className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-3.5 font-medium outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                    autoComplete="organization"
-                  />
-                </label>
-                <label className="grid gap-1.5 text-sm font-bold text-slate-800">
-                  Skala
-                  <input
-                    value={scale}
-                    onChange={(event) => setScale(event.target.value)}
-                    placeholder={role === "organizator" ? "np. 30 wydarzeń rocznie" : "np. 45 pracowników"}
-                    className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-3.5 font-medium outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                  />
-                </label>
-              </div>
-
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
-                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-blue-700">Warto dopisać</p>
-                <div className="mt-2 grid gap-2 sm:grid-cols-3">
-                  {copy.questions.map((item) => (
-                    <span key={item} className="flex items-start gap-2 text-xs font-semibold leading-5 text-slate-600">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> {item}
-                    </span>
-                  ))}
+            {reference ? (
+              <div className="grid justify-items-center gap-5 p-7 text-center sm:p-10">
+                <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60">
+                  <CheckCircle2 className="h-9 w-9" />
+                </span>
+                <div>
+                  <h3 className="text-2xl font-black tracking-[-0.03em] text-slate-950">Wiadomość została wysłana</h3>
+                  <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600">
+                    Przekazaliśmy ją na <strong>{copy.recipient}</strong>. Odpowiedź otrzymasz na podany adres e-mail.
+                  </p>
+                  <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-slate-400">Numer zgłoszenia: {reference}</p>
                 </div>
-              </div>
-
-              <label className="grid gap-1.5 text-sm font-bold text-slate-800">
-                Czego potrzebujesz?
-                <textarea
-                  value={message}
-                  onChange={(event) => setMessage(event.target.value)}
-                  required
-                  rows={5}
-                  className="resize-y rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 font-medium leading-6 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                />
-              </label>
-
-              <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                <p className="max-w-sm text-xs leading-5 text-slate-500">
-                  Po kliknięciu przygotujemy wiadomość w Twoim programie pocztowym. Formularz nie zapisuje danych w serwisie.
-                </p>
-                <button
-                  type="submit"
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-extrabold text-white shadow-[0_12px_25px_rgba(37,99,235,0.2)] transition hover:bg-blue-700"
-                >
-                  Przygotuj wiadomość <Mail className="h-4 w-4" />
+                <button type="button" onClick={closeModal} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-600 px-7 py-3 text-sm font-extrabold text-white transition hover:bg-blue-700">
+                  Zamknij
                 </button>
               </div>
-            </form>
+            ) : (
+              <form onSubmit={submit} className="relative grid gap-5 p-5 sm:p-7">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="grid gap-1.5 text-sm font-bold text-slate-800">
+                    Imię i nazwisko
+                    <input
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      required
+                      minLength={2}
+                      maxLength={120}
+                      disabled={submitting}
+                      className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-3.5 font-medium outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
+                      autoComplete="name"
+                    />
+                  </label>
+                  <label className="grid gap-1.5 text-sm font-bold text-slate-800">
+                    E-mail
+                    <input
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      required
+                      type="email"
+                      maxLength={320}
+                      disabled={submitting}
+                      className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-3.5 font-medium outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
+                      autoComplete="email"
+                    />
+                  </label>
+                  {role !== "medyk" ? (
+                    <>
+                      <label className="grid gap-1.5 text-sm font-bold text-slate-800">
+                        {copy.organisationLabel}
+                        <input
+                          value={organisation}
+                          onChange={(event) => setOrganisation(event.target.value)}
+                          required
+                          maxLength={180}
+                          disabled={submitting}
+                          className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-3.5 font-medium outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
+                          autoComplete="organization"
+                        />
+                      </label>
+                      <label className="grid gap-1.5 text-sm font-bold text-slate-800">
+                        {copy.scaleLabel}
+                        <input
+                          value={scale}
+                          onChange={(event) => setScale(event.target.value)}
+                          placeholder={copy.scalePlaceholder}
+                          maxLength={120}
+                          disabled={submitting}
+                          className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-3.5 font-medium outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
+                        />
+                      </label>
+                    </>
+                  ) : null}
+                </div>
+
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-blue-700">Warto dopisać</p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                    {copy.questions.map((item) => (
+                      <span key={item} className="flex items-start gap-2 text-xs font-semibold leading-5 text-slate-600">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <label className="grid gap-1.5 text-sm font-bold text-slate-800">
+                  Czego potrzebujesz?
+                  <textarea
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
+                    required
+                    minLength={10}
+                    maxLength={5000}
+                    rows={5}
+                    disabled={submitting}
+                    className="resize-y rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 font-medium leading-6 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
+                  />
+                </label>
+
+                <label className="pointer-events-none absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+                  Strona internetowa
+                  <input value={website} onChange={(event) => setWebsite(event.target.value)} tabIndex={-1} autoComplete="off" />
+                </label>
+
+                {error ? (
+                  <div role="alert" aria-live="polite" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold leading-6 text-rose-700">
+                    {error} <a href={`mailto:${copy.recipient}`} className="font-extrabold underline underline-offset-2">{copy.recipient}</a>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="max-w-sm text-xs leading-5 text-slate-500">
+                    Formularz wyśle wiadomość do <strong>{copy.recipient}</strong>. Dane wykorzystamy wyłącznie do obsługi kontaktu zgodnie z <Link href="/polityka-prywatnosci" className="font-bold text-blue-700 underline underline-offset-2">polityką prywatności</Link>.
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-extrabold text-white shadow-[0_12px_25px_rgba(37,99,235,0.2)] transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-70"
+                  >
+                    {submitting ? <><LoaderCircle className="h-4 w-4 animate-spin" /> Wysyłanie…</> : <>Wyślij wiadomość <Mail className="h-4 w-4" /></>}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       ) : null}

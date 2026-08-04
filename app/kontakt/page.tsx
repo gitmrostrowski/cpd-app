@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Building2, Mail, Stethoscope, UserRound } from "lucide-react";
 import RoleContactModal from "@/components/RoleContactModal";
+import DirectEmailContacts from "@/components/DirectEmailContacts";
 
 export const metadata: Metadata = {
   title: "Kontakt z CRPE",
@@ -24,13 +25,13 @@ export default function Page() {
         </div>
       </section>
 
-      <section className={`${wrap} py-14 sm:py-18`}>
+      <section id="formularz" className={`${wrap} scroll-mt-24 py-14 sm:py-18`}>
         <div className="grid gap-5 lg:grid-cols-3">
           <article className="rounded-[26px] border border-slate-200 bg-white p-6 shadow-[0_18px_52px_rgba(15,45,75,0.07)]">
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100"><Stethoscope className="h-6 w-6" /></span>
             <h2 className="mt-5 text-[23px] font-black text-slate-950">Jestem medykiem</h2>
             <p className="mt-3 text-sm leading-7 text-slate-600">Pytania o konto, aktywności, dokumenty, raport lub Panel CPD.</p>
-            <div className="mt-6"><RoleContactModal role="ogolne" triggerLabel="Napisz jako medyk" /></div>
+            <div className="mt-6"><RoleContactModal role="medyk" triggerLabel="Napisz jako medyk" /></div>
           </article>
           <article className="rounded-[26px] border border-blue-200 bg-blue-50/45 p-6 shadow-[0_18px_52px_rgba(15,45,75,0.07)]">
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white"><Building2 className="h-6 w-6" /></span>
@@ -48,9 +49,13 @@ export default function Page() {
       </section>
 
       <section className="bg-slate-950 py-14 text-white sm:py-18">
-        <div className={`${wrap} grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center`}>
-          <div><p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-cyan-300">Kontakt bez formularza</p><h2 className="mt-3 text-[31px] font-black tracking-[-0.04em] sm:text-[44px]">Możesz też napisać bezpośrednio.</h2><p className="mt-4 text-[15px] leading-7 text-slate-300">Adres do kontaktu: kontakt@crpe.pl</p></div>
-          <a href="mailto:kontakt@crpe.pl" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-extrabold text-blue-700">Napisz e-mail<ArrowRight className="h-4 w-4" /></a>
+        <div className={wrap}>
+          <div className="max-w-3xl">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-cyan-300">Kontakt bez formularza</p>
+            <h2 className="mt-3 text-[31px] font-black tracking-[-0.04em] sm:text-[44px]">Wybierz adres właściwy dla swojej sprawy.</h2>
+            <p className="mt-4 text-[15px] leading-7 text-slate-300">Kliknij adres, aby otworzyć pocztę. Jeśli urządzenie nie ma skonfigurowanej aplikacji pocztowej, użyj przycisku „Kopiuj adres”.</p>
+          </div>
+          <div className="mt-8"><DirectEmailContacts /></div>
         </div>
       </section>
 

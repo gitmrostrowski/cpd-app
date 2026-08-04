@@ -563,7 +563,7 @@ export default function Page() {
             </p>
             <div className="mt-5">
               <RoleContactModal
-                role="ogolne"
+                role="medyk"
                 triggerLabel="Napisz do pomocy"
               />
             </div>

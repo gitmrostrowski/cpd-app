@@ -1,8 +1,8 @@
 // app/polityka-prywatnosci/page.tsx
 export const metadata = { title: "Polityka prywatności | CRPE" };
 
-const VERSION = "1.0";
-const EFFECTIVE_DATE = "2026-02-17";
+const VERSION = "1.1";
+const EFFECTIVE_DATE = "2026-08-04";
 
 const ADMIN = "MEDICAI SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ";
 const ADDRESS = "ul. Sulmierzycka 6/21, 02-139 Warszawa, Polska";
@@ -68,6 +68,11 @@ export default function Page() {
               <strong>dane techniczne i logi</strong>: adres IP, identyfikatory sesji,
               informacje o przeglądarce/urządzeniu, zdarzenia bezpieczeństwa.
             </li>
+            <li>
+              <strong>dane kontaktowe i treść zgłoszeń</strong>: imię i nazwisko,
+              adres e-mail, wybrana rola, opcjonalnie nazwa organizacji i jej
+              skala, treść wiadomości oraz techniczny status jej wysłania.
+            </li>
           </ul>
         </section>
 
@@ -119,6 +124,10 @@ export default function Page() {
                 <li>
                   <strong>Vercel</strong> – hosting aplikacji.
                 </li>
+                <li>
+                  <strong>Brevo</strong> – przekazywanie wiadomości e-mail z
+                  formularza kontaktowego i wysyłka powiadomień systemowych.
+                </li>
               </ul>
             </li>
             <li>
@@ -155,6 +164,11 @@ export default function Page() {
               konieczne dla wyjaśnienia incydentu).
             </li>
             <li>
+              Dane z formularza kontaktowego – przez okres potrzebny do obsługi
+              sprawy, nie dłużej niż <strong>12 miesięcy</strong>, chyba że dalsze
+              przechowywanie jest niezbędne do ustalenia, dochodzenia lub obrony roszczeń.
+            </li>
+            <li>
               Dane rozliczeniowe i dokumenty księgowe (plany płatne) – przez okres wymagany przepisami,
               standardowo <strong>5 lat</strong> od końca roku podatkowego/rozliczeniowego.
             </li>
@@ -181,6 +195,10 @@ export default function Page() {
             </li>
             <li>
               Podanie danych rozliczeniowych jest konieczne do zakupu planu płatnego i wystawienia dokumentów rozliczeniowych.
+            </li>
+            <li>
+              Podanie imienia i nazwiska, adresu e-mail oraz treści wiadomości
+              jest konieczne do wysłania i obsługi zgłoszenia kontaktowego.
             </li>
           </ul>
         </section>
