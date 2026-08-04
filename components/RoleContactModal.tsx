@@ -89,6 +89,7 @@ export default function RoleContactModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [reference, setReference] = useState("");
+  const [confirmationSent, setConfirmationSent] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const copy = useMemo(() => roleCopy[role], [role]);
   const Icon = copy.icon;
@@ -96,6 +97,7 @@ export default function RoleContactModal({
   function openModal() {
     setError("");
     setReference("");
+    setConfirmationSent(false);
     setStartedAt(Date.now());
     setOpen(true);
   }
@@ -145,6 +147,7 @@ export default function RoleContactModal({
       const payload = (await response.json().catch(() => ({}))) as {
         error?: string;
         reference?: string;
+        confirmation_sent?: boolean;
       };
 
       if (!response.ok) {
@@ -152,6 +155,7 @@ export default function RoleContactModal({
       }
 
       setReference(payload.reference || "CRPE");
+      setConfirmationSent(payload.confirmation_sent === true);
       setName("");
       setEmail("");
       setOrganisation("");
@@ -220,9 +224,12 @@ export default function RoleContactModal({
                   <CheckCircle2 className="h-9 w-9" />
                 </span>
                 <div>
-                  <h3 className="text-2xl font-black tracking-[-0.03em] text-slate-950">Wiadomość została wysłana</h3>
+                  <h3 className="text-2xl font-black tracking-[-0.03em] text-slate-950">Wiadomość została przyjęta</h3>
                   <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600">
-                    Przekazaliśmy ją na <strong>{copy.recipient}</strong>. Odpowiedź otrzymasz na podany adres e-mail.
+                    Przekazaliśmy ją do wysyłki na <strong>{copy.recipient}</strong>.
+                    {confirmationSent
+                      ? " Kopię z numerem zgłoszenia wysłaliśmy także na podany przez Ciebie adres e-mail."
+                      : " Nie udało się wysłać kopii na Twój adres, ale zgłoszenie do zespołu CRPE zostało przyjęte."}
                   </p>
                   <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-slate-400">Numer zgłoszenia: {reference}</p>
                 </div>

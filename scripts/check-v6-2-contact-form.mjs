@@ -26,8 +26,7 @@ const checks = [
     "Endpoint kieruje role na trzy właściwe skrzynki",
     api.includes('"pomoc@crpe.pl"') &&
       api.includes('"kontakt@crpe.pl"') &&
-      api.includes('"zgloszenia@crpe.pl"') &&
-      api.includes("CRPE_TRAINING_SUBMISSIONS_EMAIL"),
+      api.includes('"zgloszenia@crpe.pl"'),
   ],
   [
     "Wiadomości są wysyłane serwerowo przez Brevo z Reply-To użytkownika",

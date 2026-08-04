@@ -22,17 +22,28 @@ const contactSchema = z.object({
 const roleSettings = {
   medyk: {
     label: "Medyk",
-    recipient: () => process.env.CRPE_SUPPORT_EMAIL?.trim() || "pomoc@crpe.pl",
+    recipient: "pomoc@crpe.pl",
   },
   placowka: {
     label: "Placówka",
-    recipient: () => process.env.CRPE_CONTACT_EMAIL?.trim() || "kontakt@crpe.pl",
+    recipient: "kontakt@crpe.pl",
   },
   organizator: {
     label: "Organizator",
-    recipient: () => process.env.CRPE_TRAINING_SUBMISSIONS_EMAIL?.trim() || "zgloszenia@crpe.pl",
+    recipient: "zgloszenia@crpe.pl",
   },
 } as const;
+
+type BrevoMessage = {
+  sender: { name: string; email: string };
+  to: Array<{ email: string; name?: string }>;
+  replyTo?: { email: string; name?: string };
+  subject: string;
+  htmlContent: string;
+  textContent: string;
+  headers: Record<string, string>;
+  tags: string[];
+};
 
 function json(body: object, status: number) {
   return NextResponse.json(body, {
@@ -80,6 +91,30 @@ function referenceFromId(id: string) {
   return `CRPE-${id.replaceAll("-", "").slice(0, 10).toUpperCase()}`;
 }
 
+async function sendBrevoMessage(apiKey: string, message: BrevoMessage) {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "api-key": apiKey,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(message),
+  });
+
+  const result = (await response.json().catch(() => ({}))) as {
+    messageId?: string;
+    message?: string;
+    code?: string;
+  };
+  if (!response.ok || !result.messageId) {
+    const providerCode = result.code || result.message || `http_${response.status}`;
+    throw new Error(String(providerCode).slice(0, 160));
+  }
+
+  return result.messageId;
+}
+
 export async function POST(request: Request) {
   if (!validSameOrigin(request)) {
     return json({ error: "invalid_request" }, 403);
@@ -111,7 +146,7 @@ export async function POST(request: Request) {
   const body = parsed.data;
   const elapsed = Date.now() - body.startedAt;
   if (elapsed < 1_500 || elapsed > 2 * 60 * 60 * 1000) {
-    return json({ reference: `CRPE-${crypto.randomUUID().slice(0, 10).toUpperCase()}` }, 202);
+    return json({ error: "invalid_request" }, 400);
   }
 
   if (body.role !== "medyk" && !body.organisation) {
@@ -153,7 +188,7 @@ export async function POST(request: Request) {
   }
 
   const settings = roleSettings[body.role];
-  const recipient = settings.recipient();
+  const recipient = settings.recipient;
   const { data: record, error: insertError } = await supabase
     .from("contact_messages")
     .insert({
@@ -166,6 +201,8 @@ export async function POST(request: Request) {
       recipient,
       sender_hash: senderHash,
       status: "pending",
+      recipient_status: "pending",
+      confirmation_status: "not_attempted",
     })
     .select("id")
     .single();
@@ -191,62 +228,110 @@ export async function POST(request: Request) {
     </div>
   `;
 
+  let recipientMessageId: string;
   try {
-    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "api-key": brevoKey,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        sender: { name: "CRPE", email: fromEmail },
-        to: [{ email: recipient }],
-        replyTo: { name: body.name, email: normalizedEmail },
-        subject,
-        htmlContent,
-        textContent: [
-          "Nowa wiadomość z formularza CRPE",
-          `Numer: ${reference}`,
-          `Rola: ${settings.label}`,
-          `Imię i nazwisko: ${body.name}`,
-          `E-mail: ${normalizedEmail}`,
-          body.organisation ? `Organizacja: ${body.organisation}` : "",
-          body.scale ? `Skala: ${body.scale}` : "",
-          "",
-          body.message,
-        ].filter(Boolean).join("\n"),
-        headers: {
-          "Idempotency-Key": `crpe-contact-${record.id}`,
-          "X-Crpe-Contact-Id": record.id,
-        },
-        tags: ["contact_form", `contact_${body.role}`],
-      }),
+    recipientMessageId = await sendBrevoMessage(brevoKey, {
+      sender: { name: "CRPE", email: fromEmail },
+      to: [{ email: recipient, name: "Zespół CRPE" }],
+      replyTo: { name: body.name, email: normalizedEmail },
+      subject,
+      htmlContent,
+      textContent: [
+        "Nowa wiadomość z formularza CRPE",
+        `Numer: ${reference}`,
+        `Rola: ${settings.label}`,
+        `Imię i nazwisko: ${body.name}`,
+        `E-mail: ${normalizedEmail}`,
+        body.organisation ? `Organizacja: ${body.organisation}` : "",
+        body.scale ? `Skala: ${body.scale}` : "",
+        "",
+        body.message,
+      ].filter(Boolean).join("\n"),
+      headers: { "X-Crpe-Contact-Id": record.id },
+      tags: ["contact_form", "contact_recipient", `contact_${body.role}`],
     });
-
-    const result = (await response.json().catch(() => ({}))) as {
-      messageId?: string;
-      message?: string;
-      code?: string;
-    };
-    if (!response.ok || !result.messageId) {
-      throw new Error(result.code || result.message || `brevo_${response.status}`);
-    }
-
-    const { error: updateError } = await supabase
-      .from("contact_messages")
-      .update({ status: "sent", provider_message_id: result.messageId, sent_at: new Date().toISOString() })
-      .eq("id", record.id);
-    if (updateError) console.error("Contact form status update failed", updateError);
-
-    return json({ reference }, 201);
   } catch (deliveryError) {
     const errorCode = deliveryError instanceof Error ? deliveryError.message.slice(0, 160) : "unknown";
-    console.error("Contact form delivery failed", { id: record.id, error: errorCode });
+    console.error("Contact form recipient delivery failed", { id: record.id, error: errorCode });
     await supabase
       .from("contact_messages")
-      .update({ status: "failed", error_code: errorCode })
+      .update({ status: "failed", recipient_status: "failed", error_code: errorCode })
       .eq("id", record.id);
     return json({ error: "delivery_failed", reference }, 502);
+  }
+
+  const acceptedAt = new Date().toISOString();
+  const { error: recipientUpdateError } = await supabase
+    .from("contact_messages")
+    .update({
+      status: "sent",
+      recipient_status: "accepted",
+      provider_message_id: recipientMessageId,
+      recipient_provider_message_id: recipientMessageId,
+      sent_at: acceptedAt,
+    })
+    .eq("id", record.id);
+  if (recipientUpdateError) {
+    console.error("Contact form recipient status update failed", recipientUpdateError);
+  }
+
+  const confirmationSubject = `[${reference}] Otrzymaliśmy Twoją wiadomość — CRPE`;
+  const confirmationHtml = `
+    <div style="font-family:Arial,sans-serif;color:#0f172a;line-height:1.65">
+      <h2>Dziękujemy za kontakt z CRPE</h2>
+      <p>Twoja wiadomość została przekazana do właściwego zespołu pod adresem <strong>${escapeHtml(recipient)}</strong>.</p>
+      <p><strong>Numer zgłoszenia:</strong> ${escapeHtml(reference)}</p>
+      <div style="margin-top:20px;padding:16px;border-radius:12px;background:#f1f5f9;white-space:pre-wrap">${escapeHtml(body.message)}</div>
+      <p style="margin-top:20px;color:#64748b;font-size:12px">Zachowaj numer zgłoszenia. Na tę automatyczną wiadomość możesz odpowiedzieć — odpowiedź trafi do właściwego zespołu CRPE.</p>
+    </div>
+  `;
+
+  try {
+    const confirmationMessageId = await sendBrevoMessage(brevoKey, {
+      sender: { name: "CRPE", email: fromEmail },
+      to: [{ email: normalizedEmail, name: body.name }],
+      replyTo: { email: recipient, name: "Zespół CRPE" },
+      subject: confirmationSubject,
+      htmlContent: confirmationHtml,
+      textContent: [
+        "Dziękujemy za kontakt z CRPE.",
+        `Twoja wiadomość została przekazana do: ${recipient}`,
+        `Numer zgłoszenia: ${reference}`,
+        "",
+        body.message,
+      ].join("\n"),
+      headers: { "X-Crpe-Contact-Confirmation-Id": record.id },
+      tags: ["contact_form", "contact_confirmation", `contact_${body.role}`],
+    });
+
+    const confirmationAcceptedAt = new Date().toISOString();
+    const { error: confirmationUpdateError } = await supabase
+      .from("contact_messages")
+      .update({
+        confirmation_status: "accepted",
+        confirmation_provider_message_id: confirmationMessageId,
+        confirmation_sent_at: confirmationAcceptedAt,
+      })
+      .eq("id", record.id);
+    if (confirmationUpdateError) {
+      console.error("Contact form confirmation status update failed", confirmationUpdateError);
+    }
+
+    return json({ reference, confirmation_sent: true }, 201);
+  } catch (confirmationError) {
+    const errorCode = confirmationError instanceof Error
+      ? confirmationError.message.slice(0, 160)
+      : "unknown";
+    console.error("Contact form confirmation delivery failed", { id: record.id, error: errorCode });
+    await supabase
+      .from("contact_messages")
+      .update({
+        status: "partial",
+        confirmation_status: "failed",
+        confirmation_error_code: errorCode,
+      })
+      .eq("id", record.id);
+
+    return json({ reference, confirmation_sent: false }, 201);
   }
 }

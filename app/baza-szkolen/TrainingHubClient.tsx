@@ -419,7 +419,7 @@ function OrganizerLogo({
   const size = large
     ? "h-16 w-16 rounded-2xl"
     : card
-      ? "h-[54px] w-[66px] rounded-2xl"
+      ? "h-[60px] w-[66px] rounded-2xl"
       : "h-7 w-7 rounded-lg";
 
   return (
@@ -433,7 +433,7 @@ function OrganizerLogo({
       <img
         src={logoUrl}
         alt=""
-        className="h-full w-full object-contain p-1.5"
+        className={`h-full w-full object-contain ${card ? "p-1" : "p-1.5"}`}
         loading="lazy"
         referrerPolicy="no-referrer"
       />
@@ -1353,27 +1353,20 @@ export default function TrainingHubClient() {
                     className={`absolute bottom-0 left-0 top-0 w-1.5 ${tone.stripe}`}
                   />
 
-                  <div className="flex w-full gap-3 pl-1.5">
-                    <div className="flex shrink-0 flex-col gap-2">
-                      <div className="flex w-[66px] flex-col items-center rounded-2xl bg-slate-50 px-2 py-2 shadow-inner shadow-slate-900/5 ring-1 ring-slate-300/80">
-                        <span
-                          className={`mb-1.5 h-1.5 w-8 rounded-full ${tone.dateTop}`}
-                        />
-                        <span className="text-2xl font-extrabold leading-none tracking-[-0.06em] text-slate-950">
-                          {date.day}
-                        </span>
-                        <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          {date.month}
-                        </span>
-                      </div>
-                      <OrganizerLogo
-                        name={t.organizer}
-                        src={t.organizer_logo_url}
-                        card
+                  <div className="grid w-full grid-cols-[66px_minmax(0,1fr)] gap-x-3 gap-y-2 pl-1.5">
+                    <div className="col-start-1 row-start-1 flex w-[66px] flex-col items-center self-start rounded-2xl bg-slate-50 px-2 py-2 shadow-inner shadow-slate-900/5 ring-1 ring-slate-300/80">
+                      <span
+                        className={`mb-1.5 h-1.5 w-8 rounded-full ${tone.dateTop}`}
                       />
+                      <span className="text-2xl font-extrabold leading-none tracking-[-0.06em] text-slate-950">
+                        {date.day}
+                      </span>
+                      <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        {date.month}
+                      </span>
                     </div>
 
-                    <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="col-start-2 row-start-1 min-w-0">
                       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
@@ -1433,8 +1426,18 @@ export default function TrainingHubClient() {
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="mt-2 grid gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="col-start-1 row-start-2 self-start">
+                      <OrganizerLogo
+                        name={t.organizer}
+                        src={t.organizer_logo_url}
+                        card
+                      />
+                    </div>
+
+                    <div className="col-start-2 row-start-2 min-w-0">
+                      <div className="grid gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
                         {range ? (
                           <span className="inline-flex min-w-0 items-center gap-1.5">
                             <span className={metaIconBase}>
