@@ -35,6 +35,7 @@ const submissionSchema = z.object({
     .nullable()
     .optional(),
   description: z.string().trim().max(5000).nullable().optional(),
+  profession: z.string().trim().min(2).max(500),
 });
 
 async function supabaseServer() {
@@ -68,6 +69,7 @@ async function notifyOperator(input: {
   id: string;
   title: string;
   organizer: string | null;
+  profession: string;
   submittedEmail: string | null;
 }) {
   const apiKey = process.env.BREVO_API_KEY?.trim();
@@ -101,6 +103,7 @@ async function notifyOperator(input: {
         <h2>Nowe zgłoszenie szkolenia w CRPE</h2>
         <p><strong>Tytuł:</strong> ${escapeHtml(input.title)}</p>
         <p><strong>Organizator:</strong> ${escapeHtml(input.organizer || "nie podano")}</p>
+        <p><strong>Adresaci:</strong> ${escapeHtml(input.profession)}</p>
         <p><strong>Zgłaszający:</strong> ${escapeHtml(input.submittedEmail || "brak adresu")}</p>
         <p><strong>ID:</strong> ${escapeHtml(input.id)}</p>
         <p><a href="${escapeHtml(adminUrl)}">Otwórz panel moderacji CRPE</a></p>
@@ -212,6 +215,7 @@ export async function POST(request: Request) {
       id: data.id,
       title: data.title,
       organizer: data.organizer_name ?? null,
+      profession: parsed.data.profession,
       submittedEmail: user.email ?? null,
     });
   } catch (notificationError) {

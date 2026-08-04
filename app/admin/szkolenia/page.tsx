@@ -6,9 +6,18 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabaseClient } from "@/lib/supabase/client";
 import {
+  fetchProfessionCatalog,
   fetchTrainings,
   toNormalizedTraining,
 } from "@/lib/data/crpe";
+import {
+  FALLBACK_PROFESSION_OPTIONS,
+  type ProfessionOption,
+} from "@/lib/cpd/professions";
+import TrainingAudienceField, {
+  hasTrainingAudience,
+  trainingAudienceSummary,
+} from "@/components/TrainingAudienceField";
 
 type TrainingStatus = "pending" | "approved" | "rejected";
 
@@ -24,6 +33,7 @@ type TrainingRow = {
   url: string | null;
   external_url?: string | null;
   description: string | null;
+  profession: string | null;
   approval_status: TrainingStatus | null;
   reject_reason: string | null;
   submitted_by: string | null;
@@ -90,6 +100,10 @@ function normalizeUrl(raw: string | null | undefined) {
   return v;
 }
 
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 export default function AdminTrainingsPage() {
   const router = useRouter();
   const sb = useMemo(() => supabaseClient(), []);
@@ -107,10 +121,14 @@ export default function AdminTrainingsPage() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [edit, setEdit] = useState<TrainingRow | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [editLogoFile, setEditLogoFile] = useState<File | null>(null);
   const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null);
   const [removeEditLogo, setRemoveEditLogo] = useState(false);
+  const [professionOptions, setProfessionOptions] = useState<ProfessionOption[]>([
+    ...FALLBACK_PROFESSION_OPTIONS,
+  ]);
 
   useEffect(() => {
     if (!editLogoFile) {
@@ -186,6 +204,7 @@ export default function AdminTrainingsPage() {
             row.title,
             row.organizer,
             row.description,
+            row.profession,
             row.submitted_email,
           ].some((value) =>
             String(value ?? "").toLocaleLowerCase("pl-PL").includes(phrase),
@@ -194,8 +213,8 @@ export default function AdminTrainingsPage() {
       }
       data.sort((a, b) => b.created_at.localeCompare(a.created_at));
       setRows(data);
-    } catch (e: any) {
-      setErr(e?.message || "Błąd pobierania danych");
+    } catch (error: unknown) {
+      setErr(errorMessage(error, "Błąd pobierania danych"));
       setRows([]);
     } finally {
       setLoading(false);
@@ -207,6 +226,13 @@ export default function AdminTrainingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, status]);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    void fetchProfessionCatalog(sb)
+      .then(setProfessionOptions)
+      .catch(() => undefined);
+  }, [isAdmin, sb]);
+
   const filtered = useMemo(() => rows, [rows]);
 
   async function patch(id: string, patchData: Partial<TrainingRow>) {
@@ -217,6 +243,9 @@ export default function AdminTrainingsPage() {
       ...patchData,
       approval_status: getStatus({ ...current, ...patchData }),
     };
+    if (next.approval_status === "approved" && !hasTrainingAudience(next.profession)) {
+      throw new Error("Przed akceptacją wybierz adresatów szkolenia.");
+    }
     const normalized: Record<string, unknown> = toNormalizedTraining(next);
     const { data: auth } = await sb.auth.getUser();
     if (next.approval_status === "approved") {
@@ -244,7 +273,7 @@ export default function AdminTrainingsPage() {
     return updated;
   }
 
-  function openEdit(row: TrainingRow, focus?: "url" | "description") {
+  function openEdit(row: TrainingRow, focus?: "url" | "description" | "audience") {
     const base: TrainingRow = {
       ...row,
       approval_status: getStatus(row),
@@ -255,6 +284,7 @@ export default function AdminTrainingsPage() {
     if (focus === "description" && !base.description) base.description = "";
 
     setEdit(base);
+    setEditError(null);
     setEditLogoFile(null);
     setRemoveEditLogo(false);
     setEditOpen(true);
@@ -265,15 +295,19 @@ export default function AdminTrainingsPage() {
           ? (document.getElementById("admin-training-url") as HTMLInputElement | null)
           : focus === "description"
           ? (document.getElementById("admin-training-description") as HTMLTextAreaElement | null)
+          : focus === "audience"
+          ? (document.getElementById("admin-training-audience") as HTMLDivElement | null)
           : null;
 
       el?.focus();
+      el?.scrollIntoView({ block: "center", behavior: "smooth" });
     }, 50);
   }
 
   function closeEdit() {
     setEditOpen(false);
     setEdit(null);
+    setEditError(null);
     setEditLogoFile(null);
     setRemoveEditLogo(false);
   }
@@ -281,8 +315,17 @@ export default function AdminTrainingsPage() {
   async function saveEdit() {
     if (!edit) return;
 
+    if (getStatus(edit) === "approved" && !hasTrainingAudience(edit.profession)) {
+      setEditError("Przed akceptacją wybierz adresatów szkolenia.");
+      document
+        .getElementById("admin-training-audience")
+        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
+
     setSaving(true);
     setErr(null);
+    setEditError(null);
 
     try {
       let organizerLogoUrl = edit.organizer_logo_url;
@@ -336,6 +379,7 @@ export default function AdminTrainingsPage() {
         url,
         external_url: url,
         description: (edit.description || "").trim() ? (edit.description || "").trim() : null,
+        profession: edit.profession?.trim() || null,
         approval_status: getStatus(edit),
         reject_reason: (edit.reject_reason || "").trim()
           ? (edit.reject_reason || "").trim()
@@ -346,8 +390,8 @@ export default function AdminTrainingsPage() {
       closeEdit();
 
       if (status !== "all" && getStatus(updated) !== status) load();
-    } catch (e: any) {
-      setErr(e?.message || "Błąd zapisu");
+    } catch (error: unknown) {
+      setEditError(errorMessage(error, "Błąd zapisu"));
     } finally {
       setSaving(false);
     }
@@ -356,6 +400,12 @@ export default function AdminTrainingsPage() {
   async function approve(row: TrainingRow) {
     setErr(null);
 
+    if (!hasTrainingAudience(row.profession)) {
+      openEdit({ ...row, approval_status: "approved" }, "audience");
+      setEditError("Przed akceptacją wybierz adresatów szkolenia.");
+      return;
+    }
+
     try {
       const updated = await patch(row.id, {
         approval_status: "approved",
@@ -363,8 +413,8 @@ export default function AdminTrainingsPage() {
       });
 
       if (status !== "all" && getStatus(updated) !== status) load();
-    } catch (e: any) {
-      setErr(e?.message || "Błąd akceptacji");
+    } catch (error: unknown) {
+      setErr(errorMessage(error, "Błąd akceptacji"));
     }
   }
 
@@ -382,8 +432,8 @@ export default function AdminTrainingsPage() {
       });
 
       if (status !== "all" && getStatus(updated) !== status) load();
-    } catch (e: any) {
-      setErr(e?.message || "Błąd odrzucenia");
+    } catch (error: unknown) {
+      setErr(errorMessage(error, "Błąd odrzucenia"));
     }
   }
 
@@ -397,8 +447,8 @@ export default function AdminTrainingsPage() {
       });
 
       if (status !== "all" && getStatus(updated) !== status) load();
-    } catch (e: any) {
-      setErr(e?.message || "Błąd zmiany statusu");
+    } catch (error: unknown) {
+      setErr(errorMessage(error, "Błąd zmiany statusu"));
     }
   }
 
@@ -446,7 +496,9 @@ export default function AdminTrainingsPage() {
             <select
               className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
               value={status}
-              onChange={(e) => setStatus(e.target.value as any)}
+              onChange={(e) =>
+                setStatus(e.target.value as "all" | TrainingStatus)
+              }
             >
               <option value="all">Wszystkie</option>
               <option value="pending">Do weryfikacji</option>
@@ -627,6 +679,17 @@ export default function AdminTrainingsPage() {
                             Powód: {r.reject_reason}
                           </div>
                         ) : null}
+
+                        <div
+                          className={cls(
+                            "mt-2 text-xs font-medium",
+                            hasTrainingAudience(r.profession)
+                              ? "text-slate-500"
+                              : "text-amber-700",
+                          )}
+                        >
+                          Adresaci: {trainingAudienceSummary(r.profession)}
+                        </div>
                       </td>
 
                       <td className="px-4 py-4">
@@ -762,6 +825,15 @@ export default function AdminTrainingsPage() {
             </div>
 
             <div className="grid gap-4 px-5 py-4 sm:grid-cols-2">
+              {editError && !editError.includes("adresatów") ? (
+                <div
+                  role="alert"
+                  className="sm:col-span-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800"
+                >
+                  {editError}
+                </div>
+              ) : null}
+
               <div className="sm:col-span-2">
                 <label className="text-xs font-semibold text-slate-600">Tytuł</label>
                 <input
@@ -806,16 +878,16 @@ export default function AdminTrainingsPage() {
                         const file = event.currentTarget.files?.[0] ?? null;
                         if (!file) return;
                         if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
-                          setErr("Wybierz logo PNG, JPG lub WebP.");
+                          setEditError("Wybierz logo PNG, JPG lub WebP.");
                           event.currentTarget.value = "";
                           return;
                         }
                         if (file.size > 2 * 1024 * 1024) {
-                          setErr("Logo może mieć maksymalnie 2 MB.");
+                          setEditError("Logo może mieć maksymalnie 2 MB.");
                           event.currentTarget.value = "";
                           return;
                         }
-                        setErr(null);
+                        setEditError(null);
                         setEditLogoFile(file);
                         setRemoveEditLogo(false);
                       }}
@@ -837,6 +909,26 @@ export default function AdminTrainingsPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div
+                id="admin-training-audience"
+                tabIndex={-1}
+                className="scroll-mt-4 outline-none sm:col-span-2"
+              >
+                <TrainingAudienceField
+                  value={edit.profession}
+                  onChange={(profession) => {
+                    setEdit({ ...edit, profession });
+                    setEditError(null);
+                  }}
+                  options={professionOptions}
+                  disabled={saving}
+                  compact
+                  error={
+                    editError?.includes("adresatów") ? editError : null
+                  }
+                />
               </div>
 
               <div>

@@ -5,7 +5,9 @@ import Link from "next/link";
 import {
   ArrowRight,
   Building2,
+  Check,
   CheckCircle2,
+  Copy,
   LoaderCircle,
   Mail,
   Stethoscope,
@@ -90,6 +92,7 @@ export default function RoleContactModal({
   const [error, setError] = useState("");
   const [reference, setReference] = useState("");
   const [confirmationSent, setConfirmationSent] = useState(false);
+  const [fallbackCopied, setFallbackCopied] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const copy = useMemo(() => roleCopy[role], [role]);
   const Icon = copy.icon;
@@ -98,6 +101,7 @@ export default function RoleContactModal({
     setError("");
     setReference("");
     setConfirmationSent(false);
+    setFallbackCopied(false);
     setStartedAt(Date.now());
     setOpen(true);
   }
@@ -166,6 +170,16 @@ export default function RoleContactModal({
       setError(errorMessages[code] || errorMessages.delivery_failed);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function copyFallbackAddress() {
+    try {
+      await navigator.clipboard.writeText(copy.recipient);
+      setFallbackCopied(true);
+      window.setTimeout(() => setFallbackCopied(false), 2200);
+    } catch {
+      setFallbackCopied(false);
     }
   }
 
@@ -326,8 +340,24 @@ export default function RoleContactModal({
                 </label>
 
                 {error ? (
-                  <div role="alert" aria-live="polite" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold leading-6 text-rose-700">
-                    {error} <a href={`mailto:${copy.recipient}`} className="font-extrabold underline underline-offset-2">{copy.recipient}</a>
+                  <div role="alert" aria-live="polite" className="flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold leading-6 text-rose-700 sm:flex-row sm:items-center sm:justify-between">
+                    <span>
+                      {error}{" "}
+                      <a href={`mailto:${copy.recipient}`} className="font-extrabold underline underline-offset-2">
+                        {copy.recipient}
+                      </a>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={copyFallbackAddress}
+                      className="inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-rose-200 bg-white px-3 text-xs font-extrabold text-rose-700 transition hover:bg-rose-100"
+                    >
+                      {fallbackCopied ? (
+                        <><Check className="h-4 w-4" /> Skopiowano</>
+                      ) : (
+                        <><Copy className="h-4 w-4" /> Kopiuj adres</>
+                      )}
+                    </button>
                   </div>
                 ) : null}
 

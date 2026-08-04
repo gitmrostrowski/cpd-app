@@ -4,12 +4,10 @@ const client = fs.readFileSync("app/baza-szkolen/TrainingHubClient.tsx", "utf8")
 
 const checks = [
   [
-    "Kafelek używa dwurzędowej siatki dla daty, logo i treści",
-    client.includes("grid-cols-[66px_minmax(0,1fr)]") &&
-      client.includes("col-start-1 row-start-1") &&
-      client.includes("col-start-2 row-start-1") &&
-      client.includes("col-start-1 row-start-2") &&
-      client.includes("col-start-2 row-start-2"),
+    "Kafelek oddziela datę od głównej hierarchii treści",
+    client.includes("grid-cols-[58px_minmax(0,1fr)]") &&
+      client.includes("sm:grid-cols-[66px_minmax(0,1fr)]") &&
+      client.includes("Punkty CPD"),
   ],
   [
     "Logo pozostaje opcjonalne i nie tworzy pustej ramki",
@@ -17,8 +15,9 @@ const checks = [
       client.includes("src={t.organizer_logo_url}"),
   ],
   [
-    "Logo na kaflu ma 66 na 60 px, mniejszy margines i nie jest przycinane",
-    client.includes('"h-[60px] w-[66px] rounded-2xl"') &&
+    "Logo jest kompaktowe, powiązane z organizatorem i nie jest przycinane",
+    client.includes('"h-9 w-9 rounded-xl"') &&
+      client.includes("Organizator") &&
       client.includes('card ? "p-1" : "p-1.5"') &&
       client.includes("object-contain"),
   ],

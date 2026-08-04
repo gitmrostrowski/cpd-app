@@ -4,15 +4,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Award,
+  BookmarkPlus,
   BookOpen,
   Building2,
   CalendarDays,
   CheckCircle2,
+  ChevronRight,
   Clock3,
   ExternalLink,
   Info,
   MapPin,
   MonitorPlay,
+  Users,
   X,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
@@ -21,11 +24,16 @@ import {
   createActivity,
   fetchProfessionCatalog,
   fetchPublicTrainings,
+  type LegacyTraining,
 } from "@/lib/data/crpe";
 import {
   FALLBACK_PROFESSION_OPTIONS,
   type ProfessionOption,
 } from "@/lib/cpd/professions";
+import TrainingAudienceField, {
+  hasTrainingAudience,
+  trainingAudienceSummary,
+} from "@/components/TrainingAudienceField";
 
 type TrainingType = "online" | "stacjonarne" | "hybrydowe";
 type TrainingCategory =
@@ -246,7 +254,6 @@ function formatTone(format: TrainingType | null) {
     return {
       stripe: "bg-amber-300",
       badge: "border-amber-200 bg-amber-50 text-amber-800",
-      iconBox: "border-amber-200 bg-amber-100 text-amber-800",
       dateTop: "bg-amber-300",
     };
   }
@@ -255,7 +262,6 @@ function formatTone(format: TrainingType | null) {
     return {
       stripe: "bg-indigo-300",
       badge: "border-indigo-200 bg-indigo-50 text-indigo-800",
-      iconBox: "border-indigo-200 bg-indigo-100 text-indigo-800",
       dateTop: "bg-indigo-300",
     };
   }
@@ -263,7 +269,6 @@ function formatTone(format: TrainingType | null) {
   return {
     stripe: "bg-blue-300",
     badge: "border-blue-200 bg-blue-50 text-blue-800",
-    iconBox: "border-blue-200 bg-blue-100 text-blue-800",
     dateTop: "bg-blue-300",
   };
 }
@@ -419,7 +424,7 @@ function OrganizerLogo({
   const size = large
     ? "h-16 w-16 rounded-2xl"
     : card
-      ? "h-[60px] w-[66px] rounded-2xl"
+      ? "h-9 w-9 rounded-xl"
       : "h-7 w-7 rounded-lg";
 
   return (
@@ -441,7 +446,7 @@ function OrganizerLogo({
   );
 }
 
-function normalizeTrainingRow(r: any): Training {
+function normalizeTrainingRow(r: LegacyTraining): Training {
   const price =
     typeof r.price_pln === "number"
       ? r.price_pln
@@ -459,8 +464,8 @@ function normalizeTrainingRow(r: any): Training {
   const legacyExternal = r.external_url ?? null;
 
   return {
-    id: r.id,
-    title: r.title,
+    id: String(r.id ?? ""),
+    title: String(r.title ?? ""),
     organizer: r.organizer ?? null,
     organizer_logo_url: normalizeLogoUrl(r.organizer_logo_url),
     points: typeof r.points === "number" ? r.points : r.points ?? null,
@@ -491,7 +496,7 @@ function normalizeTrainingRow(r: any): Training {
     submitted_by: r.submitted_by ?? null,
     description: r.description ?? null,
 
-    created_at: r.created_at,
+    created_at: String(r.created_at ?? ""),
     updated_at: r.updated_at ?? null,
   };
 }
@@ -550,6 +555,7 @@ export default function TrainingHubClient() {
   const [fCap, setFCap] = useState<string>("");
   const [fEnroll, setFEnroll] = useState<EnrollmentStatus | "">("");
   const [fDescription, setFDescription] = useState("");
+  const [fProfession, setFProfession] = useState("");
   const [fLogo, setFLogo] = useState<File | null>(null);
   const [fLogoPreview, setFLogoPreview] = useState<string | null>(null);
 
@@ -764,15 +770,6 @@ export default function TrainingHubClient() {
     });
   }, [items]);
 
-  const selectedCalendarDateTrainings = useMemo(() => {
-    if (!selectedCalendarDateKey) {
-      const first = nextTrainings[0];
-      return first ? [first] : [];
-    }
-
-    return items.filter((item) => item.start_date === selectedCalendarDateKey);
-  }, [items, nextTrainings, selectedCalendarDateKey]);
-
   const visibleItems = useMemo(() => {
     if (!selectedCalendarDateKey) return items;
     return items.filter((item) => item.start_date === selectedCalendarDateKey);
@@ -871,6 +868,11 @@ export default function TrainingHubClient() {
       return;
     }
 
+    if (!hasTrainingAudience(fProfession)) {
+      alert("Wybierz adresatów szkolenia.");
+      return;
+    }
+
     const pointsNum = Number(fPoints || 0);
     const priceNum =
       fPrice.trim() === "" ? null : Number(String(fPrice).replace(",", "."));
@@ -914,6 +916,7 @@ export default function TrainingHubClient() {
       capacity: capNum,
       enrollment_status: fEnroll ? (fEnroll as EnrollmentStatus) : null,
       description: fDescription.trim() || null,
+      profession: fProfession,
 
       approval_status: "pending" as ApprovalStatus,
       submitted_by: user.id,
@@ -965,6 +968,7 @@ export default function TrainingHubClient() {
     setFCap("");
     setFEnroll("");
     setFDescription("");
+    setFProfession("");
     setFLogo(null);
 
     alert("Wysłano do akceptacji. Po zatwierdzeniu pojawi się w bazie.");
@@ -978,9 +982,6 @@ export default function TrainingHubClient() {
 
   const pillBase =
     "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none shadow-sm";
-
-  const metaIconBase =
-    "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500";
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[#eaf1f8]">
@@ -1104,7 +1105,9 @@ export default function TrainingHubClient() {
               <label className={labelBase}>Forma</label>
               <select
                 value={format}
-                onChange={(e) => setFormat(e.target.value as any)}
+                onChange={(e) =>
+                  setFormat(e.target.value as "all" | TrainingType)
+                }
                 className={fieldBase}
               >
                 {FORMAT_OPTIONS.map((o) => (
@@ -1167,7 +1170,9 @@ export default function TrainingHubClient() {
                 <label className={labelBase}>Kategoria</label>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value as any)}
+                  onChange={(e) =>
+                    setCategory(e.target.value as "all" | TrainingCategory)
+                  }
                   className={fieldBase}
                 >
                   {CATEGORY_OPTIONS.map((o) => (
@@ -1212,7 +1217,11 @@ export default function TrainingHubClient() {
                 <label className={labelBase}>Zapisy</label>
                 <select
                   value={enrollment}
-                  onChange={(e) => setEnrollment(e.target.value as any)}
+                  onChange={(e) =>
+                    setEnrollment(
+                      e.target.value as "all" | EnrollmentStatus,
+                    )
+                  }
                   className={fieldBase}
                 >
                   {ENROLLMENT_OPTIONS.map((o) => (
@@ -1339,217 +1348,171 @@ export default function TrainingHubClient() {
               const date = dateParts(t.start_date);
               const range = dateRangeShort(t.start_date, t.end_date);
               const tone = formatTone(t.format);
-
-              const capacityText =
-                typeof t.capacity === "number" ? `Limit ${t.capacity}` : null;
+              const showRange = Boolean(
+                t.start_date && t.end_date && t.start_date !== t.end_date,
+              );
+              const topics = Array.isArray(t.topics) ? t.topics.slice(0, 2) : [];
+              const remainingTopics = Array.isArray(t.topics)
+                ? Math.max(0, t.topics.length - topics.length)
+                : 0;
+              const audience = trainingAudienceSummary(t.profession);
 
               return (
                 <article
                   key={t.id}
                   onClick={(e) => e.stopPropagation()}
-                  className="group relative flex overflow-hidden rounded-[1.25rem] border border-slate-300/80 bg-white p-3 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)] transition-all duration-200 hover:-translate-y-[1px] hover:border-blue-200 hover:shadow-[0_1px_0_rgba(37,99,235,0.08),0_7px_14px_rgba(37,99,235,0.12)]"
+                  className="group relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.05),0_5px_14px_rgba(15,23,42,0.08)] transition-all duration-200 hover:-translate-y-[1px] hover:border-blue-200 hover:shadow-[0_1px_0_rgba(37,99,235,0.08),0_9px_20px_rgba(37,99,235,0.11)] sm:p-5"
                 >
                   <div
-                    className={`absolute bottom-0 left-0 top-0 w-1.5 ${tone.stripe}`}
+                    className={`absolute bottom-4 left-0 top-4 w-1 rounded-r-full ${tone.stripe}`}
                   />
 
-                  <div className="grid w-full grid-cols-[66px_minmax(0,1fr)] gap-x-3 gap-y-2 pl-1.5">
-                    <div className="col-start-1 row-start-1 flex w-[66px] flex-col items-center self-start rounded-2xl bg-slate-50 px-2 py-2 shadow-inner shadow-slate-900/5 ring-1 ring-slate-300/80">
+                  <div className="grid grid-cols-[58px_minmax(0,1fr)] gap-3 pl-1 sm:grid-cols-[66px_minmax(0,1fr)] sm:gap-4">
+                    <div className="flex w-[58px] flex-col items-center self-start rounded-2xl bg-slate-50 px-2 py-2.5 shadow-inner shadow-slate-900/5 ring-1 ring-slate-200 sm:w-[66px]">
                       <span
-                        className={`mb-1.5 h-1.5 w-8 rounded-full ${tone.dateTop}`}
+                        className={`mb-2 h-1 w-7 rounded-full ${tone.dateTop}`}
                       />
-                      <span className="text-2xl font-extrabold leading-none tracking-[-0.06em] text-slate-950">
+                      <span className="text-[22px] font-black leading-none tracking-[-0.06em] text-slate-950 sm:text-2xl">
                         {date.day}
                       </span>
-                      <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <span className="mt-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
                         {date.month}
                       </span>
                     </div>
 
-                    <div className="col-start-2 row-start-1 min-w-0">
-                      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className={`${pillBase} ${tone.badge}`}>
-                              <span
-                                className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${tone.iconBox}`}
-                              >
-                                <FormatIcon
-                                  format={t.format}
-                                  className="h-3.5 w-3.5"
-                                />
-                              </span>
-                              {labelType(t.format)}
+                    <div className="min-w-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                          <span className={`${pillBase} ${tone.badge}`}>
+                            <FormatIcon format={t.format} className="h-3.5 w-3.5" />
+                            {labelType(t.format)}
+                          </span>
+                          {enr ? (
+                            <span className={`${pillBase} ${statusTone(t.enrollment_status)}`}>
+                              <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2} />
+                              {enr}
                             </span>
-
-                            {enr ? (
-                              <span
-                                className={`${pillBase} ${statusTone(
-                                  t.enrollment_status
-                                )}`}
-                              >
-                                <CheckCircle2
-                                  className="h-3.5 w-3.5"
-                                  strokeWidth={2}
-                                />
-                                {enr}
-                              </span>
-                            ) : null}
-
-                            {soon ? (
-                              <span
-                                className={`${pillBase} border-amber-200 bg-amber-50 text-amber-700`}
-                              >
-                                <Clock3
-                                  className="h-3.5 w-3.5"
-                                  strokeWidth={2}
-                                />
-                                Wkrótce
-                              </span>
-                            ) : null}
-                          </div>
-
-                          <h3 className="mt-1.5 line-clamp-2 text-[15px] font-bold leading-snug tracking-[-0.015em] text-slate-950">
-                            {t.title}
-                          </h3>
+                          ) : null}
+                          {soon ? (
+                            <span className={`${pillBase} border-amber-200 bg-amber-50 text-amber-700`}>
+                              <Clock3 className="h-3.5 w-3.5" strokeWidth={2} />
+                              Wkrótce
+                            </span>
+                          ) : null}
                         </div>
 
-                        <div className="hidden shrink-0 rounded-2xl bg-blue-50/90 px-3 py-2 text-right ring-1 ring-blue-100 md:block">
-                          <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-blue-500">
-                            CPD
-                          </div>
-                          <div className="mt-0.5 whitespace-nowrap text-lg font-semibold leading-none tracking-[-0.03em] text-blue-700">
+                        <div className="shrink-0 rounded-xl bg-blue-50 px-2.5 py-2 text-right ring-1 ring-blue-100 sm:px-3">
+                          <span className="block text-[9px] font-bold uppercase tracking-[0.14em] text-blue-500">
+                            Punkty CPD
+                          </span>
+                          <span className="mt-0.5 block whitespace-nowrap text-lg font-black leading-none tracking-[-0.04em] text-blue-700">
                             {typeof t.points === "number" ? t.points : "—"}
-                            <span className="ml-1 text-xs font-semibold">
-                              pkt
-                            </span>
-                          </div>
+                            <span className="ml-1 text-[11px] font-bold">pkt</span>
+                          </span>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="col-start-1 row-start-2 self-start">
-                      <OrganizerLogo
-                        name={t.organizer}
-                        src={t.organizer_logo_url}
-                        card
-                      />
-                    </div>
+                      <h3 className="mt-2 line-clamp-2 text-[16px] font-extrabold leading-[1.35] tracking-[-0.02em] text-slate-950 sm:text-[17px]">
+                        {t.title}
+                      </h3>
 
-                    <div className="col-start-2 row-start-2 min-w-0">
-                      <div className="grid gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500 sm:grid-cols-2 xl:grid-cols-4">
-                        {range ? (
-                          <span className="inline-flex min-w-0 items-center gap-1.5">
-                            <span className={metaIconBase}>
-                              <CalendarDays
-                                className="h-3 w-3"
-                                strokeWidth={2}
-                              />
+                      {t.organizer ? (
+                        <div className="mt-3 flex min-w-0 items-center gap-2.5">
+                          <OrganizerLogo name={t.organizer} src={t.organizer_logo_url} card />
+                          <div className="min-w-0">
+                            <span className="block text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+                              Organizator
                             </span>
-                            <span className="truncate font-semibold text-slate-700">
-                              {range}
-                            </span>
-                          </span>
-                        ) : null}
-
-                        {t.organizer ? (
-                          <span className="inline-flex min-w-0 items-center gap-1.5">
-                            <span className={metaIconBase}>
-                              <Building2 className="h-3 w-3" strokeWidth={2} />
-                            </span>
-                            <span className="truncate font-semibold text-slate-700">
+                            <span className="block truncate text-[13px] font-bold text-slate-800">
                               {t.organizer}
                             </span>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-slate-600">
+                        {showRange && range ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            <CalendarDays className="h-3.5 w-3.5 text-slate-400" strokeWidth={2} />
+                            {range}
                           </span>
                         ) : null}
-
                         {t.voivodeship ? (
                           <span className="inline-flex min-w-0 items-center gap-1.5">
-                            <span className={metaIconBase}>
-                              <MapPin className="h-3 w-3" strokeWidth={2} />
-                            </span>
-                            <span className="truncate font-semibold text-slate-700">
-                              {t.voivodeship}
-                            </span>
+                            <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" strokeWidth={2} />
+                            <span className="truncate">{t.voivodeship}</span>
                           </span>
                         ) : null}
-
+                        <span className="inline-flex items-center gap-1.5">
+                          <Award className="h-3.5 w-3.5 text-slate-400" strokeWidth={2} />
+                          {labelCategory(t.category)}
+                          {price ? ` · ${price}` : ""}
+                        </span>
                         <span className="inline-flex min-w-0 items-center gap-1.5">
-                          <span className={metaIconBase}>
-                            <Award className="h-3 w-3" strokeWidth={2} />
-                          </span>
+                          <Users className="h-3.5 w-3.5 shrink-0 text-slate-400" strokeWidth={2} />
                           <span className="truncate">
-                            {labelCategory(t.category)}
-                            {price ? (
-                              <>
-                                {" · "}
-                                <span className="font-semibold text-slate-700">
-                                  {price}
-                                </span>
-                              </>
-                            ) : null}
+                            {audience === "Nie wskazano"
+                              ? labelProfession(t.profession)
+                              : audience}
                           </span>
                         </span>
                       </div>
 
-                      <div className="mt-2 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="flex min-w-0 flex-wrap gap-1.5">
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
-                            {labelProfession(t.profession)}
-                          </span>
-
-                          {capacityText ? (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
-                              {capacityText}
+                      {topics.length ? (
+                        <div className="mt-3 flex min-w-0 flex-wrap gap-1.5">
+                          {topics.map((topicLabel) => (
+                            <span
+                              key={topicLabel}
+                              className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600"
+                            >
+                              {topicLabel}
+                            </span>
+                          ))}
+                          {remainingTopics ? (
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500">
+                              +{remainingTopics}
                             </span>
                           ) : null}
-
-                          {Array.isArray(t.topics)
-                            ? t.topics.slice(0, 3).map((x) => (
-                                <span
-                                  key={x}
-                                  className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200"
-                                >
-                                  {x}
-                                </span>
-                              ))
-                            : null}
                         </div>
+                      ) : null}
 
-                        <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                          <button
-                            onClick={() => setDetailsTraining(t)}
-                            className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
-                            type="button"
-                          >
-                            Szczegóły
-                          </button>
+                      <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                        <button
+                          onClick={() => setDetailsTraining(t)}
+                          className="inline-flex h-9 items-center justify-center gap-1 text-xs font-bold text-slate-600 transition hover:text-blue-700 sm:justify-start"
+                          type="button"
+                        >
+                          Szczegóły <ChevronRight className="h-4 w-4" />
+                        </button>
 
+                        <div className="flex flex-col gap-2 sm:flex-row-reverse">
                           {t.url ? (
                             <a
                               href={t.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
+                              className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95"
                             >
                               Zapisy u organizatora
+                              <ExternalLink className="h-3.5 w-3.5" />
                             </a>
                           ) : (
                             <button
-                              className="inline-flex h-8 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-400 shadow-sm"
+                              className="inline-flex h-9 cursor-not-allowed items-center justify-center rounded-xl bg-slate-100 px-4 text-xs font-bold text-slate-400"
                               disabled
                               type="button"
                             >
-                              Brak linku
+                              Brak linku do zapisów
                             </button>
                           )}
 
                           <button
                             onClick={() => chooseTraining(t)}
-                            className="inline-flex h-8 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 text-xs font-semibold text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100 hover:text-blue-800 active:scale-95"
+                            className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-xs font-bold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
                             type="button"
                             title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
                           >
+                            <BookmarkPlus className="h-3.5 w-3.5" />
                             Dodaj do planu
                           </button>
                         </div>
@@ -1943,6 +1906,15 @@ export default function TrainingHubClient() {
                 />
               </div>
 
+              <div className="md:col-span-12">
+                <TrainingAudienceField
+                  value={fProfession}
+                  onChange={setFProfession}
+                  options={professionOptions}
+                  disabled={addSubmitting}
+                />
+              </div>
+
               <div className="md:col-span-6">
                 <label className={labelBase}>Województwo / miejsce</label>
                 <input
@@ -2011,7 +1983,9 @@ export default function TrainingHubClient() {
                 <label className={labelBase}>Zapisy</label>
                 <select
                   value={fEnroll}
-                  onChange={(e) => setFEnroll(e.target.value as any)}
+                  onChange={(e) =>
+                    setFEnroll(e.target.value as EnrollmentStatus | "")
+                  }
                   className={fieldBase}
                 >
                   <option value="">—</option>

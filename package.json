@@ -17,7 +17,8 @@
     "check:v6.1": "node scripts/check-v6-1-training-organizer-logos.mjs",
     "check:v6.1.1": "node scripts/check-v6-1-1-training-card-layout.mjs",
     "check:v6.2": "node scripts/check-v6-2-contact-form.mjs",
-    "check:v6.2.1": "node scripts/check-v6-2-1-contact-delivery.mjs"
+    "check:v6.2.1": "node scripts/check-v6-2-1-contact-delivery.mjs",
+    "check:v6.2.2": "node scripts/check-v6-2-2-audience-contact-card.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

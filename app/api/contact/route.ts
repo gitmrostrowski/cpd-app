@@ -160,59 +160,94 @@ export async function POST(request: Request) {
     process.env.CRPE_NOTIFICATION_FROM_EMAIL?.trim() ||
     process.env.CRPE_INVITATION_FROM_EMAIL?.trim();
 
-  if (!supabaseUrl || !serviceRoleKey || !brevoKey || !fromEmail) {
-    console.error("Contact form configuration is incomplete");
+  if (!brevoKey || !fromEmail) {
+    console.error("Contact form email configuration is incomplete", {
+      hasBrevoKey: Boolean(brevoKey),
+      hasFromEmail: Boolean(fromEmail),
+    });
     return json({ error: "contact_unavailable" }, 503);
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  const supabase =
+    supabaseUrl && serviceRoleKey
+      ? createClient(supabaseUrl, serviceRoleKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        })
+      : null;
   const normalizedEmail = body.email.toLocaleLowerCase("pl-PL");
   const senderHash = createHash("sha256")
-    .update(`${serviceRoleKey}|${clientIp(request)}|${normalizedEmail}`)
+    .update(`${serviceRoleKey || brevoKey}|${clientIp(request)}|${normalizedEmail}`)
     .digest("hex");
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const { count, error: countError } = await supabase
-    .from("contact_messages")
-    .select("id", { count: "exact", head: true })
-    .eq("sender_hash", senderHash)
-    .gte("created_at", oneHourAgo);
-
-  if (countError) {
-    console.error("Contact form rate-limit query failed", countError);
-    return json({ error: "contact_unavailable" }, 503);
-  }
-  if ((count || 0) >= 5) {
-    return json({ error: "rate_limited" }, 429);
-  }
 
   const settings = roleSettings[body.role];
   const recipient = settings.recipient;
-  const { data: record, error: insertError } = await supabase
-    .from("contact_messages")
-    .insert({
-      role: body.role,
-      name: body.name,
-      email: normalizedEmail,
-      organisation: body.organisation || null,
-      scale: body.scale || null,
-      message: body.message,
-      recipient,
-      sender_hash: senderHash,
-      status: "pending",
-      recipient_status: "pending",
-      confirmation_status: "not_attempted",
-    })
-    .select("id")
-    .single();
+  let contactId = crypto.randomUUID();
+  let recordStored = false;
 
-  if (insertError || !record?.id) {
-    console.error("Contact form insert failed", insertError);
-    return json({ error: "contact_unavailable" }, 503);
+  if (supabase) {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count, error: countError } = await supabase
+      .from("contact_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("sender_hash", senderHash)
+      .gte("created_at", oneHourAgo);
+
+    if (countError) {
+      console.warn("Contact form database rate-limit unavailable; email delivery continues", {
+        code: countError.code,
+      });
+    } else if ((count || 0) >= 5) {
+      return json({ error: "rate_limited" }, 429);
+    }
+
+    const { data: record, error: insertError } = await supabase
+      .from("contact_messages")
+      .insert({
+        role: body.role,
+        name: body.name,
+        email: normalizedEmail,
+        organisation: body.organisation || null,
+        scale: body.scale || null,
+        message: body.message,
+        recipient,
+        sender_hash: senderHash,
+        status: "pending",
+        recipient_status: "pending",
+        confirmation_status: "not_attempted",
+      })
+      .select("id")
+      .single();
+
+    if (insertError || !record?.id) {
+      console.warn("Contact form database insert unavailable; email delivery continues", {
+        code: insertError?.code,
+      });
+    } else {
+      contactId = record.id;
+      recordStored = true;
+    }
+  } else {
+    console.warn("Contact form database configuration unavailable; email delivery continues");
   }
 
-  const reference = referenceFromId(record.id);
+  async function updateStoredRecord(
+    values: Record<string, unknown>,
+    stage: string,
+  ) {
+    if (!supabase || !recordStored) return;
+    const { error } = await supabase
+      .from("contact_messages")
+      .update(values)
+      .eq("id", contactId);
+    if (error) {
+      console.warn("Contact form database status update unavailable", {
+        stage,
+        code: error.code,
+      });
+    }
+  }
+
+  const reference = referenceFromId(contactId);
   const subject = `[${reference}] Kontakt CRPE — ${settings.label}`;
   const htmlContent = `
     <div style="font-family:Arial,sans-serif;color:#0f172a;line-height:1.65">
@@ -247,33 +282,30 @@ export async function POST(request: Request) {
         "",
         body.message,
       ].filter(Boolean).join("\n"),
-      headers: { "X-Crpe-Contact-Id": record.id },
+      headers: { "X-Crpe-Contact-Id": contactId },
       tags: ["contact_form", "contact_recipient", `contact_${body.role}`],
     });
   } catch (deliveryError) {
     const errorCode = deliveryError instanceof Error ? deliveryError.message.slice(0, 160) : "unknown";
-    console.error("Contact form recipient delivery failed", { id: record.id, error: errorCode });
-    await supabase
-      .from("contact_messages")
-      .update({ status: "failed", recipient_status: "failed", error_code: errorCode })
-      .eq("id", record.id);
+    console.error("Contact form recipient delivery failed", { id: contactId, error: errorCode });
+    await updateStoredRecord(
+      { status: "failed", recipient_status: "failed", error_code: errorCode },
+      "recipient_failed",
+    );
     return json({ error: "delivery_failed", reference }, 502);
   }
 
   const acceptedAt = new Date().toISOString();
-  const { error: recipientUpdateError } = await supabase
-    .from("contact_messages")
-    .update({
+  await updateStoredRecord(
+    {
       status: "sent",
       recipient_status: "accepted",
       provider_message_id: recipientMessageId,
       recipient_provider_message_id: recipientMessageId,
       sent_at: acceptedAt,
-    })
-    .eq("id", record.id);
-  if (recipientUpdateError) {
-    console.error("Contact form recipient status update failed", recipientUpdateError);
-  }
+    },
+    "recipient_accepted",
+  );
 
   const confirmationSubject = `[${reference}] Otrzymaliśmy Twoją wiadomość — CRPE`;
   const confirmationHtml = `
@@ -300,37 +332,34 @@ export async function POST(request: Request) {
         "",
         body.message,
       ].join("\n"),
-      headers: { "X-Crpe-Contact-Confirmation-Id": record.id },
+      headers: { "X-Crpe-Contact-Confirmation-Id": contactId },
       tags: ["contact_form", "contact_confirmation", `contact_${body.role}`],
     });
 
     const confirmationAcceptedAt = new Date().toISOString();
-    const { error: confirmationUpdateError } = await supabase
-      .from("contact_messages")
-      .update({
+    await updateStoredRecord(
+      {
         confirmation_status: "accepted",
         confirmation_provider_message_id: confirmationMessageId,
         confirmation_sent_at: confirmationAcceptedAt,
-      })
-      .eq("id", record.id);
-    if (confirmationUpdateError) {
-      console.error("Contact form confirmation status update failed", confirmationUpdateError);
-    }
+      },
+      "confirmation_accepted",
+    );
 
     return json({ reference, confirmation_sent: true }, 201);
   } catch (confirmationError) {
     const errorCode = confirmationError instanceof Error
       ? confirmationError.message.slice(0, 160)
       : "unknown";
-    console.error("Contact form confirmation delivery failed", { id: record.id, error: errorCode });
-    await supabase
-      .from("contact_messages")
-      .update({
+    console.error("Contact form confirmation delivery failed", { id: contactId, error: errorCode });
+    await updateStoredRecord(
+      {
         status: "partial",
         confirmation_status: "failed",
         confirmation_error_code: errorCode,
-      })
-      .eq("id", record.id);
+      },
+      "confirmation_failed",
+    );
 
     return json({ reference, confirmation_sent: false }, 201);
   }
