@@ -9,7 +9,7 @@ import {
   Building2,
   CalendarDays,
   CheckCircle2,
-  ChevronRight,
+  ChevronDown,
   Clock3,
   ExternalLink,
   Info,
@@ -157,6 +157,8 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 ];
 
 type PriceMode = "all" | "free" | "paid";
+
+const TRAININGS_PAGE_SIZE = 10;
 
 const PRICE_OPTIONS: { value: PriceMode; label: string }[] = [
   { value: "all", label: "Dowolnie" },
@@ -361,7 +363,7 @@ function labelProfession(p: string | null) {
 
 function formatPrice(pricePln: number | null) {
   if (typeof pricePln !== "number") return null;
-  if (pricePln === 0) return "0 zł";
+  if (pricePln === 0) return "Bezpłatne";
 
   const rounded = Math.round((pricePln + Number.EPSILON) * 100) / 100;
   return `${rounded} zł`;
@@ -424,7 +426,7 @@ function OrganizerLogo({
   const size = large
     ? "h-16 w-16 rounded-2xl"
     : card
-      ? "h-9 w-9 rounded-xl"
+      ? "h-7 w-7 rounded-lg"
       : "h-7 w-7 rounded-lg";
 
   return (
@@ -529,6 +531,7 @@ export default function TrainingHubClient() {
 
   const [onlyUpcoming, setOnlyUpcoming] = useState(true);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(TRAININGS_PAGE_SIZE);
 
   const [addOpen, setAddOpen] = useState(false);
   const [detailsTraining, setDetailsTraining] = useState<Training | null>(null);
@@ -659,6 +662,7 @@ export default function TrainingHubClient() {
       });
 
       setItems(rows.slice(0, 200));
+      setVisibleCount(TRAININGS_PAGE_SIZE);
       setSelectedCalendarDateKey(null);
       setSelectedCalendarTrainingId(null);
     } catch (caught) {
@@ -775,8 +779,14 @@ export default function TrainingHubClient() {
     return items.filter((item) => item.start_date === selectedCalendarDateKey);
   }, [items, selectedCalendarDateKey]);
 
+  const displayedItems = useMemo(
+    () => visibleItems.slice(0, visibleCount),
+    [visibleCount, visibleItems],
+  );
+
   const clearCalendarSelection = () => {
     if (!selectedCalendarDateKey && !selectedCalendarTrainingId) return;
+    setVisibleCount(TRAININGS_PAGE_SIZE);
     setSelectedCalendarDateKey(null);
     setSelectedCalendarTrainingId(null);
   };
@@ -796,6 +806,7 @@ export default function TrainingHubClient() {
   };
 
   const selectCalendarDay = (trainingId: string, dateKey: string) => {
+    setVisibleCount(TRAININGS_PAGE_SIZE);
     setSelectedCalendarTrainingId(trainingId);
     setSelectedCalendarDateKey(dateKey);
     scrollCalendarMonthIntoView(dateKey);
@@ -1303,8 +1314,8 @@ export default function TrainingHubClient() {
           <div
             className={
               selectedCalendarDateKey
-                ? "space-y-4 lg:sticky lg:top-24 lg:self-start"
-                : "space-y-4"
+                ? "space-y-2 lg:sticky lg:top-24 lg:self-start"
+                : "space-y-2"
             }
           >
             {selectedCalendarDateKey ? (
@@ -1333,7 +1344,7 @@ export default function TrainingHubClient() {
               </div>
             ) : null}
 
-            {visibleItems.map((t) => {
+            {displayedItems.map((t) => {
               const dd = daysDiffFromToday(t.start_date);
               const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
 
@@ -1351,177 +1362,192 @@ export default function TrainingHubClient() {
               const showRange = Boolean(
                 t.start_date && t.end_date && t.start_date !== t.end_date,
               );
-              const topics = Array.isArray(t.topics) ? t.topics.slice(0, 2) : [];
+              const topics = Array.isArray(t.topics) ? t.topics.slice(0, 1) : [];
               const remainingTopics = Array.isArray(t.topics)
                 ? Math.max(0, t.topics.length - topics.length)
                 : 0;
               const audience = trainingAudienceSummary(t.profession);
+              const audienceLabel =
+                audience === "Nie wskazano"
+                  ? labelProfession(t.profession)
+                  : audience;
+              const showAudience = ![
+                "Dla wszystkich",
+                "Wszyscy medycy",
+                "Ogólna",
+              ].includes(audienceLabel);
 
               return (
                 <article
                   key={t.id}
                   onClick={(e) => e.stopPropagation()}
-                  className="group relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.05),0_5px_14px_rgba(15,23,42,0.08)] transition-all duration-200 hover:-translate-y-[1px] hover:border-blue-200 hover:shadow-[0_1px_0_rgba(37,99,235,0.08),0_9px_20px_rgba(37,99,235,0.11)] sm:p-5"
+                  className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,0.055)] transition-all duration-200 hover:border-blue-200 hover:shadow-[0_5px_14px_rgba(37,99,235,0.09)] sm:p-3.5"
                 >
                   <div
-                    className={`absolute bottom-4 left-0 top-4 w-1 rounded-r-full ${tone.stripe}`}
+                    className={`absolute bottom-3 left-0 top-3 w-0.5 rounded-r-full ${tone.stripe}`}
                   />
 
-                  <div className="grid grid-cols-[58px_minmax(0,1fr)] gap-3 pl-1 sm:grid-cols-[66px_minmax(0,1fr)] sm:gap-4">
-                    <div className="flex w-[58px] flex-col items-center self-start rounded-2xl bg-slate-50 px-2 py-2.5 shadow-inner shadow-slate-900/5 ring-1 ring-slate-200 sm:w-[66px]">
+                  <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_170px] sm:items-center sm:gap-3.5">
+                    <div className="flex h-[58px] w-[52px] flex-col items-center self-start rounded-xl bg-slate-50 px-1.5 py-2 ring-1 ring-slate-200 sm:self-center">
                       <span
-                        className={`mb-2 h-1 w-7 rounded-full ${tone.dateTop}`}
+                        className={`mb-1.5 h-0.5 w-6 rounded-full ${tone.dateTop}`}
                       />
-                      <span className="text-[22px] font-black leading-none tracking-[-0.06em] text-slate-950 sm:text-2xl">
+                      <span className="text-xl font-black leading-none tracking-[-0.06em] text-slate-950">
                         {date.day}
                       </span>
-                      <span className="mt-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                      <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500">
                         {date.month}
                       </span>
                     </div>
 
                     <div className="min-w-0">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                      <div className="flex min-w-0 items-start justify-between gap-2">
+                        <div className="flex min-w-0 flex-wrap items-center gap-1">
                           <span className={`${pillBase} ${tone.badge}`}>
-                            <FormatIcon format={t.format} className="h-3.5 w-3.5" />
+                            <FormatIcon format={t.format} className="h-3 w-3" />
                             {labelType(t.format)}
                           </span>
                           {enr ? (
                             <span className={`${pillBase} ${statusTone(t.enrollment_status)}`}>
-                              <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2} />
+                              <CheckCircle2 className="h-3 w-3" strokeWidth={2} />
                               {enr}
                             </span>
                           ) : null}
                           {soon ? (
                             <span className={`${pillBase} border-amber-200 bg-amber-50 text-amber-700`}>
-                              <Clock3 className="h-3.5 w-3.5" strokeWidth={2} />
+                              <Clock3 className="h-3 w-3" strokeWidth={2} />
                               Wkrótce
                             </span>
                           ) : null}
                         </div>
 
-                        <div className="shrink-0 rounded-xl bg-blue-50 px-2.5 py-2 text-right ring-1 ring-blue-100 sm:px-3">
-                          <span className="block text-[9px] font-bold uppercase tracking-[0.14em] text-blue-500">
-                            Punkty CPD
-                          </span>
-                          <span className="mt-0.5 block whitespace-nowrap text-lg font-black leading-none tracking-[-0.04em] text-blue-700">
-                            {typeof t.points === "number" ? t.points : "—"}
-                            <span className="ml-1 text-[11px] font-bold">pkt</span>
-                          </span>
+                        <div className="shrink-0 whitespace-nowrap text-sm font-black text-blue-700 sm:hidden">
+                          {typeof t.points === "number" ? t.points : "—"}
+                          <span className="ml-1 text-[10px] font-bold text-blue-500">pkt</span>
                         </div>
                       </div>
 
-                      <h3 className="mt-2 line-clamp-2 text-[16px] font-extrabold leading-[1.35] tracking-[-0.02em] text-slate-950 sm:text-[17px]">
-                        {t.title}
-                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setDetailsTraining(t)}
+                        className="mt-1.5 block w-full text-left"
+                        aria-label={`Pokaż szczegóły szkolenia: ${t.title}`}
+                      >
+                        <h3 className="line-clamp-2 text-[15px] font-extrabold leading-[1.3] tracking-[-0.018em] text-slate-950 transition group-hover:text-blue-800 sm:text-[16px]">
+                          {t.title}
+                        </h3>
+                      </button>
 
-                      {t.organizer ? (
-                        <div className="mt-3 flex min-w-0 items-center gap-2.5">
-                          <OrganizerLogo name={t.organizer} src={t.organizer_logo_url} card />
-                          <div className="min-w-0">
-                            <span className="block text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
-                              Organizator
-                            </span>
-                            <span className="block truncate text-[13px] font-bold text-slate-800">
+                      <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-medium text-slate-600 sm:text-xs">
+                        {t.organizer ? (
+                          <span className="inline-flex min-w-0 max-w-full items-center gap-2 sm:max-w-[48%]">
+                            <OrganizerLogo name={t.organizer} src={t.organizer_logo_url} card />
+                            <span className="truncate font-semibold text-slate-700">
                               {t.organizer}
                             </span>
-                          </div>
-                        </div>
-                      ) : null}
-
-                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-slate-600">
+                          </span>
+                        ) : null}
                         {showRange && range ? (
                           <span className="inline-flex items-center gap-1.5">
-                            <CalendarDays className="h-3.5 w-3.5 text-slate-400" strokeWidth={2} />
+                            <CalendarDays className="h-3 w-3 text-slate-400" strokeWidth={2} />
                             {range}
                           </span>
                         ) : null}
                         {t.voivodeship ? (
                           <span className="inline-flex min-w-0 items-center gap-1.5">
-                            <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" strokeWidth={2} />
+                            <MapPin className="h-3 w-3 shrink-0 text-slate-400" strokeWidth={2} />
                             <span className="truncate">{t.voivodeship}</span>
                           </span>
                         ) : null}
                         <span className="inline-flex items-center gap-1.5">
-                          <Award className="h-3.5 w-3.5 text-slate-400" strokeWidth={2} />
+                          <Award className="h-3 w-3 text-slate-400" strokeWidth={2} />
                           {labelCategory(t.category)}
                           {price ? ` · ${price}` : ""}
                         </span>
-                        <span className="inline-flex min-w-0 items-center gap-1.5">
-                          <Users className="h-3.5 w-3.5 shrink-0 text-slate-400" strokeWidth={2} />
-                          <span className="truncate">
-                            {audience === "Nie wskazano"
-                              ? labelProfession(t.profession)
-                              : audience}
+                        {showAudience ? (
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <Users className="h-3 w-3 shrink-0 text-slate-400" strokeWidth={2} />
+                            <span className="truncate">{audienceLabel}</span>
                           </span>
-                        </span>
-                      </div>
-
-                      {topics.length ? (
-                        <div className="mt-3 flex min-w-0 flex-wrap gap-1.5">
-                          {topics.map((topicLabel) => (
+                        ) : null}
+                        {topics.map((topicLabel) => (
+                          <span key={topicLabel} className="inline-flex items-center gap-1">
                             <span
-                              key={topicLabel}
-                              className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600"
+                              className="max-w-[190px] truncate rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600"
                             >
                               {topicLabel}
                             </span>
-                          ))}
-                          {remainingTopics ? (
-                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500">
+                            {remainingTopics ? (
+                              <span className="text-[10px] font-bold text-slate-400">
                               +{remainingTopics}
-                            </span>
-                          ) : null}
-                        </div>
-                      ) : null}
+                              </span>
+                            ) : null}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
 
-                      <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="col-span-2 mt-0.5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:flex sm:min-h-[94px] sm:flex-col sm:justify-center sm:gap-1.5 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
+                      <div className="hidden items-baseline justify-end gap-1 sm:flex">
+                        <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-blue-500">
+                          Punkty CPD
+                        </span>
+                        <span className="text-lg font-black tracking-[-0.04em] text-blue-700">
+                          {typeof t.points === "number" ? t.points : "—"}
+                        </span>
+                        <span className="text-[10px] font-bold text-blue-500">pkt</span>
+                      </div>
+
+                      {t.url ? (
+                        <a
+                          href={t.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 text-[11px] font-bold text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-9"
+                        >
+                          <span className="sm:hidden">Zapisy</span>
+                          <span className="hidden sm:inline">Zapisy u organizatora</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : (
                         <button
-                          onClick={() => setDetailsTraining(t)}
-                          className="inline-flex h-9 items-center justify-center gap-1 text-xs font-bold text-slate-600 transition hover:text-blue-700 sm:justify-start"
+                          className="inline-flex h-11 cursor-not-allowed items-center justify-center rounded-xl bg-slate-100 px-3 text-[11px] font-bold text-slate-400 sm:h-9"
+                          disabled
                           type="button"
                         >
-                          Szczegóły <ChevronRight className="h-4 w-4" />
+                          Brak linku do zapisów
                         </button>
+                      )}
 
-                        <div className="flex flex-col gap-2 sm:flex-row-reverse">
-                          {t.url ? (
-                            <a
-                              href={t.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 active:scale-95"
-                            >
-                              Zapisy u organizatora
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          ) : (
-                            <button
-                              className="inline-flex h-9 cursor-not-allowed items-center justify-center rounded-xl bg-slate-100 px-4 text-xs font-bold text-slate-400"
-                              disabled
-                              type="button"
-                            >
-                              Brak linku do zapisów
-                            </button>
-                          )}
-
-                          <button
-                            onClick={() => chooseTraining(t)}
-                            className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-xs font-bold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
-                            type="button"
-                            title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
-                          >
-                            <BookmarkPlus className="h-3.5 w-3.5" />
-                            Dodaj do planu
-                          </button>
-                        </div>
-                      </div>
+                      <button
+                        onClick={() => chooseTraining(t)}
+                        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] sm:h-8 sm:border-transparent sm:bg-transparent"
+                        type="button"
+                        title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
+                      >
+                        <BookmarkPlus className="h-3.5 w-3.5" />
+                        Dodaj do planu
+                      </button>
                     </div>
                   </div>
                 </article>
               );
             })}
+
+            {visibleCount < visibleItems.length ? (
+              <div className="flex justify-center py-3" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setVisibleCount((count) => count + TRAININGS_PAGE_SIZE)
+                  }
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  Pokaż kolejne {Math.min(TRAININGS_PAGE_SIZE, visibleItems.length - visibleCount)}
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+            ) : null}
 
             {!fetching && visibleItems.length === 0 && (
               <div className="rounded-[1.35rem] border border-slate-300/80 bg-white p-6 text-sm text-slate-600 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
@@ -1530,7 +1556,10 @@ export default function TrainingHubClient() {
             )}
           </div>
 
-          <aside className="space-y-4" onClick={(e) => e.stopPropagation()}>
+          <aside
+            className="space-y-4 lg:sticky lg:top-24 lg:self-start"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex h-[148px] flex-col overflow-hidden rounded-[1.25rem] border border-slate-300/80 bg-white p-3 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)]">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">

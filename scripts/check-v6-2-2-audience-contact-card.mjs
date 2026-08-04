@@ -35,9 +35,9 @@ const checks = [
   ],
   [
     "Kafelek ma spokojniejszą hierarchię, kompaktowe logo i maksymalnie dwa tagi",
-    directory.includes("text-[16px] font-extrabold") &&
-      directory.includes('t.topics.slice(0, 2)') &&
-      directory.includes('"h-9 w-9 rounded-xl"') &&
+    directory.includes("font-extrabold leading-[1.3]") &&
+      directory.includes('t.topics.slice(0, 1)') &&
+      directory.includes('"h-7 w-7 rounded-lg"') &&
       directory.includes("Zapisy u organizatora") &&
       directory.includes("BookmarkPlus"),
   ],

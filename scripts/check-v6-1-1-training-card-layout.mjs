@@ -5,8 +5,8 @@ const client = fs.readFileSync("app/baza-szkolen/TrainingHubClient.tsx", "utf8")
 const checks = [
   [
     "Kafelek oddziela datę od głównej hierarchii treści",
-    client.includes("grid-cols-[58px_minmax(0,1fr)]") &&
-      client.includes("sm:grid-cols-[66px_minmax(0,1fr)]") &&
+    client.includes("grid-cols-[52px_minmax(0,1fr)]") &&
+      client.includes("sm:grid-cols-[52px_minmax(0,1fr)_170px]") &&
       client.includes("Punkty CPD"),
   ],
   [
@@ -16,8 +16,8 @@ const checks = [
   ],
   [
     "Logo jest kompaktowe, powiązane z organizatorem i nie jest przycinane",
-    client.includes('"h-9 w-9 rounded-xl"') &&
-      client.includes("Organizator") &&
+    client.includes('"h-7 w-7 rounded-lg"') &&
+      client.includes("<OrganizerLogo name={t.organizer}") &&
       client.includes('card ? "p-1" : "p-1.5"') &&
       client.includes("object-contain"),
   ],
