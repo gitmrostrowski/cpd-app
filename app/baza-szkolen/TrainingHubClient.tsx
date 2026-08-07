@@ -479,12 +479,15 @@ function OrganizerLogo({
   const size = large
     ? "h-16 w-16 rounded-2xl"
     : card
-      ? "h-7 w-7 rounded-lg"
+      ? "h-8 w-[76px]"
       : "h-7 w-7 rounded-lg";
+  const frame = card
+    ? "justify-start"
+    : "overflow-hidden border border-slate-200 bg-white text-slate-400 shadow-sm";
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center overflow-hidden border border-slate-200 bg-white text-slate-400 shadow-sm ${size}`}
+      className={`inline-flex shrink-0 items-center ${frame} ${size}`}
       role="img"
       aria-label={name ? `Logo organizatora ${name}` : "Logo organizatora"}
     >
@@ -493,7 +496,7 @@ function OrganizerLogo({
       <img
         src={logoUrl}
         alt=""
-        className={`h-full w-full object-contain ${card ? "p-1" : "p-1.5"}`}
+        className={card ? "max-h-8 max-w-full object-contain" : "h-full w-full object-contain p-1.5"}
         loading="lazy"
         referrerPolicy="no-referrer"
       />
@@ -1616,8 +1619,7 @@ export default function TrainingHubClient() {
                     </div>
 
                     <div className="min-w-0">
-                      <div className="flex min-w-0 items-start justify-between gap-2">
-                        <div className="flex min-w-0 flex-wrap items-center gap-1">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1">
                           <span className={`${pillBase} ${tone.badge}`}>
                             <FormatIcon format={t.format} className="h-3 w-3" />
                             {labelType(t.format)}
@@ -1634,19 +1636,6 @@ export default function TrainingHubClient() {
                               Wkrótce
                             </span>
                           ) : null}
-                        </div>
-
-                        <div
-                          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-0.5 py-1 text-blue-700 sm:hidden"
-                          title={pointsDetailsLabel(t.points_verification_status)}
-                          aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
-                        >
-                          <GraduationCap className="h-4 w-4" strokeWidth={2.1} />
-                          <span className="text-sm font-black">
-                            {typeof t.points === "number" ? t.points : "—"}
-                          </span>
-                          <span className="text-[10px] font-bold text-blue-500">pkt</span>
-                        </div>
                       </div>
 
                       <button
@@ -1662,11 +1651,8 @@ export default function TrainingHubClient() {
 
                       <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-medium text-slate-600 sm:text-xs">
                         {t.organizer ? (
-                          <span className="inline-flex min-w-0 max-w-full items-center gap-2 sm:max-w-[48%]">
-                            <OrganizerLogo name={t.organizer} src={t.organizer_logo_url} card />
-                            <span className="truncate font-semibold text-slate-700">
-                              {t.organizer}
-                            </span>
+                          <span className="min-w-0 max-w-full truncate font-semibold text-slate-700 sm:max-w-[48%]">
+                            {t.organizer}
                           </span>
                         ) : null}
                         {showRange && range ? (
@@ -1709,17 +1695,28 @@ export default function TrainingHubClient() {
                       </div>
                     </div>
 
-                    <div className="col-span-2 mt-0.5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:flex sm:flex-col sm:justify-center sm:gap-1.5 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
+                    <div className="col-span-2 mt-0.5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:flex sm:flex-col sm:justify-center sm:gap-1 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
                       <div
-                        className="hidden h-7 items-center justify-center gap-2 whitespace-nowrap text-blue-700 sm:flex"
-                        title={pointsDetailsLabel(t.points_verification_status)}
-                        aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
+                        className="col-span-2 flex h-8 min-w-0 items-center gap-3"
                       >
-                        <GraduationCap className="h-5 w-5 shrink-0" strokeWidth={2.1} />
-                        <span className="text-[20px] font-black leading-none tracking-[-0.04em]">
-                          {typeof t.points === "number" ? t.points : "—"}
+                        {t.organizer_logo_url ? (
+                          <OrganizerLogo
+                            name={t.organizer}
+                            src={t.organizer_logo_url}
+                            card
+                          />
+                        ) : null}
+                        <span
+                          className="ml-auto inline-flex shrink-0 items-center gap-2 whitespace-nowrap text-blue-700"
+                          title={pointsDetailsLabel(t.points_verification_status)}
+                          aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
+                        >
+                          <GraduationCap className="h-5 w-5 shrink-0" strokeWidth={2.1} />
+                          <span className="text-[20px] font-black leading-none tracking-[-0.04em]">
+                            {typeof t.points === "number" ? t.points : "—"}
+                          </span>
+                          <span className="text-xs font-bold text-blue-600">pkt</span>
                         </span>
-                        <span className="text-xs font-bold text-blue-600">pkt</span>
                       </div>
 
                       {t.url ? (

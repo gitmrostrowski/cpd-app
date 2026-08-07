@@ -15,10 +15,10 @@ const checks = [
       client.includes("src={t.organizer_logo_url}"),
   ],
   [
-    "Logo jest kompaktowe, powiązane z organizatorem i nie jest przycinane",
-    client.includes('"h-7 w-7 rounded-lg"') &&
-      client.includes("<OrganizerLogo name={t.organizer}") &&
-      client.includes('card ? "p-1" : "p-1.5"') &&
+    "Logo jest czytelne, powiązane z kartą i nie jest przycinane",
+    client.includes('"h-8 w-[76px]"') &&
+      client.includes("<OrganizerLogo") &&
+      client.includes('card ? "max-h-8 max-w-full object-contain"') &&
       client.includes("object-contain"),
   ],
 ];

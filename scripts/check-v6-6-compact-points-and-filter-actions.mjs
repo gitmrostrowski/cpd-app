@@ -25,8 +25,8 @@ const checks = [
   [
     "Kolumna akcji nie wymusza minimalnej wysokości karty",
     !desktopPoints.includes("min-h-") &&
-      desktopPoints.includes("sm:gap-1.5") &&
-      desktopPoints.includes('className="hidden h-7'),
+      desktopPoints.includes("sm:gap-1") &&
+      desktopPoints.includes('className="col-span-2 flex h-8'),
   ],
   [
     "Reset filtrów jest dostępnym przyciskiem ikonowym",
