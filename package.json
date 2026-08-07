@@ -31,7 +31,8 @@
     "check:v6.11": "node scripts/check-v6-11-training-card-tint.mjs",
     "check:v6.12": "node scripts/check-v6-12-training-card-brand-rhythm.mjs",
     "check:v6.13": "node scripts/check-v6-13-training-card-art-direction.mjs",
-    "check:v6.14": "node scripts/check-v6-14-training-logo-blending.mjs"
+    "check:v6.14": "node scripts/check-v6-14-training-logo-blending.mjs",
+    "check:v6.15": "node scripts/check-v6-15-training-directory-quality.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

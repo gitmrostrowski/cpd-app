@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Award,
@@ -26,6 +27,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 import {
   createActivity,
+  fetchProfile,
   fetchProfessionCatalog,
   fetchPublicTrainings,
   type LegacyTraining,
@@ -41,6 +43,7 @@ import TrainingAudienceField, {
   trainingAudienceSelection,
   trainingAudienceSummary,
 } from "@/components/TrainingAudienceField";
+import { trainingPath } from "@/lib/trainings/public";
 
 type TrainingType = "online" | "stacjonarne" | "hybrydowe";
 type TrainingCategory =
@@ -170,21 +173,54 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 
 type PriceMode = "all" | "free" | "paid";
 
-type TrainingFilterOverrides = Partial<{
-  q: string;
-  sortBy: SortBy;
-  organizer: string;
-  format: "all" | TrainingType;
-  category: "all" | TrainingCategory;
-  minPoints: string;
-  timeWindow: TimeWindow;
-  place: string;
-  professionFilter: string;
-  priceMode: PriceMode;
-  topic: string;
-  enrollment: "all" | EnrollmentStatus;
-  onlyUpcoming: boolean;
-}>;
+type SearchParamsInput = Record<string, string | string[] | undefined>;
+
+const DEFAULT_FILTERS = {
+  q: "",
+  sortBy: "date_asc" as SortBy,
+  organizer: "all",
+  format: "all" as "all" | TrainingType,
+  category: "all" as "all" | TrainingCategory,
+  minPoints: "all",
+  timeWindow: "90" as TimeWindow,
+  place: "all",
+  professionFilter: "all",
+  priceMode: "all" as PriceMode,
+  topic: "all",
+  enrollment: "all" as "all" | EnrollmentStatus,
+};
+
+function firstSearchValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+}
+
+function allowedValue<T extends string>(value: string, allowed: readonly T[], fallback: T) {
+  return allowed.includes(value as T) ? (value as T) : fallback;
+}
+
+function filtersFromSearchParams(params: SearchParamsInput) {
+  return {
+    q: firstSearchValue(params.q),
+    sortBy: allowedValue(firstSearchValue(params.sort), SORT_OPTIONS.map((option) => option.value), DEFAULT_FILTERS.sortBy),
+    organizer: firstSearchValue(params.organizator) || DEFAULT_FILTERS.organizer,
+    format: allowedValue(firstSearchValue(params.forma), FORMAT_OPTIONS.map((option) => option.value), DEFAULT_FILTERS.format),
+    category: allowedValue(firstSearchValue(params.kategoria), CATEGORY_OPTIONS.map((option) => option.value), DEFAULT_FILTERS.category),
+    minPoints: allowedValue(firstSearchValue(params.punkty), POINTS_OPTIONS.map((option) => option.value), DEFAULT_FILTERS.minPoints),
+    timeWindow: allowedValue(firstSearchValue(params.termin), TIME_WINDOW_OPTIONS.map((option) => option.value), DEFAULT_FILTERS.timeWindow),
+    place: firstSearchValue(params.woj) || DEFAULT_FILTERS.place,
+    professionFilter: firstSearchValue(params.zawod) || DEFAULT_FILTERS.professionFilter,
+    priceMode: allowedValue(firstSearchValue(params.cena), PRICE_OPTIONS.map((option) => option.value), DEFAULT_FILTERS.priceMode),
+    topic: firstSearchValue(params.temat) || DEFAULT_FILTERS.topic,
+    enrollment: allowedValue(firstSearchValue(params.zapisy), ENROLLMENT_OPTIONS.map((option) => option.value), DEFAULT_FILTERS.enrollment),
+  };
+}
+
+function normalizeSearchText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pl-PL");
+}
 
 const TRAININGS_PAGE_SIZE = 10;
 
@@ -201,16 +237,6 @@ const ENROLLMENT_OPTIONS: { value: "all" | EnrollmentStatus; label: string }[] =
     { value: "waiting_list", label: "Lista rezerwowa" },
     { value: "closed", label: "Zapisy zamknięte" },
   ];
-
-function trainingCountLabel(count: number) {
-  if (count === 1) return "1 szkolenie";
-  const lastTwo = count % 100;
-  const last = count % 10;
-  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
-    return `${count} szkolenia`;
-  }
-  return `${count} szkoleń`;
-}
 
 function matchedTrainingCountLabel(count: number) {
   if (count === 1) return "Znaleziono 1 dopasowane szkolenie";
@@ -405,7 +431,7 @@ function labelEnrollment(s: EnrollmentStatus | null) {
 }
 
 function labelProfession(p: string | null) {
-  if (!p) return "Adresaci do weryfikacji";
+  if (!p) return "Adresaci niepodani";
   return p;
 }
 
@@ -413,6 +439,37 @@ function pointsDetailsLabel(status: PointVerificationStatus) {
   if (status === "verified") return "Punkty potwierdzone przez CRPE";
   if (status === "organizer_declared") return "Punkty podane przez organizatora";
   return "Punkty wymagają sprawdzenia dla Twojego zawodu";
+}
+
+function trainingPointValues(training: Training) {
+  const values = [
+    ...training.profession_rules.map((rule) => rule.points),
+    training.points,
+  ].filter((value): value is number => typeof value === "number");
+  return Array.from(new Set(values)).sort((a, b) => a - b);
+}
+
+function pointsPresentation(training: Training, selectedProfession: string) {
+  if (!["all", "general", "unknown"].includes(selectedProfession)) {
+    return typeof training.points === "number"
+      ? { main: String(training.points), suffix: "pkt", detail: `${training.points} pkt` }
+      : { main: "—", suffix: "pkt", detail: "Punkty do potwierdzenia" };
+  }
+
+  const values = trainingPointValues(training);
+  if (!values.length) return { main: "—", suffix: "pkt", detail: "Punkty do potwierdzenia" };
+  if (values.length === 1) return { main: String(values[0]), suffix: "pkt", detail: `${values[0]} pkt` };
+  return {
+    main: `${values[0]}–${values[values.length - 1]}`,
+    suffix: "pkt",
+    detail: `${values[0]}–${values[values.length - 1]} pkt zależnie od zawodu`,
+  };
+}
+
+function shortVerificationLabel(status: PointVerificationStatus) {
+  if (status === "verified") return "Potwierdzone";
+  if (status === "organizer_declared") return "Od organizatora";
+  return "Do sprawdzenia";
 }
 
 function formatPrice(pricePln: number | null) {
@@ -467,52 +524,25 @@ function normalizeLogoUrl(raw: string | null | undefined) {
 function OrganizerLogo({
   name,
   src,
-  large = false,
-  watermark = false,
 }: {
   name: string | null;
   src: string | null | undefined;
-  large?: boolean;
-  watermark?: boolean;
 }) {
   const logoUrl = normalizeLogoUrl(src);
-  const [logoShape, setLogoShape] = useState<"wide" | "standard" | "compact" | "tall">("standard");
   if (!logoUrl) return null;
-  const size = large
-    ? "h-16 w-16 rounded-2xl"
-    : watermark
-      ? "h-[72px] w-[210px]"
-      : "h-7 w-7 rounded-lg";
-  const frame = watermark
-    ? "crpe-training-logo-watermark pointer-events-none justify-end transition-opacity duration-200"
-    : "overflow-hidden border border-slate-200 bg-white text-slate-400 shadow-sm";
-  const watermarkShape =
-    logoShape === "wide"
-      ? "opacity-[0.74] contrast-[1.12] saturate-[0.88] group-hover:opacity-[0.82]"
-      : logoShape === "tall"
-        ? "opacity-[0.34] contrast-[1.04] saturate-[0.78] group-hover:opacity-[0.42]"
-        : logoShape === "compact"
-          ? "opacity-[0.38] contrast-[1.06] saturate-[0.82] group-hover:opacity-[0.46]"
-          : "opacity-[0.54] contrast-[1.08] saturate-[0.86] group-hover:opacity-[0.62]";
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center ${frame} ${size}`}
-      data-logo-shape={watermark ? logoShape : undefined}
-      role={watermark ? undefined : "img"}
-      aria-hidden={watermark ? true : undefined}
-      aria-label={watermark ? undefined : name ? `Logo organizatora ${name}` : "Logo organizatora"}
+      className="inline-flex h-8 w-8 shrink-0 items-center overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-400 shadow-sm"
+      role="img"
+      aria-label={name ? `Logo organizatora ${name}` : "Logo organizatora"}
     >
       {/* Logo jest moderowane przez operatora CRPE i renderowane jako obraz. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={logoUrl}
         alt=""
-        className={watermark ? `relative z-[1] max-h-[64px] max-w-[196px] object-contain object-right mix-blend-multiply transition-opacity duration-200 ${watermarkShape}` : "h-full w-full object-contain p-1.5"}
-        onLoad={watermark ? (event) => {
-          const ratio = event.currentTarget.naturalWidth / Math.max(event.currentTarget.naturalHeight, 1);
-          setLogoShape(ratio >= 2.15 ? "wide" : ratio <= 0.82 ? "tall" : ratio <= 1.3 ? "compact" : "standard");
-        } : undefined}
+        className="h-full w-full object-contain p-1.5"
         loading="lazy"
         referrerPolicy="no-referrer"
       />
@@ -581,39 +611,60 @@ function normalizeTrainingRow(r: LegacyTraining): Training {
   };
 }
 
-export default function TrainingHubClient() {
+export default function TrainingHubClient({
+  initialTrainings = [],
+  initialSearchParams = {},
+}: {
+  initialTrainings?: LegacyTraining[];
+  initialSearchParams?: SearchParamsInput;
+}) {
   const { user } = useAuth();
   const supabase = useMemo(() => supabaseClient(), []);
   const calendarMonthRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const initialFilters = useMemo(
+    () => filtersFromSearchParams(initialSearchParams),
+    [initialSearchParams],
+  );
+  const suppressUrlUpdate = useRef(false);
+  const profileDefaultAttempted = useRef(false);
+  const addDialogRef = useRef<HTMLFormElement | null>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
-  const [items, setItems] = useState<Training[]>([]);
-  const [fetching, setFetching] = useState(false);
+  const [allItems, setAllItems] = useState<Training[]>(() =>
+    initialTrainings.map(normalizeTrainingRow).filter((row) => row.approval_status === "approved"),
+  );
+  const [fetching, setFetching] = useState(initialTrainings.length === 0);
   const [error, setError] = useState<string | null>(null);
   const [professionOptions, setProfessionOptions] =
     useState<ProfessionOption[]>([...FALLBACK_PROFESSION_OPTIONS]);
 
-  const [q, setQ] = useState("");
-  const [sortBy, setSortBy] = useState<SortBy>("date_asc");
-  const [organizer, setOrganizer] = useState("all");
-  const [format, setFormat] = useState<"all" | TrainingType>("all");
+  const [q, setQ] = useState(initialFilters.q);
+  const [sortBy, setSortBy] = useState<SortBy>(initialFilters.sortBy);
+  const [organizer, setOrganizer] = useState(initialFilters.organizer);
+  const [format, setFormat] = useState<"all" | TrainingType>(initialFilters.format);
 
-  const [category, setCategory] = useState<"all" | TrainingCategory>("all");
-  const [minPoints, setMinPoints] = useState("all");
-  const [timeWindow, setTimeWindow] = useState<TimeWindow>("90");
-  const [place, setPlace] = useState("all");
-  const [professionFilter, setProfessionFilter] = useState("all");
-  const [priceMode, setPriceMode] = useState<PriceMode>("all");
+  const [category, setCategory] = useState<"all" | TrainingCategory>(initialFilters.category);
+  const [minPoints, setMinPoints] = useState(initialFilters.minPoints);
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>(initialFilters.timeWindow);
+  const [place, setPlace] = useState(initialFilters.place);
+  const [professionFilter, setProfessionFilter] = useState(initialFilters.professionFilter);
+  const [priceMode, setPriceMode] = useState<PriceMode>(initialFilters.priceMode);
 
-  const [topic, setTopic] = useState<string>("all");
-  const [enrollment, setEnrollment] = useState<"all" | EnrollmentStatus>("all");
+  const [topic, setTopic] = useState<string>(initialFilters.topic);
+  const [enrollment, setEnrollment] = useState<"all" | EnrollmentStatus>(initialFilters.enrollment);
 
-  const [onlyUpcoming, setOnlyUpcoming] = useState(true);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [visibleCount, setVisibleCount] = useState(TRAININGS_PAGE_SIZE);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const [addOpen, setAddOpen] = useState(false);
-  const [detailsTraining, setDetailsTraining] = useState<Training | null>(null);
   const [addSubmitting, setAddSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [actionNotice, setActionNotice] = useState<{
+    tone: "success" | "error";
+    message: string;
+    url?: string | null;
+  } | null>(null);
   const [selectedCalendarTrainingId, setSelectedCalendarTrainingId] = useState<
     string | null
   >(null);
@@ -641,206 +692,249 @@ export default function TrainingHubClient() {
   const [fLogoPreview, setFLogoPreview] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!fLogo) {
-      setFLogoPreview(null);
-      return;
-    }
-    const preview = URL.createObjectURL(fLogo);
-    setFLogoPreview(preview);
-    return () => URL.revokeObjectURL(preview);
-  }, [fLogo]);
+    return () => {
+      if (fLogoPreview) URL.revokeObjectURL(fLogoPreview);
+    };
+  }, [fLogoPreview]);
 
-  const load = async (overrides: TrainingFilterOverrides = {}) => {
-    setFetching(true);
-    setError(null);
+  useEffect(() => {
+    if (!actionNotice) return;
+    const timeout = window.setTimeout(() => setActionNotice(null), 7000);
+    return () => window.clearTimeout(timeout);
+  }, [actionNotice]);
 
+  useEffect(() => {
+    const dialog = addOpen ? addDialogRef.current : null;
+    if (!dialog) return;
+
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusableSelector = "a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex='-1'])";
+    const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector));
+    (focusable[0] ?? dialog).focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setAddOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const elements = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector));
+      if (!elements.length) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      returnFocusRef.current?.focus();
+    };
+  }, [addOpen]);
+
+  const items = useMemo(() => {
     const todayStr = todayYYYYMMDD();
-    const activeFilters = {
-      q: overrides.q ?? q,
-      sortBy: overrides.sortBy ?? sortBy,
-      organizer: overrides.organizer ?? organizer,
-      format: overrides.format ?? format,
-      category: overrides.category ?? category,
-      minPoints: overrides.minPoints ?? minPoints,
-      timeWindow: overrides.timeWindow ?? timeWindow,
-      place: overrides.place ?? place,
-      professionFilter: overrides.professionFilter ?? professionFilter,
-      priceMode: overrides.priceMode ?? priceMode,
-      topic: overrides.topic ?? topic,
-      enrollment: overrides.enrollment ?? enrollment,
-      onlyUpcoming: overrides.onlyUpcoming ?? onlyUpcoming,
+    const includes = (value: string | null | undefined, phrase: string) =>
+      normalizeSearchText(String(value ?? "")).includes(normalizeSearchText(phrase));
+    const pointsFor = (row: Training) => {
+      const values = [
+        ...row.profession_rules.map((rule) => rule.points),
+        row.points,
+      ].filter((value): value is number => typeof value === "number");
+      return values.length ? Math.max(...values) : null;
     };
 
-    try {
-      let rows = (await fetchPublicTrainings(supabase))
-        .map(normalizeTrainingRow)
-        .filter((row) => row.approval_status === "approved");
-      const includes = (value: string | null | undefined, phrase: string) =>
-        String(value ?? "").toLocaleLowerCase("pl-PL").includes(
-          phrase.toLocaleLowerCase("pl-PL"),
-        );
-
-      if (activeFilters.organizer !== "all")
-        rows = rows.filter((row) =>
-          includes(row.organizer, activeFilters.organizer),
-        );
-      if (activeFilters.format !== "all")
-        rows = rows.filter((row) => row.format === activeFilters.format);
-      if (activeFilters.category !== "all")
-        rows = rows.filter((row) => row.category === activeFilters.category);
-      if (activeFilters.timeWindow !== "all") {
-        const maxDate = addDaysYYYYMMDD(Number(activeFilters.timeWindow));
-        rows = rows.filter(
-          (row) =>
-            Boolean(row.start_date) &&
-            row.start_date! >= todayStr &&
-            row.start_date! <= maxDate,
-        );
-      } else if (activeFilters.onlyUpcoming) {
-        rows = rows.filter(
-          (row) => Boolean(row.start_date) && row.start_date! >= todayStr,
-        );
-      }
-      if (activeFilters.place !== "all")
-        rows = rows.filter((row) =>
-          includes(row.voivodeship, activeFilters.place),
-        );
-      if (activeFilters.professionFilter !== "all") {
-        if (activeFilters.professionFilter === "general") {
-          rows = rows.filter((row) => row.audience_scope === "all_medical");
-        } else if (activeFilters.professionFilter === "unknown") {
-          rows = rows.filter((row) => row.audience_scope === "unknown");
-        } else {
-          rows = rows
-            .filter(
-              (row) =>
-                row.audience_scope === "all_medical" ||
-                row.profession_rules.some(
-                  (rule) =>
-                    rule.profession_code === activeFilters.professionFilter,
-                ),
-            )
-            .map((row) => {
-              const rule = row.profession_rules.find(
-                (item) =>
-                  item.profession_code === activeFilters.professionFilter,
-              );
-              if (!rule) return row;
-              return {
-                ...row,
-                points: rule.points ?? row.points,
-                points_verification_status: rule.verification_status,
-                points_source_url: rule.source_url ?? row.points_source_url,
-                points_verified_on: rule.verified_on ?? row.points_verified_on,
-              };
-            });
-        }
-      }
-      if (activeFilters.minPoints !== "all")
-        rows = rows.filter(
-          (row) =>
-            Number(row.points ?? 0) >= Number(activeFilters.minPoints),
-        );
-      if (activeFilters.topic !== "all")
-        rows = rows.filter((row) =>
-          row.topics?.includes(activeFilters.topic),
-        );
-      if (activeFilters.priceMode === "free")
-        rows = rows.filter((row) => Number(row.price_pln ?? 0) === 0);
-      if (activeFilters.priceMode === "paid")
-        rows = rows.filter((row) => Number(row.price_pln ?? 0) > 0);
-      if (activeFilters.enrollment !== "all")
-        rows = rows.filter(
-          (row) => row.enrollment_status === activeFilters.enrollment,
-        );
-      if (activeFilters.q.trim()) {
-        const phrase = activeFilters.q.trim();
-        rows = rows.filter((row) =>
-          [
-            row.title,
-            row.organizer,
-            row.category,
-            row.voivodeship,
-            row.profession,
-          ].some((value) => includes(value, phrase)),
-        );
-      }
-
-      rows.sort((a, b) => {
-        if (activeFilters.sortBy === "points_desc")
-          return Number(b.points ?? 0) - Number(a.points ?? 0);
-        if (activeFilters.sortBy === "points_asc")
-          return Number(a.points ?? 0) - Number(b.points ?? 0);
-        if (activeFilters.sortBy === "newest")
-          return String(b.created_at).localeCompare(String(a.created_at));
-        const direction = activeFilters.sortBy === "date_desc" ? -1 : 1;
-        return (
-          direction *
-          String(a.start_date ?? "9999-12-31").localeCompare(
-            String(b.start_date ?? "9999-12-31"),
-          )
-        );
+    let rows = [...allItems];
+    if (organizer !== "all") rows = rows.filter((row) => includes(row.organizer, organizer));
+    if (format !== "all") rows = rows.filter((row) => row.format === format);
+    if (category !== "all") rows = rows.filter((row) => row.category === category);
+    if (timeWindow !== "all") {
+      const maxDate = addDaysYYYYMMDD(Number(timeWindow));
+      rows = rows.filter((row) => {
+        const activeUntil = row.end_date ?? row.start_date;
+        return Boolean(row.start_date && activeUntil && activeUntil >= todayStr && row.start_date <= maxDate);
       });
-
-      setItems(rows.slice(0, 200));
-      setVisibleCount(TRAININGS_PAGE_SIZE);
-      setSelectedCalendarDateKey(null);
-      setSelectedCalendarTrainingId(null);
-    } catch (caught) {
-      console.error("Public training directory load failed", caught);
-      setError("Nie udało się pobrać szkoleń. Spróbuj ponownie za chwilę.");
-      setItems([]);
+    }
+    if (place !== "all") rows = rows.filter((row) => includes(row.voivodeship, place));
+    if (professionFilter !== "all") {
+      if (professionFilter === "general") {
+        rows = rows.filter((row) => row.audience_scope === "all_medical");
+      } else if (professionFilter === "unknown") {
+        rows = rows.filter((row) => row.audience_scope === "unknown");
+      } else {
+        rows = rows
+          .filter((row) => row.audience_scope === "all_medical" || row.profession_rules.some((rule) => rule.profession_code === professionFilter))
+          .map((row) => {
+            const rule = row.profession_rules.find((item) => item.profession_code === professionFilter);
+            return rule
+              ? {
+                  ...row,
+                  points: rule.points,
+                  points_verification_status: rule.verification_status,
+                  points_source_url: rule.source_url ?? row.points_source_url,
+                  points_verified_on: rule.verified_on ?? row.points_verified_on,
+                }
+              : row;
+          });
+      }
+    }
+    if (minPoints !== "all") rows = rows.filter((row) => {
+      const value = pointsFor(row);
+      return value !== null && value >= Number(minPoints);
+    });
+    if (topic !== "all") rows = rows.filter((row) => row.topics?.includes(topic));
+    if (priceMode === "free") rows = rows.filter((row) => row.price_pln === 0);
+    if (priceMode === "paid") rows = rows.filter((row) => typeof row.price_pln === "number" && row.price_pln > 0);
+    if (enrollment !== "all") rows = rows.filter((row) => row.enrollment_status === enrollment);
+    if (q.trim()) {
+      const phrase = q.trim();
+      rows = rows.filter((row) => [row.title, row.organizer, row.category, row.voivodeship, row.profession, ...(row.topics ?? [])].some((value) => includes(value, phrase)));
     }
 
-    setFetching(false);
-  };
+    rows.sort((a, b) => {
+      if (sortBy === "points_desc" || sortBy === "points_asc") {
+        const aPoints = pointsFor(a);
+        const bPoints = pointsFor(b);
+        if (aPoints === null && bPoints === null) return a.id.localeCompare(b.id);
+        if (aPoints === null) return 1;
+        if (bPoints === null) return -1;
+        return (sortBy === "points_desc" ? bPoints - aPoints : aPoints - bPoints) || a.id.localeCompare(b.id);
+      }
+      if (sortBy === "newest") return String(b.created_at).localeCompare(String(a.created_at)) || a.id.localeCompare(b.id);
+      const direction = sortBy === "date_desc" ? -1 : 1;
+      const aDate = a.start_date;
+      const bDate = b.start_date;
+      if (!aDate && !bDate) return a.id.localeCompare(b.id);
+      if (!aDate) return 1;
+      if (!bDate) return -1;
+      return direction * aDate.localeCompare(bDate) || a.id.localeCompare(b.id);
+    });
+
+    return rows;
+  }, [allItems, category, enrollment, format, minPoints, organizer, place, priceMode, professionFilter, q, sortBy, timeWindow, topic]);
 
   const resetFilters = () => {
-    const defaults: Required<TrainingFilterOverrides> = {
-      q: "",
-      sortBy: "date_asc",
-      organizer: "all",
-      format: "all",
-      category: "all",
-      minPoints: "all",
-      timeWindow: "90",
-      place: "all",
-      professionFilter: "all",
-      priceMode: "all",
-      topic: "all",
-      enrollment: "all",
-      onlyUpcoming: true,
-    };
-
-    setQ(defaults.q);
-    setSortBy(defaults.sortBy);
-    setOrganizer(defaults.organizer);
-    setFormat(defaults.format);
-    setCategory(defaults.category);
-    setMinPoints(defaults.minPoints);
-    setTimeWindow(defaults.timeWindow);
-    setPlace(defaults.place);
-    setProfessionFilter(defaults.professionFilter);
-    setPriceMode(defaults.priceMode);
-    setTopic(defaults.topic);
-    setEnrollment(defaults.enrollment);
-    setOnlyUpcoming(defaults.onlyUpcoming);
+    setQ(DEFAULT_FILTERS.q);
+    setSortBy(DEFAULT_FILTERS.sortBy);
+    setOrganizer(DEFAULT_FILTERS.organizer);
+    setFormat(DEFAULT_FILTERS.format);
+    setCategory(DEFAULT_FILTERS.category);
+    setMinPoints(DEFAULT_FILTERS.minPoints);
+    setTimeWindow(DEFAULT_FILTERS.timeWindow);
+    setPlace(DEFAULT_FILTERS.place);
+    setProfessionFilter(DEFAULT_FILTERS.professionFilter);
+    setPriceMode(DEFAULT_FILTERS.priceMode);
+    setTopic(DEFAULT_FILTERS.topic);
+    setEnrollment(DEFAULT_FILTERS.enrollment);
     setShowMoreFilters(false);
-    void load(defaults);
   };
 
   useEffect(() => {
-    load();
+    const controller = new AbortController();
+    if (initialTrainings.length === 0) {
+      void fetchPublicTrainings(supabase, controller.signal)
+        .then((rows) => {
+          setAllItems(rows.map(normalizeTrainingRow).filter((row) => row.approval_status === "approved"));
+          setError(null);
+        })
+        .catch((caught) => {
+          if (controller.signal.aborted) return;
+          console.error("Public training directory load failed", caught);
+          setError("Nie udało się pobrać szkoleń. Spróbuj ponownie za chwilę.");
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setFetching(false);
+        });
+    }
     void fetchProfessionCatalog(supabase)
       .then(setProfessionOptions)
       .catch(() => undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => controller.abort();
+  }, [initialTrainings.length, supabase]);
+
+  useEffect(() => {
+    if (!user || firstSearchValue(initialSearchParams.zawod) || profileDefaultAttempted.current) return;
+    profileDefaultAttempted.current = true;
+    void fetchProfile(supabase, user.id)
+      .then((profile) => {
+        if (profile?.profession_code && professionFilter === "all") {
+          setProfessionFilter(profile.profession_code);
+        }
+      })
+      .catch(() => undefined);
+  }, [initialSearchParams.zawod, professionFilter, supabase, user]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const next = filtersFromSearchParams(Object.fromEntries(new URLSearchParams(window.location.search)));
+      suppressUrlUpdate.current = true;
+      setQ(next.q);
+      setSortBy(next.sortBy);
+      setOrganizer(next.organizer);
+      setFormat(next.format);
+      setCategory(next.category);
+      setMinPoints(next.minPoints);
+      setTimeWindow(next.timeWindow);
+      setPlace(next.place);
+      setProfessionFilter(next.professionFilter);
+      setPriceMode(next.priceMode);
+      setTopic(next.topic);
+      setEnrollment(next.enrollment);
+      window.setTimeout(() => { suppressUrlUpdate.current = false; }, 0);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  useEffect(() => {
+    if (suppressUrlUpdate.current) return;
+    const timeout = window.setTimeout(() => {
+      const params = new URLSearchParams();
+      if (q.trim()) params.set("q", q.trim());
+      if (professionFilter !== DEFAULT_FILTERS.professionFilter) params.set("zawod", professionFilter);
+      if (place !== DEFAULT_FILTERS.place) params.set("woj", place);
+      if (timeWindow !== DEFAULT_FILTERS.timeWindow) params.set("termin", timeWindow);
+      if (format !== DEFAULT_FILTERS.format) params.set("forma", format);
+      if (minPoints !== DEFAULT_FILTERS.minPoints) params.set("punkty", minPoints);
+      if (organizer !== DEFAULT_FILTERS.organizer) params.set("organizator", organizer);
+      if (category !== DEFAULT_FILTERS.category) params.set("kategoria", category);
+      if (priceMode !== DEFAULT_FILTERS.priceMode) params.set("cena", priceMode);
+      if (topic !== DEFAULT_FILTERS.topic) params.set("temat", topic);
+      if (enrollment !== DEFAULT_FILTERS.enrollment) params.set("zapisy", enrollment);
+      if (sortBy !== DEFAULT_FILTERS.sortBy) params.set("sort", sortBy);
+      const nextUrl = `${window.location.pathname}${params.size ? `?${params.toString()}` : ""}`;
+      const currentUrl = `${window.location.pathname}${window.location.search}`;
+      if (nextUrl !== currentUrl) window.history.pushState({}, "", nextUrl);
+    }, q ? 300 : 0);
+    return () => window.clearTimeout(timeout);
+  }, [category, enrollment, format, minPoints, organizer, place, priceMode, professionFilter, q, sortBy, timeWindow, topic]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setVisibleCount(TRAININGS_PAGE_SIZE);
+      setSelectedCalendarDateKey(null);
+      setSelectedCalendarTrainingId(null);
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [category, enrollment, format, minPoints, organizer, place, priceMode, professionFilter, q, sortBy, timeWindow, topic]);
 
   const topicOptions = useMemo(() => {
     const set = new Set<string>();
 
-    for (const t of items) {
+    for (const t of allItems) {
       const arr = Array.isArray(t.topics) ? t.topics : [];
 
       for (const x of arr) {
@@ -850,7 +944,7 @@ export default function TrainingHubClient() {
     }
 
     return ["all", ...Array.from(set).sort((a, b) => a.localeCompare(b, "pl"))];
-  }, [items]);
+  }, [allItems]);
 
   const nextTrainings = useMemo(() => items.slice(0, 4), [items]);
 
@@ -859,11 +953,6 @@ export default function TrainingHubClient() {
       .filter((t) => t.start_date)
       .sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
 
-    const firstDate = dated[0]?.start_date
-      ? new Date(`${dated[0].start_date}T00:00:00`)
-      : new Date();
-
-    const startMonth = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
     const eventMap = new Map<string, Training[]>();
 
     for (const item of dated) {
@@ -873,12 +962,13 @@ export default function TrainingHubClient() {
       eventMap.set(item.start_date, arr);
     }
 
-    return Array.from({ length: 4 }, (_, monthOffset) => {
-      const cursor = new Date(
-        startMonth.getFullYear(),
-        startMonth.getMonth() + monthOffset,
-        1
-      );
+    const monthKeys = Array.from(
+      new Set(dated.map((item) => String(item.start_date).slice(0, 7))),
+    ).sort();
+
+    return monthKeys.map((monthKey) => {
+      const [monthYear, monthNumber] = monthKey.split("-").map(Number);
+      const cursor = new Date(monthYear, monthNumber - 1, 1);
 
       const year = cursor.getFullYear();
       const month = cursor.getMonth();
@@ -909,7 +999,7 @@ export default function TrainingHubClient() {
 
       return {
         monthLabel,
-        monthKey: `${year}-${String(month + 1).padStart(2, "0")}`,
+        monthKey,
         days: [...blanks, ...days],
       };
     });
@@ -955,7 +1045,20 @@ export default function TrainingHubClient() {
 
   const chooseTraining = async (t: Training) => {
     if (!user) {
-      window.location.href = "/login?next=/baza-szkolen";
+      const next = `${window.location.pathname}${window.location.search}`;
+      window.location.assign(`/login?next=${encodeURIComponent(next)}`);
+      return;
+    }
+
+    const pointValues = trainingPointValues(t);
+    if (
+      ["all", "general", "unknown"].includes(professionFilter) &&
+      pointValues.length > 1
+    ) {
+      setActionNotice({
+        tone: "error",
+        message: "Wybierz swój zawód w filtrze, aby dodać do planu właściwą liczbę punktów.",
+      });
       return;
     }
 
@@ -977,73 +1080,46 @@ export default function TrainingHubClient() {
     try {
       await createActivity(supabase, user.id, payload);
     } catch (caught) {
-      alert(
-        `Nie udało się dodać szkolenia do planu: ${
+      setActionNotice({
+        tone: "error",
+        message: `Nie udało się dodać szkolenia do planu: ${
           caught instanceof Error ? caught.message : "nieznany błąd"
         }`,
-      );
+      });
       return;
     }
 
-    if (t.url) {
-      const goToOrganizer = window.confirm(
-        "Dodano do planu CPD.\n\nTo nie oznacza zapisu u organizatora. Aby wziąć udział w szkoleniu, musisz zapisać się bezpośrednio na stronie organizatora.\n\nCzy chcesz teraz przejść do strony organizatora?"
-      );
-
-      if (goToOrganizer) {
-        window.open(t.url, "_blank", "noopener,noreferrer");
-      }
-
-      return;
-    }
-
-    alert(
-      "Dodano do planu CPD.\n\nTo nie oznacza zapisu u organizatora. Aby wziąć udział w szkoleniu, musisz zapisać się bezpośrednio u organizatora."
-    );
+    setActionNotice({
+      tone: "success",
+      message: "Dodano do planu CPD. To nie jest zapis na szkolenie — rejestrację prowadzi organizator.",
+      url: t.url,
+    });
   };
 
   const submitNewTraining = async () => {
     if (!user) {
-      alert("Zaloguj się, żeby dodać szkolenie.");
+      setActionNotice({ tone: "error", message: "Zaloguj się, żeby zgłosić szkolenie." });
       return;
     }
 
     const title = fTitle.trim();
-
-    if (!title) {
-      alert("Podaj tytuł szkolenia.");
-      return;
-    }
-
-    if (!fStart) {
-      alert("Podaj datę rozpoczęcia.");
-      return;
-    }
-
-    if (!hasTrainingAudience(fProfession)) {
-      alert("Wybierz adresatów szkolenia.");
-      return;
-    }
-
     const pointsNum = Number(fPoints || 0);
     const priceNum =
       fPrice.trim() === "" ? null : Number(String(fPrice).replace(",", "."));
     const capNum = fCap.trim() === "" ? null : Number(fCap);
-
-    if (Number.isNaN(pointsNum) || pointsNum < 0) {
-      alert("Nieprawidłowa liczba punktów.");
+    const nextErrors: Record<string, string> = {};
+    if (!title) nextErrors.title = "Podaj tytuł szkolenia.";
+    if (!fStart) nextErrors.start = "Podaj datę rozpoczęcia.";
+    if (!hasTrainingAudience(fProfession)) nextErrors.audience = "Wybierz adresatów szkolenia.";
+    if (Number.isNaN(pointsNum) || pointsNum < 0) nextErrors.points = "Podaj prawidłową liczbę punktów.";
+    if (priceNum !== null && (Number.isNaN(priceNum) || priceNum < 0)) nextErrors.price = "Podaj prawidłową cenę.";
+    if (capNum !== null && (Number.isNaN(capNum) || capNum < 0)) nextErrors.capacity = "Podaj prawidłowy limit miejsc.";
+    if (fEnd && fStart && fEnd < fStart) nextErrors.end = "Data końca nie może być wcześniejsza niż data rozpoczęcia.";
+    if (Object.keys(nextErrors).length) {
+      setFormErrors(nextErrors);
       return;
     }
-
-    if (priceNum !== null && (Number.isNaN(priceNum) || priceNum < 0)) {
-      alert("Nieprawidłowa cena.");
-      return;
-    }
-
-    if (capNum !== null && (Number.isNaN(capNum) || capNum < 0)) {
-      alert("Nieprawidłowy limit miejsc.");
-      return;
-    }
+    setFormErrors({});
 
     setAddSubmitting(true);
 
@@ -1090,10 +1166,17 @@ export default function TrainingHubClient() {
     formData.set("submission", JSON.stringify(submissionPayload));
     if (fLogo) formData.set("organizer_logo", fLogo);
 
-    const response = await fetch("/api/trainings/submissions", {
-      method: "POST",
-      body: formData,
-    });
+    let response: Response;
+    try {
+      response = await fetch("/api/trainings/submissions", {
+        method: "POST",
+        body: formData,
+      });
+    } catch {
+      setAddSubmitting(false);
+      setFormErrors({ general: "Nie udało się połączyć z serwerem. Spróbuj ponownie." });
+      return;
+    }
 
     setAddSubmitting(false);
 
@@ -1107,10 +1190,11 @@ export default function TrainingHubClient() {
         invalid_logo_dimensions: "Logo ma nieprawidłowe lub zbyt duże wymiary.",
         invalid_logo_image: "Nie udało się odczytać pliku logo jako obrazu.",
       };
-      alert(
-        (result?.error && logoErrors[result.error]) ||
+      setFormErrors({
+        general:
+          (result?.error && logoErrors[result.error]) ||
           "Nie udało się wysłać zgłoszenia. Spróbuj ponownie za chwilę.",
-      );
+      });
       return;
     }
 
@@ -1133,8 +1217,12 @@ export default function TrainingHubClient() {
     setFDescription("");
     setFProfession("");
     setFLogo(null);
+    setFLogoPreview(null);
 
-    alert("Wysłano do akceptacji. Po zatwierdzeniu pojawi się w bazie.");
+    setActionNotice({
+      tone: "success",
+      message: "Wysłano szkolenie do akceptacji. Po zatwierdzeniu pojawi się w bazie.",
+    });
   };
 
   const fieldBase =
@@ -1146,8 +1234,31 @@ export default function TrainingHubClient() {
   const pillBase =
     "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none shadow-sm";
 
+  const activeFilterChips = [
+    q.trim() ? { key: "q", label: `Szukaj: ${q.trim()}`, clear: () => setQ("") } : null,
+    professionFilter !== "all" ? { key: "profession", label: `Zawód: ${professionOptions.find((option) => option.code === professionFilter)?.name_pl ?? (professionFilter === "general" ? "dla wszystkich" : professionFilter === "unknown" ? "niepodani" : professionFilter)}`, clear: () => setProfessionFilter("all") } : null,
+    place !== "all" ? { key: "place", label: `Miejsce: ${VOIVODESHIP_OPTIONS.find((option) => option.value === place)?.label ?? place}`, clear: () => setPlace("all") } : null,
+    timeWindow !== DEFAULT_FILTERS.timeWindow ? { key: "time", label: `Termin: ${TIME_WINDOW_OPTIONS.find((option) => option.value === timeWindow)?.label ?? timeWindow}`, clear: () => setTimeWindow(DEFAULT_FILTERS.timeWindow) } : null,
+    format !== "all" ? { key: "format", label: `Forma: ${FORMAT_OPTIONS.find((option) => option.value === format)?.label ?? format}`, clear: () => setFormat("all") } : null,
+    minPoints !== "all" ? { key: "points", label: `Punkty: ${POINTS_OPTIONS.find((option) => option.value === minPoints)?.label ?? minPoints}`, clear: () => setMinPoints("all") } : null,
+    organizer !== "all" ? { key: "organizer", label: `Organizator: ${organizer}`, clear: () => setOrganizer("all") } : null,
+    category !== "all" ? { key: "category", label: `Kategoria: ${CATEGORY_OPTIONS.find((option) => option.value === category)?.label ?? category}`, clear: () => setCategory("all") } : null,
+    priceMode !== "all" ? { key: "price", label: `Cena: ${PRICE_OPTIONS.find((option) => option.value === priceMode)?.label ?? priceMode}`, clear: () => setPriceMode("all") } : null,
+    topic !== "all" ? { key: "topic", label: `Temat: ${topic}`, clear: () => setTopic("all") } : null,
+    enrollment !== "all" ? { key: "enrollment", label: `Zapisy: ${ENROLLMENT_OPTIONS.find((option) => option.value === enrollment)?.label ?? enrollment}`, clear: () => setEnrollment("all") } : null,
+  ].filter((chip): chip is { key: string; label: string; clear: () => void } => Boolean(chip));
+
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[#eaf1f8]">
+      {actionNotice ? (
+        <div className={`fixed bottom-4 left-4 right-4 z-[70] mx-auto flex max-w-xl items-start justify-between gap-3 rounded-2xl border p-4 text-sm shadow-xl sm:left-auto sm:right-6 ${actionNotice.tone === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"}`} role={actionNotice.tone === "error" ? "alert" : "status"} aria-live="polite">
+          <div>
+            <p className="font-semibold leading-6">{actionNotice.message}</p>
+            {actionNotice.url ? <a href={actionNotice.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 font-bold underline">Przejdź do zapisów <ExternalLink className="h-4 w-4" /></a> : null}
+          </div>
+          <button type="button" onClick={() => setActionNotice(null)} className="rounded-lg p-1 hover:bg-black/5" aria-label="Zamknij komunikat"><X className="h-4 w-4" /></button>
+        </div>
+      ) : null}
       <div className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-7 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white px-5 py-4 shadow-[0_6px_16px_rgba(15,23,42,0.08)] sm:px-6">
           <div className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full bg-amber-400" />
@@ -1173,10 +1284,11 @@ export default function TrainingHubClient() {
               <button
                 onClick={() => {
                   if (user) {
+                    setFormErrors({});
                     setAddOpen(true);
                     return;
                   }
-                  window.location.href = "/login";
+                  window.location.assign("/login");
                 }}
                 className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 text-sm font-semibold text-amber-900 shadow-sm transition hover:border-amber-400 hover:bg-amber-100 active:scale-[0.98] sm:w-auto"
                 type="button"
@@ -1192,11 +1304,10 @@ export default function TrainingHubClient() {
           className="mt-5 rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_6px_16px_rgba(15,23,42,0.075)]"
           onSubmit={(event) => {
             event.preventDefault();
-            void load();
           }}
         >
-          <div className="mb-4 grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 lg:grid-cols-12 lg:gap-3">
-            <div className="col-span-3 lg:col-span-7">
+          <div className="mb-4 grid grid-cols-[40px_minmax(0,1fr)] items-center gap-2 lg:grid-cols-12 lg:gap-3">
+            <div className="col-span-2 lg:col-span-9">
               <div className="text-sm font-semibold text-slate-900">
                 Znajdź szkolenie
               </div>
@@ -1211,7 +1322,7 @@ export default function TrainingHubClient() {
               disabled={fetching}
               aria-label="Wyczyść filtry"
               title="Wyczyść filtry"
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-60 lg:col-start-8 lg:justify-self-end"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-60 lg:col-start-10 lg:justify-self-end"
             >
               <RotateCcw className="h-4 w-4" strokeWidth={2} />
             </button>
@@ -1235,13 +1346,6 @@ export default function TrainingHubClient() {
               />
             </button>
 
-            <button
-              className="inline-flex h-10 min-w-0 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 lg:col-span-2 lg:px-5"
-              disabled={fetching}
-              type="submit"
-            >
-              {fetching ? "Szukam…" : "Pokaż wyniki"}
-            </button>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
@@ -1471,19 +1575,17 @@ export default function TrainingHubClient() {
                 </select>
               </div>
 
-              <div>
-                <span className={labelBase}>Zakres</span>
-                <label className="flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-xs font-medium text-slate-600 shadow-sm shadow-slate-900/5">
-                  <input
-                    name="training-upcoming"
-                    type="checkbox"
-                    checked={onlyUpcoming}
-                    onChange={(e) => setOnlyUpcoming(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
-                  />
-                  Nadchodzące
-                </label>
-              </div>
+            </div>
+          ) : null}
+
+          {activeFilterChips.length ? (
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3" aria-label="Aktywne filtry">
+              {activeFilterChips.map((chip) => (
+                <button key={chip.key} type="button" onClick={chip.clear} className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-800 hover:bg-blue-100" aria-label={`Usuń filtr: ${chip.label}`}>
+                  {chip.label}<X className="h-3.5 w-3.5" />
+                </button>
+              ))}
+              <button type="button" onClick={resetFilters} className="min-h-8 px-2 text-xs font-bold text-slate-600 hover:text-slate-900">Wyczyść wszystkie</button>
             </div>
           ) : null}
 
@@ -1503,7 +1605,7 @@ export default function TrainingHubClient() {
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-600">
                 Wyniki wyszukiwania
               </p>
-              <h2 className="mt-0.5 text-lg font-bold tracking-tight text-slate-950 sm:text-xl">
+              <h2 className="mt-0.5 text-lg font-bold tracking-tight text-slate-950 sm:text-xl" aria-live="polite" aria-atomic="true">
                 {fetching
                   ? "Szukamy dopasowanych szkoleń…"
                   : matchedTrainingCountLabel(visibleItems.length)}
@@ -1522,7 +1624,6 @@ export default function TrainingHubClient() {
               onChange={(event) => {
                 const nextSort = event.target.value as SortBy;
                 setSortBy(nextSort);
-                void load({ sortBy: nextSort });
               }}
               disabled={fetching}
               className={fieldBase}
@@ -1538,7 +1639,7 @@ export default function TrainingHubClient() {
 
         <div
           className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]"
-          onClick={clearCalendarSelection}
+          aria-busy={fetching}
         >
           <div
             className={
@@ -1573,6 +1674,14 @@ export default function TrainingHubClient() {
               </div>
             ) : null}
 
+            {fetching && allItems.length === 0
+              ? Array.from({ length: 4 }, (_, index) => (
+                  <div key={`training-skeleton-${index}`} className="animate-pulse rounded-2xl border border-slate-200 bg-white p-4" aria-hidden="true">
+                    <div className="flex gap-4"><div className="h-14 w-14 rounded-xl bg-slate-100" /><div className="flex-1"><div className="h-4 w-2/3 rounded bg-slate-100" /><div className="mt-3 h-3 w-full rounded bg-slate-100" /><div className="mt-2 h-3 w-4/5 rounded bg-slate-100" /></div></div>
+                  </div>
+                ))
+              : null}
+
             {displayedItems.map((t) => {
               const dd = daysDiffFromToday(t.start_date);
               const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
@@ -1596,12 +1705,12 @@ export default function TrainingHubClient() {
                 audience === "Nie wskazano"
                   ? labelProfession(t.profession)
                   : audience;
-              const showAudience = audienceLabel !== "Wszyscy medycy";
+              const showAudience = t.audience_scope !== "unknown" && audienceLabel !== "Wszyscy medycy";
+              const pointDisplay = pointsPresentation(t, professionFilter);
 
               return (
                 <article
                   key={t.id}
-                  onClick={(e) => e.stopPropagation()}
                   className="group relative isolate overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,0.055)] transition-all duration-200 hover:border-blue-200 hover:shadow-[0_5px_14px_rgba(37,99,235,0.09)] sm:p-3.5"
                 >
                   <div
@@ -1645,21 +1754,21 @@ export default function TrainingHubClient() {
                           ) : null}
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setDetailsTraining(t)}
+                      <Link
+                        href={trainingPath(t)}
                         className="mt-1.5 block w-full text-left"
                         aria-label={`Pokaż szczegóły szkolenia: ${t.title}`}
                       >
                         <h3 className="line-clamp-2 text-[15px] font-extrabold leading-[1.3] tracking-[-0.018em] text-slate-950 transition group-hover:text-blue-800 sm:text-[16px]">
                           {t.title}
                         </h3>
-                      </button>
+                      </Link>
 
                       <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-medium text-slate-600 sm:text-xs">
                         {t.organizer ? (
-                          <span className="min-w-0 max-w-full truncate font-semibold text-slate-700 sm:max-w-[48%]">
-                            {t.organizer}
+                          <span className="inline-flex min-w-0 max-w-full items-center gap-2 truncate font-semibold text-slate-700 sm:max-w-[52%]">
+                            {t.organizer_logo_url ? <OrganizerLogo name={t.organizer} src={t.organizer_logo_url} /> : null}
+                            <span className="truncate">{t.organizer}</span>
                           </span>
                         ) : null}
                         {showRange && range ? (
@@ -1685,47 +1794,31 @@ export default function TrainingHubClient() {
                             <span className="truncate">{audienceLabel}</span>
                           </span>
                         ) : null}
-                        <button
-                          type="button"
-                          onClick={() => setDetailsTraining(t)}
+                        <Link
+                          href={trainingPath(t)}
                           className="inline-flex items-center gap-0.5 font-bold text-blue-700 transition hover:text-blue-800"
                           aria-label={`Pokaż pełne szczegóły szkolenia: ${t.title}`}
                         >
                           Szczegóły
                           <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.2} />
-                        </button>
+                        </Link>
                       </div>
                     </div>
 
-                    <div className="relative col-span-2 mt-0.5 border-t border-slate-100 bg-gradient-to-r from-slate-50/30 to-blue-50/70 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-t-0 sm:bg-none sm:pl-4 sm:pt-0">
-                      <div className="relative min-h-[42px] overflow-hidden sm:min-h-[70px]">
-                        {t.organizer_logo_url ? (
-                          <span className="pointer-events-none absolute -right-3 -top-1 hidden sm:block" aria-hidden="true">
-                            <OrganizerLogo
-                              name={t.organizer}
-                              src={t.organizer_logo_url}
-                              watermark
-                            />
-                          </span>
-                        ) : t.organizer ? (
-                          <span
-                            className="pointer-events-none absolute right-1 top-1/2 hidden max-w-[190px] -translate-y-1/2 text-right text-[12px] font-black uppercase leading-tight tracking-[0.08em] text-blue-900/[0.16] sm:block"
-                            aria-hidden="true"
-                          >
-                            {t.organizer}
-                          </span>
-                        ) : null}
-
+                    <div className="col-span-2 mt-0.5 border-t border-slate-100 bg-gradient-to-r from-slate-50/30 to-blue-50/70 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-t-0 sm:bg-none sm:pl-4 sm:pt-0">
+                      <div className="flex min-h-[54px] items-center justify-between gap-2">
                         <span
-                          className="absolute bottom-1.5 left-0 z-10 inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-blue-100/90 bg-white/80 px-2.5 py-1.5 text-blue-700 shadow-[0_2px_8px_rgba(37,99,235,0.08)] backdrop-blur-[2px] sm:bottom-2"
+                          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-blue-700"
                           title={pointsDetailsLabel(t.points_verification_status)}
-                          aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
+                          aria-label={`${pointDisplay.detail}. ${pointsDetailsLabel(t.points_verification_status)}`}
                         >
                           <GraduationCap className="h-5 w-5 shrink-0" strokeWidth={2.1} />
-                          <span className="text-[20px] font-black leading-none tracking-[-0.04em]">
-                            {typeof t.points === "number" ? t.points : "—"}
-                          </span>
-                          <span className="text-xs font-bold text-blue-600">pkt</span>
+                          <span className="text-[20px] font-black leading-none tracking-[-0.04em]">{pointDisplay.main}</span>
+                          <span className="text-[13px] font-bold text-blue-600">{pointDisplay.suffix}</span>
+                        </span>
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-bold ${t.points_verification_status === "verified" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : t.points_verification_status === "organizer_declared" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
+                          {t.points_verification_status === "verified" ? <CheckCircle2 className="h-3 w-3" /> : <Info className="h-3 w-3" />}
+                          {shortVerificationLabel(t.points_verification_status)}
                         </span>
                       </div>
 
@@ -1735,14 +1828,14 @@ export default function TrainingHubClient() {
                             href={t.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex h-10 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-300 bg-white/95 px-2 text-[10px] font-bold tracking-[-0.01em] text-slate-700 shadow-sm backdrop-blur-[2px] transition hover:border-blue-300 hover:bg-blue-50/95 hover:text-blue-700 active:scale-[0.98] sm:h-9 sm:text-[10.5px]"
+                            className="inline-flex h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-blue-600 px-2 text-[13px] font-bold tracking-[-0.01em] text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-10"
                           >
-                            <span>Przejdź do zapisów</span>
+                            <span>Zapisy u organizatora</span>
                             <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                           </a>
                         ) : (
                           <button
-                            className="inline-flex h-10 min-w-0 cursor-not-allowed items-center justify-center whitespace-nowrap rounded-xl bg-slate-100 px-1.5 text-[9.5px] font-bold text-slate-400 sm:h-9 sm:text-[10px]"
+                            className="inline-flex h-11 min-w-0 cursor-not-allowed items-center justify-center whitespace-nowrap rounded-xl bg-slate-100 px-2 text-[13px] font-bold text-slate-400 sm:h-10"
                             disabled
                             type="button"
                           >
@@ -1752,11 +1845,11 @@ export default function TrainingHubClient() {
 
                         <button
                           onClick={() => chooseTraining(t)}
-                          className="inline-flex h-10 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-blue-600 px-2 text-[10px] font-bold tracking-[-0.01em] text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-9 sm:text-[10.5px]"
+                          className="inline-flex h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-2 text-[13px] font-bold tracking-[-0.01em] text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 active:scale-[0.98] sm:h-10"
                           type="button"
                           title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
                         >
-                          <Plus className="h-4 w-4 shrink-0 text-white" strokeWidth={2.6} />
+                          <Plus className="h-4 w-4 shrink-0" strokeWidth={2.6} />
                           Dodaj do planu
                         </button>
                       </div>
@@ -1789,8 +1882,7 @@ export default function TrainingHubClient() {
           </div>
 
           <aside
-            className="space-y-4 lg:sticky lg:top-24 lg:self-start"
-            onClick={(e) => e.stopPropagation()}
+            className="order-first space-y-4 lg:order-none lg:sticky lg:top-24 lg:self-start"
           >
             <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
               <div className="flex items-center justify-between gap-3">
@@ -1799,18 +1891,30 @@ export default function TrainingHubClient() {
                     Kalendarz szkoleń
                   </div>
                   <div className="text-xs text-slate-500">
-                    4 miesiące z aktualnych filtrów
+                    {calendarMonths.length === 1 ? "1 miesiąc" : `${calendarMonths.length} mies.`} z wydarzeniami
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                <button type="button" onClick={() => setCalendarOpen((open) => !open)} className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-700 lg:hidden" aria-expanded={calendarOpen} aria-controls="training-calendar-content">
+                  {calendarOpen ? "Zwiń" : "Rozwiń"}<ChevronDown className={`h-4 w-4 transition-transform ${calendarOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                <div className="hidden flex-wrap items-center justify-end gap-x-2 gap-y-1 text-[10px] text-slate-400 lg:flex">
                   <span className="inline-flex h-2 w-2 rounded-full bg-blue-50 ring-1 ring-blue-200" />
                   online
                   <span className="inline-flex h-2 w-2 rounded-full bg-amber-50 ring-1 ring-amber-200" />
                   stacj.
+                  <span className="inline-flex h-2 w-2 rounded-full bg-indigo-50 ring-1 ring-indigo-200" />
+                  hybryd.
+                  <span className="inline-flex h-2 w-2 rounded-full bg-fuchsia-50 ring-1 ring-fuchsia-200" />
+                  różne
                 </div>
               </div>
 
+              <div id="training-calendar-content" className={`${calendarOpen ? "block" : "hidden"} lg:block`}>
+              <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 lg:hidden">
+                <span>🔵 online</span><span>🟠 stacjonarne</span><span>🟣 hybrydowe</span><span>🟪 różne formy</span>
+              </div>
               <div className="mt-4 space-y-4">
                 {calendarMonths.map((month) => (
                   <div
@@ -1840,13 +1944,17 @@ export default function TrainingHubClient() {
                           );
                         }
 
-                        const format = day.primary?.format ?? null;
+                        const formats = Array.from(new Set(day.events.map((event) => event.format).filter(Boolean)));
+                        const format = formats[0] ?? null;
+                        const hasMixedFormats = formats.length > 1;
                         const hasEvent = day.events.length > 0;
                         const isSelected =
                           selectedCalendarDateKey === day.dateKey;
 
                         const dayTone =
-                          format === "stacjonarne"
+                          hasMixedFormats
+                            ? "bg-fuchsia-50 text-fuchsia-800 ring-fuchsia-200 hover:bg-fuchsia-100"
+                            : format === "stacjonarne"
                             ? "bg-amber-50 text-amber-800 ring-amber-200 hover:bg-amber-100"
                             : format === "hybrydowe"
                             ? "bg-indigo-50 text-indigo-800 ring-indigo-200 hover:bg-indigo-100"
@@ -1898,9 +2006,10 @@ export default function TrainingHubClient() {
                   odpowiadające szkolenia po lewej.
                 </div>
               ) : null}
+              </div>
             </div>
 
-            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
+            <div className="hidden rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)] lg:block">
               <div className="text-sm font-semibold text-slate-950">
                 Najbliżej w planie
               </div>
@@ -1953,15 +2062,17 @@ export default function TrainingHubClient() {
 
       {addOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
+          <button
+            type="button"
+            aria-label="Zamknij formularz zgłoszenia"
             className="absolute inset-0 bg-black/30"
             onClick={() => (addSubmitting ? null : setAddOpen(false))}
           />
 
-          <div className="relative max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[1.45rem] border border-slate-300/80 bg-white p-5 shadow-xl shadow-slate-950/10">
+          <form ref={addDialogRef} role="dialog" aria-modal="true" aria-labelledby="add-training-title" tabIndex={-1} onSubmit={(event) => { event.preventDefault(); void submitNewTraining(); }} className="relative max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[1.45rem] border border-slate-300/80 bg-white p-5 shadow-xl shadow-slate-950/10 outline-none">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-lg font-semibold text-slate-950">
+                <div id="add-training-title" className="text-lg font-semibold text-slate-950">
                   Dodaj szkolenie do bazy
                 </div>
                 <div className="mt-1 text-sm leading-relaxed text-slate-600">
@@ -1980,25 +2091,34 @@ export default function TrainingHubClient() {
               </button>
             </div>
 
+            {formErrors.general ? <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-800">{formErrors.general}</div> : null}
+
             <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12">
               <div className="md:col-span-8">
-                <label className={labelBase}>Tytuł *</label>
+                <label htmlFor="new-training-title" className={labelBase}>Tytuł *</label>
                 <input
+                  id="new-training-title"
                   value={fTitle}
-                  onChange={(e) => setFTitle(e.target.value)}
+                  onChange={(e) => { setFTitle(e.target.value); setFormErrors((errors) => ({ ...errors, title: "" })); }}
                   className={fieldBase}
                   placeholder="np. Diagnostyka sepsy — biomarkery i panel…"
+                  aria-invalid={Boolean(formErrors.title)}
+                  aria-describedby={formErrors.title ? "new-training-title-error" : undefined}
                 />
+                {formErrors.title ? <p id="new-training-title-error" className="mt-1 text-xs font-semibold text-red-700">{formErrors.title}</p> : null}
               </div>
 
               <div className="md:col-span-4">
-                <label className={labelBase}>Punkty *</label>
+                <label htmlFor="new-training-points" className={labelBase}>Punkty *</label>
                 <input
+                  id="new-training-points"
                   value={fPoints}
-                  onChange={(e) => setFPoints(e.target.value)}
+                  onChange={(e) => { setFPoints(e.target.value); setFormErrors((errors) => ({ ...errors, points: "" })); }}
                   className={fieldBase}
                   inputMode="numeric"
+                  aria-invalid={Boolean(formErrors.points)}
                 />
+                {formErrors.points ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.points}</p> : null}
               </div>
 
               <div className="md:col-span-6">
@@ -2029,21 +2149,26 @@ export default function TrainingHubClient() {
                     onChange={(event) => {
                       const file = event.currentTarget.files?.[0] ?? null;
                       if (!file) {
+                        setFLogoPreview(null);
                         setFLogo(null);
                         return;
                       }
                       if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
-                        alert("Wybierz plik PNG, JPG lub WebP.");
+                        setFormErrors((errors) => ({ ...errors, logo: "Wybierz plik PNG, JPG lub WebP." }));
                         event.currentTarget.value = "";
                         setFLogo(null);
+                        setFLogoPreview(null);
                         return;
                       }
                       if (file.size > 2 * 1024 * 1024) {
-                        alert("Logo może mieć maksymalnie 2 MB.");
+                        setFormErrors((errors) => ({ ...errors, logo: "Logo może mieć maksymalnie 2 MB." }));
                         event.currentTarget.value = "";
                         setFLogo(null);
+                        setFLogoPreview(null);
                         return;
                       }
+                      setFormErrors((errors) => ({ ...errors, logo: "" }));
+                      setFLogoPreview(URL.createObjectURL(file));
                       setFLogo(file);
                     }}
                   />
@@ -2051,6 +2176,7 @@ export default function TrainingHubClient() {
                 <div className="mt-1 text-xs text-slate-500">
                   PNG, JPG lub WebP, maks. 2 MB. Plik zostanie bezpiecznie zmniejszony.
                 </div>
+                {formErrors.logo ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.logo}</p> : null}
               </div>
 
               <div className="md:col-span-3">
@@ -2085,32 +2211,39 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className={labelBase}>Start *</label>
+                <label htmlFor="new-training-start" className={labelBase}>Start *</label>
                 <input
+                  id="new-training-start"
                   type="date"
                   value={fStart}
-                  onChange={(e) => setFStart(e.target.value)}
+                  onChange={(e) => { setFStart(e.target.value); setFormErrors((errors) => ({ ...errors, start: "", end: "" })); }}
                   className={fieldBase}
+                  aria-invalid={Boolean(formErrors.start)}
                 />
+                {formErrors.start ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.start}</p> : null}
               </div>
 
               <div className="md:col-span-3">
-                <label className={labelBase}>Koniec</label>
+                <label htmlFor="new-training-end" className={labelBase}>Koniec</label>
                 <input
+                  id="new-training-end"
                   type="date"
                   value={fEnd}
-                  onChange={(e) => setFEnd(e.target.value)}
+                  onChange={(e) => { setFEnd(e.target.value); setFormErrors((errors) => ({ ...errors, end: "" })); }}
                   className={fieldBase}
+                  aria-invalid={Boolean(formErrors.end)}
                 />
+                {formErrors.end ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.end}</p> : null}
               </div>
 
               <div className="md:col-span-12">
                 <TrainingAudienceField
                   value={fProfession}
-                  onChange={setFProfession}
+                  onChange={(value) => { setFProfession(value); setFormErrors((errors) => ({ ...errors, audience: "" })); }}
                   options={professionOptions}
                   disabled={addSubmitting}
                 />
+                {formErrors.audience ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.audience}</p> : null}
               </div>
 
               <div className="md:col-span-6">
@@ -2158,23 +2291,29 @@ export default function TrainingHubClient() {
               </div>
 
               <div className="md:col-span-3">
-                <label className={labelBase}>Cena PLN</label>
+                <label htmlFor="new-training-price" className={labelBase}>Cena PLN</label>
                 <input
+                  id="new-training-price"
                   value={fPrice}
-                  onChange={(e) => setFPrice(e.target.value)}
+                  onChange={(e) => { setFPrice(e.target.value); setFormErrors((errors) => ({ ...errors, price: "" })); }}
                   className={fieldBase}
                   placeholder="np. 0 lub 199"
+                  aria-invalid={Boolean(formErrors.price)}
                 />
+                {formErrors.price ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.price}</p> : null}
               </div>
 
               <div className="md:col-span-3">
-                <label className={labelBase}>Limit miejsc</label>
+                <label htmlFor="new-training-capacity" className={labelBase}>Limit miejsc</label>
                 <input
+                  id="new-training-capacity"
                   value={fCap}
-                  onChange={(e) => setFCap(e.target.value)}
+                  onChange={(e) => { setFCap(e.target.value); setFormErrors((errors) => ({ ...errors, capacity: "" })); }}
                   className={fieldBase}
                   placeholder="np. 50"
+                  aria-invalid={Boolean(formErrors.capacity)}
                 />
+                {formErrors.capacity ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.capacity}</p> : null}
               </div>
 
               <div className="md:col-span-3">
@@ -2218,162 +2357,16 @@ export default function TrainingHubClient() {
 
               <button
                 className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 disabled:opacity-60"
-                onClick={submitNewTraining}
                 disabled={addSubmitting}
-                type="button"
+                type="submit"
               >
                 {addSubmitting ? "Wysyłam…" : "Wyślij do akceptacji"}
               </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
 
-      {detailsTraining ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <button
-            type="button"
-            className="absolute inset-0 bg-slate-950/45"
-            onClick={() => setDetailsTraining(null)}
-            aria-label="Zamknij szczegóły szkolenia"
-          />
-
-          <article
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="training-details-title"
-            className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-2xl sm:p-7"
-          >
-            <button
-              type="button"
-              onClick={() => setDetailsTraining(null)}
-              className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
-              aria-label="Zamknij"
-            >
-              <X className="h-4 w-4" />
-            </button>
-
-            <div className="flex items-start gap-4 pr-11">
-              {detailsTraining.organizer_logo_url ? (
-                <OrganizerLogo
-                  name={detailsTraining.organizer}
-                  src={detailsTraining.organizer_logo_url}
-                  large
-                />
-              ) : null}
-              <div className="min-w-0">
-                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">
-                  {labelCategory(detailsTraining.category)} · {labelType(detailsTraining.format)}
-                </div>
-                <h2
-                  id="training-details-title"
-                  className="mt-2 text-2xl font-bold tracking-tight text-slate-950"
-                >
-                  {detailsTraining.title}
-                </h2>
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                  {detailsTraining.organizer || "Organizator niepodany"}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              {[
-                ["Termin", dateRangeShort(detailsTraining.start_date, detailsTraining.end_date) || "—"],
-                ["Miejsce", detailsTraining.voivodeship || (detailsTraining.format === "online" ? "Online" : "—")],
-                ["Punkty", typeof detailsTraining.points === "number" ? `${detailsTraining.points} pkt edukacyjnych` : "Do potwierdzenia"],
-                ["Adresaci", labelProfession(detailsTraining.profession)],
-                ["Cena", formatPrice(detailsTraining.price_pln ?? null) || "Nie podano"],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                    {label}
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-slate-800">{value}</div>
-                </div>
-              ))}
-            </div>
-
-            {detailsTraining.points_verification_status !== "verified" ? (
-              <div className="mt-4 flex gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-                <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-                <div>
-                  <span className="font-semibold text-slate-800">
-                    {pointsDetailsLabel(detailsTraining.points_verification_status)}.
-                  </span>{" "}
-                  Przed zapisem upewnij się, że wskazana liczba punktów dotyczy
-                  Twojego zawodu.
-                  {detailsTraining.points_source_url ? (
-                    <a
-                      href={detailsTraining.points_source_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="ml-1 font-semibold text-blue-700 underline"
-                    >
-                      Zobacz źródło
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-
-            <div className="mt-6 rounded-2xl border border-slate-200 p-4">
-              <h3 className="text-sm font-bold text-slate-900">O szkoleniu</h3>
-              <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-600">
-                {detailsTraining.description ||
-                  "Organizator nie przekazał jeszcze szerszego opisu wydarzenia. Szczegóły sprawdzisz na stronie zapisów."}
-              </p>
-            </div>
-
-            {detailsTraining.topics?.length ? (
-              <div className="mt-4 rounded-2xl border border-slate-200 p-4">
-                <h3 className="text-sm font-bold text-slate-900">Tematy szkolenia</h3>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {detailsTraining.topics.map((topicLabel) => (
-                    <span
-                      key={topicLabel}
-                      className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600"
-                    >
-                      {topicLabel}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            <div className="mt-4 flex gap-2 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-blue-800">
-              <Info className="mt-0.5 h-4 w-4 shrink-0" />
-              Dodanie do planu CRPE nie jest zapisem na szkolenie. Rejestrację uczestnika prowadzi organizator.
-            </div>
-
-            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
-              {detailsTraining.url ? (
-                <a
-                  href={detailsTraining.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-                >
-                  Zapisy u organizatora <ExternalLink className="h-4 w-4" />
-                </a>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => {
-                  if (user) {
-                    void chooseTraining(detailsTraining);
-                    return;
-                  }
-                  window.location.href = "/login";
-                }}
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700"
-              >
-                {user ? "Dodaj do planu CPD" : "Zaloguj, aby dodać do planu"}
-              </button>
-            </div>
-          </article>
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -1,0 +1,204 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound, permanentRedirect } from "next/navigation";
+import { cache } from "react";
+import {
+  Award,
+  CalendarDays,
+  CheckCircle2,
+  ExternalLink,
+  GraduationCap,
+  Info,
+  MapPin,
+  Users,
+} from "lucide-react";
+import { fetchPublicTrainingById } from "@/lib/data/crpe";
+import { getSiteUrl } from "@/lib/siteUrl";
+import { publicSupabaseServer } from "@/lib/supabase/publicServer";
+import {
+  pointVerificationLabel,
+  publicTrainingPointsLabel,
+  trainingIdFromSlug,
+  trainingPath,
+} from "@/lib/trainings/public";
+
+export const dynamic = "force-dynamic";
+
+type PageProps = { params: Promise<{ slug: string }> };
+
+const getTraining = cache(async (slug: string) => {
+  const id = trainingIdFromSlug(slug);
+  if (!id) return null;
+  try {
+    return await fetchPublicTrainingById(publicSupabaseServer(), id);
+  } catch (error) {
+    console.error("Public training detail load failed", error);
+    return null;
+  }
+});
+
+function formatDate(value: string | null) {
+  if (!value) return "Nie podano";
+  return new Intl.DateTimeFormat("pl-PL", { dateStyle: "long" }).format(
+    new Date(`${value}T00:00:00`),
+  );
+}
+
+function formatPrice(value: number | null | undefined) {
+  if (typeof value !== "number") return "Cena niepodana";
+  if (value === 0) return "Bezpłatne";
+  return `${value.toLocaleString("pl-PL", { maximumFractionDigits: 2 })} zł`;
+}
+
+function formatDelivery(value: string | null | undefined) {
+  if (value === "stacjonarne") return "Stacjonarne";
+  if (value === "hybrydowe") return "Hybrydowe";
+  if (value === "online") return "Online / webinar";
+  return "Forma niepodana";
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const training = await getTraining(slug);
+  if (!training) return { title: "Szkolenie niedostępne — CRPE" };
+
+  const description =
+    training.description?.slice(0, 155) ||
+    `${publicTrainingPointsLabel(training)}. ${formatDelivery(training.format)}. Sprawdź termin i zapisy u organizatora.`;
+  const canonical = trainingPath(training);
+
+  return {
+    title: `${training.title} — szkolenie medyczne | CRPE`,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: "website",
+      title: training.title,
+      description,
+      url: canonical,
+      images: training.organizer_logo_url ? [training.organizer_logo_url] : undefined,
+    },
+  };
+}
+
+export default async function TrainingPage({ params }: PageProps) {
+  const { slug } = await params;
+  const training = await getTraining(slug);
+  if (!training) notFound();
+
+  const canonicalPath = trainingPath(training);
+  if (`/baza-szkolen/${slug}` !== canonicalPath) permanentRedirect(canonicalPath);
+
+  const siteUrl = getSiteUrl();
+  const canonicalUrl = `${siteUrl}${canonicalPath}`;
+  const starts = training.start_date || undefined;
+  const ends = training.end_date || starts;
+  const courseJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: training.title,
+    description: training.description || undefined,
+    url: canonicalUrl,
+    provider: training.organizer
+      ? { "@type": "Organization", name: training.organizer }
+      : undefined,
+    hasCourseInstance: {
+      "@type": "CourseInstance",
+      courseMode:
+        training.format === "online"
+          ? "online"
+          : training.format === "hybrydowe"
+            ? "blended"
+            : "onsite",
+      startDate: starts,
+      endDate: ends,
+      location:
+        training.format === "online"
+          ? { "@type": "VirtualLocation", url: training.external_url || canonicalUrl }
+          : training.voivodeship
+            ? { "@type": "Place", name: training.voivodeship }
+            : undefined,
+    },
+  };
+
+  const audience =
+    training.audience_scope === "all_medical"
+      ? "Wszyscy medycy"
+      : training.profession || "Adresaci niepodani";
+
+  return (
+    <main className="min-h-[calc(100vh-64px)] bg-[#eaf1f8] px-4 py-8 sm:px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd).replace(/</g, "\\u003c") }}
+      />
+      <article className="mx-auto max-w-4xl overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.10)]">
+        <div className="border-b border-slate-200 bg-gradient-to-br from-white to-blue-50 px-5 py-6 sm:px-8 sm:py-8">
+          <Link href="/baza-szkolen" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
+            ← Wróć do bazy szkoleń
+          </Link>
+          <div className="mt-6 flex items-start gap-4">
+            {training.organizer_logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={training.organizer_logo_url} alt="" className="h-14 w-14 rounded-2xl border border-slate-200 bg-white object-contain p-2 shadow-sm" />
+            ) : null}
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-blue-700">{training.organizer || "Organizator niepodany"}</p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{training.title}</h1>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-8 px-5 py-6 sm:px-8 sm:py-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                [CalendarDays, "Termin", training.end_date && training.end_date !== training.start_date ? `${formatDate(training.start_date)} – ${formatDate(training.end_date)}` : formatDate(training.start_date)],
+                [MapPin, "Forma i miejsce", `${formatDelivery(training.format)}${training.voivodeship ? ` · ${training.voivodeship}` : ""}`],
+                [GraduationCap, "Punkty", publicTrainingPointsLabel(training)],
+                [Users, "Adresaci", audience],
+                [Award, "Cena", formatPrice(training.price_pln)],
+                [CheckCircle2, "Weryfikacja", pointVerificationLabel(training.points_verification_status)],
+              ].map(([Icon, label, value]) => {
+                const ItemIcon = Icon as typeof CalendarDays;
+                return (
+                  <div key={String(label)} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-slate-500"><ItemIcon className="h-4 w-4" />{String(label)}</div>
+                    <p className="mt-2 text-sm font-semibold leading-6 text-slate-900">{String(value)}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <section className="mt-6">
+              <h2 className="text-xl font-bold text-slate-950">O szkoleniu</h2>
+              <p className="mt-3 whitespace-pre-line text-base leading-8 text-slate-600">
+                {training.description || "Organizator nie przekazał jeszcze szerszego opisu. Aktualne informacje znajdziesz na stronie zapisów."}
+              </p>
+            </section>
+
+            {training.topics?.length ? (
+              <section className="mt-6">
+                <h2 className="text-lg font-bold text-slate-950">Tematy</h2>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {training.topics.map((topic) => <span key={topic} className="rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800">{topic}</span>)}
+                </div>
+              </section>
+            ) : null}
+          </div>
+
+          <aside className="self-start rounded-2xl border border-blue-100 bg-blue-50 p-4 lg:sticky lg:top-24">
+            <div className="flex gap-2 text-sm leading-6 text-blue-900"><Info className="mt-1 h-4 w-4 shrink-0" /><p>Dodanie szkolenia do planu CRPE nie jest zapisem. Rejestrację prowadzi organizator.</p></div>
+            {training.external_url ? (
+              <a href={training.external_url} target="_blank" rel="noreferrer" className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700">
+                Zapisy u organizatora <ExternalLink className="h-4 w-4" />
+              </a>
+            ) : (
+              <p className="mt-4 rounded-xl bg-white p-3 text-sm font-semibold text-slate-600">Link do zapisów nie został podany.</p>
+            )}
+          </aside>
+        </div>
+      </article>
+    </main>
+  );
+}

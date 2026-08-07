@@ -986,16 +986,38 @@ export async function fetchTrainings(client: Client): Promise<LegacyTraining[]> 
  */
 export async function fetchPublicTrainings(
   client: Client,
+  signal?: AbortSignal,
 ): Promise<LegacyTraining[]> {
-  const { data, error } = await client
+  let query = client
     .from("trainings")
     .select(
       "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
     )
     .eq("approval_status", "approved")
     .order("starts_on", { ascending: true, nullsFirst: false });
+
+  if (signal) query = query.abortSignal(signal);
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return ((data ?? []) as Record<string, any>[]).map(toLegacyTraining);
+}
+
+export async function fetchPublicTrainingById(
+  client: Client,
+  trainingId: string,
+): Promise<LegacyTraining | null> {
+  const { data, error } = await client
+    .from("trainings")
+    .select(
+      "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
+    )
+    .eq("approval_status", "approved")
+    .eq("id", trainingId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data ? toLegacyTraining(data as Record<string, any>) : null;
 }
 
 export function toNormalizedTraining(
