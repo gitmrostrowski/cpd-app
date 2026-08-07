@@ -8,7 +8,7 @@ const client = fs.readFileSync(
 const filterHeading = client.indexOf("Znajdź szkolenie");
 const filterGrid = client.indexOf('className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12"');
 const moreFilters = client.indexOf("Więcej filtrów", filterHeading);
-const clearFilters = client.indexOf("Wyczyść", filterHeading);
+const clearFilters = client.indexOf('aria-label="Wyczyść filtry"', filterHeading);
 const showResults = client.indexOf("Pokaż wyniki", filterHeading);
 
 const checks = [
@@ -22,22 +22,21 @@ const checks = [
   ],
   [
     "Hierarchia działań rozróżnia opcję, reset i główne CTA",
-    client.includes("border-blue-200 bg-blue-50/70") &&
-      client.includes("hover:bg-slate-100 hover:text-slate-800") &&
+    client.includes("hover:bg-blue-50 hover:text-blue-700") &&
+      client.includes("hover:bg-slate-50 hover:text-slate-800") &&
       client.includes("rounded-xl bg-blue-600"),
   ],
   [
     "Układ działań jest responsywny",
-    client.includes("grid w-full grid-cols-2 gap-2") &&
-      client.includes("col-span-2 inline-flex") &&
-      client.includes("sm:col-span-1 sm:min-w-[168px]"),
+    client.includes("grid w-full grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)]") &&
+      client.includes('className="sm:hidden">Filtry</span>') &&
+      client.includes("sm:min-w-[168px]"),
   ],
   [
     "Punkty mają wyraźny moduł z ikoną edukacji",
     client.includes("GraduationCap") &&
-      client.includes("punkty edukacyjne") &&
-      client.includes("text-[22px] font-black") &&
-      client.includes("border border-blue-100 bg-blue-50/70"),
+      client.includes("text-[20px] font-black") &&
+      client.includes("text-xs font-bold text-blue-600"),
   ],
   [
     "Lista nie eksponuje technicznego komunikatu o braku weryfikacji",
@@ -48,8 +47,7 @@ const checks = [
     "Status punktacji pozostaje dostępny w szczegółach i dla czytników",
     client.includes("pointsDetailsLabel(t.points_verification_status)") &&
       client.includes("pointsDetailsLabel(detailsTraining.points_verification_status)") &&
-      client.includes('aria-label="Punkty potwierdzone"') &&
-      client.includes('aria-label="Informacja o punktach w szczegółach"'),
+      client.includes('punktów. ${pointsDetailsLabel(t.points_verification_status)}'),
   ],
 ];
 
@@ -60,4 +58,3 @@ for (const [label, ok] of checks) {
 }
 
 if (failed) process.exit(1);
-

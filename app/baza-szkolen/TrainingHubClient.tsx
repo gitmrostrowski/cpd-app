@@ -1200,16 +1200,19 @@ export default function TrainingHubClient() {
               </div>
             </div>
 
-            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+            <div className="grid w-full grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] items-center gap-2 sm:flex sm:w-auto sm:justify-end">
               <button
                 type="button"
                 onClick={() => setShowMoreFilters((value) => !value)}
                 aria-expanded={showMoreFilters}
                 aria-controls="advanced-training-filters"
-                className="col-span-2 inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50/70 px-4 text-sm font-semibold text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100 sm:col-span-1 sm:min-w-[168px]"
+                className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 sm:min-w-[156px] sm:px-4"
               >
                 <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
-                {showMoreFilters ? "Mniej filtrów" : "Więcej filtrów"}
+                <span className="sm:hidden">Filtry</span>
+                <span className="hidden sm:inline">
+                  {showMoreFilters ? "Mniej filtrów" : "Więcej filtrów"}
+                </span>
                 <ChevronDown
                   className={`h-4 w-4 transition-transform ${
                     showMoreFilters ? "rotate-180" : ""
@@ -1221,14 +1224,15 @@ export default function TrainingHubClient() {
                 type="button"
                 onClick={resetFilters}
                 disabled={fetching}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 disabled:opacity-60 sm:min-w-[108px]"
+                aria-label="Wyczyść filtry"
+                title="Wyczyść filtry"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-60"
               >
                 <RotateCcw className="h-4 w-4" strokeWidth={2} />
-                Wyczyść
               </button>
 
               <button
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 sm:min-w-[168px]"
+                className="inline-flex h-10 min-w-0 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 sm:min-w-[168px] sm:px-5"
                 disabled={fetching}
                 type="submit"
               >
@@ -1633,8 +1637,9 @@ export default function TrainingHubClient() {
                         </div>
 
                         <div
-                          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-blue-100 bg-blue-50 px-2 py-1 text-blue-700 sm:hidden"
+                          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-0.5 py-1 text-blue-700 sm:hidden"
                           title={pointsDetailsLabel(t.points_verification_status)}
+                          aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
                         >
                           <GraduationCap className="h-4 w-4" strokeWidth={2.1} />
                           <span className="text-sm font-black">
@@ -1704,38 +1709,17 @@ export default function TrainingHubClient() {
                       </div>
                     </div>
 
-                    <div className="col-span-2 mt-0.5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:flex sm:min-h-[104px] sm:flex-col sm:justify-center sm:gap-2 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
+                    <div className="col-span-2 mt-0.5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:flex sm:flex-col sm:justify-center sm:gap-1.5 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
                       <div
-                        className="hidden items-center gap-2.5 rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2 text-left sm:flex"
+                        className="hidden h-7 items-center justify-center gap-2 whitespace-nowrap text-blue-700 sm:flex"
                         title={pointsDetailsLabel(t.points_verification_status)}
+                        aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
                       >
-                        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-blue-700 shadow-sm ring-1 ring-blue-100">
-                          <GraduationCap className="h-5 w-5" strokeWidth={2.1} />
+                        <GraduationCap className="h-5 w-5 shrink-0" strokeWidth={2.1} />
+                        <span className="text-[20px] font-black leading-none tracking-[-0.04em]">
+                          {typeof t.points === "number" ? t.points : "—"}
                         </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="whitespace-nowrap text-[22px] font-black leading-none tracking-[-0.05em] text-blue-700">
-                            {typeof t.points === "number" ? t.points : "—"}
-                            <span className="ml-1 text-xs font-bold tracking-normal text-blue-600">
-                              pkt
-                            </span>
-                          </div>
-                          <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">
-                            punkty edukacyjne
-                          </div>
-                        </div>
-                        {t.points_verification_status === "verified" ? (
-                          <CheckCircle2
-                            className="h-4 w-4 shrink-0 text-emerald-600"
-                            strokeWidth={2.2}
-                            aria-label="Punkty potwierdzone"
-                          />
-                        ) : (
-                          <Info
-                            className="h-3.5 w-3.5 shrink-0 text-slate-400"
-                            strokeWidth={2}
-                            aria-label="Informacja o punktach w szczegółach"
-                          />
-                        )}
+                        <span className="text-xs font-bold text-blue-600">pkt</span>
                       </div>
 
                       {t.url ? (

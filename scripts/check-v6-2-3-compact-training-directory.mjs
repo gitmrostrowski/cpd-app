@@ -17,8 +17,8 @@ const checks = [
     "Desktop ma zwarty układ data, treść i akcje",
     client.includes("sm:grid-cols-[52px_minmax(0,1fr)_188px]") &&
       client.includes('h-[58px] w-[52px]') &&
-      client.includes("sm:min-h-[104px]") &&
-      client.includes("space-y-2"),
+      client.includes("sm:flex-col sm:justify-center") &&
+      client.includes("sm:h-9"),
   ],
   [
     "Hierarchia ogranicza tagi i odróżnia brak weryfikacji od wszystkich medyków",

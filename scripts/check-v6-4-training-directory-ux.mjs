@@ -24,7 +24,7 @@ const checks = [
     client.includes("onSubmit={(event) =>") &&
       client.includes('type="submit"') &&
       client.includes("Pokaż wyniki") &&
-      client.includes("Wyczyść"),
+      client.includes('aria-label="Wyczyść filtry"'),
   ],
   [
     "Podstawowe filtry mają techniczne etykiety i nazwy",
@@ -77,4 +77,3 @@ for (const [label, ok] of checks) {
 }
 
 if (failed) process.exit(1);
-
