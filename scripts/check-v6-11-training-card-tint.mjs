@@ -30,9 +30,10 @@ const checks = [
   [
     "Różne proporcje logo mieszczą się w jednym bezpiecznym obszarze",
     client.includes('? "h-[72px] w-[210px]"') &&
-      client.includes('watermark ? "max-h-[64px] max-w-[196px] object-contain object-right') &&
-      client.includes("justify-end opacity-[0.52]") &&
-      actions.includes("sm:min-h-[66px]"),
+      client.includes("max-h-[64px] max-w-[196px] object-contain object-right") &&
+      client.includes("crpe-training-logo-watermark pointer-events-none justify-end") &&
+      client.includes("data-logo-shape") &&
+      actions.includes("sm:min-h-[70px]"),
   ],
   [
     "Logo i tinta nie przechwytują kliknięć ani nie obniżają kontrastu akcji",

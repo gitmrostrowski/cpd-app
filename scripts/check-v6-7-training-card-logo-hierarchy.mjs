@@ -35,14 +35,15 @@ const checks = [
     "Logo i punkty pozostają w zwartej strefie marki nad akcjami",
     actionColumnStart >= 0 &&
       client.includes("OrganizerLogo") &&
-      actionHeader.includes("sm:min-h-[66px]") &&
+      actionHeader.includes("sm:min-h-[70px]") &&
       actionHeader.includes("sm:h-9"),
   ],
   [
     "Logo karty jest widocznym znakiem bez dodatkowej ramki",
     client.includes('? "h-[72px] w-[210px]"') &&
-      client.includes("opacity-[0.52]") &&
-      client.includes('watermark ? "max-h-[64px] max-w-[196px] object-contain object-right') &&
+      client.includes("crpe-training-logo-watermark") &&
+      client.includes("max-h-[64px] max-w-[196px] object-contain object-right") &&
+      client.includes("mix-blend-multiply") &&
       actionHeader.includes("<OrganizerLogo"),
   ],
   [

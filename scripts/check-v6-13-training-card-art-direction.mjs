@@ -13,7 +13,7 @@ const actionsStart = card.indexOf(
 );
 const actions = card.slice(actionsStart);
 
-const brandIndex = actions.indexOf("sm:min-h-[66px]");
+const brandIndex = actions.indexOf("sm:min-h-[70px]");
 const pointsIndex = actions.indexOf(
   "pointsDetailsLabel(t.points_verification_status)",
 );
@@ -33,7 +33,9 @@ const checks = [
     client.includes('? "h-[72px] w-[210px]"') &&
       client.includes("max-h-[64px] max-w-[196px]") &&
       client.includes("object-contain object-right") &&
-      client.includes("opacity-[0.52]"),
+      client.includes("crpe-training-logo-watermark") &&
+      client.includes("data-logo-shape") &&
+      client.includes("mix-blend-multiply"),
   ],
   [
     "Brak logo wykorzystuje nazwę organizatora zamiast pozostawiać pustą półkę",
@@ -61,8 +63,8 @@ const checks = [
   ],
   [
     "Zmiana jest responsywna i nie ingeruje w logikę danych",
-    actions.includes("sm:min-h-[66px]") &&
-      actions.includes("hidden -translate-y-1/2 sm:block") &&
+    actions.includes("sm:min-h-[70px]") &&
+      actions.includes("pointer-events-none absolute -right-3 -top-1 hidden sm:block") &&
       actions.includes("chooseTraining(t)") &&
       actions.includes("t.url") &&
       !client.includes("supabase/migrations"),

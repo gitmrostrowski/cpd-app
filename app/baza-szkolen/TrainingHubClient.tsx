@@ -476,6 +476,7 @@ function OrganizerLogo({
   watermark?: boolean;
 }) {
   const logoUrl = normalizeLogoUrl(src);
+  const [logoShape, setLogoShape] = useState<"wide" | "standard" | "compact" | "tall">("standard");
   if (!logoUrl) return null;
   const size = large
     ? "h-16 w-16 rounded-2xl"
@@ -483,12 +484,21 @@ function OrganizerLogo({
       ? "h-[72px] w-[210px]"
       : "h-7 w-7 rounded-lg";
   const frame = watermark
-    ? "pointer-events-none justify-end opacity-[0.52] saturate-[0.92] contrast-[1.08] transition-opacity duration-200 group-hover:opacity-[0.62]"
+    ? "crpe-training-logo-watermark pointer-events-none justify-end transition-opacity duration-200"
     : "overflow-hidden border border-slate-200 bg-white text-slate-400 shadow-sm";
+  const watermarkShape =
+    logoShape === "wide"
+      ? "opacity-[0.74] contrast-[1.12] saturate-[0.88] group-hover:opacity-[0.82]"
+      : logoShape === "tall"
+        ? "opacity-[0.34] contrast-[1.04] saturate-[0.78] group-hover:opacity-[0.42]"
+        : logoShape === "compact"
+          ? "opacity-[0.38] contrast-[1.06] saturate-[0.82] group-hover:opacity-[0.46]"
+          : "opacity-[0.54] contrast-[1.08] saturate-[0.86] group-hover:opacity-[0.62]";
 
   return (
     <span
       className={`inline-flex shrink-0 items-center ${frame} ${size}`}
+      data-logo-shape={watermark ? logoShape : undefined}
       role={watermark ? undefined : "img"}
       aria-hidden={watermark ? true : undefined}
       aria-label={watermark ? undefined : name ? `Logo organizatora ${name}` : "Logo organizatora"}
@@ -498,7 +508,11 @@ function OrganizerLogo({
       <img
         src={logoUrl}
         alt=""
-        className={watermark ? "max-h-[64px] max-w-[196px] object-contain object-right drop-shadow-[0_1px_0_rgba(255,255,255,0.8)]" : "h-full w-full object-contain p-1.5"}
+        className={watermark ? `relative z-[1] max-h-[64px] max-w-[196px] object-contain object-right mix-blend-multiply transition-opacity duration-200 ${watermarkShape}` : "h-full w-full object-contain p-1.5"}
+        onLoad={watermark ? (event) => {
+          const ratio = event.currentTarget.naturalWidth / Math.max(event.currentTarget.naturalHeight, 1);
+          setLogoShape(ratio >= 2.15 ? "wide" : ratio <= 0.82 ? "tall" : ratio <= 1.3 ? "compact" : "standard");
+        } : undefined}
         loading="lazy"
         referrerPolicy="no-referrer"
       />
@@ -1684,9 +1698,9 @@ export default function TrainingHubClient() {
                     </div>
 
                     <div className="relative col-span-2 mt-0.5 border-t border-slate-100 bg-gradient-to-r from-slate-50/30 to-blue-50/70 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-t-0 sm:bg-none sm:pl-4 sm:pt-0">
-                      <div className="relative min-h-[42px] overflow-hidden sm:min-h-[66px]">
+                      <div className="relative min-h-[42px] overflow-hidden sm:min-h-[70px]">
                         {t.organizer_logo_url ? (
-                          <span className="pointer-events-none absolute -right-1 top-1/2 hidden -translate-y-1/2 sm:block" aria-hidden="true">
+                          <span className="pointer-events-none absolute -right-3 -top-1 hidden sm:block" aria-hidden="true">
                             <OrganizerLogo
                               name={t.organizer}
                               src={t.organizer_logo_url}

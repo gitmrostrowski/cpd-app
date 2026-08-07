@@ -23,7 +23,7 @@ const checks = [
   ],
   [
     "Kolumna akcji ma kontrolowaną wysokość strefy marki",
-    desktopPoints.includes('sm:min-h-[66px]') &&
+    desktopPoints.includes('sm:min-h-[70px]') &&
       desktopPoints.includes("grid grid-cols-2 gap-2.5") &&
       desktopPoints.includes("sm:h-9"),
   ],

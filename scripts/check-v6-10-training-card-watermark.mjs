@@ -26,11 +26,11 @@ const checks = [
   ],
   [
     "Logo organizatora jest nieinteraktywnym, czytelnym znakiem w pasie marki",
-    actions.includes("sm:min-h-[66px]") &&
+    actions.includes("sm:min-h-[70px]") &&
       card.includes("watermark") &&
       client.includes("pointer-events-none") &&
-      client.includes("opacity-[0.52]") &&
-      client.includes("saturate-[0.92]"),
+      client.includes("crpe-training-logo-watermark") &&
+      client.includes("mix-blend-multiply"),
   ],
   [
     "Miękka tinta i brak pionowej linii przełamują tabelaryczny wygląd",

@@ -18,7 +18,8 @@ const checks = [
     "Logo jest czytelne i powiązane z kartą jako dekoracyjny pas marki",
     client.includes('"h-[72px] w-[210px]"') &&
       client.includes("<OrganizerLogo") &&
-      client.includes('watermark ? "max-h-[64px] max-w-[196px] object-contain object-right') &&
+      client.includes("max-h-[64px] max-w-[196px] object-contain object-right") &&
+      client.includes("crpe-training-logo-watermark") &&
       client.includes("object-contain"),
   ],
 ];

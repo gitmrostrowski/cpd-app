@@ -35,17 +35,16 @@ const checks = [
       pointsIndex > logoIndex &&
       pointsIndex < externalIndex &&
       planIndex > externalIndex &&
-      actions.includes("sm:min-h-[66px]") &&
+      actions.includes("sm:min-h-[70px]") &&
       actions.includes("absolute bottom-1.5 left-0"),
   ],
   [
     "Logo jest widoczne i uniwersalne dla różnych proporcji",
     client.includes('? "h-[72px] w-[210px]"') &&
-      client.includes("justify-end opacity-[0.52]") &&
+      client.includes("crpe-training-logo-watermark pointer-events-none justify-end") &&
       client.includes("group-hover:opacity-[0.62]") &&
-      client.includes(
-        'watermark ? "max-h-[64px] max-w-[196px] object-contain object-right',
-      ) &&
+      client.includes("max-h-[64px] max-w-[196px] object-contain object-right") &&
+      client.includes("data-logo-shape") &&
       !card.includes("absolute right-3 top-1/2"),
   ],
   [
