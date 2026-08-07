@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import {
   Award,
   BookmarkPlus,
@@ -15,6 +14,9 @@ import {
   Info,
   MapPin,
   MonitorPlay,
+  Plus,
+  RotateCcw,
+  SlidersHorizontal,
   Users,
   X,
 } from "lucide-react";
@@ -166,6 +168,22 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 
 type PriceMode = "all" | "free" | "paid";
 
+type TrainingFilterOverrides = Partial<{
+  q: string;
+  sortBy: SortBy;
+  organizer: string;
+  format: "all" | TrainingType;
+  category: "all" | TrainingCategory;
+  minPoints: string;
+  timeWindow: TimeWindow;
+  place: string;
+  professionFilter: string;
+  priceMode: PriceMode;
+  topic: string;
+  enrollment: "all" | EnrollmentStatus;
+  onlyUpcoming: boolean;
+}>;
+
 const TRAININGS_PAGE_SIZE = 10;
 
 const PRICE_OPTIONS: { value: PriceMode; label: string }[] = [
@@ -181,6 +199,26 @@ const ENROLLMENT_OPTIONS: { value: "all" | EnrollmentStatus; label: string }[] =
     { value: "waiting_list", label: "Lista rezerwowa" },
     { value: "closed", label: "Zapisy zamknięte" },
   ];
+
+function trainingCountLabel(count: number) {
+  if (count === 1) return "1 szkolenie";
+  const lastTwo = count % 100;
+  const last = count % 10;
+  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
+    return `${count} szkolenia`;
+  }
+  return `${count} szkoleń`;
+}
+
+function topicCountLabel(count: number) {
+  if (count === 1) return "temat";
+  const lastTwo = count % 100;
+  const last = count % 10;
+  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
+    return "tematy";
+  }
+  return "tematów";
+}
 
 function formatDate(d: string | null) {
   if (!d) return "—";
@@ -592,11 +630,26 @@ export default function TrainingHubClient() {
     return () => URL.revokeObjectURL(preview);
   }, [fLogo]);
 
-  const load = async () => {
+  const load = async (overrides: TrainingFilterOverrides = {}) => {
     setFetching(true);
     setError(null);
 
     const todayStr = todayYYYYMMDD();
+    const activeFilters = {
+      q: overrides.q ?? q,
+      sortBy: overrides.sortBy ?? sortBy,
+      organizer: overrides.organizer ?? organizer,
+      format: overrides.format ?? format,
+      category: overrides.category ?? category,
+      minPoints: overrides.minPoints ?? minPoints,
+      timeWindow: overrides.timeWindow ?? timeWindow,
+      place: overrides.place ?? place,
+      professionFilter: overrides.professionFilter ?? professionFilter,
+      priceMode: overrides.priceMode ?? priceMode,
+      topic: overrides.topic ?? topic,
+      enrollment: overrides.enrollment ?? enrollment,
+      onlyUpcoming: overrides.onlyUpcoming ?? onlyUpcoming,
+    };
 
     try {
       let rows = (await fetchPublicTrainings(supabase))
@@ -607,31 +660,35 @@ export default function TrainingHubClient() {
           phrase.toLocaleLowerCase("pl-PL"),
         );
 
-      if (organizer !== "all")
-        rows = rows.filter((row) => includes(row.organizer, organizer));
-      if (format !== "all")
-        rows = rows.filter((row) => row.format === format);
-      if (category !== "all")
-        rows = rows.filter((row) => row.category === category);
-      if (timeWindow !== "all") {
-        const maxDate = addDaysYYYYMMDD(Number(timeWindow));
+      if (activeFilters.organizer !== "all")
+        rows = rows.filter((row) =>
+          includes(row.organizer, activeFilters.organizer),
+        );
+      if (activeFilters.format !== "all")
+        rows = rows.filter((row) => row.format === activeFilters.format);
+      if (activeFilters.category !== "all")
+        rows = rows.filter((row) => row.category === activeFilters.category);
+      if (activeFilters.timeWindow !== "all") {
+        const maxDate = addDaysYYYYMMDD(Number(activeFilters.timeWindow));
         rows = rows.filter(
           (row) =>
             Boolean(row.start_date) &&
             row.start_date! >= todayStr &&
             row.start_date! <= maxDate,
         );
-      } else if (onlyUpcoming) {
+      } else if (activeFilters.onlyUpcoming) {
         rows = rows.filter(
           (row) => Boolean(row.start_date) && row.start_date! >= todayStr,
         );
       }
-      if (place !== "all")
-        rows = rows.filter((row) => includes(row.voivodeship, place));
-      if (professionFilter !== "all") {
-        if (professionFilter === "general") {
+      if (activeFilters.place !== "all")
+        rows = rows.filter((row) =>
+          includes(row.voivodeship, activeFilters.place),
+        );
+      if (activeFilters.professionFilter !== "all") {
+        if (activeFilters.professionFilter === "general") {
           rows = rows.filter((row) => row.audience_scope === "all_medical");
-        } else if (professionFilter === "unknown") {
+        } else if (activeFilters.professionFilter === "unknown") {
           rows = rows.filter((row) => row.audience_scope === "unknown");
         } else {
           rows = rows
@@ -639,12 +696,14 @@ export default function TrainingHubClient() {
               (row) =>
                 row.audience_scope === "all_medical" ||
                 row.profession_rules.some(
-                  (rule) => rule.profession_code === professionFilter,
+                  (rule) =>
+                    rule.profession_code === activeFilters.professionFilter,
                 ),
             )
             .map((row) => {
               const rule = row.profession_rules.find(
-                (item) => item.profession_code === professionFilter,
+                (item) =>
+                  item.profession_code === activeFilters.professionFilter,
               );
               if (!rule) return row;
               return {
@@ -657,20 +716,25 @@ export default function TrainingHubClient() {
             });
         }
       }
-      if (minPoints !== "all")
+      if (activeFilters.minPoints !== "all")
         rows = rows.filter(
-          (row) => Number(row.points ?? 0) >= Number(minPoints),
+          (row) =>
+            Number(row.points ?? 0) >= Number(activeFilters.minPoints),
         );
-      if (topic !== "all")
-        rows = rows.filter((row) => row.topics?.includes(topic));
-      if (priceMode === "free")
+      if (activeFilters.topic !== "all")
+        rows = rows.filter((row) =>
+          row.topics?.includes(activeFilters.topic),
+        );
+      if (activeFilters.priceMode === "free")
         rows = rows.filter((row) => Number(row.price_pln ?? 0) === 0);
-      if (priceMode === "paid")
+      if (activeFilters.priceMode === "paid")
         rows = rows.filter((row) => Number(row.price_pln ?? 0) > 0);
-      if (enrollment !== "all")
-        rows = rows.filter((row) => row.enrollment_status === enrollment);
-      if (q.trim()) {
-        const phrase = q.trim();
+      if (activeFilters.enrollment !== "all")
+        rows = rows.filter(
+          (row) => row.enrollment_status === activeFilters.enrollment,
+        );
+      if (activeFilters.q.trim()) {
+        const phrase = activeFilters.q.trim();
         rows = rows.filter((row) =>
           [
             row.title,
@@ -683,13 +747,13 @@ export default function TrainingHubClient() {
       }
 
       rows.sort((a, b) => {
-        if (sortBy === "points_desc")
+        if (activeFilters.sortBy === "points_desc")
           return Number(b.points ?? 0) - Number(a.points ?? 0);
-        if (sortBy === "points_asc")
+        if (activeFilters.sortBy === "points_asc")
           return Number(a.points ?? 0) - Number(b.points ?? 0);
-        if (sortBy === "newest")
+        if (activeFilters.sortBy === "newest")
           return String(b.created_at).localeCompare(String(a.created_at));
-        const direction = sortBy === "date_desc" ? -1 : 1;
+        const direction = activeFilters.sortBy === "date_desc" ? -1 : 1;
         return (
           direction *
           String(a.start_date ?? "9999-12-31").localeCompare(
@@ -709,6 +773,40 @@ export default function TrainingHubClient() {
     }
 
     setFetching(false);
+  };
+
+  const resetFilters = () => {
+    const defaults: Required<TrainingFilterOverrides> = {
+      q: "",
+      sortBy: "date_asc",
+      organizer: "all",
+      format: "all",
+      category: "all",
+      minPoints: "all",
+      timeWindow: "90",
+      place: "all",
+      professionFilter: "all",
+      priceMode: "all",
+      topic: "all",
+      enrollment: "all",
+      onlyUpcoming: true,
+    };
+
+    setQ(defaults.q);
+    setSortBy(defaults.sortBy);
+    setOrganizer(defaults.organizer);
+    setFormat(defaults.format);
+    setCategory(defaults.category);
+    setMinPoints(defaults.minPoints);
+    setTimeWindow(defaults.timeWindow);
+    setPlace(defaults.place);
+    setProfessionFilter(defaults.professionFilter);
+    setPriceMode(defaults.priceMode);
+    setTopic(defaults.topic);
+    setEnrollment(defaults.enrollment);
+    setOnlyUpcoming(defaults.onlyUpcoming);
+    setShowMoreFilters(false);
+    void load(defaults);
   };
 
   useEffect(() => {
@@ -1065,28 +1163,33 @@ export default function TrainingHubClient() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/aktywnosci"
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
-              >
-                Aktywności
-              </Link>
-
+            <div className="flex flex-wrap gap-2 sm:justify-end">
               <button
-                onClick={load}
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-60"
-                disabled={fetching}
+                onClick={() => {
+                  if (user) {
+                    setAddOpen(true);
+                    return;
+                  }
+                  window.location.href = "/login";
+                }}
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 text-sm font-semibold text-amber-900 shadow-sm transition hover:border-amber-400 hover:bg-amber-100 active:scale-[0.98] sm:w-auto"
                 type="button"
               >
-                {fetching ? "Odświeżam…" : "Odśwież"}
+                <Plus className="h-4 w-4" strokeWidth={2.2} />
+                Zgłoś szkolenie
               </button>
             </div>
           </div>
         </div>
 
-        <div className="mt-5 rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_6px_16px_rgba(15,23,42,0.075)]">
-          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <form
+          className="mt-5 rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_6px_16px_rgba(15,23,42,0.075)]"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void load();
+          }}
+        >
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="text-sm font-semibold text-slate-900">
                 Znajdź szkolenie
@@ -1095,12 +1198,32 @@ export default function TrainingHubClient() {
                 Wybierz zawód, miejsce i termin, żeby zawęzić listę.
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setShowMoreFilters((value) => !value)}
+              aria-expanded={showMoreFilters}
+              aria-controls="advanced-training-filters"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 sm:w-auto sm:min-w-[170px]"
+            >
+              <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
+              {showMoreFilters ? "Mniej filtrów" : "Więcej filtrów"}
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${
+                  showMoreFilters ? "rotate-180" : ""
+                }`}
+              />
+            </button>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
             <div className="lg:col-span-2">
-              <label className={labelBase}>Szukaj</label>
+              <label htmlFor="training-search" className={labelBase}>
+                Szukaj
+              </label>
               <input
+                id="training-search"
+                name="training-search"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="np. kongres, NIL, radiologia..."
@@ -1109,8 +1232,12 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="lg:col-span-2">
-              <label className={labelBase}>Zawód / specjalizacja</label>
+              <label htmlFor="training-profession" className={labelBase}>
+                Zawód / specjalizacja
+              </label>
               <select
+                id="training-profession"
+                name="training-profession"
                 value={professionFilter}
                 onChange={(e) => setProfessionFilter(e.target.value)}
                 className={fieldBase}
@@ -1132,8 +1259,12 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="lg:col-span-2">
-              <label className={labelBase}>Miejsce</label>
+              <label htmlFor="training-place" className={labelBase}>
+                Miejsce
+              </label>
               <select
+                id="training-place"
+                name="training-place"
                 value={place}
                 onChange={(e) => setPlace(e.target.value)}
                 className={fieldBase}
@@ -1147,8 +1278,12 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="lg:col-span-2">
-              <label className={labelBase}>Termin</label>
+              <label htmlFor="training-time" className={labelBase}>
+                Termin
+              </label>
               <select
+                id="training-time"
+                name="training-time"
                 value={timeWindow}
                 onChange={(e) => setTimeWindow(e.target.value as TimeWindow)}
                 className={fieldBase}
@@ -1162,8 +1297,12 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="lg:col-span-2">
-              <label className={labelBase}>Forma</label>
+              <label htmlFor="training-format" className={labelBase}>
+                Forma
+              </label>
               <select
+                id="training-format"
+                name="training-format"
                 value={format}
                 onChange={(e) =>
                   setFormat(e.target.value as "all" | TrainingType)
@@ -1179,8 +1318,12 @@ export default function TrainingHubClient() {
             </div>
 
             <div className="lg:col-span-2">
-              <label className={labelBase}>Punkty</label>
+              <label htmlFor="training-points" className={labelBase}>
+                Punkty
+              </label>
               <select
+                id="training-points"
+                name="training-points"
                 value={minPoints}
                 onChange={(e) => setMinPoints(e.target.value)}
                 className={fieldBase}
@@ -1195,25 +1338,17 @@ export default function TrainingHubClient() {
           </div>
 
           {showMoreFilters ? (
-            <div className="mt-3 grid grid-cols-1 gap-3 border-t border-slate-200 pt-3 md:grid-cols-2 lg:grid-cols-7">
+            <div
+              id="advanced-training-filters"
+              className="mt-3 grid grid-cols-1 gap-3 border-t border-slate-200 pt-3 md:grid-cols-2 lg:grid-cols-6"
+            >
               <div>
-                <label className={labelBase}>Sortowanie</label>
+                <label htmlFor="training-organizer" className={labelBase}>
+                  Organizator
+                </label>
                 <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortBy)}
-                  className={fieldBase}
-                >
-                  {SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className={labelBase}>Organizator</label>
-                <select
+                  id="training-organizer"
+                  name="training-organizer"
                   value={organizer}
                   onChange={(e) => setOrganizer(e.target.value)}
                   className={fieldBase}
@@ -1227,8 +1362,12 @@ export default function TrainingHubClient() {
               </div>
 
               <div>
-                <label className={labelBase}>Kategoria</label>
+                <label htmlFor="training-category" className={labelBase}>
+                  Kategoria
+                </label>
                 <select
+                  id="training-category"
+                  name="training-category"
                   value={category}
                   onChange={(e) =>
                     setCategory(e.target.value as "all" | TrainingCategory)
@@ -1244,8 +1383,12 @@ export default function TrainingHubClient() {
               </div>
 
               <div>
-                <label className={labelBase}>Cena</label>
+                <label htmlFor="training-price" className={labelBase}>
+                  Cena
+                </label>
                 <select
+                  id="training-price"
+                  name="training-price"
                   value={priceMode}
                   onChange={(e) => setPriceMode(e.target.value as PriceMode)}
                   className={fieldBase}
@@ -1259,8 +1402,12 @@ export default function TrainingHubClient() {
               </div>
 
               <div>
-                <label className={labelBase}>Temat</label>
+                <label htmlFor="training-topic" className={labelBase}>
+                  Temat
+                </label>
                 <select
+                  id="training-topic"
+                  name="training-topic"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   className={fieldBase}
@@ -1274,8 +1421,12 @@ export default function TrainingHubClient() {
               </div>
 
               <div>
-                <label className={labelBase}>Zapisy</label>
+                <label htmlFor="training-enrollment" className={labelBase}>
+                  Zapisy
+                </label>
                 <select
+                  id="training-enrollment"
+                  name="training-enrollment"
                   value={enrollment}
                   onChange={(e) =>
                     setEnrollment(
@@ -1293,9 +1444,10 @@ export default function TrainingHubClient() {
               </div>
 
               <div>
-                <label className={labelBase}>Zakres</label>
+                <span className={labelBase}>Zakres</span>
                 <label className="flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-xs font-medium text-slate-600 shadow-sm shadow-slate-900/5">
                   <input
+                    name="training-upcoming"
                     type="checkbox"
                     checked={onlyUpcoming}
                     onChange={(e) => setOnlyUpcoming(e.target.checked)}
@@ -1307,46 +1459,24 @@ export default function TrainingHubClient() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-slate-500">
-              Wynik:{" "}
-              <span className="font-semibold text-slate-900">
-                {visibleItems.length}
-              </span>
-            </div>
+          <div className="mt-4 flex flex-col-reverse gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-end">
+            <button
+              type="button"
+              onClick={resetFilters}
+              disabled={fetching}
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-60 sm:w-auto sm:min-w-[140px]"
+            >
+              <RotateCcw className="h-4 w-4" strokeWidth={2} />
+              Wyczyść
+            </button>
 
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <button
-                type="button"
-                onClick={() => setShowMoreFilters((v) => !v)}
-                className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-              >
-                {showMoreFilters ? "Mniej filtrów" : "Więcej filtrów"}
-              </button>
-
-              <button
-                onClick={() => {
-                  if (user) {
-                    setAddOpen(true);
-                    return;
-                  }
-                  window.location.href = "/login";
-                }}
-                className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-800 shadow-sm transition hover:bg-amber-100 active:scale-95"
-                type="button"
-              >
-                {user ? "Zgłoś wydarzenie" : "Zaloguj, aby zgłosić"}
-              </button>
-
-              <button
-                onClick={load}
-                className="inline-flex h-10 min-w-[140px] items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-95 disabled:opacity-60"
-                disabled={fetching}
-                type="button"
-              >
-                {fetching ? "Filtruję…" : "Filtruj"}
-              </button>
-            </div>
+            <button
+              className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 sm:w-auto sm:min-w-[180px]"
+              disabled={fetching}
+              type="submit"
+            >
+              {fetching ? "Szukam szkoleń…" : "Pokaż wyniki"}
+            </button>
           </div>
 
           {error && (
@@ -1354,10 +1484,45 @@ export default function TrainingHubClient() {
               {error}
             </div>
           )}
+        </form>
+
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-600">
+              Wyniki wyszukiwania
+            </p>
+            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950">
+              {fetching ? "Ładujemy szkolenia…" : trainingCountLabel(visibleItems.length)}
+            </h2>
+          </div>
+
+          <div className="w-full sm:w-[230px]">
+            <label htmlFor="training-sort" className={labelBase}>
+              Sortuj
+            </label>
+            <select
+              id="training-sort"
+              name="training-sort"
+              value={sortBy}
+              onChange={(event) => {
+                const nextSort = event.target.value as SortBy;
+                setSortBy(nextSort);
+                void load({ sortBy: nextSort });
+              }}
+              disabled={fetching}
+              className={fieldBase}
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div
-          className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]"
+          className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]"
           onClick={clearCalendarSelection}
         >
           <div
@@ -1432,7 +1597,7 @@ export default function TrainingHubClient() {
                     className={`absolute bottom-3 left-0 top-3 w-0.5 rounded-r-full ${tone.stripe}`}
                   />
 
-                  <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_170px] sm:items-center sm:gap-3.5">
+                  <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_188px] sm:items-center sm:gap-3.5">
                     <div className="flex h-[58px] w-[52px] flex-col items-center self-start rounded-xl bg-slate-50 px-1.5 py-2 ring-1 ring-slate-200 sm:self-center">
                       <span
                         className={`mb-1.5 h-0.5 w-6 rounded-full ${tone.dateTop}`}
@@ -1523,8 +1688,8 @@ export default function TrainingHubClient() {
                               {topicLabel}
                             </span>
                             {remainingTopics ? (
-                              <span className="text-[10px] font-bold text-slate-400">
-                              +{remainingTopics}
+                              <span className="whitespace-nowrap text-[10px] font-bold text-slate-500">
+                                +{remainingTopics} {topicCountLabel(remainingTopics)}
                               </span>
                             ) : null}
                           </span>
@@ -1532,18 +1697,17 @@ export default function TrainingHubClient() {
                       </div>
                     </div>
 
-                    <div className="col-span-2 mt-0.5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:flex sm:min-h-[94px] sm:flex-col sm:justify-center sm:gap-1.5 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
-                      <div className="hidden items-baseline justify-end gap-1 sm:flex">
-                        <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-blue-500">
-                          Punkty edukacyjne
-                        </span>
-                        <span className="text-lg font-black tracking-[-0.04em] text-blue-700">
-                          {typeof t.points === "number" ? t.points : "—"}
-                        </span>
-                        <span className="text-[10px] font-bold text-blue-500">pkt</span>
-                      </div>
-                      <div className="hidden text-right text-[9px] font-semibold text-slate-400 sm:block">
-                        {pointsStatusLabel(t.points_verification_status)}
+                    <div className="col-span-2 mt-0.5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:flex sm:min-h-[104px] sm:flex-col sm:justify-center sm:gap-2 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
+                      <div className="hidden text-right sm:block">
+                        <div className="whitespace-nowrap text-lg font-black tracking-[-0.04em] text-blue-700">
+                          {typeof t.points === "number" ? t.points : "—"}{" "}
+                          <span className="text-[10px] font-bold tracking-normal text-blue-500">
+                            pkt edukacyjnych
+                          </span>
+                        </div>
+                        <div className="mt-0.5 text-[9px] font-semibold text-slate-400">
+                          {pointsStatusLabel(t.points_verification_status)}
+                        </div>
                       </div>
 
                       {t.url ? (
@@ -1551,10 +1715,10 @@ export default function TrainingHubClient() {
                           href={t.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 text-[11px] font-bold text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-9"
+                          className="inline-flex h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-blue-600 px-3 text-[11px] font-bold text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-9"
                         >
                           <span className="sm:hidden">Zapisy</span>
-                          <span className="hidden sm:inline">Zapisy u organizatora</span>
+                          <span className="hidden sm:inline">Przejdź do zapisów</span>
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       ) : (
@@ -1569,7 +1733,7 @@ export default function TrainingHubClient() {
 
                       <button
                         onClick={() => chooseTraining(t)}
-                        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] sm:h-8 sm:border-transparent sm:bg-transparent"
+                        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-[11px] font-bold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] sm:h-9"
                         type="button"
                         title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
                       >
@@ -1608,66 +1772,30 @@ export default function TrainingHubClient() {
             className="space-y-4 lg:sticky lg:top-24 lg:self-start"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex h-[148px] flex-col overflow-hidden rounded-[1.25rem] border border-slate-300/80 bg-white p-3 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)]">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
-                  Planowanie
-                </p>
+            <div className="rounded-[1.25rem] border border-slate-300/80 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
+                Podsumowanie
+              </p>
 
-                <h2 className="mt-1 text-base font-semibold tracking-[-0.02em] text-slate-950">
-                  Podsumowanie filtrów
-                </h2>
-
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                  Potencjał punktów i formaty z aktualnej listy.
-                </p>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-base font-bold tracking-[-0.02em] text-slate-950">
+                  {trainingCountLabel(visibleItems.length)}
+                </span>
+                <span className="text-slate-300">·</span>
+                <span className="text-sm font-semibold text-blue-700">
+                  {sidebarStats.totalPoints} pkt
+                </span>
               </div>
 
-              <div className="mt-2.5 grid grid-cols-3 gap-2">
-                <div className="flex min-h-[51px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                    <Award className="h-4 w-4" strokeWidth={2.2} />
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
-                      {sidebarStats.totalPoints}
-                    </div>
-                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
-                      pkt
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex min-h-[51px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                    <MonitorPlay className="h-4 w-4" strokeWidth={2.2} />
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
-                      {sidebarStats.online}
-                    </div>
-                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
-                      online
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex min-h-[51px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                    <MapPin className="h-4 w-4" strokeWidth={2.2} />
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="text-base font-bold leading-none tracking-[-0.03em] text-slate-950">
-                      {sidebarStats.stationary}
-                    </div>
-                    <div className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">
-                      stacj.
-                    </div>
-                  </div>
-                </div>
+              <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-semibold">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1.5 text-blue-700 ring-1 ring-blue-100">
+                  <MonitorPlay className="h-3.5 w-3.5" strokeWidth={2.2} />
+                  {sidebarStats.online} online
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1.5 text-amber-700 ring-1 ring-amber-100">
+                  <MapPin className="h-3.5 w-3.5" strokeWidth={2.2} />
+                  {sidebarStats.stationary} stacjonarnie
+                </span>
               </div>
             </div>
 

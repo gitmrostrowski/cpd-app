@@ -15,9 +15,9 @@ const checks = [
   ],
   [
     "Desktop ma zwarty układ data, treść i akcje",
-    client.includes("sm:grid-cols-[52px_minmax(0,1fr)_170px]") &&
+    client.includes("sm:grid-cols-[52px_minmax(0,1fr)_188px]") &&
       client.includes('h-[58px] w-[52px]') &&
-      client.includes("sm:min-h-[94px]") &&
+      client.includes("sm:min-h-[104px]") &&
       client.includes("space-y-2"),
   ],
   [
@@ -31,14 +31,13 @@ const checks = [
     "Szczegóły otwiera dostępny tytuł, a zapis pozostaje główną akcją",
     client.includes("Pokaż szczegóły szkolenia") &&
       client.includes("setDetailsTraining(t)") &&
-      client.includes("Zapisy u organizatora") &&
+      client.includes("Przejdź do zapisów") &&
       !client.includes("Szczegóły <ChevronRight"),
   ],
   [
     "Mobilne akcje zachowują wysokość dotykową 44 px",
     client.includes('className="inline-flex h-11') &&
-      client.includes("sm:h-9") &&
-      client.includes("sm:h-8"),
+      client.includes("sm:h-9"),
   ],
   [
     "Panel boczny pozostaje widoczny podczas przewijania desktopu",
