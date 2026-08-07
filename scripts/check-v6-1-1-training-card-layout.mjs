@@ -6,7 +6,7 @@ const checks = [
   [
     "Kafelek oddziela datę od głównej hierarchii treści",
     client.includes("grid-cols-[52px_minmax(0,1fr)]") &&
-      client.includes("sm:grid-cols-[52px_minmax(0,1fr)_292px]") &&
+      client.includes("sm:grid-cols-[52px_minmax(0,1fr)_312px]") &&
       client.includes(">pkt</span>"),
   ],
   [
@@ -16,9 +16,9 @@ const checks = [
   ],
   [
     "Logo jest czytelne i powiązane z kartą jako dekoracyjny pas marki",
-    client.includes('"h-[38px] w-[160px]"') &&
+    client.includes('"h-[72px] w-[210px]"') &&
       client.includes("<OrganizerLogo") &&
-      client.includes('watermark ? "max-h-[34px] max-w-[148px] object-contain object-left"') &&
+      client.includes('watermark ? "max-h-[64px] max-w-[196px] object-contain object-right') &&
       client.includes("object-contain"),
   ],
 ];

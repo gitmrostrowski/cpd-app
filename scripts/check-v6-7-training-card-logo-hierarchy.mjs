@@ -19,7 +19,7 @@ const organizerMetadata = client.slice(
 );
 
 const actionColumnStart = client.indexOf(
-  'className="relative col-span-2 mt-0.5 flex flex-col gap-2.5',
+  'className="relative col-span-2 mt-0.5 border-t',
 );
 const actionColumnEnd = client.indexOf("</article>", actionColumnStart);
 const actionHeader = client.slice(actionColumnStart, actionColumnEnd);
@@ -32,24 +32,24 @@ const checks = [
       !organizerMetadata.includes("OrganizerLogo"),
   ],
   [
-    "Logo i punkty pozostają w zwartym pasie między akcjami",
+    "Logo i punkty pozostają w zwartej strefie marki nad akcjami",
     actionColumnStart >= 0 &&
       client.includes("OrganizerLogo") &&
-      actionHeader.includes("min-h-[38px]") &&
+      actionHeader.includes("sm:min-h-[66px]") &&
       actionHeader.includes("sm:h-9"),
   ],
   [
     "Logo karty jest widocznym znakiem bez dodatkowej ramki",
-    client.includes('? "h-[38px] w-[160px]"') &&
-      client.includes("opacity-[0.64]") &&
-      client.includes('watermark ? "max-h-[34px] max-w-[148px] object-contain object-left"') &&
+    client.includes('? "h-[72px] w-[210px]"') &&
+      client.includes("opacity-[0.52]") &&
+      client.includes('watermark ? "max-h-[64px] max-w-[196px] object-contain object-right') &&
       actionHeader.includes("<OrganizerLogo"),
   ],
   [
-    "Brak logo nie tworzy ramki, a oba przyciski wykorzystują pełną szerokość",
+    "Brak logo nie tworzy ramki, a oba przyciski tworzą równą parę",
     client.includes("{t.organizer_logo_url ? (") &&
-      actionHeader.includes('<span aria-hidden="true" />') &&
-      (actionHeader.match(/h-10 w-full/g) ?? []).length >= 3,
+      actionHeader.includes(") : t.organizer ? (") &&
+      actionHeader.includes("grid grid-cols-2 gap-2.5"),
   ],
   [
     "Kolumna logo i akcji działa na telefonie i desktopie",

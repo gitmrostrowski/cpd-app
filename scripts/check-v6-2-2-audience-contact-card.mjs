@@ -37,7 +37,7 @@ const checks = [
     "Kafelek ma spokojniejszą hierarchię, czytelne logo i tematy w szczegółach",
       directory.includes("font-extrabold leading-[1.3]") &&
       directory.includes("detailsTraining.topics.map") &&
-      directory.includes('? "h-[38px] w-[160px]"') &&
+      directory.includes('? "h-[72px] w-[210px]"') &&
       directory.includes("Przejdź do zapisów") &&
       directory.includes("GraduationCap"),
   ],

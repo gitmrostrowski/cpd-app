@@ -6,7 +6,7 @@ const client = fs.readFileSync(
 );
 
 const pointsColumnStart = client.indexOf(
-  'className="relative col-span-2 mt-0.5 flex flex-col gap-2.5',
+  'className="relative col-span-2 mt-0.5 border-t',
 );
 const pointsColumnEnd = client.indexOf("</article>", pointsColumnStart);
 const desktopPoints = client.slice(pointsColumnStart, pointsColumnEnd);
@@ -18,13 +18,13 @@ const checks = [
       desktopPoints.includes('text-[20px] font-black') &&
       desktopPoints.includes(">pkt</span>") &&
       !desktopPoints.includes("punkty edukacyjne") &&
-      desktopPoints.includes('inline-flex shrink-0 items-center justify-end') &&
+      desktopPoints.includes('inline-flex shrink-0 items-center gap-1.5') &&
       !desktopPoints.includes("PUNKTY EDUKACYJNE"),
   ],
   [
-    "Kolumna akcji ma tylko kontrolowaną wysokość pasa marki",
-    desktopPoints.includes('min-h-[38px]') &&
-      desktopPoints.includes("flex flex-col gap-2.5") &&
+    "Kolumna akcji ma kontrolowaną wysokość strefy marki",
+    desktopPoints.includes('sm:min-h-[66px]') &&
+      desktopPoints.includes("grid grid-cols-2 gap-2.5") &&
       desktopPoints.includes("sm:h-9"),
   ],
   [

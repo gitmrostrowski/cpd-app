@@ -9,7 +9,7 @@ const cardStart = client.indexOf("displayedItems.map");
 const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 const actionsStart = card.indexOf(
-  'className="relative col-span-2 mt-0.5 flex flex-col gap-2.5',
+  'className="relative col-span-2 mt-0.5 border-t',
 );
 const actions = card.slice(actionsStart);
 
@@ -22,28 +22,29 @@ const planIndex = actions.indexOf("Dodaj do planu");
 
 const checks = [
   [
-    "Dwa przyciski tworzą równe pełnoszerokie moduły",
+    "Dwa przyciski tworzą równą poziomą parę",
     actionsStart >= 0 &&
       externalIndex >= 0 &&
       planIndex > externalIndex &&
-      (actions.match(/inline-flex h-10 w-full/g) ?? []).length >= 3 &&
-      actions.includes("flex flex-col gap-2.5"),
+      (actions.match(/inline-flex h-10 min-w-0/g) ?? []).length >= 3 &&
+      actions.includes("grid grid-cols-2 gap-2.5"),
   ],
   [
-    "Logo i punkty tworzą osobny pas marki między przyciskami",
-    logoIndex > externalIndex &&
+    "Logo i punkty tworzą artystyczną strefę marki nad przyciskami",
+    logoIndex >= 0 &&
       pointsIndex > logoIndex &&
-      planIndex > pointsIndex &&
-      actions.includes("min-h-[38px]") &&
-      actions.includes("items-center justify-between gap-3 px-1"),
+      pointsIndex < externalIndex &&
+      planIndex > externalIndex &&
+      actions.includes("sm:min-h-[66px]") &&
+      actions.includes("absolute bottom-1.5 left-0"),
   ],
   [
     "Logo jest widoczne i uniwersalne dla różnych proporcji",
-    client.includes('? "h-[38px] w-[160px]"') &&
-      client.includes("justify-start opacity-[0.64]") &&
-      client.includes("group-hover:opacity-[0.76]") &&
+    client.includes('? "h-[72px] w-[210px]"') &&
+      client.includes("justify-end opacity-[0.52]") &&
+      client.includes("group-hover:opacity-[0.62]") &&
       client.includes(
-        'watermark ? "max-h-[34px] max-w-[148px] object-contain object-left"',
+        'watermark ? "max-h-[64px] max-w-[196px] object-contain object-right',
       ) &&
       !card.includes("absolute right-3 top-1/2"),
   ],
@@ -57,11 +58,11 @@ const checks = [
   ],
   [
     "Tinta pozostaje miękka, a interfejs czytelny na desktopie i telefonie",
-    card.includes("hidden w-[36%]") &&
+    card.includes("hidden w-[38%]") &&
       card.includes("radial-gradient") &&
       actions.includes("bg-gradient-to-r from-slate-50/30 to-blue-50/70") &&
       actions.includes("sm:bg-none") &&
-      actions.includes("whitespace-nowrap"),
+      actions.includes("grid grid-cols-2"),
   ],
   [
     "Zmiana pozostaje w warstwie wizualnej",

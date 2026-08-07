@@ -9,35 +9,35 @@ const cardStart = client.indexOf("displayedItems.map");
 const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 const actionsStart = card.indexOf(
-  'className="relative col-span-2 mt-0.5 flex flex-col gap-2.5',
+  'className="relative col-span-2 mt-0.5 border-t',
 );
 const actions = card.slice(actionsStart);
 
 const checks = [
   [
     "Prawa część karty ma uniwersalną tintę obejmującą około jednej trzeciej szerokości",
-    card.includes("absolute inset-y-0 right-0 z-0 hidden w-[36%]") &&
+    card.includes("absolute inset-y-0 right-0 z-0 hidden w-[38%]") &&
       card.includes("radial-gradient") &&
       card.includes("linear-gradient") &&
-      card.includes("rgba(239,246,255,0.92)"),
+      card.includes("rgba(219,234,254,0.84)"),
   ],
   [
     "Tinta ma miękkie wejście zamiast twardego podziału kolumnowego",
     card.includes("transparent_0%") &&
-      card.includes("rgba(248,250,252,0.72)_22%") &&
+    card.includes("rgba(248,250,252,0.58)_24%") &&
       !actions.includes("sm:border-l"),
   ],
   [
     "Różne proporcje logo mieszczą się w jednym bezpiecznym obszarze",
-    client.includes('? "h-[38px] w-[160px]"') &&
-      client.includes('watermark ? "max-h-[34px] max-w-[148px] object-contain object-left"') &&
-      client.includes("justify-start opacity-[0.64]") &&
-      actions.includes("min-h-[38px]"),
+    client.includes('? "h-[72px] w-[210px]"') &&
+      client.includes('watermark ? "max-h-[64px] max-w-[196px] object-contain object-right') &&
+      client.includes("justify-end opacity-[0.52]") &&
+      actions.includes("sm:min-h-[66px]"),
   ],
   [
     "Logo i tinta nie przechwytują kliknięć ani nie obniżają kontrastu akcji",
     card.includes("pointer-events-none") &&
-      client.includes("pointer-events-none justify-start") &&
+      client.includes("pointer-events-none justify-end") &&
       card.includes("relative z-10 grid") &&
       actions.includes("bg-white/95") &&
       actions.includes("bg-blue-600"),
@@ -46,7 +46,7 @@ const checks = [
     "Na telefonie akcje otrzymują spokojne tło bez nakładania dużego logo",
     actions.includes("bg-gradient-to-r from-slate-50/30 to-blue-50/70") &&
       actions.includes("sm:bg-none") &&
-      actions.includes("w-full"),
+    actions.includes("grid grid-cols-2"),
   ],
   [
     "Zmiana nie dotyka danych ani logiki zapisów",

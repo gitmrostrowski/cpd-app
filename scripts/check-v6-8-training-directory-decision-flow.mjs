@@ -17,7 +17,7 @@ const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 
 const actionStart = card.indexOf(
-  'flex flex-col gap-2.5',
+  'relative col-span-2 mt-0.5 border-t',
 );
 const actions = card.slice(actionStart);
 
@@ -46,20 +46,19 @@ const checks = [
       !client.includes(">Podsumowanie<"),
   ],
   [
-    "Zapisy są pierwszą szeroką akcją, a plan pozostaje głównym CTA CRPE",
+    "Punkty poprzedzają równą parę akcji, a plan pozostaje głównym CTA CRPE",
     actionStart >= 0 &&
       externalIndex >= 0 &&
       externalIndex < planIndex &&
-      pointsIndex > externalIndex &&
-      pointsIndex < planIndex &&
+      pointsIndex < externalIndex &&
       actions.includes("bg-blue-600") &&
       actions.includes("pointsDetailsLabel(t.points_verification_status)"),
   ],
   [
-    "Logo ma własny pas marki, a zapis wykorzystuje pełną szerokość prawej strefy",
+    "Logo jest tłem strefy marki, a obie akcje mają równe kolumny",
     logoIndex >= 0 &&
       actions.includes("border border-slate-300 bg-white/95") &&
-      actions.includes("h-10 w-full") &&
+      actions.includes("grid grid-cols-2 gap-2.5") &&
       card.includes("watermark"),
   ],
   [

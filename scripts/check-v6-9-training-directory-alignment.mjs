@@ -18,7 +18,7 @@ const cardStart = client.indexOf("displayedItems.map");
 const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 const actionStart = card.indexOf(
-  'flex flex-col gap-2.5',
+  'relative col-span-2 mt-0.5 border-t',
 );
 const actions = card.slice(actionStart);
 const planStart = actions.indexOf('title="Dodaje szkolenie do planu CPD');
@@ -40,13 +40,13 @@ const checks = [
   ],
   [
     "Prawa kolumna i obie akcje są szersze",
-    card.includes("sm:grid-cols-[52px_minmax(0,1fr)_292px]") &&
-      actions.includes("flex flex-col gap-2.5") &&
-      actions.includes("px-4 text-xs"),
+    card.includes("sm:grid-cols-[52px_minmax(0,1fr)_312px]") &&
+      actions.includes("grid grid-cols-2 gap-2.5") &&
+      actions.includes("min-w-0"),
   ],
   [
     "Pełne etykiety przycisków nie łamią się",
-    (actions.match(/whitespace-nowrap/g) ?? []).length >= 3 &&
+    (actions.match(/whitespace-nowrap/g) ?? []).length >= 4 &&
       actions.includes("Dodaj do planu") &&
       actions.includes("Przejdź do zapisów") &&
       !actions.includes('className="sm:hidden">Zapisy</span>'),
