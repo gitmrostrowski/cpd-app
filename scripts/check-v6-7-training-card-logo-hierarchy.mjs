@@ -19,7 +19,7 @@ const organizerMetadata = client.slice(
 );
 
 const actionColumnStart = client.indexOf(
-  'className="col-span-2 mt-0.5 grid grid-cols-[minmax(0,1fr)_76px]',
+  'className="col-span-2 mt-0.5 grid grid-cols-[minmax(168px,1fr)_76px]',
 );
 const actionColumnEnd = client.indexOf("</article>", actionColumnStart);
 const actionHeader = client.slice(actionColumnStart, actionColumnEnd);
@@ -35,8 +35,7 @@ const checks = [
     "Logo i punkty pozostają w zwartej kolumnie akcji",
     actionColumnStart >= 0 &&
       actionHeader.includes("OrganizerLogo") &&
-      actionHeader.includes("GraduationCap") &&
-      actionHeader.includes("grid-cols-[minmax(0,1fr)_76px]") &&
+      actionHeader.includes("grid-cols-[minmax(168px,1fr)_76px]") &&
       actionHeader.includes("sm:h-9"),
   ],
   [

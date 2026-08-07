@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Award,
-  BookmarkPlus,
   BookOpen,
   Building2,
   CalendarDays,
@@ -1181,8 +1180,8 @@ export default function TrainingHubClient() {
             void load();
           }}
         >
-          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+          <div className="mb-4 grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 lg:grid-cols-12 lg:gap-3">
+            <div className="col-span-3 lg:col-span-7">
               <div className="text-sm font-semibold text-slate-900">
                 Znajdź szkolenie
               </div>
@@ -1191,45 +1190,43 @@ export default function TrainingHubClient() {
               </div>
             </div>
 
-            <div className="grid w-full grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 sm:flex sm:w-auto sm:justify-end">
-              <button
-                type="button"
-                onClick={resetFilters}
-                disabled={fetching}
-                aria-label="Wyczyść filtry"
-                title="Wyczyść filtry"
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-60"
-              >
-                <RotateCcw className="h-4 w-4" strokeWidth={2} />
-              </button>
+            <button
+              type="button"
+              onClick={resetFilters}
+              disabled={fetching}
+              aria-label="Wyczyść filtry"
+              title="Wyczyść filtry"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-60 lg:col-start-8 lg:justify-self-end"
+            >
+              <RotateCcw className="h-4 w-4" strokeWidth={2} />
+            </button>
 
-              <button
-                type="button"
-                onClick={() => setShowMoreFilters((value) => !value)}
-                aria-expanded={showMoreFilters}
-                aria-controls="advanced-training-filters"
-                className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 sm:w-[198px] sm:px-4"
-              >
-                <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
-                <span className="sm:hidden">Filtry</span>
-                <span className="hidden sm:inline">
-                  {showMoreFilters ? "Mniej filtrów" : "Więcej filtrów"}
-                </span>
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${
-                    showMoreFilters ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
+            <button
+              type="button"
+              onClick={() => setShowMoreFilters((value) => !value)}
+              aria-expanded={showMoreFilters}
+              aria-controls="advanced-training-filters"
+              className="inline-flex h-10 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 lg:col-span-2 lg:px-4"
+            >
+              <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
+              <span className="sm:hidden">Filtry</span>
+              <span className="hidden sm:inline">
+                {showMoreFilters ? "Mniej filtrów" : "Więcej filtrów"}
+              </span>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${
+                  showMoreFilters ? "rotate-180" : ""
+                }`}
+              />
+            </button>
 
-              <button
-                className="inline-flex h-10 min-w-0 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 sm:w-[198px] sm:px-5"
-                disabled={fetching}
-                type="submit"
-              >
-                {fetching ? "Szukam…" : "Pokaż wyniki"}
-              </button>
-            </div>
+            <button
+              className="inline-flex h-10 min-w-0 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 lg:col-span-2 lg:px-5"
+              disabled={fetching}
+              type="submit"
+            >
+              {fetching ? "Szukam…" : "Pokaż wyniki"}
+            </button>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
@@ -1596,7 +1593,7 @@ export default function TrainingHubClient() {
                     className={`absolute bottom-3 left-0 top-3 w-0.5 rounded-r-full ${tone.stripe}`}
                   />
 
-                  <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_220px] sm:items-center sm:gap-3.5">
+                  <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_272px] sm:items-center sm:gap-3.5">
                     <div className="flex h-[58px] w-[52px] flex-col items-center self-start rounded-xl bg-slate-50 px-1.5 py-2 ring-1 ring-slate-200 sm:self-center">
                       <span
                         className={`mb-1.5 h-0.5 w-6 rounded-full ${tone.dateTop}`}
@@ -1681,23 +1678,22 @@ export default function TrainingHubClient() {
                       </div>
                     </div>
 
-                    <div className="col-span-2 mt-0.5 grid grid-cols-[minmax(0,1fr)_76px] gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
+                    <div className="col-span-2 mt-0.5 grid grid-cols-[minmax(168px,1fr)_76px] gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
                       <button
                         onClick={() => chooseTraining(t)}
-                        className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 text-[11px] font-bold text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-9"
+                        className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-9"
                         type="button"
                         title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
                       >
-                        <BookmarkPlus className="h-3.5 w-3.5" />
+                        <GraduationCap className="h-4 w-4 shrink-0 text-white" strokeWidth={2.2} />
                         Dodaj do planu
                       </button>
 
                       <span
-                        className="inline-flex h-10 items-center justify-end gap-1.5 whitespace-nowrap text-blue-700 sm:h-9"
+                        className="inline-flex h-10 items-center justify-end gap-1 whitespace-nowrap text-blue-700 sm:h-9"
                         title={pointsDetailsLabel(t.points_verification_status)}
                         aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
                       >
-                        <GraduationCap className="h-[18px] w-[18px] shrink-0" strokeWidth={2.1} />
                         <span className="text-lg font-black leading-none tracking-[-0.04em]">
                           {typeof t.points === "number" ? t.points : "—"}
                         </span>
@@ -1709,11 +1705,10 @@ export default function TrainingHubClient() {
                           href={t.url}
                           target="_blank"
                           rel="noreferrer"
-                          className={`${t.organizer_logo_url ? "" : "col-span-2"} inline-flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-2 text-[10.5px] font-bold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] sm:h-9`}
+                          className={`${t.organizer_logo_url ? "" : "col-span-2"} inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] sm:h-9`}
                         >
-                          <span className="sm:hidden">Zapisy</span>
-                          <span className="hidden sm:inline">Przejdź do zapisów</span>
-                          <ExternalLink className="h-3 w-3" />
+                          <span>Przejdź do zapisów</span>
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                         </a>
                       ) : (
                         <button

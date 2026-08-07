@@ -17,7 +17,7 @@ const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 
 const actionStart = card.indexOf(
-  'grid-cols-[minmax(0,1fr)_76px]',
+  'grid-cols-[minmax(168px,1fr)_76px]',
 );
 const actions = card.slice(actionStart);
 
@@ -25,7 +25,7 @@ const resetIndex = filterActions.indexOf('aria-label="Wyczyść filtry"');
 const moreIndex = filterActions.indexOf("Więcej filtrów");
 const resultsIndex = filterActions.indexOf("Pokaż wyniki");
 const planIndex = actions.indexOf("Dodaj do planu");
-const pointsIndex = actions.indexOf("GraduationCap");
+const pointsIndex = actions.indexOf("pointsDetailsLabel(t.points_verification_status)");
 const externalIndex = actions.indexOf("Przejdź do zapisów");
 const logoIndex = actions.indexOf("OrganizerLogo");
 
@@ -35,7 +35,7 @@ const checks = [
     resetIndex >= 0 &&
       resetIndex < moreIndex &&
       moreIndex < resultsIndex &&
-      (filterActions.match(/sm:w-\[198px\]/g) ?? []).length === 2,
+      (filterActions.match(/lg:col-span-2/g) ?? []).length === 2,
   ],
   [
     "Liczba wyników ma jeden opis z ikoną i nie jest duplikowana w panelu bocznym",
@@ -51,6 +51,7 @@ const checks = [
       planIndex >= 0 &&
       pointsIndex > planIndex &&
       actions.includes("bg-blue-600") &&
+      actions.includes("GraduationCap") &&
       actions.includes("pointsDetailsLabel(t.points_verification_status)"),
   ],
   [

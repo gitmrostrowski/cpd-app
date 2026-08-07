@@ -28,9 +28,9 @@ const checks = [
   ],
   [
     "Układ działań jest responsywny",
-    client.includes("grid w-full grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)]") &&
+    client.includes("grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)]") &&
       client.includes('className="sm:hidden">Filtry</span>') &&
-      client.includes("sm:w-[198px]"),
+      (client.match(/lg:col-span-2/g) ?? []).length >= 2,
   ],
   [
     "Punkty mają wyraźny moduł z ikoną edukacji",
