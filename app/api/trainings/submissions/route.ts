@@ -36,6 +36,31 @@ const submissionSchema = z.object({
     .optional(),
   description: z.string().trim().max(5000).nullable().optional(),
   profession: z.string().trim().min(2).max(500),
+  audience_scope: z.enum(["specific", "all_medical"]),
+  profession_codes: z.array(z.string().trim().min(1).max(80)).max(20),
+}).superRefine((value, ctx) => {
+  const uniqueCodes = new Set(value.profession_codes);
+  if (uniqueCodes.size !== value.profession_codes.length) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["profession_codes"],
+      message: "duplicate_profession_codes",
+    });
+  }
+  if (value.audience_scope === "specific" && uniqueCodes.size === 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["profession_codes"],
+      message: "profession_required",
+    });
+  }
+  if (value.audience_scope === "all_medical" && uniqueCodes.size > 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["profession_codes"],
+      message: "all_medical_cannot_have_codes",
+    });
+  }
 });
 
 async function supabaseServer() {
@@ -168,6 +193,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_date_range" }, { status: 400 });
   }
 
+  let professionIds: string[] = [];
+  if (parsed.data.audience_scope === "specific") {
+    const { data: professions, error: professionsError } = await supabase
+      .from("professions")
+      .select("id,code")
+      .in("code", parsed.data.profession_codes)
+      .eq("is_active", true);
+
+    if (
+      professionsError ||
+      !professions ||
+      professions.length !== parsed.data.profession_codes.length
+    ) {
+      return NextResponse.json(
+        { error: "invalid_professions" },
+        { status: 400 },
+      );
+    }
+    professionIds = professions.map((profession) => profession.id);
+  }
+
   let uploadedLogo: { path: string; url: string } | null = null;
   if (logoFile) {
     try {
@@ -193,6 +239,10 @@ export async function POST(request: Request) {
     organizer_logo_url: uploadedLogo?.url ?? null,
     organizer_logo_path: uploadedLogo?.path ?? null,
     approval_status: "pending",
+    audience_scope: parsed.data.audience_scope,
+    points_verification_status: "organizer_declared",
+    points_source_url: parsed.data.url ?? null,
+    points_verified_on: null,
     submitted_by: user.id,
     submitted_email: user.email ?? null,
   });
@@ -207,6 +257,27 @@ export async function POST(request: Request) {
     console.error("Training submission insert failed", error);
     await removeTrainingLogo(uploadedLogo?.path);
     return NextResponse.json({ error: "submission_failed" }, { status: 500 });
+  }
+
+  if (parsed.data.audience_scope === "specific") {
+    const { error: rulesError } = await supabase
+      .from("training_profession_rules")
+      .insert(
+        professionIds.map((professionId) => ({
+          training_id: data.id,
+          profession_id: professionId,
+          points: parsed.data.points,
+          verification_status: "organizer_declared",
+          source_url: parsed.data.url ?? null,
+        })),
+      );
+
+    if (rulesError) {
+      console.error("Training profession rules insert failed", rulesError);
+      await supabase.from("trainings").delete().eq("id", data.id);
+      await removeTrainingLogo(uploadedLogo?.path);
+      return NextResponse.json({ error: "submission_failed" }, { status: 500 });
+    }
   }
 
   let notificationSent = false;

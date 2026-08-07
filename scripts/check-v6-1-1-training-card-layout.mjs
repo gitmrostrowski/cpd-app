@@ -7,7 +7,7 @@ const checks = [
     "Kafelek oddziela datę od głównej hierarchii treści",
     client.includes("grid-cols-[52px_minmax(0,1fr)]") &&
       client.includes("sm:grid-cols-[52px_minmax(0,1fr)_170px]") &&
-      client.includes("Punkty CPD"),
+      client.includes("Punkty edukacyjne"),
   ],
   [
     "Logo pozostaje opcjonalne i nie tworzy pustej ramki",

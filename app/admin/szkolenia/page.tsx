@@ -9,6 +9,8 @@ import {
   fetchProfessionCatalog,
   fetchTrainings,
   toNormalizedTraining,
+  type PointVerificationStatus,
+  type TrainingProfessionRule,
 } from "@/lib/data/crpe";
 import {
   FALLBACK_PROFESSION_OPTIONS,
@@ -16,6 +18,7 @@ import {
 } from "@/lib/cpd/professions";
 import TrainingAudienceField, {
   hasTrainingAudience,
+  trainingAudienceSelection,
   trainingAudienceSummary,
 } from "@/components/TrainingAudienceField";
 
@@ -34,6 +37,11 @@ type TrainingRow = {
   external_url?: string | null;
   description: string | null;
   profession: string | null;
+  audience_scope: "unknown" | "specific" | "all_medical";
+  profession_rules: TrainingProfessionRule[];
+  points_verification_status: PointVerificationStatus;
+  points_source_url: string | null;
+  points_verified_on: string | null;
   approval_status: TrainingStatus | null;
   reject_reason: string | null;
   submitted_by: string | null;
@@ -61,6 +69,12 @@ function statusBadgeCls(s: TrainingStatus) {
   if (s === "approved") return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
   if (s === "rejected") return "bg-rose-50 text-rose-700 ring-1 ring-rose-200";
   return "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
+}
+
+function pointsVerificationLabel(status: PointVerificationStatus) {
+  if (status === "verified") return "potwierdzone";
+  if (status === "organizer_declared") return "deklarowane";
+  return "niezweryfikowane";
 }
 
 function normOrganizer(v: string | null) {
@@ -246,7 +260,20 @@ export default function AdminTrainingsPage() {
     if (next.approval_status === "approved" && !hasTrainingAudience(next.profession)) {
       throw new Error("Przed akceptacją wybierz adresatów szkolenia.");
     }
+    if (
+      next.points_verification_status === "verified" &&
+      (!next.points_source_url || !next.points_verified_on)
+    ) {
+      throw new Error(
+        "Zweryfikowane punkty wymagają źródła i daty sprawdzenia.",
+      );
+    }
     const normalized: Record<string, unknown> = toNormalizedTraining(next);
+    const audience = trainingAudienceSelection(
+      next.profession,
+      professionOptions,
+    );
+    normalized.audience_scope = audience.scope;
     const { data: auth } = await sb.auth.getUser();
     if (next.approval_status === "approved") {
       normalized.approved_by = auth.user?.id ?? null;
@@ -261,14 +288,48 @@ export default function AdminTrainingsPage() {
       normalized.reject_reason = null;
     }
 
+    // Najpierw zapisujemy relacje. Dzieki temu przy zmianie statusu na
+    // approved trigger bazy widzi juz kompletna klasyfikacje szkolenia.
+    const { error: rulesError } = await sb.rpc(
+      "replace_training_profession_rules",
+      {
+        p_training_id: id,
+        p_audience_scope: audience.scope,
+        p_profession_codes: audience.professionCodes,
+        p_points: next.points,
+        p_verification_status:
+          next.points_verification_status ?? "unverified",
+        p_source_url: next.points_source_url ?? null,
+        p_verified_on: next.points_verified_on ?? null,
+      },
+    );
+    if (rulesError) throw rulesError;
+
+    // Klasyfikacja zostala zapisana atomowo przez RPC. Nie wysylamy jej drugi
+    // raz w zwyklym UPDATE, ktory moglby odtworzyc stan posredni.
+    const {
+      audience_scope: _audienceScope,
+      points_verification_status: _pointsVerificationStatus,
+      points_source_url: _pointsSourceUrl,
+      points_verified_on: _pointsVerifiedOn,
+      ...trainingData
+    } = normalized;
+    void _audienceScope;
+    void _pointsVerificationStatus;
+    void _pointsSourceUrl;
+    void _pointsVerifiedOn;
+
     const { error } = await sb
       .from("trainings")
-      .update(normalized)
+      .update(trainingData)
       .eq("id", id);
 
     if (error) throw error;
 
-    const updated = next;
+    const updated = {
+      ...next,
+      audience_scope: audience.scope,
+    };
     setRows((prev) => prev.map((x) => (x.id === id ? updated : x)));
     return updated;
   }
@@ -320,6 +381,16 @@ export default function AdminTrainingsPage() {
       document
         .getElementById("admin-training-audience")
         ?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
+
+    if (
+      edit.points_verification_status === "verified" &&
+      (!edit.points_source_url || !edit.points_verified_on)
+    ) {
+      setEditError(
+        "Zweryfikowane punkty wymagają źródła i daty sprawdzenia.",
+      );
       return;
     }
 
@@ -380,6 +451,11 @@ export default function AdminTrainingsPage() {
         external_url: url,
         description: (edit.description || "").trim() ? (edit.description || "").trim() : null,
         profession: edit.profession?.trim() || null,
+        audience_scope: edit.audience_scope,
+        profession_rules: edit.profession_rules,
+        points_verification_status: edit.points_verification_status,
+        points_source_url: normalizeUrl(edit.points_source_url),
+        points_verified_on: edit.points_verified_on || null,
         approval_status: getStatus(edit),
         reject_reason: (edit.reject_reason || "").trim()
           ? (edit.reject_reason || "").trim()
@@ -713,7 +789,10 @@ export default function AdminTrainingsPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        {r.points ?? <span className="text-slate-400">—</span>}
+                        <div>{r.points ?? <span className="text-slate-400">—</span>}</div>
+                        <div className="mt-1 text-[10px] font-semibold text-slate-400">
+                          {pointsVerificationLabel(r.points_verification_status)}
+                        </div>
                       </td>
 
                       <td className="px-4 py-4 text-xs">
@@ -944,6 +1023,66 @@ export default function AdminTrainingsPage() {
                     })
                   }
                 />
+                <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                  Dla wybranych zawodów ta wartość zostanie zapisana osobno.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600">
+                  Status punktacji
+                </label>
+                <select
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={edit.points_verification_status}
+                  onChange={(e) =>
+                    setEdit({
+                      ...edit,
+                      points_verification_status: e.target
+                        .value as PointVerificationStatus,
+                    })
+                  }
+                >
+                  <option value="unverified">Niezweryfikowane</option>
+                  <option value="organizer_declared">Deklarowane przez organizatora</option>
+                  <option value="verified">Zweryfikowane przez CRPE</option>
+                </select>
+              </div>
+
+              <div className="sm:col-span-2 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-xs font-semibold text-slate-600">
+                    Źródło punktacji
+                  </label>
+                  <input
+                    type="url"
+                    className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="https://..."
+                    value={edit.points_source_url || ""}
+                    onChange={(e) =>
+                      setEdit({
+                        ...edit,
+                        points_source_url: e.target.value || null,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-600">
+                    Sprawdzono dnia
+                  </label>
+                  <input
+                    type="date"
+                    className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    value={edit.points_verified_on || ""}
+                    onChange={(e) =>
+                      setEdit({
+                        ...edit,
+                        points_verified_on: e.target.value || null,
+                      })
+                    }
+                  />
+                </div>
               </div>
 
               <div>

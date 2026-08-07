@@ -45,6 +45,7 @@ export type Database = {
       professional_identifiers: LooseTable;
       professions: LooseTable;
       profiles: LooseTable;
+      training_profession_rules: LooseTable;
       trainings: LooseTable;
     };
     Views: Record<string, never>;
@@ -173,6 +174,18 @@ export type Database = {
       is_platform_staff: {
         Args: { accepted_roles: string[] };
         Returns: boolean;
+      };
+      replace_training_profession_rules: {
+        Args: {
+          p_training_id: string;
+          p_audience_scope: string;
+          p_profession_codes: string[];
+          p_points: number | null;
+          p_verification_status: string;
+          p_source_url: string | null;
+          p_verified_on: string | null;
+        };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;

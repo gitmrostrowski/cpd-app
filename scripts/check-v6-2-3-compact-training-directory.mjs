@@ -21,9 +21,9 @@ const checks = [
       client.includes("space-y-2"),
   ],
   [
-    "Hierarchia ogranicza tagi i nie pokazuje domyślnej grupy odbiorców",
+    "Hierarchia ogranicza tagi i odróżnia brak weryfikacji od wszystkich medyków",
     client.includes("t.topics.slice(0, 1)") &&
-      client.includes('"Dla wszystkich"') &&
+      client.includes('"Adresaci do weryfikacji"') &&
       client.includes('"Wszyscy medycy"') &&
       client.includes('if (pricePln === 0) return "Bezpłatne"'),
   ],

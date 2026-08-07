@@ -55,6 +55,11 @@ export type LegacyTraining = {
   format?: string | null;
   category?: string | null;
   profession?: string | null;
+  audience_scope?: "unknown" | "specific" | "all_medical";
+  profession_rules?: TrainingProfessionRule[];
+  points_verification_status?: PointVerificationStatus;
+  points_source_url?: string | null;
+  points_verified_on?: string | null;
   voivodeship?: string | null;
   is_partner?: boolean;
   topics?: string[] | null;
@@ -76,6 +81,21 @@ export type LegacyTraining = {
   submitted_email?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+};
+
+export type PointVerificationStatus =
+  | "unverified"
+  | "organizer_declared"
+  | "verified";
+
+export type TrainingProfessionRule = {
+  profession_id: string;
+  profession_code: string;
+  profession_name: string;
+  points: number | null;
+  verification_status: PointVerificationStatus;
+  source_url: string | null;
+  verified_on: string | null;
 };
 
 export type LegacyProfile = {
@@ -303,6 +323,33 @@ function yearFromActivity(row: Record<string, any>) {
 
 function toLegacyTraining(row: Record<string, any>): LegacyTraining {
   const legacy = (row.legacy_data ?? {}) as Record<string, unknown>;
+  const professionRules = (
+    (row.training_profession_rules ?? []) as Record<string, any>[]
+  ).map((rule) => {
+    const profession = Array.isArray(rule.profession)
+      ? rule.profession[0]
+      : rule.profession;
+    return {
+      profession_id: rule.profession_id,
+      profession_code: profession?.code ?? "",
+      profession_name: profession?.name_pl ?? "Nieznany zawód",
+      points: rule.points == null ? null : asNumber(rule.points),
+      verification_status:
+        (rule.verification_status as PointVerificationStatus) ?? "unverified",
+      source_url: rule.source_url ?? null,
+      verified_on: rule.verified_on ?? null,
+    };
+  });
+  const audienceScope = (row.audience_scope ?? "unknown") as
+    | "unknown"
+    | "specific"
+    | "all_medical";
+  const normalizedProfession =
+    audienceScope === "all_medical"
+      ? "Wszyscy medycy"
+      : professionRules.length
+        ? professionRules.map((rule) => rule.profession_name).join(", ")
+        : row.target_profession_text ?? null;
   return {
     id: row.id,
     title: row.title,
@@ -314,7 +361,14 @@ function toLegacyTraining(row: Record<string, any>): LegacyTraining {
     start_date: row.starts_on ?? null,
     end_date: row.ends_on ?? null,
     category: row.category ?? null,
-    profession: row.target_profession_text ?? null,
+    profession: normalizedProfession,
+    audience_scope: audienceScope,
+    profession_rules: professionRules,
+    points_verification_status:
+      (row.points_verification_status as PointVerificationStatus) ??
+      "unverified",
+    points_source_url: row.points_source_url ?? null,
+    points_verified_on: row.points_verified_on ?? null,
     voivodeship: row.location ?? null,
     external_url: row.external_url ?? null,
     is_partner: Boolean(row.is_partner),
@@ -918,7 +972,7 @@ export async function fetchTrainings(client: Client): Promise<LegacyTraining[]> 
   const { data, error } = await client
     .from("trainings")
     .select(
-      "id,title,organizer_name,organizer_logo_url,organizer_logo_path,points,delivery_format,starts_on,ends_on,category,target_profession_text,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,submitted_by,approved_by,approved_at,reject_reason,description,submitted_email,legacy_data,created_at,updated_at",
+      "id,title,organizer_name,organizer_logo_url,organizer_logo_path,points,delivery_format,starts_on,ends_on,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,submitted_by,approved_by,approved_at,reject_reason,description,submitted_email,legacy_data,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
     )
     .order("starts_on", { ascending: true, nullsFirst: false });
   if (error) throw new Error(error.message);
@@ -936,7 +990,7 @@ export async function fetchPublicTrainings(
   const { data, error } = await client
     .from("trainings")
     .select(
-      "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,category,target_profession_text,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at",
+      "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
     )
     .eq("approval_status", "approved")
     .order("starts_on", { ascending: true, nullsFirst: false });
@@ -965,6 +1019,11 @@ export function toNormalizedTraining(
     ends_on: input.end_date ?? null,
     category: input.category ?? null,
     target_profession_text: input.profession ?? null,
+    audience_scope: input.audience_scope ?? "unknown",
+    points_verification_status:
+      input.points_verification_status ?? "unverified",
+    points_source_url: input.points_source_url ?? null,
+    points_verified_on: input.points_verified_on ?? null,
     location: input.voivodeship ?? null,
     external_url: input.external_url ?? input.url ?? null,
     is_partner: Boolean(input.is_partner),

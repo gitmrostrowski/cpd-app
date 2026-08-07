@@ -2,6 +2,34 @@ import type { ProfessionOption } from "@/lib/cpd/professions";
 
 export const GENERAL_TRAINING_AUDIENCE = "Wszyscy medycy";
 
+export type TrainingAudienceScope = "unknown" | "specific" | "all_medical";
+
+export function trainingAudienceSelection(
+  value: string | null | undefined,
+  options: readonly ProfessionOption[],
+) {
+  const selected = selectedAudiences(value);
+  if (!selected.length) {
+    return { scope: "unknown" as const, professionCodes: [] as string[] };
+  }
+  if (selected.includes(GENERAL_TRAINING_AUDIENCE)) {
+    return { scope: "all_medical" as const, professionCodes: [] as string[] };
+  }
+
+  const professionCodes = selected
+    .map(
+      (name) =>
+        options.find(
+          (option) =>
+            option.name_pl.toLocaleLowerCase("pl-PL") ===
+            name.toLocaleLowerCase("pl-PL"),
+        )?.code,
+    )
+    .filter((code): code is string => Boolean(code));
+
+  return { scope: "specific" as const, professionCodes };
+}
+
 type Props = {
   value: string | null | undefined;
   onChange: (value: string) => void;

@@ -25,6 +25,8 @@ import {
   fetchProfessionCatalog,
   fetchPublicTrainings,
   type LegacyTraining,
+  type PointVerificationStatus,
+  type TrainingProfessionRule,
 } from "@/lib/data/crpe";
 import {
   FALLBACK_PROFESSION_OPTIONS,
@@ -32,6 +34,7 @@ import {
 } from "@/lib/cpd/professions";
 import TrainingAudienceField, {
   hasTrainingAudience,
+  trainingAudienceSelection,
   trainingAudienceSummary,
 } from "@/components/TrainingAudienceField";
 
@@ -61,6 +64,11 @@ type Training = {
 
   category: TrainingCategory | null;
   profession: string | null;
+  audience_scope: "unknown" | "specific" | "all_medical";
+  profession_rules: TrainingProfessionRule[];
+  points_verification_status: PointVerificationStatus;
+  points_source_url: string | null;
+  points_verified_on: string | null;
   voivodeship: string | null;
 
   url: string | null;
@@ -357,8 +365,14 @@ function labelEnrollment(s: EnrollmentStatus | null) {
 }
 
 function labelProfession(p: string | null) {
-  if (!p) return "Dla wszystkich";
+  if (!p) return "Adresaci do weryfikacji";
   return p;
+}
+
+function pointsStatusLabel(status: PointVerificationStatus) {
+  if (status === "verified") return "potwierdzone";
+  if (status === "organizer_declared") return "deklarowane";
+  return "niezweryfikowane";
 }
 
 function formatPrice(pricePln: number | null) {
@@ -479,6 +493,12 @@ function normalizeTrainingRow(r: LegacyTraining): Training {
 
     category: (r.category ?? null) as TrainingCategory | null,
     profession: r.profession ?? null,
+    audience_scope: r.audience_scope ?? "unknown",
+    profession_rules: r.profession_rules ?? [],
+    points_verification_status:
+      r.points_verification_status ?? "unverified",
+    points_source_url: r.points_source_url ?? null,
+    points_verified_on: r.points_verified_on ?? null,
     voivodeship: r.voivodeship ?? null,
 
     url: normalizeUrl(r.url ?? legacyExternal),
@@ -593,10 +613,6 @@ export default function TrainingHubClient() {
         rows = rows.filter((row) => row.format === format);
       if (category !== "all")
         rows = rows.filter((row) => row.category === category);
-      if (minPoints !== "all")
-        rows = rows.filter(
-          (row) => Number(row.points ?? 0) >= Number(minPoints),
-        );
       if (timeWindow !== "all") {
         const maxDate = addDaysYYYYMMDD(Number(timeWindow));
         rows = rows.filter(
@@ -613,17 +629,38 @@ export default function TrainingHubClient() {
       if (place !== "all")
         rows = rows.filter((row) => includes(row.voivodeship, place));
       if (professionFilter !== "all") {
-        rows = rows.filter((row) => {
-          const profession = String(row.profession ?? "");
-          const general =
-            !profession ||
-            includes(profession, "ogól") ||
-            includes(profession, "wszys");
-          return professionFilter === "general"
-            ? general
-            : general || includes(profession, professionFilter);
-        });
+        if (professionFilter === "general") {
+          rows = rows.filter((row) => row.audience_scope === "all_medical");
+        } else if (professionFilter === "unknown") {
+          rows = rows.filter((row) => row.audience_scope === "unknown");
+        } else {
+          rows = rows
+            .filter(
+              (row) =>
+                row.audience_scope === "all_medical" ||
+                row.profession_rules.some(
+                  (rule) => rule.profession_code === professionFilter,
+                ),
+            )
+            .map((row) => {
+              const rule = row.profession_rules.find(
+                (item) => item.profession_code === professionFilter,
+              );
+              if (!rule) return row;
+              return {
+                ...row,
+                points: rule.points ?? row.points,
+                points_verification_status: rule.verification_status,
+                points_source_url: rule.source_url ?? row.points_source_url,
+                points_verified_on: rule.verified_on ?? row.points_verified_on,
+              };
+            });
+        }
       }
+      if (minPoints !== "all")
+        rows = rows.filter(
+          (row) => Number(row.points ?? 0) >= Number(minPoints),
+        );
       if (topic !== "all")
         rows = rows.filter((row) => row.topics?.includes(topic));
       if (priceMode === "free")
@@ -934,8 +971,19 @@ export default function TrainingHubClient() {
       submitted_email: user.email ?? null,
     };
 
+    const audienceSelection = trainingAudienceSelection(
+      fProfession,
+      professionOptions,
+    );
+
+    const submissionPayload = {
+      ...payload,
+      audience_scope: audienceSelection.scope,
+      profession_codes: audienceSelection.professionCodes,
+    };
+
     const formData = new FormData();
-    formData.set("submission", JSON.stringify(payload));
+    formData.set("submission", JSON.stringify(submissionPayload));
     if (fLogo) formData.set("organizer_logo", fLogo);
 
     const response = await fetch("/api/trainings/submissions", {
@@ -1070,8 +1118,9 @@ export default function TrainingHubClient() {
                 {[
                   { value: "all", label: "Wszystkie" },
                   { value: "general", label: "Ogólne / dla wszystkich" },
+                  { value: "unknown", label: "Adresaci do weryfikacji" },
                   ...professionOptions.map((option) => ({
-                    value: option.name_pl.toLocaleLowerCase("pl-PL"),
+                    value: option.code,
                     label: option.name_pl,
                   })),
                 ].map((o) => (
@@ -1371,11 +1420,7 @@ export default function TrainingHubClient() {
                 audience === "Nie wskazano"
                   ? labelProfession(t.profession)
                   : audience;
-              const showAudience = ![
-                "Dla wszystkich",
-                "Wszyscy medycy",
-                "Ogólna",
-              ].includes(audienceLabel);
+              const showAudience = audienceLabel !== "Wszyscy medycy";
 
               return (
                 <article
@@ -1490,12 +1535,15 @@ export default function TrainingHubClient() {
                     <div className="col-span-2 mt-0.5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:flex sm:min-h-[94px] sm:flex-col sm:justify-center sm:gap-1.5 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
                       <div className="hidden items-baseline justify-end gap-1 sm:flex">
                         <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-blue-500">
-                          Punkty CPD
+                          Punkty edukacyjne
                         </span>
                         <span className="text-lg font-black tracking-[-0.04em] text-blue-700">
                           {typeof t.points === "number" ? t.points : "—"}
                         </span>
                         <span className="text-[10px] font-bold text-blue-500">pkt</span>
+                      </div>
+                      <div className="hidden text-right text-[9px] font-semibold text-slate-400 sm:block">
+                        {pointsStatusLabel(t.points_verification_status)}
                       </div>
 
                       {t.url ? (
@@ -2108,11 +2156,12 @@ export default function TrainingHubClient() {
               </div>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {[
                 ["Termin", dateRangeShort(detailsTraining.start_date, detailsTraining.end_date) || "—"],
                 ["Miejsce", detailsTraining.voivodeship || (detailsTraining.format === "online" ? "Online" : "—")],
-                ["Punkty", typeof detailsTraining.points === "number" ? `${detailsTraining.points} pkt` : "Do potwierdzenia"],
+                ["Punkty", typeof detailsTraining.points === "number" ? `${detailsTraining.points} pkt · ${pointsStatusLabel(detailsTraining.points_verification_status)}` : "Do potwierdzenia"],
+                ["Adresaci", labelProfession(detailsTraining.profession)],
                 ["Cena", formatPrice(detailsTraining.price_pln ?? null) || "Nie podano"],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
@@ -2123,6 +2172,27 @@ export default function TrainingHubClient() {
                 </div>
               ))}
             </div>
+
+            {detailsTraining.points_verification_status !== "verified" ? (
+              <div className="mt-4 flex gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+                <Info className="mt-0.5 h-4 w-4 shrink-0" />
+                <div>
+                  Punkty nie zostały jeszcze niezależnie potwierdzone przez CRPE
+                  dla wskazanego zawodu. Przed zapisem sprawdź informację u
+                  organizatora.
+                  {detailsTraining.points_source_url ? (
+                    <a
+                      href={detailsTraining.points_source_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="ml-1 font-semibold underline"
+                    >
+                      Zobacz źródło
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
 
             <div className="mt-6 rounded-2xl border border-slate-200 p-4">
               <h3 className="text-sm font-bold text-slate-900">O szkoleniu</h3>
