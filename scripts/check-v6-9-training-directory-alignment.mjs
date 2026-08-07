@@ -18,7 +18,7 @@ const cardStart = client.indexOf("displayedItems.map");
 const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 const actionStart = card.indexOf(
-  'grid-cols-[minmax(168px,1fr)_76px]',
+  'grid-cols-[minmax(188px,1fr)_84px]',
 );
 const actions = card.slice(actionStart);
 const planStart = actions.indexOf('title="Dodaje szkolenie do planu CPD');
@@ -40,8 +40,8 @@ const checks = [
   ],
   [
     "Prawa kolumna i obie akcje są szersze",
-    card.includes("sm:grid-cols-[52px_minmax(0,1fr)_272px]") &&
-      actions.includes("grid-cols-[minmax(168px,1fr)_76px]") &&
+    card.includes("sm:grid-cols-[52px_minmax(0,1fr)_292px]") &&
+      actions.includes("grid-cols-[minmax(188px,1fr)_84px]") &&
       actions.includes("px-4 text-xs"),
   ],
   [
@@ -52,11 +52,11 @@ const checks = [
       !actions.includes('className="sm:hidden">Zapisy</span>'),
   ],
   [
-    "Biała czapeczka wyróżnia dodawanie do planu, a nie liczbę punktów",
-    planButton.includes("GraduationCap") &&
+    "Biały plus wyróżnia plan, a czapeczka wróciła do punktów",
+    planButton.includes("Plus") &&
       planButton.includes("text-white") &&
-      planButton.indexOf("GraduationCap") < planButton.indexOf("Dodaj do planu") &&
-      !points.includes("GraduationCap") &&
+      planButton.indexOf("Plus") < planButton.indexOf("Dodaj do planu") &&
+      points.includes("GraduationCap") &&
       points.includes("pkt</span>"),
   ],
   [

@@ -54,8 +54,8 @@ const checks = [
       submission.includes("removeTrainingLogo(uploadedLogo?.path)"),
   ],
   [
-    "Kafelek pokazuje opcjonalne logo przy organizatorze bez pustej ramki",
-    directory.includes("card\n") &&
+    "Kafelek pokazuje opcjonalne logo jako tło bez pustej ramki",
+    directory.includes("watermark\n") &&
       directory.includes("if (!logoUrl) return null") &&
       directory.includes("Logo organizatora (opcjonalnie)"),
   ],

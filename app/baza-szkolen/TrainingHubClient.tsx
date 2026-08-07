@@ -305,6 +305,7 @@ function formatTone(format: TrainingType | null) {
       stripe: "bg-amber-300",
       badge: "border-amber-200 bg-amber-50 text-amber-800",
       dateTop: "bg-amber-300",
+      wash: "bg-amber-100/80",
     };
   }
 
@@ -313,6 +314,7 @@ function formatTone(format: TrainingType | null) {
       stripe: "bg-indigo-300",
       badge: "border-indigo-200 bg-indigo-50 text-indigo-800",
       dateTop: "bg-indigo-300",
+      wash: "bg-indigo-100/75",
     };
   }
 
@@ -320,6 +322,7 @@ function formatTone(format: TrainingType | null) {
     stripe: "bg-blue-300",
     badge: "border-blue-200 bg-blue-50 text-blue-800",
     dateTop: "bg-blue-300",
+    wash: "bg-blue-100/75",
   };
 }
 
@@ -468,36 +471,37 @@ function OrganizerLogo({
   name,
   src,
   large = false,
-  card = false,
+  watermark = false,
 }: {
   name: string | null;
   src: string | null | undefined;
   large?: boolean;
-  card?: boolean;
+  watermark?: boolean;
 }) {
   const logoUrl = normalizeLogoUrl(src);
   if (!logoUrl) return null;
   const size = large
     ? "h-16 w-16 rounded-2xl"
-    : card
-      ? "h-8 w-[76px]"
+    : watermark
+      ? "h-[68px] w-[104px]"
       : "h-7 w-7 rounded-lg";
-  const frame = card
-    ? "justify-end"
+  const frame = watermark
+    ? "pointer-events-none justify-end opacity-[0.12] saturate-[0.75] transition-opacity duration-200 group-hover:opacity-[0.16]"
     : "overflow-hidden border border-slate-200 bg-white text-slate-400 shadow-sm";
 
   return (
     <span
       className={`inline-flex shrink-0 items-center ${frame} ${size}`}
-      role="img"
-      aria-label={name ? `Logo organizatora ${name}` : "Logo organizatora"}
+      role={watermark ? undefined : "img"}
+      aria-hidden={watermark ? true : undefined}
+      aria-label={watermark ? undefined : name ? `Logo organizatora ${name}` : "Logo organizatora"}
     >
       {/* Logo jest moderowane przez operatora CRPE i renderowane jako obraz. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={logoUrl}
         alt=""
-        className={card ? "max-h-8 max-w-full object-contain" : "h-full w-full object-contain p-1.5"}
+        className={watermark ? "max-h-[68px] max-w-full object-contain" : "h-full w-full object-contain p-1.5"}
         loading="lazy"
         referrerPolicy="no-referrer"
       />
@@ -1593,7 +1597,7 @@ export default function TrainingHubClient() {
                     className={`absolute bottom-3 left-0 top-3 w-0.5 rounded-r-full ${tone.stripe}`}
                   />
 
-                  <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_272px] sm:items-center sm:gap-3.5">
+                  <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_292px] sm:items-center sm:gap-3.5">
                     <div className="flex h-[58px] w-[52px] flex-col items-center self-start rounded-xl bg-slate-50 px-1.5 py-2 ring-1 ring-slate-200 sm:self-center">
                       <span
                         className={`mb-1.5 h-0.5 w-6 rounded-full ${tone.dateTop}`}
@@ -1678,41 +1682,34 @@ export default function TrainingHubClient() {
                       </div>
                     </div>
 
-                    <div className="col-span-2 mt-0.5 grid grid-cols-[minmax(168px,1fr)_76px] gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
-                      <button
-                        onClick={() => chooseTraining(t)}
-                        className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-9"
-                        type="button"
-                        title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
-                      >
-                        <GraduationCap className="h-4 w-4 shrink-0 text-white" strokeWidth={2.2} />
-                        Dodaj do planu
-                      </button>
-
+                    <div className="relative isolate col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px] gap-2 overflow-hidden border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-t-0 sm:pl-3.5 sm:pt-0">
                       <span
-                        className="inline-flex h-10 items-center justify-end gap-1 whitespace-nowrap text-blue-700 sm:h-9"
-                        title={pointsDetailsLabel(t.points_verification_status)}
-                        aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
-                      >
-                        <span className="text-lg font-black leading-none tracking-[-0.04em]">
-                          {typeof t.points === "number" ? t.points : "—"}
+                        className={`pointer-events-none absolute -right-12 -top-12 z-0 h-32 w-44 rounded-full blur-2xl ${tone.wash}`}
+                        aria-hidden="true"
+                      />
+                      {t.organizer_logo_url ? (
+                        <span className="absolute -right-3 top-1 z-0">
+                          <OrganizerLogo
+                            name={t.organizer}
+                            src={t.organizer_logo_url}
+                            watermark
+                          />
                         </span>
-                        <span className="text-[11px] font-bold text-blue-600">pkt</span>
-                      </span>
+                      ) : null}
 
                       {t.url ? (
                         <a
                           href={t.url}
                           target="_blank"
                           rel="noreferrer"
-                          className={`${t.organizer_logo_url ? "" : "col-span-2"} inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] sm:h-9`}
+                          className="relative z-10 col-span-2 inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] sm:h-9"
                         >
                           <span>Przejdź do zapisów</span>
                           <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                         </a>
                       ) : (
                         <button
-                          className={`${t.organizer_logo_url ? "" : "col-span-2"} inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl bg-slate-100 px-2 text-[10.5px] font-bold text-slate-400 sm:h-9`}
+                          className="relative z-10 col-span-2 inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl bg-slate-100 px-2 text-[10.5px] font-bold text-slate-400 sm:h-9"
                           disabled
                           type="button"
                         >
@@ -1720,13 +1717,27 @@ export default function TrainingHubClient() {
                         </button>
                       )}
 
-                      {t.organizer_logo_url ? (
-                        <OrganizerLogo
-                          name={t.organizer}
-                          src={t.organizer_logo_url}
-                          card
-                        />
-                      ) : null}
+                      <button
+                        onClick={() => chooseTraining(t)}
+                        className="relative z-10 inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-9"
+                        type="button"
+                        title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
+                      >
+                        <Plus className="h-4 w-4 shrink-0 text-white" strokeWidth={2.6} />
+                        Dodaj do planu
+                      </button>
+
+                      <span
+                        className="relative z-10 inline-flex h-10 items-center justify-end gap-1.5 whitespace-nowrap text-blue-700 sm:h-9"
+                        title={pointsDetailsLabel(t.points_verification_status)}
+                        aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
+                      >
+                        <GraduationCap className="h-[18px] w-[18px] shrink-0 text-blue-600" strokeWidth={2.2} />
+                        <span className="text-lg font-black leading-none tracking-[-0.04em]">
+                          {typeof t.points === "number" ? t.points : "—"}
+                        </span>
+                        <span className="text-[11px] font-bold text-blue-600">pkt</span>
+                      </span>
                     </div>
                   </div>
                 </article>

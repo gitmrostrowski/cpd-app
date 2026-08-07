@@ -17,7 +17,7 @@ const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 
 const actionStart = card.indexOf(
-  'grid-cols-[minmax(168px,1fr)_76px]',
+  'grid-cols-[minmax(188px,1fr)_84px]',
 );
 const actions = card.slice(actionStart);
 
@@ -46,20 +46,20 @@ const checks = [
       !client.includes(">Podsumowanie<"),
   ],
   [
-    "Plan i punkty tworzą pierwszy rząd decyzji",
+    "Zapisy są pierwszą szeroką akcją, a plan pozostaje głównym CTA CRPE",
     actionStart >= 0 &&
-      planIndex >= 0 &&
+      externalIndex >= 0 &&
+      externalIndex < planIndex &&
       pointsIndex > planIndex &&
       actions.includes("bg-blue-600") &&
-      actions.includes("GraduationCap") &&
       actions.includes("pointsDetailsLabel(t.points_verification_status)"),
   ],
   [
-    "Zapisy i logo tworzą drugi, spokojniejszy rząd",
-    externalIndex > pointsIndex &&
-      logoIndex > externalIndex &&
+    "Logo jest tłem, a zapis wykorzystuje pełną szerokość prawej strefy",
+    logoIndex < externalIndex &&
       actions.includes("border border-slate-300 bg-white") &&
-      actions.includes('t.organizer_logo_url ? "" : "col-span-2"'),
+      actions.includes("col-span-2 inline-flex") &&
+      actions.includes("watermark"),
   ],
   [
     "Karta pokazuje mniej treści, a tematy są dostępne po rozwinięciu",

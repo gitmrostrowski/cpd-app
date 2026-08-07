@@ -52,7 +52,7 @@ const checks = [
   ],
   [
     "Karty mają szerszą kolumnę i dwie czytelne akcje",
-    client.includes("sm:grid-cols-[52px_minmax(0,1fr)_272px]") &&
+    client.includes("sm:grid-cols-[52px_minmax(0,1fr)_292px]") &&
       client.includes("Przejdź do zapisów") &&
       client.includes("Dodaj do planu") &&
       client.includes("sm:h-9"),

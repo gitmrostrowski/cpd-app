@@ -15,9 +15,9 @@ const checks = [
   ],
   [
     "Desktop ma zwarty układ data, treść i akcje",
-    client.includes("sm:grid-cols-[52px_minmax(0,1fr)_272px]") &&
+    client.includes("sm:grid-cols-[52px_minmax(0,1fr)_292px]") &&
       client.includes('h-[58px] w-[52px]') &&
-      client.includes("grid-cols-[minmax(168px,1fr)_76px]") &&
+      client.includes("grid-cols-[minmax(188px,1fr)_84px]") &&
       client.includes("sm:h-9"),
   ],
   [

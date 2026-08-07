@@ -6,7 +6,7 @@ const client = fs.readFileSync(
 );
 
 const pointsColumnStart = client.indexOf(
-  'className="col-span-2 mt-0.5 grid grid-cols-[minmax(168px,1fr)_76px]',
+  'className="relative isolate col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px]',
 );
 const pointsColumnEnd = client.indexOf("</article>", pointsColumnStart);
 const desktopPoints = client.slice(pointsColumnStart, pointsColumnEnd);
@@ -18,13 +18,13 @@ const checks = [
       desktopPoints.includes('text-lg font-black') &&
       desktopPoints.includes(">pkt</span>") &&
       !desktopPoints.includes("punkty edukacyjne") &&
-      desktopPoints.includes('className="inline-flex h-10 items-center justify-end') &&
+      desktopPoints.includes('inline-flex h-10 items-center justify-end') &&
       !desktopPoints.includes("PUNKTY EDUKACYJNE"),
   ],
   [
     "Kolumna akcji nie wymusza minimalnej wysokości karty",
     !desktopPoints.includes("min-h-") &&
-      desktopPoints.includes("grid-cols-[minmax(168px,1fr)_76px]") &&
+      desktopPoints.includes("grid-cols-[minmax(188px,1fr)_84px]") &&
       desktopPoints.includes("sm:h-9"),
   ],
   [
