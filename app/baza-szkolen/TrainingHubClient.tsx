@@ -3,16 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Award,
   BookOpen,
   Building2,
-  CalendarDays,
   CheckCircle2,
   ChevronDown,
-  ChevronRight,
   Clock3,
   ExternalLink,
-  GraduationCap,
   Info,
   MapPin,
   MonitorPlay,
@@ -20,7 +16,6 @@ import {
   RotateCcw,
   SearchCheck,
   SlidersHorizontal,
-  Users,
   X,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
@@ -309,26 +304,10 @@ function dateRangeShort(start: string | null, end: string | null) {
   return formatDate(start ?? end);
 }
 
-function statusTone(status: EnrollmentStatus | null | undefined) {
-  if (status === "open") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  }
-
-  if (status === "waiting_list") {
-    return "border-amber-200 bg-amber-50 text-amber-700";
-  }
-
-  if (status === "closed") {
-    return "border-slate-200 bg-slate-50 text-slate-500";
-  }
-
-  return "border-slate-200 bg-slate-50 text-slate-500";
-}
-
 function formatTone(format: TrainingType | null) {
   if (format === "stacjonarne") {
     return {
-      stripe: "bg-amber-300",
+      rail: "#f59e0b",
       badge: "border-amber-200 bg-amber-50 text-amber-800",
       dateTop: "bg-amber-300",
     };
@@ -336,14 +315,14 @@ function formatTone(format: TrainingType | null) {
 
   if (format === "hybrydowe") {
     return {
-      stripe: "bg-indigo-300",
+      rail: "#6366f1",
       badge: "border-indigo-200 bg-indigo-50 text-indigo-800",
       dateTop: "bg-indigo-300",
     };
   }
 
   return {
-    stripe: "bg-blue-300",
+    rail: "#3b82f6",
     badge: "border-blue-200 bg-blue-50 text-blue-800",
     dateTop: "bg-blue-300",
   };
@@ -480,6 +459,28 @@ function formatPrice(pricePln: number | null) {
   return `${rounded} zł`;
 }
 
+function trainingMetaLine(
+  training: Training,
+  details: {
+    price: string | null;
+    enrollment: string | null;
+    range: string | null;
+    audienceLabel: string;
+    showAudience: boolean;
+  },
+) {
+  return [
+    labelCategory(training.category),
+    details.price,
+    details.range,
+    training.voivodeship,
+    details.showAudience ? details.audienceLabel : null,
+    details.enrollment,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 function mapToActivityType(
   category: TrainingCategory | null,
   delivery: TrainingType | null
@@ -529,11 +530,32 @@ function OrganizerLogo({
   src: string | null | undefined;
 }) {
   const logoUrl = normalizeLogoUrl(src);
-  if (!logoUrl) return null;
+
+  if (!logoUrl) {
+    const initials = String(name ?? "")
+      .split(/[–—-]/)[0]
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 1)
+      .slice(0, 3)
+      .map((word) => word[0]?.toLocaleUpperCase("pl-PL"))
+      .join("");
+
+    if (!initials) return null;
+
+    return (
+      <span
+        className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md bg-blue-50 px-1 text-[10px] font-extrabold tracking-[-0.02em] text-blue-700 ring-1 ring-inset ring-blue-100"
+        aria-hidden="true"
+      >
+        {initials}
+      </span>
+    );
+  }
 
   return (
     <span
-      className="inline-flex h-8 w-8 shrink-0 items-center overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-400 shadow-sm"
+      className="inline-flex h-7 w-10 shrink-0 items-center justify-center overflow-hidden"
       role="img"
       aria-label={name ? `Logo organizatora ${name}` : "Logo organizatora"}
     >
@@ -542,7 +564,7 @@ function OrganizerLogo({
       <img
         src={logoUrl}
         alt=""
-        className="h-full w-full object-contain p-1.5"
+        className="max-h-6 w-full object-contain"
         loading="lazy"
         referrerPolicy="no-referrer"
       />
@@ -1707,152 +1729,117 @@ export default function TrainingHubClient({
                   : audience;
               const showAudience = t.audience_scope !== "unknown" && audienceLabel !== "Wszyscy medycy";
               const pointDisplay = pointsPresentation(t, professionFilter);
+              const meta = trainingMetaLine(t, {
+                price,
+                enrollment: enr,
+                range: showRange ? range : null,
+                audienceLabel,
+                showAudience,
+              });
 
               return (
                 <article
                   key={t.id}
-                  className="group relative isolate overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,0.055)] transition-all duration-200 hover:border-blue-200 hover:shadow-[0_5px_14px_rgba(37,99,235,0.09)] sm:p-3.5"
+                  className="group relative rounded-2xl border border-l-[3px] border-slate-200 bg-white p-3.5 shadow-[0_2px_8px_rgba(15,23,42,0.045)] transition-colors duration-150 hover:border-slate-300 hover:shadow-[0_3px_12px_rgba(15,23,42,0.07)]"
+                  style={{ borderLeftColor: tone.rail }}
                 >
-                  <div
-                    className={`absolute bottom-3 left-0 top-3 w-0.5 rounded-r-full ${tone.stripe}`}
-                  />
-
-                  <span
-                    className="pointer-events-none absolute inset-y-0 right-0 z-0 hidden w-[38%] bg-[radial-gradient(ellipse_at_92%_12%,rgba(147,197,253,0.46),transparent_52%),linear-gradient(108deg,transparent_0%,rgba(248,250,252,0.58)_24%,rgba(239,246,255,0.88)_58%,rgba(219,234,254,0.84)_100%)] sm:block"
-                    aria-hidden="true"
-                  />
-                  <div className="relative z-10 grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_312px] sm:items-center sm:gap-3.5">
-                    <div className="flex h-[58px] w-[52px] flex-col items-center self-start rounded-xl bg-slate-50 px-1.5 py-2 ring-1 ring-slate-200 sm:self-center">
-                      <span
-                        className={`mb-1.5 h-0.5 w-6 rounded-full ${tone.dateTop}`}
-                      />
-                      <span className="text-xl font-black leading-none tracking-[-0.06em] text-slate-950">
+                  <div className="grid grid-cols-[54px_minmax(0,1fr)] gap-3 sm:grid-cols-[54px_minmax(0,1fr)_216px] sm:items-center sm:gap-4">
+                    <div className="flex w-[54px] shrink-0 flex-col items-center self-start text-center sm:self-center">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
+                        {date.weekday}
+                      </span>
+                      <span className="text-[26px] font-black leading-[1.1] tracking-[-0.04em] text-slate-950">
                         {date.day}
                       </span>
-                      <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500">
-                        {date.month}
+                      <span className="text-[11px] font-semibold text-slate-500">
+                        {date.month.toLocaleLowerCase("pl-PL")} {date.year}
                       </span>
                     </div>
 
                     <div className="min-w-0">
-                      <div className="flex min-w-0 flex-wrap items-center gap-1">
-                          <span className={`${pillBase} ${tone.badge}`}>
-                            <FormatIcon format={t.format} className="h-3 w-3" />
-                            {labelType(t.format)}
+                      <div className="mb-1.5 flex min-w-0 flex-wrap items-center gap-1.5">
+                        <span className={`${pillBase} ${tone.badge}`}>
+                          <FormatIcon format={t.format} className="h-3 w-3" />
+                          {labelType(t.format)}
+                        </span>
+                        {soon ? (
+                          <span className={`${pillBase} border-amber-200 bg-amber-50 text-amber-800`}>
+                            <Clock3 className="h-3 w-3" strokeWidth={2} />
+                            {dd === 0 ? "Dziś" : dd === 1 ? "Jutro" : `Za ${dd} dni`}
                           </span>
-                          {enr ? (
-                            <span className={`${pillBase} ${statusTone(t.enrollment_status)}`}>
-                              <CheckCircle2 className="h-3 w-3" strokeWidth={2} />
-                              {enr}
-                            </span>
-                          ) : null}
-                          {soon ? (
-                            <span className={`${pillBase} border-amber-200 bg-amber-50 text-amber-700`}>
-                              <Clock3 className="h-3 w-3" strokeWidth={2} />
-                              Wkrótce
-                            </span>
-                          ) : null}
+                        ) : null}
                       </div>
 
                       <Link
                         href={trainingPath(t)}
-                        className="mt-1.5 block w-full text-left"
+                        className="block w-full text-left"
                         aria-label={`Pokaż szczegóły szkolenia: ${t.title}`}
                       >
-                        <h3 className="line-clamp-2 text-[15px] font-extrabold leading-[1.3] tracking-[-0.018em] text-slate-950 transition group-hover:text-blue-800 sm:text-[16px]">
+                        <h3 className="line-clamp-2 text-[15px] font-bold leading-[1.35] tracking-[-0.015em] text-slate-950 transition-colors group-hover:text-blue-800">
                           {t.title}
                         </h3>
                       </Link>
 
-                      <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-medium text-slate-600 sm:text-xs">
-                        {t.organizer ? (
-                          <span className="inline-flex min-w-0 max-w-full items-center gap-2 truncate font-semibold text-slate-700 sm:max-w-[52%]">
-                            {t.organizer_logo_url ? <OrganizerLogo name={t.organizer} src={t.organizer_logo_url} /> : null}
-                            <span className="truncate">{t.organizer}</span>
+                      {t.organizer ? (
+                        <div className="mt-1.5 flex min-w-0 items-center gap-2">
+                          <OrganizerLogo name={t.organizer} src={t.organizer_logo_url} />
+                          <span className="truncate text-[13px] font-medium text-slate-600">
+                            {t.organizer}
                           </span>
-                        ) : null}
-                        {showRange && range ? (
-                          <span className="inline-flex items-center gap-1.5">
-                            <CalendarDays className="h-3 w-3 text-slate-400" strokeWidth={2} />
-                            {range}
-                          </span>
-                        ) : null}
-                        {t.voivodeship ? (
-                          <span className="inline-flex min-w-0 items-center gap-1.5">
-                            <MapPin className="h-3 w-3 shrink-0 text-slate-400" strokeWidth={2} />
-                            <span className="truncate">{t.voivodeship}</span>
-                          </span>
-                        ) : null}
-                        <span className="inline-flex items-center gap-1.5">
-                          <Award className="h-3 w-3 text-slate-400" strokeWidth={2} />
-                          {labelCategory(t.category)}
-                          {price ? ` · ${price}` : ""}
-                        </span>
-                        {showAudience ? (
-                          <span className="inline-flex min-w-0 items-center gap-1.5">
-                            <Users className="h-3 w-3 shrink-0 text-slate-400" strokeWidth={2} />
-                            <span className="truncate">{audienceLabel}</span>
-                          </span>
-                        ) : null}
-                        <Link
-                          href={trainingPath(t)}
-                          className="inline-flex items-center gap-0.5 font-bold text-blue-700 transition hover:text-blue-800"
-                          aria-label={`Pokaż pełne szczegóły szkolenia: ${t.title}`}
-                        >
-                          Szczegóły
-                          <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.2} />
-                        </Link>
-                      </div>
+                        </div>
+                      ) : null}
+
+                      <p className="mt-1 line-clamp-2 text-xs text-slate-500 sm:truncate" title={meta}>
+                        {meta}
+                      </p>
                     </div>
 
-                    <div className="col-span-2 mt-0.5 border-t border-slate-100 bg-gradient-to-r from-slate-50/30 to-blue-50/70 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-t-0 sm:bg-none sm:pl-4 sm:pt-0">
-                      <div className="flex min-h-[54px] items-center justify-between gap-2">
-                        <span
-                          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-blue-700"
-                          title={pointsDetailsLabel(t.points_verification_status)}
-                          aria-label={`${pointDisplay.detail}. ${pointsDetailsLabel(t.points_verification_status)}`}
-                        >
-                          <GraduationCap className="h-5 w-5 shrink-0" strokeWidth={2.1} />
-                          <span className="text-[20px] font-black leading-none tracking-[-0.04em]">{pointDisplay.main}</span>
-                          <span className="text-[13px] font-bold text-blue-600">{pointDisplay.suffix}</span>
+                    <div className="col-span-2 mt-3 border-t border-slate-100 pt-3 sm:col-span-1 sm:mt-0 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+                      <div className="flex items-baseline gap-1.5 text-blue-700">
+                        <span className="text-[27px] font-black leading-none tracking-[-0.04em]">
+                          {pointDisplay.main}
                         </span>
-                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-bold ${t.points_verification_status === "verified" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : t.points_verification_status === "organizer_declared" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
-                          {t.points_verification_status === "verified" ? <CheckCircle2 className="h-3 w-3" /> : <Info className="h-3 w-3" />}
-                          {shortVerificationLabel(t.points_verification_status)}
-                        </span>
+                        <span className="text-[13px] font-bold">{pointDisplay.suffix}</span>
                       </div>
 
-                      <div className="relative z-10 grid grid-cols-2 gap-2.5">
-                        {t.url ? (
-                          <a
-                            href={t.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-blue-600 px-2 text-[13px] font-bold tracking-[-0.01em] text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-10"
-                          >
-                            <span>Zapisy u organizatora</span>
-                            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                          </a>
+                      <div
+                        className={`mb-2.5 mt-1 inline-flex items-center gap-1 text-[11px] font-semibold ${t.points_verification_status === "verified" ? "text-emerald-700" : t.points_verification_status === "organizer_declared" ? "text-amber-700" : "text-slate-500"}`}
+                        title={pointsDetailsLabel(t.points_verification_status)}
+                        aria-label={`${pointDisplay.detail}. ${pointsDetailsLabel(t.points_verification_status)}`}
+                      >
+                        {t.points_verification_status === "verified" ? (
+                          <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.2} />
                         ) : (
-                          <button
-                            className="inline-flex h-11 min-w-0 cursor-not-allowed items-center justify-center whitespace-nowrap rounded-xl bg-slate-100 px-2 text-[13px] font-bold text-slate-400 sm:h-10"
-                            disabled
-                            type="button"
-                          >
-                            Brak linku do zapisów
-                          </button>
+                          <Info className="h-3.5 w-3.5" strokeWidth={2.2} />
                         )}
-
-                        <button
-                          onClick={() => chooseTraining(t)}
-                          className="inline-flex h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-2 text-[13px] font-bold tracking-[-0.01em] text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 active:scale-[0.98] sm:h-10"
-                          type="button"
-                          title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
-                        >
-                          <Plus className="h-4 w-4 shrink-0" strokeWidth={2.6} />
-                          Dodaj do planu
-                        </button>
+                        {shortVerificationLabel(t.points_verification_status)}
                       </div>
+
+                      {t.url ? (
+                        <a
+                          href={t.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-blue-700 px-3 text-[13px] font-bold text-white transition-colors hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        >
+                          <span className="truncate">Zapisy u organizatora</span>
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                        </a>
+                      ) : (
+                        <span className="flex h-10 w-full items-center justify-center rounded-lg bg-slate-100 px-3 text-[13px] font-bold text-slate-400">
+                          Brak linku do zapisów
+                        </span>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => chooseTraining(t)}
+                        title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
+                        className="mt-1.5 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-[13px] font-bold text-slate-700 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                      >
+                        <Plus className="h-4 w-4 shrink-0" strokeWidth={2.4} />
+                        Dodaj do planu
+                      </button>
                     </div>
                   </div>
                 </article>
