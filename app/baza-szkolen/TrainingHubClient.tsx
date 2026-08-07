@@ -480,10 +480,10 @@ function OrganizerLogo({
   const size = large
     ? "h-16 w-16 rounded-2xl"
     : watermark
-      ? "h-[76px] w-[168px]"
+      ? "h-[38px] w-[160px]"
       : "h-7 w-7 rounded-lg";
   const frame = watermark
-    ? "pointer-events-none justify-center opacity-[0.14] saturate-[0.65] contrast-[0.92] transition-opacity duration-200 group-hover:opacity-[0.18]"
+    ? "pointer-events-none justify-start opacity-[0.64] saturate-[0.9] contrast-[1.06] transition-opacity duration-200 group-hover:opacity-[0.76]"
     : "overflow-hidden border border-slate-200 bg-white text-slate-400 shadow-sm";
 
   return (
@@ -498,7 +498,7 @@ function OrganizerLogo({
       <img
         src={logoUrl}
         alt=""
-        className={watermark ? "max-h-[62px] max-w-[154px] object-contain" : "h-full w-full object-contain p-1.5"}
+        className={watermark ? "max-h-[34px] max-w-[148px] object-contain object-left" : "h-full w-full object-contain p-1.5"}
         loading="lazy"
         referrerPolicy="no-referrer"
       />
@@ -1598,16 +1598,6 @@ export default function TrainingHubClient() {
                     className="pointer-events-none absolute inset-y-0 right-0 z-0 hidden w-[36%] bg-[radial-gradient(circle_at_100%_12%,rgba(191,219,254,0.62),transparent_52%),linear-gradient(90deg,transparent_0%,rgba(248,250,252,0.72)_22%,rgba(239,246,255,0.92)_100%)] sm:block"
                     aria-hidden="true"
                   />
-                  {t.organizer_logo_url ? (
-                    <span className="pointer-events-none absolute right-3 top-1/2 z-0 hidden -translate-y-1/2 sm:block">
-                      <OrganizerLogo
-                        name={t.organizer}
-                        src={t.organizer_logo_url}
-                        watermark
-                      />
-                    </span>
-                  ) : null}
-
                   <div className="relative z-10 grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_292px] sm:items-center sm:gap-3.5">
                     <div className="flex h-[58px] w-[52px] flex-col items-center self-start rounded-xl bg-slate-50 px-1.5 py-2 ring-1 ring-slate-200 sm:self-center">
                       <span
@@ -1693,20 +1683,20 @@ export default function TrainingHubClient() {
                       </div>
                     </div>
 
-                    <div className="relative col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px] gap-2 border-t border-slate-100 bg-gradient-to-r from-slate-50/30 to-blue-50/70 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-t-0 sm:bg-none sm:pl-3.5 sm:pt-0">
+                    <div className="relative col-span-2 mt-0.5 flex flex-col gap-2.5 border-t border-slate-100 bg-gradient-to-r from-slate-50/30 to-blue-50/70 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-t-0 sm:bg-none sm:pl-3.5 sm:pt-0">
                       {t.url ? (
                         <a
                           href={t.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="relative z-10 col-span-2 inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white/90 px-4 text-xs font-bold text-slate-700 shadow-sm backdrop-blur-[1px] transition hover:border-blue-300 hover:bg-blue-50/95 hover:text-blue-700 active:scale-[0.98] sm:h-9"
+                          className="relative z-10 inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white/95 px-4 text-xs font-bold text-slate-700 shadow-sm backdrop-blur-[1px] transition hover:border-blue-300 hover:bg-blue-50/95 hover:text-blue-700 active:scale-[0.98] sm:h-9"
                         >
                           <span>Przejdź do zapisów</span>
                           <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                         </a>
                       ) : (
                         <button
-                          className="relative z-10 col-span-2 inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl bg-slate-100 px-2 text-[10.5px] font-bold text-slate-400 sm:h-9"
+                          className="relative z-10 inline-flex h-10 w-full cursor-not-allowed items-center justify-center rounded-xl bg-slate-100 px-2 text-[10.5px] font-bold text-slate-400 sm:h-9"
                           disabled
                           type="button"
                         >
@@ -1714,27 +1704,39 @@ export default function TrainingHubClient() {
                         </button>
                       )}
 
+                      <div className="relative z-10 flex min-h-[38px] items-center justify-between gap-3 px-1">
+                        {t.organizer_logo_url ? (
+                          <OrganizerLogo
+                            name={t.organizer}
+                            src={t.organizer_logo_url}
+                            watermark
+                          />
+                        ) : (
+                          <span aria-hidden="true" />
+                        )}
+
+                        <span
+                          className="inline-flex shrink-0 items-center justify-end gap-2 whitespace-nowrap text-blue-700"
+                          title={pointsDetailsLabel(t.points_verification_status)}
+                          aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
+                        >
+                          <GraduationCap className="h-5 w-5 shrink-0" strokeWidth={2.1} />
+                          <span className="text-[20px] font-black leading-none tracking-[-0.04em]">
+                            {typeof t.points === "number" ? t.points : "—"}
+                          </span>
+                          <span className="text-xs font-bold text-blue-600">pkt</span>
+                        </span>
+                      </div>
+
                       <button
                         onClick={() => chooseTraining(t)}
-                        className="relative z-10 inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-9"
+                        className="relative z-10 inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-9"
                         type="button"
                         title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
                       >
                         <Plus className="h-4 w-4 shrink-0 text-white" strokeWidth={2.6} />
                         Dodaj do planu
                       </button>
-
-                      <span
-                        className="relative z-10 inline-flex h-10 items-center justify-end gap-1.5 whitespace-nowrap text-blue-700 sm:h-9"
-                        title={pointsDetailsLabel(t.points_verification_status)}
-                        aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
-                      >
-                        <GraduationCap className="h-[18px] w-[18px] shrink-0 text-blue-600" strokeWidth={2.2} />
-                        <span className="text-lg font-black leading-none tracking-[-0.04em]">
-                          {typeof t.points === "number" ? t.points : "—"}
-                        </span>
-                        <span className="text-[11px] font-bold text-blue-600">pkt</span>
-                      </span>
                     </div>
                   </div>
                 </article>

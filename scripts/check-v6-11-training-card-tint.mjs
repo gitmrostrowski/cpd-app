@@ -9,7 +9,7 @@ const cardStart = client.indexOf("displayedItems.map");
 const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 const actionsStart = card.indexOf(
-  'className="relative col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px]',
+  'className="relative col-span-2 mt-0.5 flex flex-col gap-2.5',
 );
 const actions = card.slice(actionsStart);
 
@@ -29,24 +29,24 @@ const checks = [
   ],
   [
     "Różne proporcje logo mieszczą się w jednym bezpiecznym obszarze",
-    client.includes('? "h-[76px] w-[168px]"') &&
-      client.includes('watermark ? "max-h-[62px] max-w-[154px] object-contain"') &&
-      client.includes("justify-center opacity-[0.14]") &&
-      card.includes("right-3 top-1/2") &&
-      card.includes("-translate-y-1/2"),
+    client.includes('? "h-[38px] w-[160px]"') &&
+      client.includes('watermark ? "max-h-[34px] max-w-[148px] object-contain object-left"') &&
+      client.includes("justify-start opacity-[0.64]") &&
+      actions.includes("min-h-[38px]"),
   ],
   [
     "Logo i tinta nie przechwytują kliknięć ani nie obniżają kontrastu akcji",
-    (card.match(/pointer-events-none/g) ?? []).length >= 2 &&
+    card.includes("pointer-events-none") &&
+      client.includes("pointer-events-none justify-start") &&
       card.includes("relative z-10 grid") &&
-      actions.includes("bg-white/90") &&
+      actions.includes("bg-white/95") &&
       actions.includes("bg-blue-600"),
   ],
   [
     "Na telefonie akcje otrzymują spokojne tło bez nakładania dużego logo",
     actions.includes("bg-gradient-to-r from-slate-50/30 to-blue-50/70") &&
       actions.includes("sm:bg-none") &&
-      card.includes("hidden -translate-y-1/2 sm:block"),
+      actions.includes("w-full"),
   ],
   [
     "Zmiana nie dotyka danych ani logiki zapisów",

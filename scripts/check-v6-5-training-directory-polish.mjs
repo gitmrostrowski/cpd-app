@@ -35,8 +35,8 @@ const checks = [
   [
     "Punkty mają wyraźny moduł z ikoną edukacji",
     client.includes("GraduationCap") &&
-      client.includes("text-lg font-black") &&
-      client.includes("text-[11px] font-bold text-blue-600"),
+      client.includes("text-[20px] font-black") &&
+      client.includes("text-xs font-bold text-blue-600"),
   ],
   [
     "Lista nie eksponuje technicznego komunikatu o braku weryfikacji",

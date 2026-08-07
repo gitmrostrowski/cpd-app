@@ -18,14 +18,14 @@ const cardStart = client.indexOf("displayedItems.map");
 const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 const actionStart = card.indexOf(
-  'grid-cols-[minmax(188px,1fr)_84px]',
+  'flex flex-col gap-2.5',
 );
 const actions = card.slice(actionStart);
 const planStart = actions.indexOf('title="Dodaje szkolenie do planu CPD');
 const planEnd = actions.indexOf("</button>", planStart);
 const planButton = actions.slice(planStart, planEnd);
 const pointsStart = actions.indexOf("pointsDetailsLabel(t.points_verification_status)");
-const pointsEnd = actions.indexOf("{t.url ? (", pointsStart);
+const pointsEnd = actions.indexOf("</div>", pointsStart);
 const points = actions.slice(pointsStart, pointsEnd);
 
 const checks = [
@@ -41,7 +41,7 @@ const checks = [
   [
     "Prawa kolumna i obie akcje są szersze",
     card.includes("sm:grid-cols-[52px_minmax(0,1fr)_292px]") &&
-      actions.includes("grid-cols-[minmax(188px,1fr)_84px]") &&
+      actions.includes("flex flex-col gap-2.5") &&
       actions.includes("px-4 text-xs"),
   ],
   [

@@ -17,7 +17,7 @@ const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 
 const actionStart = card.indexOf(
-  'grid-cols-[minmax(188px,1fr)_84px]',
+  'flex flex-col gap-2.5',
 );
 const actions = card.slice(actionStart);
 
@@ -50,15 +50,16 @@ const checks = [
     actionStart >= 0 &&
       externalIndex >= 0 &&
       externalIndex < planIndex &&
-      pointsIndex > planIndex &&
+      pointsIndex > externalIndex &&
+      pointsIndex < planIndex &&
       actions.includes("bg-blue-600") &&
       actions.includes("pointsDetailsLabel(t.points_verification_status)"),
   ],
   [
-    "Logo jest tłem, a zapis wykorzystuje pełną szerokość prawej strefy",
+    "Logo ma własny pas marki, a zapis wykorzystuje pełną szerokość prawej strefy",
     logoIndex >= 0 &&
-      actions.includes("border border-slate-300 bg-white/90") &&
-      actions.includes("col-span-2 inline-flex") &&
+      actions.includes("border border-slate-300 bg-white/95") &&
+      actions.includes("h-10 w-full") &&
       card.includes("watermark"),
   ],
   [

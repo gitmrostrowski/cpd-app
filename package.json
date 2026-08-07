@@ -28,7 +28,8 @@
     "check:v6.8": "node scripts/check-v6-8-training-directory-decision-flow.mjs",
     "check:v6.9": "node scripts/check-v6-9-training-directory-alignment.mjs",
     "check:v6.10": "node scripts/check-v6-10-training-card-watermark.mjs",
-    "check:v6.11": "node scripts/check-v6-11-training-card-tint.mjs"
+    "check:v6.11": "node scripts/check-v6-11-training-card-tint.mjs",
+    "check:v6.12": "node scripts/check-v6-12-training-card-brand-rhythm.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

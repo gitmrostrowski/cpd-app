@@ -6,7 +6,7 @@ const client = fs.readFileSync(
 );
 
 const pointsColumnStart = client.indexOf(
-  'className="relative col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px]',
+  'className="relative col-span-2 mt-0.5 flex flex-col gap-2.5',
 );
 const pointsColumnEnd = client.indexOf("</article>", pointsColumnStart);
 const desktopPoints = client.slice(pointsColumnStart, pointsColumnEnd);
@@ -15,16 +15,16 @@ const checks = [
   [
     "Punkty są zwartym wskaźnikiem bez kafla i podpisu",
     pointsColumnStart >= 0 &&
-      desktopPoints.includes('text-lg font-black') &&
+      desktopPoints.includes('text-[20px] font-black') &&
       desktopPoints.includes(">pkt</span>") &&
       !desktopPoints.includes("punkty edukacyjne") &&
-      desktopPoints.includes('inline-flex h-10 items-center justify-end') &&
+      desktopPoints.includes('inline-flex shrink-0 items-center justify-end') &&
       !desktopPoints.includes("PUNKTY EDUKACYJNE"),
   ],
   [
-    "Kolumna akcji nie wymusza minimalnej wysokości karty",
-    !desktopPoints.includes("min-h-") &&
-      desktopPoints.includes("grid-cols-[minmax(188px,1fr)_84px]") &&
+    "Kolumna akcji ma tylko kontrolowaną wysokość pasa marki",
+    desktopPoints.includes('min-h-[38px]') &&
+      desktopPoints.includes("flex flex-col gap-2.5") &&
       desktopPoints.includes("sm:h-9"),
   ],
   [
