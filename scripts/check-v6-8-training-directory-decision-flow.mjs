@@ -27,7 +27,7 @@ const resultsIndex = filterActions.indexOf("Pokaż wyniki");
 const planIndex = actions.indexOf("Dodaj do planu");
 const pointsIndex = actions.indexOf("pointsDetailsLabel(t.points_verification_status)");
 const externalIndex = actions.indexOf("Przejdź do zapisów");
-const logoIndex = actions.indexOf("OrganizerLogo");
+const logoIndex = card.indexOf("OrganizerLogo");
 
 const checks = [
   [
@@ -56,10 +56,10 @@ const checks = [
   ],
   [
     "Logo jest tłem, a zapis wykorzystuje pełną szerokość prawej strefy",
-    logoIndex < externalIndex &&
-      actions.includes("border border-slate-300 bg-white") &&
+    logoIndex >= 0 &&
+      actions.includes("border border-slate-300 bg-white/90") &&
       actions.includes("col-span-2 inline-flex") &&
-      actions.includes("watermark"),
+      card.includes("watermark"),
   ],
   [
     "Karta pokazuje mniej treści, a tematy są dostępne po rozwinięciu",

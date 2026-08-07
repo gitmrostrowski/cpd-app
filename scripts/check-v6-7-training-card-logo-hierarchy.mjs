@@ -19,7 +19,7 @@ const organizerMetadata = client.slice(
 );
 
 const actionColumnStart = client.indexOf(
-  'className="relative isolate col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px]',
+  'className="relative col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px]',
 );
 const actionColumnEnd = client.indexOf("</article>", actionColumnStart);
 const actionHeader = client.slice(actionColumnStart, actionColumnEnd);
@@ -34,21 +34,21 @@ const checks = [
   [
     "Logo i punkty pozostają w zwartej kolumnie akcji",
     actionColumnStart >= 0 &&
-      actionHeader.includes("OrganizerLogo") &&
+      client.includes("OrganizerLogo") &&
       actionHeader.includes("grid-cols-[minmax(188px,1fr)_84px]") &&
       actionHeader.includes("sm:h-9"),
   ],
   [
     "Logo karty jest delikatnym znakiem wodnym bez dodatkowej ramki",
-    client.includes('? "h-[68px] w-[104px]"') &&
-      client.includes("opacity-[0.12]") &&
-      client.includes('watermark ? "max-h-[68px] max-w-full object-contain"') &&
-      actionHeader.includes("absolute -right-3 top-1 z-0"),
+    client.includes('? "h-[76px] w-[168px]"') &&
+      client.includes("opacity-[0.14]") &&
+      client.includes('watermark ? "max-h-[62px] max-w-[154px] object-contain"') &&
+      client.includes("absolute right-3 top-1/2 z-0 hidden -translate-y-1/2 sm:block"),
   ],
   [
     "Brak logo nie tworzy placeholdera, a zapis wykorzystuje pełny rząd",
-    actionHeader.includes("{t.organizer_logo_url ? (") &&
-      actionHeader.includes(") : null}") &&
+    client.includes("{t.organizer_logo_url ? (") &&
+      client.includes(") : null}") &&
       actionHeader.includes("relative z-10 col-span-2"),
   ],
   [

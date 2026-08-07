@@ -6,7 +6,7 @@ const client = fs.readFileSync(
 );
 
 const pointsColumnStart = client.indexOf(
-  'className="relative isolate col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px]',
+  'className="relative col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px]',
 );
 const pointsColumnEnd = client.indexOf("</article>", pointsColumnStart);
 const desktopPoints = client.slice(pointsColumnStart, pointsColumnEnd);

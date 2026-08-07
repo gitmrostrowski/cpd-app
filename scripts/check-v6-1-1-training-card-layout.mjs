@@ -16,9 +16,9 @@ const checks = [
   ],
   [
     "Logo jest czytelne i powiązane z kartą jako dekoracyjne tło",
-    client.includes('"h-[68px] w-[104px]"') &&
+    client.includes('"h-[76px] w-[168px]"') &&
       client.includes("<OrganizerLogo") &&
-      client.includes('watermark ? "max-h-[68px] max-w-full object-contain"') &&
+      client.includes('watermark ? "max-h-[62px] max-w-[154px] object-contain"') &&
       client.includes("object-contain"),
   ],
 ];

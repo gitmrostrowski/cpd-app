@@ -305,7 +305,6 @@ function formatTone(format: TrainingType | null) {
       stripe: "bg-amber-300",
       badge: "border-amber-200 bg-amber-50 text-amber-800",
       dateTop: "bg-amber-300",
-      wash: "bg-amber-100/80",
     };
   }
 
@@ -314,7 +313,6 @@ function formatTone(format: TrainingType | null) {
       stripe: "bg-indigo-300",
       badge: "border-indigo-200 bg-indigo-50 text-indigo-800",
       dateTop: "bg-indigo-300",
-      wash: "bg-indigo-100/75",
     };
   }
 
@@ -322,7 +320,6 @@ function formatTone(format: TrainingType | null) {
     stripe: "bg-blue-300",
     badge: "border-blue-200 bg-blue-50 text-blue-800",
     dateTop: "bg-blue-300",
-    wash: "bg-blue-100/75",
   };
 }
 
@@ -483,10 +480,10 @@ function OrganizerLogo({
   const size = large
     ? "h-16 w-16 rounded-2xl"
     : watermark
-      ? "h-[68px] w-[104px]"
+      ? "h-[76px] w-[168px]"
       : "h-7 w-7 rounded-lg";
   const frame = watermark
-    ? "pointer-events-none justify-end opacity-[0.12] saturate-[0.75] transition-opacity duration-200 group-hover:opacity-[0.16]"
+    ? "pointer-events-none justify-center opacity-[0.14] saturate-[0.65] contrast-[0.92] transition-opacity duration-200 group-hover:opacity-[0.18]"
     : "overflow-hidden border border-slate-200 bg-white text-slate-400 shadow-sm";
 
   return (
@@ -501,7 +498,7 @@ function OrganizerLogo({
       <img
         src={logoUrl}
         alt=""
-        className={watermark ? "max-h-[68px] max-w-full object-contain" : "h-full w-full object-contain p-1.5"}
+        className={watermark ? "max-h-[62px] max-w-[154px] object-contain" : "h-full w-full object-contain p-1.5"}
         loading="lazy"
         referrerPolicy="no-referrer"
       />
@@ -1591,13 +1588,27 @@ export default function TrainingHubClient() {
                 <article
                   key={t.id}
                   onClick={(e) => e.stopPropagation()}
-                  className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,0.055)] transition-all duration-200 hover:border-blue-200 hover:shadow-[0_5px_14px_rgba(37,99,235,0.09)] sm:p-3.5"
+                  className="group relative isolate overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,0.055)] transition-all duration-200 hover:border-blue-200 hover:shadow-[0_5px_14px_rgba(37,99,235,0.09)] sm:p-3.5"
                 >
                   <div
                     className={`absolute bottom-3 left-0 top-3 w-0.5 rounded-r-full ${tone.stripe}`}
                   />
 
-                  <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_292px] sm:items-center sm:gap-3.5">
+                  <span
+                    className="pointer-events-none absolute inset-y-0 right-0 z-0 hidden w-[36%] bg-[radial-gradient(circle_at_100%_12%,rgba(191,219,254,0.62),transparent_52%),linear-gradient(90deg,transparent_0%,rgba(248,250,252,0.72)_22%,rgba(239,246,255,0.92)_100%)] sm:block"
+                    aria-hidden="true"
+                  />
+                  {t.organizer_logo_url ? (
+                    <span className="pointer-events-none absolute right-3 top-1/2 z-0 hidden -translate-y-1/2 sm:block">
+                      <OrganizerLogo
+                        name={t.organizer}
+                        src={t.organizer_logo_url}
+                        watermark
+                      />
+                    </span>
+                  ) : null}
+
+                  <div className="relative z-10 grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_292px] sm:items-center sm:gap-3.5">
                     <div className="flex h-[58px] w-[52px] flex-col items-center self-start rounded-xl bg-slate-50 px-1.5 py-2 ring-1 ring-slate-200 sm:self-center">
                       <span
                         className={`mb-1.5 h-0.5 w-6 rounded-full ${tone.dateTop}`}
@@ -1682,27 +1693,13 @@ export default function TrainingHubClient() {
                       </div>
                     </div>
 
-                    <div className="relative isolate col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px] gap-2 overflow-hidden border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-t-0 sm:pl-3.5 sm:pt-0">
-                      <span
-                        className={`pointer-events-none absolute -right-12 -top-12 z-0 h-32 w-44 rounded-full blur-2xl ${tone.wash}`}
-                        aria-hidden="true"
-                      />
-                      {t.organizer_logo_url ? (
-                        <span className="absolute -right-3 top-1 z-0">
-                          <OrganizerLogo
-                            name={t.organizer}
-                            src={t.organizer_logo_url}
-                            watermark
-                          />
-                        </span>
-                      ) : null}
-
+                    <div className="relative col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px] gap-2 border-t border-slate-100 bg-gradient-to-r from-slate-50/30 to-blue-50/70 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-t-0 sm:bg-none sm:pl-3.5 sm:pt-0">
                       {t.url ? (
                         <a
                           href={t.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="relative z-10 col-span-2 inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] sm:h-9"
+                          className="relative z-10 col-span-2 inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white/90 px-4 text-xs font-bold text-slate-700 shadow-sm backdrop-blur-[1px] transition hover:border-blue-300 hover:bg-blue-50/95 hover:text-blue-700 active:scale-[0.98] sm:h-9"
                         >
                           <span>Przejdź do zapisów</span>
                           <ExternalLink className="h-3.5 w-3.5 shrink-0" />

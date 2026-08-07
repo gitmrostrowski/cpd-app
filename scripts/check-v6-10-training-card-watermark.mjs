@@ -9,7 +9,7 @@ const cardStart = client.indexOf("displayedItems.map");
 const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 const actionsStart = card.indexOf(
-  'className="relative isolate col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px]',
+  'className="relative col-span-2 mt-0.5 grid grid-cols-[minmax(188px,1fr)_84px]',
 );
 const actions = card.slice(actionsStart);
 
@@ -26,16 +26,17 @@ const checks = [
   ],
   [
     "Logo organizatora jest nieinteraktywnym, rozjaśnionym tłem",
-    actions.includes("absolute -right-3 top-1 z-0") &&
-      actions.includes("watermark") &&
+    card.includes("absolute right-3 top-1/2 z-0 hidden -translate-y-1/2 sm:block") &&
+      card.includes("watermark") &&
       client.includes("pointer-events-none") &&
-      client.includes("opacity-[0.12]") &&
-      client.includes("saturate-[0.75]"),
+      client.includes("opacity-[0.14]") &&
+      client.includes("saturate-[0.65]"),
   ],
   [
-    "Miękka plama koloru i brak pionowej linii przełamują tabelaryczny wygląd",
-    actions.includes("rounded-full blur-2xl") &&
-      actions.includes("tone.wash") &&
+    "Miękka tinta i brak pionowej linii przełamują tabelaryczny wygląd",
+    card.includes("w-[36%]") &&
+      card.includes("radial-gradient") &&
+      card.includes("linear-gradient") &&
       !actions.includes("sm:border-l"),
   ],
   [
