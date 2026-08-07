@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Clock3,
   ExternalLink,
+  GraduationCap,
   Info,
   MapPin,
   MonitorPlay,
@@ -407,10 +408,10 @@ function labelProfession(p: string | null) {
   return p;
 }
 
-function pointsStatusLabel(status: PointVerificationStatus) {
-  if (status === "verified") return "potwierdzone";
-  if (status === "organizer_declared") return "deklarowane";
-  return "niezweryfikowane";
+function pointsDetailsLabel(status: PointVerificationStatus) {
+  if (status === "verified") return "Punkty potwierdzone przez CRPE";
+  if (status === "organizer_declared") return "Punkty podane przez organizatora";
+  return "Punkty wymagają sprawdzenia dla Twojego zawodu";
 }
 
 function formatPrice(pricePln: number | null) {
@@ -1189,7 +1190,7 @@ export default function TrainingHubClient() {
             void load();
           }}
         >
-          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="text-sm font-semibold text-slate-900">
                 Znajdź szkolenie
@@ -1199,21 +1200,41 @@ export default function TrainingHubClient() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowMoreFilters((value) => !value)}
-              aria-expanded={showMoreFilters}
-              aria-controls="advanced-training-filters"
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 sm:w-auto sm:min-w-[170px]"
-            >
-              <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
-              {showMoreFilters ? "Mniej filtrów" : "Więcej filtrów"}
-              <ChevronDown
-                className={`h-4 w-4 transition-transform ${
-                  showMoreFilters ? "rotate-180" : ""
-                }`}
-              />
-            </button>
+            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setShowMoreFilters((value) => !value)}
+                aria-expanded={showMoreFilters}
+                aria-controls="advanced-training-filters"
+                className="col-span-2 inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50/70 px-4 text-sm font-semibold text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100 sm:col-span-1 sm:min-w-[168px]"
+              >
+                <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
+                {showMoreFilters ? "Mniej filtrów" : "Więcej filtrów"}
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${
+                    showMoreFilters ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              <button
+                type="button"
+                onClick={resetFilters}
+                disabled={fetching}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 disabled:opacity-60 sm:min-w-[108px]"
+              >
+                <RotateCcw className="h-4 w-4" strokeWidth={2} />
+                Wyczyść
+              </button>
+
+              <button
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 sm:min-w-[168px]"
+                disabled={fetching}
+                type="submit"
+              >
+                {fetching ? "Szukam…" : "Pokaż wyniki"}
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
@@ -1459,26 +1480,6 @@ export default function TrainingHubClient() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-col-reverse gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-end">
-            <button
-              type="button"
-              onClick={resetFilters}
-              disabled={fetching}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-60 sm:w-auto sm:min-w-[140px]"
-            >
-              <RotateCcw className="h-4 w-4" strokeWidth={2} />
-              Wyczyść
-            </button>
-
-            <button
-              className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 sm:w-auto sm:min-w-[180px]"
-              disabled={fetching}
-              type="submit"
-            >
-              {fetching ? "Szukam szkoleń…" : "Pokaż wyniki"}
-            </button>
-          </div>
-
           {error && (
             <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
               {error}
@@ -1631,9 +1632,15 @@ export default function TrainingHubClient() {
                           ) : null}
                         </div>
 
-                        <div className="shrink-0 whitespace-nowrap text-sm font-black text-blue-700 sm:hidden">
-                          {typeof t.points === "number" ? t.points : "—"}
-                          <span className="ml-1 text-[10px] font-bold text-blue-500">pkt</span>
+                        <div
+                          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-blue-100 bg-blue-50 px-2 py-1 text-blue-700 sm:hidden"
+                          title={pointsDetailsLabel(t.points_verification_status)}
+                        >
+                          <GraduationCap className="h-4 w-4" strokeWidth={2.1} />
+                          <span className="text-sm font-black">
+                            {typeof t.points === "number" ? t.points : "—"}
+                          </span>
+                          <span className="text-[10px] font-bold text-blue-500">pkt</span>
                         </div>
                       </div>
 
@@ -1698,16 +1705,37 @@ export default function TrainingHubClient() {
                     </div>
 
                     <div className="col-span-2 mt-0.5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:flex sm:min-h-[104px] sm:flex-col sm:justify-center sm:gap-2 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
-                      <div className="hidden text-right sm:block">
-                        <div className="whitespace-nowrap text-lg font-black tracking-[-0.04em] text-blue-700">
-                          {typeof t.points === "number" ? t.points : "—"}{" "}
-                          <span className="text-[10px] font-bold tracking-normal text-blue-500">
-                            pkt edukacyjnych
-                          </span>
+                      <div
+                        className="hidden items-center gap-2.5 rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2 text-left sm:flex"
+                        title={pointsDetailsLabel(t.points_verification_status)}
+                      >
+                        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-blue-700 shadow-sm ring-1 ring-blue-100">
+                          <GraduationCap className="h-5 w-5" strokeWidth={2.1} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="whitespace-nowrap text-[22px] font-black leading-none tracking-[-0.05em] text-blue-700">
+                            {typeof t.points === "number" ? t.points : "—"}
+                            <span className="ml-1 text-xs font-bold tracking-normal text-blue-600">
+                              pkt
+                            </span>
+                          </div>
+                          <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">
+                            punkty edukacyjne
+                          </div>
                         </div>
-                        <div className="mt-0.5 text-[9px] font-semibold text-slate-400">
-                          {pointsStatusLabel(t.points_verification_status)}
-                        </div>
+                        {t.points_verification_status === "verified" ? (
+                          <CheckCircle2
+                            className="h-4 w-4 shrink-0 text-emerald-600"
+                            strokeWidth={2.2}
+                            aria-label="Punkty potwierdzone"
+                          />
+                        ) : (
+                          <Info
+                            className="h-3.5 w-3.5 shrink-0 text-slate-400"
+                            strokeWidth={2}
+                            aria-label="Informacja o punktach w szczegółach"
+                          />
+                        )}
                       </div>
 
                       {t.url ? (
@@ -2288,7 +2316,7 @@ export default function TrainingHubClient() {
               {[
                 ["Termin", dateRangeShort(detailsTraining.start_date, detailsTraining.end_date) || "—"],
                 ["Miejsce", detailsTraining.voivodeship || (detailsTraining.format === "online" ? "Online" : "—")],
-                ["Punkty", typeof detailsTraining.points === "number" ? `${detailsTraining.points} pkt · ${pointsStatusLabel(detailsTraining.points_verification_status)}` : "Do potwierdzenia"],
+                ["Punkty", typeof detailsTraining.points === "number" ? `${detailsTraining.points} pkt edukacyjnych` : "Do potwierdzenia"],
                 ["Adresaci", labelProfession(detailsTraining.profession)],
                 ["Cena", formatPrice(detailsTraining.price_pln ?? null) || "Nie podano"],
               ].map(([label, value]) => (
@@ -2302,18 +2330,20 @@ export default function TrainingHubClient() {
             </div>
 
             {detailsTraining.points_verification_status !== "verified" ? (
-              <div className="mt-4 flex gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
-                <Info className="mt-0.5 h-4 w-4 shrink-0" />
+              <div className="mt-4 flex gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
                 <div>
-                  Punkty nie zostały jeszcze niezależnie potwierdzone przez CRPE
-                  dla wskazanego zawodu. Przed zapisem sprawdź informację u
-                  organizatora.
+                  <span className="font-semibold text-slate-800">
+                    {pointsDetailsLabel(detailsTraining.points_verification_status)}.
+                  </span>{" "}
+                  Przed zapisem upewnij się, że wskazana liczba punktów dotyczy
+                  Twojego zawodu.
                   {detailsTraining.points_source_url ? (
                     <a
                       href={detailsTraining.points_source_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="ml-1 font-semibold underline"
+                      className="ml-1 font-semibold text-blue-700 underline"
                     >
                       Zobacz źródło
                     </a>
