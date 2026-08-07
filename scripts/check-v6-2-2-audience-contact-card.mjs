@@ -34,10 +34,10 @@ const checks = [
       admin.includes("Przed akceptacją wybierz adresatów szkolenia"),
   ],
   [
-    "Kafelek ma spokojniejszą hierarchię, kompaktowe logo i maksymalnie dwa tagi",
+    "Kafelek ma spokojniejszą hierarchię, czytelne logo i tematy w szczegółach",
     directory.includes("font-extrabold leading-[1.3]") &&
-      directory.includes('t.topics.slice(0, 1)') &&
-      directory.includes('"h-7 w-7 rounded-lg"') &&
+      directory.includes("detailsTraining.topics.map") &&
+      directory.includes('? "h-8 w-[76px]"') &&
       directory.includes("Zapisy u organizatora") &&
       directory.includes("BookmarkPlus"),
   ],

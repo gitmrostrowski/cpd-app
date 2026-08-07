@@ -6,9 +6,9 @@ const client = fs.readFileSync(
 );
 
 const pointsColumnStart = client.indexOf(
-  'className="col-span-2 mt-0.5 grid grid-cols-2',
+  'className="col-span-2 mt-0.5 grid grid-cols-[minmax(0,1fr)_76px]',
 );
-const pointsColumnEnd = client.indexOf("{t.url ? (", pointsColumnStart);
+const pointsColumnEnd = client.indexOf("</article>", pointsColumnStart);
 const desktopPoints = client.slice(pointsColumnStart, pointsColumnEnd);
 
 const checks = [
@@ -16,17 +16,17 @@ const checks = [
     "Punkty są zwartym wskaźnikiem bez kafla i podpisu",
     pointsColumnStart >= 0 &&
       desktopPoints.includes("GraduationCap") &&
-      desktopPoints.includes('text-[20px] font-black') &&
+      desktopPoints.includes('text-lg font-black') &&
       desktopPoints.includes(">pkt</span>") &&
       !desktopPoints.includes("punkty edukacyjne") &&
-      !desktopPoints.includes("border-blue-100") &&
-      !desktopPoints.includes("bg-blue-50"),
+      desktopPoints.includes('className="inline-flex h-10 items-center justify-end') &&
+      !desktopPoints.includes("PUNKTY EDUKACYJNE"),
   ],
   [
     "Kolumna akcji nie wymusza minimalnej wysokości karty",
     !desktopPoints.includes("min-h-") &&
-      desktopPoints.includes("sm:gap-1") &&
-      desktopPoints.includes('className="col-span-2 flex h-8'),
+      desktopPoints.includes("grid-cols-[minmax(0,1fr)_76px]") &&
+      desktopPoints.includes("sm:h-9"),
   ],
   [
     "Reset filtrów jest dostępnym przyciskiem ikonowym",
@@ -37,7 +37,7 @@ const checks = [
   ],
   [
     "Działania filtrów mają wspólną wysokość i spokojną hierarchię",
-    client.includes("grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)]") &&
+    client.includes("grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)]") &&
       client.includes("border border-slate-300 bg-white") &&
       client.includes("rounded-xl bg-blue-600") &&
       client.includes('className="sm:hidden">Filtry</span>'),

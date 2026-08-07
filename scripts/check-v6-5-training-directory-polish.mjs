@@ -15,9 +15,9 @@ const checks = [
   [
     "Trzy działania filtrów tworzą jeden górny pasek",
     filterHeading >= 0 &&
-      moreFilters > filterHeading &&
-      clearFilters > moreFilters &&
-      showResults > clearFilters &&
+      clearFilters > filterHeading &&
+      moreFilters > clearFilters &&
+      showResults > moreFilters &&
       filterGrid > showResults,
   ],
   [
@@ -28,15 +28,15 @@ const checks = [
   ],
   [
     "Układ działań jest responsywny",
-    client.includes("grid w-full grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)]") &&
+    client.includes("grid w-full grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)]") &&
       client.includes('className="sm:hidden">Filtry</span>') &&
-      client.includes("sm:min-w-[168px]"),
+      client.includes("sm:w-[198px]"),
   ],
   [
     "Punkty mają wyraźny moduł z ikoną edukacji",
     client.includes("GraduationCap") &&
-      client.includes("text-[20px] font-black") &&
-      client.includes("text-xs font-bold text-blue-600"),
+      client.includes("text-lg font-black") &&
+      client.includes("text-[11px] font-bold text-blue-600"),
   ],
   [
     "Lista nie eksponuje technicznego komunikatu o braku weryfikacji",

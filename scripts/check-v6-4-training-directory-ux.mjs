@@ -45,28 +45,28 @@ const checks = [
   [
     "Liczba wyników i sortowanie znajdują się nad listą",
     client.includes("Wyniki wyszukiwania") &&
-      client.includes("trainingCountLabel(visibleItems.length)") &&
+      client.includes("matchedTrainingCountLabel(visibleItems.length)") &&
+      client.includes("SearchCheck") &&
       client.includes('id="training-sort"') &&
       client.includes("void load({ sortBy: nextSort })"),
   ],
   [
-    "Karty mają szerszą kolumnę i równorzędne przyciski akcji",
-    client.includes("sm:grid-cols-[52px_minmax(0,1fr)_188px]") &&
+    "Karty mają szerszą kolumnę i dwie czytelne akcje",
+    client.includes("sm:grid-cols-[52px_minmax(0,1fr)_220px]") &&
       client.includes("Przejdź do zapisów") &&
       client.includes("Dodaj do planu") &&
       client.includes("sm:h-9"),
   ],
   [
-    "Niejasna liczba tematów ma opis słowny",
-    client.includes("topicCountLabel(remainingTopics)") &&
-      client.includes('return "tematów"'),
+    "Tematy nie przeciążają listy i są dostępne w szczegółach",
+    !client.includes("topicCountLabel(remainingTopics)") &&
+      client.includes("detailsTraining.topics.map"),
   ],
   [
-    "Panel boczny używa zwartego podsumowania bez ramek w ramkach",
-    client.includes("{trainingCountLabel(visibleItems.length)}") &&
-      client.includes("{sidebarStats.totalPoints} pkt") &&
-      client.includes("{sidebarStats.online} online") &&
-      client.includes("{sidebarStats.stationary} stacjonarnie"),
+    "Panel boczny nie powtarza liczby wyników",
+    !client.includes("sidebarStats") &&
+      !client.includes(">Podsumowanie<") &&
+      client.includes("Kalendarz szkoleń"),
   ],
 ];
 

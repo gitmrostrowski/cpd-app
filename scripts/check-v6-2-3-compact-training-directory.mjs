@@ -15,28 +15,30 @@ const checks = [
   ],
   [
     "Desktop ma zwarty układ data, treść i akcje",
-    client.includes("sm:grid-cols-[52px_minmax(0,1fr)_188px]") &&
+    client.includes("sm:grid-cols-[52px_minmax(0,1fr)_220px]") &&
       client.includes('h-[58px] w-[52px]') &&
-      client.includes("sm:flex-col sm:justify-center") &&
+      client.includes("grid-cols-[minmax(0,1fr)_76px]") &&
       client.includes("sm:h-9"),
   ],
   [
     "Hierarchia ogranicza tagi i odróżnia brak weryfikacji od wszystkich medyków",
-    client.includes("t.topics.slice(0, 1)") &&
+    !client.slice(client.indexOf("displayedItems.map"), client.indexOf("visibleCount < visibleItems.length")).includes("topics.map") &&
+      client.includes("detailsTraining.topics.map") &&
       client.includes('"Adresaci do weryfikacji"') &&
       client.includes('"Wszyscy medycy"') &&
       client.includes('if (pricePln === 0) return "Bezpłatne"'),
   ],
   [
-    "Szczegóły otwiera dostępny tytuł, a zapis pozostaje główną akcją",
+    "Szczegóły otwiera dostępny tytuł, a plan pozostaje główną akcją",
     client.includes("Pokaż szczegóły szkolenia") &&
       client.includes("setDetailsTraining(t)") &&
       client.includes("Przejdź do zapisów") &&
-      !client.includes("Szczegóły <ChevronRight"),
+      client.includes("Dodaj do planu") &&
+      client.includes("Szczegóły"),
   ],
   [
-    "Mobilne akcje zachowują wysokość dotykową 44 px",
-    client.includes('className="inline-flex h-11') &&
+    "Mobilne akcje zachowują wygodną wysokość dotykową",
+    client.includes('className="inline-flex h-10') &&
       client.includes("sm:h-9"),
   ],
   [

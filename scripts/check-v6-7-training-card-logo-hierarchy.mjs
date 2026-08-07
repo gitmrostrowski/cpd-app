@@ -19,9 +19,9 @@ const organizerMetadata = client.slice(
 );
 
 const actionColumnStart = client.indexOf(
-  'className="col-span-2 mt-0.5 grid grid-cols-2',
+  'className="col-span-2 mt-0.5 grid grid-cols-[minmax(0,1fr)_76px]',
 );
-const actionColumnEnd = client.indexOf("{t.url ? (", actionColumnStart);
+const actionColumnEnd = client.indexOf("</article>", actionColumnStart);
 const actionHeader = client.slice(actionColumnStart, actionColumnEnd);
 
 const checks = [
@@ -32,31 +32,30 @@ const checks = [
       !organizerMetadata.includes("OrganizerLogo"),
   ],
   [
-    "Logo i punkty tworzą jeden zwarty wiersz nad akcjami",
+    "Logo i punkty pozostają w zwartej kolumnie akcji",
     actionColumnStart >= 0 &&
       actionHeader.includes("OrganizerLogo") &&
       actionHeader.includes("GraduationCap") &&
-      actionHeader.indexOf("OrganizerLogo") < actionHeader.indexOf("GraduationCap") &&
-      actionHeader.includes("col-span-2 flex h-8") &&
-      actionHeader.includes("ml-auto"),
+      actionHeader.includes("grid-cols-[minmax(0,1fr)_76px]") &&
+      actionHeader.includes("sm:h-9"),
   ],
   [
     "Logo karty ma czytelny obszar bez dodatkowej ramki",
     client.includes('? "h-8 w-[76px]"') &&
-      client.includes('? "justify-start"') &&
+      client.includes('? "justify-end"') &&
       client.includes('card ? "max-h-8 max-w-full object-contain"') &&
       !actionHeader.includes("border-slate-200"),
   ],
   [
-    "Brak logo nie tworzy placeholdera, a punkty pozostają po prawej",
+    "Brak logo nie tworzy placeholdera, a zapis wykorzystuje miejsce",
     actionHeader.includes("{t.organizer_logo_url ? (") &&
       actionHeader.includes(") : null}") &&
-      actionHeader.includes("ml-auto inline-flex shrink-0"),
+      actionHeader.includes('t.organizer_logo_url ? "" : "col-span-2"'),
   ],
   [
-    "Jeden wiersz logo i punktów działa na telefonie i desktopie",
+    "Kolumna logo i akcji działa na telefonie i desktopie",
     actionHeader.includes("col-span-2") &&
-      !actionHeader.includes("sm:hidden") &&
+      actionHeader.includes("sm:h-9") &&
       !actionHeader.includes("hidden h-7"),
   ],
 ];

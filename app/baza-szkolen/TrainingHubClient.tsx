@@ -9,6 +9,7 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   Clock3,
   ExternalLink,
   GraduationCap,
@@ -17,6 +18,7 @@ import {
   MonitorPlay,
   Plus,
   RotateCcw,
+  SearchCheck,
   SlidersHorizontal,
   Users,
   X,
@@ -211,14 +213,14 @@ function trainingCountLabel(count: number) {
   return `${count} szkoleń`;
 }
 
-function topicCountLabel(count: number) {
-  if (count === 1) return "temat";
+function matchedTrainingCountLabel(count: number) {
+  if (count === 1) return "Znaleziono 1 dopasowane szkolenie";
   const lastTwo = count % 100;
   const last = count % 10;
   if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
-    return "tematy";
+    return `Znaleziono ${count} dopasowane szkolenia`;
   }
-  return "tematów";
+  return `Znaleziono ${count} dopasowanych szkoleń`;
 }
 
 function formatDate(d: string | null) {
@@ -482,7 +484,7 @@ function OrganizerLogo({
       ? "h-8 w-[76px]"
       : "h-7 w-7 rounded-lg";
   const frame = card
-    ? "justify-start"
+    ? "justify-end"
     : "overflow-hidden border border-slate-200 bg-white text-slate-400 shadow-sm";
 
   return (
@@ -836,20 +838,6 @@ export default function TrainingHubClient() {
     return ["all", ...Array.from(set).sort((a, b) => a.localeCompare(b, "pl"))];
   }, [items]);
 
-  const sidebarStats = useMemo(() => {
-    const totalPoints = items.reduce(
-      (sum, t) => sum + (typeof t.points === "number" ? t.points : 0),
-      0
-    );
-
-    return {
-      totalPoints,
-      online: items.filter((t) => t.format === "online").length,
-      stationary: items.filter((t) => t.format === "stacjonarne").length,
-      open: items.filter((t) => t.enrollment_status === "open").length,
-    };
-  }, [items]);
-
   const nextTrainings = useMemo(() => items.slice(0, 4), [items]);
 
   const calendarMonths = useMemo(() => {
@@ -953,7 +941,7 @@ export default function TrainingHubClient() {
 
   const chooseTraining = async (t: Training) => {
     if (!user) {
-      alert("Zaloguj się, żeby dodać szkolenie do planu.");
+      window.location.href = "/login?next=/baza-szkolen";
       return;
     }
 
@@ -1203,13 +1191,24 @@ export default function TrainingHubClient() {
               </div>
             </div>
 
-            <div className="grid w-full grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] items-center gap-2 sm:flex sm:w-auto sm:justify-end">
+            <div className="grid w-full grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 sm:flex sm:w-auto sm:justify-end">
+              <button
+                type="button"
+                onClick={resetFilters}
+                disabled={fetching}
+                aria-label="Wyczyść filtry"
+                title="Wyczyść filtry"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-60"
+              >
+                <RotateCcw className="h-4 w-4" strokeWidth={2} />
+              </button>
+
               <button
                 type="button"
                 onClick={() => setShowMoreFilters((value) => !value)}
                 aria-expanded={showMoreFilters}
                 aria-controls="advanced-training-filters"
-                className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 sm:min-w-[156px] sm:px-4"
+                className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 sm:w-[198px] sm:px-4"
               >
                 <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
                 <span className="sm:hidden">Filtry</span>
@@ -1224,18 +1223,7 @@ export default function TrainingHubClient() {
               </button>
 
               <button
-                type="button"
-                onClick={resetFilters}
-                disabled={fetching}
-                aria-label="Wyczyść filtry"
-                title="Wyczyść filtry"
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-60"
-              >
-                <RotateCcw className="h-4 w-4" strokeWidth={2} />
-              </button>
-
-              <button
-                className="inline-flex h-10 min-w-0 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 sm:min-w-[168px] sm:px-5"
+                className="inline-flex h-10 min-w-0 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 sm:w-[198px] sm:px-5"
                 disabled={fetching}
                 type="submit"
               >
@@ -1495,13 +1483,20 @@ export default function TrainingHubClient() {
         </form>
 
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-              Wyniki wyszukiwania
-            </p>
-            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950">
-              {fetching ? "Ładujemy szkolenia…" : trainingCountLabel(visibleItems.length)}
-            </h2>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+              <SearchCheck className="h-5 w-5" strokeWidth={2.1} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-600">
+                Wyniki wyszukiwania
+              </p>
+              <h2 className="mt-0.5 text-lg font-bold tracking-tight text-slate-950 sm:text-xl">
+                {fetching
+                  ? "Szukamy dopasowanych szkoleń…"
+                  : matchedTrainingCountLabel(visibleItems.length)}
+              </h2>
+            </div>
           </div>
 
           <div className="w-full sm:w-[230px]">
@@ -1584,10 +1579,6 @@ export default function TrainingHubClient() {
               const showRange = Boolean(
                 t.start_date && t.end_date && t.start_date !== t.end_date,
               );
-              const topics = Array.isArray(t.topics) ? t.topics.slice(0, 1) : [];
-              const remainingTopics = Array.isArray(t.topics)
-                ? Math.max(0, t.topics.length - topics.length)
-                : 0;
               const audience = trainingAudienceSummary(t.profession);
               const audienceLabel =
                 audience === "Nie wskazano"
@@ -1605,7 +1596,7 @@ export default function TrainingHubClient() {
                     className={`absolute bottom-3 left-0 top-3 w-0.5 rounded-r-full ${tone.stripe}`}
                   />
 
-                  <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_188px] sm:items-center sm:gap-3.5">
+                  <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 pl-0.5 sm:grid-cols-[52px_minmax(0,1fr)_220px] sm:items-center sm:gap-3.5">
                     <div className="flex h-[58px] w-[52px] flex-col items-center self-start rounded-xl bg-slate-50 px-1.5 py-2 ring-1 ring-slate-200 sm:self-center">
                       <span
                         className={`mb-1.5 h-0.5 w-6 rounded-full ${tone.dateTop}`}
@@ -1678,53 +1669,47 @@ export default function TrainingHubClient() {
                             <span className="truncate">{audienceLabel}</span>
                           </span>
                         ) : null}
-                        {topics.map((topicLabel) => (
-                          <span key={topicLabel} className="inline-flex items-center gap-1">
-                            <span
-                              className="max-w-[190px] truncate rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600"
-                            >
-                              {topicLabel}
-                            </span>
-                            {remainingTopics ? (
-                              <span className="whitespace-nowrap text-[10px] font-bold text-slate-500">
-                                +{remainingTopics} {topicCountLabel(remainingTopics)}
-                              </span>
-                            ) : null}
-                          </span>
-                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setDetailsTraining(t)}
+                          className="inline-flex items-center gap-0.5 font-bold text-blue-700 transition hover:text-blue-800"
+                          aria-label={`Pokaż pełne szczegóły szkolenia: ${t.title}`}
+                        >
+                          Szczegóły
+                          <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.2} />
+                        </button>
                       </div>
                     </div>
 
-                    <div className="col-span-2 mt-0.5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:flex sm:flex-col sm:justify-center sm:gap-1 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
-                      <div
-                        className="col-span-2 flex h-8 min-w-0 items-center gap-3"
+                    <div className="col-span-2 mt-0.5 grid grid-cols-[minmax(0,1fr)_76px] gap-2 border-t border-slate-100 pt-2.5 sm:col-span-1 sm:mt-0 sm:border-l sm:border-t-0 sm:pl-3.5 sm:pt-0">
+                      <button
+                        onClick={() => chooseTraining(t)}
+                        className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 text-[11px] font-bold text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-9"
+                        type="button"
+                        title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
                       >
-                        {t.organizer_logo_url ? (
-                          <OrganizerLogo
-                            name={t.organizer}
-                            src={t.organizer_logo_url}
-                            card
-                          />
-                        ) : null}
-                        <span
-                          className="ml-auto inline-flex shrink-0 items-center gap-2 whitespace-nowrap text-blue-700"
-                          title={pointsDetailsLabel(t.points_verification_status)}
-                          aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
-                        >
-                          <GraduationCap className="h-5 w-5 shrink-0" strokeWidth={2.1} />
-                          <span className="text-[20px] font-black leading-none tracking-[-0.04em]">
-                            {typeof t.points === "number" ? t.points : "—"}
-                          </span>
-                          <span className="text-xs font-bold text-blue-600">pkt</span>
+                        <BookmarkPlus className="h-3.5 w-3.5" />
+                        Dodaj do planu
+                      </button>
+
+                      <span
+                        className="inline-flex h-10 items-center justify-end gap-1.5 whitespace-nowrap text-blue-700 sm:h-9"
+                        title={pointsDetailsLabel(t.points_verification_status)}
+                        aria-label={`${typeof t.points === "number" ? t.points : "Brak danych"} punktów. ${pointsDetailsLabel(t.points_verification_status)}`}
+                      >
+                        <GraduationCap className="h-[18px] w-[18px] shrink-0" strokeWidth={2.1} />
+                        <span className="text-lg font-black leading-none tracking-[-0.04em]">
+                          {typeof t.points === "number" ? t.points : "—"}
                         </span>
-                      </div>
+                        <span className="text-[11px] font-bold text-blue-600">pkt</span>
+                      </span>
 
                       {t.url ? (
                         <a
                           href={t.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-blue-600 px-3 text-[11px] font-bold text-white shadow-sm shadow-blue-600/15 transition hover:bg-blue-700 active:scale-[0.98] sm:h-9"
+                          className={`${t.organizer_logo_url ? "" : "col-span-2"} inline-flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-2 text-[10.5px] font-bold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] sm:h-9`}
                         >
                           <span className="sm:hidden">Zapisy</span>
                           <span className="hidden sm:inline">Przejdź do zapisów</span>
@@ -1732,7 +1717,7 @@ export default function TrainingHubClient() {
                         </a>
                       ) : (
                         <button
-                          className="inline-flex h-11 cursor-not-allowed items-center justify-center rounded-xl bg-slate-100 px-3 text-[11px] font-bold text-slate-400 sm:h-9"
+                          className={`${t.organizer_logo_url ? "" : "col-span-2"} inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl bg-slate-100 px-2 text-[10.5px] font-bold text-slate-400 sm:h-9`}
                           disabled
                           type="button"
                         >
@@ -1740,15 +1725,13 @@ export default function TrainingHubClient() {
                         </button>
                       )}
 
-                      <button
-                        onClick={() => chooseTraining(t)}
-                        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-[11px] font-bold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] sm:h-9"
-                        type="button"
-                        title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
-                      >
-                        <BookmarkPlus className="h-3.5 w-3.5" />
-                        Dodaj do planu
-                      </button>
+                      {t.organizer_logo_url ? (
+                        <OrganizerLogo
+                          name={t.organizer}
+                          src={t.organizer_logo_url}
+                          card
+                        />
+                      ) : null}
                     </div>
                   </div>
                 </article>
@@ -1781,33 +1764,6 @@ export default function TrainingHubClient() {
             className="space-y-4 lg:sticky lg:top-24 lg:self-start"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="rounded-[1.25rem] border border-slate-300/80 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.05),0_4px_10px_rgba(15,23,42,0.085)]">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
-                Podsumowanie
-              </p>
-
-              <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-base font-bold tracking-[-0.02em] text-slate-950">
-                  {trainingCountLabel(visibleItems.length)}
-                </span>
-                <span className="text-slate-300">·</span>
-                <span className="text-sm font-semibold text-blue-700">
-                  {sidebarStats.totalPoints} pkt
-                </span>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-semibold">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1.5 text-blue-700 ring-1 ring-blue-100">
-                  <MonitorPlay className="h-3.5 w-3.5" strokeWidth={2.2} />
-                  {sidebarStats.online} online
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1.5 text-amber-700 ring-1 ring-amber-100">
-                  <MapPin className="h-3.5 w-3.5" strokeWidth={2.2} />
-                  {sidebarStats.stationary} stacjonarnie
-                </span>
-              </div>
-            </div>
-
             <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -2340,6 +2296,22 @@ export default function TrainingHubClient() {
                   "Organizator nie przekazał jeszcze szerszego opisu wydarzenia. Szczegóły sprawdzisz na stronie zapisów."}
               </p>
             </div>
+
+            {detailsTraining.topics?.length ? (
+              <div className="mt-4 rounded-2xl border border-slate-200 p-4">
+                <h3 className="text-sm font-bold text-slate-900">Tematy szkolenia</h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {detailsTraining.topics.map((topicLabel) => (
+                    <span
+                      key={topicLabel}
+                      className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600"
+                    >
+                      {topicLabel}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <div className="mt-4 flex gap-2 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-blue-800">
               <Info className="mt-0.5 h-4 w-4 shrink-0" />
