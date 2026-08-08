@@ -81,17 +81,17 @@ const audiences: AudienceOption[] = [
     mobileLabel: "Placówka",
     shortLabel: "Wspieram zespół",
     icon: Building2,
-    status: "Moduł w rozwoju",
-    statusTone: "bg-amber-50 text-amber-800 ring-amber-100",
-    title: "Uporządkuj ewidencję zespołu i szybciej wychwytuj braki.",
+    status: "Fundament dostępny",
+    statusTone: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    title: "Zbuduj strukturę placówki i uporządkuj dostęp zespołu.",
     description:
-      "Indywidualna ewidencja pracowników działa już dziś. Zbiorczy widok jednostki i kompletności dokumentów jest rozwijany.",
+      "Struktura placówki, zaproszenia i role są dostępne już dziś. Zbiorczy status zespołu, raporty i alerty są rozwijane.",
     cta: "Zobacz zakres",
     href: "/dla-placowki",
     detailsHref: "/dla-placowki",
     detailsLabel: "Dowiedz się więcej o rozwiązaniu dla placówki",
-    facts: ["24 osoby", "19 kompletnych", "5 do sprawdzenia"],
-    benefits: ["Indywidualne konta pracowników", "Kontrola kompletności dokumentów", "Przygotowanie danych do weryfikacji"],
+    facts: ["Jednostki", "E-mail", "Role"],
+    benefits: ["Struktura placówki i jednostek", "Zaproszenia na konkretny e-mail", "Role i członkostwa zespołu"],
   },
   {
     key: "organizator",
@@ -99,17 +99,17 @@ const audiences: AudienceOption[] = [
     mobileLabel: "Organizator",
     shortLabel: "Organizuję szkolenia",
     icon: UserRound,
-    status: "Zakres ustalany indywidualnie",
-    statusTone: "bg-blue-50 text-blue-700 ring-blue-100",
-    title: "Porządkuj szkolenia, uczestników i dokumentację edukacyjną.",
+    status: "Zgłoszenia dostępne",
+    statusTone: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    title: "Opublikuj szkolenie i skieruj użytkowników do zapisów.",
     description:
-      "CRPE rozwija obsługę wydarzeń, uczestników i certyfikatów. Zakres modułu ustalamy indywidualnie.",
+      "Możesz zgłosić szkolenie do publicznej bazy i zaprezentować dane wydarzenia, logo oraz link do zapisów. Dalszy zakres rozwijamy.",
     cta: "Poznaj zakres modułu",
     href: "/dla-organizatora",
     detailsHref: "/dla-organizatora",
     detailsLabel: "Dowiedz się więcej o rozwiązaniu dla organizatora",
-    facts: ["3 wydarzenia", "86 uczestników", "72 certyfikaty"],
-    benefits: ["Dane wydarzeń edukacyjnych", "Uczestnicy i dokumentacja", "Planowana obsługa certyfikatów"],
+    facts: ["Zgłoszenie", "Logo", "Link"],
+    benefits: ["Zgłoszenie do publicznej bazy", "Strona wydarzenia po publikacji", "Dane organizatora i link do zapisów"],
   },
 ];
 
@@ -169,29 +169,6 @@ function Metric({
   );
 }
 
-function BigMetric({
-  label,
-  value,
-  accent = "blue",
-}: {
-  label: string;
-  value: string;
-  accent?: "blue" | "emerald" | "amber";
-}) {
-  const valueClass =
-    accent === "emerald"
-      ? "text-emerald-700"
-      : accent === "amber"
-        ? "text-amber-700"
-        : "text-blue-700";
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
-      <p className="text-[10px] font-bold leading-4 text-slate-500">{label}</p>
-      <p className={`mt-1 text-2xl font-black ${valueClass}`}>{value}</p>
-    </div>
-  );
-}
-
 function MedykDashboard() {
   return (
     <>
@@ -226,51 +203,40 @@ function MedykDashboard() {
 }
 
 function PlacowkaDashboard() {
-  const alerts = [
-    ["Anna Kowalska", "Brak certyfikatu", "Dokumentacja: 7/8"],
-  ];
-
   return (
     <>
-      <div className="grid grid-cols-3 gap-3">
-        <BigMetric label="Pracownicy" value="24" />
-        <BigMetric label="Kompletne" value="19" accent="emerald" />
-        <BigMetric label="Wymaga uwagi" value="5" accent="amber" />
-      </div>
-
-      <div className="mt-3 rounded-2xl border border-slate-200 p-3.5">
-        <div className="flex items-center justify-between gap-3">
+      <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-extrabold text-slate-950">Kompletność dokumentacji</p>
-            <p className="mt-1 text-[11px] text-slate-500">Zbiorczy status zespołu</p>
+            <p className="text-[11px] font-bold text-slate-500">Panel placówki</p>
+            <p className="mt-1 text-[17px] font-black text-slate-950">Struktura i dostęp zespołu</p>
           </div>
-          <span className="text-lg font-black text-blue-700">79%</span>
-        </div>
-        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
-          <div className="crpe-progress-fill h-full w-[79%] rounded-full bg-blue-600" />
+          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+            Działa dziś
+          </span>
         </div>
       </div>
 
-      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">Wymaga uwagi</p>
-            <p className="mt-1 text-[11px] text-slate-500">Najważniejsze braki do sprawdzenia</p>
-          </div>
-          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-extrabold text-amber-800 ring-1 ring-amber-100">5 osób</span>
-        </div>
-
-        <div className="mt-3 space-y-2">
-          {alerts.map(([name, issue, progress]) => (
-            <div key={name} className="crpe-row-in flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
-              <div className="min-w-0">
-                <p className="truncate text-[13px] font-extrabold text-slate-900">{name}</p>
-                <p className="mt-0.5 truncate text-[10px] font-semibold text-amber-700">{issue}</p>
-              </div>
-              <span className="shrink-0 text-[10px] font-bold text-slate-500">{progress}</span>
+      <div className="mt-3 space-y-2">
+        {[
+          ["Jednostki organizacyjne", "Tworzenie struktury placówki"],
+          ["Zaproszenia e-mail", "Dostęp dla wskazanej osoby"],
+          ["Role i członkostwa", "Uprawnienia w zespole"],
+        ].map(([name, description]) => (
+          <div key={name} className="crpe-row-in flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+              <CheckCircle2 className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-[13px] font-extrabold text-slate-900">{name}</p>
+              <p className="mt-0.5 text-[10px] text-slate-500">{description}</p>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] font-semibold text-amber-800">
+        Zbiorczy status, raporty i alerty — rozwijamy
       </div>
     </>
   );
@@ -280,34 +246,35 @@ function OrganizatorDashboard() {
   return (
     <>
       <div className="rounded-2xl border border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_100%)] p-4">
-        <p className="text-[11px] font-bold text-slate-500">Aktywne wydarzenia</p>
-        <div className="mt-1 flex items-end justify-between gap-4">
-          <p className="text-[32px] font-black tracking-tight text-slate-950">3</p>
-          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-blue-700 ring-1 ring-blue-100">
-            86 uczestników
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-bold text-slate-500">Publiczna baza szkoleń</p>
+            <p className="mt-1 text-[17px] font-black text-slate-950">Zgłoś wydarzenie do publikacji</p>
+          </div>
+          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+            Działa dziś
           </span>
         </div>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <Metric icon={FileCheck2} label="Wydane" value="72 certyfikaty" tone="cyan" />
-        <Metric icon={ClipboardCheck} label="Do przygotowania" value="14 dokumentów" tone="amber" />
-      </div>
       <div className="mt-3 space-y-2">
         {[
-          ["Diagnostyka obrazowa", "12.09.2026", "32 osoby"],
-        ].map(([name, date, people]) => (
-          <div key={name} className="crpe-row-in rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-extrabold text-slate-900">{name}</p>
-                <p className="mt-1 text-[11px] text-slate-500">{date}</p>
-              </div>
-              <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-slate-600 ring-1 ring-slate-200">
-                {people}
-              </span>
+          ["Dane wydarzenia", "Termin, format, miejsce i punkty"],
+          ["Organizator", "Nazwa i logo po publikacji"],
+          ["Zapisy", "Bezpośredni link do organizatora"],
+        ].map(([name, description]) => (
+          <div key={name} className="crpe-row-in flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+              <CheckCircle2 className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-[13px] font-extrabold text-slate-900">{name}</p>
+              <p className="mt-0.5 text-[10px] text-slate-500">{description}</p>
             </div>
           </div>
         ))}
+      </div>
+      <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] font-semibold text-amber-800">
+        Panel uczestników i obsługa certyfikatów — rozwijamy
       </div>
     </>
   );
@@ -412,13 +379,8 @@ function RolePicker({
 function MobileRolePreview({ active }: { active: AudienceOption }) {
   const labels: Record<AudienceKey, [string, string, string]> = {
     medyk: ["Postęp", "Certyfikaty", "Do uzupełnienia"],
-    placowka: ["Zespół", "Kompletne", "Do sprawdzenia"],
-    organizator: ["Wydarzenia", "Uczestnicy", "Certyfikaty"],
-  };
-  const progress: Record<AudienceKey, string> = {
-    medyk: "55%",
-    placowka: "79%",
-    organizator: "84%",
+    placowka: ["Struktura", "Zaproszenia", "Dostęp"],
+    organizator: ["Publikacja", "Organizator", "Zapisy"],
   };
 
   return (
@@ -447,9 +409,11 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
         ))}
       </div>
 
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-        <div className="crpe-progress-fill h-full rounded-full bg-blue-600" style={{ width: progress[active.key] }} />
-      </div>
+      {active.key === "medyk" ? (
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-blue-600" />
+        </div>
+      ) : null}
 
       <Link
         href={active.detailsHref}
@@ -567,10 +531,10 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       id: "dla-placowki",
       icon: Building2,
       title: "Placówka / jednostka",
-      status: "Konta pracowników dostępne; widok zespołu w rozwoju",
+      status: "Struktura, zaproszenia i role dostępne",
       statusClass: "text-amber-700",
-      text: "Ujednolicaj indywidualną ewidencję zespołu. Rozwijamy zbiorczy podgląd kompletności i raportów.",
-      benefits: ["Konta pracowników", "Planowany widok zespołu", "Planowany eksport jednostki"],
+      text: "Zbuduj strukturę jednostki, zapraszaj pracowników i nadawaj role. Zbiorczy status oraz raporty pozostają w rozwoju.",
+      benefits: ["Jednostki organizacyjne", "Zaproszenia e-mail", "Role i członkostwa"],
       cta: "Zobacz zakres",
       href: "/dla-placowki",
     },
@@ -579,10 +543,10 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       id: "dla-organizatora",
       icon: UserRound,
       title: "Organizator kształcenia",
-      status: "Zakres wdrożenia ustalany indywidualnie",
+      status: "Zgłoszenie do bazy dostępne",
       statusClass: "text-blue-700",
-      text: "Porządkuj informacje o wydarzeniach. Narzędzia administracyjne są udostępniane zależnie od uprawnień.",
-      benefits: ["Baza wydarzeń", "Dane uczestników", "Obsługa dokumentacji"],
+      text: "Zgłoś szkolenie do publicznej bazy. Po publikacji użytkownicy zobaczą stronę wydarzenia, dane organizatora i link do zapisów.",
+      benefits: ["Formularz zgłoszenia", "Publiczna strona szkolenia", "Logo i link do zapisów"],
       cta: "Zobacz zakres",
       href: "/dla-organizatora",
     },
@@ -870,22 +834,22 @@ function HowItWorks({ selected }: { selected: AudienceKey }) {
     },
     placowka: {
       title: "Uporządkuj sposób pracy zespołu w czterech krokach.",
-      text: "Indywidualne konta pracowników są dostępne teraz. Zakres widoku zbiorczego ustalamy zgodnie z etapem rozwoju modułu.",
+      text: "Fundament organizacyjny jest dostępny teraz. Zbiorczy status zespołu i raporty pozostają kolejnym etapem rozwoju.",
       steps: [
-        { icon: ClipboardCheck, title: "Ustal zakres", text: "Określ potrzeby jednostki." },
-        { icon: Building2, title: "Dodaj strukturę", text: "Przygotuj zespoły i role." },
-        { icon: UserRound, title: "Zaproś pracowników", text: "Każdy prowadzi własne dane." },
-        { icon: BarChart3, title: "Sprawdzaj kompletność", text: "Wychwytuj braki i terminy." },
+        { icon: Building2, title: "Utwórz placówkę", text: "Rozpocznij pracę w panelu organizacji." },
+        { icon: ClipboardCheck, title: "Dodaj strukturę", text: "Przygotuj jednostki i role dostępu." },
+        { icon: UserRound, title: "Zaproś pracowników", text: "Wyślij zaproszenia na konkretne adresy e-mail." },
+        { icon: BarChart3, title: "Ustal kolejny zakres", text: "Zaplanuj pilotaż statusów i raportów zespołu." },
       ],
     },
     organizator: {
-      title: "Ustal zakres obsługi szkoleń w czterech krokach.",
-      text: "Funkcje organizatora rozwijamy indywidualnie — od danych wydarzenia po dokumentację uczestników.",
+      title: "Opublikuj szkolenie w bazie w czterech krokach.",
+      text: "Zgłoszenie wydarzenia działa już dziś. Rozbudowany panel uczestników i dokumentacji pozostaje osobnym etapem.",
       steps: [
-        { icon: ClipboardCheck, title: "Ustal zakres", text: "Określ rodzaj wydarzeń i danych." },
-        { icon: CalendarCheck2, title: "Dodaj wydarzenie", text: "Uzupełnij program i terminy." },
-        { icon: UserRound, title: "Dodaj uczestników", text: "Uporządkuj listy i statusy." },
-        { icon: FileCheck2, title: "Przygotuj dokumenty", text: "Zarządzaj certyfikatami i historią." },
+        { icon: CalendarCheck2, title: "Przygotuj dane", text: "Uzupełnij termin, format, miejsce i punkty." },
+        { icon: ClipboardCheck, title: "Zgłoś szkolenie", text: "Prześlij formularz do publicznej bazy." },
+        { icon: CheckCircle2, title: "Poczekaj na weryfikację", text: "Zgłoszenie jest sprawdzane przed publikacją." },
+        { icon: ArrowRight, title: "Kieruj do zapisów", text: "Opublikowana strona prowadzi do organizatora." },
       ],
     },
   };
@@ -898,22 +862,120 @@ function HowItWorks({ selected }: { selected: AudienceKey }) {
           <SectionHeading eyebrow="Jak to działa" title={active.title} text={active.text} centered />
         </Reveal>
 
-        <div key={selected} className="crpe-role-swap relative mt-10 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:gap-0">
-          <div className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-7 hidden h-px bg-blue-100 xl:block" aria-hidden="true" />
+        <ol key={selected} className="crpe-role-swap relative mx-auto mt-10 max-w-[880px]">
           {active.steps.map(({ icon: Icon, title, text }, index) => (
-            <Reveal key={title} className="relative h-full">
-              <article className="crpe-step-card relative flex h-full min-h-[132px] items-start gap-4 rounded-[18px] border border-slate-200 bg-slate-50/70 p-5 xl:mx-1.5">
-                <span className="crpe-card-icon relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white text-blue-700 shadow-[0_7px_18px_rgba(15,45,75,0.06)] ring-1 ring-blue-100">
+            <li key={title} className="relative grid grid-cols-[44px_minmax(0,1fr)] gap-4 pb-7 last:pb-0 sm:grid-cols-[52px_minmax(0,1fr)] sm:gap-6 sm:pb-9">
+              {index < active.steps.length - 1 ? (
+                <span className="absolute bottom-0 left-[21px] top-11 w-px bg-blue-100 sm:left-[25px] sm:top-13" aria-hidden="true" />
+              ) : null}
+              <span className="relative z-10 flex h-11 w-11 items-center justify-center rounded-full border-4 border-white bg-blue-600 text-sm font-black text-white shadow-[0_8px_20px_rgba(37,99,235,0.18)] sm:h-[52px] sm:w-[52px]">
+                {index + 1}
+              </span>
+              <div className="min-w-0 border-b border-slate-100 pb-7 last:border-b-0 sm:flex sm:items-start sm:gap-5 sm:pb-9">
+                <span className="mt-0.5 hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 sm:flex">
                   <Icon className="h-[18px] w-[18px]" />
                 </span>
-                <div className="min-w-0 pt-0.5">
-                  <span className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-400">0{index + 1}</span>
-                  <h3 className="mt-1 text-[15px] font-bold text-slate-950">{title}</h3>
-                  <p className="mt-1.5 text-[13px] leading-5 text-slate-600">{text}</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-blue-500">Krok {index + 1}</p>
+                  <h3 className="mt-1 text-[17px] font-bold text-slate-950">{title}</h3>
+                  <p className="mt-1.5 text-[14px] leading-6 text-slate-600">{text}</p>
                 </div>
-              </article>
-            </Reveal>
+              </div>
+            </li>
           ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"> }) {
+  const variants = {
+    placowka: {
+      eyebrow: "Aktualny zakres placówki",
+      title: "Fundament organizacji działa. Zbiorcze zarządzanie jest kolejnym etapem.",
+      text: "Oddzielamy funkcje dostępne w panelu od planowanego widoku statusów, aby placówka wiedziała dokładnie, z czego może skorzystać już teraz.",
+      available: [
+        "Struktura placówki i jednostek organizacyjnych",
+        "Zaproszenia wysyłane na konkretny adres e-mail",
+        "Role, członkostwa i kontrolowany dostęp",
+        "Indywidualna ewidencja na kontach pracowników",
+      ],
+      developing: [
+        "Zbiorczy status i kompletność zespołu",
+        "Kolejka weryfikacji aktywności i dokumentów",
+        "Raporty jednostki, alerty i terminy",
+      ],
+    },
+    organizator: {
+      eyebrow: "Aktualny zakres organizatora",
+      title: "Publikacja szkolenia działa. Panel operacyjny rozwijamy osobno.",
+      text: "Organizator może już przekazać wydarzenie do publicznej bazy. Rozszerzona obsługa uczestników i dokumentacji nie jest przedstawiana jako gotowa funkcja.",
+      available: [
+        "Formularz zgłoszenia szkolenia do publicznej bazy",
+        "Publiczna, linkowalna strona wydarzenia po publikacji",
+        "Prezentacja danych oraz logo organizatora",
+        "Bezpośredni link do zapisów u organizatora",
+      ],
+      developing: [
+        "Samoobsługowy panel organizatora",
+        "Listy uczestników i statusy wydarzenia",
+        "Obsługa certyfikatów i dokumentacji uczestników",
+      ],
+    },
+  } satisfies Record<Exclude<AudienceKey, "medyk">, {
+    eyebrow: string;
+    title: string;
+    text: string;
+    available: string[];
+    developing: string[];
+  }>;
+  const active = variants[selected];
+
+  return (
+    <section className="bg-blue-50/50 py-16 sm:py-20">
+      <div className={pageWrap}>
+        <SectionHeading eyebrow={active.eyebrow} title={active.title} text={active.text} centered />
+        <div key={selected} className="crpe-role-swap mx-auto mt-9 grid max-w-[980px] gap-4 md:grid-cols-2 sm:mt-11">
+          <article className="rounded-[20px] border border-emerald-200 bg-white p-5 shadow-[0_14px_38px_rgba(15,45,75,0.055)] sm:p-6">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <CheckCircle2 className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-emerald-700">Dostępne</p>
+                <h3 className="mt-0.5 text-[18px] font-bold text-slate-950">Działa dziś</h3>
+              </div>
+            </div>
+            <ul className="mt-5 grid gap-3">
+              {active.available.map((item) => (
+                <li key={item} className="flex gap-2.5 text-[14px] leading-6 text-slate-700">
+                  <Check className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </article>
+
+          <article className="rounded-[20px] border border-amber-200 bg-white p-5 shadow-[0_14px_38px_rgba(15,45,75,0.055)] sm:p-6">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+                <BarChart3 className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-amber-700">Kolejny etap</p>
+                <h3 className="mt-0.5 text-[18px] font-bold text-slate-950">Rozwijamy</h3>
+              </div>
+            </div>
+            <ul className="mt-5 grid gap-3">
+              {active.developing.map((item) => (
+                <li key={item} className="flex gap-2.5 text-[14px] leading-6 text-slate-700">
+                  <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-amber-600" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </article>
         </div>
       </div>
     </section>
@@ -996,11 +1058,11 @@ function FaqSection() {
     ],
     [
       "Co CRPE daje placówce lub jednostce?",
-      "Pomaga ujednolicić indywidualną ewidencję w zespole. Zbiorczy moduł organizacyjny z podglądem statusów i raportami jest rozwijany.",
+      "Panel pozwala tworzyć strukturę jednostki, wysyłać zaproszenia i nadawać role. Zbiorczy status zespołu, raporty i alerty są rozwijane.",
     ],
     [
       "Czy CRPE jest dla organizatorów kształcenia?",
-      "CRPE rozwija funkcje związane z wydarzeniami, uczestnikami i dokumentacją. Rozszerzone narzędzia są udostępniane zależnie od uprawnień.",
+      "Tak. Organizator może zgłosić szkolenie do publicznej bazy wraz z danymi, logo i linkiem do zapisów. Panel uczestników i obsługa certyfikatów są rozwijane.",
     ],
     [
       "Czy mogę dodać certyfikat z telefonu?",
@@ -1055,8 +1117,14 @@ export default function Page() {
       <Hero selected={selectedAudience} onSelect={setSelectedAudience} />
       <AudienceSection selected={selectedAudience} />
       <HowItWorks selected={selectedAudience} />
-      <PracticeSection />
-      <ProductToolsSection />
+      {selectedAudience === "medyk" ? (
+        <>
+          <PracticeSection />
+          <ProductToolsSection />
+        </>
+      ) : (
+        <RoleStateSection selected={selectedAudience} />
+      )}
       <TrustSection />
       <FaqSection />
       <BottomCTA selected={selectedAudience} />
