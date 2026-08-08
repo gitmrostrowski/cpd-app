@@ -6,7 +6,7 @@ const client = await readFile(
   "utf8",
 );
 
-const cardStart = client.indexOf("{displayedItems.map((t) => {");
+const cardStart = client.indexOf("{displayedItems.map((t, index) => {");
 const cardEnd = client.indexOf("{visibleCount < visibleItems.length", cardStart);
 
 assert.ok(cardStart >= 0 && cardEnd > cardStart, "Nie znaleziono listy kart szkoleń");

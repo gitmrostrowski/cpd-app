@@ -52,9 +52,8 @@ function Reveal({
 }: {
   children: React.ReactNode;
   className?: string;
-  delay?: number;
 }) {
-  return <div className={`crpe-scroll-reveal is-visible ${className}`}>{children}</div>;
+  return <div className={className}>{children}</div>;
 }
 
 const audiences: AudienceOption[] = [
@@ -138,22 +137,6 @@ function SectionHeading({
           {text}
         </p>
       ) : null}
-    </div>
-  );
-}
-
-function DashboardHeader({ title, note }: { title: string; note: string }) {
-  return (
-    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-          Przykładowy widok CRPE
-        </p>
-        <p className="mt-1 text-sm font-extrabold text-slate-900">{title}</p>
-      </div>
-      <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold text-blue-700 ring-1 ring-blue-100">
-        {note}
-      </span>
     </div>
   );
 }
@@ -426,77 +409,6 @@ function RolePicker({
   );
 }
 
-function SelectedRoleSummary({ selected }: { selected: AudienceKey }) {
-  const active = audiences.find((item) => item.key === selected) ?? audiences[0];
-  const Icon = active.icon;
-  const selectedIndex = audiences.findIndex((item) => item.key === selected);
-
-  return (
-    <div
-      key={selected}
-      className="crpe-role-swap relative overflow-hidden rounded-[20px] border border-slate-200/90 bg-white shadow-[0_16px_46px_rgba(15,45,75,0.065)]"
-      aria-live="polite"
-    >
-      <div className="absolute inset-x-0 top-0 h-px bg-slate-100" aria-hidden="true" />
-      <div
-        className="absolute top-0 h-[2px] w-1/3 bg-[linear-gradient(90deg,#2563eb_0%,#38bdf8_100%)] transition-transform duration-500 ease-out"
-        style={{ transform: `translateX(${selectedIndex * 100}%)` }}
-        aria-hidden="true"
-      />
-
-      <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-9 lg:p-8">
-        <div>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-[0_7px_18px_rgba(37,99,235,0.14)]">
-              <Icon className="h-5 w-5" />
-            </span>
-            <div>
-              <p className="text-[9px] font-extrabold uppercase tracking-[0.17em] text-blue-600 sm:text-[10px]">
-                Treść dopasowana do wyboru
-              </p>
-              <div className="mt-1 flex flex-wrap items-center gap-2.5">
-                <p className="text-[17px] font-black text-slate-950 sm:text-[18px]">{active.label}</p>
-                <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${active.statusTone}`}>
-                  {active.status}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <h3 className="mt-4 max-w-[620px] text-[21px] font-black leading-[1.16] tracking-[-0.03em] text-slate-950 sm:text-[25px]">
-            {active.title}
-          </h3>
-          <p className="mt-2 max-w-[620px] text-[14px] leading-6 text-slate-600 sm:text-[15px]">
-            {active.description}
-          </p>
-
-          <Link
-            href={active.detailsHref}
-            className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[13px] font-extrabold text-white shadow-[0_8px_18px_rgba(37,99,235,0.14)] transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-            Zobacz szczegóły tej roli <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-
-        <div className="divide-y divide-slate-100 lg:border-l lg:border-slate-200/80 lg:pl-9">
-          {active.benefits.map((item, index) => (
-            <div
-              key={item}
-              className="crpe-row-in flex items-center gap-3 py-3 text-[13px] font-semibold leading-5 text-slate-700 first:pt-0 last:pb-0"
-              style={{ animationDelay: `${index * 55}ms` }}
-            >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
-                <Check className="h-3.5 w-3.5" strokeWidth={2.8} />
-              </span>
-              <span>{item}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function MobileRolePreview({ active }: { active: AudienceOption }) {
   const labels: Record<AudienceKey, [string, string, string]> = {
     medyk: ["Postęp", "Certyfikaty", "Do uzupełnienia"],
@@ -572,8 +484,8 @@ function Hero({
             </div>
 
             <h1 className="crpe-hero-in mt-4 max-w-[590px] text-[35px] font-black leading-[1.02] tracking-[-0.046em] text-slate-950 sm:mt-5 sm:text-[48px] lg:text-[54px] [--hero-delay:110ms]">
-              <span className="block">Punkty</span>
-              <span className="block">i dokumenty</span>
+              <span className="block">Punkty edukacyjne</span>
+              <span className="block">i certyfikaty</span>
               <span className="block text-blue-600">w jednym miejscu.</span>
             </h1>
 
@@ -588,7 +500,7 @@ function Hero({
             <div key={selected} className="crpe-role-swap mt-5 lg:mt-6" aria-live="polite">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[14px] font-black text-slate-950">{active.label}</span>
-                <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${active.statusTone}`}>
+                <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ${active.statusTone}`}>
                   {active.status}
                 </span>
               </div>
@@ -636,13 +548,7 @@ function Hero({
   );
 }
 
-function AudienceSection({
-  selected,
-  onSelect,
-}: {
-  selected: AudienceKey;
-  onSelect: (key: AudienceKey) => void;
-}) {
+function AudienceSection({ selected }: { selected: AudienceKey }) {
   const cards = [
     {
       key: "medyk" as AudienceKey,
@@ -650,7 +556,7 @@ function AudienceSection({
       icon: Stethoscope,
       title: "Medyk",
       status: "Dostępne teraz",
-      statusClass: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+      statusClass: "text-emerald-700",
       text: "Prowadź własną ewidencję punktów, aktywności i certyfikatów w jednym panelu.",
       benefits: ["Postęp i brakujące punkty", "Dokumenty przy aktywnościach", "Raport użytkownika"],
       cta: "Załóż konto",
@@ -661,8 +567,8 @@ function AudienceSection({
       id: "dla-placowki",
       icon: Building2,
       title: "Placówka / jednostka",
-      status: "Moduł w rozwoju",
-      statusClass: "bg-amber-50 text-amber-800 ring-amber-100",
+      status: "Konta pracowników dostępne; widok zespołu w rozwoju",
+      statusClass: "text-amber-700",
       text: "Ujednolicaj indywidualną ewidencję zespołu. Rozwijamy zbiorczy podgląd kompletności i raportów.",
       benefits: ["Konta pracowników", "Planowany widok zespołu", "Planowany eksport jednostki"],
       cta: "Zobacz zakres",
@@ -673,8 +579,8 @@ function AudienceSection({
       id: "dla-organizatora",
       icon: UserRound,
       title: "Organizator kształcenia",
-      status: "Zakres ustalany indywidualnie",
-      statusClass: "bg-blue-50 text-blue-700 ring-blue-100",
+      status: "Zakres wdrożenia ustalany indywidualnie",
+      statusClass: "text-blue-700",
       text: "Porządkuj informacje o wydarzeniach. Narzędzia administracyjne są udostępniane zależnie od uprawnień.",
       benefits: ["Baza wydarzeń", "Dane uczestników", "Obsługa dokumentacji"],
       cta: "Zobacz zakres",
@@ -683,45 +589,22 @@ function AudienceSection({
   ];
 
   return (
-    <section id="dla-kogo" className="scroll-mt-24 pb-16 pt-10 sm:pb-20 sm:pt-14">
+    <section id="dla-kogo" className="scroll-mt-24 bg-[linear-gradient(180deg,#f7faff_0%,#eff5fb_100%)] py-16 sm:py-20">
       <div className={pageWrap}>
-        <div className="mx-auto max-w-[820px] text-center">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.19em] text-blue-700">
-            Wybierz swoją ścieżkę
-          </p>
-          <h1 className="mt-2 text-[27px] font-black tracking-[-0.04em] text-slate-950 sm:text-[34px]">
-            Kim jesteś?
-          </h1>
-          <p className="mx-auto mt-3 max-w-[620px] text-[13px] leading-5 text-slate-500 sm:text-[14px] sm:leading-6">
-            Wybierz rolę — opis, kolejne kroki i końcowa propozycja zmienią się od razu.
-          </p>
-        </div>
+        <Reveal>
+          <SectionHeading
+            eyebrow="Dla kogo jest CRPE"
+            title="Porównaj zakres CRPE dla każdej roli."
+            text="Profil medyka działa już teraz. Moduły organizacyjne rozwijamy etapami i jasno oznaczamy ich aktualny zakres."
+            centered
+          />
+        </Reveal>
 
-        <div className="mx-auto mt-6 max-w-[980px] sm:mt-7">
-          <RolePicker selected={selected} onSelect={onSelect} />
-        </div>
-
-        <div className="mx-auto mt-3 max-w-[1080px] sm:mt-4">
-          <SelectedRoleSummary selected={selected} />
-        </div>
-      </div>
-
-      <div className="mt-16 bg-[linear-gradient(180deg,#f7faff_0%,#eff5fb_100%)] py-16 sm:mt-20 sm:py-20">
-        <div className={pageWrap}>
-          <Reveal>
-            <SectionHeading
-              eyebrow="Dla kogo jest CRPE"
-              title="Porównaj zakres CRPE dla każdej roli."
-              text="Profil medyka działa już teraz. Moduły organizacyjne rozwijamy etapami i jasno oznaczamy ich aktualny zakres."
-              centered
-            />
-          </Reveal>
-
-          <div className="mt-9 grid gap-4 lg:mt-11 lg:grid-cols-3">
-            {cards.map(({ key, id, icon: Icon, title, status, statusClass, text, benefits, cta, href }, index) => {
+        <div className="mt-9 grid gap-4 lg:mt-11 lg:grid-cols-3">
+          {cards.map(({ key, id, icon: Icon, title, status, statusClass, text, benefits, cta, href }) => {
               const active = selected === key;
               return (
-                <Reveal key={id} delay={index * 90} className="h-full">
+                <Reveal key={id} className="h-full">
                   <article
                     id={id}
                     className={`crpe-interactive-card relative flex h-full scroll-mt-24 flex-col overflow-hidden rounded-[20px] border p-5 shadow-[0_12px_36px_rgba(15,45,75,0.055)] sm:p-6 ${
@@ -730,21 +613,14 @@ function AudienceSection({
                     aria-current={active ? "true" : undefined}
                   >
                     {active ? <span className="absolute inset-x-0 top-0 h-[3px] bg-blue-600" aria-hidden="true" /> : null}
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
                       <span className={`crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl ${active ? "bg-blue-600 text-white" : "bg-slate-50 text-slate-600 ring-1 ring-slate-200"}`}>
                         <Icon className="h-5 w-5" />
                       </span>
-                      <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold ring-1 sm:text-[10px] ${statusClass}`}>
-                        {status}
-                      </span>
                     </div>
-                    {active ? (
-                      <span className="mt-3 inline-flex w-fit rounded-full bg-blue-600 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.08em] text-white">
-                        Wybrana rola
-                      </span>
-                    ) : null}
-                    <h3 className="mt-4 text-lg font-black tracking-[-0.02em] text-slate-950">{title}</h3>
+                    <h3 className="mt-4 text-lg font-bold tracking-[-0.02em] text-slate-950">{title}</h3>
                     <p className="mt-2 text-[14px] leading-6 text-slate-600">{text}</p>
+                    <p className={`mt-3 text-xs font-semibold ${statusClass}`}>{status}</p>
                     <ul className="mt-4 grid gap-2">
                       {benefits.map((item) => (
                         <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-slate-700">
@@ -757,7 +633,7 @@ function AudienceSection({
                     </ul>
                     <Link
                       href={href}
-                      className={`mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 text-[14px] font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+                      className={`mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 text-[14px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
                         key === "medyk"
                           ? "mt-6 bg-blue-600 text-white shadow-[0_9px_20px_rgba(37,99,235,0.14)] hover:bg-blue-700"
                           : "mt-6 border border-slate-300 bg-white text-slate-800 hover:border-blue-200 hover:bg-blue-50"
@@ -768,8 +644,7 @@ function AudienceSection({
                   </article>
                 </Reveal>
               );
-            })}
-          </div>
+          })}
         </div>
       </div>
     </section>
@@ -820,7 +695,7 @@ function ProductToolsSection() {
           />
         </Reveal>
 
-        <Reveal delay={70}>
+        <Reveal>
           <div className={`${panel} mt-9 overflow-hidden sm:mt-11`}>
             <div className="bg-slate-950 px-5 py-5 text-white sm:px-7 sm:py-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -855,18 +730,18 @@ function ProductToolsSection() {
             </div>
 
             <div className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-4">
-              {tools.map(({ icon: Icon, title, status, text, bullets }, index) => (
-                <Reveal key={title} delay={index * 70} className="h-full last:[&>article]:border-b-0">
+              {tools.map(({ icon: Icon, title, status, text, bullets }) => (
+                <Reveal key={title} className="h-full last:[&>article]:border-b-0">
                   <article className="crpe-interactive-card flex h-full min-h-[280px] flex-col rounded-[18px] border border-slate-200 bg-slate-50/75 p-5">
                     <div className="flex items-center justify-between gap-3">
                       <span className="crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
                         <Icon className="h-5 w-5" />
                       </span>
-                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-100">
                         {status}
                       </span>
                     </div>
-                    <h3 className="mt-4 min-h-[44px] text-[17px] font-black leading-[1.25] tracking-[-0.02em] text-slate-950">{title}</h3>
+                    <h3 className="mt-4 min-h-[44px] text-[17px] font-bold leading-[1.25] tracking-[-0.02em] text-slate-950">{title}</h3>
                     <p className="mt-2 text-[14px] leading-6 text-slate-600">{text}</p>
                     <ul className="mt-4 grid gap-2">
                       {bullets.map((item) => (
@@ -922,7 +797,7 @@ function PracticeSection() {
           </div>
         </Reveal>
 
-        <Reveal delay={120}>
+        <Reveal>
           <div className="crpe-dashboard-shell overflow-hidden rounded-[20px] border border-white/10 bg-white p-4 text-slate-900 shadow-[0_24px_64px_rgba(0,0,0,0.28)] sm:p-6">
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
@@ -1026,14 +901,14 @@ function HowItWorks({ selected }: { selected: AudienceKey }) {
         <div key={selected} className="crpe-role-swap relative mt-10 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:gap-0">
           <div className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-7 hidden h-px bg-blue-100 xl:block" aria-hidden="true" />
           {active.steps.map(({ icon: Icon, title, text }, index) => (
-            <Reveal key={title} delay={index * 90} className="relative h-full">
+            <Reveal key={title} className="relative h-full">
               <article className="crpe-step-card relative flex h-full min-h-[132px] items-start gap-4 rounded-[18px] border border-slate-200 bg-slate-50/70 p-5 xl:mx-1.5">
                 <span className="crpe-card-icon relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white text-blue-700 shadow-[0_7px_18px_rgba(15,45,75,0.06)] ring-1 ring-blue-100">
                   <Icon className="h-[18px] w-[18px]" />
                 </span>
                 <div className="min-w-0 pt-0.5">
                   <span className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-400">0{index + 1}</span>
-                  <h3 className="mt-1 text-[15px] font-black text-slate-950">{title}</h3>
+                  <h3 className="mt-1 text-[15px] font-bold text-slate-950">{title}</h3>
                   <p className="mt-1.5 text-[13px] leading-5 text-slate-600">{text}</p>
                 </div>
               </article>
@@ -1155,10 +1030,10 @@ function FaqSection() {
         </Reveal>
 
         <div className="space-y-3">
-          {items.map(([question, answer], index) => (
-            <Reveal key={question} delay={index * 55}>
+          {items.map(([question, answer]) => (
+            <Reveal key={question}>
               <details className="group rounded-[16px] border border-slate-200 bg-white px-4 py-3 shadow-[0_9px_26px_rgba(15,45,75,0.045)] transition hover:border-blue-200 hover:bg-blue-50/20 hover:shadow-[0_13px_32px_rgba(15,45,75,0.065)] sm:px-5 sm:py-3.5">
-                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-black leading-5 text-slate-950 sm:min-h-14 sm:text-[15px]">
+                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-bold leading-5 text-slate-950 sm:min-h-14 sm:text-[15px]">
                   {question}
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700 transition duration-200 group-open:rotate-45 group-open:bg-blue-100">+</span>
                 </summary>
@@ -1177,7 +1052,8 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-white">
-      <AudienceSection selected={selectedAudience} onSelect={setSelectedAudience} />
+      <Hero selected={selectedAudience} onSelect={setSelectedAudience} />
+      <AudienceSection selected={selectedAudience} />
       <HowItWorks selected={selectedAudience} />
       <PracticeSection />
       <ProductToolsSection />

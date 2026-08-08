@@ -103,11 +103,6 @@ body {
   animation-delay: 140ms;
 }
 
-.crpe-scroll-reveal {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .crpe-dashboard-shell {
   transition:
     transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
@@ -194,12 +189,6 @@ body {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
-  }
-
-  .crpe-scroll-reveal {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
   }
 
   .crpe-dashboard-shell,

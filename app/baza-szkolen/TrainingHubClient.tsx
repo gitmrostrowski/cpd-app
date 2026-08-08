@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
   Building2,
@@ -52,6 +52,14 @@ type TrainingCategory =
 type EnrollmentStatus = "open" | "waiting_list" | "closed";
 type ApprovalStatus = "approved" | "pending" | "rejected";
 
+type AudienceMatch = "exact" | "general" | "unclear";
+
+const AUDIENCE_MATCH_ORDER: Record<AudienceMatch, number> = {
+  exact: 0,
+  general: 1,
+  unclear: 2,
+};
+
 type Training = {
   id: string;
   title: string;
@@ -67,6 +75,7 @@ type Training = {
   category: TrainingCategory | null;
   profession: string | null;
   audience_scope: "unknown" | "specific" | "all_medical";
+  audience_match?: AudienceMatch;
   profession_rules: TrainingProfessionRule[];
   points_verification_status: PointVerificationStatus;
   points_source_url: string | null;
@@ -459,6 +468,12 @@ function formatPrice(pricePln: number | null) {
   return `${rounded} zł`;
 }
 
+function shortPlace(location: string | null) {
+  // Nie dzielimy po zwykłym dywizie: występuje np. w „kujawsko-pomorskie”.
+  const head = String(location ?? "").split(/[—–]/)[0]?.trim();
+  return head || null;
+}
+
 function trainingMetaLine(
   training: Training,
   details: {
@@ -473,9 +488,9 @@ function trainingMetaLine(
     labelCategory(training.category),
     details.price,
     details.range,
-    training.voivodeship,
+    shortPlace(training.voivodeship),
     details.showAudience ? details.audienceLabel : null,
-    details.enrollment,
+    training.enrollment_status === "open" ? null : details.enrollment,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -798,18 +813,35 @@ export default function TrainingHubClient({
         rows = rows.filter((row) => row.audience_scope === "unknown");
       } else {
         rows = rows
-          .filter((row) => row.audience_scope === "all_medical" || row.profession_rules.some((rule) => rule.profession_code === professionFilter))
+          .filter(
+            (row) =>
+              row.audience_scope === "all_medical" ||
+              row.audience_scope === "unknown" ||
+              row.profession_rules.some(
+                (rule) => rule.profession_code === professionFilter,
+              ),
+          )
           .map((row) => {
             const rule = row.profession_rules.find((item) => item.profession_code === professionFilter);
-            return rule
-              ? {
-                  ...row,
-                  points: rule.points,
-                  points_verification_status: rule.verification_status,
-                  points_source_url: rule.source_url ?? row.points_source_url,
-                  points_verified_on: rule.verified_on ?? row.points_verified_on,
-                }
-              : row;
+
+            if (rule) {
+              return {
+                ...row,
+                audience_match: "exact" as AudienceMatch,
+                points: rule.points,
+                points_verification_status: rule.verification_status,
+                points_source_url: rule.source_url ?? row.points_source_url,
+                points_verified_on: rule.verified_on ?? row.points_verified_on,
+              };
+            }
+
+            return {
+              ...row,
+              audience_match:
+                row.audience_scope === "all_medical"
+                  ? ("general" as AudienceMatch)
+                  : ("unclear" as AudienceMatch),
+            };
           });
       }
     }
@@ -827,6 +859,11 @@ export default function TrainingHubClient({
     }
 
     rows.sort((a, b) => {
+      const matchDelta =
+        AUDIENCE_MATCH_ORDER[a.audience_match ?? "exact"] -
+        AUDIENCE_MATCH_ORDER[b.audience_match ?? "exact"];
+      if (matchDelta !== 0) return matchDelta;
+
       if (sortBy === "points_desc" || sortBy === "points_asc") {
         const aPoints = pointsFor(a);
         const bPoints = pointsFor(b);
@@ -1035,6 +1072,18 @@ export default function TrainingHubClient({
   const displayedItems = useMemo(
     () => visibleItems.slice(0, visibleCount),
     [visibleCount, visibleItems],
+  );
+
+  const unclearCount = useMemo(
+    () => visibleItems.filter((item) => item.audience_match === "unclear").length,
+    [visibleItems],
+  );
+
+  const matchedCount = visibleItems.length - unclearCount;
+
+  const firstUnclearIndex = useMemo(
+    () => displayedItems.findIndex((item) => item.audience_match === "unclear"),
+    [displayedItems],
   );
 
   const clearCalendarSelection = () => {
@@ -1630,8 +1679,13 @@ export default function TrainingHubClient({
               <h2 className="mt-0.5 text-lg font-bold tracking-tight text-slate-950 sm:text-xl" aria-live="polite" aria-atomic="true">
                 {fetching
                   ? "Szukamy dopasowanych szkoleń…"
-                  : matchedTrainingCountLabel(visibleItems.length)}
+                  : matchedTrainingCountLabel(matchedCount)}
               </h2>
+              {!fetching && unclearCount > 0 ? (
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Dodatkowo {unclearCount} z niepotwierdzonymi adresatami
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -1704,7 +1758,7 @@ export default function TrainingHubClient({
                 ))
               : null}
 
-            {displayedItems.map((t) => {
+            {displayedItems.map((t, index) => {
               const dd = daysDiffFromToday(t.start_date);
               const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
 
@@ -1738,8 +1792,17 @@ export default function TrainingHubClient({
               });
 
               return (
-                <article
-                  key={t.id}
+                <Fragment key={t.id}>
+                  {index === firstUnclearIndex ? (
+                    <div className="flex items-center gap-3 pb-1 pt-4 first:pt-0">
+                      <div className="h-px flex-1 bg-slate-200" />
+                      <p className="text-center text-xs font-semibold text-slate-500">
+                        Możliwe dopasowanie — adresaci niepotwierdzeni ({unclearCount})
+                      </p>
+                      <div className="h-px flex-1 bg-slate-200" />
+                    </div>
+                  ) : null}
+                  <article
                   className="group relative rounded-2xl border border-l-[3px] border-slate-200 bg-white p-3.5 shadow-[0_2px_8px_rgba(15,23,42,0.045)] transition-colors duration-150 hover:border-slate-300 hover:shadow-[0_3px_12px_rgba(15,23,42,0.07)]"
                   style={{ borderLeftColor: tone.rail }}
                 >
@@ -1800,20 +1863,27 @@ export default function TrainingHubClient({
                           {pointDisplay.main}
                         </span>
                         <span className="text-[13px] font-bold">{pointDisplay.suffix}</span>
+                        <span className="sr-only">
+                          {pointDisplay.detail}. {pointsDetailsLabel(t.points_verification_status)}.
+                        </span>
                       </div>
 
-                      <div
-                        className={`mb-2.5 mt-1 inline-flex items-center gap-1 text-[11px] font-semibold ${t.points_verification_status === "verified" ? "text-emerald-700" : t.points_verification_status === "organizer_declared" ? "text-amber-700" : "text-slate-500"}`}
-                        title={pointsDetailsLabel(t.points_verification_status)}
-                        aria-label={`${pointDisplay.detail}. ${pointsDetailsLabel(t.points_verification_status)}`}
-                      >
-                        {t.points_verification_status === "verified" ? (
-                          <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.2} />
-                        ) : (
-                          <Info className="h-3.5 w-3.5" strokeWidth={2.2} />
-                        )}
-                        {shortVerificationLabel(t.points_verification_status)}
-                      </div>
+                      {t.points_verification_status === "unverified" ? (
+                        <div className="mb-2.5 mt-1 h-[17px]" aria-hidden="true" />
+                      ) : (
+                        <div
+                          className={`mb-2.5 mt-1 inline-flex items-center gap-1 text-[11px] font-semibold ${t.points_verification_status === "verified" ? "text-emerald-700" : "text-amber-700"}`}
+                          title={pointsDetailsLabel(t.points_verification_status)}
+                          aria-hidden="true"
+                        >
+                          {t.points_verification_status === "verified" ? (
+                            <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.2} />
+                          ) : (
+                            <Info className="h-3.5 w-3.5" strokeWidth={2.2} />
+                          )}
+                          {shortVerificationLabel(t.points_verification_status)}
+                        </div>
+                      )}
 
                       {t.url ? (
                         <a
@@ -1842,7 +1912,8 @@ export default function TrainingHubClient({
                       </button>
                     </div>
                   </div>
-                </article>
+                  </article>
+                </Fragment>
               );
             })}
 
