@@ -14,6 +14,10 @@ type TrainingPatch = {
   points?: number | null;
   start_date?: string | null; // YYYY-MM-DD
   end_date?: string | null;   // YYYY-MM-DD
+  start_time?: string | null; // HH:MM
+  end_time?: string | null;   // HH:MM
+  time_zone?: string;
+  speakers?: string[];
   url?: string | null;
   description?: string | null;
   status?: TrainingStatus;
@@ -124,9 +128,34 @@ export async function PATCH(req: Request) {
       { error: "training not found" },
       { status: 404 },
     );
+  const candidate = { ...existing, ...patch };
+  if (candidate.end_time && !candidate.start_time) {
+    return NextResponse.json({ error: "start time required" }, { status: 400 });
+  }
+  if (
+    candidate.start_time &&
+    candidate.end_time &&
+    (!candidate.end_date || candidate.end_date === candidate.start_date) &&
+    candidate.end_time <= candidate.start_time
+  ) {
+    return NextResponse.json({ error: "invalid time range" }, { status: 400 });
+  }
+  if (
+    candidate.speakers &&
+    (candidate.speakers.length > 20 ||
+      candidate.speakers.some((speaker: string) => speaker.trim().length > 180))
+  ) {
+    return NextResponse.json({ error: "invalid speakers" }, { status: 400 });
+  }
+  if (candidate.time_zone) {
+    try {
+      new Intl.DateTimeFormat("pl-PL", { timeZone: candidate.time_zone }).format();
+    } catch {
+      return NextResponse.json({ error: "invalid time zone" }, { status: 400 });
+    }
+  }
   const normalized: Record<string, any> = toNormalizedTraining({
-    ...existing,
-    ...patch,
+    ...candidate,
     title: patch.title ?? existing.title,
     approval_status: patch.status ?? existing.approval_status,
   });

@@ -15,7 +15,7 @@ const card = client.slice(cardStart, cardEnd);
 
 assert.match(card, /border-l-\[3px\]/, "Format szkolenia powinien mieć widoczny pasek 3 px");
 assert.match(card, /style=\{\{ borderLeftColor: tone\.rail \}\}/, "Pasek musi używać semantycznego koloru formatu");
-assert.match(card, /sm:grid-cols-\[54px_minmax\(0,1fr\)_216px\]/, "Szyna akcji powinna mieć stabilną szerokość 216 px");
+assert.match(card, /sm:grid-cols-\[64px_minmax\(0,1fr\)_216px\]/, "Szyna daty powinna mieścić godziny, a szyna akcji zachować 216 px");
 assert.doesNotMatch(card, /grid-cols-2 gap-2\.5/, "CTA nie mogą ponownie dzielić zbyt wąskiego wiersza");
 assert.doesNotMatch(card, /radial-gradient|linear-gradient/, "Karta nie może zawierać gradientu po dawnym watermarku");
 assert.match(card, /\{date\.weekday\}/, "Kafelek daty powinien pokazywać dzień tygodnia");

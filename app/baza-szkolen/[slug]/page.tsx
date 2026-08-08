@@ -57,6 +57,41 @@ function formatDelivery(value: string | null | undefined) {
   return "Forma niepodana";
 }
 
+function formatTimeRange(
+  start: string | null | undefined,
+  end: string | null | undefined,
+  timeZone: string | null | undefined,
+) {
+  if (!start) return null;
+  const hours = end
+    ? `${start.slice(0, 5)}–${end.slice(0, 5)}`
+    : start.slice(0, 5);
+  return `${hours} · ${timeZone || "Europe/Warsaw"}`;
+}
+
+function schemaDateTime(
+  date: string | undefined,
+  time: string | null | undefined,
+  timeZone: string | null | undefined,
+) {
+  if (!date) return undefined;
+  if (!time) return date;
+  const zone = timeZone || "Europe/Warsaw";
+  try {
+    const zoneName = new Intl.DateTimeFormat("en-US", {
+      timeZone: zone,
+      timeZoneName: "longOffset",
+    })
+      .formatToParts(new Date(`${date}T12:00:00Z`))
+      .find((part) => part.type === "timeZoneName")?.value;
+    if (zoneName === "GMT") return `${date}T${time.slice(0, 5)}:00Z`;
+    const offset = zoneName?.match(/^GMT([+-]\d{2}:\d{2})$/)?.[1];
+    return `${date}T${time.slice(0, 5)}:00${offset || ""}`;
+  } catch {
+    return `${date}T${time.slice(0, 5)}:00`;
+  }
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const training = await getTraining(slug);
@@ -91,8 +126,10 @@ export default async function TrainingPage({ params }: PageProps) {
 
   const siteUrl = getSiteUrl();
   const canonicalUrl = `${siteUrl}${canonicalPath}`;
-  const starts = training.start_date || undefined;
-  const ends = training.end_date || starts;
+  const startDate = training.start_date || undefined;
+  const endDate = training.end_date || startDate;
+  const starts = schemaDateTime(startDate, training.start_time, training.time_zone);
+  const ends = schemaDateTime(endDate, training.end_time, training.time_zone);
   const courseJsonLd = {
     "@context": "https://schema.org",
     "@type": "Course",
@@ -112,6 +149,9 @@ export default async function TrainingPage({ params }: PageProps) {
             : "onsite",
       startDate: starts,
       endDate: ends,
+      instructor: training.speakers?.length
+        ? training.speakers.map((speaker) => ({ "@type": "Person", name: speaker }))
+        : undefined,
       location:
         training.format === "online"
           ? { "@type": "VirtualLocation", url: training.external_url || canonicalUrl }
@@ -133,6 +173,7 @@ export default async function TrainingPage({ params }: PageProps) {
         training.end_date && training.end_date !== training.start_date
           ? `${formatDate(training.start_date)} – ${formatDate(training.end_date)}`
           : formatDate(training.start_date),
+      note: formatTimeRange(training.start_time, training.end_time, training.time_zone),
     },
     {
       icon: MapPin,
@@ -180,7 +221,7 @@ export default async function TrainingPage({ params }: PageProps) {
         <div className="grid gap-8 px-5 py-6 sm:px-8 sm:py-8 lg:grid-cols-[minmax(0,1fr)_280px]">
           <div>
             <div className="grid gap-3 sm:grid-cols-2">
-              {detailItems.map(({ icon: ItemIcon, label, value, highlight }) => {
+              {detailItems.map(({ icon: ItemIcon, label, value, note, highlight }) => {
                 return (
                   <div
                     key={label}
@@ -193,17 +234,41 @@ export default async function TrainingPage({ params }: PageProps) {
                     <p className={`mt-2 text-sm font-semibold leading-6 ${highlight ? "text-emerald-900" : "text-slate-900"}`}>
                       {value}
                     </p>
+                    {note ? <p className="mt-1 text-xs font-bold text-blue-700">{note}</p> : null}
                   </div>
                 );
               })}
             </div>
 
-            <section className="mt-6">
-              <h2 className="text-xl font-bold text-slate-950">O szkoleniu</h2>
-              <p className="mt-3 whitespace-pre-line text-base leading-8 text-slate-600">
-                {training.description || "Organizator nie przekazał jeszcze szerszego opisu. Aktualne informacje znajdziesz na stronie zapisów."}
-              </p>
-            </section>
+            {training.speakers?.length ? (
+              <section className="mt-6">
+                <h2 className="text-xl font-bold text-slate-950">Prowadzący</h2>
+                <ul className="mt-3 grid gap-2">
+                  {training.speakers.map((speaker) => (
+                    <li key={speaker} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
+                      {speaker}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {training.description ? (
+              <section className="mt-6">
+                <h2 className="text-xl font-bold text-slate-950">O szkoleniu</h2>
+                <p className="mt-3 whitespace-pre-line text-base leading-8 text-slate-600">
+                  {training.description}
+                </p>
+              </section>
+            ) : !training.speakers?.length ? (
+              <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm leading-6 text-slate-600">
+                  Szczegółowy program znajdziesz {training.external_url ? (
+                    <a href={training.external_url} target="_blank" rel="noreferrer" className="font-bold text-blue-700 hover:text-blue-800">na stronie organizatora</a>
+                  ) : "po jego opublikowaniu przez organizatora"}.
+                </p>
+              </section>
+            ) : null}
 
             {training.topics?.length ? (
               <section className="mt-6">

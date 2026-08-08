@@ -49,6 +49,10 @@ export type LegacyTraining = {
   organizer_logo_path?: string | null;
   start_date: string | null;
   end_date: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  time_zone?: string | null;
+  speakers?: string[] | null;
   external_url: string | null;
   points?: number | null;
   type?: string | null;
@@ -360,6 +364,10 @@ function toLegacyTraining(row: Record<string, any>): LegacyTraining {
     type: (legacy.legacy_type as string | null) ?? null,
     start_date: row.starts_on ?? null,
     end_date: row.ends_on ?? null,
+    start_time: row.start_time ?? null,
+    end_time: row.end_time ?? null,
+    time_zone: row.time_zone ?? "Europe/Warsaw",
+    speakers: Array.isArray(row.speakers) ? row.speakers : [],
     category: row.category ?? null,
     profession: normalizedProfession,
     audience_scope: audienceScope,
@@ -972,7 +980,7 @@ export async function fetchTrainings(client: Client): Promise<LegacyTraining[]> 
   const { data, error } = await client
     .from("trainings")
     .select(
-      "id,title,organizer_name,organizer_logo_url,organizer_logo_path,points,delivery_format,starts_on,ends_on,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,submitted_by,approved_by,approved_at,reject_reason,description,submitted_email,legacy_data,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
+      "id,title,organizer_name,organizer_logo_url,organizer_logo_path,points,delivery_format,starts_on,ends_on,start_time,end_time,time_zone,speakers,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,submitted_by,approved_by,approved_at,reject_reason,description,submitted_email,legacy_data,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
     )
     .order("starts_on", { ascending: true, nullsFirst: false });
   if (error) throw new Error(error.message);
@@ -991,7 +999,7 @@ export async function fetchPublicTrainings(
   let query = client
     .from("trainings")
     .select(
-      "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
+      "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,start_time,end_time,time_zone,speakers,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
     )
     .eq("approval_status", "approved")
     .order("starts_on", { ascending: true, nullsFirst: false });
@@ -1010,7 +1018,7 @@ export async function fetchPublicTrainingById(
   const { data, error } = await client
     .from("trainings")
     .select(
-      "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
+      "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,start_time,end_time,time_zone,speakers,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
     )
     .eq("approval_status", "approved")
     .eq("id", trainingId)
@@ -1039,6 +1047,16 @@ export function toNormalizedTraining(
             : null,
     starts_on: input.start_date ?? null,
     ends_on: input.end_date ?? null,
+    start_time: input.start_time ?? null,
+    end_time: input.end_time ?? null,
+    time_zone: input.time_zone?.trim() || "Europe/Warsaw",
+    speakers: Array.from(
+      new Set(
+        (input.speakers ?? [])
+          .map((speaker) => speaker.trim())
+          .filter(Boolean),
+      ),
+    ),
     category: input.category ?? null,
     target_profession_text: input.profession ?? null,
     audience_scope: input.audience_scope ?? "unknown",

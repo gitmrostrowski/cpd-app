@@ -24,6 +24,10 @@ const submissionSchema = z.object({
   ]),
   start_date: z.iso.date(),
   end_date: z.iso.date().nullable().optional(),
+  start_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable().optional(),
+  end_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable().optional(),
+  time_zone: z.string().trim().min(1).max(100).default("Europe/Warsaw"),
+  speakers: z.array(z.string().trim().min(2).max(180)).max(20).default([]),
   voivodeship: z.string().trim().max(160).nullable().optional(),
   url: z.url().max(2000).nullable().optional(),
   topics: z.array(z.string().trim().min(1).max(80)).max(20).nullable().optional(),
@@ -59,6 +63,34 @@ const submissionSchema = z.object({
       code: "custom",
       path: ["profession_codes"],
       message: "all_medical_cannot_have_codes",
+    });
+  }
+  if (value.end_time && !value.start_time) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["end_time"],
+      message: "start_time_required",
+    });
+  }
+  if (
+    value.start_time &&
+    value.end_time &&
+    (!value.end_date || value.end_date === value.start_date) &&
+    value.end_time <= value.start_time
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["end_time"],
+      message: "invalid_time_range",
+    });
+  }
+  try {
+    new Intl.DateTimeFormat("pl-PL", { timeZone: value.time_zone }).format();
+  } catch {
+    ctx.addIssue({
+      code: "custom",
+      path: ["time_zone"],
+      message: "invalid_time_zone",
     });
   }
 });

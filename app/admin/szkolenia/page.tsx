@@ -35,6 +35,10 @@ type TrainingRow = {
   price_pln: number | null;
   start_date: string | null;
   end_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  time_zone: string;
+  speakers: string[];
   url: string | null;
   external_url?: string | null;
   description: string | null;
@@ -103,6 +107,19 @@ function fmtDateTime(iso: string | null) {
     minute: "2-digit",
   });
 }
+
+function fmtTimeRange(start: string | null, end: string | null) {
+  if (!start) return "—";
+  return end ? `${start.slice(0, 5)}–${end.slice(0, 5)}` : start.slice(0, 5);
+}
+
+const TIME_ZONE_OPTIONS = [
+  { value: "Europe/Warsaw", label: "Polska — Europe/Warsaw" },
+  { value: "Europe/Berlin", label: "Berlin — Europe/Berlin" },
+  { value: "Europe/London", label: "Londyn — Europe/London" },
+  { value: "Europe/Paris", label: "Paryż — Europe/Paris" },
+  { value: "UTC", label: "UTC" },
+] as const;
 
 function shortId(id: string | null) {
   if (!id) return "—";
@@ -223,6 +240,7 @@ export default function AdminTrainingsPage() {
             row.organizer,
             row.description,
             row.profession,
+            ...(row.speakers ?? []),
             row.submitted_email,
           ].some((value) =>
             String(value ?? "").toLocaleLowerCase("pl-PL").includes(phrase),
@@ -401,6 +419,28 @@ export default function AdminTrainingsPage() {
       return;
     }
 
+    if (edit.end_time && !edit.start_time) {
+      setEditError("Godzina zakończenia wymaga podania godziny rozpoczęcia.");
+      return;
+    }
+    if (
+      edit.start_time &&
+      edit.end_time &&
+      (!edit.end_date || edit.end_date === edit.start_date) &&
+      edit.end_time <= edit.start_time
+    ) {
+      setEditError("Godzina zakończenia musi być późniejsza niż rozpoczęcia.");
+      return;
+    }
+    if ((edit.speakers ?? []).length > 20) {
+      setEditError("Możesz podać maksymalnie 20 prowadzących.");
+      return;
+    }
+    if ((edit.speakers ?? []).some((speaker) => speaker.trim().length > 180)) {
+      setEditError("Imię, nazwisko i tytuł prowadzącego mogą mieć maksymalnie 180 znaków.");
+      return;
+    }
+
     if (getStatus(edit) === "approved" && !hasTrainingAudience(edit.profession)) {
       setEditError("Przed akceptacją wybierz adresatów szkolenia.");
       document
@@ -478,6 +518,12 @@ export default function AdminTrainingsPage() {
               : null,
         start_date: edit.start_date || null,
         end_date: edit.end_date || null,
+        start_time: edit.start_time || null,
+        end_time: edit.end_time || null,
+        time_zone: edit.time_zone || "Europe/Warsaw",
+        speakers: (edit.speakers ?? [])
+          .map((speaker) => speaker.trim())
+          .filter(Boolean),
         url,
         external_url: url,
         description: (edit.description || "").trim() ? (edit.description || "").trim() : null,
@@ -817,6 +863,7 @@ export default function AdminTrainingsPage() {
                       <td className="px-4 py-4 text-xs text-slate-700">
                         <div className="whitespace-nowrap">{fmtDate(r.start_date)}</div>
                         <div className="whitespace-nowrap text-slate-500">{fmtDate(r.end_date)}</div>
+                        <div className="mt-1 whitespace-nowrap font-semibold text-blue-700">{fmtTimeRange(r.start_time, r.end_time)}</div>
                       </td>
 
                       <td className="px-4 py-4">
@@ -1195,6 +1242,45 @@ export default function AdminTrainingsPage() {
                 />
               </div>
 
+              <div>
+                <label htmlFor="admin-training-start-time" className="text-xs font-semibold text-slate-600">Godzina rozpoczęcia</label>
+                <input
+                  id="admin-training-start-time"
+                  type="time"
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={edit.start_time || ""}
+                  onChange={(event) => setEdit({ ...edit, start_time: event.target.value || null })}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="admin-training-end-time" className="text-xs font-semibold text-slate-600">Godzina zakończenia</label>
+                <input
+                  id="admin-training-end-time"
+                  type="time"
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={edit.end_time || ""}
+                  onChange={(event) => setEdit({ ...edit, end_time: event.target.value || null })}
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label htmlFor="admin-training-time-zone" className="text-xs font-semibold text-slate-600">Strefa czasowa</label>
+                <select
+                  id="admin-training-time-zone"
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={edit.time_zone || "Europe/Warsaw"}
+                  onChange={(event) => setEdit({ ...edit, time_zone: event.target.value })}
+                >
+                  {!TIME_ZONE_OPTIONS.some((option) => option.value === edit.time_zone) && edit.time_zone ? (
+                    <option value={edit.time_zone}>{edit.time_zone}</option>
+                  ) : null}
+                  {TIME_ZONE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="sm:col-span-2">
                 <label className="text-xs font-semibold text-slate-600">Link</label>
                 <input
@@ -1203,6 +1289,20 @@ export default function AdminTrainingsPage() {
                   value={edit.url || ""}
                   onChange={(e) => setEdit({ ...edit, url: e.target.value || null })}
                   placeholder="https://..."
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label htmlFor="admin-training-speakers" className="text-xs font-semibold text-slate-600">Prowadzący</label>
+                <textarea
+                  id="admin-training-speakers"
+                  className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={(edit.speakers ?? []).join("\n")}
+                  onChange={(event) => setEdit({
+                    ...edit,
+                    speakers: event.target.value.split(/\r?\n/).map((speaker) => speaker.trimStart()),
+                  })}
+                  placeholder={"Każdy prowadzący w osobnym wierszu\nnp. dr hab. n. med. Anna Kowalska"}
                 />
               </div>
 

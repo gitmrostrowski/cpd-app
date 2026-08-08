@@ -36,7 +36,8 @@
     "check:v6.15.1": "node scripts/check-v6-15-1-training-card-layout.mjs",
     "check:v6.15.2": "node scripts/check-v6-15-2-audience-homepage.mjs",
     "check:v6.15.3": "node scripts/check-v6-15-3-role-paths.mjs",
-    "check:v6.15.4": "node scripts/check-v6-15-4-price-visibility.mjs"
+    "check:v6.15.4": "node scripts/check-v6-15-4-price-visibility.mjs",
+    "check:v6.16": "node scripts/check-v6-16-schedule-and-speakers.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

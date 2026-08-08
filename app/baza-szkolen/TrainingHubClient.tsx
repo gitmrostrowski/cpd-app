@@ -70,6 +70,10 @@ type Training = {
 
   start_date: string | null;
   end_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  time_zone: string;
+  speakers: string[];
 
   category: TrainingCategory | null;
   profession: string | null;
@@ -116,6 +120,14 @@ const CATEGORY_OPTIONS: { value: "all" | TrainingCategory; label: string }[] = [
   { value: "publikacja", label: "Publikacja" },
   { value: "inne", label: "Inne" },
 ];
+
+const TIME_ZONE_OPTIONS = [
+  { value: "Europe/Warsaw", label: "Polska — Europe/Warsaw" },
+  { value: "Europe/Berlin", label: "Berlin — Europe/Berlin" },
+  { value: "Europe/London", label: "Londyn — Europe/London" },
+  { value: "Europe/Paris", label: "Paryż — Europe/Paris" },
+  { value: "UTC", label: "UTC" },
+] as const;
 
 const ORGANIZER_QUICK: { value: string; label: string }[] = [
   { value: "all", label: "Wszyscy" },
@@ -313,6 +325,11 @@ function dateRangeShort(start: string | null, end: string | null) {
   return formatDate(start ?? end);
 }
 
+function timeRangeShort(start: string | null, end: string | null) {
+  if (!start) return null;
+  return end ? `${start.slice(0, 5)}–${end.slice(0, 5)}` : start.slice(0, 5);
+}
+
 function formatTone(format: TrainingType | null) {
   if (format === "stacjonarne") {
     return {
@@ -500,6 +517,9 @@ function trainingMetaLine(
 ) {
   return [
     labelCategory(training.category),
+    training.speakers.length
+      ? `${training.speakers[0]}${training.speakers.length > 1 ? ` +${training.speakers.length - 1}` : ""}`
+      : null,
     details.priceMissing ? "Cena niepodana" : null,
     details.range,
     shortPlace(training.voivodeship),
@@ -534,6 +554,13 @@ function parseTopics(input: string) {
     .filter(Boolean);
 
   return parts.length ? parts : null;
+}
+
+function parseSpeakers(input: string) {
+  return input
+    .split(/\r?\n/)
+    .map((speaker) => speaker.trim())
+    .filter(Boolean);
 }
 
 function normalizeUrl(raw: string | null | undefined) {
@@ -629,6 +656,10 @@ function normalizeTrainingRow(r: LegacyTraining): Training {
 
     start_date: r.start_date ?? null,
     end_date: r.end_date ?? null,
+    start_time: r.start_time?.slice(0, 5) ?? null,
+    end_time: r.end_time?.slice(0, 5) ?? null,
+    time_zone: r.time_zone || "Europe/Warsaw",
+    speakers: Array.isArray(r.speakers) ? r.speakers.filter(Boolean) : [],
 
     category: (r.category ?? null) as TrainingCategory | null,
     profession: r.profession ?? null,
@@ -730,6 +761,10 @@ export default function TrainingHubClient({
   const [fCategory, setFCategory] = useState<TrainingCategory>("kurs");
   const [fStart, setFStart] = useState("");
   const [fEnd, setFEnd] = useState("");
+  const [fStartTime, setFStartTime] = useState("");
+  const [fEndTime, setFEndTime] = useState("");
+  const [fTimeZone, setFTimeZone] = useState("Europe/Warsaw");
+  const [fSpeakers, setFSpeakers] = useState("");
   const [fVoiv, setFVoiv] = useState("");
   const [fUrl, setFUrl] = useState("");
   const [fTopics, setFTopics] = useState("");
@@ -1200,6 +1235,7 @@ export default function TrainingHubClient({
           ? enteredPrice
           : null;
     const capNum = fCap.trim() === "" ? null : Number(fCap);
+    const speakers = parseSpeakers(fSpeakers);
     const nextErrors: Record<string, string> = {};
     if (!title) nextErrors.title = "Podaj tytuł szkolenia.";
     if (!fStart) nextErrors.start = "Podaj datę rozpoczęcia.";
@@ -1213,6 +1249,12 @@ export default function TrainingHubClient({
     }
     if (capNum !== null && (Number.isNaN(capNum) || capNum < 0)) nextErrors.capacity = "Podaj prawidłowy limit miejsc.";
     if (fEnd && fStart && fEnd < fStart) nextErrors.end = "Data końca nie może być wcześniejsza niż data rozpoczęcia.";
+    if (fEndTime && !fStartTime) nextErrors.time = "Podaj godzinę rozpoczęcia albo usuń godzinę zakończenia.";
+    if (fStartTime && fEndTime && (!fEnd || fEnd === fStart) && fEndTime <= fStartTime) {
+      nextErrors.time = "Godzina zakończenia musi być późniejsza niż rozpoczęcia.";
+    }
+    if (speakers.length > 20) nextErrors.speakers = "Możesz podać maksymalnie 20 prowadzących.";
+    if (speakers.some((speaker) => speaker.length > 180)) nextErrors.speakers = "Imię, nazwisko i tytuł prowadzącego mogą mieć maksymalnie 180 znaków.";
     if (Object.keys(nextErrors).length) {
       setFormErrors(nextErrors);
       return;
@@ -1231,6 +1273,10 @@ export default function TrainingHubClient({
       category: fCategory,
       start_date: fStart,
       end_date: fEnd || null,
+      start_time: fStartTime || null,
+      end_time: fEndTime || null,
+      time_zone: fTimeZone,
+      speakers,
       voivodeship: fVoiv.trim() || null,
 
       url,
@@ -1305,6 +1351,10 @@ export default function TrainingHubClient({
     setFCategory("kurs");
     setFStart("");
     setFEnd("");
+    setFStartTime("");
+    setFEndTime("");
+    setFTimeZone("Europe/Warsaw");
+    setFSpeakers("");
     setFVoiv("");
     setFUrl("");
     setFTopics("");
@@ -1807,6 +1857,7 @@ export default function TrainingHubClient({
 
               const date = dateParts(t.start_date);
               const range = dateRangeShort(t.start_date, t.end_date);
+              const timeRange = timeRangeShort(t.start_time, t.end_time);
               const tone = formatTone(t.format);
               const showRange = Boolean(
                 t.start_date && t.end_date && t.start_date !== t.end_date,
@@ -1841,8 +1892,8 @@ export default function TrainingHubClient({
                   className="group relative rounded-2xl border border-l-[3px] border-slate-200 bg-white p-3.5 shadow-[0_2px_8px_rgba(15,23,42,0.045)] transition-colors duration-150 hover:border-slate-300 hover:shadow-[0_3px_12px_rgba(15,23,42,0.07)]"
                   style={{ borderLeftColor: tone.rail }}
                 >
-                  <div className="grid grid-cols-[54px_minmax(0,1fr)] gap-3 sm:grid-cols-[54px_minmax(0,1fr)_216px] sm:items-center sm:gap-4">
-                    <div className="flex w-[54px] shrink-0 flex-col items-center self-start text-center sm:self-center">
+                  <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 sm:grid-cols-[64px_minmax(0,1fr)_216px] sm:items-center sm:gap-4">
+                    <div className="flex w-[64px] shrink-0 flex-col items-center self-start text-center sm:self-center">
                       <span
                         className={`text-[11px] font-semibold uppercase tracking-[0.06em] ${soon ? "text-amber-700" : "text-slate-400"}`}
                         aria-label={urgencyLabel ? `${date.weekday}, ${urgencyLabel}` : undefined}
@@ -1858,6 +1909,11 @@ export default function TrainingHubClient({
                       <span className="text-[11px] font-semibold text-slate-500">
                         {date.month.toLocaleLowerCase("pl-PL")} {date.year}
                       </span>
+                      {timeRange ? (
+                        <span className="mt-1 whitespace-nowrap text-[10px] font-bold text-blue-700">
+                          {timeRange}
+                        </span>
+                      ) : null}
                     </div>
 
                     <div className="min-w-0">
@@ -2334,6 +2390,45 @@ export default function TrainingHubClient({
                 {formErrors.end ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.end}</p> : null}
               </div>
 
+              <div className="md:col-span-3">
+                <label htmlFor="new-training-start-time" className={labelBase}>Godzina rozpoczęcia</label>
+                <input
+                  id="new-training-start-time"
+                  type="time"
+                  value={fStartTime}
+                  onChange={(event) => { setFStartTime(event.target.value); setFormErrors((errors) => ({ ...errors, time: "" })); }}
+                  className={fieldBase}
+                  aria-invalid={Boolean(formErrors.time)}
+                />
+              </div>
+
+              <div className="md:col-span-3">
+                <label htmlFor="new-training-end-time" className={labelBase}>Godzina zakończenia</label>
+                <input
+                  id="new-training-end-time"
+                  type="time"
+                  value={fEndTime}
+                  onChange={(event) => { setFEndTime(event.target.value); setFormErrors((errors) => ({ ...errors, time: "" })); }}
+                  className={fieldBase}
+                  aria-invalid={Boolean(formErrors.time)}
+                />
+              </div>
+
+              <div className="md:col-span-6">
+                <label htmlFor="new-training-time-zone" className={labelBase}>Strefa czasowa</label>
+                <select
+                  id="new-training-time-zone"
+                  value={fTimeZone}
+                  onChange={(event) => setFTimeZone(event.target.value)}
+                  className={fieldBase}
+                >
+                  {TIME_ZONE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+              {formErrors.time ? <p className="md:col-span-12 -mt-2 text-xs font-semibold text-red-700">{formErrors.time}</p> : null}
+
               <div className="md:col-span-12">
                 <TrainingAudienceField
                   value={fProfession}
@@ -2386,6 +2481,20 @@ export default function TrainingHubClient({
                   placeholder="Program, grupa docelowa i najważniejsze informacje dla uczestnika"
                   maxLength={5000}
                 />
+              </div>
+
+              <div className="md:col-span-12">
+                <label htmlFor="new-training-speakers" className={labelBase}>Prowadzący</label>
+                <textarea
+                  id="new-training-speakers"
+                  value={fSpeakers}
+                  onChange={(event) => { setFSpeakers(event.target.value); setFormErrors((errors) => ({ ...errors, speakers: "" })); }}
+                  className={`${fieldBase} min-h-24 py-2`}
+                  placeholder={"np. dr hab. n. med. Anna Kowalska\nlek. Jan Nowak"}
+                  aria-invalid={Boolean(formErrors.speakers)}
+                />
+                <p className="mt-1 text-xs text-slate-500">Każdego prowadzącego wpisz w osobnym wierszu, razem z tytułem zawodowym lub naukowym.</p>
+                {formErrors.speakers ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.speakers}</p> : null}
               </div>
 
               <div className="md:col-span-6">
