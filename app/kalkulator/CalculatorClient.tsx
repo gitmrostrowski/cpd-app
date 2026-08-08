@@ -26,6 +26,16 @@ import {
 
 type ActivityStatus = "planned" | "done" | null;
 
+const PANEL_SECTION_IDS = [
+  "ustawienia",
+  "status",
+  "kroki",
+  "limity",
+  "aktywnosci",
+] as const;
+
+type PanelSectionId = (typeof PANEL_SECTION_IDS)[number];
+
 type ActivityRow = {
   id: string;
   user_id: string;
@@ -73,6 +83,20 @@ const VERIFIED_LIMITS: RuleLimit[] = [];
 
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
+}
+
+/**
+ * Polska odmiana przez liczbę: 1 wpis, 2-4 wpisy, 5-21 wpisów.
+ * Forma mnoga „few” wraca dla końcówek 2-4 poza nastką (22, 23, 24, 32...).
+ */
+function pluralPl(n: number, forms: [string, string, string]) {
+  const abs = Math.abs(n);
+  const last = abs % 10;
+  const lastTwo = abs % 100;
+
+  if (abs === 1) return forms[0];
+  if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return forms[1];
+  return forms[2];
 }
 
 function normalizeStatus(s: ActivityStatus | undefined): "planned" | "done" {
@@ -132,7 +156,7 @@ function suggestPlannedPoints(rule: {
 
 function buildNextSteps(
   missingPoints: number,
-  missingEvidenceCount: number,
+  incompleteCount: number,
   limitWarning: string | null,
 ) {
   const steps: {
@@ -143,10 +167,10 @@ function buildNextSteps(
     priority: "high" | "normal";
   }[] = [];
 
-  if (missingEvidenceCount > 0) {
+  if (incompleteCount > 0) {
     steps.push({
-      title: "Uzupełnij dokumenty",
-      description: `Masz ${missingEvidenceCount} brakujących dokumentów. To najszybszy krok do uporządkowania panelu.`,
+      title: "Uzupełnij wpisy",
+      description: `${incompleteCount} ${pluralPl(incompleteCount, ["wpis wymaga", "wpisy wymagają", "wpisów wymaga"])} uzupełnienia. To najszybszy krok do gotowego raportu.`,
       ctaHref: "/aktywnosci",
       tone: "amber",
       priority: "high",
@@ -161,7 +185,7 @@ function buildNextSteps(
         "Wybierz aktywność, która realnie przybliży Cię do wymaganej liczby punktów.",
       ctaHref: "/baza-szkolen",
       tone: "blue",
-      priority: missingEvidenceCount === 0 ? "high" : "normal",
+      priority: incompleteCount === 0 ? "high" : "normal",
     });
   }
 
@@ -295,11 +319,14 @@ function MiniIcon({
 
 function CircularProgress({
   value,
+  completeValue,
   label = "realizacji",
   size = "normal",
   tone = "blue",
 }: {
   value: number;
+  /** Część `value` pochodzącą z kompletnych wpisów rysujemy pełnym kolorem. */
+  completeValue?: number;
   label?: string;
   size?: "normal" | "small";
   tone?: "blue" | "slate" | "amber";
@@ -312,6 +339,9 @@ function CircularProgress({
   const normalizedRadius = radius - stroke / 2;
   const circumference = normalizedRadius * 2 * Math.PI;
   const offset = circumference - (clamp(value, 0, 100) / 100) * circumference;
+  const hasSplit = typeof completeValue === "number" && completeValue < value;
+  const completeOffset =
+    circumference - (clamp(completeValue ?? 0, 0, 100) / 100) * circumference;
   const strokeTone =
     tone === "amber"
       ? "text-amber-500"
@@ -333,7 +363,7 @@ function CircularProgress({
         />
         <circle
           stroke="currentColor"
-          className={`${strokeTone} transition-all duration-700`}
+          className={`${hasSplit ? "text-blue-200" : strokeTone} transition-all duration-700`}
           fill="transparent"
           strokeLinecap="round"
           strokeWidth={stroke}
@@ -343,6 +373,20 @@ function CircularProgress({
           cx={center}
           cy={center}
         />
+        {hasSplit ? (
+          <circle
+            stroke="currentColor"
+            className={`${strokeTone} transition-all duration-700`}
+            fill="transparent"
+            strokeLinecap="round"
+            strokeWidth={stroke}
+            strokeDasharray={`${circumference} ${circumference}`}
+            strokeDashoffset={completeOffset}
+            r={normalizedRadius}
+            cx={center}
+            cy={center}
+          />
+        ) : null}
       </svg>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -431,6 +475,39 @@ function TriangleMarker({
   );
 }
 
+function ClusterMarker({
+  left,
+  tone,
+  title,
+  count,
+  top,
+}: {
+  left: number;
+  tone: "amber" | "green" | "blue";
+  title: string;
+  count: number;
+  top: number;
+}) {
+  const palette =
+    tone === "amber"
+      ? "border-amber-400 bg-amber-50 text-amber-800"
+      : tone === "green"
+        ? "border-emerald-400 bg-emerald-50 text-emerald-800"
+        : "border-blue-400 bg-blue-50 text-blue-800";
+
+  return (
+    <span
+      role="img"
+      aria-label={title}
+      title={title}
+      className={`absolute z-10 grid h-[19px] min-w-[19px] -translate-x-1/2 place-items-center rounded-full border px-1 text-[10px] font-black tabular-nums shadow-sm ${palette}`}
+      style={{ left: `${left}%`, top }}
+    >
+      {count}
+    </span>
+  );
+}
+
 function LegendTriangle({ tone }: { tone: "amber" | "green" | "blue" }) {
   const stroke =
     tone === "amber" ? "#f59e0b" : tone === "green" ? "#10b981" : "#60a5fa";
@@ -446,72 +523,6 @@ function LegendTriangle({ tone }: { tone: "amber" | "green" | "blue" }) {
     >
       <path d="M2 2h14L9 14Z" />
     </svg>
-  );
-}
-
-function StatMiniCard({
-  label,
-  value,
-  suffix,
-  subtitle,
-  tone = "slate",
-  icon,
-  compact = false,
-  emphasis = false,
-}: {
-  label: string;
-  value: React.ReactNode;
-  suffix?: string;
-  subtitle?: string;
-  tone?: "slate" | "amber" | "blue" | "green";
-  icon?: React.ReactNode;
-  compact?: boolean;
-  emphasis?: boolean;
-}) {
-  const toneWrap =
-    tone === "amber"
-      ? "bg-amber-50/70 border-amber-200"
-      : tone === "blue"
-        ? "bg-blue-50/70 border-blue-200"
-        : tone === "green"
-          ? "bg-emerald-50/70 border-emerald-200"
-          : "bg-white border-slate-200";
-
-  const toneValue =
-    tone === "amber"
-      ? "text-amber-700"
-      : tone === "blue"
-        ? "text-blue-700"
-        : tone === "green"
-          ? "text-emerald-700"
-          : "text-slate-950";
-
-  const iconTone =
-    tone === "amber"
-      ? "text-amber-600"
-      : tone === "blue"
-        ? "text-blue-600"
-        : tone === "green"
-          ? "text-emerald-600"
-          : "text-slate-500";
-
-  return (
-    <div className={`h-full rounded-2xl border ${compact ? "p-3" : "p-4"} ${toneWrap}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">{label}</div>
-          <div className={`mt-1.5 flex items-end gap-1 ${toneValue}`}>
-            <div className={`font-extrabold leading-none tracking-[-0.04em] ${emphasis ? "text-[2rem]" : compact ? "text-[1.12rem]" : "text-[1.35rem]"}`}>
-              {value}
-            </div>
-            {suffix ? <div className="pb-0.5 text-xs font-semibold text-slate-400">{suffix}</div> : null}
-          </div>
-          {subtitle ? <div className="mt-1.5 text-[11px] leading-relaxed text-slate-500">{subtitle}</div> : null}
-        </div>
-
-        {icon ? <div className={`shrink-0 ${iconTone}`}>{icon}</div> : null}
-      </div>
-    </div>
   );
 }
 
@@ -574,14 +585,7 @@ export default function CalculatorClient() {
   const [planningKey, setPlanningKey] = useState<string | null>(null);
   const [activityFilter, setActivityFilter] = useState<"all" | "planned" | "missing" | "complete">("all");
   const [selectedLimitKey, setSelectedLimitKey] = useState<string | null>(null);
-  const [activeNav, setActiveNav] = useState<
-    | "ustawienia"
-    | "status"
-    | "kroki"
-    | "limity"
-    | "aktywnosci"
-    | "powiadomienia"
-  >("ustawienia");
+  const [activeNav, setActiveNav] = useState<PanelSectionId>("ustawienia");
 
   const supabase = useMemo(() => supabaseClient(), []);
 
@@ -736,6 +740,32 @@ export default function CalculatorClient() {
     [inPeriodDone],
   );
 
+  /**
+   * Jedna definicja kompletności dla licznika, warstw postępu, kroków i listy.
+   * Wpis jest kompletny dopiero wtedy, gdy nie brakuje żadnego pola
+   * wskazanego przez getRowMissing (np. organizatora lub certyfikatu).
+   */
+  const incompleteEntries = useMemo(
+    () => inPeriodDone.filter((a) => getRowMissing(a).length > 0),
+    [inPeriodDone],
+  );
+
+  const incompleteIds = useMemo(
+    () => new Set(incompleteEntries.map((a) => a.id)),
+    [incompleteEntries],
+  );
+
+  const completePoints = useMemo(
+    () =>
+      inPeriodDone
+        .filter((a) => !incompleteIds.has(a.id))
+        .reduce((sum, a) => sum + (Number(a.points) || 0), 0),
+    [inPeriodDone, incompleteIds],
+  );
+
+  const incompletePoints = Math.max(0, donePoints - completePoints);
+  const incompleteCount = incompleteEntries.length;
+
   const missingPoints = useMemo(
     () => Math.max(0, (Number(requiredPoints) || 0) - donePoints),
     [requiredPoints, donePoints],
@@ -746,10 +776,10 @@ export default function CalculatorClient() {
     return req <= 0 ? 0 : clamp((donePoints / req) * 100, 0, 100);
   }, [requiredPoints, donePoints]);
 
-  const missingEvidenceCount = useMemo(
-    () => inPeriodDone.filter((a) => !a.certificate_path).length,
-    [inPeriodDone],
-  );
+  const completeProgress = useMemo(() => {
+    const req = Number(requiredPoints) || 0;
+    return req <= 0 ? 0 : clamp((completePoints / req) * 100, 0, 100);
+  }, [requiredPoints, completePoints]);
 
   const periodTimeProgress = useMemo(() => {
     const start = new Date(periodStart, 0, 1).getTime();
@@ -761,15 +791,6 @@ export default function CalculatorClient() {
   }, [periodStart, periodEnd]);
 
   const paceDelta = Math.round(progress - periodTimeProgress);
-  const paceLabel =
-    progress <= 0
-      ? "Start"
-      : paceDelta >= 10
-        ? "Zapas"
-        : paceDelta >= -10
-          ? "Równo"
-          : "Do nadrobienia";
-
   const paceDescription =
     paceDelta < -10
       ? `Jesteś ${Math.abs(paceDelta)} pp. za upływem czasu.`
@@ -858,8 +879,8 @@ export default function CalculatorClient() {
   }, [limitsUsage]);
 
   const nextSteps = useMemo(
-    () => buildNextSteps(missingPoints, missingEvidenceCount, limitWarning),
-    [missingPoints, missingEvidenceCount, limitWarning],
+    () => buildNextSteps(missingPoints, incompleteCount, limitWarning),
+    [missingPoints, incompleteCount, limitWarning],
   );
 
   const timelineEvents = useMemo(() => {
@@ -894,7 +915,14 @@ export default function CalculatorClient() {
           prog === "planned" ? "zaplanowane" : missing.length > 0 ? "do uzupełnienia" : "kompletne"
         } · ${a.points} pkt`;
 
-        return { id: a.id, left: clamp(left, 1, 99), tone, title };
+        return {
+          id: a.id,
+          left: clamp(left, 1, 99),
+          tone,
+          title,
+          points: Number(a.points) || 0,
+          monthKey: String(rawDate).slice(0, 7),
+        };
       })
       .filter(Boolean)
       .sort((a, b) => (a!.left === b!.left ? a!.id.localeCompare(b!.id) : a!.left - b!.left)) as {
@@ -902,17 +930,45 @@ export default function CalculatorClient() {
         left: number;
         tone: "amber" | "green" | "blue";
         title: string;
+        points: number;
+        monthKey: string;
       }[];
 
-    const adjusted: typeof raw = [];
-    for (const ev of raw.slice(0, 32)) {
-      const prev = adjusted[adjusted.length - 1];
-      let left = ev.left;
-      if (prev && left - prev.left < 1.35) left = Math.min(99, prev.left + 1.35);
-      adjusted.push({ ...ev, left });
+    // Poprzednio znaczniki rozsuwano o 1.35% szerokości paska (~5 px przy
+    // 18-pikselowym trójkącie), więc przy kilku aktywnościach w jednym miesiącu
+    // i tak zlewały się w plamę. Grupujemy je w kubełki miesięczne: pojedyncze
+    // zdarzenie zostaje trójkątem, kilka zamienia się w kółko z liczbą.
+    const buckets = new Map<string, typeof raw>();
+    for (const ev of raw) {
+      const bucket = buckets.get(ev.monthKey);
+      if (bucket) bucket.push(ev);
+      else buckets.set(ev.monthKey, [ev]);
     }
 
-    return adjusted;
+    return [...buckets.entries()]
+      .map(([monthKey, events]) => {
+        const left = events.reduce((sum, ev) => sum + ev.left, 0) / events.length;
+        const tone = events.some((ev) => ev.tone === "amber")
+          ? ("amber" as const)
+          : events.some((ev) => ev.tone === "blue")
+            ? ("blue" as const)
+            : ("green" as const);
+
+        const points = events.reduce((sum, ev) => sum + ev.points, 0);
+
+        return {
+          id: monthKey,
+          left: clamp(left, 1, 99),
+          tone,
+          count: events.length,
+          title:
+            events.length === 1
+              ? events[0].title
+              : `${events.length} ${pluralPl(events.length, ["aktywność", "aktywności", "aktywności"])} · ${points} pkt`,
+        };
+      })
+      .sort((a, b) => a.left - b.left)
+      .slice(0, 32);
   }, [activities, periodStart, periodEnd]);
 
   const recentRows = useMemo(() => {
@@ -956,14 +1012,7 @@ export default function CalculatorClient() {
   useEffect(() => {
     if (isBusy) return;
 
-    const ids = [
-      "ustawienia",
-      "status",
-      "kroki",
-      "limity",
-      "aktywnosci",
-      "powiadomienia",
-    ] as const;
+    const ids = PANEL_SECTION_IDS;
 
     const nodes = ids
       .map((id) => document.getElementById(id))
@@ -1108,8 +1157,8 @@ export default function CalculatorClient() {
 
       setPlanInfo(`Dodano do planu: ${r.label} (+${pts} pkt)`);
       await reloadActivities();
-    } catch (e: any) {
-      setPlanErr(e?.message || "Nie udało się dodać planu.");
+    } catch (e: unknown) {
+      setPlanErr(e instanceof Error ? e.message : "Nie udało się dodać planu.");
     } finally {
       setPlanningKey(null);
     }
@@ -1122,13 +1171,7 @@ export default function CalculatorClient() {
     "scroll-mt-44 relative overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(15,45,75,0.07)] transition-shadow hover:shadow-[0_18px_44px_rgba(15,45,75,0.09)]";
 
   function scrollToSection(
-    id:
-      | "ustawienia"
-      | "status"
-      | "kroki"
-      | "limity"
-      | "aktywnosci"
-      | "powiadomienia",
+    id: PanelSectionId,
   ) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -1165,21 +1208,33 @@ export default function CalculatorClient() {
           : "Nie masz jeszcze żadnych aktywności w tym okresie.";
 
   const emptyStateCta =
-    activityFilter === "missing" ? "Uzupełnij dokumenty" : "Dodaj pierwszą aktywność";
+    activityFilter === "missing" ? "Uzupełnij wpisy" : "Dodaj pierwszą aktywność";
 
-  const panelSections = [
-    { id: "ustawienia", label: "Ustawienia", mobileLabel: "Ustawienia", icon: "user" as const },
-    { id: "status", label: "Status ewidencji", mobileLabel: "Postęp", icon: "chart" as const },
-    { id: "kroki", label: "Co dalej?", mobileLabel: "Co dalej", icon: "target" as const },
-    { id: "limity", label: "Limity", mobileLabel: "Limity", icon: "shield" as const },
-    { id: "aktywnosci", label: "Aktywności", mobileLabel: "Wpisy", icon: "calendar" as const },
-    { id: "powiadomienia", label: "Powiadomienia", mobileLabel: "Alerty", icon: "bell" as const },
-  ] as const;
+  // Sekcja limitów istnieje tylko dla zweryfikowanego rule setu z pełnym
+  // zakresem obliczeń. Dopóki go nie ma, zakładka prowadziłaby do komunikatu
+  // „brak limitów” — więc jej nie pokazujemy. „Powiadomienia” to pojedynczy
+  // baner na dole i nie potrzebuje własnej pozycji w nawigacji.
+  const hasLimits = limitsUsage.length > 0;
+
+  const panelSections: {
+    id: PanelSectionId;
+    label: string;
+    mobileLabel: string;
+    icon: "user" | "chart" | "target" | "shield" | "calendar";
+  }[] = [
+    { id: "ustawienia", label: "Ustawienia", mobileLabel: "Ustawienia", icon: "user" },
+    { id: "status", label: "Status ewidencji", mobileLabel: "Postęp", icon: "chart" },
+    { id: "kroki", label: "Co dalej?", mobileLabel: "Co dalej", icon: "target" },
+    ...(hasLimits
+      ? [{ id: "limity" as const, label: "Limity", mobileLabel: "Limity", icon: "shield" as const }]
+      : []),
+    { id: "aktywnosci", label: "Aktywności", mobileLabel: "Wpisy", icon: "calendar" },
+  ];
 
   const mainAction =
-    missingEvidenceCount > 0
+    incompleteCount > 0
       ? {
-          label: "Uzupełnij dokumenty",
+          label: "Uzupełnij wpisy",
           href: "/aktywnosci",
           tone: "amber" as const,
           description:
@@ -1620,46 +1675,23 @@ export default function CalculatorClient() {
               </Link>
             </div>
 
-            <div className="mx-4 mt-4 grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                  1. Punkty zadeklarowane
-                </div>
-                <div className="mt-1 text-xl font-extrabold text-slate-950">
-                  {donePoints} pkt
-                </div>
-                <div className="mt-1 text-xs leading-5 text-slate-500">
-                  Suma ukończonych wpisów użytkownika w wybranym okresie.
-                </div>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                  2. Według reguł CRPE
-                </div>
-                <div className="mt-1 text-base font-extrabold text-slate-950">
-                  {appliedRuleSet?.calculation_scope === "full"
-                    ? `${donePoints} pkt`
-                    : "Nieobliczane"}
-                </div>
-                <div className="mt-1 text-xs leading-5 text-slate-500">
-                  {appliedRuleSet?.calculation_scope === "full"
-                    ? `Zestaw reguł ${appliedRuleSet.version}.`
-                    : "Brak pełnej, zweryfikowanej kwalifikacji form aktywności."}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                  3. Status formalny
-                </div>
-                <div className="mt-1 text-base font-extrabold text-slate-950">
-                  {formalStatus === "confirmed_externally"
-                    ? "Potwierdzony poza CRPE"
-                    : "Niepotwierdzony"}
-                </div>
-                <div className="mt-1 text-xs leading-5 text-slate-500">
-                  Formalnego potwierdzenia dokonuje właściwy organ, nie CRPE.
-                </div>
-              </div>
+            <div
+              role="group"
+              aria-label="Poziomy statusu wyniku"
+              className="mx-4 mt-4 flex flex-wrap gap-x-5 gap-y-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 text-xs text-slate-600"
+            >
+              <span>
+                <span className="font-semibold text-slate-900">1. Punkty zadeklarowane</span>{" "}
+                · ewidencja użytkownika
+              </span>
+              <span>
+                <span className="font-semibold text-slate-900">2. Według reguł CRPE</span>{" "}
+                · {appliedRuleSet?.calculation_scope === "full" ? "obliczane" : "nieobliczane"}
+              </span>
+              <span>
+                <span className="font-semibold text-slate-900">3. Status formalny</span>{" "}
+                · {formalStatus === "confirmed_externally" ? "potwierdzony poza CRPE" : "niepotwierdzony"}
+              </span>
             </div>
 
             <div className="grid gap-4 p-4 xl:grid-cols-[460px_minmax(0,1fr)]">
@@ -1667,17 +1699,30 @@ export default function CalculatorClient() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 text-center shadow-sm shadow-slate-900/5">
                     <div className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                      Punkty zadeklarowane
+                      Realizacja celu
                     </div>
-                    <CircularProgress value={progress} label="celu" />
+                    <CircularProgress
+                      value={progress}
+                      completeValue={completeProgress}
+                      label="celu"
+                    />
                     <div className="mt-3 text-2xl font-extrabold tracking-[-0.05em] text-blue-700">
                       {donePoints}
                       <span className="ml-1 text-base font-semibold text-slate-500">
                         / {requiredPoints} pkt
                       </span>
                     </div>
-                    <div className="mt-1 text-xs leading-relaxed text-slate-500">
-                      ukończone aktywności w okresie {periodStart}–{periodEnd}
+                    <div className="mt-1.5 text-xs leading-relaxed text-slate-500">
+                      {incompletePoints > 0 ? (
+                        <>
+                          <span className="font-bold text-blue-700">{completePoints} pkt</span>{" "}
+                          z kompletnych wpisów,{" "}
+                          <span className="font-bold text-amber-700">{incompletePoints} pkt</span>{" "}
+                          do uzupełnienia
+                        </>
+                      ) : (
+                        <>wszystkie ukończone wpisy są kompletne</>
+                      )}
                     </div>
                   </div>
 
@@ -1686,11 +1731,11 @@ export default function CalculatorClient() {
                       Upływ okresu
                     </div>
                     <CircularProgress value={periodTimeProgress} label="okresu" tone="slate" />
-                    <div className="mt-3 text-2xl font-extrabold tracking-[-0.05em] text-slate-950">
-                      {Math.round(periodTimeProgress)}%
+                    <div className="mt-3 text-sm font-bold tracking-tight text-slate-900">
+                      {periodStart}–{periodEnd}
                     </div>
                     <div className="mt-1 text-xs leading-relaxed text-slate-500">
-                      okres {periodStart}–{periodEnd}
+                      {paceDescription}
                     </div>
                   </div>
                 </div>
@@ -1745,7 +1790,7 @@ export default function CalculatorClient() {
                               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
                                 <MiniIcon name="doc" className="h-4 w-4" />
                               </span>
-                              Uzupełnij dokumentację
+                              Uzupełnij wpisy
                             </span>
                             <span className="text-slate-400">›</span>
                           </Link>
@@ -1771,35 +1816,10 @@ export default function CalculatorClient() {
               </div>
 
               <div className="grid gap-3">
-                <div className="grid gap-3 lg:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
-                    onClick={() => scrollToSection("aktywnosci")}
-                    className="relative overflow-hidden rounded-[1.25rem] border border-blue-200 bg-blue-50/70 p-4 text-left shadow-sm shadow-blue-100/40 transition hover:bg-blue-50 hover:shadow-md"
-                  >
-                    <div className="absolute bottom-3 left-0 top-3 w-1 rounded-r-full bg-blue-500" />
-                    <div className="pl-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700">
-                            Punkty zadeklarowane
-                          </div>
-                          <div className="mt-2 text-3xl font-extrabold tracking-[-0.06em] text-blue-700">
-                            {donePoints}
-                            <span className="ml-1 text-sm font-semibold text-blue-400">pkt</span>
-                          </div>
-                          <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                            To już liczy się do celu.
-                          </div>
-                        </div>
-                        <MiniIcon name="chart" className="h-7 w-7 text-blue-600" />
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => scrollToSection("limity")}
+                    onClick={() => scrollToSection(hasLimits ? "limity" : "kroki")}
                     className="relative overflow-hidden rounded-[1.25rem] border border-blue-200 bg-white p-4 text-left shadow-sm shadow-slate-900/5 transition hover:bg-blue-50/50 hover:shadow-md"
                   >
                     <div className="absolute bottom-3 left-0 top-3 w-1 rounded-r-full bg-blue-500" />
@@ -1814,7 +1834,9 @@ export default function CalculatorClient() {
                             <span className="ml-1 text-sm font-semibold text-blue-500">pkt</span>
                           </div>
                           <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                            Do celu zostało {missingPoints} pkt.
+                            {hasLimits
+                              ? `Do celu zostało ${missingPoints} pkt. Sprawdź limity.`
+                              : `Do celu zostało ${missingPoints} pkt. Zobacz kolejne kroki.`}
                           </div>
                         </div>
                         <MiniIcon name="chart" className="h-7 w-7 text-slate-950" />
@@ -1826,29 +1848,31 @@ export default function CalculatorClient() {
                     type="button"
                     onClick={() => filterActivities("missing")}
                     className={`relative overflow-hidden rounded-[1.25rem] border p-4 text-left shadow-sm transition hover:shadow-md ${
-                      missingEvidenceCount > 0
+                      incompleteCount > 0
                         ? "border-amber-200 bg-amber-50/70 hover:bg-amber-50"
                         : "border-emerald-200 bg-emerald-50/70 hover:bg-emerald-50"
                     }`}
                   >
-                    <div className={`absolute bottom-3 left-0 top-3 w-1 rounded-r-full ${missingEvidenceCount > 0 ? "bg-amber-400" : "bg-emerald-500"}`} />
+                    <div className={`absolute bottom-3 left-0 top-3 w-1 rounded-r-full ${incompleteCount > 0 ? "bg-amber-400" : "bg-emerald-500"}`} />
                     <div className="pl-2">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${missingEvidenceCount > 0 ? "text-amber-700" : "text-emerald-700"}`}>
-                            Brakujące dokumenty
+                          <div className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${incompleteCount > 0 ? "text-amber-700" : "text-emerald-700"}`}>
+                            Wpisy do uzupełnienia
                           </div>
-                          <div className={`mt-2 text-3xl font-extrabold tracking-[-0.06em] ${missingEvidenceCount > 0 ? "text-amber-700" : "text-emerald-700"}`}>
-                            {missingEvidenceCount}
+                          <div className={`mt-2 text-3xl font-extrabold tracking-[-0.06em] ${incompleteCount > 0 ? "text-amber-700" : "text-emerald-700"}`}>
+                            {incompleteCount}
                             <span className="ml-1 text-sm font-semibold opacity-70">
-                              {missingEvidenceCount === 1 ? "brak" : "braki"}
+                              {pluralPl(incompleteCount, ["wpis", "wpisy", "wpisów"])}
                             </span>
                           </div>
                           <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                            To blokuje gotowość raportu.
+                            {incompleteCount > 0
+                              ? `${incompletePoints} pkt pochodzi z wpisów wymagających uzupełnienia.`
+                              : "Wszystkie ukończone wpisy są kompletne."}
                           </div>
                         </div>
-                        <MiniIcon name="doc" className={`h-7 w-7 ${missingEvidenceCount > 0 ? "text-amber-600" : "text-emerald-600"}`} />
+                        <MiniIcon name="doc" className={`h-7 w-7 ${incompleteCount > 0 ? "text-amber-600" : "text-emerald-600"}`} />
                       </div>
                     </div>
                   </button>
@@ -1910,15 +1934,26 @@ export default function CalculatorClient() {
                         />
                         <TimeNowMarker progress={periodTimeProgress} />
 
-                        {timelineEvents.map((ev, i) => (
-                          <TriangleMarker
-                            key={ev.id}
-                            left={ev.left}
-                            tone={ev.tone}
-                            title={ev.title}
-                            top={i % 2 === 0 ? -6 : -14}
-                          />
-                        ))}
+                        {timelineEvents.map((ev, i) =>
+                          ev.count > 1 ? (
+                            <ClusterMarker
+                              key={ev.id}
+                              left={ev.left}
+                              tone={ev.tone}
+                              title={ev.title}
+                              count={ev.count}
+                              top={i % 2 === 0 ? -8 : -18}
+                            />
+                          ) : (
+                            <TriangleMarker
+                              key={ev.id}
+                              left={ev.left}
+                              tone={ev.tone}
+                              title={ev.title}
+                              top={i % 2 === 0 ? -6 : -14}
+                            />
+                          ),
+                        )}
 
                         <div className="absolute left-0 right-0 top-9 grid grid-cols-4 text-center text-xs font-medium text-slate-500">
                           <span>{periodStart}</span>
@@ -1940,6 +1975,12 @@ export default function CalculatorClient() {
                         <span className="inline-flex items-center gap-1.5">
                           <LegendTriangle tone="blue" />
                           zaplanowane
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="grid h-[17px] min-w-[17px] place-items-center rounded-full border border-slate-400 bg-white px-1 text-[9px] font-black text-slate-700">
+                            2
+                          </span>
+                          kilka w tym miesiącu
                         </span>
                       </div>
                     </div>
@@ -2051,6 +2092,7 @@ export default function CalculatorClient() {
 </section>        </>
       )}
 
+      {hasLimits ? (
       <section id="limity" className={`${cardCls} scroll-mt-44`}>
         <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -2068,11 +2110,6 @@ export default function CalculatorClient() {
             </div>
           </div>
 
-          <div className="pl-12 text-xs text-slate-500 sm:pl-0">
-            Zaliczone: <strong className="text-slate-900">{donePoints} pkt</strong>
-            <span className="mx-2 text-slate-300">|</span>
-            Brakuje: <strong className="text-slate-900">{missingPoints} pkt</strong>
-          </div>
         </div>
 
         <div className="p-4">
@@ -2481,6 +2518,7 @@ export default function CalculatorClient() {
           </div>
         </div>
       </section>
+      ) : null}
 
       <section id="aktywnosci" className={`${cardCls} scroll-mt-44`}>
         <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -2505,7 +2543,7 @@ export default function CalculatorClient() {
                 {(["all", "missing", "planned", "complete"] as const).map((f) => {
                   const labels = {
                     all: "wszystkie",
-                    missing: "brakująca dokumentacja",
+                    missing: "do uzupełnienia",
                     planned: "zaplanowane",
                     complete: "kompletne",
                   };
