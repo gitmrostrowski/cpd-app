@@ -14,6 +14,8 @@ assert.match(panel, /z kompletnych wpisów/, "Podpis pod pierścieniem musi wyja
 
 // 2. Bez powtórzeń tych samych liczb
 assert.match(panel, /aria-label="Poziomy statusu wyniku"/, "Trzy poziomy wyniku z fundamentu v4 muszą pozostać w zwartej formie");
+assert.match(panel, /2\. Według reguł CRPE/, "Poziom według reguł CRPE musi pozostać widoczny");
+assert.match(panel, /3\. Status formalny/, "Poziom statusu formalnego musi pozostać widoczny");
 assert.doesNotMatch(panel, /mx-4 mt-4 grid gap-3 md:grid-cols-3/, "Trzy rozbudowane karty statusu powinien zastąpić zwarty pasek");
 assert.doesNotMatch(panel, /To już liczy się do celu\./, "Kafelek dublujący pierścień punktów powinien zniknąć");
 assert.doesNotMatch(panel, /Zaliczone: <strong/, "Nagłówek limitów nie może powtarzać sumy punktów");
@@ -32,7 +34,7 @@ assert.doesNotMatch(panel, /missingEvidenceCount/, "Drugi, rozbieżny licznik po
 assert.match(panel, /function pluralPl/, "Polska odmiana przez liczbę wymaga trzech form");
 assert.doesNotMatch(panel, /\? "brak" : "braki"/, "Dwie formy dawały „5 braki”");
 assert.doesNotMatch(panel, /nie trafi do raportu/, "Panel nie może obiecywać filtrowania, którego raport jeszcze nie wykonuje");
-assert.match(panel, /scrollToSection\(hasLimits \? "limity" : "kroki"\)/, "Kafelek brakujących punktów nie może prowadzić do ukrytej sekcji");
+assert.match(panel, /href=\{missingPoints > 0 \? "\/baza-szkolen" : "\/portfolio"\}/, "Kafelek brakujących punktów nie może prowadzić do ukrytej sekcji");
 
 // 4. Grupowanie znaczników na osi czasu
 assert.match(panel, /function ClusterMarker/, "Skupiska aktywności potrzebują własnego znacznika");
