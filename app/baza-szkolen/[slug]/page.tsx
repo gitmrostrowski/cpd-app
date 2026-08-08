@@ -125,6 +125,34 @@ export default async function TrainingPage({ params }: PageProps) {
     training.audience_scope === "all_medical"
       ? "Wszyscy medycy"
       : training.profession || "Adresaci niepodani";
+  const detailItems = [
+    {
+      icon: CalendarDays,
+      label: "Termin",
+      value:
+        training.end_date && training.end_date !== training.start_date
+          ? `${formatDate(training.start_date)} – ${formatDate(training.end_date)}`
+          : formatDate(training.start_date),
+    },
+    {
+      icon: MapPin,
+      label: "Forma i miejsce",
+      value: `${formatDelivery(training.format)}${training.voivodeship ? ` · ${training.voivodeship}` : ""}`,
+    },
+    { icon: GraduationCap, label: "Punkty", value: publicTrainingPointsLabel(training) },
+    { icon: Users, label: "Adresaci", value: audience },
+    {
+      icon: Award,
+      label: "Cena",
+      value: formatPrice(training.price_pln),
+      highlight: training.price_pln === 0,
+    },
+    {
+      icon: CheckCircle2,
+      label: "Weryfikacja",
+      value: pointVerificationLabel(training.points_verification_status),
+    },
+  ];
 
   return (
     <main className="min-h-[calc(100vh-64px)] bg-[#eaf1f8] px-4 py-8 sm:px-6">
@@ -152,19 +180,19 @@ export default async function TrainingPage({ params }: PageProps) {
         <div className="grid gap-8 px-5 py-6 sm:px-8 sm:py-8 lg:grid-cols-[minmax(0,1fr)_280px]">
           <div>
             <div className="grid gap-3 sm:grid-cols-2">
-              {[
-                [CalendarDays, "Termin", training.end_date && training.end_date !== training.start_date ? `${formatDate(training.start_date)} – ${formatDate(training.end_date)}` : formatDate(training.start_date)],
-                [MapPin, "Forma i miejsce", `${formatDelivery(training.format)}${training.voivodeship ? ` · ${training.voivodeship}` : ""}`],
-                [GraduationCap, "Punkty", publicTrainingPointsLabel(training)],
-                [Users, "Adresaci", audience],
-                [Award, "Cena", formatPrice(training.price_pln)],
-                [CheckCircle2, "Weryfikacja", pointVerificationLabel(training.points_verification_status)],
-              ].map(([Icon, label, value]) => {
-                const ItemIcon = Icon as typeof CalendarDays;
+              {detailItems.map(({ icon: ItemIcon, label, value, highlight }) => {
                 return (
-                  <div key={String(label)} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-slate-500"><ItemIcon className="h-4 w-4" />{String(label)}</div>
-                    <p className="mt-2 text-sm font-semibold leading-6 text-slate-900">{String(value)}</p>
+                  <div
+                    key={label}
+                    className={`rounded-2xl border p-4 ${highlight ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-slate-50"}`}
+                  >
+                    <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] ${highlight ? "text-emerald-700" : "text-slate-500"}`}>
+                      <ItemIcon className="h-4 w-4" />
+                      {label}
+                    </div>
+                    <p className={`mt-2 text-sm font-semibold leading-6 ${highlight ? "text-emerald-900" : "text-slate-900"}`}>
+                      {value}
+                    </p>
                   </div>
                 );
               })}

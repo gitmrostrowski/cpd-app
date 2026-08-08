@@ -7,7 +7,6 @@ import {
   Building2,
   CheckCircle2,
   ChevronDown,
-  Clock3,
   ExternalLink,
   Info,
   MapPin,
@@ -176,6 +175,7 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 ];
 
 type PriceMode = "all" | "free" | "paid";
+type PriceDeclaration = "unconfirmed" | "free" | "paid";
 
 type SearchParamsInput = Record<string, string | string[] | undefined>;
 
@@ -463,9 +463,23 @@ function shortVerificationLabel(status: PointVerificationStatus) {
 function formatPrice(pricePln: number | null) {
   if (typeof pricePln !== "number") return null;
   if (pricePln === 0) return "Bezpłatne";
+  return `${pricePln.toLocaleString("pl-PL", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })} zł`;
+}
 
-  const rounded = Math.round((pricePln + Number.EPSILON) * 100) / 100;
-  return `${rounded} zł`;
+function priceBadge(pricePln: number | null) {
+  const label = formatPrice(pricePln);
+  if (!label) return null;
+
+  return {
+    label,
+    className:
+      pricePln === 0
+        ? "border-emerald-600 bg-emerald-600 text-white shadow-[0_1px_3px_rgba(5,120,85,0.22)]"
+        : "border-slate-300 bg-white text-slate-700",
+  };
 }
 
 function shortPlace(location: string | null) {
@@ -477,7 +491,7 @@ function shortPlace(location: string | null) {
 function trainingMetaLine(
   training: Training,
   details: {
-    price: string | null;
+    priceMissing: boolean;
     enrollment: string | null;
     range: string | null;
     audienceLabel: string;
@@ -486,7 +500,7 @@ function trainingMetaLine(
 ) {
   return [
     labelCategory(training.category),
-    details.price,
+    details.priceMissing ? "Cena niepodana" : null,
     details.range,
     shortPlace(training.voivodeship),
     details.showAudience ? details.audienceLabel : null,
@@ -719,6 +733,8 @@ export default function TrainingHubClient({
   const [fVoiv, setFVoiv] = useState("");
   const [fUrl, setFUrl] = useState("");
   const [fTopics, setFTopics] = useState("");
+  const [fPriceDeclaration, setFPriceDeclaration] =
+    useState<PriceDeclaration>("unconfirmed");
   const [fPrice, setFPrice] = useState<string>("");
   const [fRec, setFRec] = useState(false);
   const [fCap, setFCap] = useState<string>("");
@@ -1175,15 +1191,26 @@ export default function TrainingHubClient({
 
     const title = fTitle.trim();
     const pointsNum = Number(fPoints || 0);
-    const priceNum =
+    const enteredPrice =
       fPrice.trim() === "" ? null : Number(String(fPrice).replace(",", "."));
+    const priceNum =
+      fPriceDeclaration === "free"
+        ? 0
+        : fPriceDeclaration === "paid"
+          ? enteredPrice
+          : null;
     const capNum = fCap.trim() === "" ? null : Number(fCap);
     const nextErrors: Record<string, string> = {};
     if (!title) nextErrors.title = "Podaj tytuł szkolenia.";
     if (!fStart) nextErrors.start = "Podaj datę rozpoczęcia.";
     if (!hasTrainingAudience(fProfession)) nextErrors.audience = "Wybierz adresatów szkolenia.";
     if (Number.isNaN(pointsNum) || pointsNum < 0) nextErrors.points = "Podaj prawidłową liczbę punktów.";
-    if (priceNum !== null && (Number.isNaN(priceNum) || priceNum < 0)) nextErrors.price = "Podaj prawidłową cenę.";
+    if (
+      fPriceDeclaration === "paid" &&
+      (priceNum === null || Number.isNaN(priceNum) || priceNum <= 0)
+    ) {
+      nextErrors.price = "Podaj kwotę większą od 0 zł.";
+    }
     if (capNum !== null && (Number.isNaN(capNum) || capNum < 0)) nextErrors.capacity = "Podaj prawidłowy limit miejsc.";
     if (fEnd && fStart && fEnd < fStart) nextErrors.end = "Data końca nie może być wcześniejsza niż data rozpoczęcia.";
     if (Object.keys(nextErrors).length) {
@@ -1281,6 +1308,7 @@ export default function TrainingHubClient({
     setFVoiv("");
     setFUrl("");
     setFTopics("");
+    setFPriceDeclaration("unconfirmed");
     setFPrice("");
     setFRec(false);
     setFCap("");
@@ -1761,8 +1789,15 @@ export default function TrainingHubClient({
             {displayedItems.map((t, index) => {
               const dd = daysDiffFromToday(t.start_date);
               const soon = typeof dd === "number" && dd >= 0 && dd <= 7;
+              const urgencyLabel = soon
+                ? dd === 0
+                  ? "Dziś"
+                  : dd === 1
+                    ? "Jutro"
+                    : `Za ${dd} dni`
+                : null;
 
-              const price = formatPrice(
+              const price = priceBadge(
                 typeof t.price_pln === "number" ? t.price_pln : null
               );
 
@@ -1784,7 +1819,7 @@ export default function TrainingHubClient({
               const showAudience = t.audience_scope !== "unknown" && audienceLabel !== "Wszyscy medycy";
               const pointDisplay = pointsPresentation(t, professionFilter);
               const meta = trainingMetaLine(t, {
-                price,
+                priceMissing: typeof t.price_pln !== "number",
                 enrollment: enr,
                 range: showRange ? range : null,
                 audienceLabel,
@@ -1808,8 +1843,14 @@ export default function TrainingHubClient({
                 >
                   <div className="grid grid-cols-[54px_minmax(0,1fr)] gap-3 sm:grid-cols-[54px_minmax(0,1fr)_216px] sm:items-center sm:gap-4">
                     <div className="flex w-[54px] shrink-0 flex-col items-center self-start text-center sm:self-center">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
-                        {date.weekday}
+                      <span
+                        className={`text-[11px] font-semibold uppercase tracking-[0.06em] ${soon ? "text-amber-700" : "text-slate-400"}`}
+                        aria-label={urgencyLabel ? `${date.weekday}, ${urgencyLabel}` : undefined}
+                      >
+                        {urgencyLabel ? <span className="sr-only">{date.weekday}</span> : null}
+                        <span aria-hidden={Boolean(urgencyLabel)}>
+                          {urgencyLabel ?? date.weekday}
+                        </span>
                       </span>
                       <span className="text-[26px] font-black leading-[1.1] tracking-[-0.04em] text-slate-950">
                         {date.day}
@@ -1825,10 +1866,9 @@ export default function TrainingHubClient({
                           <FormatIcon format={t.format} className="h-3 w-3" />
                           {labelType(t.format)}
                         </span>
-                        {soon ? (
-                          <span className={`${pillBase} border-amber-200 bg-amber-50 text-amber-800`}>
-                            <Clock3 className="h-3 w-3" strokeWidth={2} />
-                            {dd === 0 ? "Dziś" : dd === 1 ? "Jutro" : `Za ${dd} dni`}
+                        {price ? (
+                          <span className={`${pillBase} ${price.className}`}>
+                            {price.label}
                           </span>
                         ) : null}
                       </div>
@@ -2348,20 +2388,49 @@ export default function TrainingHubClient({
                 />
               </div>
 
-              <div className="md:col-span-3">
-                <label htmlFor="new-training-price" className={labelBase}>Cena PLN</label>
-                <input
-                  id="new-training-price"
-                  value={fPrice}
-                  onChange={(e) => { setFPrice(e.target.value); setFormErrors((errors) => ({ ...errors, price: "" })); }}
-                  className={fieldBase}
-                  placeholder="np. 0 lub 199"
-                  aria-invalid={Boolean(formErrors.price)}
-                />
+              <div className="md:col-span-6">
+                <label htmlFor="new-training-price-declaration" className={labelBase}>Cena</label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <select
+                    id="new-training-price-declaration"
+                    value={fPriceDeclaration}
+                    onChange={(event) => {
+                      setFPriceDeclaration(event.target.value as PriceDeclaration);
+                      setFormErrors((errors) => ({ ...errors, price: "" }));
+                    }}
+                    className={fieldBase}
+                  >
+                    <option value="unconfirmed">Cena do potwierdzenia</option>
+                    <option value="free">Bezpłatne</option>
+                    <option value="paid">Płatne</option>
+                  </select>
+                  {fPriceDeclaration === "paid" ? (
+                    <div>
+                      <label htmlFor="new-training-price" className="sr-only">Kwota w złotych</label>
+                      <input
+                        id="new-training-price"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        value={fPrice}
+                        onChange={(event) => {
+                          setFPrice(event.target.value);
+                          setFormErrors((errors) => ({ ...errors, price: "" }));
+                        }}
+                        className={fieldBase}
+                        placeholder="Kwota w PLN, np. 199"
+                        aria-invalid={Boolean(formErrors.price)}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  Wybierz „Cena do potwierdzenia”, jeśli organizator nie podał jeszcze kosztu.
+                </p>
                 {formErrors.price ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.price}</p> : null}
               </div>
 
-              <div className="md:col-span-3">
+              <div className="md:col-span-2">
                 <label htmlFor="new-training-capacity" className={labelBase}>Limit miejsc</label>
                 <input
                   id="new-training-capacity"
@@ -2374,7 +2443,7 @@ export default function TrainingHubClient({
                 {formErrors.capacity ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.capacity}</p> : null}
               </div>
 
-              <div className="md:col-span-3">
+              <div className="md:col-span-2">
                 <label className={labelBase}>Zapisy</label>
                 <select
                   value={fEnroll}
@@ -2390,7 +2459,7 @@ export default function TrainingHubClient({
                 </select>
               </div>
 
-              <div className="flex items-end md:col-span-3">
+              <div className="flex items-end md:col-span-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
                   <input
                     type="checkbox"

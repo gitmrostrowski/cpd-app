@@ -23,6 +23,7 @@ import TrainingAudienceField, {
 } from "@/components/TrainingAudienceField";
 
 type TrainingStatus = "pending" | "approved" | "rejected";
+type PriceDeclaration = "unconfirmed" | "free" | "paid";
 
 type TrainingRow = {
   id: string;
@@ -31,6 +32,7 @@ type TrainingRow = {
   organizer_logo_url: string | null;
   organizer_logo_path: string | null;
   points: number | null;
+  price_pln: number | null;
   start_date: string | null;
   end_date: string | null;
   url: string | null;
@@ -135,6 +137,8 @@ export default function AdminTrainingsPage() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [edit, setEdit] = useState<TrainingRow | null>(null);
+  const [editPriceDeclaration, setEditPriceDeclaration] =
+    useState<PriceDeclaration>("unconfirmed");
   const [editError, setEditError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [editLogoFile, setEditLogoFile] = useState<File | null>(null);
@@ -345,6 +349,13 @@ export default function AdminTrainingsPage() {
     if (focus === "description" && !base.description) base.description = "";
 
     setEdit(base);
+    setEditPriceDeclaration(
+      typeof base.price_pln !== "number"
+        ? "unconfirmed"
+        : base.price_pln === 0
+          ? "free"
+          : "paid",
+    );
     setEditError(null);
     setEditLogoFile(null);
     setRemoveEditLogo(false);
@@ -368,6 +379,7 @@ export default function AdminTrainingsPage() {
   function closeEdit() {
     setEditOpen(false);
     setEdit(null);
+    setEditPriceDeclaration("unconfirmed");
     setEditError(null);
     setEditLogoFile(null);
     setRemoveEditLogo(false);
@@ -375,6 +387,19 @@ export default function AdminTrainingsPage() {
 
   async function saveEdit() {
     if (!edit) return;
+
+    if (
+      editPriceDeclaration === "paid" &&
+      (typeof edit.price_pln !== "number" ||
+        Number.isNaN(edit.price_pln) ||
+        edit.price_pln <= 0)
+    ) {
+      setEditError("Dla płatnego szkolenia podaj kwotę większą od 0 zł.");
+      document
+        .getElementById("admin-training-price")
+        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
 
     if (getStatus(edit) === "approved" && !hasTrainingAudience(edit.profession)) {
       setEditError("Przed akceptacją wybierz adresatów szkolenia.");
@@ -445,6 +470,12 @@ export default function AdminTrainingsPage() {
         organizer_logo_url: organizerLogoUrl,
         organizer_logo_path: organizerLogoPath,
         points: edit.points,
+        price_pln:
+          editPriceDeclaration === "free"
+            ? 0
+            : editPriceDeclaration === "paid"
+              ? edit.price_pln
+              : null,
         start_date: edit.start_date || null,
         end_date: edit.end_date || null,
         url,
@@ -1047,6 +1078,65 @@ export default function AdminTrainingsPage() {
                   <option value="organizer_declared">Deklarowane przez organizatora</option>
                   <option value="verified">Zweryfikowane przez CRPE</option>
                 </select>
+              </div>
+
+              <div className="sm:col-span-2 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="admin-training-price-declaration" className="text-xs font-semibold text-slate-600">
+                    Cena
+                  </label>
+                  <select
+                    id="admin-training-price-declaration"
+                    className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    value={editPriceDeclaration}
+                    onChange={(event) => {
+                      const declaration = event.target.value as PriceDeclaration;
+                      setEditPriceDeclaration(declaration);
+                      setEdit({
+                        ...edit,
+                        price_pln:
+                          declaration === "free"
+                            ? 0
+                            : declaration === "unconfirmed"
+                              ? null
+                              : edit.price_pln === 0
+                                ? null
+                                : edit.price_pln,
+                      });
+                      setEditError(null);
+                    }}
+                  >
+                    <option value="unconfirmed">Cena do potwierdzenia</option>
+                    <option value="free">Bezpłatne</option>
+                    <option value="paid">Płatne</option>
+                  </select>
+                </div>
+                {editPriceDeclaration === "paid" ? (
+                  <div>
+                    <label htmlFor="admin-training-price" className="text-xs font-semibold text-slate-600">
+                      Kwota w PLN
+                    </label>
+                    <input
+                      id="admin-training-price"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      value={edit.price_pln ?? ""}
+                      onChange={(event) => {
+                        setEdit({
+                          ...edit,
+                          price_pln:
+                            event.target.value === ""
+                              ? null
+                              : Number(event.target.value),
+                        });
+                        setEditError(null);
+                      }}
+                      placeholder="np. 199"
+                    />
+                  </div>
+                ) : null}
               </div>
 
               <div className="sm:col-span-2 grid gap-4 sm:grid-cols-2">
