@@ -23,13 +23,16 @@ import {
   normalizeOtherProfession,
   professionOptionByName,
 } from "@/lib/cpd/professions";
+import {
+  buildAccrualSeries,
+  type AccrualSeries,
+} from "@/lib/cpd/accrual";
 
 type ActivityStatus = "planned" | "done" | null;
 
 const PANEL_SECTION_IDS = [
   "ustawienia",
   "status",
-  "kroki",
   "limity",
   "aktywnosci",
 ] as const;
@@ -85,44 +88,6 @@ function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
-function spaceTimelineMarkers<T extends { left: number }>(
-  markers: T[],
-  minGap = 3.2,
-  minLeft = 3,
-  maxLeft = 97,
-) {
-  if (markers.length === 0) return [];
-  if (markers.length === 1) {
-    return [{ ...markers[0], left: clamp(markers[0].left, minLeft, maxLeft) }];
-  }
-
-  // Przy wyjątkowo dużej liczbie kubełków zmniejszamy odstęp tak, aby żaden
-  // znacznik nie został wypchnięty poza pasek ani sklejony z innym na 97%.
-  const available = Math.max(0, maxLeft - minLeft);
-  const gap = Math.min(minGap, available / (markers.length - 1));
-  const spaced = markers.map((marker) => ({
-    ...marker,
-    left: clamp(marker.left, minLeft, maxLeft),
-  }));
-
-  for (let index = 1; index < spaced.length; index += 1) {
-    spaced[index].left = Math.max(spaced[index].left, spaced[index - 1].left + gap);
-  }
-
-  if (spaced[spaced.length - 1].left > maxLeft) {
-    spaced[spaced.length - 1].left = maxLeft;
-    for (let index = spaced.length - 2; index >= 0; index -= 1) {
-      spaced[index].left = Math.min(spaced[index].left, spaced[index + 1].left - gap);
-    }
-  }
-
-  return spaced;
-}
-
-/**
- * Polska odmiana przez liczbę: 1 wpis, 2-4 wpisy, 5-21 wpisów.
- * Forma mnoga „few” wraca dla końcówek 2-4 poza nastką (22, 23, 24, 32...).
- */
 function pluralPl(n: number, forms: [string, string, string]) {
   const abs = Math.abs(n);
   const last = abs % 10;
@@ -351,219 +316,172 @@ function MiniIcon({
   );
 }
 
-function CircularProgress({
-  value,
-  completeValue,
-  label = "realizacji",
-  size = "normal",
-  tone = "blue",
+/**
+ * Punkty i czas na jednej skali: oś X to okres rozliczeniowy, oś Y to punkty.
+ * Przekątna pokazuje równomierne tempo, więc odstęp krzywej od niej *jest*
+ * informacją „ile jestem do tyłu” — wcześniej podawaną wyłącznie słowem.
+ */
+function PointsAccrualChart({
+  series,
+  periodStart,
+  periodEnd,
 }: {
-  value: number;
-  /** Część `value` pochodzącą z kompletnych wpisów rysujemy pełnym kolorem. */
-  completeValue?: number;
-  label?: string;
-  size?: "normal" | "small";
-  tone?: "blue" | "slate" | "amber";
+  series: AccrualSeries;
+  periodStart: number;
+  periodEnd: number;
 }) {
-  const isSmall = size === "small";
-  const svgSize = isSmall ? 76 : 104;
-  const center = svgSize / 2;
-  const radius = isSmall ? 29 : 40;
-  const stroke = isSmall ? 8 : 10;
-  const normalizedRadius = radius - stroke / 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const offset = circumference - (clamp(value, 0, 100) / 100) * circumference;
-  const hasSplit = typeof completeValue === "number" && completeValue < value;
-  const completeOffset =
-    circumference - (clamp(completeValue ?? 0, 0, 100) / 100) * circumference;
-  const strokeTone =
-    tone === "amber"
-      ? "text-amber-500"
-      : tone === "slate"
-        ? "text-slate-500"
-        : "text-blue-600";
+  const W = 500;
+  const H = 210;
+  const L = 42;
+  const R = 18;
+  const T = 18;
+  const B = 32;
+
+  const px = (x: number) => L + clamp(x, 0, 1) * (W - L - R);
+  const py = (v: number) => H - B - (clamp(v, 0, series.max) / series.max) * (H - T - B);
+
+  const toPath = (points: { x: number; value: number }[]) => {
+    if (!points.length) return "";
+    const parts: string[] = [];
+    let prev = points[0];
+    parts.push(`${px(prev.x)},${py(prev.value)}`);
+    for (const point of points.slice(1)) {
+      parts.push(`${px(point.x)},${py(prev.value)}`);
+      parts.push(`${px(point.x)},${py(point.value)}`);
+      prev = point;
+    }
+    return parts.join(" ");
+  };
+
+  const allYears = Array.from(
+    { length: Math.max(1, periodEnd - periodStart + 1) },
+    (_, i) => periodStart + i,
+  );
+  const yearSpan = allYears.length;
+  const tickStep = Math.max(1, Math.ceil(yearSpan / 5));
+  const visibleYears = allYears.filter(
+    (_, index) => index % tickStep === 0 || index === yearSpan - 1,
+  );
+  const behind = Math.round(series.targetToday - series.doneTotal);
+  const gapTextAnchor = series.todayX > 0.82 ? "end" : "start";
+  const gapTextX = px(series.todayX) + (series.todayX > 0.82 ? -8 : 8);
+  const accessibleTarget =
+    series.target > 0
+      ? `Przy równomiernym tempie na dziś ${Math.round(series.targetToday)} pkt, cel ${series.target} pkt.`
+      : "Cel punktowy nie jest ustawiony.";
 
   return (
-    <div
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="h-[210px] w-full min-w-[460px]"
       role="img"
-      aria-label={`${Math.round(value)}% ${label}${
-        typeof completeValue === "number"
-          ? `, ${Math.round(completeValue)}% z kompletnych wpisów`
-          : ""
-      }`}
-      className={`relative mx-auto shrink-0 ${isSmall ? "h-[76px] w-[76px]" : "h-[104px] w-[104px]"}`}
+      aria-label={`Wykres narastania punktów w okresie ${periodStart}–${periodEnd}. Zdobyte ${series.doneTotal} pkt. ${accessibleTarget}`}
     >
-      <svg aria-hidden="true" className="-rotate-90" height={svgSize} width={svgSize}>
-        <circle
-          stroke="currentColor"
-          className="text-slate-200/80"
-          fill="transparent"
-          strokeWidth={stroke}
-          r={normalizedRadius}
-          cx={center}
-          cy={center}
-        />
-        <circle
-          stroke="currentColor"
-          className={`${hasSplit ? "text-blue-200" : strokeTone} transition-all duration-700`}
-          fill="transparent"
-          strokeLinecap="round"
-          strokeWidth={stroke}
-          strokeDasharray={`${circumference} ${circumference}`}
-          strokeDashoffset={offset}
-          r={normalizedRadius}
-          cx={center}
-          cy={center}
-        />
-        {hasSplit ? (
-          <circle
-            stroke="currentColor"
-            className={`${strokeTone} transition-all duration-700`}
-            fill="transparent"
-            strokeLinecap="round"
-            strokeWidth={stroke}
-            strokeDasharray={`${circumference} ${circumference}`}
-            strokeDashoffset={completeOffset}
-            r={normalizedRadius}
-            cx={center}
-            cy={center}
+      {[0, 0.5, 1].map((ratio) => (
+        <g key={ratio}>
+          <line
+            x1={L}
+            y1={py(series.max * ratio)}
+            x2={W - R}
+            y2={py(series.max * ratio)}
+            stroke={ratio === 0 ? "#cbd5e1" : "#e2e8f0"}
+            strokeWidth={1}
           />
-        ) : null}
-      </svg>
+          <text
+            x={L - 6}
+            y={py(series.max * ratio) + 4}
+            textAnchor="end"
+            fontSize={11}
+            fill="#94a3b8"
+          >
+            {Math.round(series.max * ratio)}
+          </text>
+        </g>
+      ))}
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className={`${isSmall ? "text-base" : "text-2xl"} font-extrabold tracking-[-0.05em] text-slate-950`}>
-          {Math.round(value)}%
-        </div>
-        <div className="mt-0.5 text-center text-[10px] font-medium leading-tight text-slate-500">
-          {label}
-        </div>
-      </div>
-    </div>
-  );
-}
+      <line
+        x1={px(0)}
+        y1={py(0)}
+        x2={px(1)}
+        y2={py(series.target)}
+        stroke="#94a3b8"
+        strokeWidth={1.5}
+        strokeDasharray="5 4"
+      />
 
-function PulsingTargetMarker({ progress }: { progress: number }) {
-  return (
-    <div
-      className="pointer-events-none absolute top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 transition-all duration-700"
-      style={{ left: `${clamp(progress, 4, 96)}%` }}
-    >
-      <div className="relative grid h-9 w-9 place-items-center text-blue-700">
-        <span className="cpd-target-pulse absolute h-9 w-9 rounded-full border border-blue-300/70" />
-        <span className="cpd-target-pulse-delay absolute h-6 w-6 rounded-full border border-blue-400/80" />
-        <svg
-          viewBox="0 0 24 24"
-          className="relative h-5 w-5 drop-shadow-sm"
+      {series.planned.length > 1 ? (
+        <polyline
+          points={toPath(series.planned)}
           fill="none"
-          stroke="currentColor"
-          strokeWidth="2.4"
+          stroke="#2563eb"
+          strokeWidth={2.5}
+          strokeDasharray="4 3"
           strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="12" cy="12" r="8" />
-          <circle cx="12" cy="12" r="3" />
-          <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-        </svg>
-      </div>
-    </div>
-  );
-}
+        />
+      ) : null}
 
-function TimeNowMarker({ progress }: { progress: number }) {
-  return (
-    <div
-      className="pointer-events-none absolute top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 transition-all duration-700"
-      style={{ left: `${clamp(progress, 4, 96)}%` }}
-    >
-      <div className="grid h-7 w-7 place-items-center rounded-full bg-white text-slate-700 shadow-sm ring-2 ring-slate-200">
-        <span className="grid h-4.5 w-4.5 place-items-center rounded-full bg-slate-500 text-white">
-          <span className="h-1.5 w-1.5 rounded-full bg-white" />
-        </span>
-      </div>
-    </div>
-  );
-}
+      <polyline
+        points={toPath(series.done)}
+        fill="none"
+        stroke="#2563eb"
+        strokeWidth={2.5}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
 
-function TriangleMarker({
-  left,
-  tone,
-  title,
-  top = -15,
-}: {
-  left: number;
-  tone: "amber" | "green" | "blue";
-  title: string;
-  top?: number;
-}) {
-  const stroke =
-    tone === "amber" ? "#f59e0b" : tone === "green" ? "#10b981" : "#60a5fa";
+      {behind > 0 ? (
+        <>
+          <line
+            x1={px(series.todayX)}
+            y1={py(series.doneTotal)}
+            x2={px(series.todayX)}
+            y2={py(series.targetToday)}
+            stroke="#b45309"
+            strokeWidth={1.5}
+          />
+          <circle cx={px(series.todayX)} cy={py(series.targetToday)} r={3} fill="#b45309" />
+          <text
+            x={gapTextX}
+            y={py(series.targetToday) - 5}
+            textAnchor={gapTextAnchor}
+            fontSize={11}
+            fontWeight={700}
+            fill="#b45309"
+          >
+            −{behind} pkt
+          </text>
+        </>
+      ) : null}
 
-  return (
-    <svg
-      aria-label={title}
-      role="img"
-      viewBox="0 0 18 16"
-      className="absolute z-10 h-4 w-4 -translate-x-1/2"
-      style={{ left: `${clamp(left, 1, 99)}%`, top }}
-      fill="white"
-      stroke={stroke}
-      strokeWidth="2"
-      strokeLinejoin="round"
-    >
-      <title>{title}</title>
-      <path d="M2 2h14L9 14Z" />
-    </svg>
-  );
-}
+      <circle
+        cx={px(series.todayX)}
+        cy={py(series.doneTotal)}
+        r={5}
+        fill="#2563eb"
+        stroke="#ffffff"
+        strokeWidth={2}
+      />
+      <text
+        x={px(series.todayX)}
+        y={H - 8}
+        textAnchor="middle"
+        fontSize={11}
+        fontWeight={700}
+        fill="#0f172a"
+      >
+        dziś
+      </text>
 
-function ClusterMarker({
-  left,
-  tone,
-  title,
-  count,
-  top,
-}: {
-  left: number;
-  tone: "amber" | "green" | "blue";
-  title: string;
-  count: number;
-  top: number;
-}) {
-  const palette =
-    tone === "amber"
-      ? "border-amber-400 bg-amber-50 text-amber-800"
-      : tone === "green"
-        ? "border-emerald-400 bg-emerald-50 text-emerald-800"
-        : "border-blue-400 bg-blue-50 text-blue-800";
-
-  return (
-    <span
-      role="img"
-      aria-label={title}
-      title={title}
-      className={`absolute z-10 grid h-[19px] min-w-[19px] -translate-x-1/2 place-items-center rounded-full border px-1 text-[10px] font-black tabular-nums shadow-sm ${palette}`}
-      style={{ left: `${left}%`, top }}
-    >
-      {count}
-    </span>
-  );
-}
-
-function LegendTriangle({ tone }: { tone: "amber" | "green" | "blue" }) {
-  const stroke =
-    tone === "amber" ? "#f59e0b" : tone === "green" ? "#10b981" : "#60a5fa";
-
-  return (
-    <svg
-      viewBox="0 0 18 16"
-      className="h-4 w-4"
-      fill="white"
-      stroke={stroke}
-      strokeWidth="2"
-      strokeLinejoin="round"
-    >
-      <path d="M2 2h14L9 14Z" />
+      {visibleYears.map((year) => {
+        const index = year - periodStart;
+        const x = px((index + 0.5) / yearSpan);
+        if (Math.abs(x - px(series.todayX)) < 24) return null;
+        return (
+          <text key={year} x={x} y={H - 8} textAnchor="middle" fontSize={11} fill="#94a3b8">
+            {year}
+          </text>
+        );
+      })}
     </svg>
   );
 }
@@ -627,6 +545,7 @@ export default function CalculatorClient() {
   const [planningKey, setPlanningKey] = useState<string | null>(null);
   const [activityFilter, setActivityFilter] = useState<"all" | "planned" | "missing" | "complete">("all");
   const [selectedLimitKey, setSelectedLimitKey] = useState<string | null>(null);
+  const [showAccrual, setShowAccrual] = useState(false);
   const [activeNav, setActiveNav] = useState<PanelSectionId>("ustawienia");
 
   const supabase = useMemo(() => supabaseClient(), []);
@@ -792,20 +711,6 @@ export default function CalculatorClient() {
     [inPeriodDone],
   );
 
-  const incompleteIds = useMemo(
-    () => new Set(incompleteEntries.map((a) => a.id)),
-    [incompleteEntries],
-  );
-
-  const completePoints = useMemo(
-    () =>
-      inPeriodDone
-        .filter((a) => !incompleteIds.has(a.id))
-        .reduce((sum, a) => sum + (Number(a.points) || 0), 0),
-    [inPeriodDone, incompleteIds],
-  );
-
-  const incompletePoints = Math.max(0, donePoints - completePoints);
   const incompleteCount = incompleteEntries.length;
 
   const missingPoints = useMemo(
@@ -818,11 +723,6 @@ export default function CalculatorClient() {
     return req <= 0 ? 0 : clamp((donePoints / req) * 100, 0, 100);
   }, [requiredPoints, donePoints]);
 
-  const completeProgress = useMemo(() => {
-    const req = Number(requiredPoints) || 0;
-    return req <= 0 ? 0 : clamp((completePoints / req) * 100, 0, 100);
-  }, [requiredPoints, completePoints]);
-
   const periodTimeProgress = useMemo(() => {
     const start = new Date(periodStart, 0, 1).getTime();
     const end = new Date(periodEnd, 11, 31, 23, 59, 59).getTime();
@@ -832,13 +732,27 @@ export default function CalculatorClient() {
     return clamp(((now - start) / (end - start)) * 100, 0, 100);
   }, [periodStart, periodEnd]);
 
+  const hasPointTarget = Number(requiredPoints) > 0;
   const paceDelta = Math.round(progress - periodTimeProgress);
-  const paceDescription =
-    paceDelta < -10
-      ? `Jesteś ${Math.abs(paceDelta)} pp. za upływem czasu.`
+  const paceBadgeLabel =
+    !hasPointTarget
+      ? "Cel nieustawiony"
+      : progress <= 0
+      ? "Brak punktów"
       : paceDelta >= 10
-        ? `Masz ${paceDelta} pp. zapasu względem czasu.`
-        : "Postęp punktów jest blisko upływu okresu.";
+        ? `${paceDelta} pp. zapasu`
+        : paceDelta >= -10
+          ? "Zgodnie z tempem"
+          : `${Math.abs(paceDelta)} pp. poniżej tempa`;
+
+  const paceBadgeClass =
+    !hasPointTarget
+      ? "bg-slate-100 text-slate-700"
+      : progress > 0 && paceDelta >= 10
+      ? "bg-emerald-50 text-emerald-800"
+      : progress > 0 && paceDelta >= -10
+        ? "bg-slate-100 text-slate-700"
+        : "bg-amber-50 text-amber-800";
 
   const limitsUsage = useMemo(() => {
     if (
@@ -925,115 +839,18 @@ export default function CalculatorClient() {
     [missingPoints, incompleteCount, limitWarning],
   );
 
-  const timelineEvents = useMemo(() => {
-    const periodStartMs = new Date(periodStart, 0, 1).getTime();
-    const periodEndMs = new Date(periodEnd, 11, 31, 23, 59, 59).getTime();
-    const range = Math.max(1, periodEndMs - periodStartMs);
-
-    const raw = activities
-      .map((a) => {
-        const prog = normalizeStatus(a.status);
-        const missing = getRowMissing(a);
-        const y =
-          prog === "planned" && a.planned_start_date
-            ? Number(String(a.planned_start_date).slice(0, 4))
-            : Number(a.year);
-
-        if (y < periodStart || y > periodEnd) return null;
-
-        // Jeżeli wpis zachował dokładną datę aktywności, używamy jej niezależnie
-        // od statusu. Dla starszych ukończonych wpisów, które mają tylko rok,
-        // przyjmujemy neutralny środek roku. Nigdy nie używamy created_at,
-        // ponieważ jest to data wprowadzenia wpisu do CRPE.
-        const rawDate = a.planned_start_date ?? `${a.year}-07-01`;
-
-        const dateMs = new Date(`${rawDate}T12:00:00`).getTime();
-        if (!Number.isFinite(dateMs)) return null;
-
-        const left = ((dateMs - periodStartMs) / range) * 100;
-        const tone = prog === "planned" ? "blue" : missing.length > 0 ? "amber" : "green";
-        const title = `${a.type} · ${
-          prog === "planned" ? "zaplanowane" : missing.length > 0 ? "do uzupełnienia" : "kompletne"
-        } · ${a.points} pkt`;
-
-        return {
-          id: a.id,
-          left: clamp(left, 3, 97),
-          tone,
-          title,
-          points: Number(a.points) || 0,
-          monthKey: String(rawDate).slice(0, 7),
-        };
-      })
-      .filter(Boolean)
-      .sort((a, b) => (a!.left === b!.left ? a!.id.localeCompare(b!.id) : a!.left - b!.left)) as {
-        id: string;
-        left: number;
-        tone: "amber" | "green" | "blue";
-        title: string;
-        points: number;
-        monthKey: string;
-      }[];
-
-    // Poprzednio znaczniki rozsuwano o 1.35% szerokości paska (~5 px przy
-    // 18-pikselowym trójkącie), więc przy kilku aktywnościach w jednym miesiącu
-    // i tak zlewały się w plamę. Grupujemy je w kubełki miesięczne: pojedyncze
-    // zdarzenie zostaje trójkątem, kilka zamienia się w kółko z liczbą.
-    const buckets = new Map<string, typeof raw>();
-    for (const ev of raw) {
-      const bucket = buckets.get(ev.monthKey);
-      if (bucket) bucket.push(ev);
-      else buckets.set(ev.monthKey, [ev]);
-    }
-
-    const grouped = [...buckets.entries()]
-      .map(([monthKey, events]) => {
-        const left = events.reduce((sum, ev) => sum + ev.left, 0) / events.length;
-        const tone = events.some((ev) => ev.tone === "amber")
-          ? ("amber" as const)
-          : events.some((ev) => ev.tone === "blue")
-            ? ("blue" as const)
-            : ("green" as const);
-
-        const points = events.reduce((sum, ev) => sum + ev.points, 0);
-
-        return {
-          id: monthKey,
-          left: clamp(left, 3, 97),
-          tone,
-          count: events.length,
-          title:
-            events.length === 1
-              ? events[0].title
-              : `${events.length} ${pluralPl(events.length, ["aktywność", "aktywności", "aktywności"])} · ${points} pkt`,
-        };
-      })
-      .sort((a, b) => a.left - b.left)
-      .slice(0, 32);
-
-    // Kubełki mogą nadal wypaść blisko siebie. Rozsuwamy je w obu kierunkach,
-    // żeby ostatnie pozycje nie skleiły się po ograniczeniu do 97%.
-    return spaceTimelineMarkers(grouped);
-  }, [activities, periodStart, periodEnd]);
-
-  const timelineYearTicks = useMemo(() => {
-    const years = Array.from(
-      { length: Math.max(1, periodEnd - periodStart + 1) },
-      (_, index) => periodStart + index,
-    );
-    const visibleYears =
-      years.length <= 6
-        ? years
-        : [...new Set([years[0], years[Math.round((years.length - 1) / 2)], years.at(-1)!])];
-    const start = new Date(periodStart, 0, 1).getTime();
-    const end = new Date(periodEnd, 11, 31, 23, 59, 59).getTime();
-    const range = Math.max(1, end - start);
-
-    return visibleYears.map((year) => ({
-      year,
-      left: clamp(((new Date(year, 6, 1).getTime() - start) / range) * 100, 3, 97),
-    }));
-  }, [periodStart, periodEnd]);
+  const accrualSeries = useMemo<AccrualSeries | null>(
+    () =>
+      buildAccrualSeries({
+        activities,
+        doneActivities: inPeriodDone,
+        periodStart,
+        periodEnd,
+        periodTimeProgress,
+        requiredPoints,
+      }),
+    [activities, inPeriodDone, periodEnd, periodStart, periodTimeProgress, requiredPoints],
+  );
 
   const recentRows = useMemo(() => {
     const rank = (a: ActivityRow) => {
@@ -1287,55 +1104,12 @@ export default function CalculatorClient() {
     icon: "user" | "chart" | "target" | "shield" | "calendar";
   }[] = [
     { id: "ustawienia", label: "Ustawienia", mobileLabel: "Ustawienia", icon: "user" },
-    { id: "status", label: "Status ewidencji", mobileLabel: "Postęp", icon: "chart" },
-    { id: "kroki", label: "Co dalej?", mobileLabel: "Co dalej", icon: "target" },
+    { id: "status", label: "Status i kroki", mobileLabel: "Status", icon: "chart" },
     ...(hasLimits
       ? [{ id: "limity" as const, label: "Limity", mobileLabel: "Limity", icon: "shield" as const }]
       : []),
     { id: "aktywnosci", label: "Aktywności", mobileLabel: "Wpisy", icon: "calendar" },
   ];
-
-  const incompleteCardClass = `rounded-2xl border p-3.5 text-left transition ${
-    incompleteCount > 0
-      ? "border-amber-300 bg-amber-50 hover:bg-amber-100/70"
-      : "border-emerald-200 bg-emerald-50"
-  }`;
-
-  const incompleteCardContent = (
-    <>
-      <div
-        className={`text-[11px] font-bold uppercase tracking-[0.12em] ${
-          incompleteCount > 0 ? "text-amber-700" : "text-emerald-700"
-        }`}
-      >
-        Wpisy do uzupełnienia
-      </div>
-      <div
-        className={`mt-1 text-[28px] font-extrabold leading-none tracking-[-0.06em] ${
-          incompleteCount > 0 ? "text-amber-700" : "text-emerald-700"
-        }`}
-      >
-        {incompleteCount}
-        <span className="ml-1 text-sm font-semibold opacity-70">
-          {pluralPl(incompleteCount, ["wpis", "wpisy", "wpisów"])}
-        </span>
-      </div>
-      {incompleteCount > 0 ? (
-        <>
-          <div className="mt-1 text-[11px] leading-4 text-amber-900/80">
-            Do uzupełnienia: {incompletePoints} pkt
-          </div>
-          <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-amber-800 underline underline-offset-2">
-            Uzupełnij wpisy <span aria-hidden="true">→</span>
-          </span>
-        </>
-      ) : (
-        <div className="mt-1 text-[11px] leading-4 text-emerald-900/80">
-          Wszystkie ukończone wpisy są kompletne.
-        </div>
-      )}
-    </>
-  );
 
   return (
     <div
@@ -1725,233 +1499,208 @@ export default function CalculatorClient() {
           ) : null}
 
           <section id="status" className={cardCls}>
-            <div className="border-b border-slate-100 px-6 py-3.5">
-              <div className="flex items-center gap-3">
-                <IconBubble tone="blue">
-                  <MiniIcon name="chart" />
-                </IconBubble>
-
-                <div>
-                  <h2 className="text-base font-extrabold tracking-tight text-slate-950">
-                    Status ewidencji według danych w CRPE
-                  </h2>
-                  <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
-                    Punkty zadeklarowane, dokumenty i postęp względem wybranego
-                    celu.
-                  </p>
+            <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <h2 className="text-base font-extrabold tracking-tight text-slate-950">
+                  Twój status i kolejne kroki
+                </h2>
+                <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm text-slate-600">
+                  {hasPointTarget ? (
+                    <span className="text-slate-900">
+                      <span className="text-lg font-extrabold tracking-[-0.03em]">{donePoints}</span>{" "}
+                      <span className="text-slate-500">/ {requiredPoints} pkt</span>
+                    </span>
+                  ) : (
+                    <span className="text-slate-900">
+                      <span className="text-lg font-extrabold tracking-[-0.03em]">{donePoints}</span>{" "}
+                      <span className="text-slate-500">pkt</span>
+                    </span>
+                  )}
+                  {hasPointTarget ? (
+                    <span>
+                      brakuje{" "}
+                      <span className="font-bold text-slate-900">{missingPoints} pkt</span>
+                    </span>
+                  ) : (
+                    <span className="font-bold text-amber-800">ustaw cel punktowy</span>
+                  )}
+                  <span>
+                    okres {periodStart}–{periodEnd}, minęło{" "}
+                    <span className="font-bold text-slate-900">
+                      {Math.round(periodTimeProgress)}%
+                    </span>
+                  </span>
                 </div>
               </div>
+
+              <span
+                className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold ${paceBadgeClass}`}
+              >
+                {paceBadgeLabel}
+              </span>
             </div>
 
-            <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5">
-                <CircularProgress
-                  value={progress}
-                  completeValue={completeProgress}
-                  label="celu"
-                  size="small"
-                />
-                <div className="min-w-0">
-                  <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                    Realizacja celu
-                  </div>
-                  <div className="mt-1 text-[22px] font-extrabold leading-none tracking-[-0.05em] text-blue-700">
-                    {donePoints}
-                    <span className="ml-1 text-sm font-semibold text-slate-500">
-                      / {requiredPoints} pkt
-                    </span>
-                  </div>
-                  <div className="mt-1.5 text-[11px] leading-4 text-slate-500">
-                    {incompletePoints > 0 ? (
-                      <>
-                        <span className="font-bold text-blue-700">{completePoints} pkt</span> z
-                        kompletnych wpisów
-                      </>
-                    ) : (
-                      <>wszystkie wpisy kompletne</>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
-                <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                  Brakuje punktów
-                </div>
-                <div className="mt-1 text-[28px] font-extrabold leading-none tracking-[-0.06em] text-slate-950">
-                  {missingPoints}
-                  <span className="ml-1 text-sm font-semibold text-slate-500">pkt</span>
-                </div>
-                <Link
-                  href={missingPoints > 0 ? "/baza-szkolen" : "/portfolio"}
-                  className="mt-2.5 inline-flex items-center gap-1 text-xs font-bold text-blue-700 underline underline-offset-2 hover:text-blue-900"
-                >
-                  {missingPoints > 0 ? "Znajdź szkolenie" : "Sprawdź raport"}{" "}
-                  <span aria-hidden="true">→</span>
-                </Link>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                    Upływ okresu
-                  </span>
-                  <span className="text-xs font-bold tabular-nums text-slate-700">
-                    {Math.round(periodTimeProgress)}%
-                  </span>
-                </div>
+            <div className="px-5 pt-4">
+              <div
+                className="relative"
+                role="progressbar"
+                aria-label="Realizacja celu punktowego"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(progress)}
+                aria-valuetext={
+                  hasPointTarget
+                    ? `${donePoints} z ${requiredPoints} punktów`
+                    : `${donePoints} punktów; cel nie jest ustawiony`
+                }
+              >
+                <div className="h-2 rounded-full bg-slate-100" />
                 <div
-                  role="progressbar"
-                  aria-label="Upływ okresu"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={Math.round(periodTimeProgress)}
-                  className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"
-                >
-                  <div
-                    className="h-full rounded-full bg-slate-500 transition-all duration-700"
-                    style={{ width: `${Math.max(periodTimeProgress, 2)}%` }}
-                  />
-                </div>
-                <div className="mt-2 text-sm font-bold tracking-tight text-slate-900">
-                  {periodStart}–{periodEnd}
-                </div>
-                <div className="mt-0.5 text-[11px] leading-4 text-slate-500">
-                  {paceDescription}
-                </div>
+                  className="absolute left-0 top-0 h-2 rounded-full bg-blue-600 transition-all duration-700"
+                  style={{ width: `${progress}%` }}
+                />
+                <div
+                  className="absolute -top-1 h-4 w-0.5 -translate-x-1/2 bg-slate-900"
+                  style={{ left: `${clamp(periodTimeProgress, 0.5, 99.5)}%` }}
+                  aria-hidden="true"
+                />
               </div>
-
-              {incompleteCount > 0 ? (
-                <Link href="/aktywnosci" className={incompleteCardClass}>
-                  {incompleteCardContent}
-                </Link>
-              ) : (
-                <div className={incompleteCardClass}>{incompleteCardContent}</div>
-              )}
+              <p className="mt-2 text-[11px] text-slate-500">
+                Kreska pokazuje, gdzie byłbyś przy równomiernym tempie ({Math.round(periodTimeProgress)}% okresu).
+              </p>
             </div>
 
-            <div className="px-4 pb-4">
-              <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-                <div>
-                  <div className="text-sm font-extrabold uppercase tracking-[0.02em] text-slate-950">
-                    Postęp i oś czasu
-                  </div>
-                  <div className="mt-1 text-sm leading-relaxed text-slate-500">
-                    Postęp punktów oraz rozkład aktywności w czasie. Wpisy bez dokładnej daty
-                    pokazujemy w połowie wskazanego roku.
-                  </div>
-                </div>
+            <ol className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
+              {nextSteps.map((step, index) => {
+                const isHigh = step.priority === "high";
+                const tone =
+                  step.tone === "amber"
+                    ? {
+                        row: isHigh ? "bg-amber-50 hover:bg-amber-100/70" : "hover:bg-slate-50",
+                        badge: "bg-white text-amber-800 ring-amber-200",
+                        title: isHigh ? "text-amber-900" : "text-slate-950",
+                        text: isHigh ? "text-amber-900/80" : "text-slate-600",
+                        arrow: isHigh ? "text-amber-700" : "text-slate-400",
+                      }
+                    : step.tone === "green"
+                      ? {
+                          row: isHigh ? "bg-emerald-50 hover:bg-emerald-100/70" : "hover:bg-slate-50",
+                          badge: "bg-white text-emerald-800 ring-emerald-200",
+                          title: isHigh ? "text-emerald-900" : "text-slate-950",
+                          text: isHigh ? "text-emerald-900/80" : "text-slate-600",
+                          arrow: isHigh ? "text-emerald-700" : "text-slate-400",
+                        }
+                      : {
+                          row: isHigh ? "bg-blue-50 hover:bg-blue-100/70" : "hover:bg-slate-50",
+                          badge: "bg-white text-blue-800 ring-blue-200",
+                          title: isHigh ? "text-blue-900" : "text-slate-950",
+                          text: isHigh ? "text-blue-900/80" : "text-slate-600",
+                          arrow: isHigh ? "text-blue-700" : "text-slate-400",
+                        };
 
-              <div className="mt-5 space-y-7">
-                <div>
-                  <div className="mb-2 text-sm font-semibold text-slate-900">
-                    Postęp punktów
-                  </div>
-
-                  <div
-                    role="progressbar"
-                    aria-label="Realizacja celu punktowego"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={Math.round(progress)}
-                    className="relative h-8"
-                  >
-                    <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-100" />
-                    <div
-                      className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-blue-600 transition-all duration-700"
-                      style={{ width: `${Math.max(progress, 2)}%` }}
-                    />
-                    <PulsingTargetMarker progress={progress} />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="mb-2 text-sm font-semibold text-slate-900">
-                    Upływ okresu
-                  </div>
-
-                  <div className="relative h-12">
-                    <div className="absolute left-0 right-0 top-5 h-2 rounded-full bg-slate-100" />
-                    <div
-                      className="absolute left-0 top-5 h-2 rounded-full bg-slate-500 transition-all duration-700"
-                      style={{ width: `${periodTimeProgress}%` }}
-                    />
-                    <div
-                      className="absolute top-5 h-2 rounded-full bg-slate-300/80 transition-all duration-700"
-                      style={{
-                        left: `${periodTimeProgress}%`,
-                        right: 0,
-                      }}
-                    />
-                    <TimeNowMarker progress={periodTimeProgress} />
-
-                    {timelineEvents.map((ev, i) =>
-                      ev.count > 1 ? (
-                        <ClusterMarker
-                          key={ev.id}
-                          left={ev.left}
-                          tone={ev.tone}
-                          title={ev.title}
-                          count={ev.count}
-                          top={i % 2 === 0 ? -8 : -18}
-                        />
-                      ) : (
-                        <TriangleMarker
-                          key={ev.id}
-                          left={ev.left}
-                          tone={ev.tone}
-                          title={ev.title}
-                          top={i % 2 === 0 ? -6 : -14}
-                        />
-                      ),
-                    )}
-
-                    <div className="absolute left-0 right-0 top-9 text-xs font-medium text-slate-500">
-                      {timelineYearTicks.map((tick) => (
-                        <span
-                          key={tick.year}
-                          className="absolute -translate-x-1/2 tabular-nums"
-                          style={{ left: `${tick.left}%` }}
-                        >
-                          {tick.year}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-7 flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500">
-                    <span className="inline-flex items-center gap-1.5">
-                      <LegendTriangle tone="amber" />
-                      do uzupełnienia
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <LegendTriangle tone="green" />
-                      kompletne
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <LegendTriangle tone="blue" />
-                      zaplanowane
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="grid h-[17px] min-w-[17px] place-items-center rounded-full border border-slate-400 bg-white px-1 text-[9px] font-black text-slate-700">
-                        2
+                return (
+                  <li key={step.title}>
+                    <Link
+                      href={step.ctaHref}
+                      className={`flex items-center gap-3.5 px-5 py-3.5 transition-colors ${tone.row}`}
+                    >
+                      <span
+                        className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold ring-1 ${tone.badge}`}
+                      >
+                        {index + 1}
                       </span>
-                      kilka w tym miesiącu
-                    </span>
+                      <span className="min-w-0 flex-1">
+                        <span className={`block text-sm font-bold ${tone.title}`}>
+                          {step.title}
+                        </span>
+                        <span className={`mt-0.5 block text-xs leading-5 ${tone.text}`}>
+                          {step.description}
+                        </span>
+                      </span>
+                      <span className={`shrink-0 text-lg font-bold ${tone.arrow}`} aria-hidden="true">
+                        →
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+
+            {accrualSeries ? (
+              <div className="border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAccrual((value) => !value)}
+                  aria-expanded={showAccrual}
+                  aria-controls="wykres-narastania"
+                  className="flex w-full items-center gap-2 px-5 py-3 text-left text-[13px] font-bold text-blue-700 transition-colors hover:bg-slate-50"
+                >
+                  <span
+                    className={`text-base leading-none transition-transform ${showAccrual ? "rotate-90" : ""}`}
+                    aria-hidden="true"
+                  >
+                    ›
+                  </span>
+                  {showAccrual ? "Ukryj wykres punktów w czasie" : "Pokaż wykres punktów w czasie"}
+                </button>
+
+                {showAccrual ? (
+                  <div id="wykres-narastania" className="px-5 pb-4">
+                    <div
+                      className="overflow-x-auto pb-1"
+                      role="region"
+                      aria-label="Przewijany wykres punktów"
+                      tabIndex={0}
+                    >
+                      <PointsAccrualChart
+                        series={accrualSeries}
+                        periodStart={periodStart}
+                        periodEnd={periodEnd}
+                      />
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 pl-10 text-[11px] text-slate-500">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="h-0.5 w-3.5 bg-blue-600" aria-hidden="true" />
+                        zdobyte
+                      </span>
+                      {accrualSeries.plannedTotal > accrualSeries.doneTotal ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <span
+                            className="h-0 w-3.5 border-t-2 border-dashed border-blue-600"
+                            aria-hidden="true"
+                          />
+                          z zaplanowanymi (+
+                          {Math.round(accrualSeries.plannedTotal - accrualSeries.doneTotal)} pkt)
+                        </span>
+                      ) : null}
+                      <span className="inline-flex items-center gap-1.5">
+                        <span
+                          className="h-0 w-3.5 border-t-2 border-dashed border-slate-400"
+                          aria-hidden="true"
+                        />
+                        równomierne tempo
+                      </span>
+                    </div>
+                    <p className="mt-2 text-[11px] leading-4 text-slate-500">
+                      {accrualSeries.usesApproximateDoneDates
+                        ? "Wpisy z dokładną datą są pokazane w tym dniu; starsze wpisy zapisane tylko z rokiem — w jego połowie. "
+                        : "Ukończone wpisy są pokazane według zapisanych dat. "}
+                      Linia równomiernego tempa służy wyłącznie planowaniu i nie zmienia zasad
+                      właściwych dla Twojego zawodu ani okresu.
+                    </p>
                   </div>
-                </div>
+                ) : null}
               </div>
-            </div>
-            </div>
+            ) : null}
 
             <div
               role="group"
               aria-label="Poziomy statusu wyniku"
-              className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-slate-100 bg-slate-50/70 px-4 py-2.5 text-[11px] leading-4 text-slate-500"
+              className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-slate-100 bg-slate-50/70 px-5 py-2.5 text-[11px] leading-4 text-slate-500"
             >
               <span>
                 <span className="font-semibold text-slate-700">1. Punkty zadeklarowane</span>
-                {" "}· ewidencja użytkownika · podstawa:{" "}
+                {" · podstawa: "}
                 <span className="font-semibold text-slate-700">
                   {cycleTargetMode === "rule_set" ? "reguła CRPE" : "własny cel"}
                 </span>{" "}
@@ -1982,107 +1731,7 @@ export default function CalculatorClient() {
               </button>
             </div>
           </section>
-
-         <section id="kroki" className={cardCls}>
-  <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
-    <IconBubble tone="blue">
-      <MiniIcon name="chart" />
-    </IconBubble>
-
-    <div>
-      <h2 className="text-base font-extrabold tracking-tight text-slate-950">Co dalej?</h2>
-      <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
-        Krótka lista kolejnych działań — bez zgadywania
-      </p>
-    </div>
-  </div>
-
-  <div className="p-5">
-    <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/80 p-1 shadow-inner shadow-slate-900/[0.03]">
-      <div className="grid gap-1 md:grid-cols-3">
-        {nextSteps.map((step, index) => {
-          const tone =
-            step.tone === "amber"
-              ? {
-                  icon: "bg-white text-amber-700 ring-amber-200",
-                  badge: "bg-amber-100 text-amber-800",
-                  arrow: "border-amber-200 text-amber-700",
-                  active: "border-amber-200 bg-white shadow-sm ring-1 ring-amber-100",
-                  marker: "bg-amber-400",
-                }
-              : step.tone === "green"
-                ? {
-                    icon: "bg-white text-emerald-700 ring-emerald-200",
-                    badge: "bg-emerald-100 text-emerald-800",
-                    arrow: "border-emerald-200 text-emerald-700",
-                    active: "border-emerald-200 bg-white shadow-sm ring-1 ring-emerald-100",
-                    marker: "bg-emerald-500",
-                  }
-                : {
-                    icon: "bg-white text-blue-700 ring-blue-200",
-                    badge: "bg-blue-100 text-blue-800",
-                    arrow: "border-blue-200 text-blue-700",
-                    active: "border-blue-200 bg-white shadow-sm ring-1 ring-blue-100",
-                    marker: "bg-blue-500",
-                  };
-
-          const isHigh = step.priority === "high";
-
-          return (
-            <Link
-              key={step.title}
-              href={step.ctaHref}
-              className={[
-                "group relative flex min-h-[96px] items-start gap-3 rounded-[1.1rem] border p-4 transition active:scale-[0.99]",
-                isHigh
-                  ? tone.active
-                  : "border-transparent bg-transparent hover:bg-white/80 hover:shadow-sm",
-              ].join(" ")}
-            >
-              {isHigh ? (
-                <div
-                  className={`absolute inset-x-4 -bottom-[5px] h-[3px] rounded-full ${tone.marker}`}
-                />
-              ) : null}
-
-              <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold ring-1 ${tone.icon}`}
-              >
-                {index + 1}
-              </span>
-
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="text-sm font-bold text-slate-950">
-                    {step.title}
-                  </div>
-
-                  {isHigh ? (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone.badge}`}
-                    >
-                      najpierw
-                    </span>
-                  ) : null}
-                </div>
-
-                <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                  {step.description}
-                </div>
-              </div>
-
-              <span
-                className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border bg-white text-sm font-bold transition group-hover:translate-x-0.5 ${tone.arrow}`}
-              >
-                →
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </div>
-  </div>
-</section>        </>
+        </>
       )}
 
       {hasLimits ? (

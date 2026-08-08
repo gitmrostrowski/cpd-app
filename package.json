@@ -39,7 +39,8 @@
     "check:v6.15.4": "node scripts/check-v6-15-4-price-visibility.mjs",
     "check:v6.16": "node scripts/check-v6-16-schedule-and-speakers.mjs",
     "check:v6.17": "node scripts/check-v6-17-cpd-panel.mjs",
-    "check:v6.18": "node scripts/check-v6-18-compact-status-timeline.mjs"
+    "check:v6.18": "node scripts/check-v6-18-compact-status-timeline.mjs",
+    "check:v6.19": "node scripts/check-v6-19-status-steps-accrual.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",
