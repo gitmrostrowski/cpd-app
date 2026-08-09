@@ -26,14 +26,28 @@ assert.doesNotMatch(panel, /id: "kroki"/, "Nawigacja nie może prowadzić do usu
 assert.match(panel, /Twój status i kolejne kroki/, "Nagłówek musi zapowiadać obie części");
 assert.match(panel, /nextSteps\.map\(\(step, index\) => \{/, "Kroki muszą pochodzić ze wspólnej listy");
 
-// 2. Wykres jest zwijany, dostępny i czytelny na wąskim ekranie.
+// 2. Wykres jest widoczny od razu, dostępny i czytelny na wąskim ekranie.
 assert.match(panel, /function PointsAccrualChart/, "Wykres narastania musi mieć własny komponent");
 assert.match(panel, /buildAccrualSeries\(\{/, "Dane wykresu muszą powstawać poza JSX");
-assert.match(panel, /aria-expanded=\{showAccrual\}/, "Przełącznik wykresu musi ogłaszać stan");
-assert.match(panel, /aria-controls="wykres-narastania"/, "Przełącznik musi wskazywać sterowany obszar");
+assert.doesNotMatch(panel, /showAccrual/, "Wykres nie może wrócić za przełącznik");
+assert.match(
+  panel,
+  /hasPointTarget && accrualSeries \? \(\s*<>/,
+  "Wykres musi renderować się domyślnie po ustawieniu celu",
+);
 assert.match(panel, /overflow-x-auto/, "Na wąskim ekranie wykres nie może ściskać etykiet");
-assert.match(panel, /role="progressbar"/, "Zwarty pasek postępu musi zachować semantykę dostępności");
-assert.match(panel, /style=\{\{ width: `\$\{progress\}%` \}\}/, "Zero punktów nie może rysować sztucznego postępu");
+assert.match(
+  panel,
+  /lg:grid-cols-\[minmax\(0,1\.25fr\)_minmax\(0,1fr\)\]/,
+  "Wykres i lista zadań muszą stać obok siebie na szerokim ekranie",
+);
+assert.match(panel, /text-\[34px\] font-black/, "Suma punktów musi być główną liczbą sekcji");
+assert.match(panel, /const areaPath = donePoints\.length/, "Krzywa musi mieć bezpiecznie zbudowane wypełnienie");
+assert.match(panel, /opacity=\{0\.1\}/, "Wypełnienie pod krzywą powinno pozostać subtelne");
+assert.match(panel, /strokeWidth=\{3\}/, "Krzywa zdobytych punktów musi pozostać czytelna");
+assert.match(panel, /\{\[0, 1\]\.map/, "Siatka wykresu powinna mieć tylko poziom zera i maksimum");
+assert.match(panel, /Ustaw cel punktowy, żeby zobaczyć/, "Brak celu wymaga czytelnego stanu pustego");
+assert.doesNotMatch(panel, /Kreska pokazuje, gdzie byłbyś/, "Cienki pasek nie może dublować wykresu");
 
 // 3. Uczciwość opisu i trzy poziomy wiarygodności.
 assert.match(panel, /służy wyłącznie planowaniu/, "Równomierne tempo musi być opisane jako pomoc");
@@ -92,7 +106,7 @@ assert.equal(exactDate?.usesApproximateDoneDates, false, "Dokładna data nie mo�
 assert.equal(
   buildAccrualSeries({ activities: [], doneActivities: [], periodStart: 2025, periodEnd: 2029, periodTimeProgress: 0, requiredPoints: 0 }),
   null,
-  "Bez celu i danych przełącznik wykresu nie powinien się renderować",
+  "Bez celu i danych seria wykresu nie powinna powstawać",
 );
 const exceeded = buildAccrualSeries({
   activities: [{ year: 2025, points: 240, status: "done" }],

@@ -330,28 +330,41 @@ function PointsAccrualChart({
   periodStart: number;
   periodEnd: number;
 }) {
-  const W = 500;
-  const H = 210;
-  const L = 42;
-  const R = 18;
-  const T = 18;
-  const B = 32;
+  const W = 380;
+  const H = 190;
+  const L = 38;
+  const R = 14;
+  const T = 24;
+  const B = 34;
 
   const px = (x: number) => L + clamp(x, 0, 1) * (W - L - R);
   const py = (v: number) => H - B - (clamp(v, 0, series.max) / series.max) * (H - T - B);
 
-  const toPath = (points: { x: number; value: number }[]) => {
-    if (!points.length) return "";
-    const parts: string[] = [];
+  const stepPoints = (points: { x: number; value: number }[]) => {
+    if (!points.length) return [] as [number, number][];
+    const result: [number, number][] = [[px(points[0].x), py(points[0].value)]];
     let prev = points[0];
-    parts.push(`${px(prev.x)},${py(prev.value)}`);
     for (const point of points.slice(1)) {
-      parts.push(`${px(point.x)},${py(prev.value)}`);
-      parts.push(`${px(point.x)},${py(point.value)}`);
+      result.push([px(point.x), py(prev.value)]);
+      result.push([px(point.x), py(point.value)]);
       prev = point;
     }
-    return parts.join(" ");
+    return result;
   };
+
+  const donePoints = stepPoints(series.done);
+  const plannedPoints = stepPoints(series.planned);
+  const toPolyline = (points: [number, number][]) =>
+    points.map(([x, y]) => `${x},${y}`).join(" ");
+  const areaPath = donePoints.length
+    ? [
+        `M${donePoints[0][0]},${donePoints[0][1]}`,
+        ...donePoints.slice(1).map(([x, y]) => `L${x},${y}`),
+        `L${donePoints[donePoints.length - 1][0]},${py(0)}`,
+        `L${donePoints[0][0]},${py(0)}`,
+        "Z",
+      ].join(" ")
+    : "";
 
   const allYears = Array.from(
     { length: Math.max(1, periodEnd - periodStart + 1) },
@@ -373,11 +386,11 @@ function PointsAccrualChart({
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
-      className="h-[210px] w-full min-w-[460px]"
+      className="h-auto w-full min-w-[340px]"
       role="img"
       aria-label={`Wykres narastania punktów w okresie ${periodStart}–${periodEnd}. Zdobyte ${series.doneTotal} pkt. ${accessibleTarget}`}
     >
-      {[0, 0.5, 1].map((ratio) => (
+      {[0, 1].map((ratio) => (
         <g key={ratio}>
           <line
             x1={L}
@@ -409,9 +422,11 @@ function PointsAccrualChart({
         strokeDasharray="5 4"
       />
 
-      {series.planned.length > 1 ? (
+      {areaPath ? <path d={areaPath} fill="#2563eb" opacity={0.1} /> : null}
+
+      {plannedPoints.length > 1 ? (
         <polyline
-          points={toPath(series.planned)}
+          points={toPolyline(plannedPoints)}
           fill="none"
           stroke="#2563eb"
           strokeWidth={2.5}
@@ -421,10 +436,10 @@ function PointsAccrualChart({
       ) : null}
 
       <polyline
-        points={toPath(series.done)}
+        points={toPolyline(donePoints)}
         fill="none"
         stroke="#2563eb"
-        strokeWidth={2.5}
+        strokeWidth={3}
         strokeLinejoin="round"
         strokeLinecap="round"
       />
@@ -545,7 +560,6 @@ export default function CalculatorClient() {
   const [planningKey, setPlanningKey] = useState<string | null>(null);
   const [activityFilter, setActivityFilter] = useState<"all" | "planned" | "missing" | "complete">("all");
   const [selectedLimitKey, setSelectedLimitKey] = useState<string | null>(null);
-  const [showAccrual, setShowAccrual] = useState(false);
   const [activeNav, setActiveNav] = useState<PanelSectionId>("ustawienia");
 
   const supabase = useMemo(() => supabaseClient(), []);
@@ -1499,40 +1513,10 @@ export default function CalculatorClient() {
           ) : null}
 
           <section id="status" className={cardCls}>
-            <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <h2 className="text-base font-extrabold tracking-tight text-slate-950">
-                  Twój status i kolejne kroki
-                </h2>
-                <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm text-slate-600">
-                  {hasPointTarget ? (
-                    <span className="text-slate-900">
-                      <span className="text-lg font-extrabold tracking-[-0.03em]">{donePoints}</span>{" "}
-                      <span className="text-slate-500">/ {requiredPoints} pkt</span>
-                    </span>
-                  ) : (
-                    <span className="text-slate-900">
-                      <span className="text-lg font-extrabold tracking-[-0.03em]">{donePoints}</span>{" "}
-                      <span className="text-slate-500">pkt</span>
-                    </span>
-                  )}
-                  {hasPointTarget ? (
-                    <span>
-                      brakuje{" "}
-                      <span className="font-bold text-slate-900">{missingPoints} pkt</span>
-                    </span>
-                  ) : (
-                    <span className="font-bold text-amber-800">ustaw cel punktowy</span>
-                  )}
-                  <span>
-                    okres {periodStart}–{periodEnd}, minęło{" "}
-                    <span className="font-bold text-slate-900">
-                      {Math.round(periodTimeProgress)}%
-                    </span>
-                  </span>
-                </div>
-              </div>
-
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 pb-1 pt-4">
+              <h2 className="text-base font-extrabold tracking-tight text-slate-950">
+                Twój status i kolejne kroki
+              </h2>
               <span
                 className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold ${paceBadgeClass}`}
               >
@@ -1540,116 +1524,38 @@ export default function CalculatorClient() {
               </span>
             </div>
 
-            <div className="px-5 pt-4">
-              <div
-                className="relative"
-                role="progressbar"
-                aria-label="Realizacja celu punktowego"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.round(progress)}
-                aria-valuetext={
-                  hasPointTarget
-                    ? `${donePoints} z ${requiredPoints} punktów`
-                    : `${donePoints} punktów; cel nie jest ustawiony`
-                }
-              >
-                <div className="h-2 rounded-full bg-slate-100" />
-                <div
-                  className="absolute left-0 top-0 h-2 rounded-full bg-blue-600 transition-all duration-700"
-                  style={{ width: `${progress}%` }}
-                />
-                <div
-                  className="absolute -top-1 h-4 w-0.5 -translate-x-1/2 bg-slate-900"
-                  style={{ left: `${clamp(periodTimeProgress, 0.5, 99.5)}%` }}
-                  aria-hidden="true"
-                />
-              </div>
-              <p className="mt-2 text-[11px] text-slate-500">
-                Kreska pokazuje, gdzie byłbyś przy równomiernym tempie ({Math.round(periodTimeProgress)}% okresu).
-              </p>
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-5 pb-2">
+              <span className="text-[34px] font-black leading-none tracking-[-0.05em] text-slate-950">
+                {donePoints}
+              </span>
+              {hasPointTarget ? (
+                <>
+                  <span className="text-[15px] font-semibold text-slate-500">
+                    z {requiredPoints} pkt
+                  </span>
+                  <span className="text-[13px] text-slate-500">
+                    brakuje <span className="font-bold text-slate-900">{missingPoints}</span>
+                  </span>
+                </>
+              ) : (
+                <span className="text-[13px] font-bold text-amber-800">cel nieustawiony</span>
+              )}
+              <span className="text-[13px] text-slate-500">
+                okres {periodStart}–{periodEnd}, minęło{" "}
+                <span className="font-bold text-slate-900">
+                  {Math.round(periodTimeProgress)}%
+                </span>
+              </span>
             </div>
 
-            <ol className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
-              {nextSteps.map((step, index) => {
-                const isHigh = step.priority === "high";
-                const tone =
-                  step.tone === "amber"
-                    ? {
-                        row: isHigh ? "bg-amber-50 hover:bg-amber-100/70" : "hover:bg-slate-50",
-                        badge: "bg-white text-amber-800 ring-amber-200",
-                        title: isHigh ? "text-amber-900" : "text-slate-950",
-                        text: isHigh ? "text-amber-900/80" : "text-slate-600",
-                        arrow: isHigh ? "text-amber-700" : "text-slate-400",
-                      }
-                    : step.tone === "green"
-                      ? {
-                          row: isHigh ? "bg-emerald-50 hover:bg-emerald-100/70" : "hover:bg-slate-50",
-                          badge: "bg-white text-emerald-800 ring-emerald-200",
-                          title: isHigh ? "text-emerald-900" : "text-slate-950",
-                          text: isHigh ? "text-emerald-900/80" : "text-slate-600",
-                          arrow: isHigh ? "text-emerald-700" : "text-slate-400",
-                        }
-                      : {
-                          row: isHigh ? "bg-blue-50 hover:bg-blue-100/70" : "hover:bg-slate-50",
-                          badge: "bg-white text-blue-800 ring-blue-200",
-                          title: isHigh ? "text-blue-900" : "text-slate-950",
-                          text: isHigh ? "text-blue-900/80" : "text-slate-600",
-                          arrow: isHigh ? "text-blue-700" : "text-slate-400",
-                        };
-
-                return (
-                  <li key={step.title}>
-                    <Link
-                      href={step.ctaHref}
-                      className={`flex items-center gap-3.5 px-5 py-3.5 transition-colors ${tone.row}`}
-                    >
-                      <span
-                        className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold ring-1 ${tone.badge}`}
-                      >
-                        {index + 1}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className={`block text-sm font-bold ${tone.title}`}>
-                          {step.title}
-                        </span>
-                        <span className={`mt-0.5 block text-xs leading-5 ${tone.text}`}>
-                          {step.description}
-                        </span>
-                      </span>
-                      <span className={`shrink-0 text-lg font-bold ${tone.arrow}`} aria-hidden="true">
-                        →
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ol>
-
-            {accrualSeries ? (
-              <div className="border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowAccrual((value) => !value)}
-                  aria-expanded={showAccrual}
-                  aria-controls="wykres-narastania"
-                  className="flex w-full items-center gap-2 px-5 py-3 text-left text-[13px] font-bold text-blue-700 transition-colors hover:bg-slate-50"
-                >
-                  <span
-                    className={`text-base leading-none transition-transform ${showAccrual ? "rotate-90" : ""}`}
-                    aria-hidden="true"
-                  >
-                    ›
-                  </span>
-                  {showAccrual ? "Ukryj wykres punktów w czasie" : "Pokaż wykres punktów w czasie"}
-                </button>
-
-                {showAccrual ? (
-                  <div id="wykres-narastania" className="px-5 pb-4">
+            <div className="grid gap-0 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+              <div className="min-w-0 px-3 pb-3 pt-1">
+                {hasPointTarget && accrualSeries ? (
+                  <>
                     <div
                       className="overflow-x-auto pb-1"
                       role="region"
-                      aria-label="Przewijany wykres punktów"
+                      aria-label="Wykres punktów w czasie"
                       tabIndex={0}
                     >
                       <PointsAccrualChart
@@ -1658,9 +1564,9 @@ export default function CalculatorClient() {
                         periodEnd={periodEnd}
                       />
                     </div>
-                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 pl-10 text-[11px] text-slate-500">
+                    <div className="-mt-1 flex flex-wrap gap-x-3.5 gap-y-1 pl-9 text-[11px] text-slate-500">
                       <span className="inline-flex items-center gap-1.5">
-                        <span className="h-0.5 w-3.5 bg-blue-600" aria-hidden="true" />
+                        <span className="h-[3px] w-3.5 rounded-full bg-blue-600" aria-hidden="true" />
                         zdobyte
                       </span>
                       {accrualSeries.plannedTotal > accrualSeries.doneTotal ? (
@@ -1669,7 +1575,7 @@ export default function CalculatorClient() {
                             className="h-0 w-3.5 border-t-2 border-dashed border-blue-600"
                             aria-hidden="true"
                           />
-                          z zaplanowanymi (+
+                          z planem (+
                           {Math.round(accrualSeries.plannedTotal - accrualSeries.doneTotal)} pkt)
                         </span>
                       ) : null}
@@ -1678,20 +1584,82 @@ export default function CalculatorClient() {
                           className="h-0 w-3.5 border-t-2 border-dashed border-slate-400"
                           aria-hidden="true"
                         />
-                        równomierne tempo
+                        równe tempo
                       </span>
                     </div>
-                    <p className="mt-2 text-[11px] leading-4 text-slate-500">
+                    <p className="mt-2 px-2 text-[11px] leading-4 text-slate-500">
                       {accrualSeries.usesApproximateDoneDates
                         ? "Wpisy z dokładną datą są pokazane w tym dniu; starsze wpisy zapisane tylko z rokiem — w jego połowie. "
                         : "Ukończone wpisy są pokazane według zapisanych dat. "}
                       Linia równomiernego tempa służy wyłącznie planowaniu i nie zmienia zasad
                       właściwych dla Twojego zawodu ani okresu.
                     </p>
+                  </>
+                ) : (
+                  <div className="flex h-[190px] items-center justify-center px-6 text-center text-[13px] leading-5 text-slate-500">
+                    Ustaw cel punktowy, żeby zobaczyć, jak Twoje punkty narastają w okresie.
                   </div>
-                ) : null}
+                )}
               </div>
-            ) : null}
+
+              <ol className="divide-y divide-slate-100 border-t border-slate-100 lg:border-l lg:border-t-0">
+                {nextSteps.map((step, index) => {
+                  const isHigh = step.priority === "high";
+                  const tone =
+                    step.tone === "amber"
+                      ? {
+                          row: isHigh ? "bg-amber-50 hover:bg-amber-100/70" : "hover:bg-slate-50",
+                          badge: "bg-white text-amber-800 ring-amber-200",
+                          title: isHigh ? "text-amber-900" : "text-slate-950",
+                          text: isHigh ? "text-amber-900/80" : "text-slate-500",
+                          arrow: isHigh ? "text-amber-700" : "text-slate-400",
+                        }
+                      : step.tone === "green"
+                        ? {
+                            row: isHigh
+                              ? "bg-emerald-50 hover:bg-emerald-100/70"
+                              : "hover:bg-slate-50",
+                            badge: "bg-white text-emerald-800 ring-emerald-200",
+                            title: isHigh ? "text-emerald-900" : "text-slate-950",
+                            text: isHigh ? "text-emerald-900/80" : "text-slate-500",
+                            arrow: isHigh ? "text-emerald-700" : "text-slate-400",
+                          }
+                        : {
+                            row: isHigh ? "bg-blue-50 hover:bg-blue-100/70" : "hover:bg-slate-50",
+                            badge: "bg-white text-blue-800 ring-blue-200",
+                            title: isHigh ? "text-blue-900" : "text-slate-950",
+                            text: isHigh ? "text-blue-900/80" : "text-slate-500",
+                            arrow: isHigh ? "text-blue-700" : "text-slate-400",
+                          };
+
+                  return (
+                    <li key={step.title} className="h-full">
+                      <Link
+                        href={step.ctaHref}
+                        className={`flex h-full items-center gap-3 px-4 py-3 transition-colors ${tone.row}`}
+                      >
+                        <span
+                          className={`grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full text-xs font-bold ring-1 ${tone.badge}`}
+                        >
+                          {index + 1}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className={`block text-sm font-bold leading-5 ${tone.title}`}>
+                            {step.title}
+                          </span>
+                          <span className={`mt-0.5 block text-xs leading-4 ${tone.text}`}>
+                            {step.description}
+                          </span>
+                        </span>
+                        <span className={`shrink-0 text-base font-bold ${tone.arrow}`} aria-hidden="true">
+                          →
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
 
             <div
               role="group"
