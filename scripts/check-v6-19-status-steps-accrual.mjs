@@ -55,9 +55,9 @@ assert.match(panel, /nie zmienia zasad/, "Wykres nie może tworzyć nowego wymog
 assert.doesNotMatch(panel, /izba rozlicza okres/, "Panel nie może przypisywać jednego organu wszystkim zawodom");
 assert.doesNotMatch(panel, /Blokują \{incompletePoints\} pkt/, "Panel nie może twierdzić, że punkty są blokowane");
 assert.match(panel, /aria-label="Poziomy statusu wyniku"/, "Trzy poziomy wiarygodności muszą pozostać dostępne");
-assert.match(panel, /1\. Punkty zadeklarowane/, "Pierwszy poziom musi pozostać widoczny");
-assert.match(panel, /2\. Według reguł CRPE/, "Drugi poziom musi pozostać widoczny");
-assert.match(panel, /3\. Status formalny/, "Trzeci poziom musi pozostać widoczny");
+assert.match(panel, /Reguła CRPE" : "Własny cel"/, "Podstawa zadeklarowanych punktów musi pozostać widoczna");
+assert.match(panel, />Reguły CRPE:<\//, "Poziom obliczeń CRPE musi pozostać widoczny");
+assert.match(panel, />Status formalny:<\//, "Status formalny musi pozostać widoczny");
 
 // 4. Zachowanie serii na danych z analizy: 38 zdobytych, 59 z planami, cel dziś 64.
 const sampleDone = [
@@ -129,7 +129,6 @@ for (const dead of [
   "timelineEvents",
   "CircularProgress",
   "completePoints",
-  "incompletePoints",
 ]) {
   assert.doesNotMatch(panel, new RegExp(`\\b${dead}\\b`), `${dead} powinien zniknąć`);
 }

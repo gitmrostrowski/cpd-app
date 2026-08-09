@@ -40,7 +40,8 @@
     "check:v6.16": "node scripts/check-v6-16-schedule-and-speakers.mjs",
     "check:v6.17": "node scripts/check-v6-17-cpd-panel.mjs",
     "check:v6.18": "node scripts/check-v6-18-compact-status-timeline.mjs",
-    "check:v6.19": "node scripts/check-v6-19-status-steps-accrual.mjs"
+    "check:v6.19": "node scripts/check-v6-19-status-steps-accrual.mjs",
+    "check:v6.19.2": "node scripts/check-v6-19-2-status-actions-typography.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

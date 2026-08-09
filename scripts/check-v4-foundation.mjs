@@ -63,9 +63,9 @@ check(
 check(
   "Kalkulator pokazuje trzy poziomy wyniku",
   [
-    "1. Punkty zadeklarowane",
-    "2. Według reguł CRPE",
-    "3. Status formalny",
+    'Reguła CRPE" : "Własny cel',
+    "Reguły CRPE:",
+    "Status formalny:",
   ].every((label) => calculator.includes(label)),
 );
 check(

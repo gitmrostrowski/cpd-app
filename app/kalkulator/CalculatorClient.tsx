@@ -156,7 +156,11 @@ function suggestPlannedPoints(rule: {
 function buildNextSteps(
   missingPoints: number,
   incompleteCount: number,
+  incompletePoints: number,
+  hasPointTarget: boolean,
   limitWarning: string | null,
+  periodStart: number,
+  periodEnd: number,
 ) {
   const steps: {
     title: string;
@@ -164,42 +168,49 @@ function buildNextSteps(
     ctaHref: string;
     tone: "amber" | "blue" | "green";
     priority: "high" | "normal";
-  }[] = [];
-
-  if (incompleteCount > 0) {
-    steps.push({
-      title: "Uzupełnij wpisy",
-      description: `${incompleteCount} ${pluralPl(incompleteCount, ["wpis wymaga", "wpisy wymagają", "wpisów wymaga"])} uzupełnienia. To najszybszy krok do gotowego raportu.`,
-      ctaHref: "/aktywnosci",
-      tone: "amber",
-      priority: "high",
-    });
-  }
-
-  if (missingPoints > 0) {
-    steps.push({
-      title: limitWarning ? "Dobierz inną aktywność" : "Zaplanuj szkolenie",
+  }[] = [
+    incompleteCount > 0
+      ? {
+          title: `Uzupełnij ${incompleteCount} ${pluralPl(incompleteCount, ["wpis", "wpisy", "wpisów"])}`,
+          description: `Do uzupełnienia: ${incompletePoints} pkt`,
+          ctaHref: "/aktywnosci",
+          tone: "amber",
+          priority: "high",
+        }
+      : {
+          title: "Dodaj aktywność",
+          description: "Wszystkie ukończone wpisy są kompletne.",
+          ctaHref: "/aktywnosci?new=1",
+          tone: "green",
+          priority: "normal",
+        },
+    {
+      title: !hasPointTarget
+        ? "Ustaw cel punktowy"
+        : limitWarning
+          ? "Dobierz inną aktywność"
+          : "Zaplanuj szkolenie",
       description:
-        limitWarning ||
-        "Wybierz aktywność, która realnie przybliży Cię do wymaganej liczby punktów.",
-      ctaHref: "/baza-szkolen",
+        !hasPointTarget
+          ? "Określ cel, aby CRPE mogło policzyć postęp."
+          : limitWarning ||
+            (missingPoints > 0
+              ? `Zostało ${missingPoints} pkt do zdobycia`
+              : "Cel osiągnięty — zaplanuj dalszy rozwój."),
+      ctaHref: hasPointTarget ? "/baza-szkolen" : "#ustawienia",
       tone: "blue",
-      priority: incompleteCount === 0 ? "high" : "normal",
-    });
-  }
+      priority: incompleteCount === 0 && missingPoints > 0 ? "high" : "normal",
+    },
+    {
+      title: "Sprawdź raport",
+      description: `Podsumowanie okresu ${periodStart}–${periodEnd}`,
+      ctaHref: "/portfolio",
+      tone: "green",
+      priority: "normal",
+    },
+  ];
 
-  steps.push({
-    title: "Sprawdź raport",
-    description:
-      missingPoints <= 0
-        ? "Masz komplet punktów. Sprawdź, czy raport jest gotowy."
-        : "Zobacz, jak wygląda podsumowanie okresu.",
-    ctaHref: "/portfolio",
-    tone: "green",
-    priority: "normal",
-  });
-
-  return steps.slice(0, 3);
+  return steps;
 }
 
 function IconBubble({
@@ -726,6 +737,10 @@ export default function CalculatorClient() {
   );
 
   const incompleteCount = incompleteEntries.length;
+  const incompletePoints = useMemo(
+    () => incompleteEntries.reduce((sum, activity) => sum + (Number(activity.points) || 0), 0),
+    [incompleteEntries],
+  );
 
   const missingPoints = useMemo(
     () => Math.max(0, (Number(requiredPoints) || 0) - donePoints),
@@ -849,8 +864,25 @@ export default function CalculatorClient() {
   }, [limitsUsage]);
 
   const nextSteps = useMemo(
-    () => buildNextSteps(missingPoints, incompleteCount, limitWarning),
-    [missingPoints, incompleteCount, limitWarning],
+    () =>
+      buildNextSteps(
+        missingPoints,
+        incompleteCount,
+        incompletePoints,
+        hasPointTarget,
+        limitWarning,
+        periodStart,
+        periodEnd,
+      ),
+    [
+      missingPoints,
+      incompleteCount,
+      incompletePoints,
+      hasPointTarget,
+      limitWarning,
+      periodStart,
+      periodEnd,
+    ],
   );
 
   const accrualSeries = useMemo<AccrualSeries | null>(
@@ -1564,7 +1596,7 @@ export default function CalculatorClient() {
                         periodEnd={periodEnd}
                       />
                     </div>
-                    <div className="-mt-1 flex flex-wrap gap-x-3.5 gap-y-1 pl-9 text-[11px] text-slate-500">
+                    <div className="-mt-1 flex flex-wrap gap-x-4 gap-y-1.5 pl-9 text-[12px] font-medium leading-5 text-slate-600">
                       <span className="inline-flex items-center gap-1.5">
                         <span className="h-[3px] w-3.5 rounded-full bg-blue-600" aria-hidden="true" />
                         zdobyte
@@ -1587,7 +1619,7 @@ export default function CalculatorClient() {
                         równe tempo
                       </span>
                     </div>
-                    <p className="mt-2 px-2 text-[11px] leading-4 text-slate-500">
+                    <p className="mt-2 px-2 text-[12px] leading-[18px] text-slate-500">
                       {accrualSeries.usesApproximateDoneDates
                         ? "Wpisy z dokładną datą są pokazane w tym dniu; starsze wpisy zapisane tylko z rokiem — w jego połowie. "
                         : "Ukończone wpisy są pokazane według zapisanych dat. "}
@@ -1602,7 +1634,7 @@ export default function CalculatorClient() {
                 )}
               </div>
 
-              <ol className="divide-y divide-slate-100 border-t border-slate-100 lg:border-l lg:border-t-0">
+              <ol className="grid grid-rows-3 divide-y divide-slate-100 border-t border-slate-100 lg:border-l lg:border-t-0">
                 {nextSteps.map((step, index) => {
                   const isHigh = step.priority === "high";
                   const tone =
@@ -1633,25 +1665,25 @@ export default function CalculatorClient() {
                           };
 
                   return (
-                    <li key={step.title} className="h-full">
+                    <li key={step.title} className="min-h-0">
                       <Link
                         href={step.ctaHref}
-                        className={`flex h-full items-center gap-3 px-4 py-3 transition-colors ${tone.row}`}
+                        className={`flex h-full min-h-[72px] items-center gap-3.5 px-4 py-3.5 transition-colors ${tone.row}`}
                       >
                         <span
-                          className={`grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full text-xs font-bold ring-1 ${tone.badge}`}
+                          className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold ring-1 ${tone.badge}`}
                         >
                           {index + 1}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className={`block text-sm font-bold leading-5 ${tone.title}`}>
+                          <span className={`block text-base font-bold leading-5 ${tone.title}`}>
                             {step.title}
                           </span>
-                          <span className={`mt-0.5 block text-xs leading-4 ${tone.text}`}>
+                          <span className={`mt-0.5 block text-sm leading-5 ${tone.text}`}>
                             {step.description}
                           </span>
                         </span>
-                        <span className={`shrink-0 text-base font-bold ${tone.arrow}`} aria-hidden="true">
+                        <span className={`shrink-0 text-lg font-bold ${tone.arrow}`} aria-hidden="true">
                           →
                         </span>
                       </Link>
@@ -1664,31 +1696,28 @@ export default function CalculatorClient() {
             <div
               role="group"
               aria-label="Poziomy statusu wyniku"
-              className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-slate-100 bg-slate-50/70 px-5 py-2.5 text-[11px] leading-4 text-slate-500"
+              className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 bg-slate-50/70 px-5 py-3 text-[12px] leading-[18px] text-slate-500"
             >
               <span>
-                <span className="font-semibold text-slate-700">1. Punkty zadeklarowane</span>
-                {" · podstawa: "}
                 <span className="font-semibold text-slate-700">
-                  {cycleTargetMode === "rule_set" ? "reguła CRPE" : "własny cel"}
+                  {cycleTargetMode === "rule_set" ? "Reguła CRPE" : "Własny cel"}
                 </span>{" "}
                 · {displayProfession(profession, professionOther)} · {requiredPoints} pkt ·{" "}
                 {periodStart}–{periodEnd}
               </span>
               <span>
-                <span className="font-semibold text-slate-700">2. Według reguł CRPE</span>:{" "}
+                <span className="font-semibold text-slate-700">Reguły CRPE:</span>{" "}
                 <span className="font-semibold text-slate-700">
                   {appliedRuleSet?.calculation_scope === "full" ? "obliczane" : "nieobliczane"}
                 </span>
               </span>
               <span>
-                <span className="font-semibold text-slate-700">3. Status formalny</span>:{" "}
+                <span className="font-semibold text-slate-700">Status formalny:</span>{" "}
                 <span className="font-semibold text-slate-700">
                   {formalStatus === "confirmed_externally"
                     ? "potwierdzony poza CRPE"
                     : "niepotwierdzony"}
-                </span>{" "}
-                — potwierdza właściwy organ, nie CRPE
+                </span>
               </span>
               <button
                 type="button"
