@@ -80,7 +80,10 @@ const sample = buildAccrualSeries({
 });
 assert.ok(sample, "Seria z celem musi istnieć");
 assert.equal(sample.doneTotal, 38, "Suma wykresu musi zgadzać się z nagłówkiem");
-assert.equal(sample.plannedTotal, 59, "Planowana seria musi doliczać przyszłe wpisy raz");
+// v6.24: wpis z 10.05.2026 wypada przed znacznikiem „dziś” (32% okresu 2025–2029),
+// więc jest zaległy i nie jest prognozą. Do 38 pkt dolicza się już tylko
+// przyszły termin z 10.09.2026 — wcześniej krzywa „z planem” zawyżała wynik.
+assert.equal(sample.plannedTotal, 49, "Planowana seria liczy wyłącznie przyszłe wpisy");
 assert.equal(sample.targetToday, 64, "Punkt równomiernego tempa powinien wynosić 64 pkt");
 assert.equal(sample.done.at(-1)?.value, 38, "Krzywa zdobytych musi kończyć się pełną sumą na dziś");
 

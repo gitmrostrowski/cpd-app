@@ -1,4 +1,5 @@
 export type AccrualActivity = {
+  id?: string;
   points: number;
   year: number;
   status?: "planned" | "done" | null;
@@ -31,6 +32,8 @@ type BuildAccrualSeriesInput = {
   periodEnd: number;
   periodTimeProgress: number;
   requiredPoints: number;
+  /** Identyfikatory zaległych planów policzone wspólną regułą widoku. */
+  overdueActivityIds?: ReadonlySet<string>;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -60,6 +63,7 @@ export function buildAccrualSeries({
   periodEnd,
   periodTimeProgress,
   requiredPoints,
+  overdueActivityIds,
 }: BuildAccrualSeriesInput): AccrualSeries | null {
   const target = Math.max(0, Number(requiredPoints) || 0);
   const todayX = clamp(periodTimeProgress / 100, 0, 1);
@@ -112,13 +116,22 @@ export function buildAccrualSeries({
         activity.status === "planned" && Boolean(activity.planned_start_date),
     )
     .map((activity) => ({
+      id: activity.id,
       date: String(activity.planned_start_date),
       points: normalizedPoints(activity.points),
     }))
     .filter((activity) => {
       const year = Number(activity.date.slice(0, 4));
+      // Wpis zaplanowany na datę, która już minęła, nie jest prognozą — nie
+      // wiadomo, czy szkolenie się odbyło. Doliczanie go zawyżało krzywą
+      // „z planem” o punkty sprzed miesięcy.
+      const position = datePosition(activity.date, periodStartMs, range);
+      const isOverdue = activity.id && overdueActivityIds
+        ? overdueActivityIds.has(activity.id)
+        : position !== null && position < todayX;
       return (
         activity.points > 0 &&
+        !isOverdue &&
         year >= periodStart &&
         year <= periodEnd
       );

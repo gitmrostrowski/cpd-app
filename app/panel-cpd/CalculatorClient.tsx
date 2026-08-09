@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import AppPageHeader from "@/components/AppPageHeader";
 import { useAuth } from "@/components/AuthProvider";
@@ -28,6 +29,7 @@ import {
   buildAccrualSeries,
   type AccrualSeries,
 } from "@/lib/cpd/accrual";
+import { formatOverdue, overdueEntries } from "@/lib/cpd/overdue";
 import {
   formatCountdown,
   requiredPace,
@@ -208,30 +210,38 @@ function buildNextSteps(
   limitWarning: string | null,
   periodStart: number,
   periodEnd: number,
+  overdueCount: number,
+  overduePoints: number,
+  reportEntries: number,
 ) {
-  const steps: {
+  type NextStep = {
     title: string;
     description: string;
     ctaHref: string;
+    icon: MiniIconName;
     tone: "amber" | "blue" | "green";
     priority: "high" | "normal";
-  }[] = [
-    incompleteCount > 0
-      ? {
-          title: `Uzupełnij ${incompleteCount} ${pluralPl(incompleteCount, ["wpis", "wpisy", "wpisów"])}`,
-          description: `Do uzupełnienia: ${incompletePoints} pkt`,
-          ctaHref: "/aktywnosci",
-          tone: "amber",
-          priority: "high",
-        }
-      : {
-          title: "Dodaj aktywność",
-          description: "Wszystkie ukończone wpisy są kompletne.",
-          ctaHref: "/aktywnosci?new=1",
-          tone: "green",
-          priority: "normal",
-        },
-    {
+  };
+
+  const incompleteStep: NextStep = incompleteCount > 0
+    ? {
+        title: `Uzupełnij ${incompleteCount} ${pluralPl(incompleteCount, ["wpis", "wpisy", "wpisów"])}`,
+        description: `Do uzupełnienia: ${incompletePoints} pkt`,
+        ctaHref: "/aktywnosci?filtr=braki",
+        icon: "document",
+        tone: "amber",
+        priority: "high",
+      }
+    : {
+        title: "Dodaj aktywność",
+        description: "Wszystkie ukończone wpisy są kompletne.",
+        ctaHref: "/aktywnosci?new=1",
+        icon: "calendar",
+        tone: "green",
+        priority: "normal",
+      };
+
+  const planningStep: NextStep = {
       title: !hasPointTarget
         ? "Ustaw cel punktowy"
         : limitWarning
@@ -245,17 +255,37 @@ function buildNextSteps(
               ? `Zostało ${missingPoints} pkt do zdobycia`
               : "Cel osiągnięty — zaplanuj dalszy rozwój."),
       ctaHref: hasPointTarget ? "/baza-szkolen" : "#ustawienia",
+      icon: "school",
       tone: "blue",
       priority: incompleteCount === 0 && missingPoints > 0 ? "high" : "normal",
-    },
-    {
-      title: "Sprawdź raport",
-      description: `Podsumowanie okresu ${periodStart}–${periodEnd}`,
+    };
+
+  const reportStep: NextStep = {
+      title: "Pobierz zestawienie",
+      description:
+        reportEntries > 0
+          ? `${reportEntries} ${pluralPl(reportEntries, ["pozycja", "pozycje", "pozycji"])} · CSV lub PDF`
+          : `Podsumowanie okresu ${periodStart}–${periodEnd}`,
       ctaHref: "/raporty/uzytkownik",
+      icon: "download",
       tone: "green",
       priority: "normal",
-    },
-  ];
+    };
+
+  const steps: NextStep[] = overdueCount > 0
+    ? [
+        {
+          title: `Rozstrzygnij ${overdueCount} ${pluralPl(overdueCount, ["zaległy termin", "zaległe terminy", "zaległych terminów"])}`,
+          description: `Minęły, a wciąż są zaplanowane · ${overduePoints} pkt`,
+          ctaHref: "/aktywnosci?filtr=zalegle",
+          icon: "alert",
+          tone: "amber",
+          priority: "high",
+        },
+        incompleteCount > 0 ? incompleteStep : planningStep,
+        reportStep,
+      ]
+    : [incompleteStep, planningStep, reportStep];
 
   return steps;
 }
@@ -282,11 +312,25 @@ function IconBubble({
   );
 }
 
+type MiniIconName =
+  | "calendar"
+  | "shield"
+  | "chart"
+  | "doc"
+  | "document"
+  | "user"
+  | "bell"
+  | "hourglass"
+  | "target"
+  | "school"
+  | "alert"
+  | "download";
+
 function MiniIcon({
   name,
   className = "h-4 w-4",
 }: {
-  name: "calendar" | "shield" | "chart" | "doc" | "user" | "bell" | "hourglass" | "target" | "school";
+  name: MiniIconName;
   className?: string;
 }) {
   if (name === "calendar") {
@@ -353,6 +397,37 @@ function MiniIcon({
         <circle cx="12" cy="12" r="8" />
         <circle cx="12" cy="12" r="3" />
         <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+      </svg>
+    );
+  }
+
+  if (name === "alert") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+        <path d="M12 9v4" />
+        <path d="M12 17h.01" />
+        <circle cx="12" cy="12" r="9" />
+      </svg>
+    );
+  }
+
+  if (name === "download") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+        <path d="M12 3v12" />
+        <path d="m7 11 5 5 5-5" />
+        <path d="M5 21h14" />
+      </svg>
+    );
+  }
+
+  if (name === "document") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+        <path d="M14 3v5h5" />
+        <path d="M9 13h6" />
+        <path d="M9 17h4" />
       </svg>
     );
   }
@@ -1047,6 +1122,24 @@ export default function CalculatorClient() {
     return hit ? `Limit "${hit.label}" jest osiągnięty.` : null;
   }, [adjustedDoneRows, limitsUsage]);
 
+  const overdue = useMemo(
+    () =>
+      overdueEntries({
+        activities: activities.map((a) => ({
+          id: a.id,
+          type: a.type,
+          organizer: a.organizer,
+          points: Number(a.points) || 0,
+          status: normalizeStatus(a.status),
+          planned_start_date: a.planned_start_date ?? null,
+        })),
+        today: new Date(),
+      }),
+    [activities],
+  );
+
+  const overduePoints = overdue.reduce((sum, entry) => sum + entry.points, 0);
+
   const nextSteps = useMemo(
     () =>
       buildNextSteps(
@@ -1057,6 +1150,9 @@ export default function CalculatorClient() {
         limitWarning,
         periodStart,
         periodEnd,
+        overdue.length,
+        overduePoints,
+        inPeriodDone.length,
       ),
     [
       missingPoints,
@@ -1066,6 +1162,9 @@ export default function CalculatorClient() {
       limitWarning,
       periodStart,
       periodEnd,
+      overdue.length,
+      overduePoints,
+      inPeriodDone.length,
     ],
   );
 
@@ -1084,8 +1183,9 @@ export default function CalculatorClient() {
         periodEnd,
         periodTimeProgress,
         requiredPoints,
+        overdueActivityIds: new Set(overdue.map((entry) => entry.id)),
       }),
-    [adjustedAllRows, adjustedDoneRows, periodEnd, periodStart, periodTimeProgress, requiredPoints],
+    [adjustedAllRows, adjustedDoneRows, overdue, periodEnd, periodStart, periodTimeProgress, requiredPoints],
   );
 
   const recentRows = useMemo(() => {
@@ -1124,23 +1224,49 @@ export default function CalculatorClient() {
       });
   }, [activities, periodStart, periodEnd, activityFilter]);
 
-  const timelineRows = useMemo(
+  const upcoming = useMemo(
     () =>
-      [...recentRows]
-        .sort((a, b) => {
-          const plannedA = normalizeStatus(a.status) === "planned";
-          const plannedB = normalizeStatus(b.status) === "planned";
-          if (plannedA !== plannedB) return plannedA ? -1 : 1;
-
-          const dateA = timelineDate(a).sort;
-          const dateB = timelineDate(b).sort;
-          return plannedA
-            ? dateA.localeCompare(dateB)
-            : dateB.localeCompare(dateA);
-        })
-        .slice(0, 8),
-    [recentRows],
+      upcomingEntries({
+        activities: activities.map((a) => ({
+          id: a.id,
+          type: a.type,
+          organizer: a.organizer,
+          points: Number(a.points) || 0,
+          status: normalizeStatus(a.status),
+          planned_start_date: a.planned_start_date ?? null,
+        })),
+        today: new Date(),
+      }),
+    [activities],
   );
+  /**
+   * Oś aktywności pokazuje to, co już się wydarzyło.
+   *
+   * Przyszłe terminy mają własną sekcję z odliczaniem, a wcześniej te same
+   * wpisy pojawiały się w trzech miejscach naraz: tutaj, w „Najbliższych
+   * terminach” i jako linia przerywana na wykresie.
+   */
+  const timelineRows = useMemo(() => {
+    const agendaIds = new Set([
+      ...upcoming.map((entry) => entry.id),
+      ...overdue.map((entry) => entry.id),
+    ]);
+
+    return [...recentRows]
+      .filter((activity) => !agendaIds.has(activity.id))
+      .sort((a, b) => {
+        const plannedA = normalizeStatus(a.status) === "planned";
+        const plannedB = normalizeStatus(b.status) === "planned";
+        if (plannedA !== plannedB) return plannedA ? -1 : 1;
+
+        const dateA = timelineDate(a).sort;
+        const dateB = timelineDate(b).sort;
+        return plannedA
+          ? dateA.localeCompare(dateB)
+          : dateB.localeCompare(dateA);
+      })
+      .slice(0, 8);
+  }, [recentRows, upcoming, overdue]);
 
   const isBusy = authLoading || loading;
 
@@ -1201,21 +1327,6 @@ export default function CalculatorClient() {
     [missingPoints, periodDeadline],
   );
 
-  const upcoming = useMemo(
-    () =>
-      upcomingEntries({
-        activities: activities.map((a) => ({
-          id: a.id,
-          type: a.type,
-          organizer: a.organizer,
-          points: Number(a.points) || 0,
-          status: normalizeStatus(a.status),
-          planned_start_date: a.planned_start_date ?? null,
-        })),
-        today: new Date(),
-      }),
-    [activities],
-  );
 
   /**
    * Data, którą wskazałaby reguła zawodu. Liczymy ją także w trybie okresu
@@ -1887,63 +1998,60 @@ export default function CalculatorClient() {
                 )}
               </div>
 
-              <ol className="grid grid-rows-3 divide-y divide-slate-100 border-t border-slate-100 lg:border-l lg:border-t-0">
-                {nextSteps.map((step, index) => {
-                  const isHigh = step.priority === "high";
-                  const tone =
-                    step.tone === "amber"
-                      ? {
-                          row: isHigh ? "bg-amber-50 hover:bg-amber-100/70" : "hover:bg-slate-50",
-                          badge: "bg-white text-amber-800 ring-amber-200",
-                          title: isHigh ? "text-amber-900" : "text-slate-950",
-                          text: isHigh ? "text-amber-900/80" : "text-slate-500",
-                          arrow: isHigh ? "text-amber-700" : "text-slate-400",
-                        }
-                      : step.tone === "green"
-                        ? {
-                            row: isHigh
-                              ? "bg-emerald-50 hover:bg-emerald-100/70"
-                              : "hover:bg-slate-50",
-                            badge: "bg-white text-emerald-800 ring-emerald-200",
-                            title: isHigh ? "text-emerald-900" : "text-slate-950",
-                            text: isHigh ? "text-emerald-900/80" : "text-slate-500",
-                            arrow: isHigh ? "text-emerald-700" : "text-slate-400",
-                          }
-                        : {
-                            row: isHigh ? "bg-blue-50 hover:bg-blue-100/70" : "hover:bg-slate-50",
-                            badge: "bg-white text-blue-800 ring-blue-200",
-                            title: isHigh ? "text-blue-900" : "text-slate-950",
-                            text: isHigh ? "text-blue-900/80" : "text-slate-500",
-                            arrow: isHigh ? "text-blue-700" : "text-slate-400",
-                          };
+              <div className="flex flex-col justify-center gap-2 border-t border-slate-100 p-4 lg:border-l lg:border-t-0">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                  {nextSteps[0]?.priority === "high" ? "Najpierw to" : "Co dalej"}
+                </p>
 
-                  return (
-                    <li key={step.title} className="min-h-0">
+                {nextSteps.map((step, index) => {
+                  const isPrimary = index === 0;
+
+                  const primaryTone =
+                    step.tone === "amber"
+                      ? "bg-amber-600 hover:bg-amber-700"
+                      : step.tone === "green"
+                        ? "bg-emerald-600 hover:bg-emerald-700"
+                        : "bg-blue-600 hover:bg-blue-700";
+
+                  if (isPrimary) {
+                    return (
                       <Link
+                        key={step.title}
                         href={step.ctaHref}
-                        className={`flex h-full min-h-[72px] items-center gap-3.5 px-4 py-3.5 transition-colors ${tone.row}`}
+                        className={`mb-1.5 flex items-center gap-3 rounded-xl px-3.5 py-3 text-white shadow-sm transition-colors ${primaryTone}`}
                       >
-                        <span
-                          className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold ring-1 ${tone.badge}`}
-                        >
-                          {index + 1}
-                        </span>
+                        <MiniIcon name={step.icon} className="h-5 w-5 shrink-0" />
                         <span className="min-w-0 flex-1">
-                          <span className={`block text-base font-bold leading-5 ${tone.title}`}>
-                            {step.title}
-                          </span>
-                          <span className={`mt-0.5 block text-sm leading-5 ${tone.text}`}>
+                          <span className="block text-[15px] font-bold leading-5">{step.title}</span>
+                          <span className="mt-0.5 block text-xs leading-4 text-white/85">
                             {step.description}
                           </span>
                         </span>
-                        <span className={`shrink-0 text-lg font-bold ${tone.arrow}`} aria-hidden="true">
-                          →
-                        </span>
+                        <ChevronRight className="h-5 w-5 shrink-0 text-white/80" aria-hidden="true" />
                       </Link>
-                    </li>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={step.title}
+                      href={step.ctaHref}
+                      className="flex items-center gap-3 rounded-xl border border-slate-200 px-3.5 py-2.5 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                    >
+                      <MiniIcon name={step.icon} className="h-[18px] w-[18px] shrink-0 text-slate-500" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-base font-bold leading-5 text-slate-950">
+                          {step.title}
+                        </span>
+                        <span className="mt-0.5 block text-sm leading-5 text-slate-500">
+                          {step.description}
+                        </span>
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                    </Link>
                   );
                 })}
-              </ol>
+              </div>
             </div>
 
             <div
@@ -2035,13 +2143,22 @@ export default function CalculatorClient() {
                     {limitsUsage.map((r) => {
                       const active = selectedLimit?.key === r.key;
 
-                      const value = r.mode === "per_item" ? r.cap : Math.round(r.remaining);
-                      const suffix =
-                        r.mode === "per_item"
-                          ? "pkt / wpis"
-                          : r.status === "blocked"
-                            ? "pkt"
-                            : "pkt wolne";
+                      /**
+                       * Duża liczba znaczyła co innego w każdym trybie: przy
+                       * `per_item` był to sufit na jeden wpis, a przy limicie
+                       * okresowym — reszta. Ten sam krój i ta sama pozycja,
+                       * więc „6” i „5” czytało się jak te same wielkości.
+                       * Limit zbiorczy pokazujemy teraz jako ułamek.
+                       */
+                      const isPerItem = r.mode === "per_item";
+                      const value = isPerItem
+                        ? String(r.cap)
+                        : `${Math.round(r.remaining)}/${Math.round(r.cap)}`;
+                      const suffix = isPerItem
+                        ? "pkt na wpis"
+                        : r.status === "blocked"
+                          ? "limit wyczerpany"
+                          : "pkt wolne";
 
                       const description =
                         r.mode === "per_item"
@@ -2123,7 +2240,8 @@ export default function CalculatorClient() {
 
                             <div
                               className={[
-                                "shrink-0 text-xl font-bold leading-none tracking-[-0.03em]",
+                                "shrink-0 font-bold leading-none tracking-[-0.03em] tabular-nums",
+                                isPerItem ? "text-xl" : "text-lg",
                                 active ? "text-emerald-700" : "text-slate-500",
                               ].join(" ")}
                             >
@@ -2711,7 +2829,7 @@ export default function CalculatorClient() {
                 Najbliższe terminy
               </h2>
               <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
-                Zaplanowane wpisy i koniec okresu rozliczeniowego.
+                Zaległe plany, nadchodzące wpisy i koniec okresu.
               </p>
             </div>
           </div>
@@ -2725,6 +2843,38 @@ export default function CalculatorClient() {
         </div>
 
         <ul className="divide-y divide-slate-100">
+          {overdue.map((entry) => (
+            <li key={`overdue-${entry.id}`} className="bg-rose-50/55">
+              <Link
+                href={`/aktywnosci/${entry.id}`}
+                className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-rose-50"
+              >
+                <span className="w-12 shrink-0 text-center">
+                  <span className="block text-lg font-extrabold leading-tight tracking-[-0.03em] text-rose-800">
+                    {agendaDay(entry.date)}
+                  </span>
+                  <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-rose-500">
+                    {agendaMonth(entry.date)}
+                  </span>
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold text-slate-950">
+                    {entry.title}
+                  </span>
+                  <span className="mt-0.5 block truncate text-xs text-rose-700">
+                    Nadal oznaczone jako zaplanowane
+                    {entry.detail ? ` · ${entry.detail}` : ""}
+                  </span>
+                </span>
+
+                <span className="shrink-0 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-800">
+                  {formatOverdue(entry.daysOverdue)}
+                </span>
+              </Link>
+            </li>
+          ))}
+
           {upcoming.map((entry) => (
             <li key={entry.id}>
               <Link
@@ -2764,7 +2914,7 @@ export default function CalculatorClient() {
             </li>
           ))}
 
-          {upcoming.length === 0 ? (
+          {upcoming.length === 0 && overdue.length === 0 ? (
             <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
               <p className="text-[13px] leading-5 text-slate-500">
                 Nie masz zaplanowanych aktywności. Dodaj termin, a CRPE przypomni o nim

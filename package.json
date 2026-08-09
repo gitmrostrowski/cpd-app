@@ -44,7 +44,8 @@
     "check:v6.19.2": "node scripts/check-v6-19-2-status-actions-typography.mjs",
     "check:v6.20": "node --experimental-strip-types scripts/check-v6-20-deadlines-and-pace.mjs",
     "check:v6.21": "node --experimental-strip-types scripts/check-v6-21-consistency-and-routes.mjs",
-    "check:v6.22": "node --experimental-strip-types scripts/check-v6-22-report-export.mjs"
+    "check:v6.22": "node --experimental-strip-types scripts/check-v6-22-report-export.mjs",
+    "check:v6.24": "node --experimental-strip-types scripts/check-v6-24-overdue-and-actions.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

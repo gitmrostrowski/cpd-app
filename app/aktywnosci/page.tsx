@@ -24,6 +24,7 @@ import {
   Trash2,
   UploadCloud,
 } from "lucide-react";
+import { isOverduePlanned } from "@/lib/cpd/overdue";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 import {
@@ -95,7 +96,7 @@ const ALLOWED_MIME = new Set([
 ]);
 
 type StatusKind = "complete" | "missing";
-type ActivityTab = "todo" | "planned" | "ready" | "all";
+type ActivityTab = "overdue" | "todo" | "planned" | "ready" | "all";
 
 const ACTIVITY_TABS: {
   key: ActivityTab;
@@ -103,6 +104,12 @@ const ACTIVITY_TABS: {
   short: string;
   description: string;
 }[] = [
+  {
+    key: "overdue",
+    label: "Zaległe terminy",
+    short: "Zaległe",
+    description: "Zaplanowane wpisy, których data już minęła.",
+  },
   {
     key: "todo",
     label: "Do uzupełnienia",
@@ -227,12 +234,24 @@ function getActivityTab(
   const prog = normalizeStatus(a.status);
   const st = getRowStatus(a, docsForActivity);
 
-  if (prog === "planned") return "planned";
+  if (prog === "planned") {
+    return isOverduePlanned(a, new Date()) ? "overdue" : "planned";
+  }
   if (st.kind === "missing") return "todo";
   return "ready";
 }
 
 function tabTone(tab: ActivityTab) {
+  if (tab === "overdue") {
+    return {
+      stripe: "bg-rose-500",
+      icon: "bg-rose-50 text-rose-700 ring-rose-100",
+      pill: "border-rose-200 bg-rose-50 text-rose-700",
+      active: "border-rose-200 bg-white shadow-sm ring-1 ring-rose-100",
+      number: "text-rose-700",
+    };
+  }
+
   if (tab === "todo") {
     return {
       stripe: "bg-amber-400",
@@ -382,6 +401,25 @@ export default function ActivitiesPage() {
   );
 
   const [activeTab, setActiveTab] = useState<ActivityTab>("todo");
+
+  // Wejście z Panelu CPD: filtr listy albo przewinięcie do formularza.
+  useEffect(() => {
+    if (typeof window === "undefined" || loading || !user) return;
+    const requested = new URLSearchParams(window.location.search).get("filtr");
+    if (requested === "zalegle") setActiveTab("overdue");
+    if (requested === "braki") setActiveTab("todo");
+    if (requested === "wszystkie") setActiveTab("all");
+
+    if (new URLSearchParams(window.location.search).get("new") === "1") {
+      window.requestAnimationFrame(() => {
+        const form = document.getElementById("new-activity");
+        form?.scrollIntoView({ behavior: "smooth", block: "start" });
+        form?.querySelector<HTMLSelectElement>("[data-new-activity-input]")?.focus({
+          preventScroll: true,
+        });
+      });
+    }
+  }, [loading, user]);
 
   const [q, setQ] = useState("");
   const [filterType, setFilterType] = useState<string>("Wszystkie");
@@ -768,6 +806,7 @@ export default function ActivitiesPage() {
   }, [items]);
 
   const activityStats = useMemo(() => {
+    let overdue = 0;
     let todo = 0;
     let planned = 0;
     let ready = 0;
@@ -776,6 +815,7 @@ export default function ActivitiesPage() {
       const docsFor = docsByActivity[a.id] ?? [];
       const bucket = getActivityTab(a, docsFor);
 
+      if (bucket === "overdue") overdue += 1;
       if (bucket === "todo") todo += 1;
       if (bucket === "planned") planned += 1;
       if (bucket === "ready") ready += 1;
@@ -800,6 +840,7 @@ export default function ActivitiesPage() {
     }, 0);
 
     return {
+      overdue,
       todo,
       planned,
       ready,
@@ -811,6 +852,7 @@ export default function ActivitiesPage() {
   }, [items, docsByActivity]);
 
   function getTabCount(tab: ActivityTab) {
+    if (tab === "overdue") return activityStats.overdue;
     if (tab === "todo") return activityStats.todo;
     if (tab === "planned") return activityStats.planned;
     if (tab === "ready") return activityStats.ready;
@@ -841,9 +883,6 @@ export default function ActivitiesPage() {
       return true;
     });
   }, [items, activeTab, q, filterType, filterYear, docsByActivity]);
-
-  const activeTabMeta =
-    ACTIVITY_TABS.find((t) => t.key === activeTab) ?? ACTIVITY_TABS[0];
 
   if (loading) {
     return (
@@ -953,12 +992,12 @@ export default function ActivitiesPage() {
                 </div>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
                 {ACTIVITY_TABS.map((tab) => {
                   const active = activeTab === tab.key;
                   const tone = tabTone(tab.key);
                   const Icon =
-                    tab.key === "todo"
+                    tab.key === "overdue" || tab.key === "todo"
                       ? AlertTriangle
                       : tab.key === "planned"
                         ? CalendarDays
@@ -1074,7 +1113,13 @@ export default function ActivitiesPage() {
               </div>
 
               <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600">
-                {activeTab === "todo" ? (
+                {activeTab === "overdue" ? (
+                  <>
+                    Te terminy minęły, ale wpisy nadal są oznaczone jako
+                    zaplanowane. Otwórz je i wybierz „Ukończ” albo usuń, jeśli
+                    wydarzenie się nie odbyło.
+                  </>
+                ) : activeTab === "todo" ? (
                   <>
                     Masz{" "}
                     <span className="font-semibold text-slate-900">
@@ -1122,7 +1167,9 @@ export default function ActivitiesPage() {
                   Brak wyników
                 </div>
                 <div className="mx-auto mt-1 max-w-md text-sm leading-relaxed text-slate-600">
-                  {activeTab === "todo"
+                  {activeTab === "overdue"
+                    ? "Nie masz zaległych planów. Wszystkie minione terminy zostały już rozstrzygnięte."
+                    : activeTab === "todo"
                     ? "Nie masz aktywności wymagających uzupełnienia. Kompletne wpisy znajdziesz w „Gotowe do raportu”."
                     : activeTab === "planned"
                       ? "Nie masz obecnie zaplanowanych szkoleń. Możesz dodać je z bazy szkoleń."
@@ -1622,7 +1669,10 @@ export default function ActivitiesPage() {
           </section>
 
           <aside className="space-y-4">
-            <div className="rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]">
+            <div
+              id="new-activity"
+              className="scroll-mt-24 rounded-[1.45rem] border border-slate-300/80 bg-white p-4 shadow-[0_7px_16px_rgba(15,23,42,0.10)]"
+            >
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
                 Porządkowanie
               </p>
@@ -1820,6 +1870,7 @@ export default function ActivitiesPage() {
                 <div>
                   <label className={labelBase}>Rodzaj</label>
                   <select
+                    data-new-activity-input
                     className={fieldBase}
                     value={type}
                     onChange={(e) => setType(e.target.value as any)}

@@ -9,15 +9,22 @@ const packageJson = JSON.parse(await readFile(new URL("package.json", root), "ut
 assert.match(panel, /title: `Uzupełnij \$\{incompleteCount\}/, "Pierwszy krok musi prowadzić do uzupełniania wpisów");
 assert.match(panel, /title: "Dodaj aktywność"/, "Stan bez braków nadal potrzebuje pierwszego odnośnika");
 assert.match(panel, /\? "Ustaw cel punktowy"[\s\S]{0,120}\? "Dobierz inną aktywność"[\s\S]{0,80}: "Zaplanuj szkolenie"/, "Drugi krok musi odpowiadać stanowi celu");
-assert.match(panel, /title: "Sprawdź raport"/, "Trzeci krok musi prowadzić do raportu");
-assert.match(panel, /description: `Podsumowanie okresu \$\{periodStart\}–\$\{periodEnd\}`/, "Raport powinien wskazywać właściwy okres");
+// v6.24: „Sprawdź raport” nie nazywało żadnej czynności i nie niosło danych.
+assert.match(panel, /title: "Pobierz zestawienie"/, "Trzeci krok musi nazywać realną akcję");
+assert.match(panel, /ctaHref: "\/raporty\/uzytkownik"/, "Trzeci krok nadal prowadzi do raportu");
+// v6.24: przy pustym okresie nadal wskazujemy zakres, ale gdy są pozycje,
+// opis podaje ich liczbę i dostępne formaty — etykieta okresu nic nie wnosiła.
+assert.match(panel, /`Podsumowanie okresu \$\{periodStart\}–\$\{periodEnd\}`/, "Pusty okres nadal wskazuje zakres");
+assert.match(panel, /pozycja", "pozycje", "pozycji"/, "Niepusty raport podaje liczbę pozycji");
 assert.match(panel, /return steps;/, "Lista nie może ucinać kroków zależnie od stanu");
 
-// Trzy rzędy dzielą wysokość kolumny. Stary `li.h-full` rozciągał każdy rząd
-// do wysokości całego panelu, przez co widoczny był tylko pierwszy żółty krok.
-assert.match(panel, /<ol className="grid grid-rows-3 divide-y/, "Odnośniki muszą tworzyć trzy równe rzędy");
-assert.doesNotMatch(panel, /<li key=\{step\.title\} className="h-full">/, "Pojedynczy krok nie może mieć wysokości całej listy");
-assert.match(panel, /min-h-\[72px\]/, "Każdy odnośnik musi zachować wygodny obszar kliknięcia");
+// v6.24: trzy równe rzędy rozciągały się do wysokości wykresu (~83 px na dwie
+// linijki tekstu) i wyglądały jak wypełniacz. Teraz kolumna jest wyśrodkowana,
+// a hierarchię niesie wyróżniona pierwsza akcja, nie równy podział wysokości.
+assert.doesNotMatch(panel, /grid grid-rows-3 divide-y/, "Rzędy nie mogą rozciągać się do wysokości wykresu");
+assert.match(panel, /flex flex-col justify-center gap-2/, "Kolumna akcji układa się pionowo i centruje");
+assert.match(panel, /py-3\b/, "Akcja główna zachowuje wygodny obszar kliknięcia");
+assert.match(panel, /py-2\.5/, "Odnośniki drugorzędne są zwarte, ale nadal klikalne");
 
 // Hierarchia typografii pod wykresem i w odnośnikach nie może wrócić do 11 px.
 assert.match(panel, /pl-9 text-\[12px\] font-medium leading-5/, "Legenda wykresu musi pozostać czytelna");
