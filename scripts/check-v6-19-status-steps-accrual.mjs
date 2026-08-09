@@ -45,7 +45,9 @@ assert.match(panel, /text-\[34px\] font-black/, "Suma punktów musi być główn
 assert.match(panel, /const areaPath = donePoints\.length/, "Krzywa musi mieć bezpiecznie zbudowane wypełnienie");
 assert.match(panel, /opacity=\{0\.1\}/, "Wypełnienie pod krzywą powinno pozostać subtelne");
 assert.match(panel, /strokeWidth=\{3\}/, "Krzywa zdobytych punktów musi pozostać czytelna");
-assert.match(panel, /\{\[0, 1\]\.map/, "Siatka wykresu powinna mieć tylko poziom zera i maksimum");
+// v6.20: siatka dostała linię pośrednią. Bez niej nie dało się odczytać, gdzie
+// leży wynik ani punkt równego tempa — a to są dwie liczby, o które w tym wykresie chodzi.
+assert.match(panel, /\{\[0, 0\.5, 1\]\.map/, "Siatka wykresu potrzebuje poziomu pośredniego");
 assert.match(panel, /Ustaw cel punktowy, żeby zobaczyć/, "Brak celu wymaga czytelnego stanu pustego");
 assert.doesNotMatch(panel, /Kreska pokazuje, gdzie byłbyś/, "Cienki pasek nie może dublować wykresu");
 

@@ -27,8 +27,19 @@ import {
   buildAccrualSeries,
   type AccrualSeries,
 } from "@/lib/cpd/accrual";
+import {
+  formatCountdown,
+  requiredPace,
+  resolvePeriodDeadline,
+  upcomingEntries,
+} from "@/lib/cpd/deadlines";
 
 type ActivityStatus = "planned" | "done" | null;
+
+const MONTHS_SHORT = [
+  "sty", "lut", "mar", "kwi", "maj", "cze",
+  "lip", "sie", "wrz", "paź", "lis", "gru",
+] as const;
 
 const PANEL_SECTION_IDS = [
   "ustawienia",
@@ -107,6 +118,15 @@ function formatYMD(d: string | null | undefined) {
   const [y, m, day] = d.split("-");
   if (!y || !m || !day) return d;
   return `${day}.${m}.${y}`;
+}
+
+function agendaDay(isoDate: string) {
+  return Number(isoDate.slice(8, 10));
+}
+
+function agendaMonth(isoDate: string) {
+  const monthIndex = Number(isoDate.slice(5, 7)) - 1;
+  return MONTHS_SHORT[monthIndex] ?? "";
 }
 
 function getPeriodFromPwzIssueDate(
@@ -388,7 +408,9 @@ function PointsAccrualChart({
   );
   const behind = Math.round(series.targetToday - series.doneTotal);
   const gapTextAnchor = series.todayX > 0.82 ? "end" : "start";
-  const gapTextX = px(series.todayX) + (series.todayX > 0.82 ? -8 : 8);
+  const gapTextX = px(series.todayX) + (series.todayX > 0.82 ? -9 : 9);
+  /** Etykieta siada w połowie pionowej kreski, żeby nie nachodzić na krzywą ani na znacznik „dziś”. */
+  const gapTextY = (py(series.doneTotal) + py(series.targetToday)) / 2 + 4;
   const accessibleTarget =
     series.target > 0
       ? `Przy równomiernym tempie na dziś ${Math.round(series.targetToday)} pkt, cel ${series.target} pkt.`
@@ -401,7 +423,7 @@ function PointsAccrualChart({
       role="img"
       aria-label={`Wykres narastania punktów w okresie ${periodStart}–${periodEnd}. Zdobyte ${series.doneTotal} pkt. ${accessibleTarget}`}
     >
-      {[0, 1].map((ratio) => (
+      {[0, 0.5, 1].map((ratio) => (
         <g key={ratio}>
           <line
             x1={L}
@@ -465,14 +487,26 @@ function PointsAccrualChart({
             stroke="#b45309"
             strokeWidth={1.5}
           />
+          <line
+            x1={L}
+            y1={py(series.targetToday)}
+            x2={px(series.todayX)}
+            y2={py(series.targetToday)}
+            stroke="#f59e0b"
+            strokeWidth={1}
+            strokeDasharray="2 3"
+          />
           <circle cx={px(series.todayX)} cy={py(series.targetToday)} r={3} fill="#b45309" />
           <text
             x={gapTextX}
-            y={py(series.targetToday) - 5}
+            y={gapTextY}
             textAnchor={gapTextAnchor}
             fontSize={11}
             fontWeight={700}
             fill="#b45309"
+            stroke="#ffffff"
+            strokeWidth={3}
+            paintOrder="stroke"
           >
             −{behind} pkt
           </text>
@@ -763,16 +797,26 @@ export default function CalculatorClient() {
 
   const hasPointTarget = Number(requiredPoints) > 0;
   const paceDelta = Math.round(progress - periodTimeProgress);
+
+  /**
+   * Odstęp od równego tempa podajemy w punktach, a nie w punktach procentowych.
+   * Wykres obok pokazuje dokładnie tę samą różnicę jako „−N pkt”, a cały panel
+   * liczy w punktach — dwie jednostki na jedną wielkość zmuszały do przeliczania.
+   */
+  const paceGapPoints = Math.round(
+    (Number(requiredPoints) || 0) * (periodTimeProgress / 100) - donePoints,
+  );
+
   const paceBadgeLabel =
     !hasPointTarget
       ? "Cel nieustawiony"
       : progress <= 0
       ? "Brak punktów"
       : paceDelta >= 10
-        ? `${paceDelta} pp. zapasu`
+        ? `${Math.abs(paceGapPoints)} pkt zapasu`
         : paceDelta >= -10
           ? "Zgodnie z tempem"
-          : `${Math.abs(paceDelta)} pp. poniżej tempa`;
+          : `${Math.abs(paceGapPoints)} pkt poniżej tempa`;
 
   const paceBadgeClass =
     !hasPointTarget
@@ -973,7 +1017,50 @@ export default function CalculatorClient() {
     cycleTargetMode === "rule_set" && pwzIssueDate
       ? "Tryb okresu — według reguły"
       : "Tryb okresu";
-  const okresLabel = pwzIssueDate
+  const canUseRuleDeadline =
+    cycleTargetMode === "rule_set" &&
+    appliedRuleSet?.status === "verified" &&
+    Boolean(appliedRuleSet.period_months);
+  const periodDeadline = useMemo(
+    () =>
+      resolvePeriodDeadline({
+        periodEnd,
+        pwzIssueDate: canUseRuleDeadline ? pwzIssueDate : null,
+        ruleMonths: canUseRuleDeadline ? appliedRuleSet?.period_months ?? null : null,
+        today: new Date(),
+      }),
+    [appliedRuleSet?.period_months, canUseRuleDeadline, periodEnd, pwzIssueDate],
+  );
+
+  const pace = useMemo(
+    () => requiredPace({ missingPoints, deadline: periodDeadline }),
+    [missingPoints, periodDeadline],
+  );
+
+  const upcoming = useMemo(
+    () =>
+      upcomingEntries({
+        activities: activities.map((a) => ({
+          id: a.id,
+          type: a.type,
+          organizer: a.organizer,
+          points: Number(a.points) || 0,
+          status: normalizeStatus(a.status),
+          planned_start_date: a.planned_start_date ?? null,
+        })),
+        today: new Date(),
+      }),
+    [activities],
+  );
+
+  const deadlineFallbackMessage =
+    periodDeadline?.source === "period_year" && cycleTargetMode === "rule_set"
+      ? !pwzIssueDate
+        ? "Termin liczony do końca roku kalendarzowego. Uzupełnij datę wydania PWZ w profilu, żeby CRPE liczyło okres od niej."
+        : "Termin liczony do końca roku kalendarzowego, ponieważ przypięta reguła nie pozwala wyznaczyć dokładnej daty końca."
+      : null;
+
+  const okresLabel = cycleTargetMode === "rule_set" && pwzIssueDate
     ? `Okres liczony z PWZ (${formatYMD(pwzIssueDate)})`
     : periodMode === "preset"
       ? "Okres rozliczeniowy"
@@ -2357,31 +2444,119 @@ export default function CalculatorClient() {
         </div>
       </section>
 
-      <section id="powiadomienia" className={`${cardCls} scroll-mt-44`}>
-        <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+      <section id="terminy" className={`${cardCls} scroll-mt-44`}>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-slate-100 px-5 py-3.5">
           <div className="flex items-center gap-3">
             <IconBubble tone="blue">
               <MiniIcon name="bell" />
             </IconBubble>
-
             <div>
               <h2 className="text-base font-extrabold tracking-tight text-slate-950">
-                Bądź na bieżąco i nie przegap ważnych terminów
+                Najbliższe terminy
               </h2>
               <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
-                Włącz powiadomienia, aby otrzymywać przypomnienia o szkoleniach
-                i terminach.
+                Zaplanowane wpisy i koniec okresu rozliczeniowego.
               </p>
             </div>
           </div>
 
           <Link
             href="/profil"
-            className="shrink-0 rounded-xl border border-blue-100 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95"
+            className="shrink-0 text-[13px] font-bold text-blue-700 hover:underline"
           >
-            Ustawienia powiadomień →
+            Przypomnienia →
           </Link>
         </div>
+
+        <ul className="divide-y divide-slate-100">
+          {upcoming.map((entry) => (
+            <li key={entry.id}>
+              <Link
+                href="/aktywnosci"
+                className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-slate-50"
+              >
+                <span className="w-12 shrink-0 text-center">
+                  <span className="block text-lg font-extrabold leading-tight tracking-[-0.03em] text-slate-950">
+                    {agendaDay(entry.date)}
+                  </span>
+                  <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                    {agendaMonth(entry.date)}
+                  </span>
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold text-slate-950">
+                    {entry.title}
+                  </span>
+                  {entry.detail ? (
+                    <span className="mt-0.5 block truncate text-xs text-slate-500">
+                      {entry.detail}
+                    </span>
+                  ) : null}
+                </span>
+
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
+                    entry.daysAway <= 30
+                      ? "bg-amber-50 text-amber-800"
+                      : "text-slate-500"
+                  }`}
+                >
+                  {formatCountdown(entry.daysAway)}
+                </span>
+              </Link>
+            </li>
+          ))}
+
+          {upcoming.length === 0 ? (
+            <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+              <p className="text-[13px] leading-5 text-slate-500">
+                Nie masz zaplanowanych aktywności. Dodaj termin, a CRPE przypomni o nim
+                z wyprzedzeniem.
+              </p>
+              <Link
+                href="/baza-szkolen"
+                className="shrink-0 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-[13px] font-bold text-blue-700 transition hover:bg-blue-100"
+              >
+                Znajdź szkolenie →
+              </Link>
+            </li>
+          ) : null}
+
+          {periodDeadline ? (
+            <li className="flex items-center gap-4 bg-slate-50/70 px-5 py-3">
+              <span className="grid w-12 shrink-0 place-items-center text-slate-400">
+                <MiniIcon name="target" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold text-slate-950">
+                  Koniec okresu rozliczeniowego
+                </span>
+                <span className="mt-0.5 block truncate text-xs text-slate-500">
+                  {formatYMD(periodDeadline.date)}
+                  {missingPoints > 0 ? ` · zostało ${missingPoints} pkt do zdobycia` : " · cel osiągnięty"}
+                </span>
+              </span>
+              <span className="shrink-0 text-xs font-bold text-slate-500">
+                {formatCountdown(periodDeadline.daysAway)}
+              </span>
+            </li>
+          ) : null}
+        </ul>
+
+        {pace && !pace.achieved ? (
+          <p className="border-t border-slate-100 px-5 py-3 text-[13px] leading-5 text-slate-600">
+            Przy pozostałym czasie musisz zdobywać średnio{" "}
+            <span className="font-bold text-slate-900">{pace.pointsPerYear} pkt rocznie</span>, żeby
+            zamknąć okres na czas.
+          </p>
+        ) : null}
+
+        {deadlineFallbackMessage ? (
+          <p className="border-t border-slate-100 px-5 py-2.5 text-[11px] leading-4 text-slate-400">
+            {deadlineFallbackMessage}
+          </p>
+        ) : null}
       </section>
     </div>
   );
