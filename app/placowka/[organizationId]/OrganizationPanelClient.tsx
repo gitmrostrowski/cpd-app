@@ -566,7 +566,7 @@ export default function OrganizationPanelClient({
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
-              href="/kalkulator"
+              href="/panel-cpd"
               className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
             >
               Moje CRPE

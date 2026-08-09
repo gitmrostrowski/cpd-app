@@ -101,7 +101,7 @@ export default function PlacowkaPage() {
           </p>
         </div>
         <Link
-          href="/kalkulator"
+          href="/panel-cpd"
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
         >
           <UserRound className="h-4 w-4" /> Moje CRPE

@@ -131,7 +131,7 @@ const guides: Guide[] = [
           "Przejdź do aktywności wymagających uzupełnienia.",
         ],
         result: "Zobaczysz, ile punktów brakuje według ustawień i danych w CRPE.",
-        href: "/kalkulator",
+        href: "/panel-cpd",
         action: "Otwórz Panel CPD",
       },
     ],
@@ -264,9 +264,9 @@ const guides: Guide[] = [
         steps: [
           "Wybierz aktywności, które mają znaleźć się w raporcie.",
           "Sprawdź dokumenty i dane organizatora.",
-          "Kliknij „Pobierz PDF” albo „Pobierz ZIP”.",
+          "Kliknij „Drukuj / zapisz PDF” albo „Pobierz CSV”.",
         ],
-        result: "PDF zawiera zestawienie, a ZIP może zawierać dołączone dokumenty.",
+        result: "Otrzymasz czytelne zestawienie do zapisu jako PDF albo plik CSV do dalszej pracy.",
         href: "/raporty/uzytkownik",
         action: "Przygotuj raport",
       },
@@ -479,11 +479,13 @@ export default function Page() {
             Wybierz obszar i kliknij czynność.
           </h2>
         </div>
-        <div className="grid items-start gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {guides.map(({ icon: Icon, title, text, items }) => (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-12">
+          {guides.map(({ icon: Icon, title, text, items }, index) => (
             <article
               key={title}
-              className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_15px_42px_rgba(15,45,75,0.06)]"
+              className={`flex h-full flex-col rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_15px_42px_rgba(15,45,75,0.06)] ${
+                index < 4 ? "xl:col-span-3" : "xl:col-span-4"
+              }`}
             >
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
                 <Icon className="h-5 w-5" />
@@ -494,7 +496,7 @@ export default function Page() {
               <p className="mt-2 min-h-12 text-sm leading-6 text-slate-600">
                 {text}
               </p>
-              <div className="mt-5 divide-y divide-slate-100 border-y border-slate-100">
+              <div className="mt-5 flex-1 divide-y divide-slate-100 border-y border-slate-100">
                 {items.map((item) => (
                   <details key={item.title} className="group">
                     <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 py-2.5 text-sm font-bold text-slate-800 transition hover:text-blue-700">
@@ -552,14 +554,15 @@ export default function Page() {
               <HelpCircle className="h-5 w-5" />
             </span>
             <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.2em] text-blue-700">
-              Najczęstsze pytania
+              Zasady i zakres CRPE
             </p>
             <h2 className="mt-2 text-[32px] font-black leading-[1.08] tracking-[-0.04em] text-slate-950 sm:text-[44px]">
-              Krótkie odpowiedzi na ważne pytania.
+              Pytania o to, czym CRPE jest, a czym nie.
             </h2>
             <p className="mt-4 text-sm leading-7 text-slate-600">
-              Nie znalazłeś odpowiedzi? Napisz, co chciałeś zrobić, na którym
-              kroku pojawił się problem i jaki komunikat zobaczyłeś.
+              Wyżej znajdziesz instrukcje „jak to zrobić”. Tutaj odpowiadamy na
+              pytania o zakres, dane i formalności. Nie znalazłeś odpowiedzi?
+              Napisz, co chciałeś zrobić i jaki komunikat zobaczyłeś.
             </p>
             <div className="mt-5">
               <RoleContactModal
@@ -602,7 +605,7 @@ export default function Page() {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/kalkulator"
+                href="/panel-cpd"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-extrabold text-white"
               >
                 Panel CPD <ArrowRight className="h-4 w-4" />

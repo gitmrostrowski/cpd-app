@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
-const panel = await readFile(new URL("app/kalkulator/CalculatorClient.tsx", root), "utf8");
+const panel = await readFile(new URL("app/panel-cpd/CalculatorClient.tsx", root), "utf8");
 const packageJson = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
 
 // Prawa kolumna ma zawsze trzy odnośniki, również gdy nie ma braków albo cel jest osiągnięty.

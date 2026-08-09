@@ -323,16 +323,30 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
           {selected === "organizator" ? <OrganizatorDashboard /> : null}
         </div>
 
-        <div className="flex items-center justify-between gap-4 border-t border-slate-100 bg-slate-50/70 px-5 py-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-slate-100 bg-slate-50/70 px-5 py-3.5">
           <p className="max-w-[310px] text-[12px] font-semibold leading-5 text-slate-600">
             Zobacz dokładnie, czym różni się zakres CRPE dla wybranej roli.
           </p>
-          <Link
-            href={active.detailsHref}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-[12px] font-extrabold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
-          >
-            Dowiedz się więcej <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {/*
+              Role organizacyjne decydują za cały zespół, więc pytanie o dane
+              pracowników pada wcześniej niż o funkcje — link musi być pod ręką.
+            */}
+            {selected !== "medyk" ? (
+              <Link
+                href="/bezpieczenstwo"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-[12px] font-extrabold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+              >
+                Jak chronimy dane zespołu
+              </Link>
+            ) : null}
+            <Link
+              href={active.detailsHref}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-[12px] font-extrabold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
+            >
+              Dowiedz się więcej <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
       </div>
     </div>
@@ -620,28 +634,24 @@ function ProductToolsSection() {
     {
       icon: BarChart3,
       title: "Panel CPD i kalkulator",
-      status: "Dostępne",
       text: "Ustaw okres i wymagany cel, sprawdzaj postęp, limity oraz podpowiedź kolejnego kroku.",
       bullets: ["Cel i okres rozliczeniowy", "Postęp, limity i braki"],
     },
     {
       icon: CalendarCheck2,
       title: "Aktywności i certyfikaty",
-      status: "Dostępne",
       text: "Dodawaj i edytuj aktywności, wpisuj punkty oraz dołączaj PDF lub zdjęcie certyfikatu.",
       bullets: ["Dokument przy właściwym wpisie", "Edycja i kontrola kompletności"],
     },
     {
       icon: FileText,
       title: "Raport użytkownika",
-      status: "Dostępne",
-      text: "Przygotuj zestawienie aktywności, punktów i załączników oraz eksportuj dokumenty.",
-      bullets: ["Podsumowanie wybranego okresu", "Eksport PDF i ZIP"],
+      text: "Przygotuj zestawienie aktywności, punktów i kompletności załączników.",
+      bullets: ["Podsumowanie wybranego okresu", "Wydruk PDF i eksport CSV"],
     },
     {
       icon: FolderOpen,
       title: "Baza szkoleń",
-      status: "Dostępne",
       text: "Wyszukuj kursy, webinary i wydarzenia, filtruj je i dodawaj wybrane pozycje do planu CPD.",
       bullets: ["Filtry zawodu, miejsca i terminu", "Plan CPD bez automatycznego zapisu"],
     },
@@ -694,17 +704,12 @@ function ProductToolsSection() {
             </div>
 
             <div className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-4">
-              {tools.map(({ icon: Icon, title, status, text, bullets }) => (
+              {tools.map(({ icon: Icon, title, text, bullets }) => (
                 <Reveal key={title} className="h-full last:[&>article]:border-b-0">
                   <article className="crpe-interactive-card flex h-full min-h-[280px] flex-col rounded-[18px] border border-slate-200 bg-slate-50/75 p-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-100">
-                        {status}
-                      </span>
-                    </div>
+                    <span className="crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                      <Icon className="h-5 w-5" />
+                    </span>
                     <h3 className="mt-4 min-h-[44px] text-[17px] font-bold leading-[1.25] tracking-[-0.02em] text-slate-950">{title}</h3>
                     <p className="mt-2 text-[14px] leading-6 text-slate-600">{text}</p>
                     <ul className="mt-4 grid gap-2">
@@ -745,7 +750,7 @@ function PracticeSection() {
             Panel CPD łączy kalkulator, aktywności i dokumenty.
           </h2>
           <p className="mt-3 text-[15px] leading-6 text-slate-300 sm:mt-4 sm:text-[16px] sm:leading-7">
-            Kalkulator pokazuje postęp, Aktywności przechowują wpisy i certyfikaty, a Raport zbiera wszystko w jedno zestawienie.
+            Panel CPD pokazuje postęp, Aktywności przechowują wpisy i certyfikaty, a Raport zbiera wszystko w jedno zestawienie.
           </p>
 
           <ul className="mt-5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-1">

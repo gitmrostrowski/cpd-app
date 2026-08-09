@@ -192,7 +192,9 @@ export function formatCountdown(daysAway: number) {
   if (daysAway < 0) return "po terminie";
   if (daysAway === 0) return "dziś";
   if (daysAway === 1) return "jutro";
-  if (daysAway < 45) return `za ${daysAway} dni`;
+  // Do dwóch miesięcy podajemy dni. Przy progu 45 termin oddalony o 49 dni
+  // zaokrąglał się do „za 2 mies.”, co zawyżało odległość o pół miesiąca.
+  if (daysAway < 60) return `za ${daysAway} dni`;
 
   const months = Math.round(daysAway / 30.44);
   if (months < 18) return `za ${months} mies.`;

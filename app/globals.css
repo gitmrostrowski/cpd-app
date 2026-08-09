@@ -208,3 +208,82 @@ summary::-webkit-details-marker {
 :focus-visible {
   outline-color: #2563eb;
 }
+
+.crpe-print-only {
+  display: none;
+}
+
+/*
+ * Wydruk raportu. „Pobierz PDF” otwiera okno wydruku przeglądarki, więc kartka
+ * musi być dokumentem, a nie zrzutem interfejsu: bez nawigacji, filtrów
+ * i przycisków, z pełną tabelą i widocznymi adresami źródeł.
+ */
+@media print {
+  :root {
+    --crpe-print: 1;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  header[data-crpe-chrome],
+  footer[data-crpe-chrome],
+  [data-print="hide"] {
+    display: none !important;
+  }
+
+  .crpe-report-print[data-print="area"] {
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  .crpe-report-print .crpe-print-only {
+    display: block !important;
+  }
+
+  .crpe-report-print [data-print="summary-grid"] {
+    display: block !important;
+  }
+
+  .crpe-report-print [data-print="summary"] {
+    width: 100% !important;
+  }
+
+  .crpe-report-print [data-print="table"] {
+    overflow: visible !important;
+  }
+
+  .crpe-report-print table {
+    width: 100%;
+    min-width: 0 !important;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .crpe-report-print thead {
+    display: table-header-group;
+  }
+
+  .crpe-report-print tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .crpe-report-print .sticky {
+    position: static !important;
+  }
+
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 9px;
+    color: #475569;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+}

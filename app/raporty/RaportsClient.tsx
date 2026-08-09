@@ -1,6 +1,8 @@
 // app/raporty/RaportsClient.tsx
 "use client";
 
+import AppPageHeader from "@/components/AppPageHeader";
+import { FileText } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -17,29 +19,16 @@ export default function RaportsClient() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900">Raporty</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Wybierz rodzaj raportu, który chcesz przygotować.
-          </p>
-        </div>
-
-        <div className="flex gap-2">
-          <Link
-            href="/aktywnosci"
-            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            Aktywności
-          </Link>
-          <Link
-            href="/kalkulator"
-            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            Kalkulator
-          </Link>
-        </div>
-      </div>
+      <AppPageHeader
+        eyebrow="Zestawienia CPD"
+        title="Raporty"
+        description="Wybierz rodzaj raportu, który chcesz przygotować."
+        icon={<FileText className="h-5 w-5" strokeWidth={2.2} />}
+        actions={[
+          { label: "Aktywności", href: "/aktywnosci", variant: "secondary" },
+          { label: "Panel CPD", href: "/panel-cpd", variant: "secondary" },
+        ]}
+      />
 
       {!user ? (
         <div className="mt-5 rounded-2xl border bg-white p-5 shadow-sm">
@@ -84,7 +73,7 @@ export default function RaportsClient() {
               <li>• podsumowanie punktów w wybranym okresie</li>
               <li>• lista aktywności do raportu</li>
               <li>• kontrola załączników i certyfikatów</li>
-              <li>• eksport PDF i ZIP</li>
+              <li>• wydruk / zapis PDF oraz eksport CSV</li>
             </ul>
           </div>
 

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { MailCheck } from "lucide-react";
 import { supabaseClient } from "@/lib/supabase/client";
 import { getSiteUrl } from "@/lib/siteUrl";
+import { safeInternalPath } from "@/lib/navigation/safeInternalPath";
 
 function isRateLimitError(message?: string) {
   const m = (message ?? "").toLowerCase();
@@ -53,7 +54,7 @@ export default function LoginPage() {
     "required" | "resent" | null
   >(null);
   const [pending, setPending] = useState(false);
-  const [nextPath, setNextPath] = useState("/kalkulator");
+  const [nextPath, setNextPath] = useState("/panel-cpd");
   const [invitationFlow, setInvitationFlow] = useState(false);
   const [useExistingAccount, setUseExistingAccount] = useState(false);
   const [emailLocked, setEmailLocked] = useState(false);
@@ -81,15 +82,8 @@ export default function LoginPage() {
     const candidate = searchParams.get("next");
     const existingAccountMode = searchParams.get("use_existing") === "1";
     setUseExistingAccount(existingAccountMode);
-    let safeCandidate = "/kalkulator";
-    if (
-      candidate &&
-      candidate.startsWith("/") &&
-      !candidate.startsWith("//")
-    ) {
-      safeCandidate = candidate;
-      setNextPath(safeCandidate);
-    }
+    const safeCandidate = safeInternalPath(candidate, "/panel-cpd");
+    setNextPath(safeCandidate);
 
     const destination = new URL(safeCandidate, window.location.origin);
     const invitationToken =

@@ -65,7 +65,7 @@ const content: Record<RoleKind, RoleContent> = {
     roadmapText: "CRPE pomaga prowadzić własną ewidencję, ale nie zastępuje oficjalnego rejestru ani wymaganej procedury rozliczenia.",
     roadmap: [
       "Dokument jest zawsze przypisany do konkretnej aktywności.",
-      "Kalkulator pokazuje postęp według ustawionego celu i okresu.",
+      "Panel CPD pokazuje postęp według ustawionego celu i okresu.",
       "Dodanie szkolenia do planu nie oznacza zapisu u organizatora.",
       "Dane i pliki są dostępne po zalogowaniu.",
     ],

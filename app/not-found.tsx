@@ -17,10 +17,10 @@ export default function NotFound() {
             Home
           </Link>
           <Link
-            href="/kalkulator"
+            href="/panel-cpd"
             className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium hover:bg-slate-50"
           >
-            Kalkulator
+            Panel CPD
           </Link>
           <Link
             href="/portfolio"

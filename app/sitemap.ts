@@ -6,11 +6,32 @@ import { trainingPath } from "@/lib/trainings/public";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
-  const staticPaths = ["", "/baza-szkolen", "/dla-medyka", "/dla-placowki", "/kalkulator", "/narzedzia", "/pomoc", "/kontakt"];
+  // Bez /panel-cpd, /aktywnosci i /raporty — te ekrany wymagają logowania,
+  // więc w mapie witryny byłyby tylko przekierowaniem do /login.
+  const staticPaths = [
+    "",
+    "/baza-szkolen",
+    "/dla-medyka",
+    "/dla-placowki",
+    "/dla-organizatora",
+    "/narzedzia",
+    "/bezpieczenstwo",
+    "/pomoc",
+    "/kontakt",
+    "/regulamin",
+    "/polityka-prywatnosci",
+  ];
   const staticEntries: MetadataRoute.Sitemap = staticPaths.map((path) => ({
     url: `${siteUrl}${path}`,
     changeFrequency: path === "/baza-szkolen" ? "daily" : "monthly",
-    priority: path === "" ? 1 : path === "/baza-szkolen" ? 0.9 : 0.7,
+    priority:
+      path === ""
+        ? 1
+        : path === "/baza-szkolen"
+          ? 0.9
+          : path === "/regulamin" || path === "/polityka-prywatnosci"
+            ? 0.3
+            : 0.7,
   }));
 
   try {

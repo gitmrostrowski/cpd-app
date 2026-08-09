@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MailCheck } from "lucide-react";
 import { createBrowserSupabase } from "@/lib/supabaseBrowser";
 import { getSiteUrl } from "@/lib/siteUrl";
+import { safeInternalPath } from "@/lib/navigation/safeInternalPath";
 
 const TERMS_VERSION = "1.0";
 const PRIVACY_VERSION = "1.0";
@@ -15,11 +16,6 @@ type InvitationLanding = {
   account_exists: boolean | null;
   email?: string;
 };
-
-function safeNextPath(value: string | null) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/";
-  return value;
-}
 
 function registrationError(message?: string) {
   const normalized = (message ?? "").toLowerCase();
@@ -54,8 +50,9 @@ export default function RegisterPage() {
   const [confirmationResent, setConfirmationResent] = useState(false);
 
   useEffect(() => {
-    const candidate = safeNextPath(
+    const candidate = safeInternalPath(
       new URLSearchParams(window.location.search).get("next"),
+      "/",
     );
     setNextPath(candidate);
 

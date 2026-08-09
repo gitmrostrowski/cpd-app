@@ -42,7 +42,9 @@
     "check:v6.18": "node scripts/check-v6-18-compact-status-timeline.mjs",
     "check:v6.19": "node scripts/check-v6-19-status-steps-accrual.mjs",
     "check:v6.19.2": "node scripts/check-v6-19-2-status-actions-typography.mjs",
-    "check:v6.20": "node --experimental-strip-types scripts/check-v6-20-deadlines-and-pace.mjs"
+    "check:v6.20": "node --experimental-strip-types scripts/check-v6-20-deadlines-and-pace.mjs",
+    "check:v6.21": "node --experimental-strip-types scripts/check-v6-21-consistency-and-routes.mjs",
+    "check:v6.22": "node --experimental-strip-types scripts/check-v6-22-report-export.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

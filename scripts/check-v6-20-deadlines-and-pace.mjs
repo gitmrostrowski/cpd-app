@@ -9,7 +9,7 @@ import {
 } from "../lib/cpd/deadlines.ts";
 
 const root = new URL("../", import.meta.url);
-const panel = await readFile(new URL("app/kalkulator/CalculatorClient.tsx", root), "utf8");
+const panel = await readFile(new URL("app/panel-cpd/CalculatorClient.tsx", root), "utf8");
 const packageJson = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
 
 const today = new Date(2026, 7, 9);
@@ -95,6 +95,8 @@ assert.equal(formatCountdown(0), "dziś");
 assert.equal(formatCountdown(-1), "po terminie");
 assert.equal(formatCountdown(1), "jutro");
 assert.equal(formatCountdown(18), "za 18 dni");
+assert.equal(formatCountdown(49), "za 49 dni", "49 dni to nie „2 mies.” — próg dni sięga 60");
+assert.equal(formatCountdown(59), "za 59 dni");
 assert.equal(formatCountdown(60), "za 2 mies.");
 assert.equal(formatCountdown(547), "za 1 rok 6 mies.");
 assert.equal(formatCountdown(1184), "za 3 lata 3 mies.");
@@ -133,7 +135,11 @@ assert.match(panel, /Koniec okresu rozliczeniowego/, "Agenda musi zawierać wier
 assert.match(panel, /pkt rocznie/, "Panel musi podawać wymagane tempo");
 assert.match(panel, /Uzupełnij datę wydania PWZ/, "Brak daty PWZ wymaga wyjaśnienia przybliżenia");
 assert.match(panel, /const canUseRuleDeadline =/, "Dokładny termin z PWZ wymaga trybu reguły i zweryfikowanej reguły");
-assert.match(panel, /periodDeadline\?\.source === "period_year"/, "Wyjaśnienie przybliżenia musi korzystać ze źródła terminu");
+assert.match(panel, /periodDeadline\?\.source !== "period_year"/, "Wyjaśnienie przybliżenia musi korzystać ze źródła terminu");
+// v6.21: okres własny też wymaga wyjaśnienia — wcześniej użytkownik ze zweryfikowaną
+// regułą i datą PWZ widział koniec roku kalendarzowego bez słowa komentarza.
+assert.match(panel, /const ruleDeadline = useMemo/, "Panel musi znać datę, którą wskazałaby reguła");
+assert.match(panel, /Według reguły dla zawodu wypadłby/, "Różnicę wobec reguły trzeba nazwać wprost");
 
 // --- Odstęp od tempa w jednej jednostce ---
 assert.match(panel, /const paceGapPoints/, "Odstęp od tempa liczymy w punktach");

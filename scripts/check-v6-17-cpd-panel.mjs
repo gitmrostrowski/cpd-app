@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
-const panel = await readFile(new URL("app/kalkulator/CalculatorClient.tsx", root), "utf8");
+const panel = await readFile(new URL("app/panel-cpd/CalculatorClient.tsx", root), "utf8");
 
 // Trwałe zasady v6.17: jedna definicja kompletności i uczciwy opis wyniku.
 assert.match(panel, /const incompleteEntries = useMemo/, "Panel musi mieć jedną definicję niekompletnego wpisu");

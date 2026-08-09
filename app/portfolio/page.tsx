@@ -131,7 +131,7 @@ export default function PortfolioPage() {
           <h1 className="text-xl font-semibold">Raport CPD</h1>
           <p className="mt-2 text-sm text-slate-600">Zaloguj się, aby wygenerować raport.</p>
           <div className="mt-4 flex gap-2">
-            <Link className="rounded-xl bg-blue-600 px-4 py-2 text-white hover:bg-blue-700" href="/logowanie">
+            <Link className="rounded-xl bg-blue-600 px-4 py-2 text-white hover:bg-blue-700" href="/login">
               Logowanie
             </Link>
             <Link className="rounded-xl border border-slate-200 px-4 py-2 hover:bg-slate-50" href="/">
@@ -144,7 +144,7 @@ export default function PortfolioPage() {
   }
 
   if (loading) return <div className="p-6">Wczytuję raport…</div>;
-  if (!profile) return <div className="p-6">Brak profilu. Uzupełnij profil w Kalkulatorze.</div>;
+  if (!profile) return <div className="p-6">Brak profilu. Uzupełnij profil w Panelu CPD.</div>;
 
   const missing = Math.max(0, profile.required_points - totalPoints);
 
@@ -253,7 +253,7 @@ export default function PortfolioPage() {
 
       <div className="pt-2 flex flex-wrap gap-2">
         <Link
-          href="/kalkulator"
+          href="/panel-cpd"
           className="inline-flex items-center rounded-2xl bg-blue-600 px-4 py-2 text-white font-semibold hover:bg-blue-700"
         >
           ← Wróć do kalkulatora

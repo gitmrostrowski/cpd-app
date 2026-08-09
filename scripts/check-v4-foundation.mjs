@@ -14,7 +14,7 @@ const migrationPath =
 const migration = read(migrationPath);
 const dataLayer = read("lib/data/crpe.ts");
 const professions = read("lib/cpd/professions.ts");
-const calculator = read("app/kalkulator/CalculatorClient.tsx");
+const calculator = read("app/panel-cpd/CalculatorClient.tsx");
 
 check(
   "Migracja tworzy trzy tabele reguł",

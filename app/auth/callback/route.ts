@@ -1,20 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
-
-function safeNextPath(value: string | null, fallback: string) {
-  if (!value) return fallback;
-  // pozwalamy tylko na ścieżki względne w obrębie serwisu
-  if (!value.startsWith("/")) return fallback;
-  // blokujemy próby typu //evil.com
-  if (value.startsWith("//")) return fallback;
-  return value;
-}
+import { safeInternalPath } from "@/lib/navigation/safeInternalPath";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
 
-  const next = safeNextPath(url.searchParams.get("next"), "/kalkulator");
+  const next = safeInternalPath(url.searchParams.get("next"), "/panel-cpd");
 
   if (!code) {
     return NextResponse.redirect(new URL(`/login?e=missing_code`, url.origin));

@@ -1,6 +1,7 @@
 // app/raporty/uzytkownik/RaportUserClient.tsx
 "use client";
 
+import { buildCsv, downloadCsv, safeFileName } from "@/lib/export/csv";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
@@ -391,12 +392,49 @@ export default function RaportUserClient() {
     setPeriodMode(profile?.period_start && profile?.period_end ? "profile" : "current");
   }
 
-  async function onDownloadPdf() {
-    alert("Kolejny krok: /api/reports/pdf (serwer generuje PDF + zwraca plik). UI i dane są gotowe.");
+  /**
+   * PDF generujemy przez okno wydruku przeglądarki („Zapisz jako PDF”).
+   * Serwerowy renderer jest w planach, ale do tego czasu użytkownik i tak
+   * potrzebuje pliku — a wcześniej oba przyciski pokazywały tylko notatkę
+   * developerską ze ścieżką API.
+   */
+  function onDownloadPdf() {
+    window.print();
   }
 
-  async function onDownloadZip() {
-    alert("Kolejny krok: /api/reports/zip (PDF + załączniki: certificate + activity_documents). UI i dane są gotowe.");
+  function onDownloadCsv() {
+    const headers = [
+      "Data",
+      "Pozycja",
+      "Organizator",
+      "Typ",
+      "Status",
+      "Punkty",
+      "Załączniki",
+    ];
+
+    const rows = included.map((a) => {
+      const status = (a.status ?? "done") as string;
+      return [
+        formatDatePLFromISO(activityDisplayDate(a)),
+        a.trainings?.title ?? "Aktywność własna",
+        a.organizer ?? a.trainings?.organizer ?? "",
+        a.type ?? "",
+        status === "done" ? "zrobione" : status === "planned" ? "planowane" : status,
+        parsePoints(a.points),
+        attachmentsTotalForActivity(a),
+      ];
+    });
+
+    rows.push([]);
+    rows.push(["Punkty po limitach", "", "", "", "", totals.pointsAfterLimits, ""]);
+    rows.push(["Cel punktowy", "", "", "", "", requiredPoints, ""]);
+    rows.push([`Zakres: ${fromDate} – ${toDate}`, "", "", "", "", "", ""]);
+
+    downloadCsv(
+      safeFileName(`CRPE raport ${fromDate} ${toDate}`, "csv"),
+      buildCsv(headers, rows),
+    );
   }
 
   if (!user?.id) {
@@ -416,20 +454,23 @@ export default function RaportUserClient() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-4 md:p-6">
+    <div data-print="area" className="crpe-report-print mx-auto max-w-6xl p-4 md:p-6">
       <div className="mb-4 flex flex-col gap-3 md:mb-6 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Raport użytkownika</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Wygeneruj zestawienie aktywności i pakiet dokumentów do złożenia w izbie / urzędzie.
+            Przygotuj zestawienie aktywności, punktów i kompletności załączników dla wybranego okresu.
+          </p>
+          <p className="crpe-print-only mt-2 text-xs text-slate-600">
+            Zawód: {professionLabel} · okres: {fromDate} – {toDate} · cel: {requiredPoints} pkt
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div data-print="hide" className="flex flex-wrap gap-2">
           <Link href="/raporty" className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium hover:bg-slate-50">
             Wróć do raportów
           </Link>
-          <Link href="/kalkulator" className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium hover:bg-slate-50">
-            Kalkulator
+          <Link href="/panel-cpd" className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium hover:bg-slate-50">
+            Panel CPD
           </Link>
           <Link href="/aktywnosci" className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium hover:bg-slate-50">
             Aktywności
@@ -441,8 +482,8 @@ export default function RaportUserClient() {
         <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-        <div className="md:col-span-5">
+      <div data-print="summary-grid" className="grid grid-cols-1 gap-4 md:grid-cols-12">
+        <div data-print="hide" className="md:col-span-5">
           <div className="rounded-2xl border bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -548,7 +589,7 @@ export default function RaportUserClient() {
           </div>
         </div>
 
-        <div className="md:col-span-7">
+        <div data-print="summary" className="md:col-span-7">
           <div className="rounded-2xl border bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -608,7 +649,7 @@ export default function RaportUserClient() {
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border bg-white p-4 shadow-sm">
+      <div data-print="hide" className="mt-4 rounded-2xl border bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="text-base font-semibold">Zawartość raportu</h2>
@@ -621,7 +662,7 @@ export default function RaportUserClient() {
             >
               Przywróć domyślne
             </button>
-            <Link href="/kalkulator" className="rounded-xl border bg-white px-3 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50">
+            <Link href="/panel-cpd" className="rounded-xl border bg-white px-3 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50">
               Reguły CPD
             </Link>
           </div>
@@ -666,7 +707,7 @@ export default function RaportUserClient() {
             <p className="mt-1 text-xs text-slate-600">Podgląd danych, które trafią do raportu.</p>
           </div>
 
-          <div className="grid w-full grid-cols-1 gap-2 md:w-auto md:grid-cols-4">
+          <div data-print="hide" className="grid w-full grid-cols-1 gap-2 md:w-auto md:grid-cols-4">
             <input
               placeholder="Szukaj (typ, organizator, szkolenie)…"
               value={q}
@@ -690,7 +731,7 @@ export default function RaportUserClient() {
           </div>
         </div>
 
-        <div className="mt-4 overflow-x-auto">
+        <div data-print="table" className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[980px] border-collapse text-sm">
             <thead>
               <tr className="border-b bg-slate-50 text-left text-xs text-slate-600">
@@ -781,12 +822,22 @@ export default function RaportUserClient() {
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <button onClick={onDownloadZip} className="rounded-xl border bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                Pobierz ZIP
+            <div data-print="hide" className="flex gap-2">
+              <button
+                type="button"
+                onClick={onDownloadCsv}
+                disabled={included.length === 0}
+                className="rounded-xl border bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Pobierz CSV
               </button>
-              <button onClick={onDownloadPdf} className="rounded-xl bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
-                Pobierz PDF
+              <button
+                type="button"
+                onClick={onDownloadPdf}
+                disabled={included.length === 0}
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Drukuj / zapisz PDF
               </button>
             </div>
           </div>

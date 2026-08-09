@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-white">
+    <footer data-crpe-chrome="true" className="border-t border-slate-200 bg-white">
       <div className="mx-auto grid w-full max-w-[1180px] gap-10 px-4 py-12 text-sm sm:py-14 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-end lg:px-8">
         <div>
           <p className="font-black text-slate-900">CRPE.pl</p>

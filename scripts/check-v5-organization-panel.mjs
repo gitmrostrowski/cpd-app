@@ -11,7 +11,7 @@ const panel = read(
 );
 const invitation = read("app/placowka/zaproszenie/page.tsx");
 const header = read("components/Header.tsx");
-const calculator = read("app/kalkulator/CalculatorClient.tsx");
+const calculator = read("app/panel-cpd/CalculatorClient.tsx");
 
 const checks = [];
 function check(name, passed) {

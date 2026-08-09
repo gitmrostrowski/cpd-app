@@ -1,9 +1,10 @@
 // app/profil/page.tsx
 "use client";
 
+import AppPageHeader from "@/components/AppPageHeader";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Building2, ChevronRight, ShieldCheck } from "lucide-react";
+import { Building2, ChevronRight, ShieldCheck, UserRound } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 import { getSiteUrl } from "@/lib/siteUrl";
@@ -503,7 +504,7 @@ export default function ProfilePage() {
     return (
       <div className="mx-auto w-full max-w-4xl p-6">
         <div className="rounded-2xl border bg-white p-6">
-          <h1 className="text-2xl font-bold text-slate-900">Profil</h1>
+          <h1 className="text-[28px] font-black tracking-[-0.035em] text-slate-950">Profil</h1>
           <p className="mt-2 text-slate-600">
             Status: <span className="font-semibold text-rose-700">❌ Niezalogowany</span>
           </p>
@@ -514,10 +515,10 @@ export default function ProfilePage() {
             </Link>
 
             <Link
-              href="/kalkulator"
+              href="/panel-cpd"
               className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              Przejdź do kalkulatora
+              Przejdź do Panelu CPD
             </Link>
           </div>
         </div>
@@ -534,34 +535,19 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto w-full max-w-4xl p-6 space-y-6">
       {/* Header */}
+      <AppPageHeader
+        eyebrow="Twoje konto"
+        title="Profil i ustawienia"
+        description={`Zalogowany jako ${user.email ?? "—"}.${profileLoading ? " Ładuję profil z bazy…" : ""}`}
+        icon={<UserRound className="h-5 w-5" strokeWidth={2.2} />}
+        actions={[
+          { label: "Portfolio", href: "/portfolio" },
+          { label: "Raporty", href: "/raporty", variant: "secondary" },
+          { label: "Panel CPD", href: "/panel-cpd", variant: "secondary" },
+        ]}
+      />
+
       <div className="rounded-2xl border bg-white p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Profil i ustawienia</h1>
-            <p className="mt-2 text-slate-700">
-              Status: <span className="font-semibold text-emerald-700">✅ Zalogowany</span>
-            </p>
-            <p className="mt-1 text-slate-600">
-              E-mail: <span className="font-medium text-slate-900">{user.email}</span>
-            </p>
-            {profileLoading ? <p className="mt-1 text-sm text-slate-500">Ładuję profil z bazy…</p> : null}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Link href="/portfolio" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-              Portfolio
-            </Link>
-
-            <Link href="/raporty" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-              Raporty
-            </Link>
-
-            <Link href="/kalkulator" className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-              Kalkulator
-            </Link>
-          </div>
-        </div>
-
         {(info || err) && (
           <div className="mt-4 rounded-xl border bg-white p-3 text-sm">
             {info ? <div className="text-emerald-700">{info}</div> : null}

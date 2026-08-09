@@ -17,6 +17,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
+import AppPageHeader from "@/components/AppPageHeader";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseClient } from "@/lib/supabase/client";
 import {
@@ -1409,45 +1410,30 @@ export default function TrainingHubClient({
         </div>
       ) : null}
       <div className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-7 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white px-5 py-4 shadow-[0_6px_16px_rgba(15,23,42,0.08)] sm:px-6">
-          <div className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full bg-amber-400" />
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700">
-                <BookOpen className="h-5 w-5" strokeWidth={2} />
-              </span>
-
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-950">
-                  Baza szkoleń
-                </h1>
-                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
-                  Kursy, webinary i wydarzenia z punktami edukacyjnymi. Dodanie
-                  do planu nie oznacza zapisu u organizatora.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2 sm:justify-end">
-              <button
-                onClick={() => {
-                  if (user) {
-                    setFormErrors({});
-                    setAddOpen(true);
-                    return;
-                  }
-                  window.location.assign("/login");
-                }}
-                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 text-sm font-semibold text-amber-900 shadow-sm transition hover:border-amber-400 hover:bg-amber-100 active:scale-[0.98] sm:w-auto"
-                type="button"
-              >
-                <Plus className="h-4 w-4" strokeWidth={2.2} />
-                Zgłoś szkolenie
-              </button>
-            </div>
-          </div>
-        </div>
+        <AppPageHeader
+          eyebrow="Publiczny katalog CRPE"
+          title="Baza szkoleń"
+          description="Kursy, webinary i wydarzenia z punktami edukacyjnymi. Dodanie do planu nie oznacza zapisu u organizatora."
+          accent="amber"
+          icon={<BookOpen className="h-5 w-5" strokeWidth={2} />}
+          actionsSlot={
+            <button
+              onClick={() => {
+                if (user) {
+                  setFormErrors({});
+                  setAddOpen(true);
+                  return;
+                }
+                window.location.assign("/login");
+              }}
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 text-sm font-bold text-amber-900 shadow-sm transition hover:border-amber-400 hover:bg-amber-100 active:scale-[0.98] sm:w-auto"
+              type="button"
+            >
+              <Plus className="h-4 w-4" strokeWidth={2.2} />
+              Zgłoś szkolenie
+            </button>
+          }
+        />
 
         <form
           className="mt-5 rounded-[1.35rem] border border-slate-300/80 bg-white p-4 shadow-[0_6px_16px_rgba(15,23,42,0.075)]"
