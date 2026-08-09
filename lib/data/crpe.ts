@@ -15,6 +15,8 @@ export type LegacyActivity = {
   type: string;
   points: number;
   year: number;
+  activity_type_code: string | null;
+  activity_date: string | null;
   organizer: string | null;
   created_at: string;
   updated_at: string;
@@ -139,10 +141,14 @@ const OLD_TYPE_BY_CODE: Record<string, string> = {
   conference: "Konferencja / kongres",
   course: "Kurs stacjonarny",
   internship: "Staż / praktyka",
+  internal_training: "Szkolenie wewnętrzne",
+  journal_subscription: "Prenumerata czasopisma",
   lecture: "Prowadzenie szkolenia",
+  medical_education_platform: "Platforma edukacyjna",
   other: "Inna aktywność",
   publication: "Publikacja naukowa",
   self_study: "Samokształcenie",
+  scientific_society_membership: "Towarzystwo/Kolegium",
   webinar: "Kurs online / webinar",
   workshop: "Warsztaty praktyczne",
 };
@@ -154,7 +160,7 @@ const CODE_BY_OLD_TYPE: Record<string, string> = {
   "webinar lub szkolenie online": "webinar",
   "kurs stacjonarny": "course",
   "kurs lub szkolenie": "course",
-  "szkolenie wewnętrzne": "course",
+  "szkolenie wewnętrzne": "internal_training",
   "warsztaty praktyczne": "workshop",
   warsztaty: "workshop",
   "publikacja naukowa": "publication",
@@ -162,10 +168,11 @@ const CODE_BY_OLD_TYPE: Record<string, string> = {
   "prowadzenie szkolenia": "lecture",
   "wykład lub prowadzenie zajęć": "lecture",
   samokształcenie: "self_study",
-  "prenumerata czasopisma": "self_study",
+  "prenumerata czasopisma": "journal_subscription",
   "staż / praktyka": "internship",
   "staż lub praktyka zawodowa": "internship",
-  "towarzystwo/kolegium": "other",
+  "towarzystwo/kolegium": "scientific_society_membership",
+  "platforma edukacyjna": "medical_education_platform",
   "inna aktywność": "other",
 };
 
@@ -187,9 +194,14 @@ function toRuleSource(row: Record<string, any>): CpdRuleSource {
 }
 
 function toRuleRequirement(row: Record<string, any>): CpdRuleRequirement {
+  const activityType = Array.isArray(row.activity_type)
+    ? row.activity_type[0]
+    : row.activity_type;
   return {
     id: row.id,
     activity_type_id: row.activity_type_id ?? null,
+    activity_type_code: activityType?.code ?? null,
+    activity_type_name_pl: activityType?.name_pl ?? null,
     requirement_kind: row.requirement_kind,
     scope: row.scope,
     points: asNumber(row.points),
@@ -215,7 +227,7 @@ async function hydrateRuleSet(
     client
       .from("cpd_rule_requirements")
       .select(
-        "id,activity_type_id,requirement_kind,scope,points,note_pl,sort_order",
+        "id,activity_type_id,requirement_kind,scope,points,note_pl,sort_order,activity_type:activity_types(code,name_pl)",
       )
       .eq("rule_set_id", row.id)
       .order("sort_order", { ascending: true }),
@@ -544,6 +556,8 @@ export async function fetchActivities(
         "Inna aktywność",
       points: points.get(row.id) ?? 0,
       year: yearFromActivity(row),
+      activity_type_code: activityType?.code ?? null,
+      activity_date: row.completed_on ?? row.starts_on ?? null,
       organizer: row.organizer_name ?? null,
       created_at: row.created_at,
       updated_at: row.updated_at,

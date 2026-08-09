@@ -12,6 +12,7 @@ import {
   fetchProfile,
 } from "@/lib/data/crpe";
 import type { CpdRuleSet } from "@/lib/cpd/professions";
+import { applyMaximumRequirements } from "@/lib/cpd/maximumRequirements";
 
 type PeriodMode = "profile" | "current" | "previous" | "custom";
 
@@ -27,6 +28,7 @@ type ProfileRow = {
   role: string;
   cycle_target_mode?: "custom" | "rule_set";
   applied_rule_set?: CpdRuleSet | null;
+  suggested_rule_set?: CpdRuleSet | null;
   formal_status?: "not_confirmed" | "confirmed_externally";
 };
 
@@ -44,6 +46,8 @@ type ActivityRow = {
   type: string;
   points: number;
   year: number;
+  activity_type_code: string | null;
+  activity_date: string | null;
   organizer: string | null;
   created_at: string;
   updated_at: string;
@@ -346,9 +350,39 @@ export default function RaportUserClient() {
     return list;
   }, [activities, onlyDone, includePlanned, q, typeFilter, sortBy, onlyWithAnyAttachments, docCounts]);
 
+  const reportMaximumRequirements = useMemo(() => {
+    const limitsRuleSet =
+      profile?.applied_rule_set?.status === "verified"
+        ? profile.applied_rule_set
+        : profile?.suggested_rule_set?.status === "verified"
+          ? profile.suggested_rule_set
+          : null;
+    return (limitsRuleSet?.requirements ?? []).filter(
+      (requirement) =>
+        requirement.requirement_kind === "maximum" &&
+        Boolean(requirement.activity_type_code),
+    );
+  }, [profile]);
+
+  const includedAfterLimits = useMemo(
+    () => applyMaximumRequirements(included, reportMaximumRequirements),
+    [included, reportMaximumRequirements],
+  );
+
+  const includedPointsById = useMemo(
+    () =>
+      new Map(
+        includedAfterLimits.map((activity) => [activity.id, activity]),
+      ),
+    [includedAfterLimits],
+  );
+
   const totals = useMemo(() => {
     const raw = included.reduce((sum, a) => sum + parsePoints(a.points), 0);
-    const afterLimits = raw;
+    const afterLimits = includedAfterLimits.reduce(
+      (sum, activity) => sum + activity.applied_points,
+      0,
+    );
 
     const s = computeStatus(afterLimits, requiredPoints);
     const attachmentsAll = included.reduce((sum, a) => sum + attachmentsTotalForActivity(a), 0);
@@ -361,7 +395,7 @@ export default function RaportUserClient() {
       itemsCount: included.length,
       attachmentsAll,
     };
-  }, [included, requiredPoints, docCounts]);
+  }, [included, includedAfterLimits, requiredPoints, docCounts]);
 
   const progress = useMemo(() => {
     if (requiredPoints <= 0) return 0;
@@ -409,12 +443,14 @@ export default function RaportUserClient() {
       "Organizator",
       "Typ",
       "Status",
-      "Punkty",
+      "Punkty wpisane",
+      "Punkty zaliczone",
       "Załączniki",
     ];
 
     const rows = included.map((a) => {
       const status = (a.status ?? "done") as string;
+      const counted = includedPointsById.get(a.id);
       return [
         formatDatePLFromISO(activityDisplayDate(a)),
         a.trainings?.title ?? "Aktywność własna",
@@ -422,14 +458,15 @@ export default function RaportUserClient() {
         a.type ?? "",
         status === "done" ? "zrobione" : status === "planned" ? "planowane" : status,
         parsePoints(a.points),
+        counted?.applied_points ?? parsePoints(a.points),
         attachmentsTotalForActivity(a),
       ];
     });
 
     rows.push([]);
-    rows.push(["Punkty po limitach", "", "", "", "", totals.pointsAfterLimits, ""]);
-    rows.push(["Cel punktowy", "", "", "", "", requiredPoints, ""]);
-    rows.push([`Zakres: ${fromDate} – ${toDate}`, "", "", "", "", "", ""]);
+    rows.push(["Punkty po limitach", "", "", "", "", "", totals.pointsAfterLimits, ""]);
+    rows.push(["Cel punktowy", "", "", "", "", "", requiredPoints, ""]);
+    rows.push([`Zakres: ${fromDate} – ${toDate}`, "", "", "", "", "", "", ""]);
 
     downloadCsv(
       safeFileName(`CRPE raport ${fromDate} ${toDate}`, "csv"),
@@ -739,7 +776,7 @@ export default function RaportUserClient() {
                 <th className="px-3 py-2">Pozycja</th>
                 <th className="px-3 py-2">Typ</th>
                 <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2 text-right">Punkty</th>
+                <th className="px-3 py-2 text-right">Punkty zaliczone</th>
                 <th className="px-3 py-2 text-right">Załączniki</th>
               </tr>
             </thead>
@@ -755,6 +792,8 @@ export default function RaportUserClient() {
                   const st = (a.status ?? "done") as any;
                   const dt = activityDisplayDate(a);
                   const pts = parsePoints(a.points);
+                  const counted = includedPointsById.get(a.id);
+                  const appliedPoints = counted?.applied_points ?? pts;
                   const att = attachmentsTotalForActivity(a);
 
                   const title = a.trainings?.title ?? null;
@@ -775,7 +814,14 @@ export default function RaportUserClient() {
                           {st === "done" ? "zrobione" : st === "planned" ? "planowane" : st ?? "—"}
                         </span>
                       </td>
-                      <td className="px-3 py-3 text-right font-semibold">{pts}</td>
+                      <td className="px-3 py-3 text-right font-semibold">
+                        {appliedPoints}
+                        {appliedPoints < pts ? (
+                          <span className="block text-[10px] font-medium text-amber-700">
+                            z {pts} wpisanych
+                          </span>
+                        ) : null}
+                      </td>
                       <td className="px-3 py-3 text-right">
                         {att > 0 ? (
                           <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
@@ -799,7 +845,7 @@ export default function RaportUserClient() {
             <span className="font-medium text-slate-800">{toDate}</span>
           </div>
           <div>
-            Suma zadeklarowana: <span className="font-semibold text-slate-900">{totals.pointsAfterLimits}</span> pkt
+            Suma po limitach: <span className="font-semibold text-slate-900">{totals.pointsAfterLimits}</span> pkt
           </div>
         </div>
       </div>

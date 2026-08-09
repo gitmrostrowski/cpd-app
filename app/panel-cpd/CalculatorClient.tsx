@@ -34,6 +34,9 @@ import {
   resolvePeriodDeadline,
   upcomingEntries,
 } from "@/lib/cpd/deadlines";
+import {
+  applyMaximumRequirements,
+} from "@/lib/cpd/maximumRequirements";
 
 type ActivityStatus = "planned" | "done" | null;
 
@@ -57,6 +60,8 @@ type ActivityRow = {
   type: string;
   points: number;
   year: number;
+  activity_type_code: string | null;
+  activity_date: string | null;
   organizer: string | null;
   created_at: string;
   status?: ActivityStatus;
@@ -87,14 +92,11 @@ type ProfileRow = {
 type RuleLimit = {
   key: string;
   label: string;
+  activityTypeCode: string;
   mode: "per_period" | "per_year" | "per_item";
   maxPoints: number;
   note?: string;
 };
-
-// v4 nie zawiera żadnych limitów wpisanych na sztywno w kodzie.
-// Karty limitów pojawią się dopiero dla rule setu o calculation_scope="full".
-const VERIFIED_LIMITS: RuleLimit[] = [];
 
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
@@ -128,6 +130,30 @@ function agendaDay(isoDate: string) {
 function agendaMonth(isoDate: string) {
   const monthIndex = Number(isoDate.slice(5, 7)) - 1;
   return MONTHS_SHORT[monthIndex] ?? "";
+}
+
+function timelineDate(activity: ActivityRow) {
+  const exactDate =
+    normalizeStatus(activity.status) === "planned"
+      ? activity.planned_start_date
+      : activity.activity_date;
+  const canShowDay =
+    Boolean(exactDate) &&
+    !String(exactDate).endsWith("-12-31");
+
+  if (exactDate && canShowDay) {
+    return {
+      primary: String(Number(exactDate.slice(8, 10))),
+      secondary: `${agendaMonth(exactDate)} ${exactDate.slice(0, 4)}`,
+      sort: exactDate,
+    };
+  }
+
+  return {
+    primary: String(activity.year),
+    secondary: "rok",
+    sort: `${activity.year}-06-30`,
+  };
 }
 
 function getPeriodFromPwzIssueDate(
@@ -225,7 +251,7 @@ function buildNextSteps(
     {
       title: "Sprawdź raport",
       description: `Podsumowanie okresu ${periodStart}–${periodEnd}`,
-      ctaHref: "/portfolio",
+      ctaHref: "/raporty/uzytkownik",
       tone: "green",
       priority: "normal",
     },
@@ -745,20 +771,86 @@ export default function CalculatorClient() {
 
   const periodLabel = `${periodStart}-${periodEnd}`;
 
+  const limitsRuleSet = useMemo(() => {
+    if (appliedRuleSet?.status === "verified") return appliedRuleSet;
+    if (suggestedRuleSet?.status === "verified") return suggestedRuleSet;
+    return null;
+  }, [appliedRuleSet, suggestedRuleSet]);
+
+  const maximumRequirements = useMemo(
+    () =>
+      (limitsRuleSet?.requirements ?? []).filter(
+        (requirement) =>
+          requirement.requirement_kind === "maximum" &&
+          Boolean(requirement.activity_type_code),
+      ),
+    [limitsRuleSet],
+  );
+
+  const inPeriodActivities = useMemo(
+    () =>
+      activities.filter((activity) => {
+        const year =
+          normalizeStatus(activity.status) === "planned" && activity.planned_start_date
+            ? Number(activity.planned_start_date.slice(0, 4))
+            : activity.year;
+        return year >= periodStart && year <= periodEnd;
+      }),
+    [activities, periodEnd, periodStart],
+  );
+
   const inPeriodDone = useMemo(
     () =>
-      activities.filter(
+      inPeriodActivities.filter(
         (x) =>
-          normalizeStatus(x.status) === "done" &&
-          x.year >= periodStart &&
-          x.year <= periodEnd,
+          normalizeStatus(x.status) === "done",
       ),
-    [activities, periodStart, periodEnd],
+    [inPeriodActivities],
+  );
+
+  const adjustedDoneRows = useMemo(
+    () => applyMaximumRequirements(inPeriodDone, maximumRequirements),
+    [inPeriodDone, maximumRequirements],
+  );
+
+  const adjustedAllRows = useMemo(
+    () =>
+      applyMaximumRequirements(
+        inPeriodActivities.map((activity) => ({
+          ...activity,
+          rule_order: normalizeStatus(activity.status) === "done" ? 0 : 1,
+        })),
+        maximumRequirements,
+      ),
+    [inPeriodActivities, maximumRequirements],
+  );
+
+  const adjustedPointsById = useMemo(
+    () =>
+      new Map([
+        ...adjustedAllRows.map((activity) => [
+          activity.id,
+          {
+            applied: activity.applied_points,
+            raw: activity.raw_points,
+            over: activity.over_points,
+          },
+        ] as const),
+        ...adjustedDoneRows.map((activity) => [
+          activity.id,
+          {
+            applied: activity.applied_points,
+            raw: activity.raw_points,
+            over: activity.over_points,
+          },
+        ] as const),
+      ]),
+    [adjustedAllRows, adjustedDoneRows],
   );
 
   const donePoints = useMemo(
-    () => inPeriodDone.reduce((sum, a) => sum + (Number(a.points) || 0), 0),
-    [inPeriodDone],
+    () => adjustedDoneRows.reduce((sum, a) => sum + a.applied_points, 0),
+    [adjustedDoneRows],
   );
 
   /**
@@ -773,8 +865,13 @@ export default function CalculatorClient() {
 
   const incompleteCount = incompleteEntries.length;
   const incompletePoints = useMemo(
-    () => incompleteEntries.reduce((sum, activity) => sum + (Number(activity.points) || 0), 0),
-    [incompleteEntries],
+    () =>
+      incompleteEntries.reduce(
+        (sum, activity) =>
+          sum + (adjustedPointsById.get(activity.id)?.applied ?? 0),
+        0,
+      ),
+    [adjustedPointsById, incompleteEntries],
   );
 
   const missingPoints = useMemo(
@@ -829,30 +926,63 @@ export default function CalculatorClient() {
         : "bg-amber-50 text-amber-800";
 
   const limitsUsage = useMemo(() => {
-    if (
-      appliedRuleSet?.status !== "verified" ||
-      appliedRuleSet.calculation_scope !== "full"
-    ) {
-      return [];
-    }
+    const yearsInPeriod = Math.max(1, periodEnd - periodStart + 1);
 
-    // v4 nie publikuje limitu, dopóki nie ma zweryfikowanego mapowania
-    // cpd_rule_requirements -> activity_types.
-    return VERIFIED_LIMITS.map((limit) => ({
-      ...limit,
-      used: 0,
-      count: 0,
-      cap: limit.maxPoints,
-      remaining: limit.maxPoints,
-      usedPct: 0,
-      yearsInPeriod: Math.max(1, periodEnd - periodStart + 1),
-      status: "available" as
-        | "available"
-        | "warning"
-        | "blocked"
-        | "per_item",
-    }));
-  }, [appliedRuleSet, periodStart, periodEnd]);
+    return maximumRequirements.map((requirement) => {
+      const code = requirement.activity_type_code as string;
+      const matching = adjustedDoneRows.filter(
+        (activity) => activity.activity_type_code === code,
+      );
+      const mode =
+        requirement.scope === "item"
+          ? "per_item"
+          : requirement.scope === "year"
+            ? "per_year"
+            : "per_period";
+      const cap =
+        mode === "per_year"
+          ? Number(requirement.points) * yearsInPeriod
+          : Number(requirement.points);
+      const used =
+        mode === "per_item"
+          ? Math.max(0, ...matching.map((activity) => activity.applied_points))
+          : matching.reduce((sum, activity) => sum + activity.applied_points, 0);
+      const remaining = mode === "per_item" ? cap : Math.max(0, cap - used);
+      const usedPct = cap > 0 ? clamp((used / cap) * 100, 0, 100) : 0;
+      const status =
+        mode === "per_item"
+          ? ("per_item" as const)
+          : remaining <= 0
+            ? ("blocked" as const)
+            : usedPct >= 80
+              ? ("warning" as const)
+              : ("available" as const);
+
+      return {
+        key: requirement.id,
+        label: requirement.activity_type_name_pl ?? "Aktywność",
+        activityTypeCode: code,
+        mode,
+        maxPoints: Number(requirement.points),
+        note: requirement.note_pl ?? undefined,
+        used,
+        count: matching.length,
+        cap,
+        remaining,
+        usedPct,
+        yearsInPeriod,
+        status,
+      } satisfies RuleLimit & {
+        used: number;
+        count: number;
+        cap: number;
+        remaining: number;
+        usedPct: number;
+        yearsInPeriod: number;
+        status: "available" | "warning" | "blocked" | "per_item";
+      };
+    });
+  }, [adjustedDoneRows, maximumRequirements, periodEnd, periodStart]);
 
   const bestLimit = useMemo(() => {
     const sorted = [...limitsUsage].sort((a, b) => {
@@ -904,9 +1034,18 @@ export default function CalculatorClient() {
   );
 
   const limitWarning = useMemo(() => {
+    const exceeded = adjustedDoneRows.find((activity) => activity.over_points > 0);
+    if (exceeded) {
+      const limit = limitsUsage.find(
+        (item) => item.activityTypeCode === exceeded.activity_type_code,
+      );
+      return limit
+        ? `Część punktów w kategorii „${limit.label}” przekracza limit i nie zwiększa wyniku.`
+        : "Część wpisanych punktów przekracza limit i nie zwiększa wyniku.";
+    }
     const hit = limitsUsage.find((x) => x.status === "blocked");
     return hit ? `Limit "${hit.label}" jest osiągnięty.` : null;
-  }, [limitsUsage]);
+  }, [adjustedDoneRows, limitsUsage]);
 
   const nextSteps = useMemo(
     () =>
@@ -933,14 +1072,20 @@ export default function CalculatorClient() {
   const accrualSeries = useMemo<AccrualSeries | null>(
     () =>
       buildAccrualSeries({
-        activities,
-        doneActivities: inPeriodDone,
+        activities: adjustedAllRows.map((activity) => ({
+          ...activity,
+          points: activity.applied_points,
+        })),
+        doneActivities: adjustedDoneRows.map((activity) => ({
+          ...activity,
+          points: activity.applied_points,
+        })),
         periodStart,
         periodEnd,
         periodTimeProgress,
         requiredPoints,
       }),
-    [activities, inPeriodDone, periodEnd, periodStart, periodTimeProgress, requiredPoints],
+    [adjustedAllRows, adjustedDoneRows, periodEnd, periodStart, periodTimeProgress, requiredPoints],
   );
 
   const recentRows = useMemo(() => {
@@ -978,6 +1123,24 @@ export default function CalculatorClient() {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
   }, [activities, periodStart, periodEnd, activityFilter]);
+
+  const timelineRows = useMemo(
+    () =>
+      [...recentRows]
+        .sort((a, b) => {
+          const plannedA = normalizeStatus(a.status) === "planned";
+          const plannedB = normalizeStatus(b.status) === "planned";
+          if (plannedA !== plannedB) return plannedA ? -1 : 1;
+
+          const dateA = timelineDate(a).sort;
+          const dateB = timelineDate(b).sort;
+          return plannedA
+            ? dateA.localeCompare(dateB)
+            : dateB.localeCompare(dateA);
+        })
+        .slice(0, 8),
+    [recentRows],
+  );
 
   const isBusy = authLoading || loading;
 
@@ -1247,10 +1410,9 @@ export default function CalculatorClient() {
   const emptyStateCta =
     activityFilter === "missing" ? "Uzupełnij wpisy" : "Dodaj pierwszą aktywność";
 
-  // Sekcja limitów istnieje tylko dla zweryfikowanego rule setu z pełnym
-  // zakresem obliczeń. Dopóki go nie ma, zakładka prowadziłaby do komunikatu
-  // „brak limitów” — więc jej nie pokazujemy. „Powiadomienia” to pojedynczy
-  // baner na dole i nie potrzebuje własnej pozycji w nawigacji.
+  // Sekcja pojawia się tylko wtedy, gdy zweryfikowana reguła zawodu zawiera
+  // jawne maksima powiązane z typami aktywności. Działa również przy własnym
+  // okresie, ale interfejs wyraźnie odróżnia regułę sugerowaną od przypiętej.
   const hasLimits = limitsUsage.length > 0;
 
   const panelSections: {
@@ -1310,7 +1472,7 @@ export default function CalculatorClient() {
       />
 
       <nav className="sticky top-[62px] z-30 rounded-[18px] border border-slate-200 bg-white/95 p-1.5 shadow-[0_12px_32px_rgba(15,45,75,0.09)] backdrop-blur sm:top-[70px]">
-        <div className="grid grid-cols-3 gap-1 sm:flex sm:items-center">
+        <div className="grid grid-cols-2 gap-1 sm:flex sm:items-center">
           {panelSections.map(({ id, label, mobileLabel, icon }) => {
             const active = activeNav === id;
             return (
@@ -1799,7 +1961,7 @@ export default function CalculatorClient() {
               <span>
                 <span className="font-semibold text-slate-700">Reguły CRPE:</span>{" "}
                 <span className="font-semibold text-slate-700">
-                  {appliedRuleSet?.calculation_scope === "full" ? "obliczane" : "nieobliczane"}
+                  {maximumRequirements.length > 0 ? "limity obliczane" : "nieobliczane"}
                 </span>
               </span>
               <span>
@@ -1839,7 +2001,14 @@ export default function CalculatorClient() {
               </p>
             </div>
           </div>
-
+          <div className="shrink-0 text-right text-[11px] leading-4 text-slate-500">
+            <div className="font-bold text-slate-700">{limitsRuleSet?.name_pl}</div>
+            {cycleTargetMode === "custom" ? (
+              <div>Reguła zawodu · okres własny</div>
+            ) : (
+              <div>Reguła przypięta do okresu</div>
+            )}
+          </div>
         </div>
 
         <div className="p-4">
@@ -1862,7 +2031,7 @@ export default function CalculatorClient() {
             <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
               <div className="space-y-3">
                 <div className="relative border-b border-slate-200 pt-1">
-                  <div className="grid items-end gap-2 md:grid-cols-3">
+                  <div className="grid items-end gap-2 sm:grid-cols-2">
                     {limitsUsage.map((r) => {
                       const active = selectedLimit?.key === r.key;
 
@@ -2013,11 +2182,11 @@ export default function CalculatorClient() {
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                              Masz już
+                              {selectedLimit.mode === "per_item" ? "Najwyższy wpis" : "Masz już"}
                             </div>
                             <div className="mt-1 text-xs text-slate-500">
                               {selectedLimit.count > 0
-                                ? `${selectedLimit.count} wpisów`
+                                ? `${selectedLimit.count} ${pluralPl(selectedLimit.count, ["wpis", "wpisy", "wpisów"])}`
                                 : "brak wpisów"}
                             </div>
                           </div>
@@ -2159,10 +2328,19 @@ export default function CalculatorClient() {
                       Skąd wynikają te limity?
                     </div>
                     <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
-                      Limity wynikają z przepisów i wymagań właściwego samorządu
-                      zawodowego, np. rozporządzeń, uchwał izby lekarskiej lub
-                      innych organów regulujących doskonalenie zawodowe.
+                      Pokazane maksima pochodzą ze zweryfikowanej reguły dla
+                      wybranego zawodu i są liczone w ustawionym okresie.
                     </p>
+                    {limitsRuleSet?.sources[0] ? (
+                      <a
+                        href={limitsRuleSet.sources[0].url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex text-[11px] font-bold text-blue-700 hover:underline"
+                      >
+                        Otwórz źródło reguły →
+                      </a>
+                    ) : null}
                   </div>
                 </div>
 
@@ -2240,7 +2418,7 @@ export default function CalculatorClient() {
               + Dodaj aktywność
             </Link>
             <Link
-              href="/portfolio"
+              href="/raporty/uzytkownik"
               className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
             >
               Raport / PDF →
@@ -2281,14 +2459,14 @@ export default function CalculatorClient() {
                   const dots = {
                     all: "",
                     missing: "bg-amber-400",
-                    planned: "bg-slate-400",
+                    planned: "bg-blue-500",
                     complete: "bg-emerald-400",
                   };
 
                   const active = {
                     all: "bg-slate-100 text-slate-800",
                     missing: "bg-amber-50 text-amber-700",
-                    planned: "bg-slate-100 text-slate-800",
+                    planned: "bg-blue-50 text-blue-700",
                     complete: "bg-emerald-50 text-emerald-700",
                   };
 
@@ -2323,7 +2501,8 @@ export default function CalculatorClient() {
         </div>
 
         <div className="p-5">
-          <div className="space-y-3">
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(270px,0.85fr)]">
+          <div className="min-w-0 space-y-3">
             {recentRows.length === 0 ? (
               <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-8 text-center">
                 <div className="text-sm font-medium text-slate-700">
@@ -2337,13 +2516,14 @@ export default function CalculatorClient() {
                 </Link>
               </div>
             ) : (
-              recentRows.slice(0, 8).map((a) => {
+              recentRows.slice(0, 6).map((a) => {
                 const prog = normalizeStatus(a.status);
                 const missing = getRowMissing(a);
                 const hasMissing = prog !== "planned" && missing.length > 0;
+                const counted = adjustedPointsById.get(a.id);
                 const stripe =
                   prog === "planned"
-                    ? "bg-slate-400"
+                    ? "bg-blue-500"
                     : hasMissing
                       ? "bg-amber-500"
                       : "bg-emerald-500";
@@ -2419,10 +2599,15 @@ export default function CalculatorClient() {
 
                       <div className="flex shrink-0 flex-col items-end gap-2">
                         <span className="text-sm font-semibold text-slate-900">
-                          +{a.points} pkt
+                          +{counted?.applied ?? a.points} pkt
                         </span>
+                        {counted && counted.over > 0 ? (
+                          <span className="text-[10px] font-medium text-amber-700">
+                            wpisano {counted.raw} pkt
+                          </span>
+                        ) : null}
                         <Link
-                          href="/aktywnosci"
+                          href={`/aktywnosci/${a.id}`}
                           className="rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
                         >
                           Otwórz →
@@ -2433,9 +2618,8 @@ export default function CalculatorClient() {
                 );
               })
             )}
-          </div>
 
-          {recentRows.length > 8 && (
+          {recentRows.length > 6 && (
             <div className="mt-3 border-t border-slate-100 pt-3 text-center">
               <Link
                 href="/aktywnosci"
@@ -2445,6 +2629,74 @@ export default function CalculatorClient() {
               </Link>
             </div>
           )}
+          </div>
+
+          <aside className="overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50/65">
+            <div className="border-b border-slate-200 bg-white px-4 py-3.5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-950">Oś aktywności</h3>
+                  <p className="mt-0.5 text-[11px] text-slate-500">
+                    Okres {periodStart}–{periodEnd}
+                  </p>
+                </div>
+                <MiniIcon name="calendar" className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-medium text-slate-500">
+                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500" />plan</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-500" />braki</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" />kompletne</span>
+              </div>
+            </div>
+
+            {timelineRows.length ? (
+              <ol className="px-4 py-3">
+                {timelineRows.map((activity, index) => {
+                  const planned = normalizeStatus(activity.status) === "planned";
+                  const incomplete = !planned && getRowMissing(activity).length > 0;
+                  const date = timelineDate(activity);
+                  const counted = adjustedPointsById.get(activity.id);
+                  const dotClass = planned
+                    ? "border-blue-200 bg-blue-500"
+                    : incomplete
+                      ? "border-amber-200 bg-amber-500"
+                      : "border-emerald-200 bg-emerald-500";
+
+                  return (
+                    <li key={activity.id} className="grid grid-cols-[50px_18px_minmax(0,1fr)] gap-2">
+                      <div className="pt-0.5 text-right">
+                        <div className="text-[12px] font-extrabold leading-4 text-slate-800">{date.primary}</div>
+                        <div className="text-[9px] font-bold uppercase leading-3 text-slate-400">{date.secondary}</div>
+                      </div>
+                      <div className="relative flex justify-center">
+                        {index < timelineRows.length - 1 ? (
+                          <span className="absolute bottom-[-1px] top-3 w-px bg-slate-200" aria-hidden="true" />
+                        ) : null}
+                        <span className={`relative mt-1 h-3 w-3 rounded-full border-[3px] border-white shadow-[0_0_0_1px_rgba(148,163,184,0.28)] ${dotClass}`} />
+                      </div>
+                      <Link
+                        href={`/aktywnosci/${activity.id}`}
+                        className={`group min-w-0 text-left ${index < timelineRows.length - 1 ? "pb-4" : "pb-1"}`}
+                      >
+                        <span className="block truncate text-[12px] font-bold text-slate-900 transition group-hover:text-blue-700">
+                          {activity.type}
+                        </span>
+                        <span className="mt-0.5 flex items-center justify-between gap-2 text-[10px] text-slate-500">
+                          <span>{planned ? "Zaplanowane" : incomplete ? "Do uzupełnienia" : "Ukończone"}</span>
+                          <span className="shrink-0 font-bold text-slate-700">+{counted?.applied ?? activity.points} pkt</span>
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ol>
+            ) : (
+              <div className="px-5 py-10 text-center text-xs leading-5 text-slate-500">
+                Brak aktywności dla wybranego filtra.
+              </div>
+            )}
+          </aside>
+          </div>
         </div>
       </section>
 

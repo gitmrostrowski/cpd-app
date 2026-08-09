@@ -30,6 +30,8 @@ export type CpdRuleSource = {
 export type CpdRuleRequirement = {
   id: string;
   activity_type_id: string | null;
+  activity_type_code: string | null;
+  activity_type_name_pl: string | null;
   requirement_kind: "minimum" | "maximum" | "fixed";
   scope: "period" | "year" | "item";
   points: number;
@@ -129,27 +131,25 @@ export function defaultRequiredPointsFor(
 }
 
 /**
- * Starsze strony mogą nadal wywoływać ten helper. W v4 limity szczegółowe
- * powstają wyłącznie z cpd_rule_requirements, więc fallback jest pusty.
+ * Adapter zgodności dla starszych ekranów, które obsługują wyłącznie limity
+ * roczne. Limity okresowe i na pojedynczy wpis stosuje nowy moduł wymagań.
  */
 export function rulesForProfession(
   _profession: Profession,
   ruleSet?: CpdRuleSet | null,
 ): CpdRules {
-  if (!ruleSet || ruleSet.status !== "verified" || ruleSet.calculation_scope !== "full") {
+  if (!ruleSet || ruleSet.status !== "verified") {
     return { yearlyMaxByType: {} };
   }
 
   const yearlyMaxByType: Record<string, number> = {};
   for (const requirement of ruleSet.requirements) {
-    // Do automatycznego mapowania potrzebna jest nazwa/kod typu aktywności.
-    // Dopóki adapter nie zwraca tego mapowania, nie nakładamy limitu po samym UUID.
     if (
       requirement.requirement_kind === "maximum" &&
       requirement.scope === "year" &&
-      !requirement.activity_type_id
+      requirement.activity_type_name_pl
     ) {
-      yearlyMaxByType[""] = requirement.points;
+      yearlyMaxByType[requirement.activity_type_name_pl] = requirement.points;
     }
   }
   return { yearlyMaxByType };

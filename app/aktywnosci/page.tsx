@@ -79,6 +79,10 @@ const TYPES = [
   "Prowadzenie szkolenia",
   "Samokształcenie",
   "Staż / praktyka",
+  "Szkolenie wewnętrzne",
+  "Prenumerata czasopisma",
+  "Towarzystwo/Kolegium",
+  "Platforma edukacyjna",
 ] as const;
 
 const BUCKET = "certificates";
