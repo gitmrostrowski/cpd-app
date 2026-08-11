@@ -1,0 +1,66 @@
+name: Import szkoleń — NIL
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Tryb uruchomienia
+        required: true
+        default: local_dry_run
+        type: choice
+        options:
+          - local_dry_run
+          - server_dry_run
+          - live
+  schedule:
+    # 17 minut po godzinie, co 6 godzin. Harmonogram zapisuje dopiero po
+    # ustawieniu repozytoryjnej zmiennej NIL_IMPORT_ENABLED=true.
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crpe-import-nil
+  cancel-in-progress: false
+
+jobs:
+  import:
+    if: github.event_name == 'workflow_dispatch' || vars.NIL_IMPORT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: integrations/training-importer
+    env:
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'local_dry_run' && 'true' || 'false' }}
+      SERVER_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'server_dry_run' && 'true' || 'false' }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      NIL_IMPORT_EMAIL: ${{ secrets.NIL_IMPORT_EMAIL }}
+      NIL_IMPORT_PASSWORD: ${{ secrets.NIL_IMPORT_PASSWORD }}
+      INTEGRATION_ENDPOINT_OVERRIDE: ${{ vars.CRPE_INTEGRATION_ENDPOINT }}
+      IMPORTER_USER_AGENT: CRPE-TrainingImporter/1.1 (+https://www.crpe.pl/kontakt)
+      NIL_IMPORT_FULL_DESCRIPTIONS: ${{ vars.NIL_IMPORT_FULL_DESCRIPTIONS }}
+    steps:
+      - name: Pobierz repozytorium
+        uses: actions/checkout@v7
+
+      - name: Ustaw Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: integrations/training-importer/package-lock.json
+
+      - name: Zainstaluj zależności
+        run: npm ci
+
+      - name: Sprawdź typy
+        run: npm run typecheck
+
+      - name: Uruchom testy parsera NIL
+        run: npm test
+
+      - name: Pobierz i przetwórz szkolenia NIL
+        run: npm run import:nil

@@ -24,6 +24,44 @@ import TrainingAudienceField, {
 
 type TrainingStatus = "pending" | "approved" | "rejected";
 type PriceDeclaration = "unconfirmed" | "free" | "paid";
+type ScheduleStatus = "scheduled" | "to_be_determined";
+
+type ImportChange = {
+  id: string;
+  training_id: string;
+  source_code: string;
+  source_external_id: string;
+  status: "pending" | "applied" | "rejected" | "superseded";
+  changed_fields: string[];
+  source: Record<string, unknown>;
+  current: Record<string, unknown>;
+  fetched_at: string;
+  created_at: string;
+};
+
+const IMPORT_FIELD_LABELS: Record<string, string> = {
+  title: "Tytuł",
+  organizer: "Organizator",
+  points: "Punkty",
+  delivery_format: "Format",
+  schedule_status: "Stan terminu",
+  start_date: "Data rozpoczęcia",
+  end_date: "Data zakończenia",
+  start_time: "Godzina rozpoczęcia",
+  end_time: "Godzina zakończenia",
+  time_zone: "Strefa czasowa",
+  speakers: "Prowadzący",
+  category: "Kategoria",
+  profession_codes: "Zawody",
+  voivodeship: "Województwo",
+  external_url: "Link",
+  topics: "Tematy",
+  price_pln: "Cena",
+  has_recording: "Nagranie",
+  capacity: "Liczba miejsc",
+  enrollment_status: "Status zapisów",
+  description: "Opis",
+};
 
 type TrainingRow = {
   id: string;
@@ -35,6 +73,7 @@ type TrainingRow = {
   price_pln: number | null;
   start_date: string | null;
   end_date: string | null;
+  schedule_status: ScheduleStatus;
   start_time: string | null;
   end_time: string | null;
   time_zone: string;
@@ -52,6 +91,12 @@ type TrainingRow = {
   reject_reason: string | null;
   submitted_by: string | null;
   submitted_email: string | null;
+  import_source: string | null;
+  source_external_id: string | null;
+  source_url: string | null;
+  source_fetched_at: string | null;
+  source_warnings: string[];
+  imported_by: string | null;
   user_id: string | null;
   created_at: string;
   updated_at: string | null;
@@ -137,6 +182,16 @@ function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 
+function importValue(value: unknown) {
+  if (value === null || value === undefined || value === "") return "—";
+  if (Array.isArray(value)) return value.length ? value.join(", ") : "—";
+  if (value === true) return "tak";
+  if (value === false) return "nie";
+  if (value === "scheduled") return "ustalony";
+  if (value === "to_be_determined") return "do ustalenia";
+  return String(value);
+}
+
 export default function AdminTrainingsPage() {
   const router = useRouter();
   const sb = useMemo(() => supabaseClient(), []);
@@ -150,6 +205,10 @@ export default function AdminTrainingsPage() {
 
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<TrainingRow[]>([]);
+  const [importChanges, setImportChanges] = useState<ImportChange[]>([]);
+  const [reviewChange, setReviewChange] = useState<ImportChange | null>(null);
+  const [reviewFields, setReviewFields] = useState<string[]>([]);
+  const [reviewing, setReviewing] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const [editOpen, setEditOpen] = useState(false);
@@ -217,7 +276,17 @@ export default function AdminTrainingsPage() {
     setErr(null);
 
     try {
-      let data = (await fetchTrainings(sb)) as TrainingRow[];
+      const [trainingData, changesResult] = await Promise.all([
+        fetchTrainings(sb),
+        sb.rpc("get_training_import_changes", { p_status: "pending" }),
+      ]);
+      if (changesResult.error) throw changesResult.error;
+      const changes = Array.isArray(changesResult.data)
+        ? (changesResult.data as ImportChange[])
+        : [];
+      setImportChanges(changes);
+      const changedTrainingIds = new Set(changes.map((change) => change.training_id));
+      let data = trainingData as TrainingRow[];
       if (status !== "all")
         data = data.filter((row) => getStatus(row) === status);
       if (dateFrom)
@@ -242,12 +311,17 @@ export default function AdminTrainingsPage() {
             row.profession,
             ...(row.speakers ?? []),
             row.submitted_email,
+            row.import_source,
+            row.source_external_id,
           ].some((value) =>
             String(value ?? "").toLocaleLowerCase("pl-PL").includes(phrase),
           ),
         );
       }
-      data.sort((a, b) => b.created_at.localeCompare(a.created_at));
+      data.sort((a, b) => {
+        const changeOrder = Number(changedTrainingIds.has(b.id)) - Number(changedTrainingIds.has(a.id));
+        return changeOrder || b.created_at.localeCompare(a.created_at);
+      });
       setRows(data);
     } catch (error: unknown) {
       setErr(errorMessage(error, "Błąd pobierania danych"));
@@ -270,6 +344,47 @@ export default function AdminTrainingsPage() {
   }, [isAdmin, sb]);
 
   const filtered = useMemo(() => rows, [rows]);
+  const importChangeByTraining = useMemo(
+    () => new Map(importChanges.map((change) => [change.training_id, change])),
+    [importChanges],
+  );
+
+  function openImportReview(change: ImportChange) {
+    setReviewChange(change);
+    setReviewFields([...change.changed_fields]);
+  }
+
+  async function decideImportChange(decision: "apply" | "reject") {
+    if (!reviewChange) return;
+    if (decision === "apply" && reviewFields.length === 0) {
+      setErr("Wybierz co najmniej jedno pole do zastosowania.");
+      return;
+    }
+    const reason =
+      decision === "reject"
+        ? window.prompt("Powód odrzucenia zmiany źródłowej (opcjonalnie):", "")
+        : null;
+    if (decision === "reject" && reason === null) return;
+
+    setReviewing(true);
+    setErr(null);
+    try {
+      const { error } = await sb.rpc("review_training_import_change", {
+        p_change_id: reviewChange.id,
+        p_decision: decision,
+        p_fields: decision === "apply" ? reviewFields : null,
+        p_reason: reason?.trim() || null,
+      });
+      if (error) throw error;
+      setReviewChange(null);
+      setReviewFields([]);
+      await load();
+    } catch (error: unknown) {
+      setErr(errorMessage(error, "Nie udało się rozpatrzyć zmiany źródłowej."));
+    } finally {
+      setReviewing(false);
+    }
+  }
 
   async function patch(id: string, patchData: Partial<TrainingRow>) {
     const current = rows.find((row) => row.id === id);
@@ -423,6 +538,17 @@ export default function AdminTrainingsPage() {
       setEditError("Godzina zakończenia wymaga podania godziny rozpoczęcia.");
       return;
     }
+    if (edit.schedule_status === "scheduled" && !edit.start_date) {
+      setEditError("Ustalony termin wymaga daty rozpoczęcia.");
+      return;
+    }
+    if (
+      edit.schedule_status === "to_be_determined" &&
+      (edit.start_date || edit.end_date || edit.start_time || edit.end_time)
+    ) {
+      setEditError("Przy terminie do ustalenia daty i godziny muszą pozostać puste.");
+      return;
+    }
     if (
       edit.start_time &&
       edit.end_time &&
@@ -518,6 +644,7 @@ export default function AdminTrainingsPage() {
               : null,
         start_date: edit.start_date || null,
         end_date: edit.end_date || null,
+        schedule_status: edit.schedule_status,
         start_time: edit.start_time || null,
         end_time: edit.end_time || null,
         time_zone: edit.time_zone || "Europe/Warsaw",
@@ -737,8 +864,13 @@ export default function AdminTrainingsPage() {
 
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-          <div className="text-sm font-semibold text-slate-800">
-            Rekordy: {filtered.length}
+          <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-800">
+            <span>Rekordy: {filtered.length}</span>
+            {importChanges.length > 0 ? (
+              <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs text-violet-700 ring-1 ring-violet-200">
+                Zmiany źródłowe: {importChanges.length}
+              </span>
+            ) : null}
           </div>
 
           <button
@@ -784,6 +916,7 @@ export default function AdminTrainingsPage() {
                   const org = normOrganizer(r.organizer);
                   const currentStatus = getStatus(r);
                   const link = normalizeUrl(r.url ?? r.external_url ?? null);
+                  const sourceChange = importChangeByTraining.get(r.id);
 
                   return (
                     <tr key={r.id} className="border-t border-slate-100 align-top">
@@ -793,6 +926,20 @@ export default function AdminTrainingsPage() {
                         </div>
 
                         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                          {r.import_source ? (
+                            <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 font-semibold uppercase text-blue-700 ring-1 ring-blue-200">
+                              import: {r.import_source}
+                            </span>
+                          ) : null}
+                          {sourceChange ? (
+                            <button
+                              type="button"
+                              className="inline-flex rounded-full bg-violet-50 px-2 py-0.5 font-semibold text-violet-700 ring-1 ring-violet-200 hover:bg-violet-100"
+                              onClick={() => openImportReview(sourceChange)}
+                            >
+                              NIL zgłosił zmianę ({sourceChange.changed_fields.length})
+                            </button>
+                          ) : null}
                           {link ? (
                             <a
                               className="text-blue-700 hover:underline"
@@ -843,6 +990,13 @@ export default function AdminTrainingsPage() {
                         >
                           Adresaci: {trainingAudienceSummary(r.profession)}
                         </div>
+                        {(r.source_warnings ?? []).length > 0 ? (
+                          <ul className="mt-2 space-y-1 text-xs text-amber-700">
+                            {r.source_warnings.map((warning) => (
+                              <li key={warning}>• {warning}</li>
+                            ))}
+                          </ul>
+                        ) : null}
                       </td>
 
                       <td className="px-4 py-4">
@@ -861,9 +1015,17 @@ export default function AdminTrainingsPage() {
                       </td>
 
                       <td className="px-4 py-4 text-xs text-slate-700">
-                        <div className="whitespace-nowrap">{fmtDate(r.start_date)}</div>
-                        <div className="whitespace-nowrap text-slate-500">{fmtDate(r.end_date)}</div>
-                        <div className="mt-1 whitespace-nowrap font-semibold text-blue-700">{fmtTimeRange(r.start_time, r.end_time)}</div>
+                        {r.schedule_status === "to_be_determined" ? (
+                          <div className="max-w-[130px] font-semibold text-amber-700">
+                            Termin do ustalenia
+                          </div>
+                        ) : (
+                          <>
+                            <div className="whitespace-nowrap">{fmtDate(r.start_date)}</div>
+                            <div className="whitespace-nowrap text-slate-500">{fmtDate(r.end_date)}</div>
+                            <div className="mt-1 whitespace-nowrap font-semibold text-blue-700">{fmtTimeRange(r.start_time, r.end_time)}</div>
+                          </>
+                        )}
                       </td>
 
                       <td className="px-4 py-4">
@@ -880,10 +1042,19 @@ export default function AdminTrainingsPage() {
                           </div>
                         ) : (
                           <>
-                            <div className="font-semibold text-slate-500">brak e-maila</div>
+                            <div className="font-semibold text-slate-500">
+                              {r.import_source
+                                ? `Importer ${r.import_source.toUpperCase()}`
+                                : "brak e-maila"}
+                            </div>
                             <div className="mt-1 text-slate-400">
                               ID: {shortId(r.submitted_by || r.user_id)}
                             </div>
+                            {r.source_external_id ? (
+                              <div className="mt-1 text-slate-400">
+                                Źródło ID: {r.source_external_id}
+                              </div>
+                            ) : null}
                           </>
                         )}
                       </td>
@@ -917,6 +1088,16 @@ export default function AdminTrainingsPage() {
                           >
                             Edytuj
                           </button>
+
+                          {sourceChange ? (
+                            <button
+                              className="h-9 rounded-xl bg-violet-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-violet-700"
+                              onClick={() => openImportReview(sourceChange)}
+                              type="button"
+                            >
+                              Porównaj NIL
+                            </button>
+                          ) : null}
 
                           {currentStatus !== "approved" ? (
                             <button
@@ -957,6 +1138,111 @@ export default function AdminTrainingsPage() {
           </table>
         </div>
       </div>
+
+      {reviewChange ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 p-4">
+          <div className="max-h-[calc(100vh-2rem)] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white shadow-xl">
+            <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">
+                  Zmiana ze źródła {reviewChange.source_code.toUpperCase()}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  ID źródła: {reviewChange.source_external_id} · pobrano: {fmtDateTime(reviewChange.fetched_at)}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-100"
+                onClick={() => setReviewChange(null)}
+                disabled={reviewing}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="px-5 py-4">
+              <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                Zaznacz tylko pola, które chcesz pobrać z NIL. Niezaznaczone poprawki moderatora pozostaną bez zmian. Po zastosowaniu szkolenie wróci do statusu „do weryfikacji”.
+              </div>
+
+              {Array.isArray(reviewChange.source.source_warnings) && reviewChange.source.source_warnings.length > 0 ? (
+                <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+                    Ostrzeżenia parsera
+                  </div>
+                  <ul className="mt-2 space-y-1 text-sm text-amber-900">
+                    {reviewChange.source.source_warnings.map((warning) => (
+                      <li key={String(warning)}>• {String(warning)}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+                <table className="w-full min-w-[760px] text-left text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold text-slate-600">
+                    <tr>
+                      <th className="w-14 px-3 py-3">Użyj</th>
+                      <th className="w-44 px-3 py-3">Pole</th>
+                      <th className="px-3 py-3">Obecnie w CRPE</th>
+                      <th className="px-3 py-3">Nowa wartość NIL</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reviewChange.changed_fields.map((field) => (
+                      <tr key={field} className="border-t border-slate-100 align-top">
+                        <td className="px-3 py-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={reviewFields.includes(field)}
+                            onChange={(event) =>
+                              setReviewFields((current) =>
+                                event.target.checked
+                                  ? [...current, field]
+                                  : current.filter((item) => item !== field),
+                              )
+                            }
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                          />
+                        </td>
+                        <td className="px-3 py-3 font-semibold text-slate-800">
+                          {IMPORT_FIELD_LABELS[field] ?? field}
+                        </td>
+                        <td className="max-w-[330px] whitespace-pre-wrap break-words px-3 py-3 text-slate-600">
+                          {importValue(reviewChange.current[field])}
+                        </td>
+                        <td className="max-w-[330px] whitespace-pre-wrap break-words bg-violet-50/40 px-3 py-3 text-slate-900">
+                          {importValue(reviewChange.source[field])}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="h-10 rounded-xl border border-rose-200 bg-white px-4 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                onClick={() => void decideImportChange("reject")}
+                disabled={reviewing}
+              >
+                Odrzuć zmianę NIL
+              </button>
+              <button
+                type="button"
+                className="h-10 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60"
+                onClick={() => void decideImportChange("apply")}
+                disabled={reviewing || reviewFields.length === 0}
+              >
+                {reviewing ? "Zapisuję…" : `Zastosuj wybrane (${reviewFields.length})`}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {editOpen && edit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
@@ -1222,12 +1508,34 @@ export default function AdminTrainingsPage() {
                 </div>
               </div>
 
+              <div className="sm:col-span-2">
+                <label className="text-xs font-semibold text-slate-600">Stan terminu</label>
+                <select
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={edit.schedule_status}
+                  onChange={(event) => {
+                    const scheduleStatus = event.target.value as ScheduleStatus;
+                    setEdit({
+                      ...edit,
+                      schedule_status: scheduleStatus,
+                      ...(scheduleStatus === "to_be_determined"
+                        ? { start_date: null, end_date: null, start_time: null, end_time: null }
+                        : {}),
+                    });
+                  }}
+                >
+                  <option value="scheduled">Termin ustalony</option>
+                  <option value="to_be_determined">Termin do ustalenia</option>
+                </select>
+              </div>
+
               <div>
                 <label className="text-xs font-semibold text-slate-600">Start</label>
                 <input
                   type="date"
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.start_date || ""}
+                  disabled={edit.schedule_status === "to_be_determined"}
                   onChange={(e) => setEdit({ ...edit, start_date: e.target.value || null })}
                 />
               </div>
@@ -1238,6 +1546,7 @@ export default function AdminTrainingsPage() {
                   type="date"
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.end_date || ""}
+                  disabled={edit.schedule_status === "to_be_determined"}
                   onChange={(e) => setEdit({ ...edit, end_date: e.target.value || null })}
                 />
               </div>
@@ -1249,6 +1558,7 @@ export default function AdminTrainingsPage() {
                   type="time"
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.start_time || ""}
+                  disabled={edit.schedule_status === "to_be_determined"}
                   onChange={(event) => setEdit({ ...edit, start_time: event.target.value || null })}
                 />
               </div>
@@ -1260,6 +1570,7 @@ export default function AdminTrainingsPage() {
                   type="time"
                   className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={edit.end_time || ""}
+                  disabled={edit.schedule_status === "to_be_determined"}
                   onChange={(event) => setEdit({ ...edit, end_time: event.target.value || null })}
                 />
               </div>

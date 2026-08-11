@@ -55,8 +55,11 @@ const checks = [
   ],
   [
     "Kafelek pokazuje opcjonalne logo jako tło bez pustej ramki",
-    directory.includes("watermark\n") &&
-      directory.includes("if (!logoUrl) return null") &&
+    // Od v6.11 brak logo ma kontrolowany fallback z inicjałami organizatora,
+    // więc starsza asercja `return null` nie opisuje już interfejsu.
+    directory.includes("function OrganizerLogo") &&
+      directory.includes("if (!logoUrl)") &&
+      directory.includes("if (!initials) return null") &&
       directory.includes("Logo organizatora (opcjonalnie)"),
   ],
   [

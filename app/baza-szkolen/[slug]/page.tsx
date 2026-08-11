@@ -170,7 +170,9 @@ export default async function TrainingPage({ params }: PageProps) {
       icon: CalendarDays,
       label: "Termin",
       value:
-        training.end_date && training.end_date !== training.start_date
+        training.schedule_status === "to_be_determined"
+          ? "Termin do ustalenia"
+          : training.end_date && training.end_date !== training.start_date
           ? `${formatDate(training.start_date)} – ${formatDate(training.end_date)}`
           : formatDate(training.start_date),
       note: formatTimeRange(training.start_time, training.end_time, training.time_zone),

@@ -6,7 +6,7 @@ const client = fs.readFileSync(
 );
 
 const pointsColumnStart = client.indexOf(
-  'className="relative col-span-2 mt-0.5 border-t',
+  'className="col-span-2 mt-3 border-t',
 );
 const pointsColumnEnd = client.indexOf("</article>", pointsColumnStart);
 const desktopPoints = client.slice(pointsColumnStart, pointsColumnEnd);
@@ -15,17 +15,17 @@ const checks = [
   [
     "Punkty są zwartym wskaźnikiem bez kafla i podpisu",
     pointsColumnStart >= 0 &&
-      desktopPoints.includes('text-[20px] font-black') &&
-      desktopPoints.includes(">pkt</span>") &&
+      desktopPoints.includes('text-[27px] font-black') &&
+      desktopPoints.includes("pointDisplay.suffix") &&
       !desktopPoints.includes("punkty edukacyjne") &&
-      desktopPoints.includes('inline-flex shrink-0 items-center gap-1.5') &&
+      desktopPoints.includes('flex items-baseline gap-1.5') &&
       !desktopPoints.includes("PUNKTY EDUKACYJNE"),
   ],
   [
     "Kolumna akcji ma kontrolowaną wysokość strefy marki",
-    desktopPoints.includes('sm:min-h-[70px]') &&
-      desktopPoints.includes("grid grid-cols-2 gap-2.5") &&
-      desktopPoints.includes("sm:h-9"),
+    desktopPoints.includes('sm:border-l sm:border-t-0 sm:pl-4') &&
+      desktopPoints.includes("flex h-10 w-full") &&
+      desktopPoints.includes("focus-visible:outline"),
   ],
   [
     "Reset filtrów jest dostępnym przyciskiem ikonowym",
@@ -36,17 +36,17 @@ const checks = [
   ],
   [
     "Działania filtrów mają wspólną wysokość i spokojną hierarchię",
-    client.includes("grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)]") &&
+    client.includes("grid-cols-[40px_minmax(0,1fr)]") &&
       client.includes("lg:grid-cols-12 lg:gap-3") &&
       client.includes("border border-slate-300 bg-white") &&
-      client.includes("rounded-xl bg-blue-600") &&
+      client.includes("hover:bg-blue-50 hover:text-blue-700") &&
       client.includes('className="sm:hidden">Filtry</span>'),
   ],
   [
     "Status punktów pozostaje dostępny bez eksponowania go na liście",
     desktopPoints.includes("pointsDetailsLabel(t.points_verification_status)") &&
-      desktopPoints.includes("aria-label=") &&
-      client.includes("pointsDetailsLabel(detailsTraining.points_verification_status)"),
+      desktopPoints.includes('className="sr-only"') &&
+      desktopPoints.includes("title={pointsDetailsLabel(t.points_verification_status)}"),
   ],
 ];
 

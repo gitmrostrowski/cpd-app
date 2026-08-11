@@ -4,51 +4,43 @@ const client = fs.readFileSync(
   "app/baza-szkolen/TrainingHubClient.tsx",
   "utf8",
 );
-const css = fs.readFileSync("app/globals.css", "utf8");
-
 const checks = [
   [
-    "Logo rozpoznaje proporcje pliku zamiast skalować wszystkie znaki identycznie",
-    client.includes('useState<"wide" | "standard" | "compact" | "tall">') &&
-      client.includes("event.currentTarget.naturalWidth") &&
-      client.includes('ratio >= 2.15 ? "wide"') &&
-      client.includes('ratio <= 0.82 ? "tall"'),
+    "Logo zachowuje proporcje pliku",
+    client.includes("function normalizeLogoUrl") &&
+      client.includes("object-contain") &&
+      client.includes("max-h-6 w-full"),
   ],
   [
-    "Szerokie logotypy są czytelniejsze, a zwarte i pionowe znaki subtelniejsze",
-    client.includes('logoShape === "wide"') &&
-      client.includes("opacity-[0.74]") &&
-      client.includes('logoShape === "compact"') &&
-      client.includes("opacity-[0.38]") &&
-      client.includes("opacity-[0.34]"),
+    "Szerokie i pionowe znaki mieszczą się w kontrolowanym obszarze",
+    client.includes('className="inline-flex h-7 w-10') &&
+      client.includes("overflow-hidden") &&
+      client.includes("object-contain"),
   ],
   [
-    "Znak łączy się z tintą bez prostokątnej ramki",
-    client.includes("crpe-training-logo-watermark") &&
-      client.includes("mix-blend-multiply") &&
-      css.includes(".crpe-training-logo-watermark") &&
-      css.includes("mask-image: radial-gradient") &&
-      css.includes("filter: blur(7px)"),
+    "Znak nie otrzymuje ciężkiej prostokątnej ramki",
+    client.includes("<OrganizerLogo") &&
+      !client.includes("crpe-training-logo-watermark") &&
+      !client.includes("mix-blend-multiply"),
   ],
   [
-    "Maska ma osobny wariant dla znaków zwartych i pionowych",
-    css.includes('[data-logo-shape="compact"]') &&
-      css.includes('[data-logo-shape="tall"]') &&
-      css.includes("ellipse 68% 94% at 78% 47%"),
+    "Brak obrazu ma kontrolowany fallback",
+    client.includes("const initials") &&
+      client.includes("if (!initials) return null") &&
+      client.includes("{initials}"),
   ],
   [
-    "Logo pozostaje dekoracyjne, dostępne semantycznie przez nazwę organizatora",
-    client.includes("aria-hidden={watermark ? true : undefined}") &&
-      client.includes("pointer-events-none absolute -right-3 -top-1") &&
-      client.includes("sm:min-h-[70px]") &&
+    "Logo jest dostępne semantycznie przez nazwę organizatora",
+    client.includes("role=\"img\"") &&
+      client.includes("aria-label={name ? `Logo organizatora ${name}`") &&
       client.includes("{t.organizer}"),
   ],
   [
     "Zmiana nie narusza akcji, punktacji ani logiki danych",
-    client.includes("Przejdź do zapisów") &&
+    client.includes("Zapisy u organizatora") &&
       client.includes("Dodaj do planu") &&
       client.includes("chooseTraining(t)") &&
-      client.includes('<GraduationCap className="h-5 w-5 shrink-0" strokeWidth={2.1}') &&
+      client.includes("pointsDetailsLabel(t.points_verification_status)") &&
       !client.includes("supabase/migrations"),
   ],
 ];

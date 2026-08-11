@@ -6,7 +6,8 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "next lint",
+    "lint": "eslint .",
+    "lint:v6.25": "eslint 'app/api/integrations/[source]/trainings/route.ts' lib/integrations/trainingImport.ts",
     "check:v4": "node scripts/check-v4-foundation.mjs",
     "check:v5": "node scripts/check-v5-organization-panel.mjs",
     "check:v5.1": "node scripts/check-v5-1-invitations-help.mjs",
@@ -45,19 +46,21 @@
     "check:v6.20": "node --experimental-strip-types scripts/check-v6-20-deadlines-and-pace.mjs",
     "check:v6.21": "node --experimental-strip-types scripts/check-v6-21-consistency-and-routes.mjs",
     "check:v6.22": "node --experimental-strip-types scripts/check-v6-22-report-export.mjs",
-    "check:v6.24": "node --experimental-strip-types scripts/check-v6-24-overdue-and-actions.mjs"
+    "check:v6.24": "node --experimental-strip-types scripts/check-v6-24-overdue-and-actions.mjs",
+    "check:v6.25": "node --experimental-strip-types scripts/check-v6-25-training-imports.mjs",
+    "check:v6.25.1": "node --experimental-strip-types scripts/check-v6-25-training-imports.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.81.1",
     "lucide-react": "^1.11.0",
-    "next": "16.1.6",
+    "next": "16.3.0",
     "puppeteer": "^24.29.1",
     "puppeteer-core": "^24.29.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "sharp": "^0.34.5",
+    "sharp": "0.35.3",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -66,8 +69,8 @@
     "@types/react": "19.2.3",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.39.1",
-    "eslint-config-next": "16.1.6",
-    "postcss": "8.5.6",
+    "eslint-config-next": "16.3.0",
+    "postcss": "8.5.26",
     "supabase": "^2.76.14",
     "tailwindcss": "^4.1.17",
     "typescript": "5.9.3"

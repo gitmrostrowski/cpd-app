@@ -45,6 +45,9 @@ export type Database = {
       professional_identifiers: LooseTable;
       professions: LooseTable;
       profiles: LooseTable;
+      training_import_sources: LooseTable;
+      training_importer_accounts: LooseTable;
+      training_import_changes: LooseTable;
       training_profession_rules: LooseTable;
       trainings: LooseTable;
     };
@@ -186,6 +189,28 @@ export type Database = {
           p_verified_on: string | null;
         };
         Returns: undefined;
+      };
+      import_training_from_source: {
+        Args: {
+          p_source_code: string;
+          p_payload: Json;
+          p_payload_hash: string;
+          p_dry_run?: boolean;
+        };
+        Returns: Json;
+      };
+      get_training_import_changes: {
+        Args: { p_status?: string };
+        Returns: Json;
+      };
+      review_training_import_change: {
+        Args: {
+          p_change_id: string;
+          p_decision: string;
+          p_fields?: string[] | null;
+          p_reason?: string | null;
+        };
+        Returns: Json;
       };
     };
     Enums: Record<string, never>;

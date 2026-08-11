@@ -34,7 +34,7 @@ const checks = [
   [
     "Publiczny filtr używa kodów zawodów i reguł relacyjnych",
     directory.includes("value: option.code") &&
-      directory.includes("rule.profession_code === activeFilters.professionFilter") &&
+      directory.includes("rule.profession_code === professionFilter") &&
       data.includes("training_profession_rules(") &&
       data.includes("training_profession_rules_profession_id_fkey"),
   ],

@@ -9,53 +9,50 @@ const cardStart = client.indexOf("displayedItems.map");
 const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 const actionsStart = card.indexOf(
-  'className="relative col-span-2 mt-0.5 border-t',
+  'className="col-span-2 mt-3 border-t',
 );
 const actions = card.slice(actionsStart);
 
-const externalIndex = actions.indexOf("Przejdź do zapisów");
+const externalIndex = actions.indexOf("Zapisy u organizatora");
 const planIndex = actions.indexOf("Dodaj do planu");
 const pointsIndex = actions.indexOf("pointsDetailsLabel(t.points_verification_status)");
 
 const checks = [
   [
     "Prawa strefa jest poszerzona i dochodzi akcjami do krawędzi karty",
-    card.includes("sm:grid-cols-[52px_minmax(0,1fr)_312px]") &&
-      actions.includes("grid grid-cols-2 gap-2.5") &&
-      (actions.match(/h-10 min-w-0/g) ?? []).length >= 3,
+    card.includes("sm:grid-cols-[64px_minmax(0,1fr)_216px]") &&
+      actions.includes("sm:border-l") &&
+      actions.includes("w-full"),
   ],
   [
-    "Logo organizatora jest nieinteraktywnym, czytelnym znakiem w pasie marki",
-    actions.includes("sm:min-h-[70px]") &&
-      card.includes("watermark") &&
-      client.includes("pointer-events-none") &&
-      client.includes("crpe-training-logo-watermark") &&
-      client.includes("mix-blend-multiply"),
+    "Logo organizatora jest czytelnym znakiem przy nazwie",
+    card.includes("<OrganizerLogo") &&
+      client.includes('className="max-h-6 w-full object-contain"') &&
+      client.includes("aria-label={name ? `Logo organizatora ${name}`"),
   ],
   [
-    "Miękka tinta i brak pionowej linii przełamują tabelaryczny wygląd",
-    card.includes("w-[38%]") &&
-      card.includes("radial-gradient") &&
-      card.includes("linear-gradient") &&
-      !actions.includes("sm:border-l"),
+    "Subtelna szyna koloru przełamuje tabelaryczny wygląd",
+    card.includes("border-l-[3px]") &&
+      card.includes("borderLeftColor: tone.rail") &&
+      card.includes("rounded-2xl"),
   ],
   [
-    "Przejście do zapisów jest pierwsze w równej parze akcji",
+    "Przejście do zapisów jest pierwsze przed dodaniem do planu",
     externalIndex >= 0 &&
       externalIndex < planIndex &&
-      actions.includes("grid grid-cols-2 gap-2.5"),
+      actions.includes("mt-1.5"),
   ],
   [
-    "Plan ma biały plus, a czapeczka wyróżnia liczbę punktów",
+    "Plan ma plus, a liczba punktów jest wyraźna",
     planIndex > externalIndex &&
     pointsIndex < externalIndex &&
-      actions.includes('<Plus className="h-4 w-4 shrink-0 text-white"') &&
-      actions.includes('<GraduationCap className="h-5 w-5 shrink-0" strokeWidth={2.1}'),
+      actions.includes('<Plus className="h-4 w-4 shrink-0"') &&
+      actions.includes("text-[27px] font-black"),
   ],
   [
     "Pełne etykiety nie przełamują się także na wąskiej karcie",
-    (actions.match(/whitespace-nowrap/g) ?? []).length >= 4 &&
-      actions.includes("Przejdź do zapisów") &&
+    actions.includes('className="truncate"') &&
+      actions.includes("Zapisy u organizatora") &&
       actions.includes("Dodaj do planu"),
   ],
   [

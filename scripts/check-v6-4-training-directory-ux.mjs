@@ -20,10 +20,10 @@ const checks = [
       client.includes("SlidersHorizontal"),
   ],
   [
-    "Formularz ma czytelną końcową akcję i obsługuje Enter",
+    "Formularz obsługuje Enter i ma czytelne sterowanie filtrami",
     client.includes("onSubmit={(event) =>") &&
-      client.includes('type="submit"') &&
-      client.includes("Pokaż wyniki") &&
+      client.includes("event.preventDefault()") &&
+      client.includes("Więcej filtrów") &&
       client.includes('aria-label="Wyczyść filtry"'),
   ],
   [
@@ -45,22 +45,22 @@ const checks = [
   [
     "Liczba wyników i sortowanie znajdują się nad listą",
     client.includes("Wyniki wyszukiwania") &&
-      client.includes("matchedTrainingCountLabel(visibleItems.length)") &&
+      client.includes("matchedTrainingCountLabel(matchedCount)") &&
       client.includes("SearchCheck") &&
       client.includes('id="training-sort"') &&
-      client.includes("void load({ sortBy: nextSort })"),
+      client.includes("setSortBy(nextSort)"),
   ],
   [
     "Karty mają szerszą kolumnę i dwie czytelne akcje",
-    client.includes("sm:grid-cols-[52px_minmax(0,1fr)_312px]") &&
+    client.includes("sm:grid-cols-[64px_minmax(0,1fr)_216px]") &&
       client.includes("Przejdź do zapisów") &&
       client.includes("Dodaj do planu") &&
-      client.includes("sm:h-9"),
+      client.includes("flex h-10 w-full"),
   ],
   [
     "Tematy nie przeciążają listy i są dostępne w szczegółach",
     !client.includes("topicCountLabel(remainingTopics)") &&
-      client.includes("detailsTraining.topics.map"),
+      client.includes("href={trainingPath(t)}"),
   ],
   [
     "Panel boczny nie powtarza liczby wyników",

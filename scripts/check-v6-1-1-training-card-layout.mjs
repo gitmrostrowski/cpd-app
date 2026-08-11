@@ -5,21 +5,24 @@ const client = fs.readFileSync("app/baza-szkolen/TrainingHubClient.tsx", "utf8")
 const checks = [
   [
     "Kafelek oddziela datę od głównej hierarchii treści",
-    client.includes("grid-cols-[52px_minmax(0,1fr)]") &&
-      client.includes("sm:grid-cols-[52px_minmax(0,1fr)_312px]") &&
-      client.includes(">pkt</span>"),
+    // Aktualny, bardziej zwarty wariant v6.15 używa szerszej kolumny daty
+    // i osobnego obszaru akcji, ale zachowuje tę samą hierarchię informacji.
+    client.includes("grid-cols-[64px_minmax(0,1fr)]") &&
+      client.includes("sm:grid-cols-[64px_minmax(0,1fr)_216px]") &&
+      client.includes('dateUndetermined ? "?" : date.day') &&
+      client.includes("date.month.toLocaleLowerCase"),
   ],
   [
     "Logo pozostaje opcjonalne i nie tworzy pustej ramki",
-    client.includes("if (!logoUrl) return null") &&
+    client.includes("if (!logoUrl)") &&
+      client.includes("if (!initials) return null") &&
       client.includes("src={t.organizer_logo_url}"),
   ],
   [
-    "Logo jest czytelne i powiązane z kartą jako dekoracyjny pas marki",
-    client.includes('"h-[72px] w-[210px]"') &&
+    "Logo jest czytelne i powiązane z kartą w wierszu organizatora",
+    client.includes('className="max-h-6 w-full object-contain"') &&
       client.includes("<OrganizerLogo") &&
-      client.includes("max-h-[64px] max-w-[196px] object-contain object-right") &&
-      client.includes("crpe-training-logo-watermark") &&
+      client.includes("aria-label={name ? `Logo organizatora ${name}`") &&
       client.includes("object-contain"),
   ],
 ];

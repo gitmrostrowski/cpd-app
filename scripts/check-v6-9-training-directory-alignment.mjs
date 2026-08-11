@@ -6,7 +6,7 @@ const client = fs.readFileSync(
 );
 
 const filterStart = client.indexOf(
-  '<div className="mb-4 grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)]',
+  '<div className="mb-4 grid grid-cols-[40px_minmax(0,1fr)]',
 );
 const filterEnd = client.indexOf(
   '<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">',
@@ -18,46 +18,42 @@ const cardStart = client.indexOf("displayedItems.map");
 const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 const actionStart = card.indexOf(
-  'relative col-span-2 mt-0.5 border-t',
+  'col-span-2 mt-3 border-t',
 );
 const actions = card.slice(actionStart);
 const planStart = actions.indexOf('title="Dodaje szkolenie do planu CPD');
 const planEnd = actions.indexOf("</button>", planStart);
 const planButton = actions.slice(planStart, planEnd);
-const pointsStart = actions.indexOf("pointsDetailsLabel(t.points_verification_status)");
-const pointsEnd = actions.indexOf("</div>", pointsStart);
-const points = actions.slice(pointsStart, pointsEnd);
 
 const checks = [
   [
     "Działania filtrów korzystają z tej samej dwunastokolumnowej siatki i odstępu co pola",
     filterActions.includes(
-      "grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 lg:grid-cols-12 lg:gap-3",
+      "grid grid-cols-[40px_minmax(0,1fr)] items-center gap-2 lg:grid-cols-12 lg:gap-3",
     ) &&
-      filterActions.includes("lg:col-start-8 lg:justify-self-end") &&
-      (filterActions.match(/lg:col-span-2/g) ?? []).length === 2 &&
+      filterActions.includes("lg:col-start-10 lg:justify-self-end") &&
+      filterActions.includes("lg:col-span-2") &&
       !filterActions.includes("sm:w-[198px]"),
   ],
   [
     "Prawa kolumna i obie akcje są szersze",
-    card.includes("sm:grid-cols-[52px_minmax(0,1fr)_312px]") &&
-      actions.includes("grid grid-cols-2 gap-2.5") &&
-      actions.includes("min-w-0"),
+    card.includes("sm:grid-cols-[64px_minmax(0,1fr)_216px]") &&
+      actions.includes("w-full") &&
+      actions.includes("sm:pl-4"),
   ],
   [
     "Pełne etykiety przycisków nie łamią się",
-    (actions.match(/whitespace-nowrap/g) ?? []).length >= 4 &&
+    actions.includes('className="truncate"') &&
       actions.includes("Dodaj do planu") &&
-      actions.includes("Przejdź do zapisów") &&
+      actions.includes("Zapisy u organizatora") &&
       !actions.includes('className="sm:hidden">Zapisy</span>'),
   ],
   [
-    "Biały plus wyróżnia plan, a czapeczka wróciła do punktów",
+    "Plus wyróżnia plan, a punkty mają własną typografię",
     planButton.includes("Plus") &&
-      planButton.includes("text-white") &&
       planButton.indexOf("Plus") < planButton.indexOf("Dodaj do planu") &&
-      points.includes("GraduationCap") &&
-      points.includes("pkt</span>"),
+      actions.includes("text-[27px] font-black") &&
+      actions.includes("pointDisplay.suffix"),
   ],
   [
     "Zmiana nie narusza danych ani migracji",
