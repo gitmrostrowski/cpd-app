@@ -51,6 +51,7 @@ export type LegacyTraining = {
   organizer_logo_path?: string | null;
   start_date: string | null;
   end_date: string | null;
+  schedule_status?: "scheduled" | "to_be_determined";
   start_time?: string | null;
   end_time?: string | null;
   time_zone?: string | null;
@@ -85,6 +86,13 @@ export type LegacyTraining = {
   url?: string | null;
   user_id?: string | null;
   submitted_email?: string | null;
+  import_source?: string | null;
+  source_external_id?: string | null;
+  source_url?: string | null;
+  source_fetched_at?: string | null;
+  source_payload_hash?: string | null;
+  source_warnings?: string[] | null;
+  imported_by?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -376,6 +384,10 @@ function toLegacyTraining(row: Record<string, any>): LegacyTraining {
     type: (legacy.legacy_type as string | null) ?? null,
     start_date: row.starts_on ?? null,
     end_date: row.ends_on ?? null,
+    schedule_status:
+      row.schedule_status === "to_be_determined"
+        ? "to_be_determined"
+        : "scheduled",
     start_time: row.start_time ?? null,
     end_time: row.end_time ?? null,
     time_zone: row.time_zone ?? "Europe/Warsaw",
@@ -417,6 +429,13 @@ function toLegacyTraining(row: Record<string, any>): LegacyTraining {
     url: row.external_url ?? null,
     user_id: row.submitted_by ?? null,
     submitted_email: row.submitted_email ?? null,
+    import_source: row.import_source ?? null,
+    source_external_id: row.source_external_id ?? null,
+    source_url: row.source_url ?? null,
+    source_fetched_at: row.source_fetched_at ?? null,
+    source_payload_hash: row.source_payload_hash ?? null,
+    source_warnings: Array.isArray(row.source_warnings) ? row.source_warnings : [],
+    imported_by: row.imported_by ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -994,7 +1013,7 @@ export async function fetchTrainings(client: Client): Promise<LegacyTraining[]> 
   const { data, error } = await client
     .from("trainings")
     .select(
-      "id,title,organizer_name,organizer_logo_url,organizer_logo_path,points,delivery_format,starts_on,ends_on,start_time,end_time,time_zone,speakers,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,submitted_by,approved_by,approved_at,reject_reason,description,submitted_email,legacy_data,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
+      "id,title,organizer_name,organizer_logo_url,organizer_logo_path,points,delivery_format,schedule_status,starts_on,ends_on,start_time,end_time,time_zone,speakers,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,submitted_by,approved_by,approved_at,reject_reason,description,submitted_email,import_source,source_external_id,source_url,source_fetched_at,source_payload_hash,source_warnings,imported_by,legacy_data,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
     )
     .order("starts_on", { ascending: true, nullsFirst: false });
   if (error) throw new Error(error.message);
@@ -1013,7 +1032,7 @@ export async function fetchPublicTrainings(
   let query = client
     .from("trainings")
     .select(
-      "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,start_time,end_time,time_zone,speakers,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
+      "id,title,organizer_name,organizer_logo_url,points,delivery_format,schedule_status,starts_on,ends_on,start_time,end_time,time_zone,speakers,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
     )
     .eq("approval_status", "approved")
     .order("starts_on", { ascending: true, nullsFirst: false });
@@ -1032,7 +1051,7 @@ export async function fetchPublicTrainingById(
   const { data, error } = await client
     .from("trainings")
     .select(
-      "id,title,organizer_name,organizer_logo_url,points,delivery_format,starts_on,ends_on,start_time,end_time,time_zone,speakers,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
+      "id,title,organizer_name,organizer_logo_url,points,delivery_format,schedule_status,starts_on,ends_on,start_time,end_time,time_zone,speakers,category,target_profession_text,audience_scope,points_verification_status,points_source_url,points_verified_on,location,external_url,is_partner,topics,price_pln,has_recording,capacity,enrollment_status,approval_status,description,created_at,updated_at,training_profession_rules(profession_id,points,verification_status,source_url,verified_on,profession:professions!training_profession_rules_profession_id_fkey(code,name_pl))",
     )
     .eq("approval_status", "approved")
     .eq("id", trainingId)
@@ -1061,6 +1080,10 @@ export function toNormalizedTraining(
             : null,
     starts_on: input.start_date ?? null,
     ends_on: input.end_date ?? null,
+    schedule_status:
+      input.schedule_status === "to_be_determined"
+        ? "to_be_determined"
+        : "scheduled",
     start_time: input.start_time ?? null,
     end_time: input.end_time ?? null,
     time_zone: input.time_zone?.trim() || "Europe/Warsaw",

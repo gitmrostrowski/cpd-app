@@ -23,7 +23,8 @@ const checks = [
   ],
   [
     "Nowe zgłoszenie wymaga adresatów po stronie klienta i serwera",
-    directory.includes('alert("Wybierz adresatów szkolenia.")') &&
+    // Formularz v6.15 używa błędu przy polu zamiast blokującego alertu.
+    directory.includes('nextErrors.audience = "Wybierz adresatów szkolenia."') &&
       directory.includes("profession: fProfession") &&
       submission.includes('profession: z.string().trim().min(2).max(500)'),
   ],
@@ -35,11 +36,11 @@ const checks = [
   ],
   [
     "Kafelek ma spokojniejszą hierarchię, czytelne logo i tematy w szczegółach",
-      directory.includes("font-extrabold leading-[1.3]") &&
-      directory.includes("detailsTraining.topics.map") &&
-      directory.includes('? "h-[72px] w-[210px]"') &&
+      directory.includes("font-bold leading-[1.35]") &&
+      directory.includes("function OrganizerLogo") &&
+      directory.includes("trainingPath(t)") &&
       directory.includes("Przejdź do zapisów") &&
-      directory.includes("GraduationCap"),
+      directory.includes("pointsDetailsLabel"),
   ],
   [
     "Awaria diagnostyki Supabase nie blokuje wysyłki kontaktu",

@@ -9,16 +9,14 @@ const filterHeading = client.indexOf("Znajdź szkolenie");
 const filterGrid = client.indexOf('className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12"');
 const moreFilters = client.indexOf("Więcej filtrów", filterHeading);
 const clearFilters = client.indexOf('aria-label="Wyczyść filtry"', filterHeading);
-const showResults = client.indexOf("Pokaż wyniki", filterHeading);
 
 const checks = [
   [
-    "Trzy działania filtrów tworzą jeden górny pasek",
+    "Sterowanie filtrami tworzy jeden górny pasek",
     filterHeading >= 0 &&
       clearFilters > filterHeading &&
       moreFilters > clearFilters &&
-      showResults > moreFilters &&
-      filterGrid > showResults,
+      filterGrid > moreFilters,
   ],
   [
     "Hierarchia działań rozróżnia opcję, reset i główne CTA",
@@ -28,15 +26,15 @@ const checks = [
   ],
   [
     "Układ działań jest responsywny",
-    client.includes("grid grid-cols-[40px_minmax(0,1fr)_minmax(0,1fr)]") &&
+    client.includes("grid grid-cols-[40px_minmax(0,1fr)]") &&
       client.includes('className="sm:hidden">Filtry</span>') &&
-      (client.match(/lg:col-span-2/g) ?? []).length >= 2,
+      client.includes("lg:grid-cols-12"),
   ],
   [
     "Punkty mają wyraźny moduł z ikoną edukacji",
-    client.includes("GraduationCap") &&
-      client.includes("text-[20px] font-black") &&
-      client.includes("text-xs font-bold text-blue-600"),
+    client.includes("text-[27px] font-black") &&
+      client.includes("text-[13px] font-bold") &&
+      client.includes("text-blue-700"),
   ],
   [
     "Lista nie eksponuje technicznego komunikatu o braku weryfikacji",
@@ -46,8 +44,8 @@ const checks = [
   [
     "Status punktacji pozostaje dostępny w szczegółach i dla czytników",
     client.includes("pointsDetailsLabel(t.points_verification_status)") &&
-      client.includes("pointsDetailsLabel(detailsTraining.points_verification_status)") &&
-      client.includes('punktów. ${pointsDetailsLabel(t.points_verification_status)}'),
+      client.includes('className="sr-only"') &&
+      client.includes("title={pointsDetailsLabel(t.points_verification_status)}"),
   ],
 ];
 

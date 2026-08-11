@@ -17,62 +17,57 @@ const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 
 const actionStart = card.indexOf(
-  'relative col-span-2 mt-0.5 border-t',
+  'col-span-2 mt-3 border-t',
 );
 const actions = card.slice(actionStart);
 
 const resetIndex = filterActions.indexOf('aria-label="Wyczyść filtry"');
 const moreIndex = filterActions.indexOf("Więcej filtrów");
-const resultsIndex = filterActions.indexOf("Pokaż wyniki");
 const planIndex = actions.indexOf("Dodaj do planu");
 const pointsIndex = actions.indexOf("pointsDetailsLabel(t.points_verification_status)");
-const externalIndex = actions.indexOf("Przejdź do zapisów");
 const logoIndex = card.indexOf("OrganizerLogo");
 
 const checks = [
   [
-    "Reset poprzedza symetryczną parę działań filtrów",
+    "Reset poprzedza rozwijanie filtrów",
     resetIndex >= 0 &&
       resetIndex < moreIndex &&
-      moreIndex < resultsIndex &&
-      (filterActions.match(/lg:col-span-2/g) ?? []).length === 2,
+      filterActions.includes('className="sm:hidden">Filtry</span>') &&
+      filterActions.includes("lg:col-span-2"),
   ],
   [
     "Liczba wyników ma jeden opis z ikoną i nie jest duplikowana w panelu bocznym",
     client.includes("SearchCheck") &&
-      client.includes("matchedTrainingCountLabel(visibleItems.length)") &&
+      client.includes("matchedTrainingCountLabel(matchedCount)") &&
       client.includes("Znaleziono 1 dopasowane szkolenie") &&
       !client.includes("sidebarStats") &&
       !client.includes(">Podsumowanie<"),
   ],
   [
-    "Punkty poprzedzają równą parę akcji, a plan pozostaje głównym CTA CRPE",
+    "Punkty poprzedzają akcję, a plan pozostaje głównym CTA CRPE",
     actionStart >= 0 &&
-      externalIndex >= 0 &&
-      externalIndex < planIndex &&
-      pointsIndex < externalIndex &&
-      actions.includes("bg-blue-600") &&
+      pointsIndex < planIndex &&
+      actions.includes("bg-blue-700") &&
       actions.includes("pointsDetailsLabel(t.points_verification_status)"),
   ],
   [
-    "Logo jest tłem strefy marki, a obie akcje mają równe kolumny",
+    "Logo jest częścią metadanych organizatora, a akcja ma pełną szerokość",
     logoIndex >= 0 &&
-      actions.includes("border border-slate-300 bg-white/95") &&
-      actions.includes("grid grid-cols-2 gap-2.5") &&
-      card.includes("watermark"),
+      card.includes("<OrganizerLogo") &&
+      actions.includes("w-full") &&
+      actions.includes("Dodaj do planu"),
   ],
   [
-    "Karta pokazuje mniej treści, a tematy są dostępne po rozwinięciu",
-    card.includes("Szczegóły") &&
+    "Karta pokazuje mniej treści, a szczegóły mają osobną trasę",
+    card.includes("Pokaż szczegóły szkolenia") &&
       !card.includes("topics.map") &&
-      client.includes("detailsTraining.topics.map") &&
-      client.includes("Tematy szkolenia"),
+      card.includes("href={trainingPath(t)}"),
   ],
   [
     "Główna akcja zatrzymuje użytkownika w przepływie CRPE",
-    client.includes('window.location.href = "/login?next=/baza-szkolen"') &&
+    client.includes("window.location.assign(`/login?next=${encodeURIComponent(next)}`)") &&
       client.includes("Dodano do planu CPD") &&
-      client.includes("Czy chcesz teraz przejść do strony organizatora?"),
+      client.includes("To nie jest zapis na szkolenie"),
   ],
 ];
 

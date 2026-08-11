@@ -9,12 +9,12 @@ const cardStart = client.indexOf("displayedItems.map");
 const cardEnd = client.indexOf("visibleCount < visibleItems.length", cardStart);
 const card = client.slice(cardStart, cardEnd);
 const actionsStart = card.indexOf(
-  'className="relative col-span-2 mt-0.5 border-t',
+  'className="col-span-2 mt-3 border-t',
 );
 const actions = card.slice(actionsStart);
 
-const externalIndex = actions.indexOf("Przejdź do zapisów");
-const logoIndex = actions.indexOf("<OrganizerLogo");
+const externalIndex = actions.indexOf("Zapisy u organizatora");
+const logoIndex = card.indexOf("<OrganizerLogo");
 const pointsIndex = actions.indexOf(
   "pointsDetailsLabel(t.points_verification_status)",
 );
@@ -22,46 +22,41 @@ const planIndex = actions.indexOf("Dodaj do planu");
 
 const checks = [
   [
-    "Dwa przyciski tworzą równą poziomą parę",
+    "Dwie akcje tworzą czytelną pionową parę",
     actionsStart >= 0 &&
       externalIndex >= 0 &&
       planIndex > externalIndex &&
-      (actions.match(/inline-flex h-10 min-w-0/g) ?? []).length >= 3 &&
-      actions.includes("grid grid-cols-2 gap-2.5"),
+      actions.includes("flex h-10 w-full") &&
+      actions.includes("flex h-9 w-full"),
   ],
   [
-    "Logo i punkty tworzą artystyczną strefę marki nad przyciskami",
+    "Logo i punkty tworzą spójną hierarchię przed akcjami",
     logoIndex >= 0 &&
-      pointsIndex > logoIndex &&
+      pointsIndex >= 0 &&
       pointsIndex < externalIndex &&
       planIndex > externalIndex &&
-      actions.includes("sm:min-h-[70px]") &&
-      actions.includes("absolute bottom-1.5 left-0"),
+      card.includes("text-[13px] font-medium text-slate-600") &&
+      actions.includes("text-[27px] font-black"),
   ],
   [
     "Logo jest widoczne i uniwersalne dla różnych proporcji",
-    client.includes('? "h-[72px] w-[210px]"') &&
-      client.includes("crpe-training-logo-watermark pointer-events-none justify-end") &&
-      client.includes("group-hover:opacity-[0.62]") &&
-      client.includes("max-h-[64px] max-w-[196px] object-contain object-right") &&
-      client.includes("data-logo-shape") &&
+    client.includes('className="inline-flex h-7 w-10') &&
+      client.includes('className="max-h-6 w-full object-contain"') &&
+      client.includes("if (!logoUrl)") &&
       !card.includes("absolute right-3 top-1/2"),
   ],
   [
-    "Czapeczka punktów dokładnie przywraca proporcje z v6.7",
-    actions.includes(
-      '<GraduationCap className="h-5 w-5 shrink-0" strokeWidth={2.1}',
-    ) &&
-      actions.includes("text-[20px] font-black") &&
-      actions.includes("text-xs font-bold text-blue-600"),
+    "Liczba punktów ma czytelne proporcje",
+    actions.includes("text-[27px] font-black") &&
+      actions.includes("text-[13px] font-bold") &&
+      actions.includes("text-blue-700"),
   ],
   [
-    "Tinta pozostaje miękka, a interfejs czytelny na desktopie i telefonie",
-    card.includes("hidden w-[38%]") &&
-      card.includes("radial-gradient") &&
-      actions.includes("bg-gradient-to-r from-slate-50/30 to-blue-50/70") &&
-      actions.includes("sm:bg-none") &&
-      actions.includes("grid grid-cols-2"),
+    "Interfejs pozostaje czytelny na desktopie i telefonie",
+    card.includes("grid-cols-[64px_minmax(0,1fr)]") &&
+      card.includes("sm:grid-cols-[64px_minmax(0,1fr)_216px]") &&
+      actions.includes("col-span-2") &&
+      actions.includes("sm:col-span-1"),
   ],
   [
     "Zmiana pozostaje w warstwie wizualnej",

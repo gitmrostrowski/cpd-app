@@ -71,6 +71,7 @@ type Training = {
 
   start_date: string | null;
   end_date: string | null;
+  schedule_status: "scheduled" | "to_be_determined";
   start_time: string | null;
   end_time: string | null;
   time_zone: string;
@@ -657,6 +658,7 @@ function normalizeTrainingRow(r: LegacyTraining): Training {
 
     start_date: r.start_date ?? null,
     end_date: r.end_date ?? null,
+    schedule_status: r.schedule_status ?? "scheduled",
     start_time: r.start_time?.slice(0, 5) ?? null,
     end_time: r.end_time?.slice(0, 5) ?? null,
     time_zone: r.time_zone || "Europe/Warsaw",
@@ -1842,6 +1844,7 @@ export default function TrainingHubClient({
               );
 
               const date = dateParts(t.start_date);
+              const dateUndetermined = t.schedule_status === "to_be_determined";
               const range = dateRangeShort(t.start_date, t.end_date);
               const timeRange = timeRangeShort(t.start_time, t.end_time);
               const tone = formatTone(t.format);
@@ -1886,14 +1889,16 @@ export default function TrainingHubClient({
                       >
                         {urgencyLabel ? <span className="sr-only">{date.weekday}</span> : null}
                         <span aria-hidden={Boolean(urgencyLabel)}>
-                          {urgencyLabel ?? date.weekday}
+                          {dateUndetermined ? "Termin" : urgencyLabel ?? date.weekday}
                         </span>
                       </span>
                       <span className="text-[26px] font-black leading-[1.1] tracking-[-0.04em] text-slate-950">
-                        {date.day}
+                        {dateUndetermined ? "?" : date.day}
                       </span>
                       <span className="text-[11px] font-semibold text-slate-500">
-                        {date.month.toLocaleLowerCase("pl-PL")} {date.year}
+                        {dateUndetermined
+                          ? "do ustalenia"
+                          : `${date.month.toLocaleLowerCase("pl-PL")} ${date.year}`}
                       </span>
                       {timeRange ? (
                         <span className="mt-1 whitespace-nowrap text-[10px] font-bold text-blue-700">

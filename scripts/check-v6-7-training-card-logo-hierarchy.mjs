@@ -9,53 +9,48 @@ const organizerMetadataStart = client.indexOf(
   "{t.organizer ? (",
   client.indexOf("displayedItems.map"),
 );
-const organizerMetadataEnd = client.indexOf(
-  "{showRange && range ? (",
-  organizerMetadataStart,
-);
+const organizerMetadataEnd = client.indexOf("</div>", organizerMetadataStart);
 const organizerMetadata = client.slice(
   organizerMetadataStart,
   organizerMetadataEnd,
 );
 
 const actionColumnStart = client.indexOf(
-  'className="relative col-span-2 mt-0.5 border-t',
+  'className="col-span-2 mt-3 border-t',
 );
 const actionColumnEnd = client.indexOf("</article>", actionColumnStart);
 const actionHeader = client.slice(actionColumnStart, actionColumnEnd);
 
 const checks = [
   [
-    "Logo nie konkuruje z tekstową nazwą organizatora",
+    "Logo jest powiązane z tekstową nazwą organizatora",
     organizerMetadataStart >= 0 &&
       organizerMetadata.includes("{t.organizer}") &&
-      !organizerMetadata.includes("OrganizerLogo"),
+      organizerMetadata.includes("OrganizerLogo"),
   ],
   [
-    "Logo i punkty pozostają w zwartej strefie marki nad akcjami",
+    "Punkty i akcje pozostają w zwartej kolumnie",
     actionColumnStart >= 0 &&
       client.includes("OrganizerLogo") &&
-      actionHeader.includes("sm:min-h-[70px]") &&
-      actionHeader.includes("sm:h-9"),
+      actionHeader.includes("text-[27px] font-black") &&
+      actionHeader.includes("flex h-10 w-full"),
   ],
   [
     "Logo karty jest widocznym znakiem bez dodatkowej ramki",
-    client.includes('? "h-[72px] w-[210px]"') &&
-      client.includes("crpe-training-logo-watermark") &&
-      client.includes("max-h-[64px] max-w-[196px] object-contain object-right") &&
-      client.includes("mix-blend-multiply") &&
-      actionHeader.includes("<OrganizerLogo"),
+    client.includes('className="max-h-6 w-full object-contain"') &&
+      client.includes('className="inline-flex h-7 w-10') &&
+      organizerMetadata.includes("<OrganizerLogo"),
   ],
   [
-    "Brak logo nie tworzy ramki, a oba przyciski tworzą równą parę",
-    client.includes("{t.organizer_logo_url ? (") &&
-      actionHeader.includes(") : t.organizer ? (") &&
-      actionHeader.includes("grid grid-cols-2 gap-2.5"),
+    "Brak logo nie tworzy pustej ramki, a akcja zachowuje pełną szerokość",
+    client.includes("if (!initials) return null") &&
+      actionHeader.includes("w-full") &&
+      actionHeader.includes("Dodaj do planu"),
   ],
   [
     "Kolumna logo i akcji działa na telefonie i desktopie",
     actionHeader.includes("col-span-2") &&
-      actionHeader.includes("sm:h-9") &&
+      actionHeader.includes("sm:col-span-1") &&
       !actionHeader.includes("hidden h-7"),
   ],
 ];
