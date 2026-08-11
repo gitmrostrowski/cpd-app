@@ -41,7 +41,7 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
-"integrations/training-importer"
+    "node_modules",
+    "integrations/training-importer"
   ]
 }
