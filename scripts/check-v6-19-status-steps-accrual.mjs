@@ -32,9 +32,16 @@ assert.match(panel, /buildAccrualSeries\(\{/, "Dane wykresu muszą powstawać po
 assert.doesNotMatch(panel, /showAccrual/, "Wykres nie może wrócić za przełącznik");
 assert.match(
   panel,
-  /hasPointTarget && accrualSeries \? \(\s*<>/,
+  /hasPointTarget && accrualSeries \? \(\s*\n\s*statusView === "bar"/,
   "Wykres musi renderować się domyślnie po ustawieniu celu",
 );
+// Przełącznik zmienia postać wykresu, ale nigdy go nie chowa: domyślny stan to przebieg.
+assert.match(
+  panel,
+  /useState<"curve" \| "bar">\("curve"\)/,
+  "Domyślnym widokiem statusu musi pozostać przebieg w linii",
+);
+assert.match(panel, /function PointsProgressBar/, "Widok paskowy musi mieć własny komponent");
 assert.match(panel, /overflow-x-auto/, "Na wąskim ekranie wykres nie może ściskać etykiet");
 assert.match(
   panel,
@@ -43,7 +50,13 @@ assert.match(
 );
 assert.match(panel, /text-\[34px\] font-black/, "Suma punktów musi być główną liczbą sekcji");
 assert.match(panel, /const areaPath = donePoints\.length/, "Krzywa musi mieć bezpiecznie zbudowane wypełnienie");
-assert.match(panel, /opacity=\{0\.1\}/, "Wypełnienie pod krzywą powinno pozostać subtelne");
+// v6.25.3: płaskie 10% zastąpił gradient, ale próg subtelności jest ten sam —
+// górny stop nie może przekroczyć 0.2, żeby wypełnienie nie konkurowało z krzywą.
+assert.match(
+  panel,
+  /id="crpe-accrual-fill"[\s\S]{0,200}stopOpacity=\{0\.2\}/,
+  "Wypełnienie pod krzywą powinno pozostać subtelne",
+);
 assert.match(panel, /strokeWidth=\{3\}/, "Krzywa zdobytych punktów musi pozostać czytelna");
 // v6.20: siatka dostała linię pośrednią. Bez niej nie dało się odczytać, gdzie
 // leży wynik ani punkt równego tempa — a to są dwie liczby, o które w tym wykresie chodzi.

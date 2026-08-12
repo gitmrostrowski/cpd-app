@@ -100,6 +100,8 @@ type RuleLimit = {
   note?: string;
 };
 
+const STATUS_VIEW_STORAGE_KEY = "crpe.panel.statusView";
+
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
@@ -525,6 +527,26 @@ function PointsAccrualChart({
       role="img"
       aria-label={`Wykres narastania punktów w okresie ${periodStart}–${periodEnd}. Zdobyte ${series.doneTotal} pkt. ${accessibleTarget}`}
     >
+      <defs>
+        <linearGradient id="crpe-accrual-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2563eb" stopOpacity={0.2} />
+          <stop offset="100%" stopColor="#2563eb" stopOpacity={0.02} />
+        </linearGradient>
+      </defs>
+
+      {/* Ćwiartki bez etykiet dają skalę, ale nie dokładają liczb do czytania. */}
+      {[0.25, 0.75].map((ratio) => (
+        <line
+          key={ratio}
+          x1={L}
+          y1={py(series.max * ratio)}
+          x2={W - R}
+          y2={py(series.max * ratio)}
+          stroke="#f1f5f9"
+          strokeWidth={1}
+        />
+      ))}
+
       {[0, 0.5, 1].map((ratio) => (
         <g key={ratio}>
           <line
@@ -547,6 +569,17 @@ function PointsAccrualChart({
         </g>
       ))}
 
+      {/* Pionowa prowadnica „dziś” wiąże krzywą z etykietą na osi X. */}
+      <line
+        x1={px(series.todayX)}
+        y1={py(series.max)}
+        x2={px(series.todayX)}
+        y2={py(0)}
+        stroke="#cbd5e1"
+        strokeWidth={1}
+        strokeDasharray="2 4"
+      />
+
       <line
         x1={px(0)}
         y1={py(0)}
@@ -557,7 +590,7 @@ function PointsAccrualChart({
         strokeDasharray="5 4"
       />
 
-      {areaPath ? <path d={areaPath} fill="#2563eb" opacity={0.1} /> : null}
+      {areaPath ? <path d={areaPath} fill="url(#crpe-accrual-fill)" /> : null}
 
       {plannedPoints.length > 1 ? (
         <polyline
@@ -618,6 +651,13 @@ function PointsAccrualChart({
       <circle
         cx={px(series.todayX)}
         cy={py(series.doneTotal)}
+        r={9}
+        fill="#2563eb"
+        opacity={0.14}
+      />
+      <circle
+        cx={px(series.todayX)}
+        cy={py(series.doneTotal)}
         r={5}
         fill="#2563eb"
         stroke="#ffffff"
@@ -645,6 +685,174 @@ function PointsAccrualChart({
         );
       })}
     </svg>
+  );
+}
+
+/**
+ * Ten sam stan co krzywa, ale bez osi punktowej: jedna oś czasu okresu,
+ * na niej zdobyte punkty i luka do równego tempa. Krzywa odpowiada na
+ * pytanie „jak to szło”, pasek na „gdzie jestem dziś”.
+ */
+function PointsProgressBar({
+  series,
+  periodStart,
+  periodEnd,
+  periodTimeProgress,
+  pointsPerYear,
+  yearsLeft,
+}: {
+  series: AccrualSeries;
+  periodStart: number;
+  periodEnd: number;
+  periodTimeProgress: number;
+  pointsPerYear: number | null;
+  yearsLeft: number | null;
+}) {
+  const target = Math.max(1, series.target);
+  const donePct = clamp((series.doneTotal / target) * 100, 0, 100);
+  const timePct = clamp(periodTimeProgress, 0, 100);
+  const gapPct = Math.max(0, timePct - donePct);
+  const gapPoints = Math.max(0, Math.round(series.targetToday - series.doneTotal));
+  const leftPoints = Math.max(0, Math.round(series.target - series.doneTotal));
+
+  const years = Array.from(
+    { length: Math.max(1, periodEnd - periodStart + 1) },
+    (_, index) => periodStart + index,
+  );
+  const tickStep = Math.max(1, Math.ceil(years.length / 5));
+  const visibleYears = years.filter(
+    (_, index) => index % tickStep === 0 || index === years.length - 1,
+  );
+
+  const monthsLeft = yearsLeft === null ? null : Math.round(yearsLeft * 12);
+  const perMonth =
+    gapPoints > 0 && monthsLeft !== null && monthsLeft >= 2
+      ? Math.ceil(gapPoints / Math.min(monthsLeft, 12))
+      : null;
+
+  const remainingText =
+    yearsLeft === null
+      ? null
+      : yearsLeft >= 1
+        ? `Na ${Math.floor(yearsLeft)} ${pluralPl(Math.floor(yearsLeft), ["rok", "lata", "lat"])} ${Math.round((yearsLeft % 1) * 12)} mies.`
+        : `Na ${Math.max(1, Math.round(yearsLeft * 12))} mies.`;
+
+  return (
+    <div
+      role="group"
+      aria-label={`Pasek postępu w okresie ${periodStart}–${periodEnd}. Zdobyte ${series.doneTotal} z ${series.target} pkt, minęło ${Math.round(timePct)}% okresu.`}
+    >
+      <div className="relative pt-5">
+        <div
+          className="absolute top-0 -translate-x-1/2 text-[11px] font-bold text-slate-900"
+          style={{ left: `${timePct}%` }}
+        >
+          dziś
+        </div>
+
+        <div className="relative h-8 overflow-hidden rounded-xl bg-slate-100">
+          <div
+            className="absolute inset-y-0 left-0 rounded-xl bg-blue-600"
+            style={{ width: `${donePct}%` }}
+          />
+          {gapPct > 0 ? (
+            <div
+              className="absolute inset-y-0 border-y border-amber-200 bg-amber-100/70"
+              style={{
+                left: `${donePct}%`,
+                width: `${gapPct}%`,
+                backgroundImage:
+                  "repeating-linear-gradient(135deg, rgba(180,83,9,0.28) 0 2px, transparent 2px 7px)",
+              }}
+            />
+          ) : null}
+          <div
+            className="absolute inset-y-0 w-px bg-slate-900"
+            style={{ left: `${timePct}%` }}
+            aria-hidden="true"
+          />
+        </div>
+
+        <div className="relative mt-1.5 h-4">
+          {visibleYears.map((year) => {
+            const index = year - periodStart;
+            const left = clamp(((index + 0.5) / years.length) * 100, 0, 100);
+            return (
+              <span
+                key={year}
+                className="absolute -translate-x-1/2 text-[11px] text-slate-400"
+                style={{ left: `${left}%` }}
+              >
+                {year}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+            <span className="h-2 w-2 rounded-sm bg-blue-600" aria-hidden="true" />
+            Zebrane
+          </div>
+          <div className="mt-1 text-xl font-extrabold leading-none tracking-[-0.04em] text-slate-950">
+            {series.doneTotal}
+            <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
+          </div>
+          <div className="mt-1 text-[11px] leading-4 text-slate-500">
+            {Math.round(donePct)}% celu {series.target} pkt
+          </div>
+        </div>
+
+        <div
+          className={`rounded-xl border px-3 py-2.5 ${
+            gapPoints > 0 ? "border-amber-200 bg-amber-50/70" : "border-emerald-200 bg-emerald-50/60"
+          }`}
+        >
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+            <span
+              className={`h-2 w-2 rounded-sm ${gapPoints > 0 ? "bg-amber-400" : "bg-emerald-500"}`}
+              aria-hidden="true"
+            />
+            {gapPoints > 0 ? "Luka do tempa" : "Zapas nad tempem"}
+          </div>
+          <div
+            className={`mt-1 text-xl font-extrabold leading-none tracking-[-0.04em] ${
+              gapPoints > 0 ? "text-amber-800" : "text-emerald-800"
+            }`}
+          >
+            {gapPoints > 0 ? gapPoints : Math.round(series.doneTotal - series.targetToday)}
+            <span className="ml-1 text-xs font-semibold opacity-60">pkt</span>
+          </div>
+          <div className="mt-1 text-[11px] leading-4 text-slate-600">
+            {gapPoints > 0
+              ? perMonth
+                ? `Do wyrównania ≈ ${perMonth} pkt / mies.`
+                : "Do wyrównania równego tempa"
+              : "Jesteś przed równym tempem"}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+            <span className="h-2 w-2 rounded-sm bg-slate-300" aria-hidden="true" />
+            Pozostaje
+          </div>
+          <div className="mt-1 text-xl font-extrabold leading-none tracking-[-0.04em] text-slate-950">
+            {leftPoints}
+            <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
+          </div>
+          <div className="mt-1 text-[11px] leading-4 text-slate-500">
+            {leftPoints === 0
+              ? "Cel osiągnięty"
+              : pointsPerYear
+                ? `Tempo ${pointsPerYear} pkt rocznie`
+                : (remainingText ?? "Do końca okresu")}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -708,6 +916,30 @@ export default function CalculatorClient() {
   const [activityFilter, setActivityFilter] = useState<"all" | "planned" | "missing" | "complete">("all");
   const [selectedLimitKey, setSelectedLimitKey] = useState<string | null>(null);
   const [activeNav, setActiveNav] = useState<PanelSectionId>("ustawienia");
+  /**
+   * Wybór widoku statusu zapamiętujemy lokalnie, a nie w profilu: to
+   * preferencja czytania jednego ekranu, nie dana rozliczeniowa.
+   * Odczyt idzie po montażu, żeby nie rozjechać hydratacji SSR.
+   */
+  const [statusView, setStatusView] = useState<"curve" | "bar">("curve");
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(STATUS_VIEW_STORAGE_KEY);
+      if (saved === "curve" || saved === "bar") setStatusView(saved);
+    } catch {
+      /* prywatny tryb przeglądarki blokuje storage — zostaje domyślny widok */
+    }
+  }, []);
+
+  function chooseStatusView(view: "curve" | "bar") {
+    setStatusView(view);
+    try {
+      window.localStorage.setItem(STATUS_VIEW_STORAGE_KEY, view);
+    } catch {
+      /* brak zapisu preferencji nie może przerywać pracy panelu */
+    }
+  }
 
   const supabase = useMemo(() => supabaseClient(), []);
 
@@ -1913,11 +2145,47 @@ export default function CalculatorClient() {
               <h2 className="text-base font-extrabold tracking-tight text-slate-950">
                 Twój status i kolejne kroki
               </h2>
-              <span
-                className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold ${paceBadgeClass}`}
-              >
-                {paceBadgeLabel}
-              </span>
+
+              <div className="flex items-center gap-2">
+                {hasPointTarget && accrualSeries ? (
+                  <div
+                    role="group"
+                    aria-label="Widok wykresu"
+                    className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5"
+                  >
+                    {(
+                      [
+                        { id: "curve", label: "Przebieg" },
+                        { id: "bar", label: "Przegląd" },
+                      ] as const
+                    ).map((option) => {
+                      const active = statusView === option.id;
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => chooseStatusView(option.id)}
+                          className={[
+                            "rounded-[7px] px-2.5 py-1 text-[11px] font-bold transition",
+                            active
+                              ? "bg-white text-slate-900 shadow-sm"
+                              : "text-slate-500 hover:text-slate-800",
+                          ].join(" ")}
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
+                <span
+                  className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold ${paceBadgeClass}`}
+                >
+                  {paceBadgeLabel}
+                </span>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-5 pb-2">
@@ -1947,6 +2215,22 @@ export default function CalculatorClient() {
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
               <div className="min-w-0 px-3 pb-3 pt-1">
                 {hasPointTarget && accrualSeries ? (
+                  statusView === "bar" ? (
+                    <div className="px-2 pb-1 pt-2">
+                      <PointsProgressBar
+                        series={accrualSeries}
+                        periodStart={periodStart}
+                        periodEnd={periodEnd}
+                        periodTimeProgress={periodTimeProgress}
+                        pointsPerYear={pace && !pace.achieved ? pace.pointsPerYear : null}
+                        yearsLeft={pace ? pace.yearsLeft : null}
+                      />
+                      <p className="mt-2 px-1 text-[12px] leading-[18px] text-slate-500">
+                        Pasek pokazuje ten sam okres co przebieg: kolor to punkty zdobyte, pole
+                        zakreskowane to luka do równego tempa na dziś.
+                      </p>
+                    </div>
+                  ) : (
                   <>
                     <div
                       className="overflow-x-auto pb-1"
@@ -1991,6 +2275,7 @@ export default function CalculatorClient() {
                       właściwych dla Twojego zawodu ani okresu.
                     </p>
                   </>
+                  )
                 ) : (
                   <div className="flex h-[190px] items-center justify-center px-6 text-center text-[13px] leading-5 text-slate-500">
                     Ustaw cel punktowy, żeby zobaczyć, jak Twoje punkty narastają w okresie.
@@ -2136,125 +2421,142 @@ export default function CalculatorClient() {
               Brak zdefiniowanych limitów dla tego zawodu.
             </div>
           ) : (
-            <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <div className="space-y-3">
-                <div className="relative border-b border-slate-200 pt-1">
-                  <div className="grid items-end gap-2 sm:grid-cols-2">
-                    {limitsUsage.map((r) => {
-                      const active = selectedLimit?.key === r.key;
+            <div className="grid items-start gap-4 lg:grid-cols-[minmax(250px,300px)_minmax(0,1fr)]">
+              {/**
+               * Wybór po lewej, wyjaśnienie po prawej. Kafle 2×2 nad opisem
+               * zmuszały do przeskoku wzrokiem w dół po każdym kliknięciu i
+               * przy czterech kategoriach czytały się jak cztery osobne wyniki,
+               * a nie jak jedna lista do wyboru.
+               */}
+              <div className="space-y-2">
+                <div className="px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                  Kategorie
+                </div>
 
-                      /**
-                       * Duża liczba znaczyła co innego w każdym trybie: przy
-                       * `per_item` był to sufit na jeden wpis, a przy limicie
-                       * okresowym — reszta. Ten sam krój i ta sama pozycja,
-                       * więc „6” i „5” czytało się jak te same wielkości.
-                       * Limit zbiorczy pokazujemy teraz jako ułamek.
-                       */
-                      const isPerItem = r.mode === "per_item";
-                      const value = isPerItem
-                        ? String(r.cap)
-                        : `${Math.round(r.remaining)}/${Math.round(r.cap)}`;
-                      const suffix = isPerItem
-                        ? "pkt na wpis"
-                        : r.status === "blocked"
-                          ? "limit wyczerpany"
-                          : "pkt wolne";
+                <div className="space-y-1.5">
+                  {limitsUsage.map((r) => {
+                    const active = selectedLimit?.key === r.key;
+                    const isPerItem = r.mode === "per_item";
+                    const value = isPerItem
+                      ? String(r.cap)
+                      : `${Math.round(r.remaining)}/${Math.round(r.cap)}`;
+                    const suffix = isPerItem
+                      ? "pkt na wpis"
+                      : r.status === "blocked"
+                        ? "limit wyczerpany"
+                        : "pkt wolne";
+                    const description =
+                      r.mode === "per_item"
+                        ? "limit pojedynczego wpisu"
+                        : r.mode === "per_year"
+                          ? "limit roczny"
+                          : "limit w okresie";
 
-                      const description =
-                        r.mode === "per_item"
-                          ? "limit pojedynczego wpisu"
-                          : r.mode === "per_year"
-                            ? "limit roczny"
-                            : "limit w okresie";
-
-                      return (
-                        <button
-                          key={r.key}
-                          type="button"
-                          onClick={() => setSelectedLimitKey(r.key)}
+                    return (
+                      <button
+                        key={r.key}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => setSelectedLimitKey(r.key)}
+                        className={[
+                          "group relative w-full rounded-2xl border px-3.5 py-3 text-left transition active:scale-[0.995]",
+                          active
+                            ? "border-emerald-300 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.06)]"
+                            : "border-slate-200 bg-slate-50/70 hover:border-slate-300 hover:bg-white",
+                        ].join(" ")}
+                      >
+                        <span
                           className={[
-                            "group relative -mb-px min-h-[74px] rounded-t-[1.05rem] border border-b-0 px-4 py-3 text-left transition active:scale-[0.995]",
-                            active
-                              ? "z-10 border-emerald-300 bg-white shadow-[0_-1px_0_rgba(16,185,129,0.35),0_8px_16px_rgba(15,23,42,0.05)]"
-                              : "border-slate-200 bg-slate-50/80 text-slate-600 hover:border-slate-300 hover:bg-white",
+                            "absolute inset-y-2 left-0 w-1 rounded-r-full transition",
+                            active ? "bg-emerald-500" : "bg-transparent group-hover:bg-slate-300",
                           ].join(" ")}
-                        >
-                          <div
-                            className={[
-                              "absolute inset-x-3 top-0 h-1 rounded-b-full transition",
-                              active ? "bg-emerald-500" : "bg-transparent group-hover:bg-slate-300",
-                            ].join(" ")}
-                          />
+                          aria-hidden="true"
+                        />
 
-                          <div className="flex h-full items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span
-                                  className={[
-                                    "grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition",
-                                    active
-                                      ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                                      : "border-slate-200 bg-white text-slate-500 group-hover:text-slate-700",
-                                  ].join(" ")}
-                                >
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    className="h-3.5 w-3.5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                  >
-                                    <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9Z" />
-                                    <path d="M3 10h18" />
-                                  </svg>
-                                </span>
-
-                                <div
-                                  className={[
-                                    "truncate text-sm font-semibold tracking-[-0.01em]",
-                                    active ? "text-slate-950" : "text-slate-700",
-                                  ].join(" ")}
-                                >
-                                  {r.label}
-                                </div>
-                              </div>
-
-                              <div
-                                className={[
-                                  "mt-1.5 truncate text-[11px] font-medium leading-none",
-                                  active ? "text-emerald-700" : "text-slate-500",
-                                ].join(" ")}
-                              >
-                                {description}
-                              </div>
-
-                              <div
-                                className={[
-                                  "mt-1.5 text-[13px] font-semibold leading-none",
-                                  active ? "text-emerald-700" : "text-slate-600",
-                                ].join(" ")}
-                              >
-                                {suffix}
-                              </div>
-                            </div>
-
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
                             <div
                               className={[
-                                "shrink-0 font-bold leading-none tracking-[-0.03em] tabular-nums",
-                                isPerItem ? "text-xl" : "text-lg",
+                                "truncate text-sm font-semibold tracking-[-0.01em]",
+                                active ? "text-slate-950" : "text-slate-700",
+                              ].join(" ")}
+                            >
+                              {r.label}
+                            </div>
+                            <div
+                              className={[
+                                "mt-1 truncate text-[11px] font-medium leading-none",
                                 active ? "text-emerald-700" : "text-slate-500",
                               ].join(" ")}
                             >
-                              {value}
+                              {description} · {suffix}
                             </div>
                           </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+
+                          <div
+                            className={[
+                              "shrink-0 text-base font-bold leading-none tracking-[-0.03em] tabular-nums",
+                              active ? "text-emerald-700" : "text-slate-500",
+                            ].join(" ")}
+                          >
+                            {value}
+                          </div>
+                        </div>
+
+                        {r.mode !== "per_item" ? (
+                          <div className="mt-2 h-1 overflow-hidden rounded-full bg-slate-200/80">
+                            <div
+                              className={[
+                                "h-full rounded-full transition-all duration-500",
+                                r.status === "blocked"
+                                  ? "bg-slate-400"
+                                  : r.status === "warning"
+                                    ? "bg-amber-400"
+                                    : "bg-blue-600",
+                              ].join(" ")}
+                              style={{
+                                width: `${Math.max(r.usedPct, r.used > 0 ? 5 : 0)}%`,
+                              }}
+                            />
+                          </div>
+                        ) : null}
+                      </button>
+                    );
+                  })}
                 </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Status limitów
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div className="rounded-xl border border-emerald-100 bg-white px-3 py-2">
+                      <div className="text-[10px] font-medium text-slate-500">Dostępne</div>
+                      <div className="mt-0.5 text-lg font-bold leading-none text-emerald-700">
+                        {usableLimitsCount}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <div className="text-[10px] font-medium text-slate-500">Zamknięte limitem</div>
+                      <div
+                        className={[
+                          "mt-0.5 text-lg font-bold leading-none",
+                          blockedLimitsCount > 0 ? "text-amber-700" : "text-slate-500",
+                        ].join(" ")}
+                      >
+                        {blockedLimitsCount}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                    „Zamknięte” oznacza kategorie, w których osiągnięto już maksymalny limit punktów.
+                  </p>
+                </div>
+              </div>
+
+              <div className="min-w-0 space-y-3">
                 {selectedLimit ? (
-                  <div className="relative overflow-hidden rounded-b-[1.35rem] rounded-tr-[1.35rem] border border-emerald-100 bg-gradient-to-br from-emerald-50/55 via-white to-blue-50/25 p-3.5 shadow-sm shadow-emerald-100/50">
+                  <div className="relative overflow-hidden rounded-[1.35rem] border border-emerald-100 bg-gradient-to-br from-emerald-50/55 via-white to-blue-50/25 p-4 shadow-sm shadow-emerald-100/50">
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-emerald-300 to-transparent" />
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -2421,104 +2723,68 @@ export default function CalculatorClient() {
                       ) : null}
                     </div>
                   </div>
-
                 ) : null}
-              </div>
 
-              <aside className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-                <div className="flex items-start gap-3">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
+                <div className="grid gap-3 rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:grid-cols-2">
+                  <div className="flex items-start gap-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 10v6" />
+                        <path d="M12 7h.01" />
+                      </svg>
+                    </span>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold text-slate-950">
+                        Skąd wynikają te limity?
+                      </div>
+                      <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                        Pokazane maksima pochodzą ze zweryfikowanej reguły dla
+                        wybranego zawodu i są liczone w ustawionym okresie.
+                      </p>
+                      {limitsRuleSet?.sources[0] ? (
+                        <a
+                          href={limitsRuleSet.sources[0].url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 inline-flex text-[11px] font-bold text-blue-700 hover:underline"
+                        >
+                          Otwórz źródło reguły →
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      Najlepszy ruch
+                    </div>
+                    <div className="mt-1 text-sm font-bold text-slate-950">
+                      {bestLimit?.label ?? "Sprawdź aktywności"}
+                    </div>
+                    <div className="mt-0.5 text-xs leading-relaxed text-slate-600">
+                      {bestLimit
+                        ? bestLimit.mode === "per_item"
+                          ? `Możesz dodać kolejny wpis do ${bestLimit.cap} pkt.`
+                          : `Możesz jeszcze doliczyć ${Math.round(bestLimit.remaining)} pkt.`
+                        : "Brak oczywistej rekomendacji."}
+                    </div>
+                    <Link
+                      href="/profil"
+                      className="mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-800"
                     >
-                      <circle cx="12" cy="12" r="9" />
-                      <path d="M12 10v6" />
-                      <path d="M12 7h.01" />
-                    </svg>
-                  </span>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-bold text-slate-950">
-                      Skąd wynikają te limity?
-                    </div>
-                    <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
-                      Pokazane maksima pochodzą ze zweryfikowanej reguły dla
-                      wybranego zawodu i są liczone w ustawionym okresie.
-                    </p>
-                    {limitsRuleSet?.sources[0] ? (
-                      <a
-                        href={limitsRuleSet.sources[0].url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-2 inline-flex text-[11px] font-bold text-blue-700 hover:underline"
-                      >
-                        Otwórz źródło reguły →
-                      </a>
-                    ) : null}
+                      Sprawdź profil i ustawienia →
+                    </Link>
                   </div>
                 </div>
-
-                <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    Status limitów
-                  </div>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <div className="rounded-xl border border-emerald-100 bg-white px-3 py-2">
-                      <div className="text-[10px] font-medium text-slate-500">Dostępne</div>
-                      <div className="mt-0.5 text-lg font-bold leading-none text-emerald-700">
-                        {usableLimitsCount}
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                      <div className="text-[10px] font-medium text-slate-500">Zamknięte limitem</div>
-                      <div
-                        className={[
-                          "mt-0.5 text-lg font-bold leading-none",
-                          blockedLimitsCount > 0 ? "text-amber-700" : "text-slate-500",
-                        ].join(" ")}
-                      >
-                        {blockedLimitsCount}
-                      </div>
-                    </div>
-                  </div>
-                  <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-                    „Zamknięte” oznacza kategorie, w których osiągnięto już maksymalny limit punktów.
-                  </p>
-                </div>
-
-                <div className="mt-3 border-t border-slate-100 pt-3">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Najlepszy ruch
-                  </div>
-                  <div className="mt-1 text-sm font-bold text-slate-950">
-                    {bestLimit?.label ?? "Sprawdź aktywności"}
-                  </div>
-                  <div className="mt-0.5 text-xs leading-relaxed text-slate-600">
-                    {bestLimit
-                      ? bestLimit.mode === "per_item"
-                        ? `Możesz dodać kolejny wpis do ${bestLimit.cap} pkt.`
-                        : `Możesz jeszcze doliczyć ${Math.round(bestLimit.remaining)} pkt.`
-                      : "Brak oczywistej rekomendacji."}
-                  </div>
-                </div>
-
-                <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 px-3 py-2.5 text-xs leading-relaxed text-slate-700">
-                  <span className="font-semibold text-slate-950">Jak korzystać?</span>{" "}
-                  Wybierz zakładkę kategorii. W środku zobaczysz limit, swój stan
-                  i decyzję: planować dalej czy wybrać coś innego.
-                </div>
-
-                <Link
-                  href="/profil"
-                  className="mt-3 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-800"
-                >
-                  Sprawdź profil i ustawienia →
-                </Link>
-              </aside>
+              </div>
             </div>
           )}
 
