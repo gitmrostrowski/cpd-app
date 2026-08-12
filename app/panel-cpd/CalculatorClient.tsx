@@ -744,36 +744,41 @@ function PointsProgressBar({
     >
       <div className="relative pt-5">
         <div
-          className="absolute top-0 -translate-x-1/2 text-[11px] font-bold text-slate-900"
-          style={{ left: `${timePct}%` }}
+          className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[11px] font-bold text-slate-900"
+          style={{ left: `clamp(1rem, ${timePct}%, calc(100% - 1rem))` }}
         >
           dziś
         </div>
 
-        <div className="relative h-8 overflow-hidden rounded-xl bg-slate-100">
+        <div className="relative h-9 overflow-hidden rounded-xl border border-slate-200 bg-slate-100/80">
           <div
-            className="absolute inset-y-0 left-0 rounded-xl bg-blue-600"
+            className="absolute inset-y-0 left-0 bg-blue-600"
             style={{ width: `${donePct}%` }}
           />
           {gapPct > 0 ? (
             <div
-              className="absolute inset-y-0 border-y border-amber-200 bg-amber-100/70"
+              className="absolute inset-y-0 bg-amber-100"
               style={{
                 left: `${donePct}%`,
                 width: `${gapPct}%`,
                 backgroundImage:
-                  "repeating-linear-gradient(135deg, rgba(180,83,9,0.28) 0 2px, transparent 2px 7px)",
+                  "repeating-linear-gradient(135deg, rgba(180,83,9,0.32) 0 2px, transparent 2px 7px)",
               }}
             />
           ) : null}
           <div
-            className="absolute inset-y-0 w-px bg-slate-900"
+            className="absolute inset-y-0 w-[2px] bg-slate-900"
             style={{ left: `${timePct}%` }}
             aria-hidden="true"
           />
         </div>
 
-        <div className="relative mt-1.5 h-4">
+        <div className="mt-1 flex items-center justify-between text-[11px] font-medium text-slate-400">
+          <span>0 pkt</span>
+          <span>{series.target} pkt</span>
+        </div>
+
+        <div className="relative mt-0.5 h-4">
           {visibleYears.map((year) => {
             const index = year - periodStart;
             const left = clamp(((index + 0.5) / years.length) * 100, 0, 100);
@@ -2142,9 +2147,14 @@ export default function CalculatorClient() {
 
           <section id="status" className={cardCls}>
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 pb-1 pt-4">
-              <h2 className="text-base font-extrabold tracking-tight text-slate-950">
-                Twój status i kolejne kroki
-              </h2>
+              <div className="flex items-center gap-3">
+                <IconBubble tone="blue">
+                  <MiniIcon name="chart" />
+                </IconBubble>
+                <h2 className="text-base font-extrabold tracking-tight text-slate-950">
+                  Twój status i kolejne kroki
+                </h2>
+              </div>
 
               <div className="flex items-center gap-2">
                 {hasPointTarget && accrualSeries ? (
@@ -2291,23 +2301,42 @@ export default function CalculatorClient() {
                 {nextSteps.map((step, index) => {
                   const isPrimary = index === 0;
 
-                  const primaryTone =
+                  /**
+                   * Akcja główna ma zawsze ten sam, granatowy kolor. Pilność
+                   * niesie plakietka, dzięki czemu ostrzeżenie nie konkuruje
+                   * wizualnie z wynikiem i pozostałymi sekcjami panelu.
+                   */
+                  const urgencyLabel =
                     step.tone === "amber"
-                      ? "bg-amber-600 hover:bg-amber-700"
+                      ? "pilne"
                       : step.tone === "green"
-                        ? "bg-emerald-600 hover:bg-emerald-700"
-                        : "bg-blue-600 hover:bg-blue-700";
+                        ? "gotowe"
+                        : null;
+
+                  const urgencyClass =
+                    step.tone === "amber"
+                      ? "bg-amber-300/90 text-amber-950"
+                      : "bg-emerald-300/90 text-emerald-950";
 
                   if (isPrimary) {
                     return (
                       <Link
                         key={step.title}
                         href={step.ctaHref}
-                        className={`mb-1.5 flex items-center gap-3 rounded-xl px-3.5 py-3 text-white shadow-sm transition-colors ${primaryTone}`}
+                        className="mb-1.5 flex items-center gap-3 rounded-xl bg-blue-700 px-3.5 py-3 text-white shadow-sm transition-colors hover:bg-blue-800"
                       >
                         <MiniIcon name={step.icon} className="h-5 w-5 shrink-0" />
                         <span className="min-w-0 flex-1">
-                          <span className="block text-[15px] font-bold leading-5">{step.title}</span>
+                          <span className="flex flex-wrap items-center gap-2">
+                            <span className="text-[15px] font-bold leading-5">{step.title}</span>
+                            {urgencyLabel ? (
+                              <span
+                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] ${urgencyClass}`}
+                              >
+                                {urgencyLabel}
+                              </span>
+                            ) : null}
+                          </span>
                           <span className="mt-0.5 block text-xs leading-4 text-white/85">
                             {step.description}
                           </span>
@@ -2437,14 +2466,18 @@ export default function CalculatorClient() {
                   {limitsUsage.map((r) => {
                     const active = selectedLimit?.key === r.key;
                     const isPerItem = r.mode === "per_item";
+                    /**
+                     * Ułamek pokazuje wykorzystanie, nie zapas. Licznik rośnie
+                     * razem z paskiem i pozostaje spójny z polem „Masz już”.
+                     */
                     const value = isPerItem
-                      ? String(r.cap)
-                      : `${Math.round(r.remaining)}/${Math.round(r.cap)}`;
+                      ? `${r.cap} pkt`
+                      : `${Math.round(r.used)}/${Math.round(r.cap)}`;
                     const suffix = isPerItem
-                      ? "pkt na wpis"
+                      ? "maksymalnie na jeden wpis"
                       : r.status === "blocked"
                         ? "limit wyczerpany"
-                        : "pkt wolne";
+                        : `zostało ${Math.round(r.remaining)} pkt`;
                     const description =
                       r.mode === "per_item"
                         ? "limit pojedynczego wpisu"
@@ -2486,10 +2519,26 @@ export default function CalculatorClient() {
                             <div
                               className={[
                                 "mt-1 truncate text-[11px] font-medium leading-none",
-                                active ? "text-emerald-700" : "text-slate-500",
+                                r.status === "blocked"
+                                  ? "text-slate-500"
+                                  : active
+                                    ? "text-emerald-700"
+                                    : "text-slate-500",
                               ].join(" ")}
                             >
-                              {description} · {suffix}
+                              {description}
+                            </div>
+                            <div
+                              className={[
+                                "mt-1 truncate text-[11px] font-semibold leading-none",
+                                r.status === "blocked"
+                                  ? "text-slate-400"
+                                  : r.status === "warning"
+                                    ? "text-amber-700"
+                                    : "text-emerald-700",
+                              ].join(" ")}
+                            >
+                              {suffix}
                             </div>
                           </div>
 
@@ -2527,17 +2576,20 @@ export default function CalculatorClient() {
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    Status limitów
+                    Podsumowanie kategorii
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <div className="rounded-xl border border-emerald-100 bg-white px-3 py-2">
-                      <div className="text-[10px] font-medium text-slate-500">Dostępne</div>
+                      <div className="text-[10px] font-medium text-slate-500">Z wolnym miejscem</div>
                       <div className="mt-0.5 text-lg font-bold leading-none text-emerald-700">
                         {usableLimitsCount}
+                        <span className="ml-1 text-[11px] font-semibold text-slate-400">
+                          z {limitsUsage.length}
+                        </span>
                       </div>
                     </div>
                     <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                      <div className="text-[10px] font-medium text-slate-500">Zamknięte limitem</div>
+                      <div className="text-[10px] font-medium text-slate-500">Wyczerpane</div>
                       <div
                         className={[
                           "mt-0.5 text-lg font-bold leading-none",
@@ -2545,11 +2597,14 @@ export default function CalculatorClient() {
                         ].join(" ")}
                       >
                         {blockedLimitsCount}
+                        <span className="ml-1 text-[11px] font-semibold text-slate-400">
+                          z {limitsUsage.length}
+                        </span>
                       </div>
                     </div>
                   </div>
                   <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-                    „Zamknięte” oznacza kategorie, w których osiągnięto już maksymalny limit punktów.
+                    Liczby przy kategoriach to punkty już wykorzystane z limitu.
                   </p>
                 </div>
               </div>
