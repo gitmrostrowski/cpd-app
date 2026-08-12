@@ -1,4 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
+import { load, type CheerioAPI } from "cheerio";
 import type {
   AdapterResult,
   DeliveryFormat,
@@ -16,7 +17,7 @@ const FORMAT_MAP: Record<string, DeliveryFormat> = {
 
 const PROFESSION_MAP: Record<string, string[]> = {
   "33": ["dentist"],
-  "34": ["doctor"],
+  "34": ["doctor", "dentist"],
 };
 
 const CATEGORY_MAP: Record<string, TrainingCategory> = {
@@ -98,16 +99,29 @@ function shortTime(raw: string) {
   return `${match[1].padStart(2, "0")}:${match[2]}`;
 }
 
-function extractEndTime(description: string) {
+function extractTimeRange(description: string) {
   const clean = stripHtml(description);
-  const match = clean.match(
-    /\bgodz\w*\s*(\d{1,2})\D?(\d{2})\D+(\d{1,2})\D?(\d{2})\b/i,
+  const compact = clean.match(/\bgodz\w*\s*(\d{7,8})\b/i);
+  const separated = clean.match(
+    /\bgodz\w*\s*(\d{1,2})\s*[:.]?\s*(\d{2})\s*(?:[-–—]|do|\s)\s*(\d{1,2})\s*[:.]?\s*(\d{2})\b/i,
   );
-  if (!match) return null;
-  const hour = Number(match[3]);
-  const minute = Number(match[4]);
-  if (hour > 23 || minute > 59) return null;
-  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  if (!compact && !separated) return null;
+  const compactDigits = compact?.[1];
+  const parts = compactDigits
+    ? compactDigits.length === 7
+      ? [compactDigits.slice(0, 1), compactDigits.slice(1, 3), compactDigits.slice(3, 5), compactDigits.slice(5, 7)]
+      : [compactDigits.slice(0, 2), compactDigits.slice(2, 4), compactDigits.slice(4, 6), compactDigits.slice(6, 8)]
+    : separated?.slice(1, 5);
+  if (!parts || parts.length !== 4) return null;
+  const startHour = Number(parts[0]);
+  const startMinute = Number(parts[1]);
+  const endHour = Number(parts[2]);
+  const endMinute = Number(parts[3]);
+  if (startHour > 23 || startMinute > 59 || endHour > 23 || endMinute > 59) return null;
+  return {
+    start: `${String(startHour).padStart(2, "0")}:${String(startMinute).padStart(2, "0")}`,
+    end: `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`,
+  };
 }
 
 function extractExternalId(url: string) {
@@ -116,25 +130,53 @@ function extractExternalId(url: string) {
   return match[1];
 }
 
+function normalizeSpeaker(value: string) {
+  return value
+    .replace(/\bdr\s+hab\.?\s+n\.?\s*med\.?/gi, "dr hab. n. med.")
+    .replace(/\bdr\s+n\.?\s*med\.?/gi, "dr n. med.")
+    .replace(/\bdr\s+nmed\.?/gi, "dr n. med.")
+    .replace(/\br\.?\s*pr\.?/gi, "r.pr.")
+    .replace(/\s*,?\s+prof\.?\s+([A-ZĄĆĘŁŃÓŚŹŻ]{2,5})\b/u, ", prof. $1")
+    .replace(/\s+/g, " ")
+    .replace(/\s+,/g, ",")
+    .trim();
+}
+
 function extractSpeakers(shortDescription: string) {
   // Feed NIL często usuwa znaczniki i interpunkcję, łącząc kilka osób w jeden
   // ciąg. Importujemy nazwę tylko przy jednoznacznym, krótkim polu tekstowym.
   const clean = stripHtml(shortDescription);
   const match = clean.match(
-    /(?:Wykładowca|Prowadzący):?\s*([^]+?)(?:\s+Szkolenie\b|\s+godz\b|\s+Miejsce\b|\s+Kontakt\b|\s+Program\b|$)/i,
+    /(?:Wykładowc(?:a|y)|Prowadząc(?:y|a)):?\s*([^]+?)(?:\s+Szkolenie\b|\s+godz\b|\s+Miejsce\b|\s+Kontakt\b|\s+Program\b|$)/i,
   );
   const candidate = match?.[1]?.trim() ?? "";
-  if (!candidate || candidate.length > 120 || /\b(?:oraz|i)\b.*\b(?:dr|lek|prof|mgr)\b/i.test(candidate)) {
+  const capitalizedNameParts = candidate.match(/\b[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż-]+\b/gu) ?? [];
+  if (
+    !candidate ||
+    candidate.length > 120 ||
+    capitalizedNameParts.length >= 4 ||
+    /\b(?:oraz|i)\b.*\b(?:dr|lek|prof|mgr)\b/i.test(candidate)
+  ) {
     return [];
   }
-  return [candidate];
+  return [normalizeSpeaker(candidate)];
 }
 
-function extractVoivodeship(description: string, format: DeliveryFormat) {
+function extractLocation(description: string, format: DeliveryFormat) {
   if (format === "online") return null;
   const clean = stripHtml(description);
-  if (/Warszaw/i.test(clean)) return "mazowieckie";
-  return null;
+  const match = clean.match(
+    /Miejsce\s+wydarzenia:?\s*(.+?)(?=\s+\d{8}\b|\s+godz\w*\b|\s+Kontakt\b|$)/i,
+  );
+  const location = match?.[1]?.trim() ?? "";
+  if (!location) return null;
+  if (/Centrum\s+SzkoleniowoKonferencyjne.*Sobieskiego\s+110.*Warszaw/i.test(location)) {
+    return "Centrum Szkoleniowo-Konferencyjne Naczelnej Izby Lekarskiej, ul. Sobieskiego 110, Warszawa";
+  }
+  if (/Naczelna\s+Izba\s+Lekarska.*Sobieskiego\s+110.*Warszaw/i.test(location)) {
+    return "Naczelna Izba Lekarska, ul. Sobieskiego 110, Warszawa";
+  }
+  return location.slice(0, 160);
 }
 
 function mapPayment(code: string) {
@@ -186,8 +228,11 @@ function mapItem(
   const startDate = scheduleUndetermined ? null : toWarsawDate(value(item.publish_date));
   const endDateRaw = value(item.publish_date_to).trim();
   const endDate = scheduleUndetermined || !endDateRaw ? null : toWarsawDate(endDateRaw);
-  const startTime = scheduleUndetermined ? null : shortTime(value(item.start_time));
-  const endTime = startTime ? extractEndTime(shortDescription) : null;
+  const timeRange = scheduleUndetermined ? null : extractTimeRange(shortDescription);
+  const startTime = scheduleUndetermined
+    ? null
+    : timeRange?.start ?? shortTime(value(item.start_time));
+  const endTime = startTime ? timeRange?.end ?? null : null;
   if (title.length < 3 || title.length > 240) {
     throw new Error(`nieprawidłowa długość tytułu (${title.length})`);
   }
@@ -218,7 +263,7 @@ function mapItem(
     end_time: endTime,
     time_zone: "Europe/Warsaw",
     speakers,
-    voivodeship: extractVoivodeship(`${shortDescription} ${longDescription}`, deliveryFormat),
+    voivodeship: extractLocation(`${shortDescription} ${longDescription}`, deliveryFormat),
     external_url: url,
     topics: [],
     price_pln: mapPayment(value(item.payment).trim()),
@@ -231,6 +276,172 @@ function mapItem(
     source_warnings: sourceWarnings,
     audience_scope: "specific",
     profession_codes: professionCodes,
+  };
+}
+
+function cleanPageText(value: string) {
+  return value.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function comparisonTokens(value: string) {
+  return new Set(
+    cleanPageText(value)
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLocaleLowerCase("pl-PL")
+      .replace(/[^a-z0-9]+/g, " ")
+      .split(" ")
+      .filter((token) => token.length > 2),
+  );
+}
+
+function titleSimilarity(left: string, right: string) {
+  const a = comparisonTokens(left);
+  const b = comparisonTokens(right);
+  if (a.size === 0 || b.size === 0) return 0;
+  let shared = 0;
+  for (const token of a) if (b.has(token)) shared += 1;
+  return shared / Math.max(a.size, b.size);
+}
+
+function extractDetailTitle($: CheerioAPI, fallback: string) {
+  const best = $("h1, h2, h3")
+    .toArray()
+    .map((element) => cleanPageText($(element).text()))
+    .filter((title) => title.length >= 3 && title.length <= 240 && !/najnowsze szkolenia/i.test(title))
+    .map((title) => ({ title, score: titleSimilarity(title, fallback) }))
+    .sort((left, right) => right.score - left.score)[0];
+  return best && best.score >= 0.55 ? best.title : fallback;
+}
+
+function extractDetailAudience(pageText: string) {
+  if (/szkolenie\s+(?:dla\s+)?lekarzy\s+i\s+lekarzy\s+dentyst/i.test(pageText)) {
+    return ["doctor", "dentist"];
+  }
+  if (/szkolenie\s+(?:dla\s+)?lekarzy\s+dentyst/i.test(pageText)) return ["dentist"];
+  if (/szkolenie\s+(?:dla\s+)?lekarzy\b/i.test(pageText)) return ["doctor"];
+  return null;
+}
+
+function extractDetailFormat(pageText: string): DeliveryFormat | null {
+  if (/\bhybrydow/i.test(pageText)) return "hybrid";
+  if (/\be[- ]?learning\b|szkolenie\s+on[- ]?line|szkolenie\s+online/i.test(pageText)) {
+    return "online";
+  }
+  if (/\bstacjonarn/i.test(pageText)) return "in_person";
+  return null;
+}
+
+function extractEnrollmentStatus(pageText: string): TrainingImportPayload["enrollment_status"] {
+  if (/ZAPIS\s+OTWARTY\s*[-–—]\s*LISTA\s+REZERWOWA/i.test(pageText)) return "waiting_list";
+  if (/ZAPIS\s+OTWARTY/i.test(pageText)) return "open";
+  if (/ZAPIS(?:Y)?\s+(?:ZAMKNIĘT|ZAKOŃCZON)|BRAK\s+WOLNYCH\s+MIEJSC/i.test(pageText)) {
+    return "closed";
+  }
+  return null;
+}
+
+function extractDetailPoints(pageText: string) {
+  const match = pageText.match(/\bPunkty:\s*(\d+(?:[.,]\d+)?)\b/i);
+  if (!match) return null;
+  const points = Number(match[1].replace(",", "."));
+  return Number.isFinite(points) && points >= 0 ? points : null;
+}
+
+function speakerFromBiography(value: string) {
+  const clean = normalizeSpeaker(cleanPageText(value))
+    .replace(/\s+[-–—]\s+.*$/u, "")
+    .replace(/-(?=\p{Ll})[^,]*$/u, "")
+    .replace(/,\s*(?:doktor|lekarka|lekarz|pediatra|specjalista|certyfikowana|kierowniczka|psycholożka|trenerka|adwokat|wpisany|od\s+\d).*$/iu, "")
+    .replace(/\s+(?:doktor|lekarka|lekarz|pediatra|specjalista|certyfikowana|kierowniczka|psycholożka|trenerka|adwokat|wpisany|od\s+\d).*$/iu, "")
+    .trim();
+  return clean.length >= 3 && clean.length <= 180 ? clean : null;
+}
+
+function extractDetailSpeakers($: CheerioAPI) {
+  const biographySpeakers: string[] = [];
+  $("h4, h5").each((_, heading) => {
+    const headingText = cleanPageText($(heading).text());
+    if (!/^Wykładowc(?:a|y):?$/i.test(headingText)) return;
+    const list = $(heading).nextAll("ul").first();
+    list.find("li").each((__, item) => {
+      const speaker = speakerFromBiography($(item).text());
+      if (speaker) biographySpeakers.push(speaker);
+    });
+  });
+
+  const concise: string[] = [];
+  $("h6").each((_, heading) => {
+    const text = cleanPageText($(heading).text());
+    const match = text.match(/^(?:Wykładowc(?:a|y)|Prowadząc(?:y|a)):?\s*(.+)$/i);
+    const candidate = match?.[1]?.trim();
+    if (candidate && candidate.length <= 180) concise.push(normalizeSpeaker(candidate));
+  });
+
+  if (biographySpeakers.length > 1) return uniqueStrings(biographySpeakers);
+  if (concise.length > 0) return uniqueStrings(concise);
+  return uniqueStrings(biographySpeakers);
+}
+
+function extractDetailLocation($: CheerioAPI, format: DeliveryFormat) {
+  if (format === "online") return null;
+  let result: string | null = null;
+  $("h5, h6").each((_, heading) => {
+    if (result) return;
+    const text = cleanPageText($(heading).text());
+    const match = text.match(/^Miejsce\s+wydarzenia:?\s*(.+)$/i);
+    if (match?.[1]) result = match[1].trim().slice(0, 160);
+  });
+  return result;
+}
+
+/** Uzupełnia rekord danymi z oficjalnej strony szczegółowej NIL. */
+export function enrichNilTraining(
+  payload: TrainingImportPayload,
+  html: string,
+): TrainingImportPayload {
+  const $ = load(html);
+  const pageText = cleanPageText($("body").text());
+  if (pageText.length < 100) throw new Error("strona szczegółowa NIL jest pusta");
+
+  const detailFormat = extractDetailFormat(pageText) ?? payload.delivery_format;
+  const detailTimes = extractTimeRange(pageText);
+  const detailSpeakers = extractDetailSpeakers($);
+  const detailAudience = extractDetailAudience(pageText);
+  const detailPoints = extractDetailPoints(pageText);
+  const warnings =
+    detailSpeakers.length > 0
+      ? payload.source_warnings.filter(
+          (warning) =>
+            !/Danych o prowadzących nie dało się wiarygodnie rozdzielić/i.test(warning),
+        )
+      : [...payload.source_warnings];
+  if (detailPoints !== null && payload.points !== null && detailPoints !== payload.points) {
+    warnings.push(
+      `Punkty na stronie szczegółowej (${detailPoints}) różnią się od RSS (${payload.points}); użyto strony szczegółowej.`,
+    );
+  }
+
+  return {
+    ...payload,
+    title: extractDetailTitle($, payload.title),
+    points: detailPoints ?? payload.points,
+    delivery_format: detailFormat,
+    start_time:
+      payload.schedule_status === "scheduled"
+        ? detailTimes?.start ?? payload.start_time
+        : null,
+    end_time:
+      payload.schedule_status === "scheduled"
+        ? detailTimes?.end ?? payload.end_time
+        : null,
+    speakers: detailSpeakers.length > 0 ? detailSpeakers : payload.speakers,
+    voivodeship:
+      extractDetailLocation($, detailFormat) ??
+      (detailFormat === "online" ? null : payload.voivodeship),
+    enrollment_status: extractEnrollmentStatus(pageText) ?? payload.enrollment_status,
+    profession_codes: detailAudience ?? payload.profession_codes,
+    source_warnings: uniqueStrings(warnings),
   };
 }
 
@@ -290,4 +501,5 @@ export const nilAdapter: SourceAdapter = {
   code: "nil",
   feedUrl: "https://nil.org.pl/szkolenia-rss",
   parse: parseNilFeed,
+  enrich: enrichNilTraining,
 };

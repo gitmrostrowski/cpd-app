@@ -48,7 +48,8 @@
     "check:v6.22": "node --experimental-strip-types scripts/check-v6-22-report-export.mjs",
     "check:v6.24": "node --experimental-strip-types scripts/check-v6-24-overdue-and-actions.mjs",
     "check:v6.25": "node --experimental-strip-types scripts/check-v6-25-training-imports.mjs",
-    "check:v6.25.1": "node --experimental-strip-types scripts/check-v6-25-training-imports.mjs"
+    "check:v6.25.1": "node --experimental-strip-types scripts/check-v6-25-training-imports.mjs",
+    "check:v6.25.2": "node --experimental-strip-types scripts/check-v6-25-2-nil-details.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

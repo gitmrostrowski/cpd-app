@@ -1,10 +1,15 @@
-# Importer szkoleń CRPE v1.1
+# Importer szkoleń CRPE v1.2
 
 Importer ma wspólny proces wysyłki i osobne adaptery źródeł. NIL jest pierwszym
 adapterem w `src/sources/nil.ts`. Kolejne OIL powinny dostarczać obiekt
 `SourceAdapter` i mapować własne RSS/API/HTML do `TrainingImportPayload`.
 
-Pobranie RSS wysyła identyfikujący nagłówek `User-Agent`. Pełne opisy NIL są
+Importer najpierw pobiera RSS, a następnie oficjalną stronę szczegółową każdego
+szkolenia. Strona szczegółowa uzupełnia tytuł, adresatów, format, prowadzących,
+lokalizację, godziny i status zapisów. Jeśli pojedyncza strona jest niedostępna,
+rekord nadal powstaje na podstawie RSS i otrzymuje ostrzeżenie dla moderatora.
+
+Pobrania wysyłają identyfikujący nagłówek `User-Agent`. Pełne opisy NIL są
 domyślnie pomijane; można je włączyć dopiero po potwierdzeniu zasad wykorzystania
 treści przez ustawienie `NIL_IMPORT_FULL_DESCRIPTIONS=true`.
 
@@ -28,6 +33,7 @@ Domyślnie `npm run import:nil` wykonuje lokalny dry-run. Do wysyłki potrzebne 
 - opcjonalnie `INTEGRATION_ENDPOINT_OVERRIDE`.
 - opcjonalnie `IMPORTER_USER_AGENT`;
 - opcjonalnie `NIL_IMPORT_FULL_DESCRIPTIONS=true` po uzyskaniu zgody na opisy.
+- awaryjnie `NIL_IMPORT_DETAILS_ENABLED=false`, aby tymczasowo pracować tylko na RSS.
 
 Zmiana istniejącego szkolenia nie nadpisuje rekordu. API zwraca
 `change_queued`, a moderator porównuje pola w `/admin/szkolenia`. Powtórne
