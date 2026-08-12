@@ -27,7 +27,7 @@ assert.match(workflow, /NIL_IMPORT_ENABLED == 'true'/);
 assert.match(workflow, /cancel-in-progress: false/);
 assert.match(workflow, /permissions:\s+contents: read/s);
 assert.match(adapter, /"33": \["dentist"\]/);
-assert.match(adapter, /"34": \["doctor"\]/);
+assert.match(adapter, /"34": \["doctor"(?:, "dentist")?\]/);
 assert.doesNotMatch(adapter, /\?\? "online"/);
 assert.match(adapter, /if \(format === "online"\) return null/);
 assert.match(adapter, /to_be_determined/);

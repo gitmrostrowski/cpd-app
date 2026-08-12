@@ -59,6 +59,10 @@ export type SourceAdapter = {
       includeFullDescriptions?: boolean;
     },
   ): AdapterResult;
+  enrich?(
+    payload: TrainingImportPayload,
+    detailHtml: string,
+  ): TrainingImportPayload;
 };
 
 export type ImportApiResult = {

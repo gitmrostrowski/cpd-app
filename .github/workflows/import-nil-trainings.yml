@@ -40,8 +40,9 @@ jobs:
       NIL_IMPORT_EMAIL: ${{ secrets.NIL_IMPORT_EMAIL }}
       NIL_IMPORT_PASSWORD: ${{ secrets.NIL_IMPORT_PASSWORD }}
       INTEGRATION_ENDPOINT_OVERRIDE: ${{ vars.CRPE_INTEGRATION_ENDPOINT }}
-      IMPORTER_USER_AGENT: CRPE-TrainingImporter/1.1 (+https://www.crpe.pl/kontakt)
+      IMPORTER_USER_AGENT: CRPE-TrainingImporter/1.2 (+https://www.crpe.pl/kontakt)
       NIL_IMPORT_FULL_DESCRIPTIONS: ${{ vars.NIL_IMPORT_FULL_DESCRIPTIONS }}
+      NIL_IMPORT_DETAILS_ENABLED: ${{ vars.NIL_IMPORT_DETAILS_ENABLED }}
     steps:
       - name: Pobierz repozytorium
         uses: actions/checkout@v7
