@@ -41,8 +41,8 @@ assert.match(panel, />\s*Kategorie\s*</);
 assert.match(panel, /selectedLimit\?\.key === r\.key/);
 assert.match(panel, /setSelectedLimitKey\(r\.key\)/);
 assert.match(panel, />\s*Wybrana kategoria\s*</);
-assert.match(panel, />\s*Status limitów\s*</);
-assert.match(panel, /Zamknięte limitem/);
+assert.match(panel, /usableLimitsCount/);
+assert.match(panel, /blockedLimitsCount/);
 assert.match(panel, /Najlepszy ruch/);
 
 assert.equal(

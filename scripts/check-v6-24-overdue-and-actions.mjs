@@ -92,8 +92,18 @@ assert.match(panel, /reportEntries > 0/, "Trzeci krok musi podawać dane, nie sa
 
 // --- Limity: dwie jednostki dają się odróżnić ---
 assert.match(panel, /const isPerItem = r\.mode === "per_item"/, "Tryb limitu steruje formatem liczby");
-assert.match(panel, /\$\{Math\.round\(r\.remaining\)\}\/\$\{Math\.round\(r\.cap\)\}/, "Limit okresowy pokazujemy jako ułamek");
-assert.match(panel, /"pkt na wpis"/, "Limit na wpis musi nazywać swoją jednostkę");
+assert.match(
+  panel,
+  /\$\{Math\.round\(r\.used\)\}\/\$\{Math\.round\(r\.cap\)\}/,
+  "Limit okresowy pokazujemy jako ułamek wykorzystania",
+);
+assert.doesNotMatch(
+  panel,
+  /\$\{Math\.round\(r\.remaining\)\}\/\$\{Math\.round\(r\.cap\)\}/,
+  "Ułamek nie może wrócić do liczenia zapasu",
+);
+assert.match(panel, /zostało \$\{Math\.round\(r\.remaining\)\} pkt/, "Zapas musi być nazwany wprost");
+assert.match(panel, /"maksymalnie na jeden wpis"/, "Limit na wpis musi nazywać swoją jednostkę");
 
 // --- Oś aktywności nie dubluje agendy ---
 assert.match(panel, /const agendaIds = new Set/, "Oś musi odfiltrować pozycje z agendy");
