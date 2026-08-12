@@ -60,6 +60,48 @@ async function writeGithubSummary(lines: string[]) {
   await appendFile(path, `${lines.join("\n")}\n`, "utf8");
 }
 
+async function enrichFromDetailPages(
+  adapter: SourceAdapter,
+  payloads: TrainingImportPayload[],
+  userAgent: string,
+) {
+  if (!adapter.enrich || process.env.NIL_IMPORT_DETAILS_ENABLED === "false") {
+    return { payloads, fetched: 0, fallback: 0 };
+  }
+
+  const enriched: TrainingImportPayload[] = [];
+  let fetched = 0;
+  let fallback = 0;
+  for (const payload of payloads) {
+    try {
+      const response = await fetchWithRetry(
+        payload.source_url,
+        {
+          headers: {
+            accept: "text/html,application/xhtml+xml;q=0.9",
+            "user-agent": userAgent,
+          },
+        },
+        { attempts: 3, timeoutMs: 20_000 },
+      );
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const html = await response.text();
+      enriched.push(adapter.enrich(payload, html));
+      fetched += 1;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "nieznany błąd";
+      const warning = `Nie udało się uzupełnić danych ze strony szczegółowej NIL (${reason.slice(0, 120)}); użyto RSS.`;
+      enriched.push({
+        ...payload,
+        source_warnings: Array.from(new Set([...payload.source_warnings, warning])).slice(0, 20),
+      });
+      fallback += 1;
+      console.warn(`FALLBACK RSS: ${payload.title} [${payload.source_external_id}] — ${reason}`);
+    }
+  }
+  return { payloads: enriched, fetched, fallback };
+}
+
 async function main() {
   const sourceCode = process.argv[2]?.trim().toLowerCase() || "nil";
   const adapter = adapters[sourceCode];
@@ -81,9 +123,16 @@ async function main() {
   if (xml.trim().length < 100) throw new Error(`Źródło ${sourceCode} zwróciło pustą odpowiedź.`);
 
   const parsed = adapter.parse(xml, { includeFullDescriptions });
+  const detailResult = await enrichFromDetailPages(adapter, parsed.payloads, userAgent);
+  parsed.payloads = detailResult.payloads;
   console.log(
     `Źródło ${sourceCode}: ${parsed.sourceItemCount} pozycji, ${parsed.payloads.length} gotowych, ${parsed.skipped.length} pominiętych.`,
   );
+  if (adapter.enrich) {
+    console.log(
+      `Strony szczegółowe: ${detailResult.fetched} pobranych, ${detailResult.fallback} fallbacków do RSS.`,
+    );
+  }
   for (const item of parsed.skipped) {
     console.log(`POMINIĘTO: ${item.title} — ${item.reason}`);
   }
@@ -98,6 +147,8 @@ async function main() {
       `- Pozycje źródłowe: ${parsed.sourceItemCount}`,
       `- Gotowe do wysłania: ${parsed.payloads.length}`,
       `- Pominięte: ${parsed.skipped.length}`,
+      `- Strony szczegółowe pobrane: ${detailResult.fetched}`,
+      `- Fallback do RSS: ${detailResult.fallback}`,
     ]);
     return;
   }
@@ -127,6 +178,8 @@ async function main() {
     `## Import ${sourceCode}${serverDryRun ? " — server dry-run" : ""}`,
     ...countLines,
     `- Pominięte przez adapter: ${parsed.skipped.length}`,
+    `- Strony szczegółowe pobrane: ${detailResult.fetched}`,
+    `- Fallback do RSS: ${detailResult.fallback}`,
     `- Błędy API: ${failures.length}`,
   ]);
 

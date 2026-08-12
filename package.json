@@ -46,9 +46,12 @@
     "check:v6.20": "node --experimental-strip-types scripts/check-v6-20-deadlines-and-pace.mjs",
     "check:v6.21": "node --experimental-strip-types scripts/check-v6-21-consistency-and-routes.mjs",
     "check:v6.22": "node --experimental-strip-types scripts/check-v6-22-report-export.mjs",
+    "check:v6.23": "node scripts/check-v6-23-limits-and-timeline.mjs",
     "check:v6.24": "node --experimental-strip-types scripts/check-v6-24-overdue-and-actions.mjs",
     "check:v6.25": "node --experimental-strip-types scripts/check-v6-25-training-imports.mjs",
-    "check:v6.25.1": "node --experimental-strip-types scripts/check-v6-25-training-imports.mjs"
+    "check:v6.25.1": "node --experimental-strip-types scripts/check-v6-25-training-imports.mjs",
+    "check:v6.25.2": "node --experimental-strip-types scripts/check-v6-25-2-nil-details.mjs",
+    "check:v6.25.3": "node scripts/check-v6-25-3-panel-views-and-limits.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",
