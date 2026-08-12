@@ -25,6 +25,18 @@ import TrainingAudienceField, {
 type TrainingStatus = "pending" | "approved" | "rejected";
 type PriceDeclaration = "unconfirmed" | "free" | "paid";
 type ScheduleStatus = "scheduled" | "to_be_determined";
+type EnrollmentStatus = "open" | "waiting_list" | "closed";
+type ReviewQueue = "all" | "new" | "changes" | "operational";
+
+type TrainingLoadFilters = {
+  status: "all" | TrainingStatus;
+  q: string;
+  addedByQ: string;
+  dateFrom: string;
+  dateTo: string;
+  eventFrom: string;
+  eventTo: string;
+};
 
 type ImportChange = {
   id: string;
@@ -63,6 +75,102 @@ const IMPORT_FIELD_LABELS: Record<string, string> = {
   description: "Opis",
 };
 
+/**
+ * Nie każda zmiana ze źródła waży tyle samo, a dotąd wszystkie wyglądały
+ * identycznie („NIL zgłosił zmianę (3)”). Moderator musiał otworzyć modal, żeby
+ * w ogóle się dowiedzieć, czy chodzi o listę rezerwową, czy o liczbę punktów.
+ *
+ * - operacyjne: stan zapisów i liczba miejsc. Zmieniają się często, nie wpływają
+ *   na to, czy szkolenie w ogóle należy do bazy. Można je przyjąć jednym ruchem.
+ * - merytoryczne: punkty, adresaci, termin, tytuł, organizator. Zmieniają to,
+ *   za co użytkownik dostaje punkty — wymagają decyzji człowieka.
+ * - redakcyjne: reszta (opis, tematy, link, prowadzący).
+ */
+const OPERATIONAL_IMPORT_FIELDS: readonly string[] = [
+  "enrollment_status",
+  "capacity",
+];
+
+const CRITICAL_IMPORT_FIELDS: readonly string[] = [
+  "points",
+  "profession_codes",
+  "title",
+  "organizer",
+  "category",
+  "schedule_status",
+  "start_date",
+  "end_date",
+  "start_time",
+  "end_time",
+];
+
+type ImportFieldWeight = "operational" | "critical" | "editorial";
+
+function importFieldWeight(field: string): ImportFieldWeight {
+  if (OPERATIONAL_IMPORT_FIELDS.includes(field)) return "operational";
+  if (CRITICAL_IMPORT_FIELDS.includes(field)) return "critical";
+  return "editorial";
+}
+
+function isOperationalChange(change: ImportChange) {
+  return (
+    change.changed_fields.length > 0 &&
+    change.changed_fields.every(
+      (field) => importFieldWeight(field) === "operational",
+    )
+  );
+}
+
+function changeWeight(change: ImportChange): ImportFieldWeight {
+  if (change.changed_fields.some((field) => importFieldWeight(field) === "critical"))
+    return "critical";
+  if (isOperationalChange(change)) return "operational";
+  return "editorial";
+}
+
+const CHANGE_WEIGHT_LABEL: Record<ImportFieldWeight, string> = {
+  operational: "zmiana operacyjna",
+  critical: "zmiana merytoryczna",
+  editorial: "zmiana redakcyjna",
+};
+
+const CHANGE_WEIGHT_CARD: Record<ImportFieldWeight, string> = {
+  operational: "border-blue-200 bg-blue-50/70",
+  critical: "border-rose-200 bg-rose-50/60",
+  editorial: "border-violet-200 bg-violet-50/50",
+};
+
+const CHANGE_WEIGHT_BADGE: Record<ImportFieldWeight, string> = {
+  operational: "bg-blue-100 text-blue-800",
+  critical: "bg-rose-100 text-rose-800",
+  editorial: "bg-violet-100 text-violet-800",
+};
+
+const ENROLLMENT_LABELS: Record<string, string> = {
+  open: "wolne miejsca",
+  waiting_list: "lista rezerwowa",
+  closed: "brak miejsc",
+};
+
+function enrollmentLabel(value: string | null | undefined) {
+  if (!value) return "nieokreślone";
+  return ENROLLMENT_LABELS[value] ?? value;
+}
+
+function enrollmentBadgeCls(value: string | null | undefined) {
+  if (value === "closed") return "bg-rose-50 text-rose-700 ring-1 ring-rose-200";
+  if (value === "waiting_list") return "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
+  if (value === "open") return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
+  return "bg-slate-50 text-slate-500 ring-1 ring-slate-200";
+}
+
+const QUEUE_TABS: { value: ReviewQueue; label: string }[] = [
+  { value: "all", label: "Wszystkie" },
+  { value: "new", label: "Nowe do decyzji" },
+  { value: "changes", label: "Zmiany ze źródła" },
+  { value: "operational", label: "Zapisy i miejsca" },
+];
+
 type TrainingRow = {
   id: string;
   title: string;
@@ -71,6 +179,8 @@ type TrainingRow = {
   organizer_logo_path: string | null;
   points: number | null;
   price_pln: number | null;
+  capacity: number | null;
+  enrollment_status: EnrollmentStatus | null;
   start_date: string | null;
   end_date: string | null;
   schedule_status: ScheduleStatus;
@@ -178,6 +288,11 @@ function normalizeUrl(raw: string | null | undefined) {
   return v;
 }
 
+function shortImportValue(value: unknown, max = 46) {
+  const text = importValue(value);
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error && error.message ? error.message : fallback;
 }
@@ -189,6 +304,8 @@ function importValue(value: unknown) {
   if (value === false) return "nie";
   if (value === "scheduled") return "ustalony";
   if (value === "to_be_determined") return "do ustalenia";
+  if (typeof value === "string" && ENROLLMENT_LABELS[value])
+    return ENROLLMENT_LABELS[value];
   return String(value);
 }
 
@@ -202,6 +319,11 @@ export default function AdminTrainingsPage() {
   const [addedByQ, setAddedByQ] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  // Data dodania odpowiada na „co przyszło w nocy”, data wydarzenia na
+  // „co zaraz się odbędzie” — to dwa różne pytania moderatora.
+  const [eventFrom, setEventFrom] = useState("");
+  const [eventTo, setEventTo] = useState("");
+  const [queue, setQueue] = useState<ReviewQueue>("all");
 
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<TrainingRow[]>([]);
@@ -271,9 +393,20 @@ export default function AdminTrainingsPage() {
     };
   }, [router, sb]);
 
-  async function load() {
+  async function load(overrides: Partial<TrainingLoadFilters> = {}) {
     setLoading(true);
     setErr(null);
+
+    const filters: TrainingLoadFilters = {
+      status,
+      q,
+      addedByQ,
+      dateFrom,
+      dateTo,
+      eventFrom,
+      eventTo,
+      ...overrides,
+    };
 
     try {
       const [trainingData, changesResult] = await Promise.all([
@@ -287,22 +420,36 @@ export default function AdminTrainingsPage() {
       setImportChanges(changes);
       const changedTrainingIds = new Set(changes.map((change) => change.training_id));
       let data = trainingData as TrainingRow[];
-      if (status !== "all")
-        data = data.filter((row) => getStatus(row) === status);
-      if (dateFrom)
-        data = data.filter((row) => row.created_at.slice(0, 10) >= dateFrom);
-      if (dateTo)
-        data = data.filter((row) => row.created_at.slice(0, 10) <= dateTo);
-      if (addedByQ.trim()) {
-        const phrase = addedByQ.trim().toLocaleLowerCase("pl-PL");
+      if (filters.status !== "all")
+        data = data.filter((row) => getStatus(row) === filters.status);
+      if (filters.dateFrom)
+        data = data.filter((row) => row.created_at.slice(0, 10) >= filters.dateFrom);
+      if (filters.dateTo)
+        data = data.filter((row) => row.created_at.slice(0, 10) <= filters.dateTo);
+      // Szkolenia bez ustalonego terminu nie mają się jak zmieścić w
+      // przedziale dat — przy aktywnym filtrze terminu wypadają z listy.
+      if (filters.eventFrom)
+        data = data.filter(
+          (row) =>
+            row.schedule_status === "scheduled" &&
+            (row.start_date ?? "") >= filters.eventFrom,
+        );
+      if (filters.eventTo)
+        data = data.filter(
+          (row) =>
+            row.schedule_status === "scheduled" &&
+            (row.start_date ?? "9999-12-31") <= filters.eventTo,
+        );
+      if (filters.addedByQ.trim()) {
+        const phrase = filters.addedByQ.trim().toLocaleLowerCase("pl-PL");
         data = data.filter((row) =>
           String(row.submitted_email ?? "")
             .toLocaleLowerCase("pl-PL")
             .includes(phrase),
         );
       }
-      if (q.trim()) {
-        const phrase = q.trim().toLocaleLowerCase("pl-PL");
+      if (filters.q.trim()) {
+        const phrase = filters.q.trim().toLocaleLowerCase("pl-PL");
         data = data.filter((row) =>
           [
             row.title,
@@ -343,15 +490,85 @@ export default function AdminTrainingsPage() {
       .catch(() => undefined);
   }, [isAdmin, sb]);
 
-  const filtered = useMemo(() => rows, [rows]);
   const importChangeByTraining = useMemo(
     () => new Map(importChanges.map((change) => [change.training_id, change])),
     [importChanges],
   );
 
+  /**
+   * Moderator wchodzi tu prawie zawsze z jednym z trzech pytań: „co nowego
+   * przyszło”, „co zmieniło się u źródła”, „czy coś przestało mieć miejsca”.
+   * Zakładki odpowiadają na nie wprost, zamiast kazać skanować całą listę.
+   * Filtrujemy po stronie klienta — dane i tak są już pobrane.
+   */
+  const queueCounts = useMemo(() => {
+    const counts: Record<ReviewQueue, number> = {
+      all: rows.length,
+      new: 0,
+      changes: 0,
+      operational: 0,
+    };
+    for (const row of rows) {
+      const change = importChangeByTraining.get(row.id);
+      if (change) {
+        counts.changes += 1;
+        if (isOperationalChange(change)) counts.operational += 1;
+      } else if (getStatus(row) === "pending") {
+        counts.new += 1;
+      }
+    }
+    return counts;
+  }, [importChangeByTraining, rows]);
+
+  const filtered = useMemo(() => {
+    if (queue === "all") return rows;
+    return rows.filter((row) => {
+      const change = importChangeByTraining.get(row.id);
+      if (queue === "new") return !change && getStatus(row) === "pending";
+      if (queue === "changes") return Boolean(change);
+      return Boolean(change && isOperationalChange(change));
+    });
+  }, [importChangeByTraining, queue, rows]);
+
   function openImportReview(change: ImportChange) {
     setReviewChange(change);
     setReviewFields([...change.changed_fields]);
+  }
+
+  /**
+   * Ścieżka na jedno kliknięcie dla zmian, które nie wymagają oceny: „są
+   * jeszcze miejsca” → „lista rezerwowa”. Otwieranie modala i odhaczanie pól
+   * dla takiej informacji to trzy ruchy za dużo.
+   */
+  async function applyOperationalChange(change: ImportChange) {
+    setReviewing(true);
+    setErr(null);
+    try {
+      // Osobny RPC istnieje dopiero od v6.26. Dzięki temu przypadkowy deploy
+      // frontendu przed migracją kończy się bezpiecznym błędem, a nie cofnięciem
+      // zaakceptowanego szkolenia do statusu „do weryfikacji”.
+      const { data, error } = await sb.rpc(
+        "review_training_operational_import_change",
+        { p_change_id: change.id },
+      );
+      if (error) throw error;
+      if (
+        !data ||
+        typeof data !== "object" ||
+        (data as { kept_approval?: boolean }).kept_approval !== true
+      ) {
+        throw new Error(
+          "Zmiana operacyjna nie potwierdziła zachowania statusu publikacji.",
+        );
+      }
+      await load();
+    } catch (error: unknown) {
+      setErr(
+        errorMessage(error, "Nie udało się przyjąć zmiany operacyjnej."),
+      );
+    } finally {
+      setReviewing(false);
+    }
   }
 
   async function decideImportChange(decision: "apply" | "reject") {
@@ -733,12 +950,29 @@ export default function AdminTrainingsPage() {
   }
 
   function clearFilters() {
-    setQ("");
-    setAddedByQ("");
-    setDateFrom("");
-    setDateTo("");
-    setStatus("all");
-    setTimeout(load, 50);
+    const cleared: TrainingLoadFilters = {
+      status: "all",
+      q: "",
+      addedByQ: "",
+      dateFrom: "",
+      dateTo: "",
+      eventFrom: "",
+      eventTo: "",
+    };
+
+    setQ(cleared.q);
+    setAddedByQ(cleared.addedByQ);
+    setDateFrom(cleared.dateFrom);
+    setDateTo(cleared.dateTo);
+    setEventFrom(cleared.eventFrom);
+    setEventTo(cleared.eventTo);
+    setQueue("all");
+    setStatus(cleared.status);
+
+    // Jeśli status już był „Wszystkie”, efekt zależny od statusu nie uruchomi
+    // ponownego pobrania. Jawne nadpisanie filtrów usuwa też problem starego
+    // closure z setTimeout(load).
+    if (status === "all") void load(cleared);
   }
 
   if (isAdmin === null) {
@@ -787,7 +1021,7 @@ export default function AdminTrainingsPage() {
             </select>
           </div>
 
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-4">
             <label className="text-xs font-semibold text-slate-600">Szukaj</label>
             <input
               className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
@@ -815,27 +1049,58 @@ export default function AdminTrainingsPage() {
             />
           </div>
 
-          <div className="lg:col-span-2">
-            <label className="text-xs font-semibold text-slate-600">Od daty dodania</label>
-            <input
-              type="date"
-              className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-            />
+          <div className="lg:col-span-3">
+            <label className="text-xs font-semibold text-slate-600">
+              Data dodania
+            </label>
+            <div className="mt-1 flex items-center gap-1.5">
+              <input
+                type="date"
+                aria-label="Data dodania od"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-2 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+              />
+              <span className="text-slate-400">–</span>
+              <input
+                type="date"
+                aria-label="Data dodania do"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-2 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+              />
+            </div>
           </div>
 
-          <div className="lg:col-span-2">
-            <label className="text-xs font-semibold text-slate-600">Do daty dodania</label>
-            <input
-              type="date"
-              className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-            />
+          <div className="lg:col-span-3">
+            <label className="text-xs font-semibold text-slate-600">
+              Termin szkolenia
+            </label>
+            <div className="mt-1 flex items-center gap-1.5">
+              <input
+                type="date"
+                aria-label="Termin szkolenia od"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-2 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+                value={eventFrom}
+                onChange={(e) => setEventFrom(e.target.value)}
+              />
+              <span className="text-slate-400">–</span>
+              <input
+                type="date"
+                aria-label="Termin szkolenia do"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-2 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+                value={eventTo}
+                onChange={(e) => setEventTo(e.target.value)}
+              />
+            </div>
           </div>
 
-          <div className="lg:col-span-12 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <div className="lg:col-span-12 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-slate-500">
+              Termin dotyczy daty rozpoczęcia. Szkolenia z terminem do ustalenia
+              nie wchodzą do wyniku, gdy filtr terminu jest aktywny.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
             <button
               className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
               onClick={clearFilters}
@@ -846,12 +1111,13 @@ export default function AdminTrainingsPage() {
 
             <button
               className="h-10 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
-              onClick={load}
+              onClick={() => void load()}
               disabled={loading}
               type="button"
             >
               {loading ? "Szukam…" : "Filtruj"}
             </button>
+            </div>
           </div>
         </div>
       </div>
@@ -863,24 +1129,52 @@ export default function AdminTrainingsPage() {
       )}
 
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-          <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-800">
-            <span>Rekordy: {filtered.length}</span>
-            {importChanges.length > 0 ? (
-              <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs text-violet-700 ring-1 ring-violet-200">
-                Zmiany źródłowe: {importChanges.length}
-              </span>
-            ) : null}
+        <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-1.5" role="tablist">
+            {QUEUE_TABS.map((tab) => {
+              const active = queue === tab.value;
+              const count = queueCounts[tab.value];
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setQueue(tab.value)}
+                  className={cls(
+                    "inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition",
+                    active
+                      ? "border-blue-200 bg-blue-50 text-blue-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                  )}
+                >
+                  {tab.label}
+                  <span
+                    className={cls(
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                      active ? "bg-blue-100 text-blue-800" : "bg-slate-100 text-slate-600",
+                    )}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          <button
-            type="button"
-            onClick={load}
-            disabled={loading}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60"
-          >
-            {loading ? "Odświeżam…" : "Odśwież"}
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-slate-500">
+              Widocznych: {filtered.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => void load()}
+              disabled={loading}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60"
+            >
+              {loading ? "Odświeżam…" : "Odśwież"}
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -891,6 +1185,7 @@ export default function AdminTrainingsPage() {
                 <th className="px-4 py-3">Organizator</th>
                 <th className="px-4 py-3">Daty szkolenia</th>
                 <th className="px-4 py-3">Pkt</th>
+                <th className="px-4 py-3">Zapisy</th>
                 <th className="px-4 py-3">Dodane przez</th>
                 <th className="px-4 py-3">Data dodania</th>
                 <th className="px-4 py-3">Status</th>
@@ -901,13 +1196,13 @@ export default function AdminTrainingsPage() {
             <tbody className="text-sm text-slate-800">
               {loading ? (
                 <tr>
-                  <td className="px-4 py-4 text-slate-500" colSpan={8}>
+                  <td className="px-4 py-4 text-slate-500" colSpan={9}>
                     Ładuję…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-4 text-slate-500" colSpan={8}>
+                  <td className="px-4 py-4 text-slate-500" colSpan={9}>
                     Brak danych.
                   </td>
                 </tr>
@@ -930,15 +1225,6 @@ export default function AdminTrainingsPage() {
                             <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 font-semibold uppercase text-blue-700 ring-1 ring-blue-200">
                               import: {r.import_source}
                             </span>
-                          ) : null}
-                          {sourceChange ? (
-                            <button
-                              type="button"
-                              className="inline-flex rounded-full bg-violet-50 px-2 py-0.5 font-semibold text-violet-700 ring-1 ring-violet-200 hover:bg-violet-100"
-                              onClick={() => openImportReview(sourceChange)}
-                            >
-                              NIL zgłosił zmianę ({sourceChange.changed_fields.length})
-                            </button>
                           ) : null}
                           {link ? (
                             <a
@@ -973,6 +1259,54 @@ export default function AdminTrainingsPage() {
                             </button>
                           )}
                         </div>
+
+                        {sourceChange ? (
+                          <div
+                            className={cls(
+                              "mt-2 max-w-[420px] rounded-xl border p-2.5",
+                              CHANGE_WEIGHT_CARD[changeWeight(sourceChange)],
+                            )}
+                          >
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span
+                                className={cls(
+                                  "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                                  CHANGE_WEIGHT_BADGE[changeWeight(sourceChange)],
+                                )}
+                              >
+                                {CHANGE_WEIGHT_LABEL[changeWeight(sourceChange)]}
+                              </span>
+                              <span className="text-[11px] text-slate-500">
+                                {sourceChange.source_code.toUpperCase()} ·{" "}
+                                {fmtDateTime(sourceChange.fetched_at)}
+                              </span>
+                            </div>
+
+                            <ul className="mt-2 space-y-1 text-xs text-slate-700">
+                              {sourceChange.changed_fields.slice(0, 3).map((field) => (
+                                <li key={field} className="flex flex-wrap items-baseline gap-1">
+                                  <span className="font-semibold text-slate-900">
+                                    {IMPORT_FIELD_LABELS[field] ?? field}:
+                                  </span>
+                                  <span className="text-slate-500 line-through">
+                                    {shortImportValue(sourceChange.current[field])}
+                                  </span>
+                                  <span aria-hidden="true" className="text-slate-400">
+                                    →
+                                  </span>
+                                  <span className="font-semibold text-slate-900">
+                                    {shortImportValue(sourceChange.source[field])}
+                                  </span>
+                                </li>
+                              ))}
+                              {sourceChange.changed_fields.length > 3 ? (
+                                <li className="text-slate-500">
+                                  i {sourceChange.changed_fields.length - 3} więcej — otwórz porównanie
+                                </li>
+                              ) : null}
+                            </ul>
+                          </div>
+                        ) : null}
 
                         {currentStatus === "rejected" && r.reject_reason ? (
                           <div className="mt-2 text-xs text-rose-700">
@@ -1036,6 +1370,22 @@ export default function AdminTrainingsPage() {
                       </td>
 
                       <td className="px-4 py-4 text-xs">
+                        <span
+                          className={cls(
+                            "inline-flex whitespace-nowrap rounded-full px-2 py-0.5 font-semibold",
+                            enrollmentBadgeCls(r.enrollment_status),
+                          )}
+                        >
+                          {enrollmentLabel(r.enrollment_status)}
+                        </span>
+                        <div className="mt-1 text-slate-400">
+                          {typeof r.capacity === "number"
+                            ? `limit: ${r.capacity}`
+                            : "limit nieznany"}
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4 text-xs">
                         {r.submitted_email ? (
                           <div className="font-semibold text-slate-800">
                             {r.submitted_email}
@@ -1089,13 +1439,25 @@ export default function AdminTrainingsPage() {
                             Edytuj
                           </button>
 
+                          {sourceChange && isOperationalChange(sourceChange) ? (
+                            <button
+                              className="h-9 rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-100 disabled:opacity-60"
+                              onClick={() => void applyOperationalChange(sourceChange)}
+                              disabled={reviewing}
+                              type="button"
+                              title="Przyjmuje wyłącznie stan zapisów i liczbę miejsc"
+                            >
+                              Przyjmij zapisy
+                            </button>
+                          ) : null}
+
                           {sourceChange ? (
                             <button
-                              className="h-9 rounded-xl bg-violet-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-violet-700"
+                              className="h-9 rounded-xl border border-violet-200 bg-white px-3 text-xs font-semibold text-violet-700 shadow-sm hover:bg-violet-50"
                               onClick={() => openImportReview(sourceChange)}
                               type="button"
                             >
-                              Porównaj NIL
+                              Porównaj ({sourceChange.changed_fields.length})
                             </button>
                           ) : null}
 
@@ -1163,7 +1525,7 @@ export default function AdminTrainingsPage() {
 
             <div className="px-5 py-4">
               <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-                Zaznacz tylko pola, które chcesz pobrać z NIL. Niezaznaczone poprawki moderatora pozostaną bez zmian. Po zastosowaniu szkolenie wróci do statusu „do weryfikacji”.
+                Zaznacz tylko pola, które chcesz pobrać z NIL. Niezaznaczone poprawki moderatora pozostaną bez zmian. Zmiany merytoryczne i redakcyjne cofają szkolenie do statusu „do weryfikacji”; sam stan zapisów i liczba miejsc zostawiają publikację nietkniętą.
               </div>
 
               {Array.isArray(reviewChange.source.source_warnings) && reviewChange.source.source_warnings.length > 0 ? (
@@ -1208,6 +1570,18 @@ export default function AdminTrainingsPage() {
                         </td>
                         <td className="px-3 py-3 font-semibold text-slate-800">
                           {IMPORT_FIELD_LABELS[field] ?? field}
+                          <span
+                            className={cls(
+                              "mt-1 block w-fit rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                              CHANGE_WEIGHT_BADGE[importFieldWeight(field)],
+                            )}
+                          >
+                            {importFieldWeight(field) === "operational"
+                              ? "operacyjne"
+                              : importFieldWeight(field) === "critical"
+                                ? "merytoryczne"
+                                : "redakcyjne"}
+                          </span>
                         </td>
                         <td className="max-w-[330px] whitespace-pre-wrap break-words px-3 py-3 text-slate-600">
                           {importValue(reviewChange.current[field])}
@@ -1222,7 +1596,26 @@ export default function AdminTrainingsPage() {
               </div>
             </div>
 
-            <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-end">
+              {reviewChange.changed_fields.some(
+                (field) => importFieldWeight(field) === "operational",
+              ) ? (
+                <button
+                  type="button"
+                  className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:mr-auto"
+                  onClick={() =>
+                    setReviewFields(
+                      reviewChange.changed_fields.filter(
+                        (field) => importFieldWeight(field) === "operational",
+                      ),
+                    )
+                  }
+                  disabled={reviewing}
+                >
+                  Zaznacz tylko operacyjne
+                </button>
+              ) : null}
+
               <button
                 type="button"
                 className="h-10 rounded-xl border border-rose-200 bg-white px-4 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60"

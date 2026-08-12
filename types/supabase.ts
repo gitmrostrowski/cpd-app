@@ -212,6 +212,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      review_training_operational_import_change: {
+        Args: {
+          p_change_id: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

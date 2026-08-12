@@ -65,7 +65,7 @@ export default function AppPageHeader({
         <div className="flex items-start gap-3.5">
           {icon ? (
             <span
-              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border shadow-sm ${bubbleTone}`}
+              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border shadow-sm [&_svg]:h-7 [&_svg]:w-7 [&_svg]:stroke-[1.75] ${bubbleTone}`}
             >
               {icon}
             </span>

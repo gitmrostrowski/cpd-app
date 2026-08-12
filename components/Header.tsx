@@ -344,30 +344,25 @@ export default function Header() {
               </div>
             ) : user ? (
               <>
-                <div className="hidden items-center rounded-xl border border-slate-200 bg-white p-1 xl:flex">
-                  <Link
-                    href="/panel-cpd"
-                    className={cx(
-                      "inline-flex min-h-8 items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-extrabold transition",
-                      !pathname?.startsWith("/placowka")
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
-                    )}
-                  >
-                    <UserRound className="h-3.5 w-3.5" />
-                    Moje CRPE
-                  </Link>
-
+                {/*
+                 * „Moje CRPE” prowadziło do /panel-cpd, czyli do pozycji, która
+                 * stoi obok w nawigacji. Powrót do widoku osobistego z kontekstu
+                 * placówki żyje teraz w menu placówek, gdzie jest potrzebny.
+                 */}
+                <div className="hidden items-center lg:flex">
                   {organizationCount > 0 ? (
                     <div className="relative" ref={contextMenuRef}>
                       <button
                         type="button"
                         onClick={() => setOpenContext((value) => !value)}
                         className={cx(
-                          "inline-flex min-h-8 max-w-56 items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-extrabold transition",
+                          // Stała szerokość zamiast max-w: nazwa placówki bywa
+                          // dowolnie długa, a pasek nie może zmieniać układu
+                          // zależnie od tego, w jakim kontekście jest użytkownik.
+                          "inline-flex h-10 w-[188px] items-center gap-2 rounded-xl border px-3 text-xs font-extrabold transition",
                           pathname?.startsWith("/placowka")
-                            ? "bg-blue-600 text-white"
-                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
+                            ? "border-blue-600 bg-blue-600 text-white"
+                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-950",
                         )}
                         aria-expanded={openContext}
                         aria-haspopup="menu"
@@ -379,7 +374,7 @@ export default function Header() {
                         }
                       >
                         <Building2 className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">
+                        <span className="min-w-0 flex-1 truncate text-left">
                           {currentOrganization?.display_name ??
                             (organizationCount === 1
                               ? organizationContexts[0].display_name
@@ -398,6 +393,18 @@ export default function Header() {
                           className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_55px_rgba(15,45,75,0.16)]"
                           role="menu"
                         >
+                          {pathname?.startsWith("/placowka") ? (
+                            <Link
+                              href="/panel-cpd"
+                              className="mb-1 flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50"
+                              onClick={() => setOpenContext(false)}
+                              role="menuitem"
+                            >
+                              <UserRound className="h-4 w-4 shrink-0" />
+                              Wróć do widoku osobistego
+                            </Link>
+                          ) : null}
+
                           <div className="px-3 pb-2 pt-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400">
                             Placówki i role
                           </div>
@@ -660,18 +667,6 @@ export default function Header() {
                       </span>
                     </span>
                   </div>
-
-                  <Link
-                    href="/panel-cpd"
-                    className={cx(
-                      "inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold",
-                      !pathname?.startsWith("/placowka")
-                        ? "border-blue-200 bg-blue-50 text-blue-700"
-                        : "border-slate-200 hover:bg-slate-50",
-                    )}
-                  >
-                    <UserRound className="h-4 w-4" /> Moje CRPE
-                  </Link>
 
                   <Link
                     href="/profil"

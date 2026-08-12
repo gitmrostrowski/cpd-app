@@ -332,12 +332,22 @@ function extractDetailFormat(pageText: string): DeliveryFormat | null {
   return null;
 }
 
+/**
+ * Kolejność ma znaczenie: „ZAPIS OTWARTY - LISTA REZERWOWA” zawiera w sobie
+ * frazę otwarcia, więc lista rezerwowa musi być sprawdzana pierwsza.
+ * Zwracany null oznacza „nie rozpoznano”, a nie „brak zapisów” — decyzję,
+ * co z tym zrobić, podejmuje warstwa importu.
+ */
 function extractEnrollmentStatus(pageText: string): TrainingImportPayload["enrollment_status"] {
-  if (/ZAPIS\s+OTWARTY\s*[-–—]\s*LISTA\s+REZERWOWA/i.test(pageText)) return "waiting_list";
-  if (/ZAPIS\s+OTWARTY/i.test(pageText)) return "open";
-  if (/ZAPIS(?:Y)?\s+(?:ZAMKNIĘT|ZAKOŃCZON)|BRAK\s+WOLNYCH\s+MIEJSC/i.test(pageText)) {
+  if (/LISTA\s+REZERWOWA/i.test(pageText)) return "waiting_list";
+  if (
+    /ZAPIS(?:Y)?\s+(?:ZAMKNIĘT|ZAKOŃCZON)|REKRUTACJA\s+ZAKOŃCZONA|BRAK\s+(?:WOLNYCH\s+)?MIEJSC/i.test(
+      pageText,
+    )
+  ) {
     return "closed";
   }
+  if (/ZAPIS(?:Y)?\s+OTWART/i.test(pageText)) return "open";
   return null;
 }
 
@@ -409,6 +419,7 @@ export function enrichNilTraining(
   const detailSpeakers = extractDetailSpeakers($);
   const detailAudience = extractDetailAudience(pageText);
   const detailPoints = extractDetailPoints(pageText);
+  const detailEnrollment = extractEnrollmentStatus(pageText);
   const warnings =
     detailSpeakers.length > 0
       ? payload.source_warnings.filter(
@@ -419,6 +430,12 @@ export function enrichNilTraining(
   if (detailPoints !== null && payload.points !== null && detailPoints !== payload.points) {
     warnings.push(
       `Punkty na stronie szczegółowej (${detailPoints}) różnią się od RSS (${payload.points}); użyto strony szczegółowej.`,
+    );
+  }
+  // Cicha zmiana szablonu NIL nie może wyglądać jak zamknięcie zapisów.
+  if (detailEnrollment === null) {
+    warnings.push(
+      "Nie rozpoznano stanu zapisów na stronie NIL — zachowano dotychczasową wartość.",
     );
   }
 
@@ -439,7 +456,7 @@ export function enrichNilTraining(
     voivodeship:
       extractDetailLocation($, detailFormat) ??
       (detailFormat === "online" ? null : payload.voivodeship),
-    enrollment_status: extractEnrollmentStatus(pageText) ?? payload.enrollment_status,
+    enrollment_status: detailEnrollment ?? payload.enrollment_status,
     profession_codes: detailAudience ?? payload.profession_codes,
     source_warnings: uniqueStrings(warnings),
   };

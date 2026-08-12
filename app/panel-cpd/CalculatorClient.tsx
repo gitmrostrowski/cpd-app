@@ -308,7 +308,15 @@ function IconBubble({
   };
 
   return (
-    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${tones[tone]}`}>
+    /**
+     * Ikona zajmuje ok. 62 % kafla. Przy 50 % kontur „pływał” w środku i
+     * czytał się jako mniejszy niż jest — outline potrzebuje więcej masy
+     * niż ikona wypełniona. Wymuszamy rozmiar na dziecku, żeby wszystkie
+     * miejsca wywołania miały tę samą proporcję bez zmiany call-site.
+     */
+    <div
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border [&_svg]:h-7 [&_svg]:w-7 [&_svg]:stroke-[1.75] ${tones[tone]}`}
+    >
       {children}
     </div>
   );
@@ -2494,14 +2502,14 @@ export default function CalculatorClient() {
                         className={[
                           "group relative w-full rounded-2xl border px-3.5 py-3 text-left transition active:scale-[0.995]",
                           active
-                            ? "border-emerald-300 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.06)]"
+                            ? "border-blue-300 bg-white ring-1 ring-blue-100 shadow-[0_2px_10px_rgba(15,45,75,0.08)]"
                             : "border-slate-200 bg-slate-50/70 hover:border-slate-300 hover:bg-white",
                         ].join(" ")}
                       >
                         <span
                           className={[
                             "absolute inset-y-2 left-0 w-1 rounded-r-full transition",
-                            active ? "bg-emerald-500" : "bg-transparent group-hover:bg-slate-300",
+                            active ? "bg-blue-600" : "bg-transparent group-hover:bg-slate-300",
                           ].join(" ")}
                           aria-hidden="true"
                         />
@@ -2522,7 +2530,7 @@ export default function CalculatorClient() {
                                 r.status === "blocked"
                                   ? "text-slate-500"
                                   : active
-                                    ? "text-emerald-700"
+                                    ? "text-blue-700"
                                     : "text-slate-500",
                               ].join(" ")}
                             >
@@ -2545,7 +2553,7 @@ export default function CalculatorClient() {
                           <div
                             className={[
                               "shrink-0 text-base font-bold leading-none tracking-[-0.03em] tabular-nums",
-                              active ? "text-emerald-700" : "text-slate-500",
+                              active ? "text-blue-700" : "text-slate-500",
                             ].join(" ")}
                           >
                             {value}
@@ -2561,7 +2569,7 @@ export default function CalculatorClient() {
                                   ? "bg-slate-400"
                                   : r.status === "warning"
                                     ? "bg-amber-400"
-                                    : "bg-blue-600",
+                                    : "bg-emerald-500",
                               ].join(" ")}
                               style={{
                                 width: `${Math.max(r.usedPct, r.used > 0 ? 5 : 0)}%`,
@@ -2579,7 +2587,7 @@ export default function CalculatorClient() {
                     Podsumowanie kategorii
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2">
-                    <div className="rounded-xl border border-emerald-100 bg-white px-3 py-2">
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
                       <div className="text-[10px] font-medium text-slate-500">Z wolnym miejscem</div>
                       <div className="mt-0.5 text-lg font-bold leading-none text-emerald-700">
                         {usableLimitsCount}
@@ -2611,8 +2619,8 @@ export default function CalculatorClient() {
 
               <div className="min-w-0 space-y-3">
                 {selectedLimit ? (
-                  <div className="relative overflow-hidden rounded-[1.35rem] border border-emerald-100 bg-gradient-to-br from-emerald-50/55 via-white to-blue-50/25 p-4 shadow-sm shadow-emerald-100/50">
-                    <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-emerald-300 to-transparent" />
+                  <div className="relative overflow-hidden rounded-[1.35rem] border border-blue-100 bg-gradient-to-br from-blue-50/55 via-white to-blue-50/20 p-4 shadow-sm shadow-blue-100/50">
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-600 via-blue-400 to-transparent" />
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
@@ -2764,7 +2772,7 @@ export default function CalculatorClient() {
                                   ? "bg-slate-400"
                                   : selectedLimit.status === "warning"
                                     ? "bg-amber-400"
-                                    : "bg-blue-600"
+                                    : "bg-emerald-500"
                               }`}
                               style={{
                                 width: `${Math.max(

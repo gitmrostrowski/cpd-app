@@ -155,6 +155,49 @@ test("strona szczegółowa rozdziela wielu prowadzących i pobiera lokalizację"
   );
 });
 
+test("status zapisów rozpoznaje zakończoną rekrutację i brak miejsc", async () => {
+  const xml = await readFile(fixturePath, "utf8");
+  const parsed = parseNilFeed(xml, {
+    fetchedAt: "2026-08-11T21:25:03.000Z",
+    asOfDate: "2026-08-11",
+  });
+  const source = parsed.payloads.find((item) => item.source_external_id === "1806");
+  assert.ok(source);
+
+  const closedByRecruitment = enrichNilTraining(
+    source,
+    "<html><body><p>REKRUTACJA ZAKOŃCZONA</p></body></html>",
+  );
+  assert.equal(closedByRecruitment.enrollment_status, "closed");
+
+  const closedByCapacity = enrichNilTraining(
+    source,
+    "<html><body><p>BRAK MIEJSC</p></body></html>",
+  );
+  assert.equal(closedByCapacity.enrollment_status, "closed");
+});
+
+test("brak rozpoznanego statusu nie kasuje znanej wartości i daje ostrzeżenie", async () => {
+  const xml = await readFile(fixturePath, "utf8");
+  const parsed = parseNilFeed(xml, {
+    fetchedAt: "2026-08-11T21:25:03.000Z",
+    asOfDate: "2026-08-11",
+  });
+  const source = parsed.payloads.find((item) => item.source_external_id === "1806");
+  assert.ok(source);
+
+  const enriched = enrichNilTraining(
+    { ...source, enrollment_status: "open" },
+    "<html><body><p>Informacje organizacyjne bez komunikatu o zapisach.</p></body></html>",
+  );
+
+  assert.equal(enriched.enrollment_status, "open");
+  assert.match(
+    enriched.source_warnings.join(" "),
+    /Nie rozpoznano stanu zapisów na stronie NIL/i,
+  );
+});
+
 test("lista zapisów bez terminu nie jest odrzucana jako wydarzenie historyczne", async () => {
   const xml = await readFile(fixturePath, "utf8");
   const result = parseNilFeed(xml, {
