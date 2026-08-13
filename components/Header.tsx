@@ -334,7 +334,7 @@ export default function Header() {
                     key={href}
                     href={href}
                     className={cx(
-                      "inline-flex items-center gap-2 text-[13px] font-bold transition",
+                      "inline-flex items-center gap-2 text-sm font-bold transition",
                       showPublicNav
                         ? "px-3 py-2 text-slate-700 hover:text-blue-700"
                         : "rounded-xl px-3 py-2.5",
@@ -373,7 +373,7 @@ export default function Header() {
                     <Link
                       href={`/placowka/${organizationContexts[0].organization_id}`}
                       className={cx(
-                        "inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-xs font-extrabold transition",
+                        "inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-[13px] font-extrabold transition",
                         pathname?.startsWith("/placowka")
                           ? "border-blue-600 bg-blue-600 text-white"
                           : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
@@ -400,10 +400,10 @@ export default function Header() {
                       >
                         <Building2 className="h-4 w-4 shrink-0 text-blue-700" />
                         <span className="min-w-0 flex-1 leading-tight">
-                          <span className="block text-[12px] font-extrabold text-slate-800">
+                          <span className="block text-[13px] font-extrabold text-slate-800">
                             Placówka · {organizationCount}
                           </span>
-                          <span className="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">
+                          <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">
                             {currentOrganization?.display_name ?? "Wybierz kontekst"}
                           </span>
                         </span>

@@ -6,7 +6,7 @@ const header = await readFile(new URL("components/Header.tsx", root), "utf8");
 const pkg = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
 
 assert.match(panel, /const PANEL_SECTION_IDS = \[\s*"status",\s*"limity",\s*"aktywnosci",\s*"terminy"/);
-assert.match(panel, /text-\[60px\][^\n]*sm:text-\[64px\]/);
+assert.match(panel, /text-\[(?:46|60)px\][^\n]*sm:text-\[(?:52|64)px\]/);
 assert.match(panel, /relative h-4 overflow-hidden rounded-full/);
 assert.match(panel, /absolute inset-y-0 left-0 w-1 bg-blue-600/);
 assert.match(panel, /absolute inset-y-0 left-0 w-1 bg-slate-300/);

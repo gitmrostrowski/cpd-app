@@ -708,6 +708,7 @@ function PointsProgressBar({
   periodTimeProgress,
   pointsPerYear,
   yearsLeft,
+  completePoints,
 }: {
   series: AccrualSeries;
   periodStart: number;
@@ -715,6 +716,7 @@ function PointsProgressBar({
   periodTimeProgress: number;
   pointsPerYear: number | null;
   yearsLeft: number | null;
+  completePoints: number;
 }) {
   const target = Math.max(1, series.target);
   const donePct = clamp((series.doneTotal / target) * 100, 0, 100);
@@ -830,6 +832,9 @@ function PointsProgressBar({
           </div>
           <div className="mt-1 text-[11px] leading-4 text-slate-500">
             {Math.round(donePct)}% celu {series.target} pkt
+            <span className="mt-0.5 block font-bold text-emerald-700">
+              {Math.round(completePoints)} pkt z kompletnych wpisów
+            </span>
           </div>
         </div>
 
@@ -1217,6 +1222,10 @@ export default function CalculatorClient() {
     () => inPeriodDone.filter((a) => getRowMissing(a).length > 0),
     [inPeriodDone],
   );
+  const completeEntries = useMemo(
+    () => inPeriodDone.filter((a) => getRowMissing(a).length === 0),
+    [inPeriodDone],
+  );
 
   const incompleteCount = incompleteEntries.length;
   const incompletePoints = useMemo(
@@ -1227,6 +1236,15 @@ export default function CalculatorClient() {
         0,
       ),
     [adjustedPointsById, incompleteEntries],
+  );
+  const completePoints = useMemo(
+    () =>
+      completeEntries.reduce(
+        (sum, activity) =>
+          sum + (adjustedPointsById.get(activity.id)?.applied ?? 0),
+        0,
+      ),
+    [adjustedPointsById, completeEntries],
   );
 
   const missingPoints = useMemo(
@@ -1927,74 +1945,92 @@ export default function CalculatorClient() {
                 </h2>
               </div>
 
-              <div className="flex items-center gap-2">
-                {hasPointTarget && accrualSeries ? (
-                  <div
-                    role="group"
-                    aria-label="Widok wykresu"
-                    className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5"
-                  >
-                    {(
-                      [
-                        { id: "curve", label: "Przebieg" },
-                        { id: "bar", label: "Przegląd" },
-                      ] as const
-                    ).map((option) => {
-                      const active = statusView === option.id;
-                      return (
-                        <button
-                          key={option.id}
-                          type="button"
-                          aria-pressed={active}
-                          onClick={() => chooseStatusView(option.id)}
-                          className={[
-                            "rounded-[7px] px-2.5 py-1 text-[11px] font-bold transition",
-                            active
-                              ? "bg-white text-slate-900 shadow-sm"
-                              : "text-slate-500 hover:text-slate-800",
-                          ].join(" ")}
-                        >
-                          {option.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : null}
+              <span
+                className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold ${paceBadgeClass}`}
+              >
+                {paceBadgeLabel}
+              </span>
+            </div>
 
-                <span
-                  className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold ${paceBadgeClass}`}
-                >
-                  {paceBadgeLabel}
+            <div className="px-5 pb-3 pt-1">
+              <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
+                <span className="text-[46px] font-black leading-[0.92] tracking-[-0.055em] text-blue-700 sm:text-[52px]">
+                  {donePoints}
+                </span>
+                {hasPointTarget ? (
+                  <>
+                    <span className="text-[15px] font-semibold text-slate-500">
+                      z {requiredPoints} pkt
+                    </span>
+                    <span className="text-[13px] text-slate-500">
+                      brakuje <span className="font-bold text-slate-900">{missingPoints}</span>
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[13px] font-bold text-amber-800">cel nieustawiony</span>
+                )}
+                <span className="text-[13px] text-slate-500">
+                  okres {periodStart}–{periodEnd}, minęło{" "}
+                  <span className="font-bold text-slate-900">
+                    {Math.round(periodTimeProgress)}%
+                  </span>
+                </span>
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 font-bold text-emerald-800 ring-1 ring-emerald-100">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+                  Kompletne wpisy: {completePoints} pkt
+                </span>
+                {incompletePoints > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 font-bold text-amber-900 ring-1 ring-amber-100">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" aria-hidden="true" />
+                    Do uzupełnienia: {incompletePoints} pkt
+                  </span>
+                ) : null}
+                <span className="text-slate-500">
+                  Planowane wpisy nie zwiększają wyniku.
                 </span>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-end gap-x-3 gap-y-1 px-5 pb-3 pt-1">
-              <span className="text-[60px] font-black leading-[0.9] tracking-[-0.06em] text-blue-700 sm:text-[64px]">
-                {donePoints}
-              </span>
-              {hasPointTarget ? (
-                <>
-                  <span className="text-[15px] font-semibold text-slate-500">
-                    z {requiredPoints} pkt
-                  </span>
-                  <span className="text-[13px] text-slate-500">
-                    brakuje <span className="font-bold text-slate-900">{missingPoints}</span>
-                  </span>
-                </>
-              ) : (
-                <span className="text-[13px] font-bold text-amber-800">cel nieustawiony</span>
-              )}
-              <span className="text-[13px] text-slate-500">
-                okres {periodStart}–{periodEnd}, minęło{" "}
-                <span className="font-bold text-slate-900">
-                  {Math.round(periodTimeProgress)}%
-                </span>
-              </span>
-            </div>
-
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
               <div className="min-w-0 px-3 pb-3 pt-1">
+                {hasPointTarget && accrualSeries ? (
+                  <div className="px-2 pb-1 pt-1">
+                    <div
+                      role="group"
+                      aria-label="Widok wykresu"
+                      className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5"
+                    >
+                      {(
+                        [
+                          { id: "curve", label: "Przebieg" },
+                          { id: "bar", label: "Przegląd" },
+                        ] as const
+                      ).map((option) => {
+                        const active = statusView === option.id;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            aria-pressed={active}
+                            onClick={() => chooseStatusView(option.id)}
+                            className={[
+                              "rounded-[7px] px-3 py-1.5 text-[12px] font-bold transition",
+                              active
+                                ? "bg-white text-slate-900 shadow-sm"
+                                : "text-slate-500 hover:text-slate-800",
+                            ].join(" ")}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+
                 {hasPointTarget && accrualSeries ? (
                   statusView === "bar" ? (
                     <div className="px-2 pb-1 pt-2">
@@ -2005,6 +2041,7 @@ export default function CalculatorClient() {
                         periodTimeProgress={periodTimeProgress}
                         pointsPerYear={pace && !pace.achieved ? pace.pointsPerYear : null}
                         yearsLeft={pace ? pace.yearsLeft : null}
+                        completePoints={completePoints}
                       />
                       <p className="mt-2 px-1 text-[12px] leading-[18px] text-slate-500">
                         Pasek pokazuje ten sam okres co przebieg: kolor to punkty zdobyte, pole
