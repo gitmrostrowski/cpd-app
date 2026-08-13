@@ -13,7 +13,7 @@ const packageJson = JSON.parse(
 // Pasek: wyraźna skala i bezpieczna etykieta „dziś”.
 assert.match(panel, /role="group"\s+aria-label=\{`Pasek postępu/);
 assert.match(panel, /left: `clamp\(1rem, \$\{timePct\}%, calc\(100% - 1rem\)\)`/);
-assert.match(panel, /h-9 overflow-hidden rounded-xl border border-slate-200/);
+assert.match(panel, /relative h-(?:4|9) overflow-hidden rounded-(?:full|xl)/);
 assert.match(panel, /<span>0 pkt<\/span>/);
 assert.match(panel, /<span>\{series\.target\} pkt<\/span>/);
 

@@ -100,6 +100,8 @@ export default function Header() {
   const [openMobile, setOpenMobile] = useState(false);
   const [openUser, setOpenUser] = useState(false);
   const [openContext, setOpenContext] = useState(false);
+  const [organizationQuery, setOrganizationQuery] = useState("");
+  const [contextToast, setContextToast] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
@@ -207,6 +209,15 @@ export default function Header() {
     setOpenContext(false);
   }, [pathname]);
 
+  useEffect(() => {
+    const name = window.sessionStorage.getItem("crpe:organization-switch-toast");
+    if (!name) return;
+    window.sessionStorage.removeItem("crpe:organization-switch-toast");
+    setContextToast(`Przełączono na ${name}`);
+    const timer = window.setTimeout(() => setContextToast(null), 2600);
+    return () => window.clearTimeout(timer);
+  }, [pathname]);
+
   const isActive = (href: string) => {
     if (!pathname) return false;
     if (href === "/") return pathname === "/";
@@ -230,6 +241,14 @@ export default function Header() {
       ) ?? null,
     [currentOrganizationId, organizationContexts],
   );
+
+  const filteredOrganizationContexts = useMemo(() => {
+    const query = organizationQuery.trim().toLocaleLowerCase("pl-PL");
+    if (!query) return organizationContexts;
+    return organizationContexts.filter((context) =>
+      context.display_name.toLocaleLowerCase("pl-PL").includes(query),
+    );
+  }, [organizationContexts, organizationQuery]);
 
   const fullName = useMemo(
     () =>
@@ -350,53 +369,78 @@ export default function Header() {
                  * placówki żyje teraz w menu placówek, gdzie jest potrzebny.
                  */}
                 <div className="hidden items-center lg:flex">
-                  {organizationCount > 0 ? (
+                  {organizationCount === 1 ? (
+                    <Link
+                      href={`/placowka/${organizationContexts[0].organization_id}`}
+                      className={cx(
+                        "inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-xs font-extrabold transition",
+                        pathname?.startsWith("/placowka")
+                          ? "border-blue-600 bg-blue-600 text-white"
+                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                      )}
+                      title={organizationContexts[0].display_name}
+                    >
+                      <Building2 className="h-4 w-4 shrink-0" />
+                      <span>Placówka</span>
+                    </Link>
+                  ) : organizationCount > 1 ? (
                     <div className="relative" ref={contextMenuRef}>
                       <button
                         type="button"
                         onClick={() => setOpenContext((value) => !value)}
                         className={cx(
-                          // Stała szerokość zamiast max-w: nazwa placówki bywa
-                          // dowolnie długa, a pasek nie może zmieniać układu
-                          // zależnie od tego, w jakim kontekście jest użytkownik.
-                          "inline-flex h-10 w-[188px] items-center gap-2 rounded-xl border px-3 text-xs font-extrabold transition",
+                          "inline-flex h-11 w-[196px] items-center gap-2 rounded-xl border px-3 text-left transition",
                           pathname?.startsWith("/placowka")
-                            ? "border-blue-600 bg-blue-600 text-white"
-                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-950",
+                            ? "border-blue-200 bg-blue-50 text-blue-800"
+                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
                         )}
                         aria-expanded={openContext}
                         aria-haspopup="menu"
-                        title={
-                          currentOrganization?.display_name ??
-                          (organizationCount === 1
-                            ? organizationContexts[0].display_name
-                            : "Wybierz placówkę")
-                        }
+                        title={currentOrganization?.display_name ?? "Wybierz placówkę"}
                       >
-                        <Building2 className="h-3.5 w-3.5 shrink-0" />
-                        <span className="min-w-0 flex-1 truncate text-left">
-                          {currentOrganization?.display_name ??
-                            (organizationCount === 1
-                              ? organizationContexts[0].display_name
-                              : `Placówki (${organizationCount})`)}
+                        <Building2 className="h-4 w-4 shrink-0 text-blue-700" />
+                        <span className="min-w-0 flex-1 leading-tight">
+                          <span className="block text-[12px] font-extrabold text-slate-800">
+                            Placówka · {organizationCount}
+                          </span>
+                          <span className="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">
+                            {currentOrganization?.display_name ?? "Wybierz kontekst"}
+                          </span>
                         </span>
                         <ChevronDown
-                          className={cx(
-                            "h-3.5 w-3.5 shrink-0 transition",
-                            openContext && "rotate-180",
-                          )}
+                          className={cx("h-3.5 w-3.5 shrink-0 transition", openContext && "rotate-180")}
                         />
                       </button>
 
                       {openContext ? (
                         <div
-                          className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_55px_rgba(15,45,75,0.16)]"
+                          className="absolute right-0 mt-2 w-[300px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_55px_rgba(15,45,75,0.16)]"
                           role="menu"
                         >
+                          <div className="rounded-xl bg-slate-50 px-3 py-2.5">
+                            <div className="text-[11px] font-semibold text-slate-500">
+                              {currentOrganization ? "Aktywna placówka" : "Wybierz placówkę"}
+                            </div>
+                            <div className="mt-0.5 truncate text-sm font-extrabold text-slate-950">
+                              {currentOrganization?.display_name ?? "Widok osobisty CRPE"}
+                            </div>
+                          </div>
+
+                          {organizationCount > 6 ? (
+                            <div className="px-1 pb-1 pt-2">
+                              <input
+                                value={organizationQuery}
+                                onChange={(event) => setOrganizationQuery(event.target.value)}
+                                placeholder="Szukaj placówki…"
+                                className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                              />
+                            </div>
+                          ) : null}
+
                           {pathname?.startsWith("/placowka") ? (
                             <Link
                               href="/panel-cpd"
-                              className="mb-1 flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50"
+                              className="mt-1 flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50"
                               onClick={() => setOpenContext(false)}
                               role="menuitem"
                             >
@@ -405,52 +449,54 @@ export default function Header() {
                             </Link>
                           ) : null}
 
-                          <div className="px-3 pb-2 pt-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400">
-                            Placówki i role
+                          <div className="mt-1 max-h-72 overflow-y-auto">
+                            {filteredOrganizationContexts.map((context) => (
+                              <Link
+                                key={context.organization_id}
+                                href={`/placowka/${context.organization_id}`}
+                                className={cx(
+                                  "flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm transition",
+                                  currentOrganizationId === context.organization_id
+                                    ? "bg-blue-50 text-blue-800"
+                                    : "text-slate-700 hover:bg-slate-50",
+                                )}
+                                onClick={() => {
+                                  window.sessionStorage.setItem("crpe:organization-switch-toast", context.display_name);
+                                  setOpenContext(false);
+                                  setOrganizationQuery("");
+                                }}
+                                role="menuitem"
+                              >
+                                <span className="min-w-0">
+                                  <span className="block truncate font-bold">{context.display_name}</span>
+                                  <span className="mt-0.5 block text-xs text-slate-500">
+                                    {primaryRoleLabel(context.role_codes)}
+                                  </span>
+                                </span>
+                                {currentOrganizationId === context.organization_id ? (
+                                  <span className="shrink-0 text-xs font-black text-blue-700" aria-label="Aktywna placówka">✓</span>
+                                ) : null}
+                              </Link>
+                            ))}
+                            {filteredOrganizationContexts.length === 0 ? (
+                              <div className="px-3 py-4 text-center text-xs text-slate-500">Brak pasujących placówek.</div>
+                            ) : null}
                           </div>
-                          {organizationContexts.map((context) => (
-                            <Link
-                              key={context.organization_id}
-                              href={`/placowka/${context.organization_id}`}
-                              className={cx(
-                                "flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm transition",
-                                currentOrganizationId === context.organization_id
-                                  ? "bg-blue-50 text-blue-800"
-                                  : "text-slate-700 hover:bg-slate-50",
-                              )}
-                              onClick={() => setOpenContext(false)}
-                              role="menuitem"
-                            >
-                              <span className="min-w-0">
-                                <span className="block truncate font-bold">
-                                  {context.display_name}
-                                </span>
-                                <span className="mt-0.5 block text-xs text-slate-500">
-                                  {primaryRoleLabel(context.role_codes)}
-                                </span>
-                              </span>
-                              {currentOrganizationId ===
-                              context.organization_id ? (
-                                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-                              ) : null}
-                            </Link>
-                          ))}
-                          {organizationCount > 1 ? (
-                            <Link
-                              href="/placowka"
-                              className="mt-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
-                              onClick={() => setOpenContext(false)}
-                            >
-                              Pokaż wszystkie placówki
-                            </Link>
-                          ) : null}
+
+                          <Link
+                            href="/placowka"
+                            className="mt-1 flex items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-50"
+                            onClick={() => setOpenContext(false)}
+                          >
+                            <Building2 className="h-4 w-4" /> Pokaż wszystkie placówki
+                          </Link>
                           <div className="my-2 h-px bg-slate-100" />
                           <Link
                             href="/profil#placowki-i-role"
-                            className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50"
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
                             onClick={() => setOpenContext(false)}
                           >
-                            Zarządzaj widokiem placówek
+                            <Settings className="h-4 w-4" /> Zarządzaj placówkami
                           </Link>
                         </div>
                       ) : null}
@@ -737,6 +783,11 @@ export default function Header() {
           </nav>
         ) : null}
       </div>
+      {contextToast ? (
+        <div className="pointer-events-none fixed right-5 top-20 z-[70] rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-bold text-emerald-800 shadow-[0_16px_40px_rgba(15,45,75,0.16)]" role="status">
+          {contextToast}
+        </div>
+      ) : null}
     </header>
   );
 }

@@ -48,10 +48,10 @@ const MONTHS_SHORT = [
 ] as const;
 
 const PANEL_SECTION_IDS = [
-  "ustawienia",
   "status",
   "limity",
   "aktywnosci",
+  "terminy",
 ] as const;
 
 type PanelSectionId = (typeof PANEL_SECTION_IDS)[number];
@@ -758,7 +758,7 @@ function PointsProgressBar({
           dziś
         </div>
 
-        <div className="relative h-9 overflow-hidden rounded-xl border border-slate-200 bg-slate-100/80">
+        <div className="relative h-4 overflow-hidden rounded-full bg-slate-200 ring-1 ring-slate-200">
           <div
             className="absolute inset-y-0 left-0 bg-blue-600"
             style={{ width: `${donePct}%` }}
@@ -770,12 +770,29 @@ function PointsProgressBar({
                 left: `${donePct}%`,
                 width: `${gapPct}%`,
                 backgroundImage:
-                  "repeating-linear-gradient(135deg, rgba(180,83,9,0.32) 0 2px, transparent 2px 7px)",
+                  "repeating-linear-gradient(135deg, rgba(180,83,9,0.40) 0 2px, transparent 2px 6px)",
               }}
             />
           ) : null}
+          {donePct >= 12 ? (
+            <span
+              className="absolute inset-y-0 left-2 flex items-center text-[9px] font-black text-white"
+              aria-hidden="true"
+            >
+              {Math.round(series.doneTotal)} pkt
+            </span>
+          ) : null}
+          {gapPct >= 14 ? (
+            <span
+              className="absolute inset-y-0 flex items-center px-2 text-[9px] font-black text-amber-900"
+              style={{ left: `${donePct}%` }}
+              aria-hidden="true"
+            >
+              luka {gapPoints}
+            </span>
+          ) : null}
           <div
-            className="absolute inset-y-0 w-[2px] bg-slate-900"
+            className="absolute -top-1 bottom-[-4px] w-[2px] bg-slate-950"
             style={{ left: `${timePct}%` }}
             aria-hidden="true"
           />
@@ -803,13 +820,11 @@ function PointsProgressBar({
         </div>
       </div>
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
-            <span className="h-2 w-2 rounded-sm bg-blue-600" aria-hidden="true" />
-            Zebrane
-          </div>
-          <div className="mt-1 text-xl font-extrabold leading-none tracking-[-0.04em] text-slate-950">
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-3 pl-4">
+          <span className="absolute inset-y-0 left-0 w-1 bg-blue-600" aria-hidden="true" />
+          <div className="text-[11px] font-semibold text-slate-600">Zebrane</div>
+          <div className="mt-1 text-[24px] font-black leading-none tracking-[-0.04em] text-blue-700">
             {series.doneTotal}
             <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
           </div>
@@ -818,27 +833,23 @@ function PointsProgressBar({
           </div>
         </div>
 
-        <div
-          className={`rounded-xl border px-3 py-2.5 ${
-            gapPoints > 0 ? "border-amber-200 bg-amber-50/70" : "border-emerald-200 bg-emerald-50/60"
-          }`}
-        >
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
-            <span
-              className={`h-2 w-2 rounded-sm ${gapPoints > 0 ? "bg-amber-400" : "bg-emerald-500"}`}
-              aria-hidden="true"
-            />
+        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-3 pl-4">
+          <span
+            className={`absolute inset-y-0 left-0 w-1 ${gapPoints > 0 ? "bg-amber-400" : "bg-emerald-500"}`}
+            aria-hidden="true"
+          />
+          <div className="text-[11px] font-semibold text-slate-600">
             {gapPoints > 0 ? "Luka do tempa" : "Zapas nad tempem"}
           </div>
           <div
-            className={`mt-1 text-xl font-extrabold leading-none tracking-[-0.04em] ${
-              gapPoints > 0 ? "text-amber-800" : "text-emerald-800"
+            className={`mt-1 text-[24px] font-black leading-none tracking-[-0.04em] ${
+              gapPoints > 0 ? "text-amber-800" : "text-emerald-700"
             }`}
           >
             {gapPoints > 0 ? gapPoints : Math.round(series.doneTotal - series.targetToday)}
             <span className="ml-1 text-xs font-semibold opacity-60">pkt</span>
           </div>
-          <div className="mt-1 text-[11px] leading-4 text-slate-600">
+          <div className="mt-1 text-[11px] leading-4 text-slate-500">
             {gapPoints > 0
               ? perMonth
                 ? `Do wyrównania ≈ ${perMonth} pkt / mies.`
@@ -847,12 +858,10 @@ function PointsProgressBar({
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
-            <span className="h-2 w-2 rounded-sm bg-slate-300" aria-hidden="true" />
-            Pozostaje
-          </div>
-          <div className="mt-1 text-xl font-extrabold leading-none tracking-[-0.04em] text-slate-950">
+        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-3 pl-4">
+          <span className="absolute inset-y-0 left-0 w-1 bg-slate-300" aria-hidden="true" />
+          <div className="text-[11px] font-semibold text-slate-600">Pozostaje</div>
+          <div className="mt-1 text-[24px] font-black leading-none tracking-[-0.04em] text-slate-950">
             {leftPoints}
             <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
           </div>
@@ -865,6 +874,31 @@ function PointsProgressBar({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SegmentedCapacityBar({ pct, status }: { pct: number; status: "available" | "warning" | "blocked" | "per_item" }) {
+  const segments = 10;
+  const active = Math.round(clamp(pct, 0, 100) / 10);
+  const fillClass =
+    status === "blocked"
+      ? "bg-slate-400"
+      : status === "warning"
+        ? "bg-amber-400"
+        : status === "per_item"
+          ? "bg-blue-500"
+          : "bg-emerald-500";
+
+  return (
+    <div className="mt-2 grid grid-cols-10 gap-1" aria-label={`Wykorzystanie limitu ${Math.round(pct)}%`}>
+      {Array.from({ length: segments }, (_, index) => (
+        <span
+          key={index}
+          className={`h-1.5 rounded-full ${index < active ? fillClass : "bg-slate-200"}`}
+          aria-hidden="true"
+        />
+      ))}
     </div>
   );
 }
@@ -928,7 +962,8 @@ export default function CalculatorClient() {
   const [planningKey, setPlanningKey] = useState<string | null>(null);
   const [activityFilter, setActivityFilter] = useState<"all" | "planned" | "missing" | "complete">("all");
   const [selectedLimitKey, setSelectedLimitKey] = useState<string | null>(null);
-  const [activeNav, setActiveNav] = useState<PanelSectionId>("ustawienia");
+  const [activeNav, setActiveNav] = useState<PanelSectionId>("status");
+  const [settingsOpen, setSettingsOpen] = useState(false);
   /**
    * Wybór widoku statusu zapamiętujemy lokalnie, a nie w profilu: to
    * preferencja czytania jednego ekranu, nie dana rozliczeniowa.
@@ -1777,12 +1812,12 @@ export default function CalculatorClient() {
     mobileLabel: string;
     icon: "user" | "chart" | "target" | "shield" | "calendar";
   }[] = [
-    { id: "ustawienia", label: "Ustawienia", mobileLabel: "Ustawienia", icon: "user" },
     { id: "status", label: "Status i kroki", mobileLabel: "Status", icon: "chart" },
     ...(hasLimits
       ? [{ id: "limity" as const, label: "Limity", mobileLabel: "Limity", icon: "shield" as const }]
       : []),
     { id: "aktywnosci", label: "Aktywności", mobileLabel: "Wpisy", icon: "calendar" },
+    { id: "terminy", label: "Najbliższe terminy", mobileLabel: "Terminy", icon: "target" },
   ];
 
   return (
@@ -1852,279 +1887,7 @@ export default function CalculatorClient() {
         </div>
       </nav>
 
-      <section id="ustawienia" className={cardCls}>
-        <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <IconBubble tone="blue">
-              <MiniIcon name="calendar" />
-            </IconBubble>
 
-            <div>
-              <h2 className="text-base font-extrabold tracking-tight text-slate-950">
-                Ustawienia okresu i zawodu
-              </h2>
-              <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
-                Zmień preferencje w dowolnym momencie.
-                {savedAt && !dirty && !savingProfile ? (
-                  <span className="ml-1 font-medium text-blue-600">Zapisano</span>
-                ) : null}
-                {!otherValid ? (
-                  <span className="ml-1 font-medium text-red-500">
-                    Uzupełnij zawód
-                  </span>
-                ) : null}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                const prof =
-                  professionOptions[0]?.name_pl ??
-                  FALLBACK_PROFESSION_OPTIONS[0].name_pl;
-                setProfession(prof);
-                setProfessionOther("");
-                setPeriodStart(2023);
-                setPeriodEnd(2026);
-                setRequiredPoints(0);
-                setSuggestedRuleSet(null);
-                setAppliedRuleSet(null);
-                setCycleTargetMode("custom");
-                setPeriodMode("preset");
-                setDirty(true);
-              }}
-              className="inline-flex h-9 w-28 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
-            >
-              Domyślne
-            </button>
-
-            <button
-              type="button"
-              onClick={saveAllSettings}
-              disabled={isBusy || savingProfile || !dirty || !otherValid}
-              className="inline-flex h-9 w-28 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {savingProfile ? "Zapisuję..." : "Zapisz"}
-            </button>
-
-            <Link
-              href="/profil"
-              className="inline-flex h-9 w-28 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95"
-            >
-              Profil →
-            </Link>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-2 xl:grid-cols-4">
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-              Zawód
-            </label>
-            <select
-              value={profession}
-              onChange={async (e) => {
-                const v = e.target.value as Profession;
-                setProfession(v);
-                if (!isOtherProfession(v)) setProfessionOther("");
-
-                setAppliedRuleSet(null);
-                setCycleTargetMode("custom");
-                const option = professionOptionByName(professionOptions, v);
-                if (option?.id) {
-                  try {
-                    const rule = await fetchVerifiedRuleSet(supabase, option.id);
-                    setSuggestedRuleSet(rule);
-                  } catch {
-                    setSuggestedRuleSet(null);
-                  }
-                } else {
-                  setSuggestedRuleSet(null);
-                }
-
-                setDirty(true);
-              }}
-              className={`mt-1.5 ${inputCls}`}
-            >
-              {professionOptions.map((option) => (
-                <option key={option.code} value={option.name_pl}>
-                  {option.name_pl}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-              {trybLabel}
-            </label>
-            <select
-              value={periodMode}
-              onChange={(e) => {
-                const v = e.target.value as "preset" | "custom";
-                setPeriodMode(v);
-
-                if (v === "custom" && pwzIssueDate) {
-                  const d = getPeriodFromPwzIssueDate(
-                    appliedRuleSet,
-                    pwzIssueDate,
-                  );
-                  if (d) {
-                    setPeriodStart(d.start);
-                    setPeriodEnd(d.end);
-                  }
-                }
-
-                setDirty(true);
-              }}
-              className={`mt-1.5 ${inputCls}`}
-            >
-              <option value="preset">Preset najczęstszy</option>
-              <option value="custom">Indywidualny</option>
-            </select>
-          </div>
-
-          {periodMode === "preset" && !pwzIssueDate ? (
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                {okresLabel}
-              </label>
-              <select
-                value={periodLabel}
-                onChange={(e) => {
-                  const [a, b] = e.target.value.split("-").map(Number);
-                  setPeriodStart(a);
-                  setPeriodEnd(b);
-                  setDirty(true);
-                }}
-                className={`mt-1.5 ${inputCls}`}
-              >
-                <option value="2019-2022">2019–2022</option>
-                <option value="2023-2026">2023–2026</option>
-                <option value="2027-2030">2027–2030</option>
-              </select>
-            </div>
-          ) : (
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                {okresLabel}
-              </label>
-              <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                <input
-                  value={periodStart}
-                  onChange={(e) => {
-                    setPeriodStart(Number(e.target.value || 0));
-                    setDirty(true);
-                  }}
-                  type="number"
-                  disabled={Boolean(pwzIssueDate)}
-                  className={inputCls}
-                />
-                <span className="text-slate-400">–</span>
-                <input
-                  value={periodEnd}
-                  onChange={(e) => {
-                    setPeriodEnd(Number(e.target.value || 0));
-                    setDirty(true);
-                  }}
-                  type="number"
-                  disabled={Boolean(pwzIssueDate)}
-                  className={inputCls}
-                />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-              Własny cel punktowy
-            </label>
-            <input
-              value={requiredPoints}
-              onChange={(e) => {
-                setRequiredPoints(Number(e.target.value || 0));
-                setDirty(true);
-              }}
-              type="number"
-              min={0}
-              className={`mt-1.5 ${inputCls}`}
-            />
-          </div>
-
-          {otherRequired ? (
-            <div className="md:col-span-2 xl:col-span-4">
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Jaki zawód?
-              </label>
-              <input
-                value={professionOther}
-                onChange={(e) => {
-                  setProfessionOther(e.target.value);
-                  setDirty(true);
-                }}
-                placeholder="np. Psycholog, Logopeda..."
-                className={`mt-1.5 ${inputCls} ${
-                  !otherValid
-                    ? "border-red-300 focus:border-red-400 focus:ring-red-100"
-                    : ""
-                }`}
-              />
-            </div>
-          ) : null}
-        </div>
-
-        <div className="mx-6 mb-5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
-          {appliedRuleSet ? (
-            <>
-              <span className="font-bold text-slate-800">
-                Reguła: {appliedRuleSet.required_points} pkt /{" "}
-                {appliedRuleSet.period_months} miesięcy
-              </span>
-              <span>
-                {" "}· wersja {appliedRuleSet.version}
-                {appliedRuleSet.last_verified_on
-                  ? ` · zweryfikowana ${appliedRuleSet.last_verified_on}`
-                  : ""}
-              </span>
-            </>
-          ) : suggestedRuleSet ? (
-            <>
-              <span className="font-bold text-slate-800">
-                Reguła dla zawodu:{" "}
-                {suggestedRuleSet.required_points} pkt /{" "}
-                {suggestedRuleSet.period_months} miesięcy
-              </span>
-              <span> · zweryfikowana</span>
-              {suggestedRuleSet.sources[0] ? (
-                <details className="ml-1 inline">
-                  <summary className="inline cursor-pointer font-bold text-blue-700 hover:text-blue-800">
-                    Szczegóły i źródło
-                  </summary>
-                  <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3">
-                    Obecny cykl pozostaje własnym celem i nie został
-                    automatycznie zmieniony. Wersja {suggestedRuleSet.version}.{" "}
-                    <a
-                      href={suggestedRuleSet.sources[0].url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-bold text-blue-700 hover:text-blue-800"
-                    >
-                      {suggestedRuleSet.sources[0].title} →
-                    </a>
-                  </div>
-                </details>
-              ) : null}
-            </>
-          ) : (
-            <>
-              <span className="font-bold text-slate-800">Cel własny.</span>{" "}
-              Brak aktywnej, zweryfikowanej reguły dla tego zawodu.
-            </>
-          )}
-        </div>
-      </section>
 
       {isBusy ? (
         <div className={`${cardCls} p-8 text-center text-sm font-medium text-slate-500`}>
@@ -2206,8 +1969,8 @@ export default function CalculatorClient() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-5 pb-2">
-              <span className="text-[34px] font-black leading-none tracking-[-0.05em] text-slate-950">
+            <div className="flex flex-wrap items-end gap-x-3 gap-y-1 px-5 pb-3 pt-1">
+              <span className="text-[60px] font-black leading-[0.9] tracking-[-0.06em] text-blue-700 sm:text-[64px]">
                 {donePoints}
               </span>
               {hasPointTarget ? (
@@ -2302,7 +2065,7 @@ export default function CalculatorClient() {
               </div>
 
               <div className="flex flex-col justify-center gap-2 border-t border-slate-100 p-4 lg:border-l lg:border-t-0">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                <p className="text-xs font-bold text-slate-600">
                   {nextSteps[0]?.priority === "high" ? "Najpierw to" : "Co dalej"}
                 </p>
 
@@ -2331,6 +2094,17 @@ export default function CalculatorClient() {
                       <Link
                         key={step.title}
                         href={step.ctaHref}
+                        onClick={(event) => {
+                          if (step.ctaHref !== "#ustawienia") return;
+                          event.preventDefault();
+                          setSettingsOpen(true);
+                          window.requestAnimationFrame(() => {
+                            const el = document.getElementById("ustawienia");
+                            if (!el) return;
+                            const targetTop = el.getBoundingClientRect().top + window.scrollY - 140;
+                            window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
+                          });
+                        }}
                         className="mb-1.5 flex items-center gap-3 rounded-xl bg-blue-700 px-3.5 py-3 text-white shadow-sm transition-colors hover:bg-blue-800"
                       >
                         <MiniIcon name={step.icon} className="h-5 w-5 shrink-0" />
@@ -2358,6 +2132,17 @@ export default function CalculatorClient() {
                     <Link
                       key={step.title}
                       href={step.ctaHref}
+                      onClick={(event) => {
+                        if (step.ctaHref !== "#ustawienia") return;
+                        event.preventDefault();
+                        setSettingsOpen(true);
+                        window.requestAnimationFrame(() => {
+                          const el = document.getElementById("ustawienia");
+                          if (!el) return;
+                          const targetTop = el.getBoundingClientRect().top + window.scrollY - 140;
+                          window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
+                        });
+                      }}
                       className="flex items-center gap-3 rounded-xl border border-slate-200 px-3.5 py-2.5 transition-colors hover:border-slate-300 hover:bg-slate-50"
                     >
                       <MiniIcon name={step.icon} className="h-[18px] w-[18px] shrink-0 text-slate-500" />
@@ -2379,38 +2164,325 @@ export default function CalculatorClient() {
             <div
               role="group"
               aria-label="Poziomy statusu wyniku"
-              className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 bg-slate-50/70 px-5 py-3 text-[12px] leading-[18px] text-slate-500"
+              className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/80 px-5 py-3 text-[12px] leading-[18px] text-slate-600"
             >
-              <span>
-                <span className="font-semibold text-slate-700">
-                  {cycleTargetMode === "rule_set" ? "Reguła CRPE" : "Własny cel"}
-                </span>{" "}
-                · {displayProfession(profession, professionOther)} · {requiredPoints} pkt ·{" "}
+              <span className="sr-only">
+                {cycleTargetMode === "rule_set" ? "Reguła CRPE" : "Własny cel"}
+              </span>
+              <span className="sr-only">Reguły CRPE:</span>
+              <span className="sr-only">Status formalny:</span>
+              <span className="font-semibold text-slate-700">
+                {displayProfession(profession, professionOther)}
+                <span className="mx-1.5 text-slate-300">·</span>
+                {requiredPoints} pkt
+                <span className="mx-1.5 text-slate-300">·</span>
                 {periodStart}–{periodEnd}
-              </span>
-              <span>
-                <span className="font-semibold text-slate-700">Reguły CRPE:</span>{" "}
-                <span className="font-semibold text-slate-700">
-                  {maximumRequirements.length > 0 ? "limity obliczane" : "nieobliczane"}
-                </span>
-              </span>
-              <span>
-                <span className="font-semibold text-slate-700">Status formalny:</span>{" "}
-                <span className="font-semibold text-slate-700">
-                  {formalStatus === "confirmed_externally"
-                    ? "potwierdzony poza CRPE"
-                    : "niepotwierdzony"}
-                </span>
+                <span className="mx-1.5 text-slate-300">·</span>
+                {periodMode === "custom" ? "Indywidualny" : "Preset"}
               </span>
               <button
                 type="button"
-                onClick={() => scrollToSection("ustawienia")}
-                className="font-bold text-blue-700 hover:underline"
+                aria-expanded={settingsOpen}
+                onClick={() => {
+                  setSettingsOpen((value) => !value);
+                  if (!settingsOpen) {
+                    window.requestAnimationFrame(() => {
+                      const el = document.getElementById("ustawienia");
+                      if (!el) return;
+                      const targetTop = el.getBoundingClientRect().top + window.scrollY - 140;
+                      window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
+                    });
+                  }
+                }}
+                className="inline-flex h-8 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-xs font-bold text-blue-700 shadow-sm transition hover:bg-blue-50"
               >
-                Zmień ustawienia
+                {settingsOpen ? "Ukryj ustawienia" : "Zmień ustawienia"}
               </button>
             </div>
           </section>
+
+          {settingsOpen ? (
+      <section id="ustawienia" className={`${cardCls} scroll-mt-44`}>
+                  <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <IconBubble tone="blue">
+                        <MiniIcon name="calendar" />
+                      </IconBubble>
+
+                      <div>
+                        <h2 className="text-base font-extrabold tracking-tight text-slate-950">
+                          Ustawienia okresu i zawodu
+                        </h2>
+                        <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
+                          Szczegóły celu, zawodu i okresu rozliczeniowego.
+                          {savedAt && !dirty && !savingProfile ? (
+                            <span className="ml-1 font-medium text-blue-600">Zapisano</span>
+                          ) : null}
+                          {!otherValid ? (
+                            <span className="ml-1 font-medium text-red-500">
+                              Uzupełnij zawód
+                            </span>
+                          ) : null}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSettingsOpen(false)}
+                        className="inline-flex h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50"
+                      >
+                        Zamknij
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const prof =
+                            professionOptions[0]?.name_pl ??
+                            FALLBACK_PROFESSION_OPTIONS[0].name_pl;
+                          setProfession(prof);
+                          setProfessionOther("");
+                          setPeriodStart(2023);
+                          setPeriodEnd(2026);
+                          setRequiredPoints(0);
+                          setSuggestedRuleSet(null);
+                          setAppliedRuleSet(null);
+                          setCycleTargetMode("custom");
+                          setPeriodMode("preset");
+                          setDirty(true);
+                        }}
+                        className="inline-flex h-9 w-28 items-center justify-center rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                      >
+                        Domyślne
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={saveAllSettings}
+                        disabled={isBusy || savingProfile || !dirty || !otherValid}
+                        className="inline-flex h-9 w-28 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {savingProfile ? "Zapisuję..." : "Zapisz"}
+                      </button>
+
+                      <Link
+                        href="/profil"
+                        className="inline-flex h-9 w-28 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95"
+                      >
+                        Profil →
+                      </Link>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-2 xl:grid-cols-4">
+                    <div>
+                      <label className="text-[12px] font-semibold text-slate-600">
+                        Zawód
+                      </label>
+                      <select
+                        value={profession}
+                        onChange={async (e) => {
+                          const v = e.target.value as Profession;
+                          setProfession(v);
+                          if (!isOtherProfession(v)) setProfessionOther("");
+
+                          setAppliedRuleSet(null);
+                          setCycleTargetMode("custom");
+                          const option = professionOptionByName(professionOptions, v);
+                          if (option?.id) {
+                            try {
+                              const rule = await fetchVerifiedRuleSet(supabase, option.id);
+                              setSuggestedRuleSet(rule);
+                            } catch {
+                              setSuggestedRuleSet(null);
+                            }
+                          } else {
+                            setSuggestedRuleSet(null);
+                          }
+
+                          setDirty(true);
+                        }}
+                        className={`mt-1.5 ${inputCls}`}
+                      >
+                        {professionOptions.map((option) => (
+                          <option key={option.code} value={option.name_pl}>
+                            {option.name_pl}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[12px] font-semibold text-slate-600">
+                        {trybLabel}
+                      </label>
+                      <select
+                        value={periodMode}
+                        onChange={(e) => {
+                          const v = e.target.value as "preset" | "custom";
+                          setPeriodMode(v);
+
+                          if (v === "custom" && pwzIssueDate) {
+                            const d = getPeriodFromPwzIssueDate(
+                              appliedRuleSet,
+                              pwzIssueDate,
+                            );
+                            if (d) {
+                              setPeriodStart(d.start);
+                              setPeriodEnd(d.end);
+                            }
+                          }
+
+                          setDirty(true);
+                        }}
+                        className={`mt-1.5 ${inputCls}`}
+                      >
+                        <option value="preset">Preset najczęstszy</option>
+                        <option value="custom">Indywidualny</option>
+                      </select>
+                    </div>
+
+                    {periodMode === "preset" && !pwzIssueDate ? (
+                      <div>
+                        <label className="text-[12px] font-semibold text-slate-600">
+                          {okresLabel}
+                        </label>
+                        <select
+                          value={periodLabel}
+                          onChange={(e) => {
+                            const [a, b] = e.target.value.split("-").map(Number);
+                            setPeriodStart(a);
+                            setPeriodEnd(b);
+                            setDirty(true);
+                          }}
+                          className={`mt-1.5 ${inputCls}`}
+                        >
+                          <option value="2019-2022">2019–2022</option>
+                          <option value="2023-2026">2023–2026</option>
+                          <option value="2027-2030">2027–2030</option>
+                        </select>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="text-[12px] font-semibold text-slate-600">
+                          {okresLabel}
+                        </label>
+                        <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                          <input
+                            value={periodStart}
+                            onChange={(e) => {
+                              setPeriodStart(Number(e.target.value || 0));
+                              setDirty(true);
+                            }}
+                            type="number"
+                            disabled={Boolean(pwzIssueDate)}
+                            className={inputCls}
+                          />
+                          <span className="text-slate-400">–</span>
+                          <input
+                            value={periodEnd}
+                            onChange={(e) => {
+                              setPeriodEnd(Number(e.target.value || 0));
+                              setDirty(true);
+                            }}
+                            type="number"
+                            disabled={Boolean(pwzIssueDate)}
+                            className={inputCls}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-[12px] font-semibold text-slate-600">
+                        Własny cel punktowy
+                      </label>
+                      <input
+                        value={requiredPoints}
+                        onChange={(e) => {
+                          setRequiredPoints(Number(e.target.value || 0));
+                          setDirty(true);
+                        }}
+                        type="number"
+                        min={0}
+                        className={`mt-1.5 ${inputCls}`}
+                      />
+                    </div>
+
+                    {otherRequired ? (
+                      <div className="md:col-span-2 xl:col-span-4">
+                        <label className="text-[12px] font-semibold text-slate-600">
+                          Jaki zawód?
+                        </label>
+                        <input
+                          value={professionOther}
+                          onChange={(e) => {
+                            setProfessionOther(e.target.value);
+                            setDirty(true);
+                          }}
+                          placeholder="np. Psycholog, Logopeda..."
+                          className={`mt-1.5 ${inputCls} ${
+                            !otherValid
+                              ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                              : ""
+                          }`}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="mx-6 mb-5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
+                    {appliedRuleSet ? (
+                      <>
+                        <span className="font-bold text-slate-800">
+                          Reguła: {appliedRuleSet.required_points} pkt /{" "}
+                          {appliedRuleSet.period_months} miesięcy
+                        </span>
+                        <span>
+                          {" "}· wersja {appliedRuleSet.version}
+                          {appliedRuleSet.last_verified_on
+                            ? ` · zweryfikowana ${appliedRuleSet.last_verified_on}`
+                            : ""}
+                        </span>
+                      </>
+                    ) : suggestedRuleSet ? (
+                      <>
+                        <span className="font-bold text-slate-800">
+                          Reguła dla zawodu:{" "}
+                          {suggestedRuleSet.required_points} pkt /{" "}
+                          {suggestedRuleSet.period_months} miesięcy
+                        </span>
+                        <span> · zweryfikowana</span>
+                        {suggestedRuleSet.sources[0] ? (
+                          <details className="ml-1 inline">
+                            <summary className="inline cursor-pointer font-bold text-blue-700 hover:text-blue-800">
+                              Szczegóły i źródło
+                            </summary>
+                            <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3">
+                              Obecny cykl pozostaje własnym celem i nie został
+                              automatycznie zmieniony. Wersja {suggestedRuleSet.version}.{" "}
+                              <a
+                                href={suggestedRuleSet.sources[0].url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="font-bold text-blue-700 hover:text-blue-800"
+                              >
+                                {suggestedRuleSet.sources[0].title} →
+                              </a>
+                            </div>
+                          </details>
+                        ) : null}
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-bold text-slate-800">Cel własny.</span>{" "}
+                        Brak aktywnej, zweryfikowanej reguły dla tego zawodu.
+                      </>
+                    )}
+                  </div>
+                </section>
+          ) : null}
         </>
       )}
 
@@ -2466,7 +2538,7 @@ export default function CalculatorClient() {
                * a nie jak jedna lista do wyboru.
                */}
               <div className="space-y-2">
-                <div className="px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                <div className="px-1 text-[11px] font-semibold text-slate-600">
                   Kategorie
                 </div>
 
@@ -2560,30 +2632,38 @@ export default function CalculatorClient() {
                           </div>
                         </div>
 
-                        {r.mode !== "per_item" ? (
-                          <div className="mt-2 h-1 overflow-hidden rounded-full bg-slate-200/80">
-                            <div
-                              className={[
-                                "h-full rounded-full transition-all duration-500",
-                                r.status === "blocked"
-                                  ? "bg-slate-400"
-                                  : r.status === "warning"
-                                    ? "bg-amber-400"
-                                    : "bg-emerald-500",
-                              ].join(" ")}
-                              style={{
-                                width: `${Math.max(r.usedPct, r.used > 0 ? 5 : 0)}%`,
-                              }}
-                            />
+                        <div className="mt-2 flex items-center gap-2">
+                          <span
+                            className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+                              r.status === "blocked"
+                                ? "bg-slate-400"
+                                : r.status === "warning"
+                                  ? "bg-amber-400"
+                                  : r.mode === "per_item"
+                                    ? "bg-blue-500"
+                                    : "bg-emerald-500"
+                            }`}
+                            aria-hidden="true"
+                          />
+                          <div className="min-w-0 flex-1">
+                            {r.mode === "per_item" ? (
+                              <div className="grid grid-cols-10 gap-1" aria-label="Limit pojedynczego wpisu">
+                                {Array.from({ length: 10 }, (_, index) => (
+                                  <span key={index} className="h-1.5 rounded-full bg-blue-200" aria-hidden="true" />
+                                ))}
+                              </div>
+                            ) : (
+                              <SegmentedCapacityBar pct={r.usedPct} status={r.status} />
+                            )}
                           </div>
-                        ) : null}
+                        </div>
                       </button>
                     );
                   })}
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  <div className="text-[11px] font-semibold text-slate-600">
                     Podsumowanie kategorii
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2">
@@ -2643,7 +2723,7 @@ export default function CalculatorClient() {
                       <div className="rounded-[1.05rem] border border-slate-200 bg-white/80 px-3 py-3 shadow-sm shadow-slate-900/[0.03]">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            <div className="text-[11px] font-semibold text-slate-600">
                               Maksymalnie
                             </div>
                             <div className="mt-1 text-xs text-slate-500">
@@ -2664,7 +2744,7 @@ export default function CalculatorClient() {
                       <div className="rounded-[1.05rem] border border-slate-200 bg-white/80 px-3 py-3 shadow-sm shadow-slate-900/[0.03]">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            <div className="text-[11px] font-semibold text-slate-600">
                               {selectedLimit.mode === "per_item" ? "Najwyższy wpis" : "Masz już"}
                             </div>
                             <div className="mt-1 text-xs text-slate-500">
@@ -2691,7 +2771,7 @@ export default function CalculatorClient() {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            <div className="text-[11px] font-semibold text-slate-600">
                               Możesz jeszcze
                             </div>
                             <div className="mt-1 text-xs text-slate-600">
@@ -2703,7 +2783,7 @@ export default function CalculatorClient() {
                             </div>
                           </div>
                           <div
-                            className={`shrink-0 text-right text-2xl font-extrabold tracking-[-0.05em] ${
+                            className={`shrink-0 text-right text-[34px] font-black leading-none tracking-[-0.06em] ${
                               selectedLimit.status === "blocked"
                                 ? "text-slate-500"
                                 : selectedLimit.status === "warning"
@@ -2765,23 +2845,7 @@ export default function CalculatorClient() {
                             <span>{Math.round(selectedLimit.usedPct)}%</span>
                           </div>
 
-                          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ${
-                                selectedLimit.status === "blocked"
-                                  ? "bg-slate-400"
-                                  : selectedLimit.status === "warning"
-                                    ? "bg-amber-400"
-                                    : "bg-emerald-500"
-                              }`}
-                              style={{
-                                width: `${Math.max(
-                                  selectedLimit.usedPct,
-                                  selectedLimit.used > 0 ? 5 : 0,
-                                )}%`,
-                              }}
-                            />
-                          </div>
+                          <SegmentedCapacityBar pct={selectedLimit.usedPct} status={selectedLimit.status} />
                         </div>
                       ) : null}
                     </div>
@@ -2826,7 +2890,7 @@ export default function CalculatorClient() {
                   </div>
 
                   <div className="border-t border-slate-100 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    <div className="text-[11px] font-semibold text-slate-600">
                       Najlepszy ruch
                     </div>
                     <div className="mt-1 text-sm font-bold text-slate-950">
@@ -2948,7 +3012,7 @@ export default function CalculatorClient() {
         </div>
 
         <div className="p-5">
-          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(270px,0.85fr)]">
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0 space-y-3">
             {recentRows.length === 0 ? (
               <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-8 text-center">
@@ -2968,100 +3032,97 @@ export default function CalculatorClient() {
                 const missing = getRowMissing(a);
                 const hasMissing = prog !== "planned" && missing.length > 0;
                 const counted = adjustedPointsById.get(a.id);
-                const stripe =
-                  prog === "planned"
+                const date = timelineDate(a);
+                const isOverdue = overdue.some((entry) => entry.id === a.id);
+                const stripe = isOverdue
+                  ? "bg-rose-500"
+                  : prog === "planned"
                     ? "bg-blue-500"
                     : hasMissing
                       ? "bg-amber-500"
                       : "bg-emerald-500";
+                const statusLabel = isOverdue
+                  ? "Po terminie"
+                  : prog === "planned"
+                    ? "Zaplanowane"
+                    : hasMissing
+                      ? "Do uzupełnienia"
+                      : "Kompletne";
+                const statusClass = isOverdue
+                  ? "bg-rose-50 text-rose-700 ring-rose-200"
+                  : prog === "planned"
+                    ? "bg-blue-50 text-blue-700 ring-blue-100"
+                    : hasMissing
+                      ? "bg-amber-50 text-amber-700 ring-amber-100"
+                      : "bg-emerald-50 text-emerald-700 ring-emerald-100";
 
                 return (
-                  <div
+                  <article
                     key={a.id}
-                    className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 pl-6 transition hover:border-blue-200 hover:shadow-sm active:scale-[0.99]"
+                    className="group relative overflow-hidden rounded-2xl border border-l-[3px] border-slate-200 bg-white p-3.5 shadow-[0_2px_8px_rgba(15,23,42,0.045)] transition hover:border-slate-300 hover:shadow-[0_3px_12px_rgba(15,23,42,0.07)]"
+                    style={{ borderLeftColor: isOverdue ? "#f43f5e" : prog === "planned" ? "#3b82f6" : hasMissing ? "#f59e0b" : "#10b981" }}
                   >
-                    <div
-                      className={`absolute inset-y-3 left-0 w-1.5 rounded-r-full ${stripe}`}
-                    />
+                    <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 sm:grid-cols-[64px_minmax(0,1fr)_150px] sm:items-center sm:gap-4">
+                      <div className="flex w-[64px] shrink-0 flex-col items-center self-start text-center sm:self-center">
+                        <span className={`mb-1 h-1 w-6 rounded-full ${stripe}`} aria-hidden="true" />
+                        <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                          {date.secondary === "rok" ? "ROK" : date.secondary.split(" ")[0]}
+                        </span>
+                        <span className="mt-0.5 text-[24px] font-black leading-none tracking-[-0.04em] text-slate-950">
+                          {date.primary}
+                        </span>
+                        <span className="mt-1 text-[10px] font-semibold text-slate-400">
+                          {date.secondary === "rok" ? a.year : date.secondary.split(" ").slice(1).join(" ")}
+                        </span>
+                      </div>
 
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <h3 className="text-sm font-semibold text-slate-900">
-                            {a.type}
-                          </h3>
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
-                              prog === "planned"
-                                ? "bg-slate-100 text-slate-600 ring-slate-200"
-                                : "bg-slate-50 text-slate-500 ring-slate-100"
-                            }`}
-                          >
-                            {prog === "planned" ? "Zaplanowane" : "Ukończone"}
+                          <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${statusClass}`}>
+                            {statusLabel}
                           </span>
+                        </div>
+                        <h3 className="mt-1.5 text-[15px] font-bold leading-[1.35] tracking-[-0.015em] text-slate-950 transition group-hover:text-blue-800">
+                          {a.type}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {a.organizer ? a.organizer : "Aktywność własna"}
+                          {prog === "planned" && a.planned_start_date ? ` · termin ${formatYMD(a.planned_start_date)}` : ""}
+                        </p>
+                        {hasMissing ? (
+                          <p className="mt-1.5 text-[11px] font-medium text-amber-700">
+                            Brakuje: {missing.join(", ")}
+                          </p>
+                        ) : null}
+                      </div>
 
-                          {prog !== "planned" ? (
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
-                                hasMissing
-                                  ? "bg-amber-50 text-amber-700 ring-amber-100"
-                                  : "bg-emerald-50 text-emerald-700 ring-emerald-100"
-                              }`}
-                            >
-                              {hasMissing
-                                ? "Brakująca dokumentacja"
-                                : "Kompletne"}
+                      <div className="col-span-2 flex items-center justify-between gap-3 border-t border-slate-100 pt-3 sm:col-span-1 sm:block sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+                        <div>
+                          <div className="flex items-baseline gap-1 text-blue-700">
+                            <span className="text-[28px] font-black leading-none tracking-[-0.05em]">
+                              +{counted?.applied ?? a.points}
+                            </span>
+                            <span className="text-xs font-bold">pkt</span>
+                          </div>
+                          {counted && counted.over > 0 ? (
+                            <span className="mt-1 block text-[10px] font-medium text-amber-700">
+                              wpisano {counted.raw} pkt
                             </span>
                           ) : null}
                         </div>
-
-                        <p className="mt-1 text-xs text-slate-500">
-                          {a.organizer ? `${a.organizer} · ` : ""}
-                          Rok:{" "}
-                          <span className="font-medium text-slate-700">{a.year}</span>
-                          {prog === "planned" && a.planned_start_date ? (
-                            <>
-                              {" "}
-                              · Termin:{" "}
-                              <span className="font-medium text-slate-700">
-                                {formatYMD(a.planned_start_date)}
-                              </span>
-                            </>
-                          ) : null}
-                        </p>
-
-                        {hasMissing ? (
-                          <div className="mt-1.5 flex flex-wrap gap-1">
-                            {missing.map((m) => (
-                              <span
-                                key={m}
-                                className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
-                              >
-                                {m}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className="flex shrink-0 flex-col items-end gap-2">
-                        <span className="text-sm font-semibold text-slate-900">
-                          +{counted?.applied ?? a.points} pkt
-                        </span>
-                        {counted && counted.over > 0 ? (
-                          <span className="text-[10px] font-medium text-amber-700">
-                            wpisano {counted.raw} pkt
-                          </span>
-                        ) : null}
                         <Link
                           href={`/aktywnosci/${a.id}`}
-                          className="rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                          className={`mt-0 inline-flex h-9 items-center justify-center rounded-xl px-3 text-xs font-bold transition sm:mt-2 ${
+                            hasMissing || prog === "planned" || isOverdue
+                              ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+                              : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
                         >
-                          Otwórz →
+                          {isOverdue ? "Rozstrzygnij" : hasMissing ? "Uzupełnij" : prog === "planned" ? "Otwórz plan" : "Szczegóły"}
                         </Link>
                       </div>
                     </div>
-                  </div>
+                  </article>
                 );
               })
             )}
@@ -3078,6 +3139,7 @@ export default function CalculatorClient() {
           )}
           </div>
 
+          <div className="space-y-4 lg:sticky lg:top-40 lg:self-start">
           <aside className="overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50/65">
             <div className="border-b border-slate-200 bg-white px-4 py-3.5">
               <div className="flex items-center justify-between gap-3">
@@ -3143,165 +3205,168 @@ export default function CalculatorClient() {
               </div>
             )}
           </aside>
+
+            <section id="terminy" className="scroll-mt-44 overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-slate-100 px-4 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <IconBubble tone="blue">
+                          <MiniIcon name="bell" />
+                        </IconBubble>
+                        <div>
+                          <h2 className="text-base font-extrabold tracking-tight text-slate-950">
+                            Najbliższe terminy
+                          </h2>
+                          <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
+                            Zaległe plany, nadchodzące wpisy i koniec okresu.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Link
+                        href="/profil"
+                        className="shrink-0 text-[13px] font-bold text-blue-700 hover:underline"
+                      >
+                        Przypomnienia →
+                      </Link>
+                    </div>
+
+                    <ul className="divide-y divide-slate-100">
+                      {overdue.map((entry) => (
+                        <li key={`overdue-${entry.id}`} className="bg-rose-50/55">
+                          <Link
+                            href={`/aktywnosci/${entry.id}`}
+                            className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-rose-50"
+                          >
+                            <span className="w-10 shrink-0 text-center">
+                              <span className="block text-lg font-extrabold leading-tight tracking-[-0.03em] text-rose-800">
+                                {agendaDay(entry.date)}
+                              </span>
+                              <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-rose-500">
+                                {agendaMonth(entry.date)}
+                              </span>
+                            </span>
+
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-bold text-slate-950">
+                                {entry.title}
+                              </span>
+                              <span className="mt-0.5 block truncate text-xs text-rose-700">
+                                Nadal oznaczone jako zaplanowane
+                                {entry.detail ? ` · ${entry.detail}` : ""}
+                              </span>
+                            </span>
+
+                            <span className="shrink-0 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-800">
+                              {formatOverdue(entry.daysOverdue)}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+
+                      {upcoming.map((entry) => (
+                        <li key={entry.id}>
+                          <Link
+                            href="/aktywnosci"
+                            className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-slate-50"
+                          >
+                            <span className="w-10 shrink-0 text-center">
+                              <span className="block text-lg font-extrabold leading-tight tracking-[-0.03em] text-slate-950">
+                                {agendaDay(entry.date)}
+                              </span>
+                              <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                                {agendaMonth(entry.date)}
+                              </span>
+                            </span>
+
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-bold text-slate-950">
+                                {entry.title}
+                              </span>
+                              {entry.detail ? (
+                                <span className="mt-0.5 block truncate text-xs text-slate-500">
+                                  {entry.detail}
+                                </span>
+                              ) : null}
+                            </span>
+
+                            <span
+                              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
+                                entry.daysAway <= 30
+                                  ? "bg-amber-50 text-amber-800"
+                                  : "text-slate-500"
+                              }`}
+                            >
+                              {formatCountdown(entry.daysAway)}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+
+                      {upcoming.length === 0 && overdue.length === 0 ? (
+                        <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
+                          <p className="text-[13px] leading-5 text-slate-500">
+                            Nie masz zaplanowanych aktywności. Dodaj termin, a CRPE przypomni o nim
+                            z wyprzedzeniem.
+                          </p>
+                          <Link
+                            href="/baza-szkolen"
+                            className="shrink-0 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-[13px] font-bold text-blue-700 transition hover:bg-blue-100"
+                          >
+                            Znajdź szkolenie →
+                          </Link>
+                        </li>
+                      ) : null}
+
+                      {periodDeadline ? (
+                        <li className="flex items-center gap-4 bg-slate-50/70 px-5 py-3">
+                          <span className="grid w-10 shrink-0 place-items-center text-slate-400">
+                            <MiniIcon name="target" />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-bold text-slate-950">
+                              Koniec okresu rozliczeniowego
+                            </span>
+                            <span className="mt-0.5 block truncate text-xs text-slate-500">
+                              {formatYMD(periodDeadline.date)}
+                              {missingPoints > 0 ? ` · zostało ${missingPoints} pkt do zdobycia` : " · cel osiągnięty"}
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-xs font-bold text-slate-500">
+                            {formatCountdown(periodDeadline.daysAway)}
+                          </span>
+                        </li>
+                      ) : null}
+                    </ul>
+
+                    {pace && !pace.achieved ? (
+                      <p className="border-t border-slate-100 px-4 py-3 text-[13px] leading-5 text-slate-600">
+                        Przy pozostałym czasie musisz zdobywać średnio{" "}
+                        <span className="font-bold text-slate-900">{pace.pointsPerYear} pkt rocznie</span>, żeby
+                        zamknąć okres na czas.
+                      </p>
+                    ) : null}
+
+                    {deadlineFallbackMessage ? (
+                      <div className="flex flex-col gap-2 border-t border-slate-100 px-4 py-3 text-[12px] leading-5 text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                        <p>{deadlineFallbackMessage}</p>
+                        {cycleTargetMode === "custom" && ruleDeadline?.source !== "period_year" ? (
+                          <button
+                            type="button"
+                            onClick={() => scrollToSection("ustawienia")}
+                            className="shrink-0 font-bold text-blue-700 hover:underline"
+                          >
+                            Przejdź do ustawień okresu
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </section>
+          </div>
           </div>
         </div>
       </section>
 
-      <section id="terminy" className={`${cardCls} scroll-mt-44`}>
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-slate-100 px-5 py-3.5">
-          <div className="flex items-center gap-3">
-            <IconBubble tone="blue">
-              <MiniIcon name="bell" />
-            </IconBubble>
-            <div>
-              <h2 className="text-base font-extrabold tracking-tight text-slate-950">
-                Najbliższe terminy
-              </h2>
-              <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
-                Zaległe plany, nadchodzące wpisy i koniec okresu.
-              </p>
-            </div>
-          </div>
 
-          <Link
-            href="/profil"
-            className="shrink-0 text-[13px] font-bold text-blue-700 hover:underline"
-          >
-            Przypomnienia →
-          </Link>
-        </div>
-
-        <ul className="divide-y divide-slate-100">
-          {overdue.map((entry) => (
-            <li key={`overdue-${entry.id}`} className="bg-rose-50/55">
-              <Link
-                href={`/aktywnosci/${entry.id}`}
-                className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-rose-50"
-              >
-                <span className="w-12 shrink-0 text-center">
-                  <span className="block text-lg font-extrabold leading-tight tracking-[-0.03em] text-rose-800">
-                    {agendaDay(entry.date)}
-                  </span>
-                  <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-rose-500">
-                    {agendaMonth(entry.date)}
-                  </span>
-                </span>
-
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold text-slate-950">
-                    {entry.title}
-                  </span>
-                  <span className="mt-0.5 block truncate text-xs text-rose-700">
-                    Nadal oznaczone jako zaplanowane
-                    {entry.detail ? ` · ${entry.detail}` : ""}
-                  </span>
-                </span>
-
-                <span className="shrink-0 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-800">
-                  {formatOverdue(entry.daysOverdue)}
-                </span>
-              </Link>
-            </li>
-          ))}
-
-          {upcoming.map((entry) => (
-            <li key={entry.id}>
-              <Link
-                href="/aktywnosci"
-                className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-slate-50"
-              >
-                <span className="w-12 shrink-0 text-center">
-                  <span className="block text-lg font-extrabold leading-tight tracking-[-0.03em] text-slate-950">
-                    {agendaDay(entry.date)}
-                  </span>
-                  <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
-                    {agendaMonth(entry.date)}
-                  </span>
-                </span>
-
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold text-slate-950">
-                    {entry.title}
-                  </span>
-                  {entry.detail ? (
-                    <span className="mt-0.5 block truncate text-xs text-slate-500">
-                      {entry.detail}
-                    </span>
-                  ) : null}
-                </span>
-
-                <span
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
-                    entry.daysAway <= 30
-                      ? "bg-amber-50 text-amber-800"
-                      : "text-slate-500"
-                  }`}
-                >
-                  {formatCountdown(entry.daysAway)}
-                </span>
-              </Link>
-            </li>
-          ))}
-
-          {upcoming.length === 0 && overdue.length === 0 ? (
-            <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-              <p className="text-[13px] leading-5 text-slate-500">
-                Nie masz zaplanowanych aktywności. Dodaj termin, a CRPE przypomni o nim
-                z wyprzedzeniem.
-              </p>
-              <Link
-                href="/baza-szkolen"
-                className="shrink-0 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-[13px] font-bold text-blue-700 transition hover:bg-blue-100"
-              >
-                Znajdź szkolenie →
-              </Link>
-            </li>
-          ) : null}
-
-          {periodDeadline ? (
-            <li className="flex items-center gap-4 bg-slate-50/70 px-5 py-3">
-              <span className="grid w-12 shrink-0 place-items-center text-slate-400">
-                <MiniIcon name="target" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold text-slate-950">
-                  Koniec okresu rozliczeniowego
-                </span>
-                <span className="mt-0.5 block truncate text-xs text-slate-500">
-                  {formatYMD(periodDeadline.date)}
-                  {missingPoints > 0 ? ` · zostało ${missingPoints} pkt do zdobycia` : " · cel osiągnięty"}
-                </span>
-              </span>
-              <span className="shrink-0 text-xs font-bold text-slate-500">
-                {formatCountdown(periodDeadline.daysAway)}
-              </span>
-            </li>
-          ) : null}
-        </ul>
-
-        {pace && !pace.achieved ? (
-          <p className="border-t border-slate-100 px-5 py-3 text-[13px] leading-5 text-slate-600">
-            Przy pozostałym czasie musisz zdobywać średnio{" "}
-            <span className="font-bold text-slate-900">{pace.pointsPerYear} pkt rocznie</span>, żeby
-            zamknąć okres na czas.
-          </p>
-        ) : null}
-
-        {deadlineFallbackMessage ? (
-          <div className="flex flex-col gap-2 border-t border-slate-100 px-5 py-3 text-[12px] leading-5 text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-            <p>{deadlineFallbackMessage}</p>
-            {cycleTargetMode === "custom" && ruleDeadline?.source !== "period_year" ? (
-              <button
-                type="button"
-                onClick={() => scrollToSection("ustawienia")}
-                className="shrink-0 font-bold text-blue-700 hover:underline"
-              >
-                Przejdź do ustawień okresu
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-      </section>
     </div>
   );
 }

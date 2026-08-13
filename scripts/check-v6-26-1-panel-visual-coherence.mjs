@@ -1,0 +1,27 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+const root = new URL("../", import.meta.url);
+const panel = await readFile(new URL("app/panel-cpd/CalculatorClient.tsx", root), "utf8");
+const header = await readFile(new URL("components/Header.tsx", root), "utf8");
+const pkg = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
+
+assert.match(panel, /const PANEL_SECTION_IDS = \[\s*"status",\s*"limity",\s*"aktywnosci",\s*"terminy"/);
+assert.match(panel, /text-\[60px\][^\n]*sm:text-\[64px\]/);
+assert.match(panel, /relative h-4 overflow-hidden rounded-full/);
+assert.match(panel, /absolute inset-y-0 left-0 w-1 bg-blue-600/);
+assert.match(panel, /absolute inset-y-0 left-0 w-1 bg-slate-300/);
+assert.match(panel, /setSettingsOpen/);
+assert.match(panel, /lg:grid-cols-\[minmax\(0,1fr\)_320px\]/);
+assert.match(panel, /grid-cols-\[64px_minmax\(0,1fr\)\]/);
+assert.match(panel, /flex items-baseline gap-1 text-blue-700[\s\S]*?text-\[28px\] font-black/);
+assert.match(panel, /Brakująca dokumentacja|Do uzupełnienia/);
+assert.match(panel, /SegmentedCapacityBar/);
+assert.match(panel, /text-\[34px\] font-black leading-none/);
+assert.match(panel, /<section id="terminy"[^>]*rounded-\[20px\]/);
+assert.match(header, /organizationCount === 1/);
+assert.match(header, /Placówka · \{organizationCount\}/);
+assert.match(header, /Szukaj placówki…/);
+assert.match(header, /crpe:organization-switch-toast/);
+assert.match(header, /Zarządzaj placówkami/);
+assert.equal(pkg.scripts?.["check:v6.26.1"], "node scripts/check-v6-26-1-panel-visual-coherence.mjs");
+console.log("v6.26.1 panel visual coherence checks passed");

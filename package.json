@@ -53,7 +53,8 @@
     "check:v6.25.2": "node --experimental-strip-types scripts/check-v6-25-2-nil-details.mjs",
     "check:v6.25.3": "node scripts/check-v6-25-3-panel-views-and-limits.mjs",
     "check:v6.25.4": "node scripts/check-v6-25-4-panel-consistency.mjs",
-    "check:v6.26": "node scripts/check-v6-26-import-review-and-panel-color.mjs"
+    "check:v6.26": "node scripts/check-v6-26-import-review-and-panel-color.mjs",
+    "check:v6.26.1": "node scripts/check-v6-26-1-panel-visual-coherence.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

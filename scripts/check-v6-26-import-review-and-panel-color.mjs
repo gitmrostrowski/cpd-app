@@ -38,16 +38,14 @@ assert.doesNotMatch(panel, /border-emerald-300 bg-white shadow-/);
 assert.doesNotMatch(panel, /from-emerald-500 via-emerald-300/);
 
 // Oba paski postępu limitu (kafel kategorii i karta szczegółu) są zielone.
-assert.equal(
-  (panel.match(/: "bg-emerald-500",?\n/g) ?? []).length >= 2,
-  true,
-  "paski postępu limitu muszą używać zieleni",
-);
+assert.match(panel, /status === "warning"[\s\S]*?"bg-amber-400"[\s\S]*?"bg-emerald-500"/);
+assert.match(panel, /SegmentedCapacityBar/);
 assert.doesNotMatch(panel, /\? "bg-amber-400"\s*\n\s*: "bg-blue-600"/);
 
 // --- Nawigacja: bez „Moje CRPE” w pasku, przełącznik placówki o stałej szerokości.
 assert.doesNotMatch(header, /<UserRound className="h-3\.5 w-3\.5" \/>\s*\n\s*Moje CRPE/);
-assert.match(header, /inline-flex h-10 w-\[188px\] items-center gap-2 rounded-xl border/);
+assert.match(header, /Placówka · \{organizationCount\}/);
+assert.match(header, /organizationCount === 1/);
 assert.doesNotMatch(header, /min-h-8 max-w-56 items-center/);
 assert.match(header, /Wróć do widoku osobistego/);
 assert.doesNotMatch(
