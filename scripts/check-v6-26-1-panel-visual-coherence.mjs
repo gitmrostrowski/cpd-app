@@ -11,6 +11,8 @@ assert.match(panel, /relative h-4 overflow-hidden rounded-full/);
 assert.match(panel, /absolute inset-y-0 left-0 w-1 bg-blue-600/);
 assert.match(panel, /absolute inset-y-0 left-0 w-1 bg-slate-300/);
 assert.match(panel, /setSettingsOpen/);
+assert.doesNotMatch(panel, /scrollToSection\("ustawienia"\)/);
+assert.match(panel, /setSettingsOpen\(true\)[\s\S]*?Przejdź do ustawień okresu/);
 assert.match(panel, /lg:grid-cols-\[minmax\(0,1fr\)_320px\]/);
 assert.match(panel, /grid-cols-\[64px_minmax\(0,1fr\)\]/);
 assert.match(panel, /flex items-baseline gap-1 text-blue-700[\s\S]*?text-\[28px\] font-black/);

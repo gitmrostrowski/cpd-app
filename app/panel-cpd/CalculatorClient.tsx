@@ -3352,7 +3352,15 @@ export default function CalculatorClient() {
                         {cycleTargetMode === "custom" && ruleDeadline?.source !== "period_year" ? (
                           <button
                             type="button"
-                            onClick={() => scrollToSection("ustawienia")}
+                            onClick={() => {
+                              setSettingsOpen(true);
+                              window.requestAnimationFrame(() => {
+                                const el = document.getElementById("ustawienia");
+                                if (!el) return;
+                                const targetTop = el.getBoundingClientRect().top + window.scrollY - 140;
+                                window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
+                              });
+                            }}
                             className="shrink-0 font-bold text-blue-700 hover:underline"
                           >
                             Przejdź do ustawień okresu

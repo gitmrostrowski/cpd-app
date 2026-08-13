@@ -186,3 +186,12 @@ semantycznych pasków, dwukolumnowego układu, segmentowanych limitów oraz zach
 
 Zaktualizowano także wcześniejsze testy v6.25.4 i v6.26 wyłącznie w tych asercjach,
 które sprawdzały stary szczegół prezentacji. Ich wymagania funkcjonalne pozostają zachowane.
+
+## Hotfix build — TypeScript / Vercel
+
+- Poprawiono odnośnik „Przejdź do ustawień okresu” w sekcji najbliższych terminów.
+- `scrollToSection` pozostaje ograniczone do rzeczywistych sekcji nawigacji (`status`, `limity`, `aktywnosci`, `terminy`).
+- Otwieranie ukrytej sekcji `ustawienia` odbywa się teraz przez `setSettingsOpen(true)` i bezpieczne przewinięcie po wyrenderowaniu sekcji.
+- Dodano kontrolę regresji, która blokuje ponowne użycie `scrollToSection("ustawienia")`.
+
+Powód: Vercel TypeScript zgłaszał `TS2345`, ponieważ `"ustawienia"` nie należy do typu `PanelSectionId`. Ostrzeżenia Next.js o `middleware` i Browserslist nie były przyczyną przerwania buildu.
