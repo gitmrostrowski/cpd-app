@@ -26,7 +26,8 @@ type TrainingStatus = "pending" | "approved" | "rejected";
 type PriceDeclaration = "unconfirmed" | "free" | "paid";
 type ScheduleStatus = "scheduled" | "to_be_determined";
 type EnrollmentStatus = "open" | "waiting_list" | "closed";
-type ReviewQueue = "all" | "new" | "changes" | "operational";
+type ReviewQueue = "attention" | "changes" | "new" | "operational" | "all";
+type TrainingFormat = "online" | "stacjonarne" | "hybrydowe";
 
 type TrainingLoadFilters = {
   status: "all" | TrainingStatus;
@@ -164,11 +165,45 @@ function enrollmentBadgeCls(value: string | null | undefined) {
   return "bg-slate-50 text-slate-500 ring-1 ring-slate-200";
 }
 
+type AdminRecordKind = "new" | "change" | "existing";
+
+const RECORD_KIND_LABEL: Record<AdminRecordKind, string> = {
+  new: "NOWY WPIS",
+  change: "ZMIANA ISTNIEJĄCEGO WPISU",
+  existing: "ISTNIEJĄCY WPIS",
+};
+
+const RECORD_KIND_BADGE: Record<AdminRecordKind, string> = {
+  new: "bg-blue-600 text-white",
+  change: "bg-violet-100 text-violet-800 ring-1 ring-violet-200",
+  existing: "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
+};
+
+const RECORD_KIND_BORDER: Record<AdminRecordKind, string> = {
+  new: "border-l-blue-500",
+  change: "border-l-violet-500",
+  existing: "border-l-slate-300",
+};
+
+function formatLabel(value: TrainingFormat | null | undefined) {
+  if (value === "online") return "online";
+  if (value === "stacjonarne") return "stacjonarne";
+  if (value === "hybrydowe") return "hybrydowe";
+  return "format nieokreślony";
+}
+
+function priceLabel(value: number | null | undefined) {
+  if (value === 0) return "bezpłatne";
+  if (typeof value === "number") return `${value.toLocaleString("pl-PL")} zł`;
+  return "cena niepotwierdzona";
+}
+
 const QUEUE_TABS: { value: ReviewQueue; label: string }[] = [
-  { value: "all", label: "Wszystkie" },
-  { value: "new", label: "Nowe do decyzji" },
-  { value: "changes", label: "Zmiany ze źródła" },
+  { value: "attention", label: "Do decyzji" },
+  { value: "changes", label: "Zmiany w istniejących" },
+  { value: "new", label: "Nowe wpisy" },
   { value: "operational", label: "Zapisy i miejsca" },
+  { value: "all", label: "Wszystkie" },
 ];
 
 type TrainingRow = {
@@ -178,7 +213,13 @@ type TrainingRow = {
   organizer_logo_url: string | null;
   organizer_logo_path: string | null;
   points: number | null;
+  format: TrainingFormat | null;
+  category: string | null;
+  voivodeship: string | null;
+  topics: string[] | null;
   price_pln: number | null;
+  has_recording: boolean | null;
+  is_partner: boolean;
   capacity: number | null;
   enrollment_status: EnrollmentStatus | null;
   start_date: string | null;
@@ -323,7 +364,7 @@ export default function AdminTrainingsPage() {
   // „co zaraz się odbędzie” — to dwa różne pytania moderatora.
   const [eventFrom, setEventFrom] = useState("");
   const [eventTo, setEventTo] = useState("");
-  const [queue, setQueue] = useState<ReviewQueue>("all");
+  const [queue, setQueue] = useState<ReviewQueue>("attention");
 
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<TrainingRow[]>([]);
@@ -503,17 +544,20 @@ export default function AdminTrainingsPage() {
    */
   const queueCounts = useMemo(() => {
     const counts: Record<ReviewQueue, number> = {
-      all: rows.length,
-      new: 0,
+      attention: 0,
       changes: 0,
+      new: 0,
       operational: 0,
+      all: rows.length,
     };
     for (const row of rows) {
       const change = importChangeByTraining.get(row.id);
       if (change) {
+        counts.attention += 1;
         counts.changes += 1;
         if (isOperationalChange(change)) counts.operational += 1;
       } else if (getStatus(row) === "pending") {
+        counts.attention += 1;
         counts.new += 1;
       }
     }
@@ -524,7 +568,9 @@ export default function AdminTrainingsPage() {
     if (queue === "all") return rows;
     return rows.filter((row) => {
       const change = importChangeByTraining.get(row.id);
-      if (queue === "new") return !change && getStatus(row) === "pending";
+      const isNew = !change && getStatus(row) === "pending";
+      if (queue === "attention") return Boolean(change || isNew);
+      if (queue === "new") return isNew;
       if (queue === "changes") return Boolean(change);
       return Boolean(change && isOperationalChange(change));
     });
@@ -533,6 +579,17 @@ export default function AdminTrainingsPage() {
   function openImportReview(change: ImportChange) {
     setReviewChange(change);
     setReviewFields([...change.changed_fields]);
+  }
+
+  function editTrainingFromImportReview() {
+    if (!reviewChange) return;
+    const row = rows.find((item) => item.id === reviewChange.training_id);
+    if (!row) {
+      setErr("Nie znaleziono szkolenia powiązanego ze zmianą źródłową.");
+      return;
+    }
+    setReviewChange(null);
+    openEdit(row);
   }
 
   /**
@@ -783,6 +840,13 @@ export default function AdminTrainingsPage() {
       setEditError("Imię, nazwisko i tytuł prowadzącego mogą mieć maksymalnie 180 znaków.");
       return;
     }
+    if (
+      edit.capacity != null &&
+      (!Number.isInteger(edit.capacity) || edit.capacity < 0)
+    ) {
+      setEditError("Liczba miejsc musi być liczbą całkowitą równą 0 lub większą.");
+      return;
+    }
 
     if (getStatus(edit) === "approved" && !hasTrainingAudience(edit.profession)) {
       setEditError("Przed akceptacją wybierz adresatów szkolenia.");
@@ -853,6 +917,17 @@ export default function AdminTrainingsPage() {
         organizer_logo_url: organizerLogoUrl,
         organizer_logo_path: organizerLogoPath,
         points: edit.points,
+        format: edit.format || null,
+        category: edit.category?.trim() || null,
+        voivodeship: edit.voivodeship?.trim() || null,
+        topics: (edit.topics ?? []).map((topic) => topic.trim()).filter(Boolean),
+        has_recording: edit.has_recording,
+        is_partner: Boolean(edit.is_partner),
+        capacity:
+          typeof edit.capacity === "number" && Number.isFinite(edit.capacity)
+            ? Math.max(0, Math.trunc(edit.capacity))
+            : null,
+        enrollment_status: edit.enrollment_status || null,
         price_pln:
           editPriceDeclaration === "free"
             ? 0
@@ -966,7 +1041,7 @@ export default function AdminTrainingsPage() {
     setDateTo(cleared.dateTo);
     setEventFrom(cleared.eventFrom);
     setEventTo(cleared.eventTo);
-    setQueue("all");
+    setQueue("attention");
     setStatus(cleared.status);
 
     // Jeśli status już był „Wszystkie”, efekt zależny od statusu nie uruchomi
@@ -1021,7 +1096,7 @@ export default function AdminTrainingsPage() {
             </select>
           </div>
 
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-5">
             <label className="text-xs font-semibold text-slate-600">Szukaj</label>
             <input
               className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
@@ -1034,7 +1109,7 @@ export default function AdminTrainingsPage() {
             />
           </div>
 
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-5">
             <label className="text-xs font-semibold text-slate-600">
               Dodane przez
             </label>
@@ -1049,7 +1124,7 @@ export default function AdminTrainingsPage() {
             />
           </div>
 
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-6">
             <label className="text-xs font-semibold text-slate-600">
               Data dodania
             </label>
@@ -1072,7 +1147,7 @@ export default function AdminTrainingsPage() {
             </div>
           </div>
 
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-6">
             <label className="text-xs font-semibold text-slate-600">
               Termin szkolenia
             </label>
@@ -1177,330 +1252,379 @@ export default function AdminTrainingsPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1180px] text-left">
-            <thead className="bg-slate-50 text-xs font-semibold text-slate-600">
-              <tr>
-                <th className="px-4 py-3">Szkolenie</th>
-                <th className="px-4 py-3">Organizator</th>
-                <th className="px-4 py-3">Daty szkolenia</th>
-                <th className="px-4 py-3">Pkt</th>
-                <th className="px-4 py-3">Zapisy</th>
-                <th className="px-4 py-3">Dodane przez</th>
-                <th className="px-4 py-3">Data dodania</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Akcje</th>
-              </tr>
-            </thead>
+        <div className="divide-y divide-slate-100">
+          <div className="border-b border-slate-100 bg-slate-50/70 px-4 py-2.5 text-xs text-slate-600">
+            <span className="font-semibold text-slate-800">Jak czytać listę:</span>{" "}
+            <span className="font-semibold text-blue-700">NOWY WPIS</span> oznacza rekord, którego wcześniej nie było w CRPE;{" "}
+            <span className="font-semibold text-violet-700">ZMIANA ISTNIEJĄCEGO WPISU</span> oznacza nowe dane ze źródła dla rekordu, który już jest w bazie.
+          </div>
 
-            <tbody className="text-sm text-slate-800">
-              {loading ? (
-                <tr>
-                  <td className="px-4 py-4 text-slate-500" colSpan={9}>
-                    Ładuję…
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-4 text-slate-500" colSpan={9}>
-                    Brak danych.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((r) => {
-                  const org = normOrganizer(r.organizer);
-                  const currentStatus = getStatus(r);
-                  const link = normalizeUrl(r.url ?? r.external_url ?? null);
-                  const sourceChange = importChangeByTraining.get(r.id);
+          {loading ? (
+            <div className="px-4 py-8 text-sm text-slate-500">Ładuję…</div>
+          ) : filtered.length === 0 ? (
+            <div className="px-4 py-8 text-sm text-slate-500">Brak danych dla wybranej kolejki i filtrów.</div>
+          ) : (
+            filtered.map((r) => {
+              const org = normOrganizer(r.organizer);
+              const currentStatus = getStatus(r);
+              const link = normalizeUrl(r.url ?? r.external_url ?? null);
+              const sourceLink = normalizeUrl(r.source_url ?? null);
+              const sourceChange = importChangeByTraining.get(r.id);
+              const isNew = !sourceChange && currentStatus === "pending";
+              const recordKind: AdminRecordKind = sourceChange
+                ? "change"
+                : isNew
+                  ? "new"
+                  : "existing";
 
-                  return (
-                    <tr key={r.id} className="border-t border-slate-100 align-top">
-                      <td className="px-4 py-4">
-                        <div className="max-w-[390px] font-semibold text-slate-900">
-                          {r.title}
-                        </div>
-
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                          {r.import_source ? (
-                            <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 font-semibold uppercase text-blue-700 ring-1 ring-blue-200">
-                              import: {r.import_source}
-                            </span>
-                          ) : null}
-                          {link ? (
-                            <a
-                              className="text-blue-700 hover:underline"
-                              href={link}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              link
-                            </a>
-                          ) : (
-                            <button
-                              type="button"
-                              className="text-blue-700 hover:underline"
-                              onClick={() => openEdit(r, "url")}
-                            >
-                              Dodaj link
-                            </button>
+              return (
+                <article
+                  key={r.id}
+                  className={cls(
+                    "border-l-4 bg-white transition hover:bg-slate-50/40",
+                    RECORD_KIND_BORDER[recordKind],
+                  )}
+                >
+                  <div className="grid gap-4 p-4 xl:grid-cols-[minmax(0,1fr)_260px] xl:p-5">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={cls(
+                            "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold tracking-wide",
+                            RECORD_KIND_BADGE[recordKind],
                           )}
-
-                          {r.description ? (
-                            <span className="line-clamp-1 max-w-[360px]">
-                              {r.description}
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="text-blue-700 hover:underline"
-                              onClick={() => openEdit(r, "description")}
-                            >
-                              Dodaj opis
-                            </button>
-                          )}
-                        </div>
+                        >
+                          {RECORD_KIND_LABEL[recordKind]}
+                        </span>
 
                         {sourceChange ? (
-                          <div
+                          <span
                             className={cls(
-                              "mt-2 max-w-[420px] rounded-xl border p-2.5",
-                              CHANGE_WEIGHT_CARD[changeWeight(sourceChange)],
+                              "inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                              CHANGE_WEIGHT_BADGE[changeWeight(sourceChange)],
                             )}
                           >
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span
-                                className={cls(
-                                  "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-                                  CHANGE_WEIGHT_BADGE[changeWeight(sourceChange)],
-                                )}
-                              >
-                                {CHANGE_WEIGHT_LABEL[changeWeight(sourceChange)]}
-                              </span>
-                              <span className="text-[11px] text-slate-500">
-                                {sourceChange.source_code.toUpperCase()} ·{" "}
-                                {fmtDateTime(sourceChange.fetched_at)}
-                              </span>
-                            </div>
-
-                            <ul className="mt-2 space-y-1 text-xs text-slate-700">
-                              {sourceChange.changed_fields.slice(0, 3).map((field) => (
-                                <li key={field} className="flex flex-wrap items-baseline gap-1">
-                                  <span className="font-semibold text-slate-900">
-                                    {IMPORT_FIELD_LABELS[field] ?? field}:
-                                  </span>
-                                  <span className="text-slate-500 line-through">
-                                    {shortImportValue(sourceChange.current[field])}
-                                  </span>
-                                  <span aria-hidden="true" className="text-slate-400">
-                                    →
-                                  </span>
-                                  <span className="font-semibold text-slate-900">
-                                    {shortImportValue(sourceChange.source[field])}
-                                  </span>
-                                </li>
-                              ))}
-                              {sourceChange.changed_fields.length > 3 ? (
-                                <li className="text-slate-500">
-                                  i {sourceChange.changed_fields.length - 3} więcej — otwórz porównanie
-                                </li>
-                              ) : null}
-                            </ul>
-                          </div>
+                            {CHANGE_WEIGHT_LABEL[changeWeight(sourceChange)]}
+                          </span>
                         ) : null}
 
-                        {currentStatus === "rejected" && r.reject_reason ? (
-                          <div className="mt-2 text-xs text-rose-700">
-                            Powód: {r.reject_reason}
-                          </div>
-                        ) : null}
-
-                        <div
-                          className={cls(
-                            "mt-2 text-xs font-medium",
-                            hasTrainingAudience(r.profession)
-                              ? "text-slate-500"
-                              : "text-amber-700",
-                          )}
-                        >
-                          Adresaci: {trainingAudienceSummary(r.profession)}
-                        </div>
-                        {(r.source_warnings ?? []).length > 0 ? (
-                          <ul className="mt-2 space-y-1 text-xs text-amber-700">
-                            {r.source_warnings.map((warning) => (
-                              <li key={warning}>• {warning}</li>
-                            ))}
-                          </ul>
-                        ) : null}
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          {r.organizer_logo_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={r.organizer_logo_url}
-                              alt=""
-                              className="h-8 w-8 rounded-lg border border-slate-200 bg-white object-contain p-1"
-                              referrerPolicy="no-referrer"
-                            />
-                          ) : null}
-                          <span>{org || <span className="text-slate-400">—</span>}</span>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4 text-xs text-slate-700">
-                        {r.schedule_status === "to_be_determined" ? (
-                          <div className="max-w-[130px] font-semibold text-amber-700">
-                            Termin do ustalenia
-                          </div>
+                        {r.import_source ? (
+                          <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-600 ring-1 ring-slate-200">
+                            źródło: {r.import_source}
+                          </span>
                         ) : (
-                          <>
-                            <div className="whitespace-nowrap">{fmtDate(r.start_date)}</div>
-                            <div className="whitespace-nowrap text-slate-500">{fmtDate(r.end_date)}</div>
-                            <div className="mt-1 whitespace-nowrap font-semibold text-blue-700">{fmtTimeRange(r.start_time, r.end_time)}</div>
-                          </>
+                          <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 ring-1 ring-slate-200">
+                            wpis użytkownika
+                          </span>
                         )}
-                      </td>
+                      </div>
 
-                      <td className="px-4 py-4">
-                        <div>{r.points ?? <span className="text-slate-400">—</span>}</div>
-                        <div className="mt-1 text-[10px] font-semibold text-slate-400">
-                          {pointsVerificationLabel(r.points_verification_status)}
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4 text-xs">
-                        <span
-                          className={cls(
-                            "inline-flex whitespace-nowrap rounded-full px-2 py-0.5 font-semibold",
-                            enrollmentBadgeCls(r.enrollment_status),
-                          )}
-                        >
-                          {enrollmentLabel(r.enrollment_status)}
-                        </span>
-                        <div className="mt-1 text-slate-400">
-                          {typeof r.capacity === "number"
-                            ? `limit: ${r.capacity}`
-                            : "limit nieznany"}
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4 text-xs">
-                        {r.submitted_email ? (
-                          <div className="font-semibold text-slate-800">
-                            {r.submitted_email}
-                          </div>
-                        ) : (
-                          <>
-                            <div className="font-semibold text-slate-500">
-                              {r.import_source
-                                ? `Importer ${r.import_source.toUpperCase()}`
-                                : "brak e-maila"}
-                            </div>
-                            <div className="mt-1 text-slate-400">
-                              ID: {shortId(r.submitted_by || r.user_id)}
-                            </div>
-                            {r.source_external_id ? (
-                              <div className="mt-1 text-slate-400">
-                                Źródło ID: {r.source_external_id}
-                              </div>
+                      <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <h2 className="text-base font-bold leading-snug text-slate-950 sm:text-lg">
+                            {r.title}
+                          </h2>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                            <span>{formatLabel(r.format)}</span>
+                            <span aria-hidden="true">•</span>
+                            <span>{priceLabel(r.price_pln)}</span>
+                            {r.category ? (
+                              <>
+                                <span aria-hidden="true">•</span>
+                                <span>{r.category}</span>
+                              </>
                             ) : null}
-                          </>
-                        )}
-                      </td>
-
-                      <td className="px-4 py-4 text-xs text-slate-600">
-                        <div className="whitespace-nowrap">{fmtDateTime(r.created_at)}</div>
-                        {r.updated_at ? (
-                          <div className="mt-1 whitespace-nowrap text-slate-400">
-                            akt.: {fmtDateTime(r.updated_at)}
+                            {link ? (
+                              <>
+                                <span aria-hidden="true">•</span>
+                                <a
+                                  className="font-semibold text-blue-700 hover:underline"
+                                  href={link}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Otwórz stronę szkolenia ↗
+                                </a>
+                              </>
+                            ) : null}
                           </div>
-                        ) : null}
-                      </td>
+                        </div>
 
-                      <td className="px-4 py-4">
                         <span
                           className={cls(
-                            "inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold",
-                            statusBadgeCls(currentStatus)
+                            "inline-flex w-fit shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold",
+                            statusBadgeCls(currentStatus),
                           )}
                         >
                           {statusLabel(currentStatus)}
                         </span>
-                      </td>
+                      </div>
 
-                      <td className="px-4 py-4">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <button
-                            className="h-9 rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
-                            onClick={() => openEdit(r)}
-                            type="button"
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5">
+                          <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Organizator</div>
+                          <div className="mt-1 flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800">
+                            {r.organizer_logo_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={r.organizer_logo_url}
+                                alt=""
+                                className="h-7 w-7 shrink-0 rounded-lg border border-slate-200 bg-white object-contain p-1"
+                                referrerPolicy="no-referrer"
+                              />
+                            ) : null}
+                            <span className="line-clamp-2">{org || "—"}</span>
+                          </div>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5">
+                          <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Termin</div>
+                          {r.schedule_status === "to_be_determined" ? (
+                            <div className="mt-1 text-sm font-semibold text-amber-700">Do ustalenia</div>
+                          ) : (
+                            <div className="mt-1 text-sm font-semibold text-slate-800">
+                              <div>{fmtDate(r.start_date)}</div>
+                              <div className="text-xs font-medium text-blue-700">{fmtTimeRange(r.start_time, r.end_time)}</div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="rounded-xl border border-blue-100 bg-blue-50/50 px-3 py-2.5">
+                          <div className="text-[10px] font-bold uppercase tracking-wide text-blue-500">Punkty</div>
+                          <div className="mt-0.5 text-2xl font-extrabold leading-none text-blue-700">
+                            {r.points ?? "—"}
+                            {r.points != null ? <span className="ml-1 text-xs font-bold">pkt</span> : null}
+                          </div>
+                          <div className="mt-1 text-[10px] font-semibold text-slate-500">
+                            {pointsVerificationLabel(r.points_verification_status)}
+                          </div>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5">
+                          <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Zapisy</div>
+                          <span
+                            className={cls(
+                              "mt-1 inline-flex whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold",
+                              enrollmentBadgeCls(r.enrollment_status),
+                            )}
                           >
-                            Edytuj
-                          </button>
+                            {enrollmentLabel(r.enrollment_status)}
+                          </span>
+                          <div className="mt-1 text-[11px] text-slate-500">
+                            {typeof r.capacity === "number" ? `limit: ${r.capacity}` : "limit nieznany"}
+                          </div>
+                        </div>
+                      </div>
 
-                          {sourceChange && isOperationalChange(sourceChange) ? (
+                      {sourceChange ? (
+                        <div
+                          className={cls(
+                            "mt-3 rounded-xl border p-3",
+                            CHANGE_WEIGHT_CARD[changeWeight(sourceChange)],
+                          )}
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <div className="text-xs font-bold text-slate-900">Co zmieniło się w istniejącym wpisie</div>
+                              <div className="mt-0.5 text-[11px] text-slate-500">
+                                {sourceChange.source_code.toUpperCase()} · pobrano {fmtDateTime(sourceChange.fetched_at)}
+                              </div>
+                            </div>
                             <button
-                              className="h-9 rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-100 disabled:opacity-60"
-                              onClick={() => void applyOperationalChange(sourceChange)}
-                              disabled={reviewing}
                               type="button"
-                              title="Przyjmuje wyłącznie stan zapisów i liczbę miejsc"
-                            >
-                              Przyjmij zapisy
-                            </button>
-                          ) : null}
-
-                          {sourceChange ? (
-                            <button
-                              className="h-9 rounded-xl border border-violet-200 bg-white px-3 text-xs font-semibold text-violet-700 shadow-sm hover:bg-violet-50"
+                              className="rounded-lg border border-white/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-violet-700 shadow-sm hover:bg-violet-50"
                               onClick={() => openImportReview(sourceChange)}
-                              type="button"
                             >
-                              Porównaj ({sourceChange.changed_fields.length})
+                              Pełne porównanie ({sourceChange.changed_fields.length})
                             </button>
-                          ) : null}
+                          </div>
 
-                          {currentStatus !== "approved" ? (
-                            <button
-                              className="h-9 rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
-                              onClick={() => approve(r)}
-                              type="button"
-                            >
-                              Akceptuj
-                            </button>
-                          ) : null}
-
-                          {currentStatus !== "rejected" ? (
-                            <button
-                              className="h-9 rounded-xl border border-rose-200 bg-white px-3 text-xs font-semibold text-rose-700 shadow-sm hover:bg-rose-50"
-                              onClick={() => reject(r)}
-                              type="button"
-                            >
-                              Odrzuć
-                            </button>
-                          ) : null}
-
-                          {currentStatus !== "pending" ? (
-                            <button
-                              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
-                              onClick={() => backToPending(r)}
-                              type="button"
-                            >
-                              Do weryfikacji
-                            </button>
+                          <div className="mt-2 grid gap-1.5 lg:grid-cols-2">
+                            {sourceChange.changed_fields.slice(0, 4).map((field) => (
+                              <div key={field} className="rounded-lg bg-white/75 px-2.5 py-2 text-xs text-slate-700 ring-1 ring-black/5">
+                                <span className="font-bold text-slate-900">{IMPORT_FIELD_LABELS[field] ?? field}: </span>
+                                <span className="text-slate-500 line-through">{shortImportValue(sourceChange.current[field])}</span>
+                                <span aria-hidden="true" className="px-1 text-slate-400">→</span>
+                                <span className="font-semibold text-slate-950">{shortImportValue(sourceChange.source[field])}</span>
+                              </div>
+                            ))}
+                          </div>
+                          {sourceChange.changed_fields.length > 4 ? (
+                            <div className="mt-2 text-[11px] font-medium text-slate-500">
+                              + {sourceChange.changed_fields.length - 4} kolejnych pól w pełnym porównaniu
+                            </div>
                           ) : null}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                      ) : isNew ? (
+                        <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
+                          <span className="font-bold">Nowy rekord do decyzji.</span>{" "}
+                          Nie ma oczekującej zmiany wcześniejszego wpisu — zaakceptowanie opublikuje ten rekord jako nowe szkolenie.
+                        </div>
+                      ) : null}
+
+                      {(r.source_warnings ?? []).length > 0 ? (
+                        <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                          <div className="text-xs font-bold text-amber-900">Ostrzeżenia źródła</div>
+                          <ul className="mt-1 space-y-1 text-xs text-amber-800">
+                            {r.source_warnings.map((warning) => (
+                              <li key={warning}>• {warning}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+
+                      {currentStatus === "rejected" && r.reject_reason ? (
+                        <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                          <span className="font-bold">Powód odrzucenia:</span> {r.reject_reason}
+                        </div>
+                      ) : null}
+
+                      <details className="mt-3 rounded-xl border border-slate-200 bg-white">
+                        <summary className="cursor-pointer select-none px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900">
+                          Więcej danych i ślad audytowy
+                        </summary>
+                        <div className="grid gap-x-5 gap-y-3 border-t border-slate-100 px-3 py-3 text-xs sm:grid-cols-2 lg:grid-cols-3">
+                          <div>
+                            <div className="font-bold text-slate-500">Adresaci</div>
+                            <div className={hasTrainingAudience(r.profession) ? "mt-0.5 text-slate-800" : "mt-0.5 font-semibold text-amber-700"}>
+                              {trainingAudienceSummary(r.profession)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-500">Lokalizacja</div>
+                            <div className="mt-0.5 text-slate-800">{r.voivodeship || "—"}</div>
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-500">Nagranie</div>
+                            <div className="mt-0.5 text-slate-800">{r.has_recording == null ? "brak informacji" : r.has_recording ? "tak" : "nie"}</div>
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-500">Dodane przez</div>
+                            <div className="mt-0.5 break-all text-slate-800">
+                              {r.submitted_email || (r.import_source ? `Importer ${r.import_source.toUpperCase()}` : shortId(r.submitted_by || r.user_id))}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-500">Data dodania</div>
+                            <div className="mt-0.5 text-slate-800">{fmtDateTime(r.created_at)}</div>
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-500">Ostatnia aktualizacja</div>
+                            <div className="mt-0.5 text-slate-800">{r.updated_at ? fmtDateTime(r.updated_at) : "—"}</div>
+                          </div>
+                          {r.description ? (
+                            <div className="sm:col-span-2 lg:col-span-3">
+                              <div className="font-bold text-slate-500">Opis</div>
+                              <div className="mt-0.5 whitespace-pre-wrap text-slate-700">{r.description}</div>
+                            </div>
+                          ) : null}
+                          {(r.speakers ?? []).length > 0 ? (
+                            <div className="sm:col-span-2 lg:col-span-3">
+                              <div className="font-bold text-slate-500">Prowadzący</div>
+                              <div className="mt-0.5 text-slate-700">{(r.speakers ?? []).join(", ")}</div>
+                            </div>
+                          ) : null}
+                          <div className="sm:col-span-2 lg:col-span-3 text-[11px] text-slate-400">
+                            ID CRPE: {r.id}
+                            {r.source_external_id ? ` · ID źródła: ${r.source_external_id}` : ""}
+                            {sourceLink ? (
+                              <>
+                                {" · "}
+                                <a className="font-semibold text-blue-700 hover:underline" href={sourceLink} target="_blank" rel="noreferrer">
+                                  rekord źródłowy ↗
+                                </a>
+                              </>
+                            ) : null}
+                          </div>
+                        </div>
+                      </details>
+                    </div>
+
+                    <aside className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 xl:self-start">
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Decyzja moderatora</div>
+                      <div className="mt-2 text-sm font-bold text-slate-900">
+                        {recordKind === "change"
+                          ? "Sprawdź zmianę źródłową"
+                          : recordKind === "new"
+                            ? "Podejmij decyzję o nowym wpisie"
+                            : "Zarządzaj wpisem"}
+                      </div>
+
+                      <button
+                        className="mt-3 h-10 w-full rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+                        onClick={() => openEdit(r)}
+                        type="button"
+                      >
+                        Edytuj wszystkie dane
+                      </button>
+
+                      {sourceChange ? (
+                        <button
+                          className="mt-2 h-10 w-full rounded-xl border border-violet-200 bg-white px-3 text-sm font-semibold text-violet-700 shadow-sm hover:bg-violet-50"
+                          onClick={() => openImportReview(sourceChange)}
+                          type="button"
+                        >
+                          Porównaj zmianę ({sourceChange.changed_fields.length})
+                        </button>
+                      ) : null}
+
+                      {sourceChange && isOperationalChange(sourceChange) ? (
+                        <button
+                          className="mt-2 h-10 w-full rounded-xl border border-blue-200 bg-blue-50 px-3 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-100 disabled:opacity-60"
+                          onClick={() => void applyOperationalChange(sourceChange)}
+                          disabled={reviewing}
+                          type="button"
+                          title="Przyjmuje wyłącznie stan zapisów i liczbę miejsc"
+                        >
+                          Przyjmij zapisy i miejsca
+                        </button>
+                      ) : null}
+
+                      {currentStatus !== "approved" ? (
+                        <button
+                          className="mt-2 h-10 w-full rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+                          onClick={() => approve(r)}
+                          type="button"
+                        >
+                          {recordKind === "new" ? "Akceptuj nowy wpis" : "Akceptuj wpis"}
+                        </button>
+                      ) : null}
+
+                      {currentStatus !== "rejected" ? (
+                        <button
+                          className="mt-2 h-10 w-full rounded-xl border border-rose-200 bg-white px-3 text-sm font-semibold text-rose-700 shadow-sm hover:bg-rose-50"
+                          onClick={() => reject(r)}
+                          type="button"
+                        >
+                          Odrzuć wpis
+                        </button>
+                      ) : null}
+
+                      {currentStatus !== "pending" ? (
+                        <button
+                          className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                          onClick={() => backToPending(r)}
+                          type="button"
+                        >
+                          Przenieś do weryfikacji
+                        </button>
+                      ) : null}
+
+                      <div className="mt-3 border-t border-slate-200 pt-3 text-[11px] leading-4 text-slate-500">
+                        {recordKind === "change"
+                          ? "Zmiana źródłowa nie zastępuje danych moderatora, dopóki jej nie zastosujesz."
+                          : recordKind === "new"
+                            ? "To nowy rekord. Przed akceptacją możesz poprawić wszystkie dane."
+                            : "Wpis nie ma obecnie oczekującej zmiany źródłowej."}
+                      </div>
+                    </aside>
+                  </div>
+                </article>
+              );
+            })
+          )}
         </div>
       </div>
-
       {reviewChange ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 p-4">
           <div className="max-h-[calc(100vh-2rem)] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white shadow-xl">
@@ -1618,6 +1742,15 @@ export default function AdminTrainingsPage() {
 
               <button
                 type="button"
+                className="h-10 rounded-xl border border-blue-200 bg-white px-4 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-60"
+                onClick={editTrainingFromImportReview}
+                disabled={reviewing}
+              >
+                Edytuj wpis ręcznie
+              </button>
+
+              <button
+                type="button"
                 className="h-10 rounded-xl border border-rose-200 bg-white px-4 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60"
                 onClick={() => void decideImportChange("reject")}
                 disabled={reviewing}
@@ -1639,8 +1772,8 @@ export default function AdminTrainingsPage() {
 
       {editOpen && edit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div className="max-h-[calc(100vh-2rem)] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
               <div>
                 <div className="text-sm font-semibold text-slate-900">
                   Edycja szkolenia
@@ -1661,6 +1794,10 @@ export default function AdminTrainingsPage() {
             </div>
 
             <div className="grid gap-4 px-5 py-4 sm:grid-cols-2">
+              <div className="sm:col-span-2 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-xs leading-5 text-blue-900">
+                Możesz edytować wszystkie dane publikowane o szkoleniu: treść, format, kategorię, lokalizację, adresatów, punkty, cenę, zapisy, liczbę miejsc, termin, prowadzących, tematy, nagranie i link. Identyfikatory źródła, autor wpisu i daty audytowe pozostają tylko do odczytu.
+              </div>
+
               {editError && !editError.includes("adresatów") ? (
                 <div
                   role="alert"
@@ -1745,6 +1882,45 @@ export default function AdminTrainingsPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Format</label>
+                <select
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={edit.format || ""}
+                  onChange={(event) =>
+                    setEdit({
+                      ...edit,
+                      format: (event.target.value || null) as TrainingFormat | null,
+                    })
+                  }
+                >
+                  <option value="">Nieokreślony</option>
+                  <option value="online">Online</option>
+                  <option value="stacjonarne">Stacjonarne</option>
+                  <option value="hybrydowe">Hybrydowe</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Kategoria</label>
+                <input
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={edit.category || ""}
+                  onChange={(event) => setEdit({ ...edit, category: event.target.value || null })}
+                  placeholder="np. kurs, konferencja, warsztaty"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="text-xs font-semibold text-slate-600">Lokalizacja / województwo</label>
+                <input
+                  className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={edit.voivodeship || ""}
+                  onChange={(event) => setEdit({ ...edit, voivodeship: event.target.value || null })}
+                  placeholder="np. Warszawa, mazowieckie lub adres wydarzenia"
+                />
               </div>
 
               <div
@@ -1863,6 +2039,76 @@ export default function AdminTrainingsPage() {
                     />
                   </div>
                 ) : null}
+              </div>
+
+              <div className="sm:col-span-2 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-xs font-semibold text-slate-600">Status zapisów</label>
+                  <select
+                    className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    value={edit.enrollment_status || ""}
+                    onChange={(event) =>
+                      setEdit({
+                        ...edit,
+                        enrollment_status: (event.target.value || null) as EnrollmentStatus | null,
+                      })
+                    }
+                  >
+                    <option value="">Nieokreślony</option>
+                    <option value="open">Wolne miejsca</option>
+                    <option value="waiting_list">Lista rezerwowa</option>
+                    <option value="closed">Brak miejsc</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-600">Liczba miejsc</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    value={edit.capacity ?? ""}
+                    onChange={(event) =>
+                      setEdit({
+                        ...edit,
+                        capacity: event.target.value === "" ? null : Number(event.target.value),
+                      })
+                    }
+                    placeholder="np. 80"
+                  />
+                </div>
+              </div>
+
+              <div className="sm:col-span-2 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-xs font-semibold text-slate-600">Nagranie</label>
+                  <select
+                    className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    value={edit.has_recording == null ? "unknown" : edit.has_recording ? "yes" : "no"}
+                    onChange={(event) =>
+                      setEdit({
+                        ...edit,
+                        has_recording:
+                          event.target.value === "unknown"
+                            ? null
+                            : event.target.value === "yes",
+                      })
+                    }
+                  >
+                    <option value="unknown">Brak informacji</option>
+                    <option value="yes">Tak</option>
+                    <option value="no">Nie</option>
+                  </select>
+                </div>
+                <label className="mt-6 flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-700">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                    checked={Boolean(edit.is_partner)}
+                    onChange={(event) => setEdit({ ...edit, is_partner: event.target.checked })}
+                  />
+                  Partner CRPE
+                </label>
               </div>
 
               <div className="sm:col-span-2 grid gap-4 sm:grid-cols-2">
@@ -2011,6 +2257,25 @@ export default function AdminTrainingsPage() {
               </div>
 
               <div className="sm:col-span-2">
+                <label htmlFor="admin-training-topics" className="text-xs font-semibold text-slate-600">Tematy</label>
+                <textarea
+                  id="admin-training-topics"
+                  className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={(edit.topics ?? []).join("\n")}
+                  onChange={(event) =>
+                    setEdit({
+                      ...edit,
+                      topics: event.target.value
+                        .split(/\r?\n/)
+                        .map((topic) => topic.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                  placeholder={"Każdy temat w osobnym wierszu"}
+                />
+              </div>
+
+              <div className="sm:col-span-2">
                 <label className="text-xs font-semibold text-slate-600">Opis</label>
                 <textarea
                   id="admin-training-description"
@@ -2054,7 +2319,7 @@ export default function AdminTrainingsPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-5 py-4">
+            <div className="sticky bottom-0 z-10 flex items-center justify-end gap-2 border-t border-slate-100 bg-white px-5 py-4">
               <button
                 className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 onClick={closeEdit}

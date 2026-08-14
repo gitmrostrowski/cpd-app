@@ -76,7 +76,7 @@ assert.match(admin, /Zaznacz tylko operacyjne/);
 assert.match(admin, /aria-label="Termin szkolenia od"/);
 assert.match(admin, /aria-label="Data dodania od"/);
 assert.match(admin, /const \[eventFrom, setEventFrom\] = useState\(""\)/);
-assert.match(admin, /<th className="px-4 py-3">Zapisy<\/th>/);
+assert.match(admin, /(?:<th className="px-4 py-3">Zapisy<\/th>|>Zapisy<\/div>)/);
 assert.match(admin, /enrollmentBadgeCls\(r\.enrollment_status\)/);
 assert.match(admin, /shortImportValue\(sourceChange\.current\[field\]\)/);
 assert.doesNotMatch(admin, /NIL zgłosił zmianę \(\{sourceChange/);
