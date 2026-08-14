@@ -12,6 +12,14 @@ const fixturePath = fileURLToPath(
   new URL("./fixtures/nil-rss-2026-08-11.xml", import.meta.url),
 );
 
+function nilDetailHtml(message: string) {
+  return `<!doctype html><html><body>
+    <h3>Szkolenie testowe Naczelnej Izby Lekarskiej</h3>
+    <p>Informacje organizacyjne dla uczestników szkolenia, zasady udziału, kontakt do organizatora oraz dodatkowe dane wydarzenia publikowane na stronie szczegółowej.</p>
+    <p>${message}</p>
+  </body></html>`;
+}
+
 test("data NIL nie przesuwa się o dzień przez konwersję do UTC", () => {
   assert.equal(toWarsawDate("Thu, 13 Aug 2026 00:00:00 +0200"), "2026-08-13");
   assert.equal(toWarsawDate("Mon, 22 Dec 2025 00:00:00 +0100"), "2025-12-22");
@@ -166,13 +174,13 @@ test("status zapisów rozpoznaje zakończoną rekrutację i brak miejsc", async 
 
   const closedByRecruitment = enrichNilTraining(
     source,
-    "<html><body><p>REKRUTACJA ZAKOŃCZONA</p></body></html>",
+    nilDetailHtml("REKRUTACJA ZAKOŃCZONA"),
   );
   assert.equal(closedByRecruitment.enrollment_status, "closed");
 
   const closedByCapacity = enrichNilTraining(
     source,
-    "<html><body><p>BRAK MIEJSC</p></body></html>",
+    nilDetailHtml("BRAK MIEJSC"),
   );
   assert.equal(closedByCapacity.enrollment_status, "closed");
 });
@@ -188,7 +196,7 @@ test("brak rozpoznanego statusu nie kasuje znanej wartości i daje ostrzeżenie"
 
   const enriched = enrichNilTraining(
     { ...source, enrollment_status: "open" },
-    "<html><body><p>Informacje organizacyjne bez komunikatu o zapisach.</p></body></html>",
+    nilDetailHtml("Informacje organizacyjne bez komunikatu określającego aktualny stan rekrutacji."),
   );
 
   assert.equal(enriched.enrollment_status, "open");
