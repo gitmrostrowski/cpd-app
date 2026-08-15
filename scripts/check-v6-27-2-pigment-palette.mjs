@@ -32,8 +32,7 @@ for (const oldToken of ['bg-cyan-700', 'bg-blue-700', 'bg-indigo-600', '#0E7490'
 }
 
 const requiredBrandAndNeutral = [
-  'className="block text-[#1D4ED8]">w jednym miejscu.</span>',
-  'bg-[#1D4ED8] px-5 py-2.5 text-[14px] font-extrabold text-white',
+  'w jednym miejscu.</span>',
   '#F7F8FA',
   '#E4E6EC',
   '#5C6270',
@@ -62,4 +61,4 @@ if (!chart.includes('linearGradient id="crpe-accrual-fill"') ||
   throw new Error("v6.27.2: wykresy v6.27 muszą pozostać bez regresji.");
 }
 
-console.log("OK v6.27.2 — petrol/stal/grafit z jednego pigmentu, CTA #1D4ED8 i wspólne chłodne neutrale; wykresy bez zmian.");
+console.log("OK v6.27.2 — petrol/stal/grafit z jednego pigmentu i wspólne chłodne neutrale; późniejsze wersje mogą przypisać CTA do roli; wykresy bez zmian.");

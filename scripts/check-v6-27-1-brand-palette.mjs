@@ -6,13 +6,15 @@ const root = process.cwd();
 const home = fs.readFileSync(path.join(root, "app/page.tsx"), "utf8");
 const chart = fs.readFileSync(path.join(root, "app/panel-cpd/CalculatorClient.tsx"), "utf8");
 
-// Ten test jest celowo semantyczny: v6.27.1 wprowadziła zasadę jednego
-// stałego koloru marki i ograniczonego akcentu roli. Kolejne wersje mogą
-// dopracowywać konkretne heksy bez łamania tej zasady.
+// Test semantyczny: v6.27.1 ustaliła jedną spójną markę i ograniczone akcenty
+// ról. Kolejne wersje mogą zmieniać właściciela CTA/H1, o ile nie wracają do
+// trzech niezależnych motywów całej strony.
 for (const token of [
   'const roleThemes: Record<AudienceKey, RoleTheme>',
-  'className="block text-[#1D4ED8]">w jednym miejscu.</span>',
-  'statusTone: "bg-emerald-50 text-emerald-700 ring-emerald-100"',
+  'w jednym miejscu.</span>',
+  '#F7F8FA',
+  '#E4E6EC',
+  '#171A21',
 ]) {
   if (!home.includes(token)) throw new Error(`v6.27.1: brak zasady spójnej marki: ${token}`);
 }
@@ -38,4 +40,4 @@ if (!chart.includes('linearGradient id="crpe-accrual-fill"') ||
   throw new Error("v6.27.1: poprawione wykresy v6.27 muszą pozostać bez regresji.");
 }
 
-console.log("OK v6.27.1 — jedna marka, kontrolowane akcenty ról i semantyczne statusy; konkretny dobór heksów może być rozwijany.");
+console.log("OK v6.27.1 — jedna marka i kontrolowane akcenty ról; późniejsze wersje mogą przenosić CTA do koloru roli bez zmiany całego motywu.");

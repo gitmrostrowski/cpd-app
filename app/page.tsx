@@ -50,6 +50,10 @@ type RoleTheme = {
   accentSoft: string;
   accentText: string;
   accentRing: string;
+  accentBorder: string;
+  ctaStrong: string;
+  ctaHover: string;
+  ctaShadow: string;
   iconShadow: string;
   mediaBackground: string;
 };
@@ -59,7 +63,11 @@ const roleThemes: Record<AudienceKey, RoleTheme> = {
     accentStrong: "bg-[#16656B]",
     accentSoft: "bg-[#E7F0F0]",
     accentText: "text-[#0E4448]",
-    accentRing: "ring-[#E7F0F0]",
+    accentRing: "ring-[#CFE1E2]",
+    accentBorder: "border-[#CFE1E2]",
+    ctaStrong: "bg-[#16656B]",
+    ctaHover: "hover:bg-[#0E4448]",
+    ctaShadow: "shadow-[0_12px_26px_rgba(22,101,107,0.22)]",
     iconShadow: "shadow-[0_10px_24px_rgba(22,101,107,0.18)]",
     mediaBackground: "bg-[linear-gradient(145deg,#F7F8FA_0%,#ffffff_62%,#F7F8FA_100%)]",
   },
@@ -67,7 +75,11 @@ const roleThemes: Record<AudienceKey, RoleTheme> = {
     accentStrong: "bg-[#23528F]",
     accentSoft: "bg-[#E9EEF7]",
     accentText: "text-[#14355E]",
-    accentRing: "ring-[#E9EEF7]",
+    accentRing: "ring-[#D7E0EF]",
+    accentBorder: "border-[#D7E0EF]",
+    ctaStrong: "bg-[#23528F]",
+    ctaHover: "hover:bg-[#14355E]",
+    ctaShadow: "shadow-[0_12px_26px_rgba(35,82,143,0.22)]",
     iconShadow: "shadow-[0_10px_24px_rgba(35,82,143,0.18)]",
     mediaBackground: "bg-[linear-gradient(145deg,#F7F8FA_0%,#ffffff_62%,#F7F8FA_100%)]",
   },
@@ -75,7 +87,11 @@ const roleThemes: Record<AudienceKey, RoleTheme> = {
     accentStrong: "bg-[#4A5170]",
     accentSoft: "bg-[#EDEEF3]",
     accentText: "text-[#2E3247]",
-    accentRing: "ring-[#EDEEF3]",
+    accentRing: "ring-[#DBDDE6]",
+    accentBorder: "border-[#DBDDE6]",
+    ctaStrong: "bg-[#2E3247]",
+    ctaHover: "hover:bg-[#24283A]",
+    ctaShadow: "shadow-[0_12px_26px_rgba(46,50,71,0.22)]",
     iconShadow: "shadow-[0_10px_24px_rgba(74,81,112,0.18)]",
     mediaBackground: "bg-[linear-gradient(145deg,#F7F8FA_0%,#ffffff_62%,#F7F8FA_100%)]",
   },
@@ -103,7 +119,7 @@ const audiences: AudienceOption[] = [
     shortLabel: "Prowadzę własną ewidencję",
     icon: Stethoscope,
     status: "Dostępne teraz",
-    statusTone: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    statusTone: "bg-[#E7F0F0] text-[#0E4448] ring-[#CFE1E2]",
     title: "Prowadź własną ewidencję bez arkuszy i osobnych folderów.",
     description:
       "Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj aktualny status w jednym panelu.",
@@ -123,7 +139,7 @@ const audiences: AudienceOption[] = [
     shortLabel: "Wspieram zespół",
     icon: Building2,
     status: "Fundament dostępny",
-    statusTone: "bg-[#F7F8FA] text-[#5C6270] ring-[#E4E6EC]",
+    statusTone: "bg-[#E9EEF7] text-[#14355E] ring-[#D7E0EF]",
     title: "Zbuduj strukturę placówki i uporządkuj dostęp zespołu.",
     description:
       "Struktura placówki, zaproszenia i role są dostępne już dziś. Zbiorczy status zespołu, raporty i alerty są rozwijane.",
@@ -143,7 +159,7 @@ const audiences: AudienceOption[] = [
     shortLabel: "Organizuję szkolenia",
     icon: UserRound,
     status: "Zgłoszenia dostępne",
-    statusTone: "bg-[#F7F8FA] text-[#5C6270] ring-[#E4E6EC]",
+    statusTone: "bg-[#EDEEF3] text-[#2E3247] ring-[#DBDDE6]",
     title: "Opublikuj szkolenie i skieruj użytkowników do zapisów.",
     description:
       "Możesz zgłosić szkolenie do publicznej bazy i zaprezentować dane wydarzenia, logo oraz link do zapisów. Dalszy zakres rozwijamy.",
@@ -195,10 +211,12 @@ function Metric({
   icon: typeof FileCheck2;
   label: string;
   value: string;
-  tone: "blue" | "amber";
+  tone: "medyk" | "amber";
 }) {
   const toneClass =
-    tone === "blue" ? "bg-blue-50 text-[#1D4ED8]" : "bg-amber-50 text-amber-700";
+    tone === "medyk"
+      ? "bg-[#E7F0F0] text-[#16656B] ring-1 ring-[#CFE1E2]"
+      : "bg-amber-50 text-amber-700 ring-1 ring-amber-100";
   return (
     <div className="rounded-2xl border border-[#E4E6EC] p-3.5">
       <div className="flex items-center gap-3">
@@ -217,30 +235,30 @@ function Metric({
 function MedykDashboard() {
   return (
     <>
-      <div className="rounded-2xl border border-blue-100 bg-blue-50/55 p-4">
+      <div className="rounded-2xl border border-[#CFE1E2] bg-[#F3F8F8] p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[11px] font-bold text-slate-500">Twój postęp</p>
+            <p className="text-[11px] font-bold text-[#5C6270]">Twój postęp</p>
             <p className="mt-1 text-[28px] font-black tracking-tight text-[#171A21]">
-              110 <span className="text-sm font-bold text-slate-500">/ 200 pkt</span>
+              110 <span className="text-sm font-bold text-[#5C6270]">/ 200 pkt</span>
             </p>
           </div>
-          <div className="rounded-xl bg-white px-3 py-2 text-right shadow-sm ring-1 ring-blue-100">
-            <p className="text-[10px] font-bold text-slate-400">Brakuje</p>
-            <p className="text-sm font-black text-[#1D4ED8]">90 pkt</p>
+          <div className="rounded-xl bg-[#E7F0F0] px-3 py-2 text-right shadow-sm ring-1 ring-[#CFE1E2]">
+            <p className="text-[10px] font-bold text-[#5C6270]">Brakuje</p>
+            <p className="text-sm font-black text-[#16656B]">90 pkt</p>
           </div>
         </div>
-        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white ring-1 ring-blue-100">
-          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-[#23528F]" />
+        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-[#E7F0F0] ring-1 ring-[#CFE1E2]">
+          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-[#16656B]" />
         </div>
-        <div className="mt-2 flex justify-between text-[11px] font-semibold text-slate-500">
+        <div className="mt-2 flex justify-between text-[11px] font-semibold text-[#5C6270]">
           <span>55% celu</span>
           <span>2025–2028</span>
         </div>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3">
-        <Metric icon={FileCheck2} label="Certyfikaty" value="18 dokumentów" tone="blue" />
+        <Metric icon={FileCheck2} label="Certyfikaty" value="18 dokumentów" tone="medyk" />
         <Metric icon={ClipboardCheck} label="Braki" value="2 aktywności" tone="amber" />
       </div>
     </>
@@ -250,14 +268,14 @@ function MedykDashboard() {
 function PlacowkaDashboard() {
   return (
     <>
-      <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+      <div className="rounded-2xl border border-[#D7E0EF] bg-[#F4F6FA] p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-bold text-slate-500">Panel placówki</p>
+            <p className="text-[11px] font-bold text-[#5C6270]">Panel placówki</p>
             <p className="mt-1 text-[17px] font-black text-[#171A21]">Struktura i dostęp zespołu</p>
           </div>
-          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-emerald-700 ring-1 ring-emerald-100">
-            Działa dziś
+          <span className="rounded-full bg-[#E9EEF7] px-2.5 py-1 text-[10px] font-extrabold text-[#14355E] ring-1 ring-[#D7E0EF]">
+            Dostępne
           </span>
         </div>
       </div>
@@ -269,12 +287,12 @@ function PlacowkaDashboard() {
           ["Role i członkostwa", "Uprawnienia w zespole"],
         ].map(([name, description]) => (
           <div key={name} className="crpe-row-in flex items-center gap-3 rounded-2xl border border-[#E4E6EC] bg-[#F7F8FA] p-3.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1D4ED8] ring-1 ring-blue-100">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#E9EEF7] text-[#23528F] ring-1 ring-[#D7E0EF]">
               <CheckCircle2 className="h-4 w-4" />
             </span>
             <div>
               <p className="text-[13px] font-extrabold text-[#171A21]">{name}</p>
-              <p className="mt-0.5 text-[10px] text-slate-500">{description}</p>
+              <p className="mt-0.5 text-[10px] text-[#5C6270]">{description}</p>
             </div>
           </div>
         ))}
@@ -290,14 +308,14 @@ function PlacowkaDashboard() {
 function OrganizatorDashboard() {
   return (
     <>
-      <div className="rounded-2xl border border-blue-100 bg-blue-50/55 p-4">
+      <div className="rounded-2xl border border-[#DBDDE6] bg-[#F6F6F8] p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-bold text-slate-500">Publiczna baza szkoleń</p>
+            <p className="text-[11px] font-bold text-[#5C6270]">Publiczna baza szkoleń</p>
             <p className="mt-1 text-[17px] font-black text-[#171A21]">Zgłoś wydarzenie do publikacji</p>
           </div>
-          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-emerald-700 ring-1 ring-emerald-100">
-            Działa dziś
+          <span className="rounded-full bg-[#EDEEF3] px-2.5 py-1 text-[10px] font-extrabold text-[#2E3247] ring-1 ring-[#DBDDE6]">
+            Dostępne
           </span>
         </div>
       </div>
@@ -308,12 +326,12 @@ function OrganizatorDashboard() {
           ["Zapisy", "Bezpośredni link do organizatora"],
         ].map(([name, description]) => (
           <div key={name} className="crpe-row-in flex items-center gap-3 rounded-2xl border border-[#E4E6EC] bg-[#F7F8FA] p-3.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1D4ED8] ring-1 ring-blue-100">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#EDEEF3] text-[#4A5170] ring-1 ring-[#DBDDE6]">
               <CheckCircle2 className="h-4 w-4" />
             </span>
             <div>
               <p className="text-[13px] font-extrabold text-[#171A21]">{name}</p>
-              <p className="mt-0.5 text-[10px] text-slate-500">{description}</p>
+              <p className="mt-0.5 text-[10px] text-[#5C6270]">{description}</p>
             </div>
           </div>
         ))}
@@ -334,7 +352,7 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
       className="crpe-hero-panel relative mx-auto hidden w-full max-w-[570px] lg:block"
       aria-live="polite"
     >
-      <div className="pointer-events-none absolute -right-10 -top-8 h-40 w-40 rounded-full bg-[#E9EEF7]/40 blur-3xl" />
+      <div className="pointer-events-none absolute -right-10 -top-8 h-40 w-40 rounded-full bg-[#E4E6EC]/55 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-10 -left-8 h-44 w-44 rounded-full bg-slate-100/65 blur-3xl" />
 
       <div className="crpe-dashboard-shell relative overflow-hidden rounded-[26px] border border-[#E4E6EC] bg-white/95 shadow-[0_30px_78px_rgba(37,51,65,0.14)]">
@@ -456,9 +474,9 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
 
       <div className="mt-3 grid grid-cols-3 gap-2">
         {active.facts.map((fact, index) => (
-          <div key={fact} className={`rounded-xl border border-[#E4E6EC] px-2.5 py-2.5 ${index === 0 ? "bg-[#E9EEF7]/70" : "bg-[#F7F8FA]"}`}>
-            <p className="text-[9px] font-bold leading-4 text-slate-500">{labels[active.key][index]}</p>
-            <p className={`mt-0.5 text-[12px] font-black leading-4 ${index === 0 ? "text-[#14355E]" : "text-[#171A21]"}`}>
+          <div key={fact} className={`rounded-xl border px-2.5 py-2.5 ${index === 0 ? `${roleThemes[active.key].accentSoft} ${roleThemes[active.key].accentBorder}` : "border-[#E4E6EC] bg-[#F7F8FA]"}`}>
+            <p className="text-[9px] font-bold leading-4 text-[#5C6270]">{labels[active.key][index]}</p>
+            <p className={`mt-0.5 text-[12px] font-black leading-4 ${index === 0 ? roleThemes[active.key].accentText : "text-[#171A21]"}`}>
               {fact}
             </p>
           </div>
@@ -466,8 +484,8 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
       </div>
 
       {active.key === "medyk" ? (
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-[#23528F]" />
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#E7F0F0] ring-1 ring-[#CFE1E2]">
+          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-[#16656B]" />
         </div>
       ) : null}
 
@@ -492,8 +510,8 @@ function Hero({
   return (
     <section className="relative overflow-hidden bg-[linear-gradient(180deg,#F7F8FA_0%,#FAFBFC_58%,#ffffff_100%)] py-7 sm:py-11 lg:py-14">
       <div className="pointer-events-none absolute -left-36 top-0 h-[360px] w-[360px] rounded-full bg-slate-100/65 blur-3xl" />
-      <div className="pointer-events-none absolute -right-24 top-12 h-[340px] w-[340px] rounded-full bg-[#E9EEF7]/45 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-8 left-[44%] hidden h-24 w-24 rounded-full bg-[#EDEEF3]/45 blur-3xl lg:block" />
+      <div className="pointer-events-none absolute -right-24 top-12 h-[340px] w-[340px] rounded-full bg-[#E4E6EC]/45 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-8 left-[44%] hidden h-24 w-24 rounded-full bg-slate-100/55 blur-3xl lg:block" />
 
       <div className={`${pageWrap} relative`}>
         <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-14">
@@ -506,7 +524,7 @@ function Hero({
             <h1 className="crpe-hero-in mt-4 max-w-[590px] text-[35px] font-black leading-[1.02] tracking-[-0.046em] text-[#171A21] sm:mt-5 sm:text-[48px] lg:text-[54px] [--hero-delay:110ms]">
               <span className="block">Punkty edukacyjne</span>
               <span className="block">i certyfikaty</span>
-              <span className="block text-[#1D4ED8]">w jednym miejscu.</span>
+              <span className="block text-[#14355E]">w jednym miejscu.</span>
             </h1>
 
             <p className="crpe-hero-in mt-3 max-w-[570px] text-[15px] leading-6 text-[#5C6270] sm:mt-4 sm:text-[17px] sm:leading-7 [--hero-delay:180ms]">
@@ -548,7 +566,7 @@ function Hero({
               <div className="mt-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
                 <Link
                   href={active.href}
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1D4ED8] px-5 py-2.5 text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(29,78,216,0.20)] transition hover:bg-[#173FAF] sm:w-auto"
+                  className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-extrabold text-white transition sm:w-auto ${roleThemes[selected].ctaStrong} ${roleThemes[selected].ctaHover} ${roleThemes[selected].ctaShadow}`}
                 >
                   {active.cta} <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -576,7 +594,7 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       icon: Stethoscope,
       title: "Medyk",
       status: "Dostępne teraz",
-      statusClass: "text-emerald-700",
+      statusClass: "bg-[#E7F0F0] text-[#0E4448] ring-[#CFE1E2]",
       text: "Prowadź własną ewidencję punktów, aktywności i certyfikatów w jednym panelu.",
       benefits: ["Postęp i brakujące punkty", "Dokumenty przy aktywnościach", "Raport użytkownika"],
       cta: "Załóż konto",
@@ -590,7 +608,7 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       icon: Building2,
       title: "Placówka / jednostka",
       status: "Struktura, zaproszenia i role dostępne",
-      statusClass: "text-[#5C6270]",
+      statusClass: "bg-[#E9EEF7] text-[#14355E] ring-[#D7E0EF]",
       text: "Zbuduj strukturę jednostki, zapraszaj pracowników i nadawaj role. Zbiorczy status oraz raporty pozostają w rozwoju.",
       benefits: ["Jednostki organizacyjne", "Zaproszenia e-mail", "Role i członkostwa"],
       cta: "Zobacz zakres",
@@ -604,7 +622,7 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       icon: UserRound,
       title: "Organizator kształcenia",
       status: "Zgłoszenie do bazy dostępne",
-      statusClass: "text-[#5C6270]",
+      statusClass: "bg-[#EDEEF3] text-[#2E3247] ring-[#DBDDE6]",
       text: "Zgłoś szkolenie do publicznej bazy. Po publikacji użytkownicy zobaczą stronę wydarzenia, dane organizatora i link do zapisów.",
       benefits: ["Formularz zgłoszenia", "Publiczna strona szkolenia", "Logo i link do zapisów"],
       cta: "Zobacz zakres",
@@ -669,7 +687,7 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
 
                     <h3 className="mt-4 text-xl font-black tracking-[-0.025em] text-[#171A21]">{title}</h3>
                     <p className="mt-2 text-[14px] leading-6 text-[#5C6270]">{text}</p>
-                    <p className={`mt-3 text-xs font-semibold ${statusClass}`}>{status}</p>
+                    <p className={`mt-3 inline-flex w-fit rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ${statusClass}`}>{status}</p>
 
                     <ul className="mt-4 grid gap-2.5">
                       {benefits.map((item) => (
@@ -685,8 +703,8 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
                     <Link
                       href={href}
                       className={`mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 py-2 text-[14px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 ${
-                        key === "medyk"
-                          ? "border-transparent bg-[#1D4ED8] text-white shadow-[0_10px_22px_rgba(29,78,216,0.18)] hover:bg-[#173FAF]"
+                        active
+                          ? `border-transparent text-white ${theme.ctaStrong} ${theme.ctaHover} ${theme.ctaShadow}`
                           : "border-[#E4E6EC] bg-white text-[#171A21] hover:bg-[#F7F8FA]"
                       }`}
                     >
@@ -755,7 +773,7 @@ function ProductToolsSection() {
                     Najważniejsze funkcje są widoczne od razu po zalogowaniu.
                   </p>
                 </div>
-                <span className="inline-flex w-fit rounded-full bg-emerald-400/10 px-2.5 py-1 text-[10px] font-extrabold text-emerald-200 ring-1 ring-emerald-300/20">
+                <span className="inline-flex w-fit rounded-full bg-[#16656B]/25 px-2.5 py-1 text-[10px] font-extrabold text-[#B9D9DA] ring-1 ring-[#79AEB1]/30">
                   Profil medyka dostępny teraz
                 </span>
               </div>
@@ -789,7 +807,7 @@ function ProductToolsSection() {
                     <ul className="mt-4 grid gap-2">
                       {bullets.map((item) => (
                         <li key={item} className="flex gap-2 text-[13px] leading-5 text-[#5C6270]">
-                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#23528F]" />
                           {item}
                         </li>
                       ))}
@@ -868,7 +886,7 @@ function PracticeSection() {
                         <p className="text-[13px] font-extrabold text-[#171A21]">{name}</p>
                         <p className="mt-0.5 text-[11px] text-slate-500">{points}</p>
                       </div>
-                      <span className={`rounded-full px-2 py-1 text-[9px] font-extrabold ${index === 1 ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>
+                      <span className={`rounded-full px-2 py-1 text-[9px] font-extrabold ${index === 1 ? "bg-amber-50 text-amber-700" : "bg-[#E7F0F0] text-[#0E4448] ring-1 ring-[#CFE1E2]"}`}>
                         {status}
                       </span>
                     </div>
@@ -1010,26 +1028,27 @@ function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"
     developing: string[];
   }>;
   const active = variants[selected];
+  const theme = roleThemes[selected];
 
   return (
     <section className="bg-[#F7F8FA] py-16 sm:py-20">
       <div className={pageWrap}>
         <SectionHeading eyebrow={active.eyebrow} title={active.title} text={active.text} centered />
         <div key={selected} className="crpe-role-swap mx-auto mt-9 grid max-w-[980px] gap-4 md:grid-cols-2 sm:mt-11">
-          <article className="rounded-[20px] border border-emerald-200 bg-white p-5 shadow-[0_14px_38px_rgba(15,45,75,0.055)] sm:p-6">
+          <article className={`rounded-[20px] border bg-white p-5 shadow-[0_14px_38px_rgba(15,45,75,0.055)] sm:p-6 ${theme.accentBorder}`}>
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+              <span className={`flex h-10 w-10 items-center justify-center rounded-xl ring-1 ${theme.accentSoft} ${theme.accentText} ${theme.accentRing}`}>
                 <CheckCircle2 className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-emerald-700">Dostępne</p>
+                <p className={`text-[10px] font-extrabold uppercase tracking-[0.15em] ${theme.accentText}`}>Dostępne</p>
                 <h3 className="mt-0.5 text-[18px] font-bold text-[#171A21]">Działa dziś</h3>
               </div>
             </div>
             <ul className="mt-5 grid gap-3">
               {active.available.map((item) => (
                 <li key={item} className="flex gap-2.5 text-[14px] leading-6 text-[#5C6270]">
-                  <Check className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />
+                  <Check className={`mt-1 h-4 w-4 shrink-0 ${theme.accentText}`} />
                   {item}
                 </li>
               ))}
