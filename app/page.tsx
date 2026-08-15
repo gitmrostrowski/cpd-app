@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -40,6 +41,68 @@ type AudienceOption = {
   detailsLabel: string;
   facts: [string, string, string];
   benefits: [string, string, string];
+  image: string;
+  imageAlt: string;
+};
+
+type RoleTheme = {
+  accentText: string;
+  accentStrong: string;
+  accentHover: string;
+  accentSoft: string;
+  accentBorder: string;
+  accentRing: string;
+  iconShadow: string;
+  heroBackground: string;
+  glowPrimary: string;
+  glowSecondary: string;
+  mediaBackground: string;
+  cardTint: string;
+};
+
+const roleThemes: Record<AudienceKey, RoleTheme> = {
+  medyk: {
+    accentText: "text-teal-700",
+    accentStrong: "bg-teal-600",
+    accentHover: "hover:bg-teal-700",
+    accentSoft: "bg-teal-50",
+    accentBorder: "border-teal-200",
+    accentRing: "ring-teal-100",
+    iconShadow: "shadow-[0_10px_24px_rgba(13,148,136,0.22)]",
+    heroBackground: "bg-[radial-gradient(circle_at_86%_10%,rgba(20,184,166,0.13),transparent_28%),radial-gradient(circle_at_8%_0%,rgba(236,253,245,0.88),transparent_30%),linear-gradient(180deg,#fcfdfb_0%,#f3f9f7_100%)]",
+    glowPrimary: "bg-teal-100/65",
+    glowSecondary: "bg-emerald-100/45",
+    mediaBackground: "bg-[linear-gradient(145deg,#ecfdf5_0%,#f7fbf9_55%,#e7f8f4_100%)]",
+    cardTint: "bg-teal-50/45",
+  },
+  placowka: {
+    accentText: "text-blue-700",
+    accentStrong: "bg-blue-600",
+    accentHover: "hover:bg-blue-700",
+    accentSoft: "bg-blue-50",
+    accentBorder: "border-blue-200",
+    accentRing: "ring-blue-100",
+    iconShadow: "shadow-[0_10px_24px_rgba(37,99,235,0.22)]",
+    heroBackground: "bg-[radial-gradient(circle_at_86%_10%,rgba(59,130,246,0.13),transparent_28%),radial-gradient(circle_at_8%_0%,rgba(239,246,255,0.92),transparent_30%),linear-gradient(180deg,#fcfdff_0%,#f2f6fb_100%)]",
+    glowPrimary: "bg-blue-100/65",
+    glowSecondary: "bg-cyan-100/45",
+    mediaBackground: "bg-[linear-gradient(145deg,#eff6ff_0%,#f8fbff_55%,#eaf2ff_100%)]",
+    cardTint: "bg-blue-50/45",
+  },
+  organizator: {
+    accentText: "text-violet-700",
+    accentStrong: "bg-violet-600",
+    accentHover: "hover:bg-violet-700",
+    accentSoft: "bg-violet-50",
+    accentBorder: "border-violet-200",
+    accentRing: "ring-violet-100",
+    iconShadow: "shadow-[0_10px_24px_rgba(124,58,237,0.20)]",
+    heroBackground: "bg-[radial-gradient(circle_at_86%_10%,rgba(139,92,246,0.12),transparent_28%),radial-gradient(circle_at_8%_0%,rgba(250,245,255,0.90),transparent_30%),linear-gradient(180deg,#fefcff_0%,#f7f4fb_100%)]",
+    glowPrimary: "bg-violet-100/60",
+    glowSecondary: "bg-fuchsia-100/35",
+    mediaBackground: "bg-[linear-gradient(145deg,#f5f3ff_0%,#fbfaff_55%,#f0ebff_100%)]",
+    cardTint: "bg-violet-50/40",
+  },
 };
 
 const pageWrap = "mx-auto w-full max-w-[1180px] px-4 sm:px-6 lg:px-8";
@@ -74,6 +137,8 @@ const audiences: AudienceOption[] = [
     detailsLabel: "Dowiedz się więcej o profilu medyka",
     facts: ["110/200 pkt", "18 certyfikatów", "2 wpisy do uzupełnienia"],
     benefits: ["Panel CPD i kalkulator celu", "Aktywności z certyfikatami", "Raport użytkownika i baza szkoleń"],
+    image: "/home/role-medyk.webp",
+    imageAlt: "Fartuch medyczny i stetoskop",
   },
   {
     key: "placowka",
@@ -92,6 +157,8 @@ const audiences: AudienceOption[] = [
     detailsLabel: "Dowiedz się więcej o rozwiązaniu dla placówki",
     facts: ["Jednostki", "E-mail", "Role"],
     benefits: ["Struktura placówki i jednostek", "Zaproszenia na konkretny e-mail", "Role i członkostwa zespołu"],
+    image: "/home/role-placowka.webp",
+    imageAlt: "Nowoczesny budynek placówki medycznej",
   },
   {
     key: "organizator",
@@ -110,6 +177,8 @@ const audiences: AudienceOption[] = [
     detailsLabel: "Dowiedz się więcej o rozwiązaniu dla organizatora",
     facts: ["Zgłoszenie", "Logo", "Link"],
     benefits: ["Zgłoszenie do publicznej bazy", "Strona wydarzenia po publikacji", "Dane organizatora i link do zapisów"],
+    image: "/home/role-organizator.webp",
+    imageAlt: "Laptop i notes symbolizujące pracę organizatora",
   },
 ];
 
@@ -172,7 +241,7 @@ function Metric({
 function MedykDashboard() {
   return (
     <>
-      <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+      <div className="rounded-2xl border border-teal-100 bg-teal-50/65 p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-bold text-slate-500">Twój postęp</p>
@@ -180,13 +249,13 @@ function MedykDashboard() {
               110 <span className="text-sm font-bold text-slate-500">/ 200 pkt</span>
             </p>
           </div>
-          <div className="rounded-xl bg-white px-3 py-2 text-right shadow-sm ring-1 ring-blue-100">
+          <div className="rounded-xl bg-white px-3 py-2 text-right shadow-sm ring-1 ring-teal-100">
             <p className="text-[10px] font-bold text-slate-400">Brakuje</p>
-            <p className="text-sm font-black text-blue-700">90 pkt</p>
+            <p className="text-sm font-black text-teal-700">90 pkt</p>
           </div>
         </div>
-        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white ring-1 ring-blue-100">
-          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-blue-600" />
+        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white ring-1 ring-teal-100">
+          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-teal-600" />
         </div>
         <div className="mt-2 flex justify-between text-[11px] font-semibold text-slate-500">
           <span>55% celu</span>
@@ -245,7 +314,7 @@ function PlacowkaDashboard() {
 function OrganizatorDashboard() {
   return (
     <>
-      <div className="rounded-2xl border border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_100%)] p-4">
+      <div className="rounded-2xl border border-violet-100 bg-[linear-gradient(135deg,#f5f3ff_0%,#fbfaff_100%)] p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] font-bold text-slate-500">Publiczna baza szkoleń</p>
@@ -282,19 +351,20 @@ function OrganizatorDashboard() {
 
 function HeroDashboard({ selected }: { selected: AudienceKey }) {
   const active = audiences.find((item) => item.key === selected) ?? audiences[0];
+  const theme = roleThemes[selected];
 
   return (
     <div
       className="crpe-hero-panel relative mx-auto hidden w-full max-w-[570px] lg:block"
       aria-live="polite"
     >
-      <div className="pointer-events-none absolute -right-10 -top-8 h-40 w-40 rounded-full bg-blue-200/55 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-10 -left-8 h-44 w-44 rounded-full bg-cyan-200/45 blur-3xl" />
+      <div className={`pointer-events-none absolute -right-10 -top-8 h-40 w-40 rounded-full blur-3xl ${theme.glowPrimary}`} />
+      <div className={`pointer-events-none absolute -bottom-10 -left-8 h-44 w-44 rounded-full blur-3xl ${theme.glowSecondary}`} />
 
-      <div className="crpe-dashboard-shell relative overflow-hidden rounded-[24px] border border-blue-100/80 bg-white shadow-[0_28px_75px_rgba(15,45,75,0.14)]">
+      <div className={`crpe-dashboard-shell relative overflow-hidden rounded-[26px] border bg-white/95 shadow-[0_30px_78px_rgba(37,51,65,0.14)] ${theme.accentBorder}`}>
         <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)]">
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white ${theme.accentStrong} ${theme.iconShadow}`}>
               {selected === "medyk" ? (
                 <Stethoscope className="h-5 w-5" />
               ) : selected === "placowka" ? (
@@ -304,7 +374,7 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
               )}
             </span>
             <div className="min-w-0">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-600">
+              <p className={`text-[10px] font-extrabold uppercase tracking-[0.16em] ${theme.accentText}`}>
                 Podgląd CRPE
               </p>
               <p className="mt-0.5 truncate text-[15px] font-black text-slate-950">
@@ -323,15 +393,11 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
           {selected === "organizator" ? <OrganizatorDashboard /> : null}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-slate-100 bg-slate-50/70 px-5 py-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-slate-100 bg-[#fbfcfb] px-5 py-3.5">
           <p className="max-w-[310px] text-[12px] font-semibold leading-5 text-slate-600">
             Zobacz dokładnie, czym różni się zakres CRPE dla wybranej roli.
           </p>
           <div className="flex flex-wrap items-center gap-2">
-            {/*
-              Role organizacyjne decydują za cały zespół, więc pytanie o dane
-              pracowników pada wcześniej niż o funkcje — link musi być pod ręką.
-            */}
             {selected !== "medyk" ? (
               <Link
                 href="/bezpieczenstwo"
@@ -342,7 +408,7 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
             ) : null}
             <Link
               href={active.detailsHref}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-[12px] font-extrabold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border bg-white px-3.5 py-2 text-[12px] font-extrabold transition ${theme.accentBorder} ${theme.accentText} hover:bg-slate-50`}
             >
               Dowiedz się więcej <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -361,22 +427,23 @@ function RolePicker({
   onSelect: (key: AudienceKey) => void;
 }) {
   return (
-    <div className="crpe-role-picker grid w-full grid-cols-3 gap-1 rounded-[16px] border border-slate-200/90 bg-white p-1 shadow-[0_10px_28px_rgba(15,45,75,0.045)] sm:gap-1.5">
+    <div className="crpe-role-picker grid w-full grid-cols-3 gap-1 rounded-[18px] border border-slate-200/80 bg-white/90 p-1.5 shadow-[0_16px_36px_rgba(37,51,65,0.07)] backdrop-blur sm:gap-1.5">
       {audiences.map(({ key, mobileLabel, icon: Icon }) => {
         const isSelected = selected === key;
+        const theme = roleThemes[key];
         return (
           <button
             key={key}
             type="button"
             aria-pressed={isSelected}
             onClick={() => onSelect(key)}
-            className={`crpe-role-button group relative flex min-w-0 w-full items-center justify-center gap-2 rounded-[12px] px-2 py-2.5 text-[11px] font-extrabold outline-none sm:px-4 sm:py-3 sm:text-[14px] ${
+            className={`crpe-role-button group relative flex min-w-0 w-full items-center justify-center gap-2 rounded-[13px] px-2 py-2.5 text-[11px] font-extrabold outline-none sm:px-4 sm:py-3 sm:text-[14px] ${
               isSelected
-                ? "bg-blue-600 text-white shadow-[0_7px_18px_rgba(37,99,235,0.16)]"
-                : "bg-slate-50/65 text-slate-700 hover:bg-blue-50 hover:text-blue-800 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                ? `${theme.accentStrong} ${theme.iconShadow} text-white`
+                : "bg-slate-50/55 text-slate-700 hover:bg-white hover:text-slate-950 focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2"
             }`}
           >
-            <Icon className={`h-4 w-4 shrink-0 transition-colors duration-200 ${isSelected ? "text-white" : "text-slate-500 group-hover:text-blue-700"}`} />
+            <Icon className={`h-4 w-4 shrink-0 transition-colors duration-200 ${isSelected ? "text-white" : "text-slate-500 group-hover:text-slate-700"}`} />
             <span className="truncate">{mobileLabel}</span>
             {isSelected ? (
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/14" aria-hidden="true">
@@ -396,15 +463,16 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
     placowka: ["Struktura", "Zaproszenia", "Dostęp"],
     organizator: ["Publikacja", "Organizator", "Zapisy"],
   };
+  const theme = roleThemes[active.key];
 
   return (
     <div
-      className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_38px_rgba(15,45,75,0.09)] lg:hidden"
+      className={`mt-4 overflow-hidden rounded-2xl border bg-white p-4 shadow-[0_18px_42px_rgba(37,51,65,0.09)] lg:hidden ${theme.accentBorder}`}
       aria-label="Przykładowy podgląd dla wybranej roli"
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-blue-600">Podgląd profilu</p>
+          <p className={`text-[10px] font-extrabold uppercase tracking-[0.14em] ${theme.accentText}`}>Podgląd profilu</p>
           <p className="mt-1 text-[14px] font-black text-slate-950">{active.label}</p>
         </div>
         <span className={`rounded-full px-2 py-1 text-[9px] font-extrabold ring-1 ${active.statusTone}`}>
@@ -414,9 +482,9 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
 
       <div className="mt-3 grid grid-cols-3 gap-2">
         {active.facts.map((fact, index) => (
-          <div key={fact} className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2.5">
+          <div key={fact} className={`rounded-xl border border-slate-200 px-2.5 py-2.5 ${index === 0 ? theme.accentSoft : "bg-slate-50"}`}>
             <p className="text-[9px] font-bold leading-4 text-slate-500">{labels[active.key][index]}</p>
-            <p className={`mt-0.5 text-[12px] font-black leading-4 ${index === 0 ? "text-blue-700" : "text-slate-900"}`}>
+            <p className={`mt-0.5 text-[12px] font-black leading-4 ${index === 0 ? theme.accentText : "text-slate-900"}`}>
               {fact}
             </p>
           </div>
@@ -425,13 +493,13 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
 
       {active.key === "medyk" ? (
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-blue-600" />
+          <div className={`crpe-progress-fill h-full w-[55%] rounded-full ${theme.accentStrong}`} />
         </div>
       ) : null}
 
       <Link
         href={active.detailsHref}
-        className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[12px] font-extrabold text-blue-700"
+        className={`mt-3 inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-[12px] font-extrabold ${theme.accentBorder} ${theme.accentSoft} ${theme.accentText}`}
       >
         Dowiedz się więcej <ArrowRight className="h-3.5 w-3.5" />
       </Link>
@@ -447,16 +515,18 @@ function Hero({
   onSelect: (key: AudienceKey) => void;
 }) {
   const active = audiences.find((item) => item.key === selected) ?? audiences[0];
+  const theme = roleThemes[selected];
 
   return (
-    <section className="relative overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#eef6fc_100%)] py-7 sm:py-11 lg:py-14">
-      <div className="pointer-events-none absolute -left-36 top-0 h-[360px] w-[360px] rounded-full bg-blue-100/70 blur-3xl" />
-      <div className="pointer-events-none absolute -right-24 top-12 h-[340px] w-[340px] rounded-full bg-cyan-100/55 blur-3xl" />
+    <section className={`relative overflow-hidden py-7 transition-colors duration-500 sm:py-11 lg:py-14 ${theme.heroBackground}`}>
+      <div className={`pointer-events-none absolute -left-36 top-0 h-[360px] w-[360px] rounded-full blur-3xl ${theme.glowSecondary}`} />
+      <div className={`pointer-events-none absolute -right-24 top-12 h-[340px] w-[340px] rounded-full blur-3xl ${theme.glowPrimary}`} />
+      <div className="pointer-events-none absolute bottom-8 left-[44%] hidden h-24 w-24 rounded-full bg-amber-100/35 blur-3xl lg:block" />
 
       <div className={`${pageWrap} relative`}>
         <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-14">
           <div className="lg:pt-2">
-            <div className="crpe-hero-in inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 text-[11px] font-extrabold text-blue-800 shadow-sm [--hero-delay:40ms]">
+            <div className={`crpe-hero-in inline-flex items-center gap-2 rounded-full border bg-white/85 px-3 py-1.5 text-[11px] font-extrabold shadow-sm backdrop-blur [--hero-delay:40ms] ${theme.accentBorder} ${theme.accentText}`}>
               <ShieldCheck className="h-3.5 w-3.5" />
               CRPE dla medyków i organizacji
             </div>
@@ -464,11 +534,11 @@ function Hero({
             <h1 className="crpe-hero-in mt-4 max-w-[590px] text-[35px] font-black leading-[1.02] tracking-[-0.046em] text-slate-950 sm:mt-5 sm:text-[48px] lg:text-[54px] [--hero-delay:110ms]">
               <span className="block">Punkty edukacyjne</span>
               <span className="block">i certyfikaty</span>
-              <span className="block text-blue-600">w jednym miejscu.</span>
+              <span className={`block ${theme.accentText}`}>w jednym miejscu.</span>
             </h1>
 
             <p className="crpe-hero-in mt-3 max-w-[570px] text-[15px] leading-6 text-slate-600 sm:mt-4 sm:text-[17px] sm:leading-7 [--hero-delay:180ms]">
-              Prowadź ewidencję aktywności, certyfikatów i danych potrzebnych do rozliczeń — w zakresie dopasowanym do Twojej roli.
+              Zbieraj aktywności, certyfikaty i dane potrzebne do rozliczeń w jednym uporządkowanym miejscu — dopasowanym do Twojej roli.
             </p>
 
             <div className="crpe-hero-in mt-5 lg:hidden [--hero-delay:250ms]">
@@ -493,7 +563,7 @@ function Hero({
               <ul className="mt-3.5 grid gap-2 sm:grid-cols-2">
                 {active.benefits.map((item) => (
                   <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-slate-700">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                    <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ring-1 ${theme.accentSoft} ${theme.accentText} ${theme.accentRing}`}>
                       <Check className="h-3 w-3" />
                     </span>
                     {item}
@@ -506,7 +576,7 @@ function Hero({
               <div className="mt-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
                 <Link
                   href={active.href}
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-[14px] font-extrabold text-white shadow-[0_12px_25px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 sm:w-auto"
+                  className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-extrabold text-white transition sm:w-auto ${theme.accentStrong} ${theme.accentHover} ${theme.iconShadow}`}
                 >
                   {active.cta} <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -539,6 +609,8 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       benefits: ["Postęp i brakujące punkty", "Dokumenty przy aktywnościach", "Raport użytkownika"],
       cta: "Załóż konto",
       href: "/rejestracja",
+      image: "/home/role-medyk.webp",
+      imageAlt: "Fartuch medyczny i stetoskop",
     },
     {
       key: "placowka" as AudienceKey,
@@ -551,6 +623,8 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       benefits: ["Jednostki organizacyjne", "Zaproszenia e-mail", "Role i członkostwa"],
       cta: "Zobacz zakres",
       href: "/dla-placowki",
+      image: "/home/role-placowka.webp",
+      imageAlt: "Nowoczesny budynek placówki medycznej",
     },
     {
       key: "organizator" as AudienceKey,
@@ -558,70 +632,98 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       icon: UserRound,
       title: "Organizator kształcenia",
       status: "Zgłoszenie do bazy dostępne",
-      statusClass: "text-blue-700",
+      statusClass: "text-violet-700",
       text: "Zgłoś szkolenie do publicznej bazy. Po publikacji użytkownicy zobaczą stronę wydarzenia, dane organizatora i link do zapisów.",
       benefits: ["Formularz zgłoszenia", "Publiczna strona szkolenia", "Logo i link do zapisów"],
       cta: "Zobacz zakres",
       href: "/dla-organizatora",
+      image: "/home/role-organizator.webp",
+      imageAlt: "Laptop i notes symbolizujące pracę organizatora",
     },
   ];
 
   return (
-    <section id="dla-kogo" className="scroll-mt-24 bg-[linear-gradient(180deg,#f7faff_0%,#eff5fb_100%)] py-16 sm:py-20">
-      <div className={pageWrap}>
+    <section
+      id="dla-kogo"
+      className="relative scroll-mt-24 overflow-hidden bg-[linear-gradient(180deg,#fbfcfa_0%,#f4f8f6_100%)] py-16 sm:py-20"
+    >
+      <div className="pointer-events-none absolute -left-32 top-12 h-72 w-72 rounded-full bg-teal-100/35 blur-3xl" />
+      <div className="pointer-events-none absolute -right-32 bottom-10 h-72 w-72 rounded-full bg-violet-100/30 blur-3xl" />
+
+      <div className={`${pageWrap} relative`}>
         <Reveal>
           <SectionHeading
             eyebrow="Dla kogo jest CRPE"
-            title="Porównaj zakres CRPE dla każdej roli."
-            text="Profil medyka działa już teraz. Moduły organizacyjne rozwijamy etapami i jasno oznaczamy ich aktualny zakres."
+            title="Trzy role, jeden spokojniejszy sposób pracy."
+            text="CRPE porządkuje różne potrzeby w jednym produkcie. Profil medyka działa już teraz, a moduły organizacyjne rozwijamy etapami i jasno oznaczamy ich aktualny zakres."
             centered
           />
         </Reveal>
 
-        <div className="mt-9 grid gap-4 lg:mt-11 lg:grid-cols-3">
-          {cards.map(({ key, id, icon: Icon, title, status, statusClass, text, benefits, cta, href }) => {
-              const active = selected === key;
-              return (
-                <Reveal key={id} className="h-full">
-                  <article
-                    id={id}
-                    className={`crpe-interactive-card relative flex h-full scroll-mt-24 flex-col overflow-hidden rounded-[20px] border p-5 shadow-[0_12px_36px_rgba(15,45,75,0.055)] sm:p-6 ${
-                      active ? "border-slate-200 bg-blue-50/55" : "border-slate-200 bg-white"
-                    }`}
-                    aria-current={active ? "true" : undefined}
-                  >
-                    {active ? <span className="absolute inset-x-0 top-0 h-[3px] bg-blue-600" aria-hidden="true" /> : null}
-                    <div className="flex items-start gap-3">
-                      <span className={`crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl ${active ? "bg-blue-600 text-white" : "bg-slate-50 text-slate-600 ring-1 ring-slate-200"}`}>
+        <div className="mt-9 grid gap-5 lg:mt-11 lg:grid-cols-3">
+          {cards.map(({ key, id, icon: Icon, title, status, statusClass, text, benefits, cta, href, image, imageAlt }) => {
+            const active = selected === key;
+            const theme = roleThemes[key];
+            return (
+              <Reveal key={id} className="h-full">
+                <article
+                  id={id}
+                  className={`crpe-interactive-card group relative flex h-full scroll-mt-24 flex-col overflow-hidden rounded-[24px] border shadow-[0_18px_48px_rgba(37,51,65,0.07)] ${
+                    active ? `${theme.accentBorder} ${theme.cardTint}` : "border-slate-200/90 bg-white"
+                  }`}
+                  aria-current={active ? "true" : undefined}
+                  style={{ "--card-accent": key === "medyk" ? "#0f9488" : key === "placowka" ? "#2563eb" : "#7c3aed" } as React.CSSProperties}
+                >
+                  <div className={`crpe-role-media relative h-40 overflow-hidden border-b border-slate-200/70 ${theme.mediaBackground}`}>
+                    <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/65 blur-2xl" />
+                    <Image
+                      src={image}
+                      alt={imageAlt}
+                      fill
+                      sizes="(min-width: 1024px) 31vw, (min-width: 640px) 80vw, 100vw"
+                      className="object-contain p-3.5 transition duration-500 ease-out group-hover:scale-[1.035]"
+                    />
+                  </div>
+
+                  <div className="flex flex-1 flex-col p-5 sm:p-6">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className={`crpe-card-icon flex h-11 w-11 items-center justify-center rounded-2xl text-white ${theme.accentStrong} ${theme.iconShadow}`}>
                         <Icon className="h-5 w-5" />
                       </span>
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ${active ? `${theme.accentSoft} ${theme.accentText} ${theme.accentRing}` : "bg-slate-50 text-slate-500 ring-slate-200"}`}>
+                        {active ? "Wybrana rola" : "Zobacz zakres"}
+                      </span>
                     </div>
-                    <h3 className="mt-4 text-lg font-bold tracking-[-0.02em] text-slate-950">{title}</h3>
+
+                    <h3 className="mt-4 text-xl font-black tracking-[-0.025em] text-slate-950">{title}</h3>
                     <p className="mt-2 text-[14px] leading-6 text-slate-600">{text}</p>
                     <p className={`mt-3 text-xs font-semibold ${statusClass}`}>{status}</p>
-                    <ul className="mt-4 grid gap-2">
+
+                    <ul className="mt-4 grid gap-2.5">
                       {benefits.map((item) => (
                         <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-slate-700">
-                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                          <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ring-1 ${theme.accentSoft} ${theme.accentText} ${theme.accentRing}`}>
                             <Check className="h-3 w-3" />
                           </span>
                           {item}
                         </li>
                       ))}
                     </ul>
+
                     <Link
                       href={href}
-                      className={`mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 text-[14px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+                      className={`mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 py-2 text-[14px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 ${
                         key === "medyk"
-                          ? "mt-6 bg-blue-600 text-white shadow-[0_9px_20px_rgba(37,99,235,0.14)] hover:bg-blue-700"
-                          : "mt-6 border border-slate-300 bg-white text-slate-800 hover:border-blue-200 hover:bg-blue-50"
+                          ? `${theme.accentStrong} ${theme.accentHover} border-transparent text-white ${theme.iconShadow}`
+                          : `${theme.accentBorder} bg-white ${theme.accentText} hover:bg-slate-50`
                       }`}
                     >
                       {cta} <ArrowRight className="h-4 w-4" />
                     </Link>
-                  </article>
-                </Reveal>
-              );
+                  </div>
+                </article>
+              </Reveal>
+            );
           })}
         </div>
       </div>
@@ -658,7 +760,7 @@ function ProductToolsSection() {
   ];
 
   return (
-    <section id="narzedzia" className="scroll-mt-24 bg-blue-50/50 py-16 sm:py-20">
+    <section id="narzedzia" className="scroll-mt-24 bg-[#f7faf8] py-16 sm:py-20">
       <div className={pageWrap}>
         <Reveal>
           <SectionHeading
@@ -938,7 +1040,7 @@ function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"
   const active = variants[selected];
 
   return (
-    <section className="bg-blue-50/50 py-16 sm:py-20">
+    <section className="bg-[#faf8fc] py-16 sm:py-20">
       <div className={pageWrap}>
         <SectionHeading eyebrow={active.eyebrow} title={active.title} text={active.text} centered />
         <div key={selected} className="crpe-role-swap mx-auto mt-9 grid max-w-[980px] gap-4 md:grid-cols-2 sm:mt-11">

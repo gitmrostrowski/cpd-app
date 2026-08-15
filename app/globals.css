@@ -137,7 +137,7 @@ body {
   position: absolute;
   inset: 0 0 auto;
   height: 3px;
-  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  background: linear-gradient(90deg, var(--card-accent, #2563eb), color-mix(in srgb, var(--card-accent, #2563eb) 58%, white));
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);

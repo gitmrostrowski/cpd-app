@@ -473,12 +473,12 @@ function PointsAccrualChart({
   periodStart: number;
   periodEnd: number;
 }) {
-  const W = 380;
-  const H = 190;
-  const L = 38;
-  const R = 14;
-  const T = 24;
-  const B = 34;
+  const W = 430;
+  const H = 224;
+  const L = 42;
+  const R = 16;
+  const T = 28;
+  const B = 40;
 
   const px = (x: number) => L + clamp(x, 0, 1) * (W - L - R);
   const py = (v: number) => H - B - (clamp(v, 0, series.max) / series.max) * (H - T - B);
@@ -519,10 +519,13 @@ function PointsAccrualChart({
     (_, index) => index % tickStep === 0 || index === yearSpan - 1,
   );
   const behind = Math.round(series.targetToday - series.doneTotal);
-  const gapTextAnchor = series.todayX > 0.82 ? "end" : "start";
-  const gapTextX = px(series.todayX) + (series.todayX > 0.82 ? -9 : 9);
-  /** Etykieta siada w połowie pionowej kreski, żeby nie nachodzić na krzywą ani na znacznik „dziś”. */
-  const gapTextY = (py(series.doneTotal) + py(series.targetToday)) / 2 + 4;
+  const gapMidY = (py(series.doneTotal) + py(series.targetToday)) / 2;
+  const gapLabelWidth = 76;
+  const gapLabelX = series.todayX > 0.76
+    ? px(series.todayX) - gapLabelWidth - 10
+    : px(series.todayX) + 10;
+  const gapLabelY = clamp(gapMidY - 11, T + 4, H - B - 26);
+  const gapTextY = gapLabelY + 14.5;
   const accessibleTarget =
     series.target > 0
       ? `Przy równomiernym tempie na dziś ${Math.round(series.targetToday)} pkt, cel ${series.target} pkt.`
@@ -531,29 +534,17 @@ function PointsAccrualChart({
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
-      className="h-auto w-full min-w-[340px]"
+      className="h-auto w-full min-w-[360px]"
       role="img"
       aria-label={`Wykres narastania punktów w okresie ${periodStart}–${periodEnd}. Zdobyte ${series.doneTotal} pkt. ${accessibleTarget}`}
     >
       <defs>
         <linearGradient id="crpe-accrual-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#2563eb" stopOpacity={0.2} />
-          <stop offset="100%" stopColor="#2563eb" stopOpacity={0.02} />
+          <stop offset="0%" stopColor="#2563eb" stopOpacity={0.18} />
+          <stop offset="70%" stopColor="#60a5fa" stopOpacity={0.07} />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
         </linearGradient>
       </defs>
-
-      {/* Ćwiartki bez etykiet dają skalę, ale nie dokładają liczb do czytania. */}
-      {[0.25, 0.75].map((ratio) => (
-        <line
-          key={ratio}
-          x1={L}
-          y1={py(series.max * ratio)}
-          x2={W - R}
-          y2={py(series.max * ratio)}
-          stroke="#f1f5f9"
-          strokeWidth={1}
-        />
-      ))}
 
       {[0, 0.5, 1].map((ratio) => (
         <g key={ratio}>
@@ -562,11 +553,11 @@ function PointsAccrualChart({
             y1={py(series.max * ratio)}
             x2={W - R}
             y2={py(series.max * ratio)}
-            stroke={ratio === 0 ? "#cbd5e1" : "#e2e8f0"}
+            stroke={ratio === 0 ? "#cbd5e1" : "#e7ebf0"}
             strokeWidth={1}
           />
           <text
-            x={L - 6}
+            x={L - 7}
             y={py(series.max * ratio) + 4}
             textAnchor="end"
             fontSize={11}
@@ -577,15 +568,14 @@ function PointsAccrualChart({
         </g>
       ))}
 
-      {/* Pionowa prowadnica „dziś” wiąże krzywą z etykietą na osi X. */}
       <line
         x1={px(series.todayX)}
-        y1={py(series.max)}
+        y1={T}
         x2={px(series.todayX)}
         y2={py(0)}
-        stroke="#cbd5e1"
+        stroke="#d7dde5"
         strokeWidth={1}
-        strokeDasharray="2 4"
+        strokeDasharray="3 5"
       />
 
       <line
@@ -593,9 +583,9 @@ function PointsAccrualChart({
         y1={py(0)}
         x2={px(1)}
         y2={py(series.target)}
-        stroke="#94a3b8"
-        strokeWidth={1.5}
-        strokeDasharray="5 4"
+        stroke="#9ca3af"
+        strokeWidth={1.7}
+        strokeDasharray="6 5"
       />
 
       {areaPath ? <path d={areaPath} fill="url(#crpe-accrual-fill)" /> : null}
@@ -604,10 +594,11 @@ function PointsAccrualChart({
         <polyline
           points={toPolyline(plannedPoints)}
           fill="none"
-          stroke="#2563eb"
+          stroke="#60a5fa"
           strokeWidth={2.5}
-          strokeDasharray="4 3"
+          strokeDasharray="5 4"
           strokeLinecap="round"
+          strokeLinejoin="round"
         />
       ) : null}
 
@@ -615,7 +606,7 @@ function PointsAccrualChart({
         points={toPolyline(donePoints)}
         fill="none"
         stroke="#2563eb"
-        strokeWidth={3}
+        strokeWidth={3.25}
         strokeLinejoin="round"
         strokeLinecap="round"
       />
@@ -627,56 +618,74 @@ function PointsAccrualChart({
             y1={py(series.doneTotal)}
             x2={px(series.todayX)}
             y2={py(series.targetToday)}
-            stroke="#b45309"
-            strokeWidth={1.5}
+            stroke="#d97706"
+            strokeWidth={2.25}
+            strokeLinecap="round"
           />
           <line
             x1={L}
             y1={py(series.targetToday)}
             x2={px(series.todayX)}
             y2={py(series.targetToday)}
-            stroke="#f59e0b"
+            stroke="#fbbf24"
             strokeWidth={1}
-            strokeDasharray="2 3"
+            strokeDasharray="3 4"
+            opacity={0.78}
           />
-          <circle cx={px(series.todayX)} cy={py(series.targetToday)} r={3} fill="#b45309" />
-          <text
-            x={gapTextX}
-            y={gapTextY}
-            textAnchor={gapTextAnchor}
-            fontSize={11}
-            fontWeight={700}
-            fill="#b45309"
+          <circle
+            cx={px(series.todayX)}
+            cy={py(series.targetToday)}
+            r={4.2}
+            fill="#d97706"
             stroke="#ffffff"
-            strokeWidth={3}
-            paintOrder="stroke"
-          >
-            −{behind} pkt
-          </text>
+            strokeWidth={2}
+          />
+          <g aria-hidden="true">
+            <rect
+              x={gapLabelX}
+              y={gapLabelY}
+              width={gapLabelWidth}
+              height={22}
+              rx={11}
+              fill="#fff7ed"
+              stroke="#fed7aa"
+            />
+            <text
+              x={gapLabelX + gapLabelWidth / 2}
+              y={gapTextY}
+              textAnchor="middle"
+              fontSize={10.5}
+              fontWeight={800}
+              fill="#9a3412"
+              paintOrder="stroke"
+            >
+              −{behind} pkt
+            </text>
+          </g>
         </>
       ) : null}
 
       <circle
         cx={px(series.todayX)}
         cy={py(series.doneTotal)}
-        r={9}
+        r={10}
         fill="#2563eb"
-        opacity={0.14}
+        opacity={0.12}
       />
       <circle
         cx={px(series.todayX)}
         cy={py(series.doneTotal)}
-        r={5}
+        r={5.4}
         fill="#2563eb"
         stroke="#ffffff"
-        strokeWidth={2}
+        strokeWidth={2.3}
       />
       <text
         x={px(series.todayX)}
-        y={H - 8}
+        y={H - 9}
         textAnchor="middle"
         fontSize={11}
-        fontWeight={700}
+        fontWeight={800}
         fill="#0f172a"
       >
         dziś
@@ -685,9 +694,9 @@ function PointsAccrualChart({
       {visibleYears.map((year) => {
         const index = year - periodStart;
         const x = px((index + 0.5) / yearSpan);
-        if (Math.abs(x - px(series.todayX)) < 24) return null;
+        if (Math.abs(x - px(series.todayX)) < 26) return null;
         return (
-          <text key={year} x={x} y={H - 8} textAnchor="middle" fontSize={11} fill="#94a3b8">
+          <text key={year} x={x} y={H - 9} textAnchor="middle" fontSize={11} fill="#94a3b8">
             {year}
           </text>
         );
@@ -720,6 +729,7 @@ function PointsProgressBar({
 }) {
   const target = Math.max(1, series.target);
   const donePct = clamp((series.doneTotal / target) * 100, 0, 100);
+  const completePct = clamp((completePoints / target) * 100, 0, donePct);
   const timePct = clamp(periodTimeProgress, 0, 100);
   const gapPct = Math.max(0, timePct - donePct);
   const gapPoints = Math.max(0, Math.round(series.targetToday - series.doneTotal));
@@ -750,62 +760,92 @@ function PointsProgressBar({
   return (
     <div
       role="group"
-      aria-label={`Pasek postępu w okresie ${periodStart}–${periodEnd}. Zdobyte ${series.doneTotal} z ${series.target} pkt, minęło ${Math.round(timePct)}% okresu.`}
+      aria-label={`Pasek postępu w okresie ${periodStart}–${periodEnd}. Zdobyte ${series.doneTotal} z ${series.target} pkt, w tym ${completePoints} pkt z kompletnych wpisów. Minęło ${Math.round(timePct)}% okresu.`}
     >
-      <div className="relative pt-5">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-0.5 text-[11px] leading-4 text-slate-500">
+        <span className="font-bold text-slate-700">Postęp cyklu edukacyjnego</span>
+        <span>
+          Równe tempo na dziś: <strong className="text-slate-800">{Math.round(series.targetToday)} pkt</strong>
+        </span>
+      </div>
+
+      <div className="relative pt-6">
         <div
-          className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[11px] font-bold text-slate-900"
+          className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[10px] font-extrabold text-slate-900 shadow-sm ring-1 ring-slate-200"
           style={{ left: `clamp(1rem, ${timePct}%, calc(100% - 1rem))` }}
         >
           dziś
         </div>
 
-        <div className="relative h-4 overflow-hidden rounded-full bg-slate-200 ring-1 ring-slate-200">
+        <div className="relative h-9 overflow-hidden rounded-xl bg-slate-100 max-h-6 ring-1 ring-slate-200/90 shadow-[inset_0_1px_2px_rgba(15,23,42,0.05)]">
           <div
             className="absolute inset-y-0 left-0 bg-blue-600"
             style={{ width: `${donePct}%` }}
           />
+          {completePct > 0 ? (
+            <div
+              className="absolute bottom-0 left-0 h-1.5 bg-emerald-500"
+              style={{ width: `${completePct}%` }}
+              aria-hidden="true"
+            />
+          ) : null}
           {gapPct > 0 ? (
             <div
-              className="absolute inset-y-0 bg-amber-100"
+              className="absolute inset-y-0 bg-amber-50"
               style={{
                 left: `${donePct}%`,
                 width: `${gapPct}%`,
                 backgroundImage:
-                  "repeating-linear-gradient(135deg, rgba(180,83,9,0.40) 0 2px, transparent 2px 6px)",
+                  "repeating-linear-gradient(135deg, rgba(217,119,6,0.36) 0 2px, transparent 2px 7px)",
               }}
             />
           ) : null}
           {donePct >= 12 ? (
             <span
-              className="absolute inset-y-0 left-2 flex items-center text-[9px] font-black text-white"
+              className="absolute inset-y-0 left-2 flex items-center text-[10px] font-black text-white"
               aria-hidden="true"
             >
               {Math.round(series.doneTotal)} pkt
             </span>
           ) : null}
-          {gapPct >= 14 ? (
+          {gapPct >= 13 ? (
             <span
-              className="absolute inset-y-0 flex items-center px-2 text-[9px] font-black text-amber-900"
+              className="absolute inset-y-0 flex items-center px-2 text-[10px] font-black text-amber-900"
               style={{ left: `${donePct}%` }}
               aria-hidden="true"
             >
-              luka {gapPoints}
+              {gapPoints} pkt
             </span>
           ) : null}
           <div
-            className="absolute -top-1 bottom-[-4px] w-[2px] bg-slate-950"
+            className="absolute -top-1.5 bottom-[-6px] w-[2px] bg-slate-950"
             style={{ left: `${timePct}%` }}
             aria-hidden="true"
           />
         </div>
 
-        <div className="mt-1 flex items-center justify-between text-[11px] font-medium text-slate-400">
+        <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[10px] font-medium text-slate-400">
           <span>0 pkt</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 text-slate-500">
+              <span className="h-2 w-2 rounded-full bg-blue-600" aria-hidden="true" />
+              zdobyte
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-emerald-700">
+              <span className="h-1.5 w-3 rounded-full bg-emerald-500" aria-hidden="true" />
+              kompletne {Math.round(completePoints)} pkt
+            </span>
+            {gapPoints > 0 ? (
+              <span className="inline-flex items-center gap-1.5 text-amber-800">
+                <span className="h-2 w-2 rounded-sm bg-amber-100 ring-1 ring-amber-300" aria-hidden="true" />
+                luka do tempa
+              </span>
+            ) : null}
+          </div>
           <span>{series.target} pkt</span>
         </div>
 
-        <div className="relative mt-0.5 h-4">
+        <div className="relative mt-1 h-4">
           {visibleYears.map((year) => {
             const index = year - periodStart;
             const left = clamp(((index + 0.5) / years.length) * 100, 0, 100);
@@ -822,15 +862,15 @@ function PointsProgressBar({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-3 pl-4">
+      <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+        <div className="relative overflow-hidden rounded-2xl border border-blue-100 bg-blue-50/35 px-3.5 py-3.5 pl-4">
           <span className="absolute inset-y-0 left-0 w-1 bg-blue-600" aria-hidden="true" />
           <div className="text-[11px] font-semibold text-slate-600">Zebrane</div>
           <div className="mt-1 text-[24px] font-black leading-none tracking-[-0.04em] text-blue-700">
             {series.doneTotal}
             <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
           </div>
-          <div className="mt-1 text-[11px] leading-4 text-slate-500">
+          <div className="mt-1.5 text-[11px] leading-4 text-slate-500">
             {Math.round(donePct)}% celu {series.target} pkt
             <span className="mt-0.5 block font-bold text-emerald-700">
               {Math.round(completePoints)} pkt z kompletnych wpisów
@@ -838,7 +878,7 @@ function PointsProgressBar({
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-3 pl-4">
+        <div className={`relative overflow-hidden rounded-2xl border px-3.5 py-3.5 pl-4 ${gapPoints > 0 ? "border-amber-100 bg-amber-50/40" : "border-emerald-100 bg-emerald-50/35"}`}>
           <span
             className={`absolute inset-y-0 left-0 w-1 ${gapPoints > 0 ? "bg-amber-400" : "bg-emerald-500"}`}
             aria-hidden="true"
@@ -854,7 +894,7 @@ function PointsProgressBar({
             {gapPoints > 0 ? gapPoints : Math.round(series.doneTotal - series.targetToday)}
             <span className="ml-1 text-xs font-semibold opacity-60">pkt</span>
           </div>
-          <div className="mt-1 text-[11px] leading-4 text-slate-500">
+          <div className="mt-1.5 text-[11px] leading-4 text-slate-500">
             {gapPoints > 0
               ? perMonth
                 ? `Do wyrównania ≈ ${perMonth} pkt / mies.`
@@ -863,14 +903,14 @@ function PointsProgressBar({
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-3 pl-4">
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/65 px-3.5 py-3.5 pl-4">
           <span className="absolute inset-y-0 left-0 w-1 bg-slate-300" aria-hidden="true" />
           <div className="text-[11px] font-semibold text-slate-600">Pozostaje</div>
           <div className="mt-1 text-[24px] font-black leading-none tracking-[-0.04em] text-slate-950">
             {leftPoints}
             <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
           </div>
-          <div className="mt-1 text-[11px] leading-4 text-slate-500">
+          <div className="mt-1.5 text-[11px] leading-4 text-slate-500">
             {leftPoints === 0
               ? "Cel osiągnięty"
               : pointsPerYear
@@ -2001,7 +2041,7 @@ export default function CalculatorClient() {
                     <div
                       role="group"
                       aria-label="Widok wykresu"
-                      className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5"
+                      className="inline-flex rounded-xl border border-slate-200 bg-[#f7f8fa] p-1 shadow-[inset_0_1px_2px_rgba(15,23,42,0.03)]"
                     >
                       {(
                         [
@@ -2043,56 +2083,64 @@ export default function CalculatorClient() {
                         yearsLeft={pace ? pace.yearsLeft : null}
                         completePoints={completePoints}
                       />
-                      <p className="mt-2 px-1 text-[12px] leading-[18px] text-slate-500">
-                        Pasek pokazuje ten sam okres co przebieg: kolor to punkty zdobyte, pole
-                        zakreskowane to luka do równego tempa na dziś.
+                      <p className="mt-2 px-2 text-[12px] leading-[18px] text-slate-500">
+                        Niebieski pokazuje zdobyte punkty, zielona krawędź — część z kompletnych wpisów, a pole zakreskowane — lukę do równego tempa na dziś.
                       </p>
                     </div>
                   ) : (
-                  <>
-                    <div
-                      className="overflow-x-auto pb-1"
-                      role="region"
-                      aria-label="Wykres punktów w czasie"
-                      tabIndex={0}
-                    >
-                      <PointsAccrualChart
-                        series={accrualSeries}
-                        periodStart={periodStart}
-                        periodEnd={periodEnd}
-                      />
-                    </div>
-                    <div className="-mt-1 flex flex-wrap gap-x-4 gap-y-1.5 pl-9 text-[12px] font-medium leading-5 text-slate-600">
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="h-[3px] w-3.5 rounded-full bg-blue-600" aria-hidden="true" />
-                        zdobyte
-                      </span>
-                      {accrualSeries.plannedTotal > accrualSeries.doneTotal ? (
-                        <span className="inline-flex items-center gap-1.5">
+                    <div className="px-2 pb-1 pt-2">
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] leading-4 text-slate-500">
+                        <span className="font-bold text-slate-700">Przebieg punktów</span>
+                        <span>
+                          Równe tempo na dziś: <strong className="text-slate-800">{Math.round(accrualSeries.targetToday)} pkt</strong>
+                        </span>
+                      </div>
+
+                      <div className="rounded-2xl border border-slate-200/90 bg-[linear-gradient(180deg,#fbfcff_0%,#ffffff_100%)] px-1.5 pb-1 pt-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                        <div
+                          className="overflow-x-auto pb-1"
+                          role="region"
+                          aria-label="Wykres punktów w czasie"
+                          tabIndex={0}
+                        >
+                          <PointsAccrualChart
+                            series={accrualSeries}
+                            periodStart={periodStart}
+                            periodEnd={periodEnd}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 flex flex-wrap gap-2 pl-9 text-[12px] font-medium leading-5 text-slate-600">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-blue-800 ring-1 ring-blue-100">
+                          <span className="h-[3px] w-3.5 rounded-full bg-blue-600" aria-hidden="true" />
+                          zdobyte
+                        </span>
+                        {accrualSeries.plannedTotal > accrualSeries.doneTotal ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-sky-800 ring-1 ring-sky-100">
+                            <span
+                              className="h-0 w-3.5 border-t-2 border-dashed border-sky-500"
+                              aria-hidden="true"
+                            />
+                            z planem (+{Math.round(accrualSeries.plannedTotal - accrualSeries.doneTotal)} pkt)
+                          </span>
+                        ) : null}
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-slate-600 ring-1 ring-slate-200">
                           <span
-                            className="h-0 w-3.5 border-t-2 border-dashed border-blue-600"
+                            className="h-0 w-3.5 border-t-2 border-dashed border-slate-400"
                             aria-hidden="true"
                           />
-                          z planem (+
-                          {Math.round(accrualSeries.plannedTotal - accrualSeries.doneTotal)} pkt)
+                          równe tempo
                         </span>
-                      ) : null}
-                      <span className="inline-flex items-center gap-1.5">
-                        <span
-                          className="h-0 w-3.5 border-t-2 border-dashed border-slate-400"
-                          aria-hidden="true"
-                        />
-                        równe tempo
-                      </span>
+                      </div>
+
+                      <p className="mt-2.5 px-2 text-[12px] leading-[18px] text-slate-500">
+                        {accrualSeries.usesApproximateDoneDates
+                          ? "Wpisy z dokładną datą są pokazane w tym dniu; starsze wpisy zapisane tylko z rokiem — w jego połowie. "
+                          : "Ukończone wpisy są pokazane według zapisanych dat. "}
+                        Schodki pokazują rzeczywiste momenty zdobywania punktów. Linia równomiernego tempa służy wyłącznie planowaniu i nie zmienia zasad właściwych dla Twojego zawodu ani okresu.
+                      </p>
                     </div>
-                    <p className="mt-2 px-2 text-[12px] leading-[18px] text-slate-500">
-                      {accrualSeries.usesApproximateDoneDates
-                        ? "Wpisy z dokładną datą są pokazane w tym dniu; starsze wpisy zapisane tylko z rokiem — w jego połowie. "
-                        : "Ukończone wpisy są pokazane według zapisanych dat. "}
-                      Linia równomiernego tempa służy wyłącznie planowaniu i nie zmienia zasad
-                      właściwych dla Twojego zawodu ani okresu.
-                    </p>
-                  </>
                   )
                 ) : (
                   <div className="flex h-[190px] items-center justify-center px-6 text-center text-[13px] leading-5 text-slate-500">
@@ -2101,7 +2149,7 @@ export default function CalculatorClient() {
                 )}
               </div>
 
-              <div className="flex flex-col justify-center gap-2 border-t border-slate-100 p-4 lg:border-l lg:border-t-0">
+              <div className="flex flex-col justify-center gap-2 border-t border-slate-100 bg-[#fafbfc] p-4 lg:border-l lg:border-t-0">
                 <p className="text-xs font-bold text-slate-600">
                   {nextSteps[0]?.priority === "high" ? "Najpierw to" : "Co dalej"}
                 </p>
