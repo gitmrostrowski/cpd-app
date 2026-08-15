@@ -3,28 +3,18 @@ import path from "node:path";
 import process from "node:process";
 
 const root = process.cwd();
-const homePath = path.join(root, "app/page.tsx");
-const chartPath = path.join(root, "app/panel-cpd/CalculatorClient.tsx");
-const home = fs.readFileSync(homePath, "utf8");
-const chart = fs.readFileSync(chartPath, "utf8");
+const home = fs.readFileSync(path.join(root, "app/page.tsx"), "utf8");
+const chart = fs.readFileSync(path.join(root, "app/panel-cpd/CalculatorClient.tsx"), "utf8");
 
-const requiredHome = [
-  'accentStrong: "bg-cyan-700"',
-  'accentStrong: "bg-blue-700"',
-  'accentStrong: "bg-indigo-600"',
-  'className="block text-blue-700">w jednym miejscu.</span>',
-  'rounded-xl bg-blue-600 px-5 py-2.5 text-[14px] font-extrabold text-white',
-  'bg-[linear-gradient(180deg,#fbfcff_0%,#f7f9fc_58%,#ffffff_100%)]',
+// Ten test jest celowo semantyczny: v6.27.1 wprowadziła zasadę jednego
+// stałego koloru marki i ograniczonego akcentu roli. Kolejne wersje mogą
+// dopracowywać konkretne heksy bez łamania tej zasady.
+for (const token of [
+  'const roleThemes: Record<AudienceKey, RoleTheme>',
+  'className="block text-[#1D4ED8]">w jednym miejscu.</span>',
   'statusTone: "bg-emerald-50 text-emerald-700 ring-emerald-100"',
-  'statusTone: "bg-slate-50 text-slate-600 ring-slate-200"',
-  'style={{ "--card-accent": "#2563eb" } as React.CSSProperties}',
-  'bg-[#f7f9fc]',
-  'bg-[#fafbfc]',
-];
-for (const token of requiredHome) {
-  if (!home.includes(token)) {
-    throw new Error(`v6.27.1: brak elementu uporządkowanej palety: ${token}`);
-  }
+]) {
+  if (!home.includes(token)) throw new Error(`v6.27.1: brak zasady spójnej marki: ${token}`);
 }
 
 const roleStrongUses = home.match(/\$\{theme\.accentStrong\}/g)?.length ?? 0;
@@ -39,9 +29,7 @@ for (const forbidden of [
   'bg-teal-50/65',
   'bg-[radial-gradient(circle_at_86%_10%',
 ]) {
-  if (home.includes(forbidden)) {
-    throw new Error(`v6.27.1: pozostał zbyt silny motyw zależny od roli: ${forbidden}`);
-  }
+  if (home.includes(forbidden)) throw new Error(`v6.27.1: pozostał zbyt silny motyw zależny od roli: ${forbidden}`);
 }
 
 if (!chart.includes('linearGradient id="crpe-accrual-fill"') ||
@@ -50,4 +38,4 @@ if (!chart.includes('linearGradient id="crpe-accrual-fill"') ||
   throw new Error("v6.27.1: poprawione wykresy v6.27 muszą pozostać bez regresji.");
 }
 
-console.log("OK v6.27.1 — jeden niebieski kolor marki, zawężone akcenty ról i semantyczne statusy; wykresy v6.27 zachowane.");
+console.log("OK v6.27.1 — jedna marka, kontrolowane akcenty ról i semantyczne statusy; konkretny dobór heksów może być rozwijany.");

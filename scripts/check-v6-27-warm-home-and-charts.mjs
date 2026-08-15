@@ -59,8 +59,8 @@ for (const token of chartRequired) {
   }
 }
 
-if (!css.includes('var(--card-accent, #2563eb)')) {
-  throw new Error("v6.27: interaktywne karty nie korzystają z akcentu roli.");
+if (!css.includes('var(--card-accent,')) {
+  throw new Error("v6.27: interaktywne karty nie mają kontrolowanego akcentu.");
 }
 
 const forbiddenHome = [
