@@ -14,9 +14,6 @@ const css = fs.readFileSync(cssPath, "utf8");
 const homeRequired = [
   'import Image from "next/image"',
   'const roleThemes: Record<AudienceKey, RoleTheme>',
-  'accentStrong: "bg-teal-600"',
-  'accentStrong: "bg-blue-600"',
-  'accentStrong: "bg-violet-600"',
   'image: "/home/role-medyk.webp"',
   'image: "/home/role-placowka.webp"',
   'image: "/home/role-organizator.webp"',
@@ -76,4 +73,4 @@ for (const token of forbiddenHome) {
   }
 }
 
-console.log("OK v6.27 — ocieplona strona główna, role kolorystyczne i poprawione wykresy Panelu CPD są obecne bez zewnętrznej biblioteki wykresowej.");
+console.log("OK v6.27 — ocieplona strona główna, ilustracje ról i poprawione wykresy Panelu CPD są obecne bez zewnętrznej biblioteki wykresowej.");

@@ -58,7 +58,8 @@
     "check:v6.26.2": "node scripts/check-v6-26-2-panel-readability.mjs",
     "check:v6.26.3": "node scripts/check-v6-26-3-nil-test-fixtures.mjs",
     "check:v6.26.4": "node scripts/check-v6-26-4-admin-training-cards.mjs",
-    "check:v6.27": "node scripts/check-v6-27-warm-home-and-charts.mjs"
+    "check:v6.27": "node scripts/check-v6-27-warm-home-and-charts.mjs",
+    "check:v6.27.1": "node scripts/check-v6-27-1-brand-palette.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",
