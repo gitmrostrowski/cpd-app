@@ -93,7 +93,7 @@ const roleThemes: Record<AudienceKey, RoleTheme> = {
     ctaStrong: "bg-crpe-brand",
     ctaHover: "hover:bg-crpe-brand-hover",
     ctaShadow: "shadow-[0_12px_26px_rgba(29,78,216,0.22)]",
-    iconShadow: "shadow-[0_8px_20px_rgba(109,57,103,0.14)]",
+    iconShadow: "shadow-[0_8px_20px_rgba(67,71,77,0.14)]",
     mediaBackground: "bg-crpe-organizator-soft",
   },
 };
@@ -189,7 +189,7 @@ function SectionHeading({
       <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-crpe-muted">
         {eyebrow}
       </p>
-      <h2 className="mt-2 text-[27px] font-black leading-[1.1] tracking-[-0.035em] text-crpe-ink sm:mt-3 sm:text-[37px]">
+      <h2 className="mt-2 text-[22px] font-extrabold leading-[1.15] tracking-[-0.025em] text-crpe-ink sm:mt-3 sm:text-[28px]">
         {title}
       </h2>
       {text ? (
@@ -432,7 +432,7 @@ function RolePicker({
             onClick={() => onSelect(key)}
             className={`crpe-role-button group relative flex min-w-0 w-full items-center justify-center gap-2 rounded-[13px] px-2 py-2.5 text-[11px] font-extrabold outline-none sm:px-4 sm:py-3 sm:text-[14px] ${
               isSelected
-                ? `${theme.accentSoft} ${theme.accentText} ring-1 ${theme.accentRing} shadow-[0_8px_20px_rgba(23,26,33,0.06)]`
+                ? `${theme.accentSoft} ${theme.accentText} shadow-[0_8px_20px_rgba(23,26,33,0.06)]`
                 : "bg-white text-crpe-muted hover:bg-crpe-surface hover:text-crpe-ink focus-visible:ring-2 focus-visible:ring-crpe-line focus-visible:ring-offset-2"
             }`}
           >
@@ -440,11 +440,6 @@ function RolePicker({
               <Icon className={`h-4 w-4 shrink-0 transition-colors duration-200 ${isSelected ? theme.accentText : "text-slate-500 group-hover:text-crpe-muted"}`} />
             </span>
             <span className="truncate">{mobileLabel}</span>
-            {isSelected ? (
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/70" aria-hidden="true">
-                <Check className={`h-3 w-3 ${theme.accentText}`} strokeWidth={3} />
-              </span>
-            ) : null}
           </button>
         );
       })}
@@ -522,7 +517,7 @@ function Hero({
               CRPE dla medyków i organizacji
             </div>
 
-            <h1 className="crpe-hero-in mt-4 max-w-[590px] text-[35px] font-black leading-[1.02] tracking-[-0.046em] text-crpe-ink sm:mt-5 sm:text-[48px] lg:text-[54px] [--hero-delay:110ms]">
+            <h1 className="crpe-hero-in mt-4 max-w-[560px] text-[32px] font-extrabold leading-[1.06] tracking-[-0.03em] text-crpe-ink sm:mt-5 sm:text-[40px] lg:text-[44px] [--hero-delay:110ms]">
               <span className="block">Punkty edukacyjne</span>
               <span className="block">i certyfikaty</span>
               <span className="block">
@@ -549,7 +544,7 @@ function Hero({
                 </span>
               </div>
 
-              <h2 className="mt-2.5 max-w-[580px] text-[22px] font-black leading-[1.18] tracking-[-0.03em] text-crpe-ink sm:text-[25px]">
+              <h2 className="mt-2.5 max-w-[560px] text-[19px] font-extrabold leading-[1.2] tracking-[-0.02em] text-crpe-ink sm:text-[22px]">
                 {active.title}
               </h2>
               <p className="mt-2 max-w-[590px] text-[14px] leading-6 text-crpe-muted sm:text-[15px]">
@@ -641,7 +636,7 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
   return (
     <section
       id="dla-kogo"
-      className="relative scroll-mt-24 overflow-hidden bg-crpe-surface py-16 sm:py-20"
+      className="relative scroll-mt-24 overflow-hidden bg-crpe-surface py-12 sm:py-16"
     >
       <div className="pointer-events-none absolute -left-32 top-12 h-72 w-72 rounded-full bg-slate-100/70 blur-3xl" />
       <div className="pointer-events-none absolute -right-32 bottom-10 h-72 w-72 rounded-full bg-crpe-placowka-soft/45 blur-3xl" />
@@ -764,7 +759,7 @@ function ProductToolsSection() {
   ];
 
   return (
-    <section id="narzedzia" className="scroll-mt-24 bg-crpe-surface py-16 sm:py-20">
+    <section id="narzedzia" className="scroll-mt-24 bg-crpe-surface py-12 sm:py-16">
       <div className={pageWrap}>
         <Reveal>
           <SectionHeading
@@ -967,7 +962,7 @@ function HowItWorks({ selected }: { selected: AudienceKey }) {
   const active = variants[selected];
 
   return (
-    <section id="jak-to-dziala" className="scroll-mt-24 bg-white py-16 sm:py-20">
+    <section id="jak-to-dziala" className="scroll-mt-24 bg-white py-12 sm:py-16">
       <div className={pageWrap}>
         <Reveal>
           <SectionHeading eyebrow="Jak to działa" title={active.title} text={active.text} centered />
@@ -1039,7 +1034,7 @@ function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"
   const theme = roleThemes[selected];
 
   return (
-    <section className="bg-crpe-surface py-16 sm:py-20">
+    <section className="bg-crpe-surface py-12 sm:py-16">
       <div className={pageWrap}>
         <SectionHeading eyebrow={active.eyebrow} title={active.title} text={active.text} centered />
         <div key={selected} className="crpe-role-swap mx-auto mt-9 grid max-w-[980px] gap-4 md:grid-cols-2 sm:mt-11">
@@ -1177,7 +1172,7 @@ function FaqSection() {
   ];
 
   return (
-    <section id="faq" className={`${pageWrap} scroll-mt-24 py-16 sm:py-20`}>
+    <section id="faq" className={`${pageWrap} scroll-mt-24 py-12 sm:py-16`}>
       <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-8">
         <Reveal>
           <div>
