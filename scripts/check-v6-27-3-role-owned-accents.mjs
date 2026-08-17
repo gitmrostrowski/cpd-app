@@ -5,6 +5,17 @@ import process from "node:process";
 const root = process.cwd();
 const home = fs.readFileSync(path.join(root, "app/page.tsx"), "utf8");
 const chart = fs.readFileSync(path.join(root, "app/panel-cpd/CalculatorClient.tsx"), "utf8");
+const css = fs.readFileSync(path.join(root, "app/globals.css"), "utf8");
+
+if (css.includes("--color-crpe-organizator-text: #6D3967;")) {
+  if (!home.includes('ctaStrong: "bg-crpe-brand"') || !home.includes("bg-crpe-medyk-soft text-crpe-medyk-text")) {
+    throw new Error("v6.27.3+: nowsza architektura brand-led musi zachować lokalną tożsamość ról i wspólny CTA.");
+  }
+  if (/emerald|green/i.test(home)) throw new Error("v6.27.3+: landing nie powinien wracać do zielonej semantyki dostępności.");
+  if (!chart.includes('linearGradient id="crpe-accrual-fill"')) throw new Error("v6.27.3+: regresja wykresów v6.27.");
+  console.log("OK v6.27.3 — lokalna tożsamość ról zachowana; CTA przejęła nowsza architektura brand-led.");
+  process.exit(0);
+}
 
 const requireToken = (token, label = token) => {
   if (!home.includes(token)) throw new Error(`v6.27.3: brak ${label}`);

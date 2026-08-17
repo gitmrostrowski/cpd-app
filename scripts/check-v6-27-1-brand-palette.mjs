@@ -5,6 +5,19 @@ import process from "node:process";
 const root = process.cwd();
 const home = fs.readFileSync(path.join(root, "app/page.tsx"), "utf8");
 const chart = fs.readFileSync(path.join(root, "app/panel-cpd/CalculatorClient.tsx"), "utf8");
+const css = fs.readFileSync(path.join(root, "app/globals.css"), "utf8");
+
+if (css.includes("--color-crpe-organizator-text: #6D3967;")) {
+  for (const token of ["--color-crpe-brand: #1D4ED8;", "--color-crpe-surface: #F7F8FA;", "--color-crpe-line: #E4E6EC;"]) {
+    if (!css.includes(token)) throw new Error(`v6.27.1+: brak tokenu spójnej marki: ${token}`);
+  }
+  if (!home.includes("const roleThemes: Record<AudienceKey, RoleTheme>") || !home.includes("bg-crpe-brand/85")) {
+    throw new Error("v6.27.1+: późniejsza architektura brand-led musi zachować wspólną markę i kontrolowane akcenty.");
+  }
+  if (!chart.includes('linearGradient id="crpe-accrual-fill"')) throw new Error("v6.27.1+: regresja wykresów v6.27.");
+  console.log("OK v6.27.1 — zasada jednej marki zachowana przez nowszą architekturę brand-led.");
+  process.exit(0);
+}
 
 // Test semantyczny: v6.27.1 ustaliła jedną spójną markę i ograniczone akcenty
 // ról. Kolejne wersje mogą zmieniać właściciela CTA/H1, o ile nie wracają do

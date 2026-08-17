@@ -1,5 +1,28 @@
 @import "tailwindcss";
 
+@theme {
+  --color-crpe-brand: #1D4ED8;
+  --color-crpe-brand-hover: #0F3CAB;
+  --color-crpe-brand-soft: #EFF4FE;
+  --color-crpe-brand-border: #CFDDFB;
+  --color-crpe-ink: #171A21;
+  --color-crpe-muted: #5C6270;
+  --color-crpe-surface: #F7F8FA;
+  --color-crpe-line: #E4E6EC;
+
+  --color-crpe-medyk-soft: #E2F6F6;
+  --color-crpe-medyk-border: #C6E6E6;
+  --color-crpe-medyk-text: #00595D;
+
+  --color-crpe-placowka-soft: #EFF4FE;
+  --color-crpe-placowka-border: #CFDDFB;
+  --color-crpe-placowka-text: #1D4ED8;
+
+  --color-crpe-organizator-soft: #FBEEF9;
+  --color-crpe-organizator-border: #EEDAEA;
+  --color-crpe-organizator-text: #6D3967;
+}
+
 :root {
   color-scheme: light;
 }
@@ -11,7 +34,7 @@ html {
 body {
   margin: 0;
   background: #ffffff;
-  color: #0f172a;
+  color: #171A21;
 }
 
 ::selection {
@@ -286,4 +309,9 @@ summary::-webkit-details-marker {
   @page {
     margin: 14mm;
   }
+}
+
+/* Landing page v6.27.4 — brand-led surfaces, role identity kept local. */
+.crpe-home-hero {
+  background: linear-gradient(180deg, var(--color-crpe-surface) 0%, #fff 100%);
 }

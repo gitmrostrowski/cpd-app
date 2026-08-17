@@ -60,46 +60,45 @@ type RoleTheme = {
 
 const roleThemes: Record<AudienceKey, RoleTheme> = {
   medyk: {
-    accentStrong: "bg-[#16656B]",
-    accentSoft: "bg-[#E7F0F0]",
-    accentText: "text-[#0E4448]",
-    accentRing: "ring-[#CFE1E2]",
-    accentBorder: "border-[#CFE1E2]",
-    ctaStrong: "bg-[#16656B]",
-    ctaHover: "hover:bg-[#0E4448]",
-    ctaShadow: "shadow-[0_12px_26px_rgba(22,101,107,0.22)]",
-    iconShadow: "shadow-[0_10px_24px_rgba(22,101,107,0.18)]",
-    mediaBackground: "bg-[linear-gradient(145deg,#F7F8FA_0%,#ffffff_62%,#F7F8FA_100%)]",
+    accentStrong: "bg-crpe-medyk-text",
+    accentSoft: "bg-crpe-medyk-soft",
+    accentText: "text-crpe-medyk-text",
+    accentRing: "ring-crpe-medyk-border",
+    accentBorder: "border-crpe-medyk-border",
+    ctaStrong: "bg-crpe-brand",
+    ctaHover: "hover:bg-crpe-brand-hover",
+    ctaShadow: "shadow-[0_12px_26px_rgba(29,78,216,0.22)]",
+    iconShadow: "shadow-[0_8px_20px_rgba(0,89,93,0.14)]",
+    mediaBackground: "bg-crpe-medyk-soft",
   },
   placowka: {
-    accentStrong: "bg-[#23528F]",
-    accentSoft: "bg-[#E9EEF7]",
-    accentText: "text-[#14355E]",
-    accentRing: "ring-[#D7E0EF]",
-    accentBorder: "border-[#D7E0EF]",
-    ctaStrong: "bg-[#23528F]",
-    ctaHover: "hover:bg-[#14355E]",
-    ctaShadow: "shadow-[0_12px_26px_rgba(35,82,143,0.22)]",
-    iconShadow: "shadow-[0_10px_24px_rgba(35,82,143,0.18)]",
-    mediaBackground: "bg-[linear-gradient(145deg,#F7F8FA_0%,#ffffff_62%,#F7F8FA_100%)]",
+    accentStrong: "bg-crpe-placowka-text",
+    accentSoft: "bg-crpe-placowka-soft",
+    accentText: "text-crpe-placowka-text",
+    accentRing: "ring-crpe-placowka-border",
+    accentBorder: "border-crpe-placowka-border",
+    ctaStrong: "bg-crpe-brand",
+    ctaHover: "hover:bg-crpe-brand-hover",
+    ctaShadow: "shadow-[0_12px_26px_rgba(29,78,216,0.22)]",
+    iconShadow: "shadow-[0_8px_20px_rgba(29,78,216,0.14)]",
+    mediaBackground: "bg-crpe-placowka-soft",
   },
   organizator: {
-    accentStrong: "bg-[#4A5170]",
-    accentSoft: "bg-[#EDEEF3]",
-    accentText: "text-[#2E3247]",
-    accentRing: "ring-[#DBDDE6]",
-    accentBorder: "border-[#DBDDE6]",
-    ctaStrong: "bg-[#2E3247]",
-    ctaHover: "hover:bg-[#24283A]",
-    ctaShadow: "shadow-[0_12px_26px_rgba(46,50,71,0.22)]",
-    iconShadow: "shadow-[0_10px_24px_rgba(74,81,112,0.18)]",
-    mediaBackground: "bg-[linear-gradient(145deg,#F7F8FA_0%,#ffffff_62%,#F7F8FA_100%)]",
+    accentStrong: "bg-crpe-organizator-text",
+    accentSoft: "bg-crpe-organizator-soft",
+    accentText: "text-crpe-organizator-text",
+    accentRing: "ring-crpe-organizator-border",
+    accentBorder: "border-crpe-organizator-border",
+    ctaStrong: "bg-crpe-brand",
+    ctaHover: "hover:bg-crpe-brand-hover",
+    ctaShadow: "shadow-[0_12px_26px_rgba(29,78,216,0.22)]",
+    iconShadow: "shadow-[0_8px_20px_rgba(109,57,103,0.14)]",
+    mediaBackground: "bg-crpe-organizator-soft",
   },
 };
-
 const pageWrap = "mx-auto w-full max-w-[1180px] px-4 sm:px-6 lg:px-8";
 const panel =
-  "rounded-[20px] border border-[#E4E6EC] bg-white shadow-[0_16px_45px_rgba(15,45,75,0.065)]";
+  "rounded-[20px] border border-crpe-line bg-white shadow-[0_16px_45px_rgba(15,45,75,0.065)]";
 
 function Reveal({
   children,
@@ -119,7 +118,7 @@ const audiences: AudienceOption[] = [
     shortLabel: "Prowadzę własną ewidencję",
     icon: Stethoscope,
     status: "Dostępne teraz",
-    statusTone: "bg-[#E7F0F0] text-[#0E4448] ring-[#CFE1E2]",
+    statusTone: "bg-crpe-medyk-soft text-crpe-medyk-text ring-crpe-medyk-border",
     title: "Prowadź własną ewidencję bez arkuszy i osobnych folderów.",
     description:
       "Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj aktualny status w jednym panelu.",
@@ -139,7 +138,7 @@ const audiences: AudienceOption[] = [
     shortLabel: "Wspieram zespół",
     icon: Building2,
     status: "Fundament dostępny",
-    statusTone: "bg-[#E9EEF7] text-[#14355E] ring-[#D7E0EF]",
+    statusTone: "bg-crpe-placowka-soft text-crpe-placowka-text ring-crpe-placowka-border",
     title: "Zbuduj strukturę placówki i uporządkuj dostęp zespołu.",
     description:
       "Struktura placówki, zaproszenia i role są dostępne już dziś. Zbiorczy status zespołu, raporty i alerty są rozwijane.",
@@ -159,7 +158,7 @@ const audiences: AudienceOption[] = [
     shortLabel: "Organizuję szkolenia",
     icon: UserRound,
     status: "Zgłoszenia dostępne",
-    statusTone: "bg-[#EDEEF3] text-[#2E3247] ring-[#DBDDE6]",
+    statusTone: "bg-crpe-organizator-soft text-crpe-organizator-text ring-crpe-organizator-border",
     title: "Opublikuj szkolenie i skieruj użytkowników do zapisów.",
     description:
       "Możesz zgłosić szkolenie do publicznej bazy i zaprezentować dane wydarzenia, logo oraz link do zapisów. Dalszy zakres rozwijamy.",
@@ -187,14 +186,14 @@ function SectionHeading({
 }) {
   return (
     <div className={centered ? "mx-auto max-w-3xl text-center" : "max-w-2xl"}>
-      <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#5C6270]">
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-crpe-muted">
         {eyebrow}
       </p>
-      <h2 className="mt-2 text-[27px] font-black leading-[1.1] tracking-[-0.035em] text-[#171A21] sm:mt-3 sm:text-[37px]">
+      <h2 className="mt-2 text-[27px] font-black leading-[1.1] tracking-[-0.035em] text-crpe-ink sm:mt-3 sm:text-[37px]">
         {title}
       </h2>
       {text ? (
-        <p className="mt-3 text-[15px] leading-6 text-[#5C6270] sm:mt-4 sm:text-[16px] sm:leading-7">
+        <p className="mt-3 text-[15px] leading-6 text-crpe-muted sm:mt-4 sm:text-[16px] sm:leading-7">
           {text}
         </p>
       ) : null}
@@ -206,26 +205,26 @@ function Metric({
   icon: Icon,
   label,
   value,
-  tone,
+  tone = "neutral",
 }: {
   icon: typeof FileCheck2;
   label: string;
   value: string;
-  tone: "medyk" | "amber";
+  tone?: "brand" | "neutral";
 }) {
   const toneClass =
-    tone === "medyk"
-      ? "bg-[#E7F0F0] text-[#16656B] ring-1 ring-[#CFE1E2]"
-      : "bg-amber-50 text-amber-700 ring-1 ring-amber-100";
+    tone === "brand"
+      ? "bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border"
+      : "bg-white text-crpe-muted ring-1 ring-crpe-line";
   return (
-    <div className="rounded-2xl border border-[#E4E6EC] p-3.5">
+    <div className="rounded-2xl border border-crpe-line bg-white p-3.5">
       <div className="flex items-center gap-3">
         <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${toneClass}`}>
           <Icon className="h-4 w-4" />
         </span>
         <div>
-          <p className="text-[11px] font-bold text-slate-400">{label}</p>
-          <p className="text-sm font-extrabold text-[#171A21]">{value}</p>
+          <p className="text-[11px] font-bold text-crpe-muted">{label}</p>
+          <p className="text-sm font-extrabold text-crpe-ink">{value}</p>
         </div>
       </div>
     </div>
@@ -235,31 +234,31 @@ function Metric({
 function MedykDashboard() {
   return (
     <>
-      <div className="rounded-2xl border border-[#CFE1E2] bg-[#F3F8F8] p-4">
+      <div className="rounded-2xl border border-crpe-line bg-crpe-surface p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[11px] font-bold text-[#5C6270]">Twój postęp</p>
-            <p className="mt-1 text-[28px] font-black tracking-tight text-[#171A21]">
-              110 <span className="text-sm font-bold text-[#5C6270]">/ 200 pkt</span>
+            <p className="text-[11px] font-bold text-crpe-muted">Twój postęp</p>
+            <p className="mt-1 text-[28px] font-black tracking-tight text-crpe-ink">
+              110 <span className="text-sm font-bold text-crpe-muted">/ 200 pkt</span>
             </p>
           </div>
-          <div className="rounded-xl bg-[#E7F0F0] px-3 py-2 text-right shadow-sm ring-1 ring-[#CFE1E2]">
-            <p className="text-[10px] font-bold text-[#5C6270]">Brakuje</p>
-            <p className="text-sm font-black text-[#16656B]">90 pkt</p>
+          <div className="rounded-xl bg-crpe-brand-soft px-3 py-2 text-right ring-1 ring-crpe-brand-border">
+            <p className="text-[10px] font-bold text-crpe-muted">Brakuje</p>
+            <p className="text-sm font-black text-crpe-brand">90 pkt</p>
           </div>
         </div>
-        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-[#E7F0F0] ring-1 ring-[#CFE1E2]">
-          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-[#16656B]" />
+        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-crpe-brand-soft ring-1 ring-crpe-brand-border">
+          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-crpe-brand" />
         </div>
-        <div className="mt-2 flex justify-between text-[11px] font-semibold text-[#5C6270]">
+        <div className="mt-2 flex justify-between text-[11px] font-semibold text-crpe-muted">
           <span>55% celu</span>
           <span>2025–2028</span>
         </div>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3">
-        <Metric icon={FileCheck2} label="Certyfikaty" value="18 dokumentów" tone="medyk" />
-        <Metric icon={ClipboardCheck} label="Braki" value="2 aktywności" tone="amber" />
+        <Metric icon={FileCheck2} label="Certyfikaty" value="18 dokumentów" tone="brand" />
+        <Metric icon={ClipboardCheck} label="Do uzupełnienia" value="2 aktywności" />
       </div>
     </>
   );
@@ -268,13 +267,13 @@ function MedykDashboard() {
 function PlacowkaDashboard() {
   return (
     <>
-      <div className="rounded-2xl border border-[#D7E0EF] bg-[#F4F6FA] p-4">
+      <div className="rounded-2xl border border-crpe-line bg-crpe-surface p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-bold text-[#5C6270]">Panel placówki</p>
-            <p className="mt-1 text-[17px] font-black text-[#171A21]">Struktura i dostęp zespołu</p>
+            <p className="text-[11px] font-bold text-crpe-muted">Panel placówki</p>
+            <p className="mt-1 text-[17px] font-black text-crpe-ink">Struktura i dostęp zespołu</p>
           </div>
-          <span className="rounded-full bg-[#E9EEF7] px-2.5 py-1 text-[10px] font-extrabold text-[#14355E] ring-1 ring-[#D7E0EF]">
+          <span className="rounded-full bg-crpe-placowka-soft px-2.5 py-1 text-[10px] font-extrabold text-crpe-placowka-text ring-1 ring-crpe-placowka-border">
             Dostępne
           </span>
         </div>
@@ -286,13 +285,13 @@ function PlacowkaDashboard() {
           ["Zaproszenia e-mail", "Dostęp dla wskazanej osoby"],
           ["Role i członkostwa", "Uprawnienia w zespole"],
         ].map(([name, description]) => (
-          <div key={name} className="crpe-row-in flex items-center gap-3 rounded-2xl border border-[#E4E6EC] bg-[#F7F8FA] p-3.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#E9EEF7] text-[#23528F] ring-1 ring-[#D7E0EF]">
+          <div key={name} className="crpe-row-in flex items-center gap-3 rounded-2xl border border-crpe-line bg-white p-3.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border">
               <CheckCircle2 className="h-4 w-4" />
             </span>
             <div>
-              <p className="text-[13px] font-extrabold text-[#171A21]">{name}</p>
-              <p className="mt-0.5 text-[10px] text-[#5C6270]">{description}</p>
+              <p className="text-[13px] font-extrabold text-crpe-ink">{name}</p>
+              <p className="mt-0.5 text-[10px] text-crpe-muted">{description}</p>
             </div>
           </div>
         ))}
@@ -308,13 +307,13 @@ function PlacowkaDashboard() {
 function OrganizatorDashboard() {
   return (
     <>
-      <div className="rounded-2xl border border-[#DBDDE6] bg-[#F6F6F8] p-4">
+      <div className="rounded-2xl border border-crpe-line bg-crpe-surface p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-bold text-[#5C6270]">Publiczna baza szkoleń</p>
-            <p className="mt-1 text-[17px] font-black text-[#171A21]">Zgłoś wydarzenie do publikacji</p>
+            <p className="text-[11px] font-bold text-crpe-muted">Publiczna baza szkoleń</p>
+            <p className="mt-1 text-[17px] font-black text-crpe-ink">Zgłoś wydarzenie do publikacji</p>
           </div>
-          <span className="rounded-full bg-[#EDEEF3] px-2.5 py-1 text-[10px] font-extrabold text-[#2E3247] ring-1 ring-[#DBDDE6]">
+          <span className="rounded-full bg-crpe-organizator-soft px-2.5 py-1 text-[10px] font-extrabold text-crpe-organizator-text ring-1 ring-crpe-organizator-border">
             Dostępne
           </span>
         </div>
@@ -325,13 +324,13 @@ function OrganizatorDashboard() {
           ["Organizator", "Nazwa i logo po publikacji"],
           ["Zapisy", "Bezpośredni link do organizatora"],
         ].map(([name, description]) => (
-          <div key={name} className="crpe-row-in flex items-center gap-3 rounded-2xl border border-[#E4E6EC] bg-[#F7F8FA] p-3.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#EDEEF3] text-[#4A5170] ring-1 ring-[#DBDDE6]">
+          <div key={name} className="crpe-row-in flex items-center gap-3 rounded-2xl border border-crpe-line bg-white p-3.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border">
               <CheckCircle2 className="h-4 w-4" />
             </span>
             <div>
-              <p className="text-[13px] font-extrabold text-[#171A21]">{name}</p>
-              <p className="mt-0.5 text-[10px] text-[#5C6270]">{description}</p>
+              <p className="text-[13px] font-extrabold text-crpe-ink">{name}</p>
+              <p className="mt-0.5 text-[10px] text-crpe-muted">{description}</p>
             </div>
           </div>
         ))}
@@ -352,10 +351,10 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
       className="crpe-hero-panel relative mx-auto hidden w-full max-w-[570px] lg:block"
       aria-live="polite"
     >
-      <div className="pointer-events-none absolute -right-10 -top-8 h-40 w-40 rounded-full bg-[#E4E6EC]/55 blur-3xl" />
+      <div className="pointer-events-none absolute -right-10 -top-8 h-40 w-40 rounded-full bg-crpe-line/55 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-10 -left-8 h-44 w-44 rounded-full bg-slate-100/65 blur-3xl" />
 
-      <div className="crpe-dashboard-shell relative overflow-hidden rounded-[26px] border border-[#E4E6EC] bg-white/95 shadow-[0_30px_78px_rgba(37,51,65,0.14)]">
+      <div className="crpe-dashboard-shell relative overflow-hidden rounded-[26px] border border-crpe-line bg-white/95 shadow-[0_30px_78px_rgba(37,51,65,0.14)]">
         <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white ${theme.accentStrong} ${theme.iconShadow}`}>
@@ -368,10 +367,10 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
               )}
             </span>
             <div className="min-w-0">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#5C6270]">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-crpe-muted">
                 Podgląd CRPE
               </p>
-              <p className="mt-0.5 truncate text-[15px] font-black text-[#171A21]">
+              <p className="mt-0.5 truncate text-[15px] font-black text-crpe-ink">
                 {active.label}
               </p>
             </div>
@@ -387,22 +386,22 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
           {selected === "organizator" ? <OrganizatorDashboard /> : null}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-slate-100 bg-[#F7F8FA] px-5 py-3.5">
-          <p className="max-w-[310px] text-[12px] font-semibold leading-5 text-[#5C6270]">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-slate-100 bg-crpe-surface px-5 py-3.5">
+          <p className="max-w-[310px] text-[12px] font-semibold leading-5 text-crpe-muted">
             Zobacz dokładnie, czym różni się zakres CRPE dla wybranej roli.
           </p>
           <div className="flex flex-wrap items-center gap-2">
             {selected !== "medyk" ? (
               <Link
                 href="/bezpieczenstwo"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[#E4E6EC] bg-white px-3.5 py-2 text-[12px] font-extrabold text-[#5C6270] transition hover:border-slate-300 hover:bg-[#F7F8FA]"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-crpe-line bg-white px-3.5 py-2 text-[12px] font-extrabold text-crpe-muted transition hover:border-slate-300 hover:bg-crpe-surface"
               >
                 Jak chronimy dane zespołu
               </Link>
             ) : null}
             <Link
               href={active.detailsHref}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[#E4E6EC] bg-white px-3.5 py-2 text-[12px] font-extrabold text-[#171A21] transition hover:bg-[#F7F8FA]"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-crpe-line bg-white px-3.5 py-2 text-[12px] font-extrabold text-crpe-ink transition hover:bg-crpe-surface"
             >
               Dowiedz się więcej <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -421,7 +420,7 @@ function RolePicker({
   onSelect: (key: AudienceKey) => void;
 }) {
   return (
-    <div className="crpe-role-picker grid w-full grid-cols-3 gap-1 rounded-[18px] border border-[#E4E6EC] bg-white/90 p-1.5 shadow-[0_16px_36px_rgba(37,51,65,0.07)] backdrop-blur sm:gap-1.5">
+    <div className="crpe-role-picker grid w-full grid-cols-3 gap-1 rounded-[18px] border border-crpe-line bg-white/90 p-1.5 shadow-[0_16px_36px_rgba(37,51,65,0.07)] backdrop-blur sm:gap-1.5">
       {audiences.map(({ key, mobileLabel, icon: Icon }) => {
         const isSelected = selected === key;
         const theme = roleThemes[key];
@@ -433,15 +432,17 @@ function RolePicker({
             onClick={() => onSelect(key)}
             className={`crpe-role-button group relative flex min-w-0 w-full items-center justify-center gap-2 rounded-[13px] px-2 py-2.5 text-[11px] font-extrabold outline-none sm:px-4 sm:py-3 sm:text-[14px] ${
               isSelected
-                ? `${theme.accentStrong} ${theme.iconShadow} text-white`
-                : "bg-[#F7F8FA] text-[#5C6270] hover:bg-white hover:text-[#171A21] focus-visible:ring-2 focus-visible:ring-[#E4E6EC] focus-visible:ring-offset-2"
+                ? `${theme.accentSoft} ${theme.accentText} ring-1 ${theme.accentRing} shadow-[0_8px_20px_rgba(23,26,33,0.06)]`
+                : "bg-white text-crpe-muted hover:bg-crpe-surface hover:text-crpe-ink focus-visible:ring-2 focus-visible:ring-crpe-line focus-visible:ring-offset-2"
             }`}
           >
-            <Icon className={`h-4 w-4 shrink-0 transition-colors duration-200 ${isSelected ? "text-white" : "text-slate-500 group-hover:text-[#5C6270]"}`} />
+            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${isSelected ? "bg-white/100" : "bg-crpe-surface"}`}>
+              <Icon className={`h-4 w-4 shrink-0 transition-colors duration-200 ${isSelected ? theme.accentText : "text-slate-500 group-hover:text-crpe-muted"}`} />
+            </span>
             <span className="truncate">{mobileLabel}</span>
             {isSelected ? (
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/14" aria-hidden="true">
-                <Check className="h-3 w-3 text-white" strokeWidth={3} />
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/70" aria-hidden="true">
+                <Check className={`h-3 w-3 ${theme.accentText}`} strokeWidth={3} />
               </span>
             ) : null}
           </button>
@@ -459,13 +460,13 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
   };
   return (
     <div
-      className="mt-4 overflow-hidden rounded-2xl border border-[#E4E6EC] bg-white p-4 shadow-[0_18px_42px_rgba(37,51,65,0.09)] lg:hidden"
+      className="mt-4 overflow-hidden rounded-2xl border border-crpe-line bg-white p-4 shadow-[0_18px_42px_rgba(37,51,65,0.09)] lg:hidden"
       aria-label="Przykładowy podgląd dla wybranej roli"
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#5C6270]">Podgląd profilu</p>
-          <p className="mt-1 text-[14px] font-black text-[#171A21]">{active.label}</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-crpe-muted">Podgląd profilu</p>
+          <p className="mt-1 text-[14px] font-black text-crpe-ink">{active.label}</p>
         </div>
         <span className={`rounded-full px-2 py-1 text-[9px] font-extrabold ring-1 ${active.statusTone}`}>
           {active.status}
@@ -474,9 +475,9 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
 
       <div className="mt-3 grid grid-cols-3 gap-2">
         {active.facts.map((fact, index) => (
-          <div key={fact} className={`rounded-xl border px-2.5 py-2.5 ${index === 0 ? `${roleThemes[active.key].accentSoft} ${roleThemes[active.key].accentBorder}` : "border-[#E4E6EC] bg-[#F7F8FA]"}`}>
-            <p className="text-[9px] font-bold leading-4 text-[#5C6270]">{labels[active.key][index]}</p>
-            <p className={`mt-0.5 text-[12px] font-black leading-4 ${index === 0 ? roleThemes[active.key].accentText : "text-[#171A21]"}`}>
+          <div key={fact} className={`rounded-xl border px-2.5 py-2.5 ${index === 0 ? `${roleThemes[active.key].accentSoft} ${roleThemes[active.key].accentBorder}` : "border-crpe-line bg-crpe-surface"}`}>
+            <p className="text-[9px] font-bold leading-4 text-crpe-muted">{labels[active.key][index]}</p>
+            <p className={`mt-0.5 text-[12px] font-black leading-4 ${index === 0 ? roleThemes[active.key].accentText : "text-crpe-ink"}`}>
               {fact}
             </p>
           </div>
@@ -484,14 +485,14 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
       </div>
 
       {active.key === "medyk" ? (
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#E7F0F0] ring-1 ring-[#CFE1E2]">
-          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-[#16656B]" />
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-crpe-brand-soft ring-1 ring-crpe-brand-border">
+          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-crpe-brand" />
         </div>
       ) : null}
 
       <Link
         href={active.detailsHref}
-        className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-[#E4E6EC] bg-[#F7F8FA] px-3 py-2 text-[12px] font-extrabold text-[#171A21]"
+        className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-crpe-line bg-crpe-surface px-3 py-2 text-[12px] font-extrabold text-crpe-ink"
       >
         Dowiedz się więcej <ArrowRight className="h-3.5 w-3.5" />
       </Link>
@@ -508,26 +509,31 @@ function Hero({
 }) {
   const active = audiences.find((item) => item.key === selected) ?? audiences[0];
   return (
-    <section className="relative overflow-hidden bg-[linear-gradient(180deg,#F7F8FA_0%,#FAFBFC_58%,#ffffff_100%)] py-7 sm:py-11 lg:py-14">
+    <section className="relative overflow-hidden crpe-home-hero py-7 sm:py-11 lg:py-14">
       <div className="pointer-events-none absolute -left-36 top-0 h-[360px] w-[360px] rounded-full bg-slate-100/65 blur-3xl" />
-      <div className="pointer-events-none absolute -right-24 top-12 h-[340px] w-[340px] rounded-full bg-[#E4E6EC]/45 blur-3xl" />
+      <div className="pointer-events-none absolute -right-24 top-12 h-[340px] w-[340px] rounded-full bg-crpe-line/45 blur-3xl" />
       <div className="pointer-events-none absolute bottom-8 left-[44%] hidden h-24 w-24 rounded-full bg-slate-100/55 blur-3xl lg:block" />
 
       <div className={`${pageWrap} relative`}>
         <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-14">
           <div className="lg:pt-2">
-            <div className="crpe-hero-in inline-flex items-center gap-2 rounded-full border border-[#E4E6EC] bg-white/90 px-3 py-1.5 text-[11px] font-extrabold text-[#5C6270] shadow-sm backdrop-blur [--hero-delay:40ms]">
+            <div className="crpe-hero-in inline-flex items-center gap-2 rounded-full border border-crpe-line bg-white/90 px-3 py-1.5 text-[11px] font-extrabold text-crpe-muted shadow-sm backdrop-blur [--hero-delay:40ms]">
               <ShieldCheck className="h-3.5 w-3.5" />
               CRPE dla medyków i organizacji
             </div>
 
-            <h1 className="crpe-hero-in mt-4 max-w-[590px] text-[35px] font-black leading-[1.02] tracking-[-0.046em] text-[#171A21] sm:mt-5 sm:text-[48px] lg:text-[54px] [--hero-delay:110ms]">
+            <h1 className="crpe-hero-in mt-4 max-w-[590px] text-[35px] font-black leading-[1.02] tracking-[-0.046em] text-crpe-ink sm:mt-5 sm:text-[48px] lg:text-[54px] [--hero-delay:110ms]">
               <span className="block">Punkty edukacyjne</span>
               <span className="block">i certyfikaty</span>
-              <span className="block text-[#14355E]">w jednym miejscu.</span>
+              <span className="block">
+                <span className="relative inline-block">
+                  w jednym miejscu.
+                  <span className="absolute -bottom-1 left-0 h-[3px] w-full rounded-full bg-crpe-brand/85" aria-hidden="true" />
+                </span>
+              </span>
             </h1>
 
-            <p className="crpe-hero-in mt-3 max-w-[570px] text-[15px] leading-6 text-[#5C6270] sm:mt-4 sm:text-[17px] sm:leading-7 [--hero-delay:180ms]">
+            <p className="crpe-hero-in mt-3 max-w-[570px] text-[15px] leading-6 text-crpe-muted sm:mt-4 sm:text-[17px] sm:leading-7 [--hero-delay:180ms]">
               Zbieraj aktywności, certyfikaty i dane potrzebne do rozliczeń w jednym uporządkowanym miejscu — dopasowanym do Twojej roli.
             </p>
 
@@ -537,23 +543,23 @@ function Hero({
 
             <div key={selected} className="crpe-role-swap mt-5 lg:mt-6" aria-live="polite">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[14px] font-black text-[#171A21]">{active.label}</span>
+                <span className="text-[14px] font-black text-crpe-ink">{active.label}</span>
                 <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ${active.statusTone}`}>
                   {active.status}
                 </span>
               </div>
 
-              <h2 className="mt-2.5 max-w-[580px] text-[22px] font-black leading-[1.18] tracking-[-0.03em] text-[#171A21] sm:text-[25px]">
+              <h2 className="mt-2.5 max-w-[580px] text-[22px] font-black leading-[1.18] tracking-[-0.03em] text-crpe-ink sm:text-[25px]">
                 {active.title}
               </h2>
-              <p className="mt-2 max-w-[590px] text-[14px] leading-6 text-[#5C6270] sm:text-[15px]">
+              <p className="mt-2 max-w-[590px] text-[14px] leading-6 text-crpe-muted sm:text-[15px]">
                 {active.description}
               </p>
 
               <ul className="mt-3.5 grid gap-2 sm:grid-cols-2">
                 {active.benefits.map((item) => (
-                  <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-[#5C6270]">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F7F8FA] text-[#5C6270] ring-1 ring-[#E4E6EC]">
+                  <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-crpe-muted">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-crpe-surface text-crpe-muted ring-1 ring-crpe-line">
                       <Check className="h-3 w-3" />
                     </span>
                     {item}
@@ -594,7 +600,7 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       icon: Stethoscope,
       title: "Medyk",
       status: "Dostępne teraz",
-      statusClass: "bg-[#E7F0F0] text-[#0E4448] ring-[#CFE1E2]",
+      statusClass: "bg-crpe-medyk-soft text-crpe-medyk-text ring-crpe-medyk-border",
       text: "Prowadź własną ewidencję punktów, aktywności i certyfikatów w jednym panelu.",
       benefits: ["Postęp i brakujące punkty", "Dokumenty przy aktywnościach", "Raport użytkownika"],
       cta: "Załóż konto",
@@ -608,7 +614,7 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       icon: Building2,
       title: "Placówka / jednostka",
       status: "Struktura, zaproszenia i role dostępne",
-      statusClass: "bg-[#E9EEF7] text-[#14355E] ring-[#D7E0EF]",
+      statusClass: "bg-crpe-placowka-soft text-crpe-placowka-text ring-crpe-placowka-border",
       text: "Zbuduj strukturę jednostki, zapraszaj pracowników i nadawaj role. Zbiorczy status oraz raporty pozostają w rozwoju.",
       benefits: ["Jednostki organizacyjne", "Zaproszenia e-mail", "Role i członkostwa"],
       cta: "Zobacz zakres",
@@ -622,7 +628,7 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       icon: UserRound,
       title: "Organizator kształcenia",
       status: "Zgłoszenie do bazy dostępne",
-      statusClass: "bg-[#EDEEF3] text-[#2E3247] ring-[#DBDDE6]",
+      statusClass: "bg-crpe-organizator-soft text-crpe-organizator-text ring-crpe-organizator-border",
       text: "Zgłoś szkolenie do publicznej bazy. Po publikacji użytkownicy zobaczą stronę wydarzenia, dane organizatora i link do zapisów.",
       benefits: ["Formularz zgłoszenia", "Publiczna strona szkolenia", "Logo i link do zapisów"],
       cta: "Zobacz zakres",
@@ -635,10 +641,10 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
   return (
     <section
       id="dla-kogo"
-      className="relative scroll-mt-24 overflow-hidden bg-[linear-gradient(180deg,#F7F8FA_0%,#FAFBFC_100%)] py-16 sm:py-20"
+      className="relative scroll-mt-24 overflow-hidden bg-crpe-surface py-16 sm:py-20"
     >
       <div className="pointer-events-none absolute -left-32 top-12 h-72 w-72 rounded-full bg-slate-100/70 blur-3xl" />
-      <div className="pointer-events-none absolute -right-32 bottom-10 h-72 w-72 rounded-full bg-[#E9EEF7]/35 blur-3xl" />
+      <div className="pointer-events-none absolute -right-32 bottom-10 h-72 w-72 rounded-full bg-crpe-placowka-soft/45 blur-3xl" />
 
       <div className={`${pageWrap} relative`}>
         <Reveal>
@@ -658,13 +664,21 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
               <Reveal key={id} className="h-full">
                 <article
                   id={id}
-                  className={`crpe-interactive-card group relative flex h-full scroll-mt-24 flex-col overflow-hidden rounded-[24px] border shadow-[0_18px_48px_rgba(37,51,65,0.07)] ${
-                    active ? "border-[#D6DAE3] bg-white ring-1 ring-[#E4E6EC]" : "border-[#E4E6EC] bg-white"
+                  className={`crpe-interactive-card group relative flex h-full scroll-mt-24 flex-col overflow-hidden rounded-[24px] border bg-white shadow-[0_18px_48px_rgba(37,51,65,0.07)] ${
+                    active ? `${theme.accentBorder} ring-1 ${theme.accentRing}` : "border-crpe-line"
                   }`}
                   aria-current={active ? "true" : undefined}
-                  style={{ "--card-accent": "#E4E6EC" } as React.CSSProperties}
+                  style={{
+                    "--card-accent":
+                      key === "medyk"
+                        ? "var(--color-crpe-medyk-text)"
+                        : key === "placowka"
+                          ? "var(--color-crpe-placowka-text)"
+                          : "var(--color-crpe-organizator-text)",
+                  } as React.CSSProperties}
                 >
-                  <div className={`crpe-role-media relative h-40 overflow-hidden border-b border-[#E4E6EC] ${theme.mediaBackground}`}>
+                  <div className={`h-1 w-full ${theme.accentStrong}`} aria-hidden="true" />
+                  <div className={`crpe-role-media relative h-36 overflow-hidden border-b ${theme.accentBorder} ${theme.mediaBackground}`}>
                     <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/65 blur-2xl" />
                     <Image
                       src={image}
@@ -677,22 +691,22 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
 
                   <div className="flex flex-1 flex-col p-5 sm:p-6">
                     <div className="flex items-start justify-between gap-3">
-                      <span className={`crpe-card-icon flex h-11 w-11 items-center justify-center rounded-2xl text-white ${theme.accentStrong} ${theme.iconShadow}`}>
+                      <span className={`crpe-card-icon flex h-11 w-11 items-center justify-center rounded-2xl ring-1 ${theme.accentSoft} ${theme.accentText} ${theme.accentRing}`}>
                         <Icon className="h-5 w-5" />
                       </span>
-                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ${active ? `${theme.accentSoft} ${theme.accentText} ${theme.accentRing}` : "bg-[#F7F8FA] text-[#5C6270] ring-[#E4E6EC]"}`}>
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ${active ? `${theme.accentSoft} ${theme.accentText} ${theme.accentRing}` : "bg-crpe-surface text-crpe-muted ring-crpe-line"}`}>
                         {active ? "Wybrana rola" : "Zobacz zakres"}
                       </span>
                     </div>
 
-                    <h3 className="mt-4 text-xl font-black tracking-[-0.025em] text-[#171A21]">{title}</h3>
-                    <p className="mt-2 text-[14px] leading-6 text-[#5C6270]">{text}</p>
+                    <h3 className="mt-4 text-xl font-black tracking-[-0.025em] text-crpe-ink">{title}</h3>
+                    <p className="mt-2 text-[14px] leading-6 text-crpe-muted">{text}</p>
                     <p className={`mt-3 inline-flex w-fit rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ${statusClass}`}>{status}</p>
 
                     <ul className="mt-4 grid gap-2.5">
                       {benefits.map((item) => (
-                        <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-[#5C6270]">
-                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F7F8FA] text-[#5C6270] ring-1 ring-[#E4E6EC]">
+                        <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-crpe-muted">
+                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-crpe-surface text-crpe-muted ring-1 ring-crpe-line">
                             <Check className="h-3 w-3" />
                           </span>
                           {item}
@@ -704,8 +718,8 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
                       href={href}
                       className={`mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 py-2 text-[14px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 ${
                         active
-                          ? `border-transparent text-white ${theme.ctaStrong} ${theme.ctaHover} ${theme.ctaShadow}`
-                          : "border-[#E4E6EC] bg-white text-[#171A21] hover:bg-[#F7F8FA]"
+                          ? "border-transparent bg-crpe-brand text-white shadow-[0_12px_26px_rgba(29,78,216,0.22)] hover:bg-crpe-brand-hover"
+                          : "border-crpe-line bg-white text-crpe-ink hover:bg-crpe-surface"
                       }`}
                     >
                       {cta} <ArrowRight className="h-4 w-4" />
@@ -750,7 +764,7 @@ function ProductToolsSection() {
   ];
 
   return (
-    <section id="narzedzia" className="scroll-mt-24 bg-[#F7F8FA] py-16 sm:py-20">
+    <section id="narzedzia" className="scroll-mt-24 bg-crpe-surface py-16 sm:py-20">
       <div className={pageWrap}>
         <Reveal>
           <SectionHeading
@@ -773,7 +787,7 @@ function ProductToolsSection() {
                     Najważniejsze funkcje są widoczne od razu po zalogowaniu.
                   </p>
                 </div>
-                <span className="inline-flex w-fit rounded-full bg-[#16656B]/25 px-2.5 py-1 text-[10px] font-extrabold text-[#B9D9DA] ring-1 ring-[#79AEB1]/30">
+                <span className="inline-flex w-fit rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-extrabold text-slate-200 ring-1 ring-white/10">
                   Profil medyka dostępny teraz
                 </span>
               </div>
@@ -798,16 +812,16 @@ function ProductToolsSection() {
             <div className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-4">
               {tools.map(({ icon: Icon, title, text, bullets }) => (
                 <Reveal key={title} className="h-full last:[&>article]:border-b-0">
-                  <article className="crpe-interactive-card flex h-full min-h-[280px] flex-col rounded-[18px] border border-[#E4E6EC] bg-[#F7F8FA]/75 p-5">
-                    <span className="crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#1D4ED8] ring-1 ring-blue-100">
+                  <article className="crpe-interactive-card flex h-full min-h-[280px] flex-col rounded-[18px] border border-crpe-line bg-crpe-surface/75 p-5">
+                    <span className="crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border">
                       <Icon className="h-5 w-5" />
                     </span>
-                    <h3 className="mt-4 min-h-[44px] text-[17px] font-bold leading-[1.25] tracking-[-0.02em] text-[#171A21]">{title}</h3>
-                    <p className="mt-2 text-[14px] leading-6 text-[#5C6270]">{text}</p>
+                    <h3 className="mt-4 min-h-[44px] text-[17px] font-bold leading-[1.25] tracking-[-0.02em] text-crpe-ink">{title}</h3>
+                    <p className="mt-2 text-[14px] leading-6 text-crpe-muted">{text}</p>
                     <ul className="mt-4 grid gap-2">
                       {bullets.map((item) => (
-                        <li key={item} className="flex gap-2 text-[13px] leading-5 text-[#5C6270]">
-                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#23528F]" />
+                        <li key={item} className="flex gap-2 text-[13px] leading-5 text-crpe-muted">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-crpe-brand" />
                           {item}
                         </li>
                       ))}
@@ -859,34 +873,34 @@ function PracticeSection() {
         </Reveal>
 
         <Reveal>
-          <div className="crpe-dashboard-shell overflow-hidden rounded-[20px] border border-white/10 bg-white p-4 text-[#171A21] shadow-[0_24px_64px_rgba(0,0,0,0.28)] sm:p-6">
+          <div className="crpe-dashboard-shell overflow-hidden rounded-[20px] border border-white/10 bg-white p-4 text-crpe-ink shadow-[0_24px_64px_rgba(0,0,0,0.28)] sm:p-6">
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-600">Panel CPD</p>
-              <p className="mt-1 text-[13px] font-extrabold text-[#171A21]">Podgląd statusu dokumentacji</p>
+              <p className="mt-1 text-[13px] font-extrabold text-crpe-ink">Podgląd statusu dokumentacji</p>
             </div>
-            <span className="rounded-full bg-[#F7F8FA] px-2.5 py-1 text-[9px] font-extrabold text-[#5C6270] ring-1 ring-[#E4E6EC]">Dane przykładowe</span>
+            <span className="rounded-full bg-crpe-surface px-2.5 py-1 text-[9px] font-extrabold text-crpe-muted ring-1 ring-crpe-line">Dane przykładowe</span>
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-[0.64fr_0.36fr]">
-            <div className="rounded-2xl border border-[#E4E6EC] bg-[#F7F8FA] p-3.5 sm:p-4">
+            <div className="rounded-2xl border border-crpe-line bg-crpe-surface p-3.5 sm:p-4">
               <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-600">Status dokumentacji</p>
               <div className="mt-2 flex items-end gap-2">
-                <span className="text-[30px] font-black tracking-tight text-[#171A21]">110/200</span>
+                <span className="text-[30px] font-black tracking-tight text-crpe-ink">110/200</span>
                 <span className="pb-1 text-xs font-bold text-slate-500">pkt</span>
               </div>
-              <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white ring-1 ring-[#E4E6EC]">
-                <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-[#23528F]" />
+              <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white ring-1 ring-crpe-line">
+                <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-crpe-brand" />
               </div>
               <div className="mt-3 space-y-2">
                 {rows.map(([name, points, status], index) => (
-                  <div key={name} className="rounded-xl border border-[#E4E6EC] bg-white p-3">
+                  <div key={name} className="rounded-xl border border-crpe-line bg-white p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-[13px] font-extrabold text-[#171A21]">{name}</p>
+                        <p className="text-[13px] font-extrabold text-crpe-ink">{name}</p>
                         <p className="mt-0.5 text-[11px] text-slate-500">{points}</p>
                       </div>
-                      <span className={`rounded-full px-2 py-1 text-[9px] font-extrabold ${index === 1 ? "bg-amber-50 text-amber-700" : "bg-[#E7F0F0] text-[#0E4448] ring-1 ring-[#CFE1E2]"}`}>
+                      <span className={`rounded-full px-2 py-1 text-[9px] font-extrabold ${index === 1 ? "bg-white text-crpe-muted ring-1 ring-crpe-line" : "bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border"}`}>
                         {status}
                       </span>
                     </div>
@@ -898,11 +912,11 @@ function PracticeSection() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
               <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3.5">
                 <p className="text-[10px] font-bold text-slate-500">Najbliższy krok</p>
-                <p className="mt-1.5 text-[13px] font-black text-[#171A21]">Uzupełnij 1 dokument</p>
+                <p className="mt-1.5 text-[13px] font-black text-crpe-ink">Uzupełnij 1 dokument</p>
               </div>
-              <div className="rounded-2xl border border-[#E4E6EC] p-3.5">
+              <div className="rounded-2xl border border-crpe-line p-3.5">
                 <UploadCloud className="h-5 w-5 text-blue-600" />
-                <p className="mt-2 text-[13px] font-black text-[#171A21]">Dodaj PDF lub zdjęcie</p>
+                <p className="mt-2 text-[13px] font-black text-crpe-ink">Dodaj PDF lub zdjęcie</p>
               </div>
             </div>
           </div>
@@ -959,25 +973,19 @@ function HowItWorks({ selected }: { selected: AudienceKey }) {
           <SectionHeading eyebrow="Jak to działa" title={active.title} text={active.text} centered />
         </Reveal>
 
-        <ol key={selected} className="crpe-role-swap relative mx-auto mt-10 max-w-[880px]">
+        <ol key={selected} className="crpe-role-swap mx-auto mt-9 grid max-w-[1040px] gap-3 sm:mt-10 md:grid-cols-2 lg:grid-cols-4">
           {active.steps.map(({ icon: Icon, title, text }, index) => (
-            <li key={title} className="relative grid grid-cols-[44px_minmax(0,1fr)] gap-4 pb-7 last:pb-0 sm:grid-cols-[52px_minmax(0,1fr)] sm:gap-6 sm:pb-9">
-              {index < active.steps.length - 1 ? (
-                <span className="absolute bottom-0 left-[21px] top-11 w-px bg-blue-100 sm:left-[25px] sm:top-13" aria-hidden="true" />
-              ) : null}
-              <span className="relative z-10 flex h-11 w-11 items-center justify-center rounded-full border-4 border-white bg-[#1D4ED8] text-sm font-black text-white shadow-[0_8px_20px_rgba(37,99,235,0.18)] sm:h-[52px] sm:w-[52px]">
-                {index + 1}
-              </span>
-              <div className="min-w-0 border-b border-slate-100 pb-7 last:border-b-0 sm:flex sm:items-start sm:gap-5 sm:pb-9">
-                <span className="mt-0.5 hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1D4ED8] ring-1 ring-blue-100 sm:flex">
+            <li key={title} className="crpe-step-card relative rounded-[18px] border border-crpe-line bg-white p-5 shadow-[0_12px_32px_rgba(15,45,75,0.045)]">
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border">
                   <Icon className="h-[18px] w-[18px]" />
                 </span>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-blue-500">Krok {index + 1}</p>
-                  <h3 className="mt-1 text-[17px] font-bold text-[#171A21]">{title}</h3>
-                  <p className="mt-1.5 text-[14px] leading-6 text-[#5C6270]">{text}</p>
-                </div>
+                <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-crpe-surface px-2 text-[11px] font-black text-crpe-muted ring-1 ring-crpe-line">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
               </div>
+              <h3 className="mt-4 text-[16px] font-black leading-5 text-crpe-ink"><span className="sr-only">Krok {index + 1}: </span>{title}</h3>
+              <p className="mt-2 text-[13px] leading-5 text-crpe-muted">{text}</p>
             </li>
           ))}
         </ol>
@@ -1031,7 +1039,7 @@ function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"
   const theme = roleThemes[selected];
 
   return (
-    <section className="bg-[#F7F8FA] py-16 sm:py-20">
+    <section className="bg-crpe-surface py-16 sm:py-20">
       <div className={pageWrap}>
         <SectionHeading eyebrow={active.eyebrow} title={active.title} text={active.text} centered />
         <div key={selected} className="crpe-role-swap mx-auto mt-9 grid max-w-[980px] gap-4 md:grid-cols-2 sm:mt-11">
@@ -1042,12 +1050,12 @@ function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"
               </span>
               <div>
                 <p className={`text-[10px] font-extrabold uppercase tracking-[0.15em] ${theme.accentText}`}>Dostępne</p>
-                <h3 className="mt-0.5 text-[18px] font-bold text-[#171A21]">Działa dziś</h3>
+                <h3 className="mt-0.5 text-[18px] font-bold text-crpe-ink">Działa dziś</h3>
               </div>
             </div>
             <ul className="mt-5 grid gap-3">
               {active.available.map((item) => (
-                <li key={item} className="flex gap-2.5 text-[14px] leading-6 text-[#5C6270]">
+                <li key={item} className="flex gap-2.5 text-[14px] leading-6 text-crpe-muted">
                   <Check className={`mt-1 h-4 w-4 shrink-0 ${theme.accentText}`} />
                   {item}
                 </li>
@@ -1062,12 +1070,12 @@ function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"
               </span>
               <div>
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-amber-700">Kolejny etap</p>
-                <h3 className="mt-0.5 text-[18px] font-bold text-[#171A21]">Rozwijamy</h3>
+                <h3 className="mt-0.5 text-[18px] font-bold text-crpe-ink">Rozwijamy</h3>
               </div>
             </div>
             <ul className="mt-5 grid gap-3">
               {active.developing.map((item) => (
-                <li key={item} className="flex gap-2.5 text-[14px] leading-6 text-[#5C6270]">
+                <li key={item} className="flex gap-2.5 text-[14px] leading-6 text-crpe-muted">
                   <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-amber-600" />
                   {item}
                 </li>
@@ -1111,24 +1119,24 @@ function TrustSection() {
                 text="System porządkuje aktywności, punkty i dokumenty, ale nie zastępuje oficjalnych rejestrów ani wymaganej procedury rozliczenia."
               />
               <div className="mt-5 flex flex-wrap gap-2">
-                <Link href="/polityka-prywatnosci" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-[14px] font-extrabold text-[#5C6270] hover:border-blue-200 hover:bg-blue-50">
+                <Link href="/polityka-prywatnosci" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-[14px] font-extrabold text-crpe-muted hover:border-crpe-brand-border hover:bg-crpe-brand-soft">
                   Polityka prywatności
                 </Link>
-                <Link href="/regulamin" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-[14px] font-extrabold text-[#5C6270] hover:border-blue-200 hover:bg-blue-50">
+                <Link href="/regulamin" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-[14px] font-extrabold text-crpe-muted hover:border-crpe-brand-border hover:bg-crpe-brand-soft">
                   Regulamin
                 </Link>
               </div>
             </div>
 
-            <div className="divide-y divide-slate-200 rounded-2xl border border-[#E4E6EC] bg-[#F7F8FA] px-4 sm:px-5">
+            <div className="divide-y divide-slate-200 rounded-2xl border border-crpe-line bg-crpe-surface px-4 sm:px-5">
               {items.map(({ icon: Icon, title, text }) => (
                 <div key={title} className="flex gap-3 py-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#1D4ED8] shadow-sm ring-1 ring-[#E4E6EC]">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-crpe-brand shadow-sm ring-1 ring-crpe-line">
                     <Icon className="h-4 w-4" />
                   </span>
                   <div>
-                    <h3 className="text-[15px] font-black text-[#171A21]">{title}</h3>
-                    <p className="mt-1 text-[14px] leading-5 text-[#5C6270]">{text}</p>
+                    <h3 className="text-[15px] font-black text-crpe-ink">{title}</h3>
+                    <p className="mt-1 text-[14px] leading-5 text-crpe-muted">{text}</p>
                   </div>
                 </div>
               ))}
@@ -1173,7 +1181,7 @@ function FaqSection() {
       <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-8">
         <Reveal>
           <div>
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#1D4ED8] ring-1 ring-blue-100 sm:h-11 sm:w-11">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border sm:h-11 sm:w-11">
               <HelpCircle className="h-5 w-5" />
             </span>
             <div className="mt-3">
@@ -1183,7 +1191,7 @@ function FaqSection() {
                 text="Najważniejsze informacje dla medyka, placówki i organizatora kształcenia."
               />
             </div>
-            <Link href="/kontakt#formularz" className="mt-4 inline-flex items-center gap-2 text-[13px] font-extrabold text-[#1D4ED8] underline decoration-blue-200 underline-offset-4 sm:mt-5 sm:text-sm">
+            <Link href="/kontakt#formularz" className="mt-4 inline-flex items-center gap-2 text-[13px] font-extrabold text-crpe-brand underline decoration-crpe-brand-border underline-offset-4 sm:mt-5 sm:text-sm">
               Masz inne pytanie? Napisz do nas <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -1192,12 +1200,12 @@ function FaqSection() {
         <div className="space-y-3">
           {items.map(([question, answer]) => (
             <Reveal key={question}>
-              <details className="group rounded-[16px] border border-[#E4E6EC] bg-white px-4 py-3 shadow-[0_9px_26px_rgba(15,45,75,0.045)] transition hover:border-blue-200 hover:bg-blue-50/20 hover:shadow-[0_13px_32px_rgba(15,45,75,0.065)] sm:px-5 sm:py-3.5">
-                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-bold leading-5 text-[#171A21] sm:min-h-14 sm:text-[15px]">
+              <details className="group rounded-[16px] border border-crpe-line bg-white px-4 py-3 shadow-[0_9px_26px_rgba(15,45,75,0.045)] transition hover:border-crpe-brand-border hover:bg-crpe-brand-soft/40 hover:shadow-[0_13px_32px_rgba(15,45,75,0.065)] sm:px-5 sm:py-3.5">
+                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-bold leading-5 text-crpe-ink sm:min-h-14 sm:text-[15px]">
                   {question}
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1D4ED8] transition duration-200 group-open:rotate-45 group-open:bg-blue-100">+</span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-crpe-surface text-crpe-muted ring-1 ring-crpe-line transition duration-200 group-open:rotate-45 group-open:bg-crpe-brand-soft group-open:text-crpe-brand">+</span>
                 </summary>
-                <p className="mt-1 max-w-3xl border-t border-slate-100 pb-2 pt-4 pr-8 text-[14px] leading-6 text-[#5C6270]">{answer}</p>
+                <p className="mt-1 max-w-3xl border-t border-slate-100 pb-2 pt-4 pr-8 text-[14px] leading-6 text-crpe-muted">{answer}</p>
               </details>
             </Reveal>
           ))}

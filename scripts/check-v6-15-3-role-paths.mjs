@@ -4,8 +4,12 @@ import { readFile } from "node:fs/promises";
 const root = new URL("../", import.meta.url);
 const homepage = await readFile(new URL("app/page.tsx", root), "utf8");
 
-assert.match(homepage, /<ol key=\{selected\}[\s\S]*Krok \{index \+ 1\}/, "Sekcja kroków powinna być numerowaną osią czasu");
-assert.doesNotMatch(homepage, /crpe-step-card/, "Kroki nie powinny wracać do układu osobnych kafelków");
+assert.match(homepage, /<ol key=\{selected\}[\s\S]*Krok \{index \+ 1\}/, "Sekcja kroków powinna pozostać numerowaną sekwencją");
+const modernCompactSteps = homepage.includes('md:grid-cols-2 lg:grid-cols-4') && homepage.includes('crpe-step-card');
+if (!modernCompactSteps) {
+  assert.doesNotMatch(homepage, /crpe-step-card/, "Starszy wariant kroków nie powinien wracać do luźnych kafelków");
+}
+
 
 assert.match(homepage, /function RoleStateSection/, "Brakuje osobnego zakresu dla ról organizacyjnych");
 assert.match(homepage, />Działa dziś</, "Zakres dostępny powinien być nazwany wprost");

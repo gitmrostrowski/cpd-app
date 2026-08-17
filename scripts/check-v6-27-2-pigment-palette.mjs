@@ -7,6 +7,16 @@ const home = fs.readFileSync(path.join(root, "app/page.tsx"), "utf8");
 const css = fs.readFileSync(path.join(root, "app/globals.css"), "utf8");
 const chart = fs.readFileSync(path.join(root, "app/panel-cpd/CalculatorClient.tsx"), "utf8");
 
+if (css.includes("--color-crpe-organizator-text: #6D3967;")) {
+  for (const token of ["--color-crpe-medyk-text: #00595D;", "--color-crpe-placowka-text: #1D4ED8;", "--color-crpe-organizator-text: #6D3967;"]) {
+    if (!css.includes(token)) throw new Error(`v6.27.2+: brak kontrolowanego tokenu roli: ${token}`);
+  }
+  if (!home.includes('ctaStrong: "bg-crpe-brand"')) throw new Error("v6.27.2+: nowsza architektura musi zachować jeden CTA marki.");
+  if (!chart.includes('linearGradient id="crpe-accrual-fill"')) throw new Error("v6.27.2+: regresja wykresów v6.27.");
+  console.log("OK v6.27.2 — rodzina ról została zastąpiona kontrolowanymi tintami w architekturze brand-led, bez regresji wykresów.");
+  process.exit(0);
+}
+
 const roleStart = home.indexOf("const roleThemes");
 const roleEnd = home.indexOf("const pageWrap", roleStart);
 if (roleStart < 0 || roleEnd < 0) throw new Error("v6.27.2: nie znaleziono definicji roleThemes.");

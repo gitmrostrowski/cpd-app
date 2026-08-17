@@ -43,25 +43,25 @@ export default function BottomCTA({ selected }: { selected: AudienceKey }) {
 
   return (
     <section className="mx-auto w-full max-w-[1180px] px-4 pb-16 sm:px-6 sm:pb-20 lg:px-8">
-      <div key={selected} className="crpe-role-swap relative overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#2563eb_0%,#1d4ed8_100%)] px-5 py-8 text-white shadow-[0_22px_58px_rgba(37,99,235,0.22)] sm:px-10 sm:py-11 lg:px-12">
-        <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-300/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-16 h-60 w-60 rounded-full bg-indigo-900/25 blur-3xl" />
+      <div className="relative overflow-hidden rounded-[20px] bg-crpe-brand px-5 py-8 text-white shadow-[0_22px_58px_rgba(29,78,216,0.22)] sm:px-10 sm:py-11 lg:px-12">
+        <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 -left-20 h-64 w-64 rounded-full bg-white/[0.06] blur-3xl" />
 
         <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-12">
           <div className="max-w-2xl">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-100">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-white/80">
               {active.eyebrow}
             </p>
             <h2 className="mt-2 text-[27px] font-black leading-[1.08] tracking-[-0.035em] sm:mt-3 sm:text-[37px]">
               {active.title}
             </h2>
-            <p className="mt-3 max-w-2xl text-[15px] leading-6 text-blue-100 sm:mt-4 sm:text-[16px] sm:leading-7">
+            <p className="mt-3 max-w-2xl text-[15px] leading-6 text-white/80 sm:mt-4 sm:text-[16px] sm:leading-7">
               {active.text}
             </p>
-            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2.5 text-[13px] font-semibold text-blue-50 sm:mt-5 sm:text-sm">
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2.5 text-[13px] font-semibold text-white/90 sm:mt-5 sm:text-sm">
               {active.facts.map((item) => (
                 <span key={item} className="inline-flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-cyan-200" /> {item}
+                  <CheckCircle2 className="h-4 w-4 text-white/70" /> {item}
                 </span>
               ))}
             </div>
@@ -71,7 +71,7 @@ export default function BottomCTA({ selected }: { selected: AudienceKey }) {
             {selected === "medyk" ? (
               <Link
                 href={active.href}
-                className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-[14px] font-black text-blue-700 shadow-lg transition hover:bg-blue-50"
+                className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-[14px] font-black text-crpe-brand shadow-lg transition hover:bg-crpe-placowka-soft"
               >
                 {active.cta} <ArrowRight className="h-4 w-4" />
               </Link>
@@ -79,10 +79,10 @@ export default function BottomCTA({ selected }: { selected: AudienceKey }) {
               <RoleContactModal
                 role={selected}
                 triggerLabel={active.cta}
-                triggerClassName="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-[14px] font-black text-blue-700 shadow-lg transition hover:bg-blue-50"
+                triggerClassName="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-[14px] font-black text-crpe-brand shadow-lg transition hover:bg-crpe-placowka-soft"
               />
             )}
-            <Link href="/pomoc" className="text-center text-[13px] font-bold text-blue-100 underline decoration-blue-300/60 underline-offset-4 hover:text-white">
+            <Link href="/pomoc" className="text-center text-[13px] font-bold text-white/80 underline decoration-white/35 underline-offset-4 hover:text-white">
               Najpierw zobacz centrum pomocy
             </Link>
           </div>
