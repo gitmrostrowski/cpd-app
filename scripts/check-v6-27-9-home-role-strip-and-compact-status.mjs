@@ -8,8 +8,8 @@ const panel = read("app/panel-cpd/CalculatorClient.tsx");
 
 const checks = [
   ["desktop audience label moved into the right product frame", page.includes('px-2 pb-2 pt-1 text-center') && page.includes("CRPE dla medyka, placówki i organizatora") && page.includes("lg:hidden")],
-  ["role selector has a distinct neutral rail", page.includes("bg-slate-100/85") && page.includes("border-slate-200/90")],
-  ["selected role icon is solid and inactive icons retain role color", page.includes("theme.accentStrong} text-white ring-transparent") && page.includes("theme.accentSoft} ${theme.accentText} ${theme.accentRing")],
+  ["role selector has a distinct neutral rail", (page.includes("bg-slate-100/85") && page.includes("border-slate-200/90")) || page.includes("bg-slate-100/75")],
+  ["role identity stays visible in the selector", (page.includes("theme.accentStrong} text-white ring-transparent") && page.includes("theme.accentSoft} ${theme.accentText} ${theme.accentRing")) || (page.includes("${theme.accentSoft} ${theme.accentText} ${theme.accentBorder}") && page.includes("absolute inset-x-5 bottom-0 h-[2px]"))],
   ["role text stays neutral", page.includes("font-extrabold text-crpe-ink")],
   ["status chart is vertically reduced", panel.includes("const H = 188;") && panel.includes("const T = 22;") && panel.includes("const B = 32;")],
   ["status toolbar combines view and pace", panel.includes('Tempo na dziś: <strong className="text-slate-800">')],

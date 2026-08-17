@@ -428,43 +428,64 @@ function RolePicker({
   onSelect: (key: AudienceKey) => void;
   embedded?: boolean;
 }) {
+  const roleDescriptions: Record<AudienceKey, string> = {
+    medyk: "Własna ewidencja",
+    placowka: "Zespół i dostęp",
+    organizator: "Publikacja szkoleń",
+  };
+
   return (
     <div
-      className={`crpe-role-picker grid w-full grid-cols-3 gap-1 p-1.5 sm:gap-1.5 ${
+      className={`crpe-role-picker w-full p-1.5 ${
         embedded
-          ? "rounded-[16px] border border-slate-200/90 bg-slate-100/85 shadow-[inset_0_1px_2px_rgba(15,23,42,0.035)]"
-          : "rounded-[18px] border border-crpe-line bg-slate-100/85 shadow-[0_12px_30px_rgba(37,51,65,0.06)] backdrop-blur"
+          ? "rounded-[17px] border border-crpe-line/90 bg-slate-100/75 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]"
+          : "rounded-[18px] border border-crpe-line bg-slate-100/75 shadow-[0_12px_30px_rgba(37,51,65,0.055)] backdrop-blur"
       }`}
     >
-      {audiences.map(({ key, mobileLabel, icon: Icon }) => {
-        const isSelected = selected === key;
-        const theme = roleThemes[key];
-        return (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={isSelected}
-            onClick={() => onSelect(key)}
-            className={`crpe-role-button group relative flex min-w-0 w-full items-center justify-center gap-2 rounded-[13px] border px-2 py-2.5 text-[11px] font-extrabold text-crpe-ink outline-none transition sm:px-4 sm:py-3 sm:text-[14px] ${
-              isSelected
-                ? "border-crpe-line bg-white shadow-[0_8px_20px_rgba(23,26,33,0.065)]"
-                : "border-transparent bg-transparent hover:border-crpe-line hover:bg-white/75 focus-visible:ring-2 focus-visible:ring-crpe-brand-border focus-visible:ring-offset-2"
-            }`}
-          >
-            <span
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] ring-1 transition ${
+      <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
+        {audiences.map(({ key, mobileLabel, icon: Icon }) => {
+          const isSelected = selected === key;
+          const theme = roleThemes[key];
+          return (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => onSelect(key)}
+              className={`crpe-role-button group relative flex min-w-0 w-full items-center justify-center gap-2 rounded-[13px] border px-2 py-2 text-left outline-none transition sm:min-h-[58px] sm:justify-start sm:gap-2.5 sm:px-3.5 ${
                 isSelected
-                  ? `${theme.accentStrong} text-white ring-transparent shadow-[0_5px_12px_rgba(15,23,42,0.14)]`
-                  : `${theme.accentSoft} ${theme.accentText} ${theme.accentRing}`
+                  ? "border-white/90 bg-white shadow-[0_7px_18px_rgba(23,26,33,0.075)]"
+                  : "border-transparent bg-transparent hover:border-white/80 hover:bg-white/55 focus-visible:ring-2 focus-visible:ring-crpe-brand-border focus-visible:ring-offset-2"
               }`}
-              aria-hidden="true"
             >
-              <Icon className="h-[17px] w-[17px] shrink-0" strokeWidth={2.15} />
-            </span>
-            <span className="truncate">{mobileLabel}</span>
-          </button>
-        );
-      })}
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border transition ${theme.accentSoft} ${theme.accentText} ${theme.accentBorder} ${
+                  isSelected ? "shadow-[0_4px_10px_rgba(15,23,42,0.07)]" : "opacity-80 group-hover:opacity-100"
+                }`}
+                aria-hidden="true"
+              >
+                <Icon className="h-[17px] w-[17px] shrink-0" strokeWidth={2.1} />
+              </span>
+
+              <span className="min-w-0">
+                <span className="block truncate text-[11px] font-extrabold leading-4 text-crpe-ink sm:text-[13px]">
+                  {mobileLabel}
+                </span>
+                <span className="mt-0.5 hidden truncate text-[9px] font-semibold leading-3.5 text-crpe-muted sm:block">
+                  {roleDescriptions[key]}
+                </span>
+              </span>
+
+              {isSelected ? (
+                <span
+                  className={`absolute inset-x-5 bottom-0 h-[2px] rounded-full ${theme.accentStrong}`}
+                  aria-hidden="true"
+                />
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

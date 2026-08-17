@@ -23,10 +23,9 @@ if (home.includes('bg-crpe-brand/85" aria-hidden="true"')) {
 }
 
 // RolePicker: tekst ma być stały, charakter roli niesie kafelek ikony.
-requireToken('font-extrabold text-crpe-ink outline-none transition', "stałego koloru tekstu przełącznika ról");
+if (!home.includes('font-extrabold text-crpe-ink outline-none transition') && !home.includes('font-extrabold leading-4 text-crpe-ink sm:text-[13px]')) { throw new Error('v6.27.7: brak stałego koloru tekstu przełącznika ról'); }
 requireToken('icon: GraduationCap', "bardziej charakterystycznej ikony Organizatora");
-requireToken('? `text-white ${theme.accentStrong} ${theme.iconShadow}`', "mocnego kafelka ikony aktywnej roli");
-requireToken(': `${theme.accentSoft} ${theme.accentText} ring-1 ${theme.accentRing}`', "miękkiego kafelka ikony nieaktywnej roli");
+if (!(home.includes('? `text-white ${theme.accentStrong} ${theme.iconShadow}`') && home.includes(': `${theme.accentSoft} ${theme.accentText} ring-1 ${theme.accentRing}`')) && !(home.includes('${theme.accentSoft} ${theme.accentText} ${theme.accentBorder}') && home.includes('absolute inset-x-5 bottom-0 h-[2px]'))) { throw new Error('v6.27.7: brak czytelnej tożsamości ról w ikonach/przełączniku'); }
 if (home.includes('? `${theme.accentSoft} ${theme.accentText} shadow-')) {
   throw new Error("v6.27.7: cały aktywny tab nadal jest barwiony kolorem roli.");
 }
