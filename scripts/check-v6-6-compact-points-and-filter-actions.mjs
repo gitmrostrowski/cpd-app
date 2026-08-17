@@ -39,7 +39,7 @@ const checks = [
     client.includes("grid-cols-[40px_minmax(0,1fr)]") &&
       client.includes("lg:grid-cols-12 lg:gap-3") &&
       client.includes("border border-slate-300 bg-white") &&
-      client.includes("hover:bg-blue-50 hover:text-blue-700") &&
+      client.includes("hover:bg-crpe-brand-soft hover:text-crpe-brand") &&
       client.includes('className="sm:hidden">Filtry</span>'),
   ],
   [

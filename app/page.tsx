@@ -22,6 +22,7 @@ import {
   UserRound,
 } from "lucide-react";
 import BottomCTA from "@/components/BottomCTA";
+import { pageWrap } from "@/lib/layout";
 
 type AudienceKey = "medyk" | "placowka" | "organizator";
 
@@ -96,7 +97,6 @@ const roleThemes: Record<AudienceKey, RoleTheme> = {
     mediaBackground: "bg-crpe-organizator-soft",
   },
 };
-const pageWrap = "mx-auto w-full max-w-[1180px] px-4 sm:px-6 lg:px-8";
 const panel =
   "rounded-[20px] border border-crpe-line bg-white shadow-[0_16px_45px_rgba(15,45,75,0.065)]";
 

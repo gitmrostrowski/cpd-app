@@ -22,7 +22,7 @@ assert.match(
   panel,
   /<IconBubble tone="blue">\s*<MiniIcon name="chart" \/>\s*<\/IconBubble>/,
 );
-assert.match(panel, /bg-blue-700[^"\n]*hover:bg-blue-800/);
+assert.match(panel, /bg-crpe-brand[^"\n]*hover:bg-crpe-brand-hover/);
 assert.match(panel, /\? "pilne"/);
 assert.match(panel, /\? "gotowe"/);
 assert.doesNotMatch(panel, /const primaryTone/);

@@ -887,7 +887,7 @@ export default function ActivitiesPage() {
   if (loading) {
     return (
       <div className="min-h-[calc(100vh-64px)] bg-[#eaf1f8]">
-        <main className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
           <div className="rounded-[1.35rem] border border-slate-300/80 bg-white p-5 text-sm text-slate-600 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
             Sprawdzam sesję…
           </div>
@@ -899,7 +899,7 @@ export default function ActivitiesPage() {
   if (!user) {
     return (
       <div className="min-h-[calc(100vh-64px)] bg-[#eaf1f8]">
-        <main className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
           <div className="relative overflow-hidden rounded-[1.35rem] border border-slate-300/80 bg-white p-6 shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
             <div className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full bg-blue-500" />
             <h1 className="text-[28px] font-black tracking-[-0.035em] text-slate-950">Aktywności</h1>
@@ -928,7 +928,7 @@ export default function ActivitiesPage() {
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[#eaf1f8]">
-      <main className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-7 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-[1200px] px-4 pb-16 pt-7 sm:px-6 lg:px-8">
         <AppPageHeader
           eyebrow="Twoje wpisy CPD"
           title="Aktywności"

@@ -44,7 +44,7 @@ const checks = [
     pointsIndex >= 0 &&
       pointsIndex < signupIndex &&
       actions.includes("text-[27px] font-black") &&
-      actions.includes("text-blue-700"),
+      actions.includes("text-crpe-brand"),
   ],
   [
     "Dwa przyciski tworzą zwartą parę i nie łamią tekstu",

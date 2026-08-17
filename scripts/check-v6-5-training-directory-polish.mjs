@@ -20,9 +20,9 @@ const checks = [
   ],
   [
     "Hierarchia działań rozróżnia opcję, reset i główne CTA",
-    client.includes("hover:bg-blue-50 hover:text-blue-700") &&
+    client.includes("hover:bg-crpe-brand-soft hover:text-crpe-brand") &&
       client.includes("hover:bg-slate-50 hover:text-slate-800") &&
-      client.includes("rounded-xl bg-blue-600"),
+      client.includes("rounded-xl bg-crpe-brand"),
   ],
   [
     "Układ działań jest responsywny",
@@ -34,7 +34,7 @@ const checks = [
     "Punkty mają wyraźny moduł z ikoną edukacji",
     client.includes("text-[27px] font-black") &&
       client.includes("text-[13px] font-bold") &&
-      client.includes("text-blue-700"),
+      client.includes("text-crpe-brand"),
   ],
   [
     "Lista nie eksponuje technicznego komunikatu o braku weryfikacji",

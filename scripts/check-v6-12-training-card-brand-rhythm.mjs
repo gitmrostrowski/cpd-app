@@ -49,7 +49,7 @@ const checks = [
     "Liczba punktów ma czytelne proporcje",
     actions.includes("text-[27px] font-black") &&
       actions.includes("text-[13px] font-bold") &&
-      actions.includes("text-blue-700"),
+      actions.includes("text-crpe-brand"),
   ],
   [
     "Interfejs pozostaje czytelny na desktopie i telefonie",

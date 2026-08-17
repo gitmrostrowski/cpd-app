@@ -204,8 +204,8 @@ export default async function TrainingPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd).replace(/</g, "\\u003c") }}
       />
       <article className="mx-auto max-w-4xl overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.10)]">
-        <div className="border-b border-slate-200 bg-gradient-to-br from-white to-blue-50 px-5 py-6 sm:px-8 sm:py-8">
-          <Link href="/baza-szkolen" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
+        <div className="border-b border-slate-200 bg-gradient-to-br from-white to-crpe-brand-soft px-5 py-6 sm:px-8 sm:py-8">
+          <Link href="/baza-szkolen" className="text-sm font-semibold text-crpe-brand hover:text-crpe-brand-hover">
             ← Wróć do bazy szkoleń
           </Link>
           <div className="mt-6 flex items-start gap-4">
@@ -214,7 +214,7 @@ export default async function TrainingPage({ params }: PageProps) {
               <img src={training.organizer_logo_url} alt="" className="h-14 w-14 rounded-2xl border border-slate-200 bg-white object-contain p-2 shadow-sm" />
             ) : null}
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-blue-700">{training.organizer || "Organizator niepodany"}</p>
+              <p className="text-sm font-semibold text-crpe-brand">{training.organizer || "Organizator niepodany"}</p>
               <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{training.title}</h1>
             </div>
           </div>
@@ -227,16 +227,16 @@ export default async function TrainingPage({ params }: PageProps) {
                 return (
                   <div
                     key={label}
-                    className={`rounded-2xl border p-4 ${highlight ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-slate-50"}`}
+                    className={`rounded-2xl border p-4 ${highlight ? "border-crpe-success-border bg-crpe-success-soft" : "border-slate-200 bg-slate-50"}`}
                   >
-                    <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] ${highlight ? "text-emerald-700" : "text-slate-500"}`}>
+                    <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] ${highlight ? "text-crpe-success" : "text-slate-500"}`}>
                       <ItemIcon className="h-4 w-4" />
                       {label}
                     </div>
-                    <p className={`mt-2 text-sm font-semibold leading-6 ${highlight ? "text-emerald-900" : "text-slate-900"}`}>
+                    <p className={`mt-2 text-sm font-semibold leading-6 ${highlight ? "text-crpe-success" : "text-slate-900"}`}>
                       {value}
                     </p>
-                    {note ? <p className="mt-1 text-xs font-bold text-blue-700">{note}</p> : null}
+                    {note ? <p className="mt-1 text-xs font-bold text-crpe-brand">{note}</p> : null}
                   </div>
                 );
               })}
@@ -266,7 +266,7 @@ export default async function TrainingPage({ params }: PageProps) {
               <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-sm leading-6 text-slate-600">
                   Szczegółowy program znajdziesz {training.external_url ? (
-                    <a href={training.external_url} target="_blank" rel="noreferrer" className="font-bold text-blue-700 hover:text-blue-800">na stronie organizatora</a>
+                    <a href={training.external_url} target="_blank" rel="noreferrer" className="font-bold text-crpe-brand hover:text-crpe-brand-hover">na stronie organizatora</a>
                   ) : "po jego opublikowaniu przez organizatora"}.
                 </p>
               </section>
@@ -276,16 +276,16 @@ export default async function TrainingPage({ params }: PageProps) {
               <section className="mt-6">
                 <h2 className="text-lg font-bold text-slate-950">Tematy</h2>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {training.topics.map((topic) => <span key={topic} className="rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800">{topic}</span>)}
+                  {training.topics.map((topic) => <span key={topic} className="rounded-full bg-crpe-brand-soft px-3 py-1.5 text-sm font-semibold text-crpe-brand">{topic}</span>)}
                 </div>
               </section>
             ) : null}
           </div>
 
-          <aside className="self-start rounded-2xl border border-blue-100 bg-blue-50 p-4 lg:sticky lg:top-24">
-            <div className="flex gap-2 text-sm leading-6 text-blue-900"><Info className="mt-1 h-4 w-4 shrink-0" /><p>Dodanie szkolenia do planu CRPE nie jest zapisem. Rejestrację prowadzi organizator.</p></div>
+          <aside className="self-start rounded-2xl border border-crpe-brand-border bg-crpe-brand-soft p-4 lg:sticky lg:top-24">
+            <div className="flex gap-2 text-sm leading-6 text-crpe-brand"><Info className="mt-1 h-4 w-4 shrink-0" /><p>Dodanie szkolenia do planu CRPE nie jest zapisem. Rejestrację prowadzi organizator.</p></div>
             {training.external_url ? (
-              <a href={training.external_url} target="_blank" rel="noreferrer" className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700">
+              <a href={training.external_url} target="_blank" rel="noreferrer" className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-crpe-brand px-4 text-sm font-bold text-white hover:bg-crpe-brand-hover">
                 Zapisy u organizatora <ExternalLink className="h-4 w-4" />
               </a>
             ) : (

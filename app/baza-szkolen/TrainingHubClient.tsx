@@ -335,24 +335,24 @@ function timeRangeShort(start: string | null, end: string | null) {
 function formatTone(format: TrainingType | null) {
   if (format === "stacjonarne") {
     return {
-      rail: "#f59e0b",
-      badge: "border-amber-200 bg-amber-50 text-amber-800",
-      dateTop: "bg-amber-300",
+      rail: "#9A4600",
+      badge: "border-crpe-warning-border bg-crpe-warning-soft text-crpe-warning",
+      dateTop: "bg-crpe-warning-border",
     };
   }
 
   if (format === "hybrydowe") {
     return {
-      rail: "#6366f1",
-      badge: "border-indigo-200 bg-indigo-50 text-indigo-800",
-      dateTop: "bg-indigo-300",
+      rail: "#94A3B8",
+      badge: "border-slate-300 bg-slate-100 text-slate-700",
+      dateTop: "bg-slate-400",
     };
   }
 
   return {
-    rail: "#3b82f6",
-    badge: "border-blue-200 bg-blue-50 text-blue-800",
-    dateTop: "bg-blue-300",
+    rail: "#1D4ED8",
+    badge: "border-crpe-brand-border bg-crpe-brand-soft text-crpe-brand",
+    dateTop: "bg-crpe-brand-border",
   };
 }
 
@@ -496,7 +496,7 @@ function priceBadge(pricePln: number | null) {
     label,
     className:
       pricePln === 0
-        ? "border-emerald-600 bg-emerald-600 text-white shadow-[0_1px_3px_rgba(5,120,85,0.22)]"
+        ? "border-crpe-success bg-crpe-success text-white shadow-[0_1px_3px_rgba(0,106,78,0.22)]"
         : "border-slate-300 bg-white text-slate-700",
   };
 }
@@ -603,7 +603,7 @@ function OrganizerLogo({
 
     return (
       <span
-        className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md bg-blue-50 px-1 text-[10px] font-extrabold tracking-[-0.02em] text-blue-700 ring-1 ring-inset ring-blue-100"
+        className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md bg-crpe-brand-soft px-1 text-[10px] font-extrabold tracking-[-0.02em] text-crpe-brand ring-1 ring-inset ring-crpe-brand-border"
         aria-hidden="true"
       >
         {initials}
@@ -1378,7 +1378,7 @@ export default function TrainingHubClient({
   };
 
   const fieldBase =
-    "h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-sm shadow-slate-900/5 transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/80";
+    "h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-sm shadow-slate-900/5 transition focus:border-crpe-brand focus:bg-white focus:ring-4 focus:ring-crpe-brand-border/80";
 
   const labelBase =
     "mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500";
@@ -1403,7 +1403,7 @@ export default function TrainingHubClient({
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[#eaf1f8]">
       {actionNotice ? (
-        <div className={`fixed bottom-4 left-4 right-4 z-[70] mx-auto flex max-w-xl items-start justify-between gap-3 rounded-2xl border p-4 text-sm shadow-xl sm:left-auto sm:right-6 ${actionNotice.tone === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"}`} role={actionNotice.tone === "error" ? "alert" : "status"} aria-live="polite">
+        <div className={`fixed bottom-4 left-4 right-4 z-[70] mx-auto flex max-w-xl items-start justify-between gap-3 rounded-2xl border p-4 text-sm shadow-xl sm:left-auto sm:right-6 ${actionNotice.tone === "success" ? "border-crpe-success-border bg-crpe-success-soft text-crpe-success" : "border-crpe-danger-border bg-crpe-danger-soft text-crpe-danger"}`} role={actionNotice.tone === "error" ? "alert" : "status"} aria-live="polite">
           <div>
             <p className="font-semibold leading-6">{actionNotice.message}</p>
             {actionNotice.url ? <a href={actionNotice.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 font-bold underline">Przejdź do zapisów <ExternalLink className="h-4 w-4" /></a> : null}
@@ -1411,7 +1411,7 @@ export default function TrainingHubClient({
           <button type="button" onClick={() => setActionNotice(null)} className="rounded-lg p-1 hover:bg-black/5" aria-label="Zamknij komunikat"><X className="h-4 w-4" /></button>
         </div>
       ) : null}
-      <div className="mx-auto w-full max-w-[1280px] px-4 pb-16 pt-7 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1200px] px-4 pb-16 pt-7 sm:px-6 lg:px-8">
         <AppPageHeader
           eyebrow="Publiczny katalog CRPE"
           title="Baza szkoleń"
@@ -1428,7 +1428,7 @@ export default function TrainingHubClient({
                 }
                 window.location.assign("/login");
               }}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 text-sm font-bold text-amber-900 shadow-sm transition hover:border-amber-400 hover:bg-amber-100 active:scale-[0.98] sm:w-auto"
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-crpe-brand-border bg-white px-4 text-sm font-bold text-crpe-brand shadow-sm transition hover:bg-crpe-brand-soft active:scale-[0.98] sm:w-auto"
               type="button"
             >
               <Plus className="h-4 w-4" strokeWidth={2.2} />
@@ -1469,7 +1469,7 @@ export default function TrainingHubClient({
               onClick={() => setShowMoreFilters((value) => !value)}
               aria-expanded={showMoreFilters}
               aria-controls="advanced-training-filters"
-              className="inline-flex h-10 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 lg:col-span-2 lg:px-4"
+              className="inline-flex h-10 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-crpe-brand-border hover:bg-crpe-brand-soft hover:text-crpe-brand lg:col-span-2 lg:px-4"
             >
               <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
               <span className="sm:hidden">Filtry</span>
@@ -1718,7 +1718,7 @@ export default function TrainingHubClient({
           {activeFilterChips.length ? (
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3" aria-label="Aktywne filtry">
               {activeFilterChips.map((chip) => (
-                <button key={chip.key} type="button" onClick={chip.clear} className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-800 hover:bg-blue-100" aria-label={`Usuń filtr: ${chip.label}`}>
+                <button key={chip.key} type="button" onClick={chip.clear} className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-crpe-brand-border bg-crpe-brand-soft px-3 text-xs font-semibold text-crpe-brand hover:bg-crpe-brand-soft" aria-label={`Usuń filtr: ${chip.label}`}>
                   {chip.label}<X className="h-3.5 w-3.5" />
                 </button>
               ))}
@@ -1727,7 +1727,7 @@ export default function TrainingHubClient({
           ) : null}
 
           {error && (
-            <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+            <div className="mt-3 rounded-xl border border-crpe-danger-border bg-crpe-danger-soft p-3 text-sm font-medium text-crpe-danger">
               {error}
             </div>
           )}
@@ -1735,11 +1735,11 @@ export default function TrainingHubClient({
 
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-crpe-brand-border bg-crpe-brand-soft text-crpe-brand">
               <SearchCheck className="h-5 w-5" strokeWidth={2.1} />
             </span>
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-600">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-crpe-brand">
                 Wyniki wyszukiwania
               </p>
               <h2 className="mt-0.5 text-lg font-bold tracking-tight text-slate-950 sm:text-xl" aria-live="polite" aria-atomic="true">
@@ -1792,11 +1792,11 @@ export default function TrainingHubClient({
           >
             {selectedCalendarDateKey ? (
               <div
-                className="flex flex-col gap-3 rounded-[1.35rem] border border-blue-200 bg-blue-50/80 p-4 text-sm text-slate-700 shadow-[0_6px_14px_rgba(37,99,235,0.10)] sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-[1.35rem] border border-crpe-brand-border bg-crpe-brand-soft/80 p-4 text-sm text-slate-700 shadow-[0_6px_14px_rgba(29,78,216,0.10)] sm:flex-row sm:items-center sm:justify-between"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-500">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-crpe-brand">
                     Wybrany dzień z kalendarza
                   </div>
                   <div className="mt-1 font-semibold text-slate-950">
@@ -1809,7 +1809,7 @@ export default function TrainingHubClient({
                 <button
                   type="button"
                   onClick={clearCalendarSelection}
-                  className="inline-flex h-9 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50"
+                  className="inline-flex h-9 items-center justify-center rounded-xl border border-crpe-brand-border bg-white px-3 text-xs font-semibold text-crpe-brand shadow-sm transition hover:bg-crpe-brand-soft"
                 >
                   Pokaż wszystkie
                 </button>
@@ -1884,7 +1884,7 @@ export default function TrainingHubClient({
                   <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 sm:grid-cols-[64px_minmax(0,1fr)_216px] sm:items-center sm:gap-4">
                     <div className="flex w-[64px] shrink-0 flex-col items-center self-start text-center sm:self-center">
                       <span
-                        className={`text-[11px] font-semibold uppercase tracking-[0.06em] ${soon ? "text-amber-700" : "text-slate-400"}`}
+                        className={`text-[11px] font-semibold uppercase tracking-[0.06em] ${soon ? "text-crpe-warning" : "text-slate-400"}`}
                         aria-label={urgencyLabel ? `${date.weekday}, ${urgencyLabel}` : undefined}
                       >
                         {urgencyLabel ? <span className="sr-only">{date.weekday}</span> : null}
@@ -1901,7 +1901,7 @@ export default function TrainingHubClient({
                           : `${date.month.toLocaleLowerCase("pl-PL")} ${date.year}`}
                       </span>
                       {timeRange ? (
-                        <span className="mt-1 whitespace-nowrap text-[10px] font-bold text-blue-700">
+                        <span className="mt-1 whitespace-nowrap text-[10px] font-bold text-crpe-brand">
                           {timeRange}
                         </span>
                       ) : null}
@@ -1925,7 +1925,7 @@ export default function TrainingHubClient({
                         className="block w-full text-left"
                         aria-label={`Pokaż szczegóły szkolenia: ${t.title}`}
                       >
-                        <h3 className="line-clamp-2 text-[15px] font-bold leading-[1.35] tracking-[-0.015em] text-slate-950 transition-colors group-hover:text-blue-800">
+                        <h3 className="line-clamp-2 text-[15px] font-bold leading-[1.35] tracking-[-0.015em] text-slate-950 transition-colors group-hover:text-crpe-brand">
                           {t.title}
                         </h3>
                       </Link>
@@ -1945,7 +1945,7 @@ export default function TrainingHubClient({
                     </div>
 
                     <div className="col-span-2 mt-3 border-t border-slate-100 pt-3 sm:col-span-1 sm:mt-0 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
-                      <div className="flex items-baseline gap-1.5 text-blue-700">
+                      <div className="flex items-baseline gap-1.5 text-crpe-brand">
                         <span className="text-[27px] font-black leading-none tracking-[-0.04em]">
                           {pointDisplay.main}
                         </span>
@@ -1959,7 +1959,7 @@ export default function TrainingHubClient({
                         <div className="mb-2.5 mt-1 h-[17px]" aria-hidden="true" />
                       ) : (
                         <div
-                          className={`mb-2.5 mt-1 inline-flex items-center gap-1 text-[11px] font-semibold ${t.points_verification_status === "verified" ? "text-emerald-700" : "text-amber-700"}`}
+                          className={`mb-2.5 mt-1 inline-flex items-center gap-1 text-[11px] font-semibold ${t.points_verification_status === "verified" ? "text-crpe-success" : "text-crpe-warning"}`}
                           title={pointsDetailsLabel(t.points_verification_status)}
                           aria-hidden="true"
                         >
@@ -1977,7 +1977,7 @@ export default function TrainingHubClient({
                           href={t.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-blue-700 px-3 text-[13px] font-bold text-white transition-colors hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                          className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-crpe-brand px-3 text-[13px] font-bold text-white transition-colors hover:bg-crpe-brand-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-crpe-brand"
                         >
                           <span className="truncate">Zapisy u organizatora</span>
                           <ExternalLink className="h-3.5 w-3.5 shrink-0" />
@@ -1992,7 +1992,7 @@ export default function TrainingHubClient({
                         type="button"
                         onClick={() => chooseTraining(t)}
                         title="Dodaje szkolenie do planu CPD, ale nie zapisuje u organizatora"
-                        className="mt-1.5 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-[13px] font-bold text-slate-700 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        className="mt-1.5 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-[13px] font-bold text-slate-700 transition-colors hover:border-crpe-brand-border hover:bg-crpe-brand-soft hover:text-crpe-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-crpe-brand"
                       >
                         <Plus className="h-4 w-4 shrink-0" strokeWidth={2.4} />
                         Dodaj do planu
@@ -2011,7 +2011,7 @@ export default function TrainingHubClient({
                   onClick={() =>
                     setVisibleCount((count) => count + TRAININGS_PAGE_SIZE)
                   }
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-crpe-brand-border hover:bg-crpe-brand-soft hover:text-crpe-brand"
                 >
                   Pokaż kolejne {Math.min(TRAININGS_PAGE_SIZE, visibleItems.length - visibleCount)}
                   <ChevronDown className="h-4 w-4" />
@@ -2045,11 +2045,11 @@ export default function TrainingHubClient({
                 </button>
 
                 <div className="hidden flex-wrap items-center justify-end gap-x-2 gap-y-1 text-[10px] text-slate-400 lg:flex">
-                  <span className="inline-flex h-2 w-2 rounded-full bg-blue-50 ring-1 ring-blue-200" />
+                  <span className="inline-flex h-2 w-2 rounded-full bg-crpe-brand-soft ring-1 ring-crpe-brand-border" />
                   online
-                  <span className="inline-flex h-2 w-2 rounded-full bg-amber-50 ring-1 ring-amber-200" />
+                  <span className="inline-flex h-2 w-2 rounded-full bg-crpe-warning-soft ring-1 ring-crpe-warning-border" />
                   stacj.
-                  <span className="inline-flex h-2 w-2 rounded-full bg-indigo-50 ring-1 ring-indigo-200" />
+                  <span className="inline-flex h-2 w-2 rounded-full bg-slate-100 ring-1 ring-slate-300" />
                   hybryd.
                   <span className="inline-flex h-2 w-2 rounded-full bg-fuchsia-50 ring-1 ring-fuchsia-200" />
                   różne
@@ -2100,11 +2100,11 @@ export default function TrainingHubClient({
                           hasMixedFormats
                             ? "bg-fuchsia-50 text-fuchsia-800 ring-fuchsia-200 hover:bg-fuchsia-100"
                             : format === "stacjonarne"
-                            ? "bg-amber-50 text-amber-800 ring-amber-200 hover:bg-amber-100"
+                            ? "bg-crpe-warning-soft text-crpe-warning ring-crpe-warning-border hover:bg-crpe-warning-soft"
                             : format === "hybrydowe"
-                            ? "bg-indigo-50 text-indigo-800 ring-indigo-200 hover:bg-indigo-100"
+                            ? "bg-slate-100 text-slate-700 ring-slate-300 hover:bg-slate-100"
                             : hasEvent
-                            ? "bg-blue-50 text-blue-800 ring-blue-200 hover:bg-blue-100"
+                            ? "bg-crpe-brand-soft text-crpe-brand ring-crpe-brand-border hover:bg-crpe-brand-soft"
                             : "bg-slate-50 text-slate-400 ring-slate-100";
 
                         return (
@@ -2118,7 +2118,7 @@ export default function TrainingHubClient({
                             }}
                             className={`relative flex aspect-square items-center justify-center rounded-xl text-[11px] font-semibold ring-1 transition disabled:cursor-default ${dayTone} ${
                               isSelected
-                                ? "outline outline-2 outline-blue-300"
+                                ? "outline outline-2 outline-crpe-brand-border"
                                 : ""
                             }`}
                             title={
@@ -2236,7 +2236,7 @@ export default function TrainingHubClient({
               </button>
             </div>
 
-            {formErrors.general ? <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-800">{formErrors.general}</div> : null}
+            {formErrors.general ? <div role="alert" className="mt-4 rounded-xl border border-crpe-danger-border bg-crpe-danger-soft p-3 text-sm font-semibold text-crpe-danger">{formErrors.general}</div> : null}
 
             <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12">
               <div className="md:col-span-8">
@@ -2250,7 +2250,7 @@ export default function TrainingHubClient({
                   aria-invalid={Boolean(formErrors.title)}
                   aria-describedby={formErrors.title ? "new-training-title-error" : undefined}
                 />
-                {formErrors.title ? <p id="new-training-title-error" className="mt-1 text-xs font-semibold text-red-700">{formErrors.title}</p> : null}
+                {formErrors.title ? <p id="new-training-title-error" className="mt-1 text-xs font-semibold text-crpe-danger">{formErrors.title}</p> : null}
               </div>
 
               <div className="md:col-span-4">
@@ -2263,7 +2263,7 @@ export default function TrainingHubClient({
                   inputMode="numeric"
                   aria-invalid={Boolean(formErrors.points)}
                 />
-                {formErrors.points ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.points}</p> : null}
+                {formErrors.points ? <p className="mt-1 text-xs font-semibold text-crpe-danger">{formErrors.points}</p> : null}
               </div>
 
               <div className="md:col-span-6">
@@ -2290,7 +2290,7 @@ export default function TrainingHubClient({
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
-                    className="min-w-0 flex-1 text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
+                    className="min-w-0 flex-1 text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-crpe-brand-soft file:px-3 file:py-2 file:font-semibold file:text-crpe-brand hover:file:bg-crpe-brand-soft"
                     onChange={(event) => {
                       const file = event.currentTarget.files?.[0] ?? null;
                       if (!file) {
@@ -2321,7 +2321,7 @@ export default function TrainingHubClient({
                 <div className="mt-1 text-xs text-slate-500">
                   PNG, JPG lub WebP, maks. 2 MB. Plik zostanie bezpiecznie zmniejszony.
                 </div>
-                {formErrors.logo ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.logo}</p> : null}
+                {formErrors.logo ? <p className="mt-1 text-xs font-semibold text-crpe-danger">{formErrors.logo}</p> : null}
               </div>
 
               <div className="md:col-span-3">
@@ -2365,7 +2365,7 @@ export default function TrainingHubClient({
                   className={fieldBase}
                   aria-invalid={Boolean(formErrors.start)}
                 />
-                {formErrors.start ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.start}</p> : null}
+                {formErrors.start ? <p className="mt-1 text-xs font-semibold text-crpe-danger">{formErrors.start}</p> : null}
               </div>
 
               <div className="md:col-span-3">
@@ -2378,7 +2378,7 @@ export default function TrainingHubClient({
                   className={fieldBase}
                   aria-invalid={Boolean(formErrors.end)}
                 />
-                {formErrors.end ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.end}</p> : null}
+                {formErrors.end ? <p className="mt-1 text-xs font-semibold text-crpe-danger">{formErrors.end}</p> : null}
               </div>
 
               <div className="md:col-span-3">
@@ -2418,7 +2418,7 @@ export default function TrainingHubClient({
                   ))}
                 </select>
               </div>
-              {formErrors.time ? <p className="md:col-span-12 -mt-2 text-xs font-semibold text-red-700">{formErrors.time}</p> : null}
+              {formErrors.time ? <p className="md:col-span-12 -mt-2 text-xs font-semibold text-crpe-danger">{formErrors.time}</p> : null}
 
               <div className="md:col-span-12">
                 <TrainingAudienceField
@@ -2427,7 +2427,7 @@ export default function TrainingHubClient({
                   options={professionOptions}
                   disabled={addSubmitting}
                 />
-                {formErrors.audience ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.audience}</p> : null}
+                {formErrors.audience ? <p className="mt-1 text-xs font-semibold text-crpe-danger">{formErrors.audience}</p> : null}
               </div>
 
               <div className="md:col-span-6">
@@ -2485,7 +2485,7 @@ export default function TrainingHubClient({
                   aria-invalid={Boolean(formErrors.speakers)}
                 />
                 <p className="mt-1 text-xs text-slate-500">Każdego prowadzącego wpisz w osobnym wierszu, razem z tytułem zawodowym lub naukowym.</p>
-                {formErrors.speakers ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.speakers}</p> : null}
+                {formErrors.speakers ? <p className="mt-1 text-xs font-semibold text-crpe-danger">{formErrors.speakers}</p> : null}
               </div>
 
               <div className="md:col-span-6">
@@ -2527,7 +2527,7 @@ export default function TrainingHubClient({
                 <p className="mt-1 text-xs text-slate-500">
                   Wybierz „Cena do potwierdzenia”, jeśli organizator nie podał jeszcze kosztu.
                 </p>
-                {formErrors.price ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.price}</p> : null}
+                {formErrors.price ? <p className="mt-1 text-xs font-semibold text-crpe-danger">{formErrors.price}</p> : null}
               </div>
 
               <div className="md:col-span-2">
@@ -2540,7 +2540,7 @@ export default function TrainingHubClient({
                   placeholder="np. 50"
                   aria-invalid={Boolean(formErrors.capacity)}
                 />
-                {formErrors.capacity ? <p className="mt-1 text-xs font-semibold text-red-700">{formErrors.capacity}</p> : null}
+                {formErrors.capacity ? <p className="mt-1 text-xs font-semibold text-crpe-danger">{formErrors.capacity}</p> : null}
               </div>
 
               <div className="md:col-span-2">
@@ -2565,7 +2565,7 @@ export default function TrainingHubClient({
                     type="checkbox"
                     checked={fRec}
                     onChange={(e) => setFRec(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-100"
+                    className="h-4 w-4 rounded border-slate-300 text-crpe-brand focus:ring-crpe-brand-border"
                   />
                   Nagranie dostępne
                 </label>
@@ -2583,7 +2583,7 @@ export default function TrainingHubClient({
               </button>
 
               <button
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 disabled:opacity-60"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-crpe-brand px-4 text-sm font-semibold text-white shadow-sm shadow-crpe-brand/20 transition hover:bg-crpe-brand-hover disabled:opacity-60"
                 disabled={addSubmitting}
                 type="submit"
               >

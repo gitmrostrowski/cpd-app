@@ -10,6 +10,21 @@
   --color-crpe-surface: #F7F8FA;
   --color-crpe-line: #E4E6EC;
 
+  /* Semantyka stanu — używać WYŁĄCZNIE do statusu danych, NIGDY do CTA i NIGDY jako tożsamość roli.
+     success = potwierdzony/kompletny; warning = wymaga uwagi/do uzupełnienia/zbliżający się termin;
+     danger = przeterminowane/błąd/krytyczne; crpe-brand = jedyny kolor wszystkich CTA w aplikacji. */
+  --color-crpe-success: #006A4E;
+  --color-crpe-success-soft: #E4F6F0;
+  --color-crpe-success-border: #C5E3D9;
+
+  --color-crpe-warning: #9A4600;
+  --color-crpe-warning-soft: #FFEEE2;
+  --color-crpe-warning-border: #FAD6C0;
+
+  --color-crpe-danger: #A42F30;
+  --color-crpe-danger-soft: #FFECE9;
+  --color-crpe-danger-border: #FFCEC8;
+
   --color-crpe-medyk-soft: #E2F6F6;
   --color-crpe-medyk-border: #C6E6E6;
   --color-crpe-medyk-text: #00595D;

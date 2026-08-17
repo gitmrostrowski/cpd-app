@@ -62,7 +62,8 @@
     "check:v6.27.1": "node scripts/check-v6-27-1-brand-palette.mjs",
     "check:v6.27.2": "node scripts/check-v6-27-2-pigment-palette.mjs",
     "check:v6.27.3": "node scripts/check-v6-27-3-role-owned-accents.mjs",
-    "check:v6.27.4": "node scripts/check-v6-27-4-brand-led-home.mjs"
+    "check:v6.27.4": "node scripts/check-v6-27-4-brand-led-home.mjs",
+    "check:v6.27.5": "node scripts/check-v6-27-5-layout-and-semantic-colors.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

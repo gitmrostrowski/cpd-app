@@ -300,10 +300,10 @@ function IconBubble({
   tone?: "blue" | "green" | "amber" | "red" | "slate";
 }) {
   const tones = {
-    blue: "border-blue-100 bg-blue-50 text-blue-700",
-    green: "border-emerald-100 bg-emerald-50 text-emerald-700",
-    amber: "border-amber-100 bg-amber-50 text-amber-700",
-    red: "border-red-100 bg-red-50 text-red-700",
+    blue: "border-crpe-brand-border bg-crpe-brand-soft text-crpe-brand",
+    green: "border-crpe-success-border bg-crpe-success-soft text-crpe-success",
+    amber: "border-crpe-warning-border bg-crpe-warning-soft text-crpe-warning",
+    red: "border-crpe-danger-border bg-crpe-danger-soft text-crpe-danger",
     slate: "border-slate-200 bg-slate-50 text-slate-600",
   };
 
@@ -540,8 +540,8 @@ function PointsAccrualChart({
     >
       <defs>
         <linearGradient id="crpe-accrual-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#2563eb" stopOpacity={0.18} />
-          <stop offset="70%" stopColor="#60a5fa" stopOpacity={0.07} />
+          <stop offset="0%" stopColor="#1D4ED8" stopOpacity={0.18} />
+          <stop offset="70%" stopColor="#CFDDFB" stopOpacity={0.07} />
           <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
         </linearGradient>
       </defs>
@@ -594,7 +594,7 @@ function PointsAccrualChart({
         <polyline
           points={toPolyline(plannedPoints)}
           fill="none"
-          stroke="#60a5fa"
+          stroke="#CFDDFB"
           strokeWidth={2.5}
           strokeDasharray="5 4"
           strokeLinecap="round"
@@ -605,7 +605,7 @@ function PointsAccrualChart({
       <polyline
         points={toPolyline(donePoints)}
         fill="none"
-        stroke="#2563eb"
+        stroke="#1D4ED8"
         strokeWidth={3.25}
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -618,7 +618,7 @@ function PointsAccrualChart({
             y1={py(series.doneTotal)}
             x2={px(series.todayX)}
             y2={py(series.targetToday)}
-            stroke="#d97706"
+            stroke="#9A4600"
             strokeWidth={2.25}
             strokeLinecap="round"
           />
@@ -627,7 +627,7 @@ function PointsAccrualChart({
             y1={py(series.targetToday)}
             x2={px(series.todayX)}
             y2={py(series.targetToday)}
-            stroke="#fbbf24"
+            stroke="#FAD6C0"
             strokeWidth={1}
             strokeDasharray="3 4"
             opacity={0.78}
@@ -636,7 +636,7 @@ function PointsAccrualChart({
             cx={px(series.todayX)}
             cy={py(series.targetToday)}
             r={4.2}
-            fill="#d97706"
+            fill="#9A4600"
             stroke="#ffffff"
             strokeWidth={2}
           />
@@ -647,8 +647,8 @@ function PointsAccrualChart({
               width={gapLabelWidth}
               height={22}
               rx={11}
-              fill="#fff7ed"
-              stroke="#fed7aa"
+              fill="#FFEEE2"
+              stroke="#FAD6C0"
             />
             <text
               x={gapLabelX + gapLabelWidth / 2}
@@ -669,14 +669,14 @@ function PointsAccrualChart({
         cx={px(series.todayX)}
         cy={py(series.doneTotal)}
         r={10}
-        fill="#2563eb"
+        fill="#1D4ED8"
         opacity={0.12}
       />
       <circle
         cx={px(series.todayX)}
         cy={py(series.doneTotal)}
         r={5.4}
-        fill="#2563eb"
+        fill="#1D4ED8"
         stroke="#ffffff"
         strokeWidth={2.3}
       />
@@ -779,24 +779,24 @@ function PointsProgressBar({
 
         <div className="relative h-9 overflow-hidden rounded-xl bg-slate-100 max-h-6 ring-1 ring-slate-200/90 shadow-[inset_0_1px_2px_rgba(15,23,42,0.05)]">
           <div
-            className="absolute inset-y-0 left-0 bg-blue-600"
+            className="absolute inset-y-0 left-0 bg-crpe-brand"
             style={{ width: `${donePct}%` }}
           />
           {completePct > 0 ? (
             <div
-              className="absolute bottom-0 left-0 h-1.5 bg-emerald-500"
+              className="absolute bottom-0 left-0 h-1.5 bg-crpe-success"
               style={{ width: `${completePct}%` }}
               aria-hidden="true"
             />
           ) : null}
           {gapPct > 0 ? (
             <div
-              className="absolute inset-y-0 bg-amber-50"
+              className="absolute inset-y-0 bg-crpe-warning-soft"
               style={{
                 left: `${donePct}%`,
                 width: `${gapPct}%`,
                 backgroundImage:
-                  "repeating-linear-gradient(135deg, rgba(217,119,6,0.36) 0 2px, transparent 2px 7px)",
+                  "repeating-linear-gradient(135deg, rgba(154,70,0,0.36) 0 2px, transparent 2px 7px)",
               }}
             />
           ) : null}
@@ -810,7 +810,7 @@ function PointsProgressBar({
           ) : null}
           {gapPct >= 13 ? (
             <span
-              className="absolute inset-y-0 flex items-center px-2 text-[10px] font-black text-amber-900"
+              className="absolute inset-y-0 flex items-center px-2 text-[10px] font-black text-crpe-warning"
               style={{ left: `${donePct}%` }}
               aria-hidden="true"
             >
@@ -828,16 +828,16 @@ function PointsProgressBar({
           <span>0 pkt</span>
           <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-1.5 text-slate-500">
-              <span className="h-2 w-2 rounded-full bg-blue-600" aria-hidden="true" />
+              <span className="h-2 w-2 rounded-full bg-crpe-brand" aria-hidden="true" />
               zdobyte
             </span>
-            <span className="inline-flex items-center gap-1.5 text-emerald-700">
-              <span className="h-1.5 w-3 rounded-full bg-emerald-500" aria-hidden="true" />
+            <span className="inline-flex items-center gap-1.5 text-crpe-success">
+              <span className="h-1.5 w-3 rounded-full bg-crpe-success" aria-hidden="true" />
               kompletne {Math.round(completePoints)} pkt
             </span>
             {gapPoints > 0 ? (
-              <span className="inline-flex items-center gap-1.5 text-amber-800">
-                <span className="h-2 w-2 rounded-sm bg-amber-100 ring-1 ring-amber-300" aria-hidden="true" />
+              <span className="inline-flex items-center gap-1.5 text-crpe-warning">
+                <span className="h-2 w-2 rounded-sm bg-crpe-warning-soft ring-1 ring-crpe-warning-border" aria-hidden="true" />
                 luka do tempa
               </span>
             ) : null}
@@ -863,24 +863,24 @@ function PointsProgressBar({
       </div>
 
       <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
-        <div className="relative overflow-hidden rounded-2xl border border-blue-100 bg-blue-50/35 px-3.5 py-3.5 pl-4">
-          <span className="absolute inset-y-0 left-0 w-1 bg-blue-600" aria-hidden="true" />
+        <div className="relative overflow-hidden rounded-2xl border border-crpe-brand-border bg-crpe-brand-soft/35 px-3.5 py-3.5 pl-4">
+          <span className="absolute inset-y-0 left-0 w-1 bg-crpe-brand" aria-hidden="true" />
           <div className="text-[11px] font-semibold text-slate-600">Zebrane</div>
-          <div className="mt-1 text-[24px] font-black leading-none tracking-[-0.04em] text-blue-700">
+          <div className="mt-1 text-[24px] font-black leading-none tracking-[-0.04em] text-crpe-brand">
             {series.doneTotal}
             <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
           </div>
           <div className="mt-1.5 text-[11px] leading-4 text-slate-500">
             {Math.round(donePct)}% celu {series.target} pkt
-            <span className="mt-0.5 block font-bold text-emerald-700">
+            <span className="mt-0.5 block font-bold text-crpe-success">
               {Math.round(completePoints)} pkt z kompletnych wpisów
             </span>
           </div>
         </div>
 
-        <div className={`relative overflow-hidden rounded-2xl border px-3.5 py-3.5 pl-4 ${gapPoints > 0 ? "border-amber-100 bg-amber-50/40" : "border-emerald-100 bg-emerald-50/35"}`}>
+        <div className={`relative overflow-hidden rounded-2xl border px-3.5 py-3.5 pl-4 ${gapPoints > 0 ? "border-crpe-warning-border bg-crpe-warning-soft/40" : "border-crpe-success-border bg-crpe-success-soft/35"}`}>
           <span
-            className={`absolute inset-y-0 left-0 w-1 ${gapPoints > 0 ? "bg-amber-400" : "bg-emerald-500"}`}
+            className={`absolute inset-y-0 left-0 w-1 ${gapPoints > 0 ? "bg-crpe-warning-border" : "bg-crpe-success"}`}
             aria-hidden="true"
           />
           <div className="text-[11px] font-semibold text-slate-600">
@@ -888,7 +888,7 @@ function PointsProgressBar({
           </div>
           <div
             className={`mt-1 text-[24px] font-black leading-none tracking-[-0.04em] ${
-              gapPoints > 0 ? "text-amber-800" : "text-emerald-700"
+              gapPoints > 0 ? "text-crpe-warning" : "text-crpe-success"
             }`}
           >
             {gapPoints > 0 ? gapPoints : Math.round(series.doneTotal - series.targetToday)}
@@ -930,10 +930,10 @@ function SegmentedCapacityBar({ pct, status }: { pct: number; status: "available
     status === "blocked"
       ? "bg-slate-400"
       : status === "warning"
-        ? "bg-amber-400"
+        ? "bg-crpe-warning-border"
         : status === "per_item"
-          ? "bg-blue-500"
-          : "bg-emerald-500";
+          ? "bg-crpe-brand"
+          : "bg-crpe-success";
 
   return (
     <div className="mt-2 grid grid-cols-10 gap-1" aria-label={`Wykorzystanie limitu ${Math.round(pct)}%`}>
@@ -953,10 +953,10 @@ function LimitStatusBadge({ kind }: { kind: "available" | "warning" | "blocked" 
     kind === "blocked"
       ? "border-slate-200 bg-slate-100 text-slate-700"
       : kind === "warning"
-        ? "border-amber-200 bg-amber-50 text-amber-700"
+        ? "border-crpe-warning-border bg-crpe-warning-soft text-crpe-warning"
         : kind === "per_item"
-          ? "border-blue-200 bg-blue-50 text-blue-700"
-          : "border-emerald-200 bg-emerald-50 text-emerald-700";
+          ? "border-crpe-brand-border bg-crpe-brand-soft text-crpe-brand"
+          : "border-crpe-success-border bg-crpe-success-soft text-crpe-success";
 
   const label =
     kind === "blocked"
@@ -1333,10 +1333,10 @@ export default function CalculatorClient() {
     !hasPointTarget
       ? "bg-slate-100 text-slate-700"
       : progress > 0 && paceDelta >= 10
-      ? "bg-emerald-50 text-emerald-800"
+      ? "bg-crpe-success-soft text-crpe-success"
       : progress > 0 && paceDelta >= -10
         ? "bg-slate-100 text-slate-700"
-        : "bg-amber-50 text-amber-800";
+        : "bg-crpe-warning-soft text-crpe-warning";
 
   const limitsUsage = useMemo(() => {
     const yearsInPeriod = Math.max(1, periodEnd - periodStart + 1);
@@ -1814,7 +1814,7 @@ export default function CalculatorClient() {
   }
 
   const inputCls =
-    "h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-[0_3px_10px_rgba(15,45,75,0.04)] transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100/80 disabled:bg-slate-50 disabled:text-slate-400";
+    "h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-[0_3px_10px_rgba(15,45,75,0.04)] transition focus:border-crpe-brand focus:ring-4 focus:ring-crpe-brand-border/80 disabled:bg-slate-50 disabled:text-slate-400";
 
   const cardCls =
     "scroll-mt-44 relative overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(15,45,75,0.07)] transition-shadow hover:shadow-[0_18px_44px_rgba(15,45,75,0.09)]";
@@ -1931,7 +1931,7 @@ export default function CalculatorClient() {
                 onClick={() => scrollToSection(id)}
                 className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-[11px] font-bold transition sm:flex-1 sm:px-3 sm:text-[13px] ${
                   active
-                    ? "bg-blue-600 text-white shadow-[0_7px_16px_rgba(37,99,235,0.22)]"
+                    ? "bg-crpe-brand text-white shadow-[0_7px_16px_rgba(29,78,216,0.22)]"
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 }`}
                 aria-current={active ? "location" : undefined}
@@ -1956,18 +1956,18 @@ export default function CalculatorClient() {
           {activityLoadError || profileLoadError ? (
             <div
               role="alert"
-              className="rounded-[20px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-950 shadow-sm"
+              className="rounded-[20px] border border-crpe-warning-border bg-crpe-warning-soft px-5 py-4 text-sm text-crpe-warning shadow-sm"
             >
               <div className="font-extrabold">
                 Nie udało się wczytać wszystkich danych z bazy Frankfurt.
               </div>
-              <div className="mt-1 break-words text-[13px] leading-5 text-amber-900">
+              <div className="mt-1 break-words text-[13px] leading-5 text-crpe-warning">
                 {activityLoadError ?? profileLoadError}
               </div>
               <button
                 type="button"
                 onClick={() => void reloadActivities()}
-                className="mt-3 inline-flex h-9 items-center justify-center rounded-xl border border-amber-300 bg-white px-3.5 text-xs font-bold text-amber-900 transition hover:bg-amber-100"
+                className="mt-3 inline-flex h-9 items-center justify-center rounded-xl border border-crpe-warning-border bg-white px-3.5 text-xs font-bold text-crpe-warning transition hover:bg-crpe-warning-soft"
               >
                 Spróbuj ponownie
               </button>
@@ -1994,7 +1994,7 @@ export default function CalculatorClient() {
 
             <div className="px-5 pb-3 pt-1">
               <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
-                <span className="text-[46px] font-black leading-[0.92] tracking-[-0.055em] text-blue-700 sm:text-[52px]">
+                <span className="text-[46px] font-black leading-[0.92] tracking-[-0.055em] text-crpe-brand sm:text-[52px]">
                   {donePoints}
                 </span>
                 {hasPointTarget ? (
@@ -2007,7 +2007,7 @@ export default function CalculatorClient() {
                     </span>
                   </>
                 ) : (
-                  <span className="text-[13px] font-bold text-amber-800">cel nieustawiony</span>
+                  <span className="text-[13px] font-bold text-crpe-warning">cel nieustawiony</span>
                 )}
                 <span className="text-[13px] text-slate-500">
                   okres {periodStart}–{periodEnd}, minęło{" "}
@@ -2018,13 +2018,13 @@ export default function CalculatorClient() {
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 font-bold text-emerald-800 ring-1 ring-emerald-100">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-crpe-success-soft px-2.5 py-1 font-bold text-crpe-success ring-1 ring-crpe-success-border">
+                  <span className="h-1.5 w-1.5 rounded-full bg-crpe-success" aria-hidden="true" />
                   Kompletne wpisy: {completePoints} pkt
                 </span>
                 {incompletePoints > 0 ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 font-bold text-amber-900 ring-1 ring-amber-100">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" aria-hidden="true" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-crpe-warning-soft px-2.5 py-1 font-bold text-crpe-warning ring-1 ring-crpe-warning-border">
+                    <span className="h-1.5 w-1.5 rounded-full bg-crpe-warning-border" aria-hidden="true" />
                     Do uzupełnienia: {incompletePoints} pkt
                   </span>
                 ) : null}
@@ -2112,8 +2112,8 @@ export default function CalculatorClient() {
                       </div>
 
                       <div className="mt-2.5 flex flex-wrap gap-2 pl-9 text-[12px] font-medium leading-5 text-slate-600">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-blue-800 ring-1 ring-blue-100">
-                          <span className="h-[3px] w-3.5 rounded-full bg-blue-600" aria-hidden="true" />
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-crpe-brand-soft px-2.5 py-1 text-crpe-brand ring-1 ring-crpe-brand-border">
+                          <span className="h-[3px] w-3.5 rounded-full bg-crpe-brand" aria-hidden="true" />
                           zdobyte
                         </span>
                         {accrualSeries.plannedTotal > accrualSeries.doneTotal ? (
@@ -2171,8 +2171,8 @@ export default function CalculatorClient() {
 
                   const urgencyClass =
                     step.tone === "amber"
-                      ? "bg-amber-300/90 text-amber-950"
-                      : "bg-emerald-300/90 text-emerald-950";
+                      ? "bg-crpe-warning-border/90 text-crpe-warning"
+                      : "bg-crpe-success-border/90 text-crpe-success";
 
                   if (isPrimary) {
                     return (
@@ -2190,7 +2190,7 @@ export default function CalculatorClient() {
                             window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
                           });
                         }}
-                        className="mb-1.5 flex items-center gap-3 rounded-xl bg-blue-700 px-3.5 py-3 text-white shadow-sm transition-colors hover:bg-blue-800"
+                        className="mb-1.5 flex items-center gap-3 rounded-xl bg-crpe-brand px-3.5 py-3 text-white shadow-sm transition-colors hover:bg-crpe-brand-hover"
                       >
                         <MiniIcon name={step.icon} className="h-5 w-5 shrink-0" />
                         <span className="min-w-0 flex-1">
@@ -2279,7 +2279,7 @@ export default function CalculatorClient() {
                     });
                   }
                 }}
-                className="inline-flex h-8 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-xs font-bold text-blue-700 shadow-sm transition hover:bg-blue-50"
+                className="inline-flex h-8 shrink-0 items-center justify-center rounded-xl border border-crpe-brand-border bg-white px-3 text-xs font-bold text-crpe-brand shadow-sm transition hover:bg-crpe-brand-soft"
               >
                 {settingsOpen ? "Ukryj ustawienia" : "Zmień ustawienia"}
               </button>
@@ -2301,10 +2301,10 @@ export default function CalculatorClient() {
                         <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
                           Szczegóły celu, zawodu i okresu rozliczeniowego.
                           {savedAt && !dirty && !savingProfile ? (
-                            <span className="ml-1 font-medium text-blue-600">Zapisano</span>
+                            <span className="ml-1 font-medium text-crpe-brand">Zapisano</span>
                           ) : null}
                           {!otherValid ? (
-                            <span className="ml-1 font-medium text-red-500">
+                            <span className="ml-1 font-medium text-crpe-danger">
                               Uzupełnij zawód
                             </span>
                           ) : null}
@@ -2346,14 +2346,14 @@ export default function CalculatorClient() {
                         type="button"
                         onClick={saveAllSettings}
                         disabled={isBusy || savingProfile || !dirty || !otherValid}
-                        className="inline-flex h-9 w-28 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(37,99,235,0.20)] transition hover:bg-blue-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex h-9 w-28 items-center justify-center rounded-xl bg-crpe-brand px-3 text-sm font-semibold text-white shadow-[0_5px_12px_rgba(29,78,216,0.20)] transition hover:bg-crpe-brand-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {savingProfile ? "Zapisuję..." : "Zapisz"}
                       </button>
 
                       <Link
                         href="/profil"
-                        className="inline-flex h-9 w-28 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95"
+                        className="inline-flex h-9 w-28 items-center justify-center rounded-xl border border-crpe-brand-border bg-white px-3 text-sm font-semibold text-crpe-brand shadow-sm transition hover:bg-crpe-brand-soft active:scale-95"
                       >
                         Profil →
                       </Link>
@@ -2509,7 +2509,7 @@ export default function CalculatorClient() {
                           placeholder="np. Psycholog, Logopeda..."
                           className={`mt-1.5 ${inputCls} ${
                             !otherValid
-                              ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                              ? "border-crpe-danger-border focus:border-crpe-danger-border focus:ring-crpe-danger-border"
                               : ""
                           }`}
                         />
@@ -2541,7 +2541,7 @@ export default function CalculatorClient() {
                         <span> · zweryfikowana</span>
                         {suggestedRuleSet.sources[0] ? (
                           <details className="ml-1 inline">
-                            <summary className="inline cursor-pointer font-bold text-blue-700 hover:text-blue-800">
+                            <summary className="inline cursor-pointer font-bold text-crpe-brand hover:text-crpe-brand">
                               Szczegóły i źródło
                             </summary>
                             <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3">
@@ -2551,7 +2551,7 @@ export default function CalculatorClient() {
                                 href={suggestedRuleSet.sources[0].url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="font-bold text-blue-700 hover:text-blue-800"
+                                className="font-bold text-crpe-brand hover:text-crpe-brand"
                               >
                                 {suggestedRuleSet.sources[0].title} →
                               </a>
@@ -2602,10 +2602,10 @@ export default function CalculatorClient() {
           {planInfo || planErr ? (
             <div className="mb-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs">
               {planInfo ? (
-                <p className="font-semibold text-blue-700">{planInfo}</p>
+                <p className="font-semibold text-crpe-brand">{planInfo}</p>
               ) : null}
               {planErr ? (
-                <p className="font-semibold text-red-600">{planErr}</p>
+                <p className="font-semibold text-crpe-danger">{planErr}</p>
               ) : null}
             </div>
           ) : null}
@@ -2659,14 +2659,14 @@ export default function CalculatorClient() {
                         className={[
                           "group relative w-full rounded-2xl border px-3.5 py-3 text-left transition active:scale-[0.995]",
                           active
-                            ? "border-blue-300 bg-white ring-1 ring-blue-100 shadow-[0_2px_10px_rgba(15,45,75,0.08)]"
+                            ? "border-crpe-brand-border bg-white ring-1 ring-crpe-brand-border shadow-[0_2px_10px_rgba(15,45,75,0.08)]"
                             : "border-slate-200 bg-slate-50/70 hover:border-slate-300 hover:bg-white",
                         ].join(" ")}
                       >
                         <span
                           className={[
                             "absolute inset-y-2 left-0 w-1 rounded-r-full transition",
-                            active ? "bg-blue-600" : "bg-transparent group-hover:bg-slate-300",
+                            active ? "bg-crpe-brand" : "bg-transparent group-hover:bg-slate-300",
                           ].join(" ")}
                           aria-hidden="true"
                         />
@@ -2687,7 +2687,7 @@ export default function CalculatorClient() {
                                 r.status === "blocked"
                                   ? "text-slate-500"
                                   : active
-                                    ? "text-blue-700"
+                                    ? "text-crpe-brand"
                                     : "text-slate-500",
                               ].join(" ")}
                             >
@@ -2699,8 +2699,8 @@ export default function CalculatorClient() {
                                 r.status === "blocked"
                                   ? "text-slate-400"
                                   : r.status === "warning"
-                                    ? "text-amber-700"
-                                    : "text-emerald-700",
+                                    ? "text-crpe-warning"
+                                    : "text-crpe-success",
                               ].join(" ")}
                             >
                               {suffix}
@@ -2710,7 +2710,7 @@ export default function CalculatorClient() {
                           <div
                             className={[
                               "shrink-0 text-base font-bold leading-none tracking-[-0.03em] tabular-nums",
-                              active ? "text-blue-700" : "text-slate-500",
+                              active ? "text-crpe-brand" : "text-slate-500",
                             ].join(" ")}
                           >
                             {value}
@@ -2723,10 +2723,10 @@ export default function CalculatorClient() {
                               r.status === "blocked"
                                 ? "bg-slate-400"
                                 : r.status === "warning"
-                                  ? "bg-amber-400"
+                                  ? "bg-crpe-warning-border"
                                   : r.mode === "per_item"
-                                    ? "bg-blue-500"
-                                    : "bg-emerald-500"
+                                    ? "bg-crpe-brand"
+                                    : "bg-crpe-success"
                             }`}
                             aria-hidden="true"
                           />
@@ -2734,7 +2734,7 @@ export default function CalculatorClient() {
                             {r.mode === "per_item" ? (
                               <div className="grid grid-cols-10 gap-1" aria-label="Limit pojedynczego wpisu">
                                 {Array.from({ length: 10 }, (_, index) => (
-                                  <span key={index} className="h-1.5 rounded-full bg-blue-200" aria-hidden="true" />
+                                  <span key={index} className="h-1.5 rounded-full bg-crpe-brand-border" aria-hidden="true" />
                                 ))}
                               </div>
                             ) : (
@@ -2754,7 +2754,7 @@ export default function CalculatorClient() {
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
                       <div className="text-[10px] font-medium text-slate-500">Z wolnym miejscem</div>
-                      <div className="mt-0.5 text-lg font-bold leading-none text-emerald-700">
+                      <div className="mt-0.5 text-lg font-bold leading-none text-crpe-success">
                         {usableLimitsCount}
                         <span className="ml-1 text-[11px] font-semibold text-slate-400">
                           z {limitsUsage.length}
@@ -2766,7 +2766,7 @@ export default function CalculatorClient() {
                       <div
                         className={[
                           "mt-0.5 text-lg font-bold leading-none",
-                          blockedLimitsCount > 0 ? "text-amber-700" : "text-slate-500",
+                          blockedLimitsCount > 0 ? "text-crpe-warning" : "text-slate-500",
                         ].join(" ")}
                       >
                         {blockedLimitsCount}
@@ -2784,12 +2784,12 @@ export default function CalculatorClient() {
 
               <div className="min-w-0 space-y-3">
                 {selectedLimit ? (
-                  <div className="relative overflow-hidden rounded-[1.35rem] border border-blue-100 bg-gradient-to-br from-blue-50/55 via-white to-blue-50/20 p-4 shadow-sm shadow-blue-100/50">
-                    <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-600 via-blue-400 to-transparent" />
+                  <div className="relative overflow-hidden rounded-[1.35rem] border border-crpe-brand-border bg-gradient-to-br from-crpe-brand-soft/55 via-white to-crpe-brand-soft/20 p-4 shadow-sm shadow-crpe-brand-border/50">
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-crpe-brand via-crpe-brand-border to-transparent" />
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-crpe-brand">
                           Wybrana kategoria
                         </div>
                         <h3 className="mt-1 text-xl font-extrabold tracking-[-0.035em] text-slate-950 sm:text-2xl">
@@ -2850,8 +2850,8 @@ export default function CalculatorClient() {
                           selectedLimit.status === "blocked"
                             ? "border-slate-200 bg-white/80 shadow-slate-900/[0.03]"
                             : selectedLimit.status === "warning"
-                              ? "border-amber-200 bg-amber-50/70 shadow-amber-100/40"
-                              : "border-blue-200 bg-blue-50/80 shadow-blue-100/40"
+                              ? "border-crpe-warning-border bg-crpe-warning-soft/70 shadow-crpe-warning-border/40"
+                              : "border-crpe-brand-border bg-crpe-brand-soft/80 shadow-crpe-brand-border/40"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -2872,8 +2872,8 @@ export default function CalculatorClient() {
                               selectedLimit.status === "blocked"
                                 ? "text-slate-500"
                                 : selectedLimit.status === "warning"
-                                  ? "text-amber-700"
-                                  : "text-blue-700"
+                                  ? "text-crpe-warning"
+                                  : "text-crpe-brand"
                             }`}
                           >
                             {selectedLimit.mode === "per_item"
@@ -2914,7 +2914,7 @@ export default function CalculatorClient() {
                             type="button"
                             disabled={isBusy || planningKey === selectedLimit.key}
                             onClick={() => planForRule(selectedLimit)}
-                            className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white px-3.5 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 active:scale-95 disabled:opacity-40"
+                            className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl border border-crpe-brand-border bg-white px-3.5 text-sm font-semibold text-crpe-brand shadow-sm transition hover:bg-crpe-brand-soft active:scale-95 disabled:opacity-40"
                           >
                             {planningKey === selectedLimit.key
                               ? "Dodaję..."
@@ -2939,7 +2939,7 @@ export default function CalculatorClient() {
 
                 <div className="grid gap-3 rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:grid-cols-2">
                   <div className="flex items-start gap-3">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-crpe-brand-border bg-crpe-brand-soft text-crpe-brand">
                       <svg
                         viewBox="0 0 24 24"
                         className="h-5 w-5"
@@ -2966,7 +2966,7 @@ export default function CalculatorClient() {
                           href={limitsRuleSet.sources[0].url}
                           target="_blank"
                           rel="noreferrer"
-                          className="mt-2 inline-flex text-[11px] font-bold text-blue-700 hover:underline"
+                          className="mt-2 inline-flex text-[11px] font-bold text-crpe-brand hover:underline"
                         >
                           Otwórz źródło reguły →
                         </a>
@@ -2990,7 +2990,7 @@ export default function CalculatorClient() {
                     </div>
                     <Link
                       href="/profil"
-                      className="mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-800"
+                      className="mt-2 inline-flex text-xs font-semibold text-crpe-brand hover:text-crpe-brand"
                     >
                       Sprawdź profil i ustawienia →
                     </Link>
@@ -3054,16 +3054,16 @@ export default function CalculatorClient() {
 
                   const dots = {
                     all: "",
-                    missing: "bg-amber-400",
-                    planned: "bg-blue-500",
-                    complete: "bg-emerald-400",
+                    missing: "bg-crpe-warning-border",
+                    planned: "bg-crpe-brand",
+                    complete: "bg-crpe-success-border",
                   };
 
                   const active = {
                     all: "bg-slate-100 text-slate-800",
-                    missing: "bg-amber-50 text-amber-700",
-                    planned: "bg-blue-50 text-blue-700",
-                    complete: "bg-emerald-50 text-emerald-700",
+                    missing: "bg-crpe-warning-soft text-crpe-warning",
+                    planned: "bg-crpe-brand-soft text-crpe-brand",
+                    complete: "bg-crpe-success-soft text-crpe-success",
                   };
 
                   return (
@@ -3090,7 +3090,7 @@ export default function CalculatorClient() {
 
           <Link
             href="/aktywnosci"
-            className="shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700"
+            className="shrink-0 text-sm font-medium text-crpe-brand hover:text-crpe-brand"
           >
             Przejdź do aktywności
           </Link>
@@ -3106,7 +3106,7 @@ export default function CalculatorClient() {
                 </div>
                 <Link
                   href={emptyStateHref}
-                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 active:scale-95"
+                  className="rounded-xl bg-crpe-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-crpe-brand-hover active:scale-95"
                 >
                   {emptyStateCta}
                 </Link>
@@ -3122,10 +3122,10 @@ export default function CalculatorClient() {
                 const stripe = isOverdue
                   ? "bg-rose-500"
                   : prog === "planned"
-                    ? "bg-blue-500"
+                    ? "bg-crpe-brand"
                     : hasMissing
-                      ? "bg-amber-500"
-                      : "bg-emerald-500";
+                      ? "bg-crpe-warning"
+                      : "bg-crpe-success";
                 const statusLabel = isOverdue
                   ? "Po terminie"
                   : prog === "planned"
@@ -3136,16 +3136,16 @@ export default function CalculatorClient() {
                 const statusClass = isOverdue
                   ? "bg-rose-50 text-rose-700 ring-rose-200"
                   : prog === "planned"
-                    ? "bg-blue-50 text-blue-700 ring-blue-100"
+                    ? "bg-crpe-brand-soft text-crpe-brand ring-crpe-brand-border"
                     : hasMissing
-                      ? "bg-amber-50 text-amber-700 ring-amber-100"
-                      : "bg-emerald-50 text-emerald-700 ring-emerald-100";
+                      ? "bg-crpe-warning-soft text-crpe-warning ring-crpe-warning-border"
+                      : "bg-crpe-success-soft text-crpe-success ring-crpe-success-border";
 
                 return (
                   <article
                     key={a.id}
                     className="group relative overflow-hidden rounded-2xl border border-l-[3px] border-slate-200 bg-white p-3.5 shadow-[0_2px_8px_rgba(15,23,42,0.045)] transition hover:border-slate-300 hover:shadow-[0_3px_12px_rgba(15,23,42,0.07)]"
-                    style={{ borderLeftColor: isOverdue ? "#f43f5e" : prog === "planned" ? "#3b82f6" : hasMissing ? "#f59e0b" : "#10b981" }}
+                    style={{ borderLeftColor: isOverdue ? "#A42F30" : prog === "planned" ? "#1D4ED8" : hasMissing ? "#9A4600" : "#006A4E" }}
                   >
                     <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 sm:grid-cols-[64px_minmax(0,1fr)_150px] sm:items-center sm:gap-4">
                       <div className="flex w-[64px] shrink-0 flex-col items-center self-start text-center sm:self-center">
@@ -3167,7 +3167,7 @@ export default function CalculatorClient() {
                             {statusLabel}
                           </span>
                         </div>
-                        <h3 className="mt-1.5 text-[15px] font-bold leading-[1.35] tracking-[-0.015em] text-slate-950 transition group-hover:text-blue-800">
+                        <h3 className="mt-1.5 text-[15px] font-bold leading-[1.35] tracking-[-0.015em] text-slate-950 transition group-hover:text-crpe-brand">
                           {a.type}
                         </h3>
                         <p className="mt-1 text-xs text-slate-500">
@@ -3175,7 +3175,7 @@ export default function CalculatorClient() {
                           {prog === "planned" && a.planned_start_date ? ` · termin ${formatYMD(a.planned_start_date)}` : ""}
                         </p>
                         {hasMissing ? (
-                          <p className="mt-1.5 text-[11px] font-medium text-amber-700">
+                          <p className="mt-1.5 text-[11px] font-medium text-crpe-warning">
                             Brakuje: {missing.join(", ")}
                           </p>
                         ) : null}
@@ -3183,14 +3183,14 @@ export default function CalculatorClient() {
 
                       <div className="col-span-2 flex items-center justify-between gap-3 border-t border-slate-100 pt-3 sm:col-span-1 sm:block sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
                         <div>
-                          <div className="flex items-baseline gap-1 text-blue-700">
+                          <div className="flex items-baseline gap-1 text-crpe-brand">
                             <span className="text-[28px] font-black leading-none tracking-[-0.05em]">
                               +{counted?.applied ?? a.points}
                             </span>
                             <span className="text-xs font-bold">pkt</span>
                           </div>
                           {counted && counted.over > 0 ? (
-                            <span className="mt-1 block text-[10px] font-medium text-amber-700">
+                            <span className="mt-1 block text-[10px] font-medium text-crpe-warning">
                               wpisano {counted.raw} pkt
                             </span>
                           ) : null}
@@ -3199,7 +3199,7 @@ export default function CalculatorClient() {
                           href={`/aktywnosci/${a.id}`}
                           className={`mt-0 inline-flex h-9 items-center justify-center rounded-xl px-3 text-xs font-bold transition sm:mt-2 ${
                             hasMissing || prog === "planned" || isOverdue
-                              ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+                              ? "bg-crpe-brand text-white shadow-sm hover:bg-crpe-brand-hover"
                               : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                           }`}
                         >
@@ -3216,7 +3216,7 @@ export default function CalculatorClient() {
             <div className="mt-3 border-t border-slate-100 pt-3 text-center">
               <Link
                 href="/aktywnosci"
-                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                className="text-sm font-medium text-crpe-brand hover:text-crpe-brand"
               >
                 Zobacz wszystkie {recentRows.length} aktywności →
               </Link>
@@ -3234,12 +3234,12 @@ export default function CalculatorClient() {
                     Okres {periodStart}–{periodEnd}
                   </p>
                 </div>
-                <MiniIcon name="calendar" className="h-4 w-4 text-blue-600" />
+                <MiniIcon name="calendar" className="h-4 w-4 text-crpe-brand" />
               </div>
               <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-medium text-slate-500">
-                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500" />plan</span>
-                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-500" />braki</span>
-                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" />kompletne</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-crpe-brand" />plan</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-crpe-warning" />braki</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-crpe-success" />kompletne</span>
               </div>
             </div>
 
@@ -3251,10 +3251,10 @@ export default function CalculatorClient() {
                   const date = timelineDate(activity);
                   const counted = adjustedPointsById.get(activity.id);
                   const dotClass = planned
-                    ? "border-blue-200 bg-blue-500"
+                    ? "border-crpe-brand-border bg-crpe-brand"
                     : incomplete
-                      ? "border-amber-200 bg-amber-500"
-                      : "border-emerald-200 bg-emerald-500";
+                      ? "border-crpe-warning-border bg-crpe-warning"
+                      : "border-crpe-success-border bg-crpe-success";
 
                   return (
                     <li key={activity.id} className="grid grid-cols-[50px_18px_minmax(0,1fr)] gap-2">
@@ -3272,7 +3272,7 @@ export default function CalculatorClient() {
                         href={`/aktywnosci/${activity.id}`}
                         className={`group min-w-0 text-left ${index < timelineRows.length - 1 ? "pb-4" : "pb-1"}`}
                       >
-                        <span className="block truncate text-[12px] font-bold text-slate-900 transition group-hover:text-blue-700">
+                        <span className="block truncate text-[12px] font-bold text-slate-900 transition group-hover:text-crpe-brand">
                           {activity.type}
                         </span>
                         <span className="mt-0.5 flex items-center justify-between gap-2 text-[10px] text-slate-500">
@@ -3309,7 +3309,7 @@ export default function CalculatorClient() {
 
                       <Link
                         href="/profil"
-                        className="shrink-0 text-[13px] font-bold text-blue-700 hover:underline"
+                        className="shrink-0 text-[13px] font-bold text-crpe-brand hover:underline"
                       >
                         Przypomnienia →
                       </Link>
@@ -3377,7 +3377,7 @@ export default function CalculatorClient() {
                             <span
                               className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
                                 entry.daysAway <= 30
-                                  ? "bg-amber-50 text-amber-800"
+                                  ? "bg-crpe-warning-soft text-crpe-warning"
                                   : "text-slate-500"
                               }`}
                             >
@@ -3395,7 +3395,7 @@ export default function CalculatorClient() {
                           </p>
                           <Link
                             href="/baza-szkolen"
-                            className="shrink-0 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-[13px] font-bold text-blue-700 transition hover:bg-blue-100"
+                            className="shrink-0 rounded-xl border border-crpe-brand-border bg-crpe-brand-soft px-3.5 py-2 text-[13px] font-bold text-crpe-brand transition hover:bg-crpe-brand-soft"
                           >
                             Znajdź szkolenie →
                           </Link>
@@ -3446,7 +3446,7 @@ export default function CalculatorClient() {
                                 window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
                               });
                             }}
-                            className="shrink-0 font-bold text-blue-700 hover:underline"
+                            className="shrink-0 font-bold text-crpe-brand hover:underline"
                           >
                             Przejdź do ustawień okresu
                           </button>

@@ -17,7 +17,7 @@ const admin = await readFile(
 
 assert.match(client, /function priceBadge\(pricePln: number \| null\)/);
 assert.match(client, /toLocaleString\("pl-PL"/);
-assert.match(client, /border-emerald-600 bg-emerald-600 text-white/);
+assert.match(client, /border-crpe-success bg-crpe-success text-white/);
 assert.match(client, /details\.priceMissing \? "Cena niepodana" : null/);
 assert.doesNotMatch(client, /<Check[^>]*>[\s\S]*?\{price\.label\}/);
 
@@ -36,7 +36,7 @@ assert.match(card, /const urgencyLabel = soon[\s\S]*?"Dziś"/);
 assert.match(card, /aria-label=\{urgencyLabel \? `\$\{date\.weekday\}, \$\{urgencyLabel\}`/);
 assert.doesNotMatch(
   card,
-  /border-amber-200 bg-amber-50 text-amber-800/,
+  /border-crpe-warning-border bg-crpe-warning-soft text-crpe-warning/,
   "Pilność nie może tworzyć trzeciej plakietki",
 );
 
@@ -53,7 +53,7 @@ assert.match(admin, /editPriceDeclaration === "free"[\s\S]*?\? 0/);
 assert.match(admin, /Dla płatnego szkolenia podaj kwotę większą od 0 zł/);
 
 assert.match(detail, /highlight: training\.price_pln === 0/);
-assert.match(detail, /border-emerald-300 bg-emerald-50/);
+assert.match(detail, /border-crpe-success-border bg-crpe-success-soft/);
 assert.doesNotMatch(
   detail,
   /label === "Cena"/,

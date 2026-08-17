@@ -302,7 +302,7 @@ export default function Header() {
           : "border-slate-200/80",
       )}
     >
-      <div className="mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center gap-3 sm:h-16 sm:gap-4">
           <Link
             href={logoHref}
