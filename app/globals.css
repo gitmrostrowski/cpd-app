@@ -10,17 +10,32 @@
   --color-crpe-surface: #F7F8FA;
   --color-crpe-line: #E4E6EC;
 
-  --color-crpe-medyk-soft: #E2F6F6;
-  --color-crpe-medyk-border: #C6E6E6;
-  --color-crpe-medyk-text: #00595D;
+  /* Semantyka stanu — używać WYŁĄCZNIE do statusu danych, NIGDY do CTA i NIGDY jako tożsamość roli.
+     success = potwierdzony/kompletny; warning = wymaga uwagi/do uzupełnienia/zbliżający się termin;
+     danger = przeterminowane/błąd/krytyczne; crpe-brand = jedyny kolor wszystkich CTA w aplikacji. */
+  --color-crpe-success: #006A4E;
+  --color-crpe-success-soft: #E4F6F0;
+  --color-crpe-success-border: #C5E3D9;
+
+  --color-crpe-warning: #9A4600;
+  --color-crpe-warning-soft: #FFEEE2;
+  --color-crpe-warning-border: #FAD6C0;
+
+  --color-crpe-danger: #A42F30;
+  --color-crpe-danger-soft: #FFECE9;
+  --color-crpe-danger-border: #FFCEC8;
+
+  --color-crpe-medyk-soft: #EAF6F7;
+  --color-crpe-medyk-border: #CBE3E5;
+  --color-crpe-medyk-text: #0F6B73;
 
   --color-crpe-placowka-soft: #EFF4FE;
   --color-crpe-placowka-border: #CFDDFB;
   --color-crpe-placowka-text: #1D4ED8;
 
-  --color-crpe-organizator-soft: #FBEEF9;
-  --color-crpe-organizator-border: #EEDAEA;
-  --color-crpe-organizator-text: #6D3967;
+  --color-crpe-organizator-soft: #F1F2F5;
+  --color-crpe-organizator-border: #DADDE2;
+  --color-crpe-organizator-text: #43474D;
 }
 
 :root {
@@ -311,7 +326,9 @@ summary::-webkit-details-marker {
   }
 }
 
-/* Landing page v6.27.4 — brand-led surfaces, role identity kept local. */
+/* Landing page v6.27.7 — spokojny brand-led hero; rola nie przemalowuje tla. */
 .crpe-home-hero {
-  background: linear-gradient(180deg, var(--color-crpe-surface) 0%, #fff 100%);
+  background:
+    radial-gradient(circle at 78% 5%, rgba(29, 78, 216, 0.075), transparent 30%),
+    linear-gradient(180deg, var(--color-crpe-surface) 0%, #fff 100%);
 }

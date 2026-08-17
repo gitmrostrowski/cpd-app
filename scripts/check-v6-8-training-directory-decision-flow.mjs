@@ -47,7 +47,7 @@ const checks = [
     "Punkty poprzedzają akcję, a plan pozostaje głównym CTA CRPE",
     actionStart >= 0 &&
       pointsIndex < planIndex &&
-      actions.includes("bg-blue-700") &&
+      actions.includes("bg-crpe-brand") &&
       actions.includes("pointsDetailsLabel(t.points_verification_status)"),
   ],
   [

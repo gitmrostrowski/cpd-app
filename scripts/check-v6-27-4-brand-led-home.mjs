@@ -78,7 +78,7 @@ if (!bottom.includes("bg-crpe-brand") || !bottom.includes("bg-white/10") || !bot
 }
 
 // Wykresy Panelu CPD z v6.27 pozostają poza zakresem tej korekty.
-for (const token of ['linearGradient id="crpe-accrual-fill"', 'stroke="#d97706"', 'bg-emerald-500']) {
+for (const token of ['linearGradient id="crpe-accrual-fill"', 'stroke="#9A4600"', 'bg-crpe-success']) {
   if (!chart.includes(token)) throw new Error(`v6.27.4: regresja wykresów Panelu CPD: ${token}`);
 }
 

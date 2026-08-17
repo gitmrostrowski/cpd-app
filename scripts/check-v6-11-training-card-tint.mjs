@@ -35,7 +35,7 @@ const checks = [
   [
     "Logo nie obniża kontrastu akcji",
     client.includes("<OrganizerLogo") &&
-      actions.includes("bg-blue-700") &&
+      actions.includes("bg-crpe-brand") &&
       actions.includes("text-white"),
   ],
   [

@@ -24,7 +24,7 @@ assert.match(card, /Dziś[\s\S]*Jutro[\s\S]*Za \$\{dd\} dni/, "Pilność powinna
 assert.doesNotMatch(card, /statusTone|Zapisy otwarte<\/span>/, "Status zapisów powinien być metadanym, nie konkurencyjną plakietką");
 assert.match(card, /trainingMetaLine/, "Metadane powinny tworzyć jedną stabilną linię");
 assert.doesNotMatch(card, />\s*Szczegóły\s*</, "Karta nie powinna dublować linku do szczegółów");
-assert.match(card, /items-baseline gap-1\.5 text-blue-700/, "Punkty i ich jednostka powinny tworzyć jeden blok");
+assert.match(card, /items-baseline gap-1\.5 text-crpe-brand/, "Punkty i ich jednostka powinny tworzyć jeden blok");
 assert.match(card, /shortVerificationLabel/, "Status weryfikacji powinien pozostać bezpośrednio przy punktach");
 assert.match(card, /Zapisy u organizatora[\s\S]*mt-1\.5 flex h-9 w-full/, "CTA powinny być ustawione pionowo");
 assert.match(client, /className="max-h-6 w-full object-contain"/, "Logo inline nie może być pomniejszone ciężką ramką i paddingiem");

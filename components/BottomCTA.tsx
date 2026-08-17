@@ -42,7 +42,7 @@ export default function BottomCTA({ selected }: { selected: AudienceKey }) {
   const active = variants[selected];
 
   return (
-    <section className="mx-auto w-full max-w-[1180px] px-4 pb-16 sm:px-6 sm:pb-20 lg:px-8">
+    <section className="mx-auto w-full max-w-[1200px] px-4 pb-16 sm:px-6 sm:pb-20 lg:px-8">
       <div className="relative overflow-hidden rounded-[20px] bg-crpe-brand px-5 py-8 text-white shadow-[0_22px_58px_rgba(29,78,216,0.22)] sm:px-10 sm:py-11 lg:px-12">
         <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-28 -left-20 h-64 w-64 rounded-full bg-white/[0.06] blur-3xl" />

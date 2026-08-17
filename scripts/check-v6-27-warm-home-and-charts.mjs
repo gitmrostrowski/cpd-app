@@ -42,10 +42,10 @@ for (const asset of [
 const chartRequired = [
   'const stepPoints = (points: { x: number; value: number }[]) =>',
   'linearGradient id="crpe-accrual-fill"',
-  'stroke="#d97706"',
+  'stroke="#9A4600"',
   '−{behind} pkt',
   'const completePct = clamp((completePoints / target) * 100, 0, donePct);',
-  'bg-emerald-500',
+  'bg-crpe-success',
   'kompletne {Math.round(completePoints)} pkt',
   'Przebieg punktów',
   'Równe tempo na dziś:',

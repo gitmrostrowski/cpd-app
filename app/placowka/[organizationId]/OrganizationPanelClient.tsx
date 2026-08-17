@@ -459,7 +459,7 @@ export default function OrganizationPanelClient({
 
   if (authLoading || loading) {
     return (
-      <main className="mx-auto max-w-[1180px] px-4 py-8">
+      <main className="mx-auto max-w-[1200px] px-4 py-8">
         <div className="h-48 animate-pulse rounded-3xl bg-slate-100" />
       </main>
     );
@@ -510,7 +510,7 @@ export default function OrganizationPanelClient({
   const isOwner = panel.current_roles.includes("owner");
 
   return (
-    <main className="mx-auto max-w-[1180px] px-4 py-7 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-[1200px] px-4 py-7 sm:px-6 lg:px-8">
       {joinedNotice ? (
         <div
           className="mb-4 flex items-start justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950 shadow-sm"

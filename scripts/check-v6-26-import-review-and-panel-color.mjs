@@ -30,15 +30,15 @@ assert.match(appHeader, /\[&_svg\]:h-7 \[&_svg\]:w-7 \[&_svg\]:stroke-\[1\.75\]/
 assert.doesNotMatch(panel, /flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border/);
 
 // --- Limity: niebieski niesie zaznaczenie, zielony niesie postęp.
-assert.match(panel, /border-blue-300 bg-white ring-1 ring-blue-100/);
-assert.match(panel, /active \? "bg-blue-600" : "bg-transparent group-hover:bg-slate-300"/);
-assert.match(panel, /rounded-\[1\.35rem\] border border-blue-100/);
-assert.match(panel, /from-blue-600 via-blue-400 to-transparent/);
+assert.match(panel, /border-crpe-brand-border bg-white ring-1 ring-crpe-brand-border/);
+assert.match(panel, /active \? "bg-crpe-brand" : "bg-transparent group-hover:bg-slate-300"/);
+assert.match(panel, /rounded-\[1\.35rem\] border border-crpe-brand-border/);
+assert.match(panel, /from-crpe-brand via-crpe-brand-border to-transparent/);
 assert.doesNotMatch(panel, /border-emerald-300 bg-white shadow-/);
 assert.doesNotMatch(panel, /from-emerald-500 via-emerald-300/);
 
 // Oba paski postępu limitu (kafel kategorii i karta szczegółu) są zielone.
-assert.match(panel, /status === "warning"[\s\S]*?"bg-amber-400"[\s\S]*?"bg-emerald-500"/);
+assert.match(panel, /status === "warning"[\s\S]*?"bg-crpe-warning-border"[\s\S]*?"bg-crpe-success"/);
 assert.match(panel, /SegmentedCapacityBar/);
 assert.doesNotMatch(panel, /\? "bg-amber-400"\s*\n\s*: "bg-blue-600"/);
 
