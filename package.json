@@ -67,7 +67,8 @@
     "check:v6.27.7": "node scripts/check-v6-27-7-home-visual-coherence.mjs",
     "check:v6.27.8": "node scripts/check-v6-27-8-home-hero-and-panel-balance.mjs",
     "check:v6.27.9": "node scripts/check-v6-27-9-home-role-strip-and-compact-status.mjs",
-    "check:v6.27.10": "node scripts/check-v6-27-10-role-switcher-polish.mjs"
+    "check:v6.27.10": "node scripts/check-v6-27-10-role-switcher-polish.mjs",
+    "check:v6.27.11": "node scripts/check-v6-27-11-nil-descriptions.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

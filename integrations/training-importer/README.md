@@ -6,12 +6,15 @@ adapterem w `src/sources/nil.ts`. Kolejne OIL powinny dostarczać obiekt
 
 Importer najpierw pobiera RSS, a następnie oficjalną stronę szczegółową każdego
 szkolenia. Strona szczegółowa uzupełnia tytuł, adresatów, format, prowadzących,
-lokalizację, godziny i status zapisów. Jeśli pojedyncza strona jest niedostępna,
-rekord nadal powstaje na podstawie RSS i otrzymuje ostrzeżenie dla moderatora.
+lokalizację, godziny, status zapisów oraz zwięzły opis z wydzielonej sekcji
+`Cel szkolenia` / `Opis szkolenia` / `O szkoleniu`, jeśli taka sekcja istnieje.
+Jeśli pojedyncza strona jest niedostępna, rekord nadal powstaje na podstawie RSS
+i otrzymuje ostrzeżenie dla moderatora.
 
-Pobrania wysyłają identyfikujący nagłówek `User-Agent`. Pełne opisy NIL są
-domyślnie pomijane; można je włączyć dopiero po potwierdzeniu zasad wykorzystania
-treści przez ustawienie `NIL_IMPORT_FULL_DESCRIPTIONS=true`.
+Pobrania wysyłają identyfikujący nagłówek `User-Agent`. Zwięzły opis wydzielony
+przez NIL jest importowany domyślnie. Pełna długa treść RSS pozostaje opt-in i może
+być włączona ustawieniem `NIL_IMPORT_FULL_DESCRIPTIONS=true`. Brak opisu w źródle
+nie jest traktowany jako polecenie usunięcia ręcznie zredagowanego opisu CRPE.
 
 ## Polecenia
 

@@ -223,6 +223,7 @@ function mapItem(
   const points = Number.isFinite(rawPoints) && rawPoints >= 0 ? rawPoints : null;
   const shortDescription = value(item.short_description);
   const longDescription = value(item.long_description);
+  const conciseDescription = extractDescriptionSection(stripHtml(longDescription));
   const title = fixBrokenEntities(value(item.title)).replace(/\s+/g, " ").trim();
   const scheduleUndetermined = hasUndeterminedSchedule(title, longDescription);
   const startDate = scheduleUndetermined ? null : toWarsawDate(value(item.publish_date));
@@ -243,7 +244,7 @@ function mapItem(
   if (/Wykładow|Prowadząc/i.test(stripHtml(`${shortDescription} ${longDescription}`)) && speakers.length === 0) {
     sourceWarnings.push("Danych o prowadzących nie dało się wiarygodnie rozdzielić — sprawdź stronę NIL.");
   }
-  if (!includeFullDescriptions && stripHtml(longDescription)) {
+  if (!conciseDescription && !includeFullDescriptions && stripHtml(longDescription)) {
     sourceWarnings.push("Pełny opis NIL pominięto do czasu potwierdzenia zasad dalszej publikacji.");
   }
 
@@ -270,9 +271,9 @@ function mapItem(
     has_recording: null,
     capacity: null,
     enrollment_status: null,
-    description: includeFullDescriptions
-      ? stripHtml(longDescription).slice(0, 5000) || null
-      : null,
+    description:
+      conciseDescription ??
+      (includeFullDescriptions ? stripHtml(longDescription).slice(0, 5000) || null : null),
     source_warnings: sourceWarnings,
     audience_scope: "specific",
     profession_codes: professionCodes,
@@ -281,6 +282,16 @@ function mapItem(
 
 function cleanPageText(value: string) {
   return value.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+}
+
+
+function extractDescriptionSection(text: string) {
+  const clean = cleanPageText(text);
+  const match = clean.match(
+    /(?:^|\s)(?:Cel(?:e)? szkolenia|Opis szkolenia|O szkoleniu)\s*:?\s*(.+?)(?=\s+(?:Wykładowc(?:a|y)|Prowadząc(?:y|a)|Program szkolenia|Program\s*:|Miejsce wydarzenia|Szkolenie on[- ]?line|Szkolenie online|Szkolenie stacjonarne|Kontakt do organizatora|ZAPIS(?:\s|$)|ABY ZAPISAĆ|Termin\s*:)|$)/i,
+  );
+  const description = cleanPageText(match?.[1] ?? "");
+  return description.length >= 20 ? description.slice(0, 5000) : null;
 }
 
 function comparisonTokens(value: string) {
@@ -420,6 +431,7 @@ export function enrichNilTraining(
   const detailAudience = extractDetailAudience(pageText);
   const detailPoints = extractDetailPoints(pageText);
   const detailEnrollment = extractEnrollmentStatus(pageText);
+  const detailDescription = extractDescriptionSection(pageText);
   const warnings =
     detailSpeakers.length > 0
       ? payload.source_warnings.filter(
@@ -427,6 +439,12 @@ export function enrichNilTraining(
             !/Danych o prowadzących nie dało się wiarygodnie rozdzielić/i.test(warning),
         )
       : [...payload.source_warnings];
+  if (detailDescription) {
+    const warningIndex = warnings.findIndex((warning) =>
+      /Pełny opis NIL pominięto do czasu potwierdzenia zasad dalszej publikacji/i.test(warning),
+    );
+    if (warningIndex >= 0) warnings.splice(warningIndex, 1);
+  }
   if (detailPoints !== null && payload.points !== null && detailPoints !== payload.points) {
     warnings.push(
       `Punkty na stronie szczegółowej (${detailPoints}) różnią się od RSS (${payload.points}); użyto strony szczegółowej.`,
@@ -458,6 +476,7 @@ export function enrichNilTraining(
       (detailFormat === "online" ? null : payload.voivodeship),
     enrollment_status: detailEnrollment ?? payload.enrollment_status,
     profession_codes: detailAudience ?? payload.profession_codes,
+    description: detailDescription ?? payload.description,
     source_warnings: uniqueStrings(warnings),
   };
 }
