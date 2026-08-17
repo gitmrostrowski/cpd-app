@@ -432,8 +432,8 @@ function RolePicker({
     <div
       className={`crpe-role-picker grid w-full grid-cols-3 gap-1 p-1.5 sm:gap-1.5 ${
         embedded
-          ? "rounded-[16px] bg-crpe-surface"
-          : "rounded-[18px] border border-crpe-line bg-crpe-surface/90 shadow-[0_12px_30px_rgba(37,51,65,0.06)] backdrop-blur"
+          ? "rounded-[16px] border border-slate-200/90 bg-slate-100/85 shadow-[inset_0_1px_2px_rgba(15,23,42,0.035)]"
+          : "rounded-[18px] border border-crpe-line bg-slate-100/85 shadow-[0_12px_30px_rgba(37,51,65,0.06)] backdrop-blur"
       }`}
     >
       {audiences.map(({ key, mobileLabel, icon: Icon }) => {
@@ -454,8 +454,8 @@ function RolePicker({
             <span
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] ring-1 transition ${
                 isSelected
-                  ? `${theme.accentSoft} ${theme.accentText} ${theme.accentRing} shadow-sm`
-                  : "bg-white text-crpe-muted ring-crpe-line"
+                  ? `${theme.accentStrong} text-white ring-transparent shadow-[0_5px_12px_rgba(15,23,42,0.14)]`
+                  : `${theme.accentSoft} ${theme.accentText} ${theme.accentRing}`
               }`}
               aria-hidden="true"
             >
@@ -532,7 +532,7 @@ function Hero({
       <div className="pointer-events-none absolute bottom-8 left-[44%] hidden h-24 w-24 rounded-full bg-slate-100/55 blur-3xl lg:block" />
 
       <div className={`${pageWrap} relative`}>
-        <p className="crpe-hero-in mb-5 text-center text-[10px] font-extrabold uppercase tracking-[0.2em] text-crpe-brand sm:mb-6 sm:text-[11px] [--hero-delay:40ms]">
+        <p className="crpe-hero-in mb-4 text-center text-[10px] font-extrabold uppercase tracking-[0.2em] text-crpe-brand sm:text-[11px] lg:hidden [--hero-delay:40ms]">
           CRPE dla medyka, placówki i organizatora
         </p>
 
@@ -592,7 +592,10 @@ function Hero({
           </div>
 
           <div className="hidden lg:block">
-            <div className="crpe-hero-in mx-auto w-full max-w-[580px] rounded-[24px] border border-crpe-line bg-white/90 p-2 shadow-[0_24px_64px_rgba(37,51,65,0.10)] [--hero-delay:230ms]">
+            <div className="crpe-hero-in mx-auto w-full max-w-[580px] rounded-[24px] border border-crpe-line bg-white/92 p-2.5 shadow-[0_24px_64px_rgba(37,51,65,0.10)] [--hero-delay:230ms]">
+              <p className="px-2 pb-2 pt-1 text-center text-[10px] font-extrabold uppercase tracking-[0.2em] text-crpe-brand">
+                CRPE dla medyka, placówki i organizatora
+              </p>
               <RolePicker selected={selected} onSelect={onSelect} embedded />
               <div className="mt-2 border-t border-crpe-line/80 pt-2">
                 <HeroDashboard selected={selected} embedded />

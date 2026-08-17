@@ -474,11 +474,11 @@ function PointsAccrualChart({
   periodEnd: number;
 }) {
   const W = 430;
-  const H = 224;
+  const H = 188;
   const L = 42;
   const R = 16;
-  const T = 28;
-  const B = 40;
+  const T = 22;
+  const B = 32;
 
   const px = (x: number) => L + clamp(x, 0, 1) * (W - L - R);
   const py = (v: number) => H - B - (clamp(v, 0, series.max) / series.max) * (H - T - B);
@@ -524,8 +524,8 @@ function PointsAccrualChart({
   const gapLabelX = series.todayX > 0.76
     ? px(series.todayX) - gapLabelWidth - 10
     : px(series.todayX) + 10;
-  const gapLabelY = clamp(gapMidY - 11, T + 4, H - B - 26);
-  const gapTextY = gapLabelY + 14.5;
+  const gapLabelY = clamp(gapMidY - 10, T + 3, H - B - 23);
+  const gapTextY = gapLabelY + 13.5;
   const accessibleTarget =
     series.target > 0
       ? `Przy równomiernym tempie na dziś ${Math.round(series.targetToday)} pkt, cel ${series.target} pkt.`
@@ -645,8 +645,8 @@ function PointsAccrualChart({
               x={gapLabelX}
               y={gapLabelY}
               width={gapLabelWidth}
-              height={22}
-              rx={11}
+              height={20}
+              rx={10}
               fill="#FFEEE2"
               stroke="#FAD6C0"
             />
@@ -1975,7 +1975,7 @@ export default function CalculatorClient() {
           ) : null}
 
           <section id="status" className={cardCls}>
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 pb-1 pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 pb-0 pt-3">
               <div className="flex items-center gap-3">
                 <IconBubble tone="blue">
                   <MiniIcon name="chart" />
@@ -1992,9 +1992,9 @@ export default function CalculatorClient() {
               </span>
             </div>
 
-            <div className="px-5 pb-3 pt-1">
+            <div className="px-5 pb-2 pt-1">
               <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
-                <span className="text-[46px] font-black leading-[0.92] tracking-[-0.055em] text-crpe-brand sm:text-[52px]">
+                <span className="text-[40px] font-black leading-[0.92] tracking-[-0.05em] text-crpe-brand sm:text-[44px]">
                   {donePoints}
                 </span>
                 {hasPointTarget ? (
@@ -2017,7 +2017,7 @@ export default function CalculatorClient() {
                 </span>
               </div>
 
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
+              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-crpe-success-soft px-2.5 py-1 font-bold text-crpe-success ring-1 ring-crpe-success-border">
                   <span className="h-1.5 w-1.5 rounded-full bg-crpe-success" aria-hidden="true" />
                   Kompletne wpisy: {completePoints} pkt
@@ -2034,10 +2034,10 @@ export default function CalculatorClient() {
               </div>
             </div>
 
-            <div className="grid gap-0 lg:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.9fr)]">
-              <div className="min-w-0 px-3 pb-3 pt-1">
+            <div className="grid items-start gap-0 lg:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.78fr)]">
+              <div className="min-w-0 px-3 pb-2 pt-0">
                 {hasPointTarget && accrualSeries ? (
-                  <div className="px-2 pb-1 pt-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2 px-2 pb-1 pt-1">
                     <div
                       role="group"
                       aria-label="Widok wykresu"
@@ -2068,12 +2068,17 @@ export default function CalculatorClient() {
                         );
                       })}
                     </div>
+                    {statusView === "curve" ? (
+                      <span className="text-[11px] leading-4 text-slate-500">
+                        Tempo na dziś: <strong className="text-slate-800">{Math.round(accrualSeries.targetToday)} pkt</strong>
+                      </span>
+                    ) : null}
                   </div>
                 ) : null}
 
                 {hasPointTarget && accrualSeries ? (
                   statusView === "bar" ? (
-                    <div className="px-2 pb-1 pt-2">
+                    <div className="px-2 pb-0 pt-1">
                       <PointsProgressBar
                         series={accrualSeries}
                         periodStart={periodStart}
@@ -2088,14 +2093,7 @@ export default function CalculatorClient() {
                       </p>
                     </div>
                   ) : (
-                    <div className="px-2 pb-1 pt-2">
-                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] leading-4 text-slate-500">
-                        <span className="font-bold text-slate-700">Przebieg punktów</span>
-                        <span>
-                          Równe tempo na dziś: <strong className="text-slate-800">{Math.round(accrualSeries.targetToday)} pkt</strong>
-                        </span>
-                      </div>
-
+                    <div className="px-2 pb-0 pt-1">
                       <div className="rounded-2xl border border-slate-200/90 bg-[linear-gradient(180deg,#fbfcff_0%,#ffffff_100%)] px-1.5 pb-1 pt-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
                         <div
                           className="overflow-x-auto pb-1"
@@ -2111,34 +2109,26 @@ export default function CalculatorClient() {
                         </div>
                       </div>
 
-                      <div className="mt-2.5 flex flex-wrap gap-2 pl-9 text-[12px] font-medium leading-5 text-slate-600">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-crpe-brand-soft px-2.5 py-1 text-crpe-brand ring-1 ring-crpe-brand-border">
+                      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 px-2 text-[11px] font-medium leading-4 text-slate-600">
+                        <span className="inline-flex items-center gap-1.5 text-crpe-brand">
                           <span className="h-[3px] w-3.5 rounded-full bg-crpe-brand" aria-hidden="true" />
                           zdobyte
                         </span>
                         {accrualSeries.plannedTotal > accrualSeries.doneTotal ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-sky-800 ring-1 ring-sky-100">
-                            <span
-                              className="h-0 w-3.5 border-t-2 border-dashed border-sky-500"
-                              aria-hidden="true"
-                            />
-                            z planem (+{Math.round(accrualSeries.plannedTotal - accrualSeries.doneTotal)} pkt)
+                          <span className="inline-flex items-center gap-1.5 text-sky-700">
+                            <span className="h-0 w-3.5 border-t-2 border-dashed border-sky-500" aria-hidden="true" />
+                            plan +{Math.round(accrualSeries.plannedTotal - accrualSeries.doneTotal)} pkt
                           </span>
                         ) : null}
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-slate-600 ring-1 ring-slate-200">
-                          <span
-                            className="h-0 w-3.5 border-t-2 border-dashed border-slate-400"
-                            aria-hidden="true"
-                          />
+                        <span className="inline-flex items-center gap-1.5 text-slate-500">
+                          <span className="h-0 w-3.5 border-t-2 border-dashed border-slate-400" aria-hidden="true" />
                           równe tempo
                         </span>
                       </div>
 
-                      <p className="mt-2.5 px-2 text-[12px] leading-[18px] text-slate-500">
-                        {accrualSeries.usesApproximateDoneDates
-                          ? "Wpisy z dokładną datą są pokazane w tym dniu; starsze wpisy zapisane tylko z rokiem — w jego połowie. "
-                          : "Ukończone wpisy są pokazane według zapisanych dat. "}
-                        Schodki pokazują rzeczywiste momenty zdobywania punktów. Linia równomiernego tempa służy wyłącznie planowaniu i nie zmienia zasad właściwych dla Twojego zawodu ani okresu.
+                      <p className="mt-1.5 px-2 text-[11px] leading-4 text-slate-500">
+                        Schodki pokazują moment zdobycia punktów; linia przerywana — równe tempo.
+                        {accrualSeries.usesApproximateDoneDates ? " Wpisy zapisane tylko z rokiem pokazujemy w jego połowie." : ""}
                       </p>
                     </div>
                   )
@@ -2149,7 +2139,7 @@ export default function CalculatorClient() {
                 )}
               </div>
 
-              <div className="flex flex-col justify-start gap-2 border-t border-slate-100 bg-crpe-surface/70 p-4 pt-5 lg:border-l lg:border-t-0 lg:px-4 lg:pb-4 lg:pt-5">
+              <div className="m-3 mt-1 flex self-start flex-col gap-1.5 rounded-2xl border border-slate-200/90 bg-crpe-surface/75 p-3 shadow-[0_10px_28px_rgba(15,23,42,0.035)] lg:ml-1">
                 <p className="text-xs font-bold text-slate-600">
                   {nextSteps[0]?.priority === "high" ? "Najpierw to" : "Co dalej"}
                 </p>
@@ -2190,12 +2180,12 @@ export default function CalculatorClient() {
                             window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
                           });
                         }}
-                        className="mb-1.5 flex items-center gap-3 rounded-xl bg-crpe-brand px-3.5 py-3 text-white shadow-sm transition-colors hover:bg-crpe-brand-hover"
+                        className="mb-1 flex items-center gap-2.5 rounded-xl bg-crpe-brand px-3 py-2.5 text-white shadow-sm transition-colors hover:bg-crpe-brand-hover"
                       >
                         <MiniIcon name={step.icon} className="h-5 w-5 shrink-0" />
                         <span className="min-w-0 flex-1">
                           <span className="flex flex-wrap items-center gap-2">
-                            <span className="text-[15px] font-bold leading-5">{step.title}</span>
+                            <span className="text-[14px] font-bold leading-5">{step.title}</span>
                             {urgencyLabel ? (
                               <span
                                 className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] ${urgencyClass}`}
@@ -2204,7 +2194,7 @@ export default function CalculatorClient() {
                               </span>
                             ) : null}
                           </span>
-                          <span className="mt-0.5 block text-xs leading-4 text-white/85">
+                          <span className="mt-0.5 block text-[11px] leading-4 text-white/85">
                             {step.description}
                           </span>
                         </span>
@@ -2228,14 +2218,14 @@ export default function CalculatorClient() {
                           window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
                         });
                       }}
-                      className="flex items-center gap-3 rounded-xl border border-slate-200 px-3.5 py-2.5 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                      className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 transition-colors hover:border-slate-300 hover:bg-white"
                     >
                       <MiniIcon name={step.icon} className="h-[18px] w-[18px] shrink-0 text-slate-500" />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-base font-bold leading-5 text-slate-950">
+                        <span className="block text-[14px] font-bold leading-5 text-slate-950">
                           {step.title}
                         </span>
-                        <span className="mt-0.5 block text-sm leading-5 text-slate-500">
+                        <span className="mt-0.5 block text-[12px] leading-4 text-slate-500">
                           {step.description}
                         </span>
                       </span>
@@ -2249,7 +2239,7 @@ export default function CalculatorClient() {
             <div
               role="group"
               aria-label="Poziomy statusu wyniku"
-              className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/80 px-5 py-3 text-[12px] leading-[18px] text-slate-600"
+              className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/80 px-5 py-2.5 text-[11px] leading-4 text-slate-600"
             >
               <span className="sr-only">
                 {cycleTargetMode === "rule_set" ? "Reguła CRPE" : "Własny cel"}
