@@ -343,7 +343,13 @@ function OrganizatorDashboard() {
   );
 }
 
-function HeroDashboard({ selected }: { selected: AudienceKey }) {
+function HeroDashboard({
+  selected,
+  embedded = false,
+}: {
+  selected: AudienceKey;
+  embedded?: boolean;
+}) {
   const active = audiences.find((item) => item.key === selected) ?? audiences[0];
   const theme = roleThemes[selected];
 
@@ -352,28 +358,28 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
       className="crpe-hero-panel relative mx-auto hidden w-full max-w-[570px] lg:block"
       aria-live="polite"
     >
-      <div className="pointer-events-none absolute -right-10 -top-8 h-40 w-40 rounded-full bg-crpe-line/55 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-10 -left-8 h-44 w-44 rounded-full bg-slate-100/65 blur-3xl" />
+      {!embedded ? (
+        <>
+          <div className="pointer-events-none absolute -right-10 -top-8 h-40 w-40 rounded-full bg-crpe-line/55 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-10 -left-8 h-44 w-44 rounded-full bg-slate-100/65 blur-3xl" />
+        </>
+      ) : null}
 
-      <div className="crpe-dashboard-shell relative overflow-hidden rounded-[22px] border border-crpe-line bg-white/95 shadow-[0_22px_56px_rgba(37,51,65,0.11)]">
-        <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white ${theme.accentStrong} ${theme.iconShadow}`}>
-              {selected === "medyk" ? (
-                <Stethoscope className="h-5 w-5" />
-              ) : selected === "placowka" ? (
-                <Building2 className="h-5 w-5" />
-              ) : (
-                <UserRound className="h-5 w-5" />
-              )}
-            </span>
-            <div className="min-w-0">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-crpe-muted">
-                Podgląd CRPE
-              </p>
-              <p className="mt-0.5 truncate text-[15px] font-black text-crpe-ink">
-                {active.label}
-              </p>
+      <div
+        className={`crpe-dashboard-shell relative overflow-hidden bg-white/95 ${
+          embedded
+            ? "rounded-[18px]"
+            : "rounded-[22px] border border-crpe-line shadow-[0_22px_56px_rgba(37,51,65,0.11)]"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-3.5">
+          <div className="min-w-0">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-crpe-muted">
+              Podgląd CRPE
+            </p>
+            <div className="mt-1 flex min-w-0 items-center gap-2">
+              <span className={`h-2 w-2 shrink-0 rounded-full ${theme.accentStrong}`} aria-hidden="true" />
+              <p className="truncate text-[15px] font-black text-crpe-ink">{active.label}</p>
             </div>
           </div>
           <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold ring-1 ${active.statusTone}`}>
@@ -416,12 +422,20 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
 function RolePicker({
   selected,
   onSelect,
+  embedded = false,
 }: {
   selected: AudienceKey;
   onSelect: (key: AudienceKey) => void;
+  embedded?: boolean;
 }) {
   return (
-    <div className="crpe-role-picker grid w-full grid-cols-3 gap-1 rounded-[18px] border border-crpe-line bg-crpe-surface/90 p-1.5 shadow-[0_12px_30px_rgba(37,51,65,0.06)] backdrop-blur sm:gap-1.5">
+    <div
+      className={`crpe-role-picker grid w-full grid-cols-3 gap-1 p-1.5 sm:gap-1.5 ${
+        embedded
+          ? "rounded-[16px] bg-crpe-surface"
+          : "rounded-[18px] border border-crpe-line bg-crpe-surface/90 shadow-[0_12px_30px_rgba(37,51,65,0.06)] backdrop-blur"
+      }`}
+    >
       {audiences.map(({ key, mobileLabel, icon: Icon }) => {
         const isSelected = selected === key;
         const theme = roleThemes[key];
@@ -438,14 +452,14 @@ function RolePicker({
             }`}
           >
             <span
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] transition ${
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] ring-1 transition ${
                 isSelected
-                  ? `text-white ${theme.accentStrong} ${theme.iconShadow}`
-                  : `${theme.accentSoft} ${theme.accentText} ring-1 ${theme.accentRing}`
+                  ? `${theme.accentSoft} ${theme.accentText} ${theme.accentRing} shadow-sm`
+                  : "bg-white text-crpe-muted ring-crpe-line"
               }`}
               aria-hidden="true"
             >
-              <Icon className="h-4 w-4 shrink-0" strokeWidth={2.15} />
+              <Icon className="h-[17px] w-[17px] shrink-0" strokeWidth={2.15} />
             </span>
             <span className="truncate">{mobileLabel}</span>
           </button>
@@ -518,13 +532,13 @@ function Hero({
       <div className="pointer-events-none absolute bottom-8 left-[44%] hidden h-24 w-24 rounded-full bg-slate-100/55 blur-3xl lg:block" />
 
       <div className={`${pageWrap} relative`}>
-        <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-14">
-          <div className="lg:pt-2">
-            <p className="crpe-hero-in text-[10px] font-extrabold uppercase tracking-[0.19em] text-crpe-brand sm:text-[11px] [--hero-delay:40ms]">
-              CRPE dla medyka, placówki i organizatora
-            </p>
+        <p className="crpe-hero-in mb-5 text-center text-[10px] font-extrabold uppercase tracking-[0.2em] text-crpe-brand sm:mb-6 sm:text-[11px] [--hero-delay:40ms]">
+          CRPE dla medyka, placówki i organizatora
+        </p>
 
-            <h1 className="crpe-hero-in mt-4 max-w-[560px] text-[32px] font-extrabold leading-[1.06] tracking-[-0.03em] text-crpe-ink sm:mt-5 sm:text-[40px] lg:text-[44px] [--hero-delay:110ms]">
+        <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-14">
+          <div className="lg:pt-1">
+            <h1 className="crpe-hero-in max-w-[560px] text-[32px] font-extrabold leading-[1.06] tracking-[-0.03em] text-crpe-ink sm:text-[40px] lg:text-[44px] [--hero-delay:110ms]">
               <span className="block">Punkty edukacyjne</span>
               <span className="block">i certyfikaty</span>
               <span className="block text-crpe-brand">w jednym miejscu.</span>
@@ -578,10 +592,12 @@ function Hero({
           </div>
 
           <div className="hidden lg:block">
-            <div className="crpe-hero-in mx-auto mb-4 w-full max-w-[570px] [--hero-delay:230ms]">
-              <RolePicker selected={selected} onSelect={onSelect} />
+            <div className="crpe-hero-in mx-auto w-full max-w-[580px] rounded-[24px] border border-crpe-line bg-white/90 p-2 shadow-[0_24px_64px_rgba(37,51,65,0.10)] [--hero-delay:230ms]">
+              <RolePicker selected={selected} onSelect={onSelect} embedded />
+              <div className="mt-2 border-t border-crpe-line/80 pt-2">
+                <HeroDashboard selected={selected} embedded />
+              </div>
             </div>
-            <HeroDashboard selected={selected} />
           </div>
         </div>
       </div>

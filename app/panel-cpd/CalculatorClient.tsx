@@ -2034,7 +2034,7 @@ export default function CalculatorClient() {
               </div>
             </div>
 
-            <div className="grid gap-0 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+            <div className="grid gap-0 lg:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.9fr)]">
               <div className="min-w-0 px-3 pb-3 pt-1">
                 {hasPointTarget && accrualSeries ? (
                   <div className="px-2 pb-1 pt-1">
@@ -2149,7 +2149,7 @@ export default function CalculatorClient() {
                 )}
               </div>
 
-              <div className="flex flex-col justify-center gap-2 border-t border-slate-100 bg-[#fafbfc] p-4 lg:border-l lg:border-t-0">
+              <div className="flex flex-col justify-start gap-2 border-t border-slate-100 bg-crpe-surface/70 p-4 pt-5 lg:border-l lg:border-t-0 lg:px-4 lg:pb-4 lg:pt-5">
                 <p className="text-xs font-bold text-slate-600">
                   {nextSteps[0]?.priority === "high" ? "Najpierw to" : "Co dalej"}
                 </p>

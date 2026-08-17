@@ -64,7 +64,8 @@
     "check:v6.27.3": "node scripts/check-v6-27-3-role-owned-accents.mjs",
     "check:v6.27.4": "node scripts/check-v6-27-4-brand-led-home.mjs",
     "check:v6.27.5": "node scripts/check-v6-27-5-layout-and-semantic-colors.mjs",
-    "check:v6.27.7": "node scripts/check-v6-27-7-home-visual-coherence.mjs"
+    "check:v6.27.7": "node scripts/check-v6-27-7-home-visual-coherence.mjs",
+    "check:v6.27.8": "node scripts/check-v6-27-8-home-hero-and-panel-balance.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",
