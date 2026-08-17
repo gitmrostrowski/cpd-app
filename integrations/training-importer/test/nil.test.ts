@@ -55,7 +55,10 @@ test("fixture RSS NIL mapuje zawody, cenę i termin bez przesunięcia", async ()
   assert.equal(doctorTraining.has_recording, null);
   assert.equal(doctorTraining.organizer, "Naczelna Izba Lekarska");
   assert.equal(doctorTraining.schedule_status, "scheduled");
-  assert.equal(doctorTraining.description, null);
+  assert.equal(
+    doctorTraining.description,
+    "Celem szkolenia jest budowa autorytetu lidera opartego na autentyczności który przyciąga pacjentów i lojalizuje zespół",
+  );
 
   const dentistTraining = result.payloads.find(
     (item) => item.source_external_id === "1744",
@@ -108,6 +111,8 @@ test("strona szczegółowa uzupełnia tytuł, adresatów i status zapisów", asy
       <li>Bezpłatny</li>
     </ul>
     <h3>Diagnostyka i leczenie ran przewlekłych, w tym ran atypowych</h3>
+    <h5>Cel szkolenia:</h5>
+    <h5>Celem szkolenia jest podniesienie kwalifikacji lekarzy w zakresie diagnostyki ran przewlekłych, w tym atypowych. Uczestnicy poznają aktualne standardy postępowania i metody leczenia.</h5>
     <h5>Wykładowca:</h5>
     <ul><li><h5>dr n. med. Magdalena Antoszewska - Lekarka w trakcie specjalizacji.</h5></li></ul>
     <h6>Prowadzący: dr n. med. Magdalena Antoszewska</h6>
@@ -126,7 +131,12 @@ test("strona szczegółowa uzupełnia tytuł, adresatów i status zapisów", asy
   assert.equal(enriched.delivery_format, "online");
   assert.equal(enriched.end_time, "20:00");
   assert.deepEqual(enriched.speakers, ["dr n. med. Magdalena Antoszewska"]);
+  assert.equal(
+    enriched.description,
+    "Celem szkolenia jest podniesienie kwalifikacji lekarzy w zakresie diagnostyki ran przewlekłych, w tym atypowych. Uczestnicy poznają aktualne standardy postępowania i metody leczenia.",
+  );
   assert.doesNotMatch(enriched.source_warnings.join(" "), /prowadzących/i);
+  assert.doesNotMatch(enriched.source_warnings.join(" "), /Pełny opis NIL pominięto/i);
 });
 
 test("strona szczegółowa rozdziela wielu prowadzących i pobiera lokalizację", async () => {
@@ -222,7 +232,7 @@ test("lista zapisów bez terminu nie jest odrzucana jako wydarzenie historyczne"
   assert.match(undated.source_warnings.join(" "), /termin nie został jeszcze ustalony/i);
 });
 
-test("pełny opis jest opt-in, a nie domyślnym kopiowaniem treści NIL", async () => {
+test("pełny opis RSS pozostaje opt-in, ale zwięzły opis sekcji Cel szkolenia jest importowany", async () => {
   const xml = await readFile(fixturePath, "utf8");
   const withoutDescriptions = parseNilFeed(xml, {
     fetchedAt: "2026-08-11T21:25:03.000Z",
@@ -236,6 +246,13 @@ test("pełny opis jest opt-in, a nie domyślnym kopiowaniem treści NIL", async 
 
   assert.equal(withoutDescriptions.payloads[0]?.description, null);
   assert.ok((withDescriptions.payloads[0]?.description?.length ?? 0) > 100);
+
+  const woundWithoutFull = withoutDescriptions.payloads.find(
+    (item) => item.source_external_id === "1806",
+  );
+  assert.ok(woundWithoutFull);
+  assert.match(woundWithoutFull.description ?? "", /podniesienie kwalifikacji lekarzy/i);
+  assert.doesNotMatch(woundWithoutFull.description ?? "", /Program szkolenia/i);
 });
 
 test("pusty RSS kończy import kontrolowanym błędem", () => {
