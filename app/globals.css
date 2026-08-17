@@ -326,7 +326,9 @@ summary::-webkit-details-marker {
   }
 }
 
-/* Landing page v6.27.4 — brand-led surfaces, role identity kept local. */
+/* Landing page v6.27.7 — spokojny brand-led hero; rola nie przemalowuje tla. */
 .crpe-home-hero {
-  background: linear-gradient(180deg, var(--color-crpe-surface) 0%, #fff 100%);
+  background:
+    radial-gradient(circle at 78% 5%, rgba(29, 78, 216, 0.075), transparent 30%),
+    linear-gradient(180deg, var(--color-crpe-surface) 0%, #fff 100%);
 }
