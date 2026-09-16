@@ -30,6 +30,7 @@ const checks = [
   'check-v6-27-8-home-hero-and-panel-balance.mjs',
   'check-v6-27-9-home-role-strip-and-compact-status.mjs',
   'check-v6-28-punkty-visual-system.mjs',
+  'check-v6-28-9-hero-stage.mjs',
 ];
 let failed = 0;
 for (const file of checks) {

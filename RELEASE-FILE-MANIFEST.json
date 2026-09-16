@@ -26,6 +26,7 @@
     "START-TUTAJ-v6.28.6.md",
     "START-TUTAJ-v6.28.7.md",
     "START-TUTAJ-v6.28.8.md",
+    "START-TUTAJ-v6.28.9.md",
     "app/crpe-visual-v6-28-2.css",
     "components/ui/crpe.tsx",
     "public/home/photo-dokument.webp",
@@ -35,6 +36,7 @@
     "public/home/photo-placowka-v3.webp",
     "public/home/photo-placowka.webp",
     "scripts/check-release.mjs",
+    "scripts/check-v6-28-9-hero-stage.mjs",
     "scripts/check-v6-28-punkty-visual-system.mjs"
   ],
   "removed": [],
