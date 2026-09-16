@@ -343,7 +343,7 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
 function HeroPortrait({ selected, compact = false }: { selected: AudienceKey; compact?: boolean }) {
   const active = audiences.find((item) => item.key === selected) ?? audiences[0];
   return (
-    <div className={cx("relative mx-auto aspect-square w-full", compact ? "max-w-[260px]" : "max-w-[540px]")}>
+    <div data-hero-portrait className={cx("relative mx-auto aspect-square w-full", compact ? "max-w-[260px]" : "max-w-[380px]")}>
       <DotRing
         key={selected}
         progress={selected === "medyk" ? 0.55 : 0}
@@ -551,9 +551,9 @@ function Hero({
           </div>
 
           <div className="relative hidden lg:block">
-            <div className="crpe-hero-panel relative ml-auto w-full max-w-[560px] pb-20">
+            <div className="crpe-hero-panel mx-auto grid w-full max-w-[460px] gap-6">
               <HeroPortrait selected={selected} />
-              <div className="absolute bottom-0 left-[-12px] w-[360px]">
+              <div data-hero-preview className="mx-auto w-full max-w-[420px]">
                 <HeroDashboard selected={selected} />
               </div>
             </div>
