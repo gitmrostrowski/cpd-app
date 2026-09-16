@@ -152,37 +152,60 @@ function Metric({
   );
 }
 
-function MedykDashboard() {
-  return (
-    <>
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="text-[12px] font-semibold text-crpe-muted">Twój postęp</p>
-          <p className="font-display mt-0.5 text-[40px] font-bold leading-none tracking-[-0.03em] text-crpe-ink">
-            110 <span className="font-sans text-[14px] font-bold tracking-normal text-crpe-muted">/ 200 pkt</span>
-          </p>
-        </div>
-        <div className="rounded-2xl bg-crpe-punkt-soft px-3 py-2 text-right">
-          <p className="text-[10px] font-semibold text-crpe-punkt-text">Brakuje</p>
-          <p className="text-[14px] font-extrabold text-crpe-punkt-text">90 pkt</p>
-        </div>
-      </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-crpe-ice">
-        <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-crpe-punkt" />
-      </div>
-      <div className="mt-1.5 flex justify-between text-[11px] font-semibold text-crpe-muted">
-        <span>55% celu</span>
-        <span>2025–2028</span>
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <Metric icon={FileCheck2} label="Certyfikaty" value="18 dokumentów" />
-        <Metric icon={ClipboardCheck} label="Do uzupełnienia" value="2 aktywności" />
-      </div>
-    </>
-  );
-}
-
+function PointsGauge({ value, goal }: { value: number; goal: number }) {
+  const r = 62;
+  const length = 2 * Math.PI * r;
+  const ratio = Math.min(value / goal, 1);
+  const offset = length * (1 - ratio);
+  return (
+    <div className="relative h-[112px] w-[112px] shrink-0 sm:h-[144px] sm:w-[144px]">
+      <svg viewBox="0 0 150 150" className="absolute inset-0 h-full w-full" aria-hidden="true" fill="none">
+        <circle cx="75" cy="75" r={r} stroke="var(--color-crpe-line)" strokeWidth="3" strokeLinecap="round" strokeDasharray="0 7.5" />
+        <circle
+          cx="75"
+          cy="75"
+          r={r}
+          transform="rotate(-90 75 75)"
+          stroke="var(--color-crpe-punkt)"
+          strokeWidth="9"
+          strokeLinecap="round"
+          strokeDasharray={length}
+          className="crpe-ring-progress"
+          style={{ strokeDashoffset: offset, "--ring-length": `${length}`, "--ring-offset": `${offset}` } as React.CSSProperties}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+        <span className="text-[32px] font-extrabold leading-none tracking-[-0.04em] text-crpe-ink sm:text-[40px]">{value}</span>
+        <span className="mt-1 text-[13px] font-bold text-crpe-muted">/ {goal} pkt</span>
+      </div>
+    </div>
+  );
+}
+
+function MedykDashboard() {
+  return (
+    <>
+      <div className="flex items-center gap-5 sm:gap-7">
+        <PointsGauge value={110} goal={200} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-semibold text-crpe-muted">Postęp punktowy</p>
+          <p className="mt-1 text-[22px] font-extrabold leading-tight tracking-[-0.02em] text-crpe-ink">55% celu</p>
+          <p className="mt-0.5 text-[13px] font-semibold text-crpe-muted">2025–2028</p>
+          <div className="mt-4 inline-flex items-baseline gap-2 rounded-2xl bg-crpe-punkt-soft px-3.5 py-2">
+            <span className="text-[12px] font-semibold text-crpe-punkt-text">Brakuje</span>
+            <span className="text-[17px] font-extrabold text-crpe-punkt-text">90 pkt</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-2">
+        <Metric icon={FileCheck2} label="Certyfikaty" value="18 dokumentów" />
+        <Metric icon={ClipboardCheck} label="Do uzupełnienia" value="2 aktywności" />
+      </div>
+    </>
+  );
+}
+
 function ChecklistDashboard({
   eyebrow,
   title,
@@ -278,14 +301,14 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
 
   return (
     <div
-      className="crpe-dashboard-shell overflow-hidden rounded-[24px] bg-white/97 shadow-crpe-lift ring-1 ring-crpe-line backdrop-blur"
+      className="crpe-dashboard-shell overflow-hidden bg-white"
       aria-live="polite"
     >
       <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-3.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <RoleRing selected={selected} />
           <div className="min-w-0">
-          <p className="text-[12px] font-semibold text-crpe-muted">Podgląd CRPE</p>
+          <p className="text-[12px] font-semibold text-crpe-muted">Dane przykładowe</p>
           <p className="flex min-w-0 items-center gap-1.5 text-[14px] font-bold leading-5 text-crpe-ink">
             <span>{active.mobileLabel}</span>
           </p>
@@ -294,17 +317,14 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
         <span className={cx(statusPill, "shrink-0 text-[11px]", active.statusTone)}>{active.status}</span>
       </div>
 
-      <div key={selected} className="crpe-role-swap px-4 pb-4 pt-1">
+      <div key={selected} className="crpe-role-swap px-4 pb-4 pt-3 sm:px-5 lg:min-h-[238px]">
         {selected === "medyk" ? <MedykDashboard /> : null}
         {selected === "placowka" ? <PlacowkaDashboard /> : null}
         {selected === "organizator" ? <OrganizatorDashboard /> : null}
       </div>
 
       <div className="border-t border-crpe-line bg-crpe-surface/70 px-4 py-3">
-        {selected === "medyk" ? <p className="text-[12px] leading-5 text-crpe-muted">
-          Zobacz dokładnie, czym różni się zakres CRPE dla wybranej roli.
-        </p> : null}
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <Link
             href={active.detailsHref}
             className="inline-flex items-center gap-1.5 text-[13px] font-bold text-crpe-brand hover:text-crpe-brand-hover"
@@ -340,7 +360,7 @@ function RolePicker({
 
   return (
     <div
-      className="crpe-role-picker w-full rounded-[22px] bg-white p-1.5 shadow-crpe-soft ring-1 ring-crpe-line sm:rounded-full"
+      className="crpe-role-picker w-full bg-crpe-navy p-2"
       role="group"
       aria-label="Wybierz swoją rolę"
     >
@@ -355,14 +375,14 @@ function RolePicker({
               onClick={() => onSelect(key)}
               className={cx(
                 "crpe-role-button group flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[16px] px-2 py-2 text-left outline-none sm:min-h-[56px] sm:justify-start sm:rounded-full sm:pl-2 sm:pr-4",
-                "focus-visible:ring-2 focus-visible:ring-crpe-brand focus-visible:ring-offset-2",
-                isSelected ? "bg-crpe-navy text-white shadow-crpe-soft" : "text-crpe-ink hover:bg-crpe-surface",
+                "focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-crpe-navy",
+                isSelected ? "bg-white text-crpe-navy shadow-crpe-soft" : "text-white hover:bg-white/10",
               )}
             >
               <span
                 className={cx(
                   "hidden h-10 w-10 shrink-0 items-center justify-center rounded-full transition sm:flex",
-                  isSelected ? "bg-white/12 text-white" : "bg-crpe-ice text-crpe-navy",
+                  isSelected ? "bg-crpe-punkt-soft text-crpe-punkt-text" : "bg-white/10 text-white",
                 )}
                 aria-hidden="true"
               >
@@ -373,7 +393,7 @@ function RolePicker({
                 <span
                   className={cx(
                     "mt-0.5 hidden truncate text-[11px] font-medium leading-4 sm:block",
-                    isSelected ? "text-white/65" : "text-crpe-muted",
+                    isSelected ? "text-crpe-muted" : "text-white/80",
                   )}
                 >
                   {roleDescriptions[key]}
@@ -419,7 +439,7 @@ function Hero({
             </h1>
 
             <p className="crpe-hero-in mt-5 max-w-[540px] text-[17px] leading-7 text-crpe-muted sm:text-[19px] sm:leading-8 [--hero-delay:180ms]">
-              Zbieraj aktywności, certyfikaty i dane potrzebne do rozliczeń w jednym uporządkowanym miejscu — dopasowanym do Twojej roli.
+              Zbieraj aktywności, punkty i certyfikaty w jednym miejscu. Sprawdzaj postęp i przygotuj dane do rozliczenia.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link href={active.href} className={cx(pill.primary, "w-full sm:w-auto")}>
@@ -430,9 +450,9 @@ function Hero({
             </div>
           </div>
 
-          <div data-hero-workspace className="crpe-hero-panel min-w-0 w-full">
+          <div data-hero-workspace className="crpe-hero-panel min-w-0 w-full overflow-hidden rounded-[24px] bg-white shadow-crpe-soft ring-1 ring-crpe-line">
             <RolePicker selected={selected} onSelect={onSelect} />
-            <div data-hero-preview className="mt-4 lg:min-h-[360px]">
+            <div data-hero-preview className="lg:min-h-[360px]">
               <HeroDashboard selected={selected} />
             </div>
 

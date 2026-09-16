@@ -19,7 +19,7 @@ const checks = [
   ["role controls expose selected state and remain keyboard buttons", page.includes('aria-pressed={isSelected}') && page.includes('type="button"') && page.includes('group flex min-h-12')],
   ["role destinations remain intact", ['/rejestracja', '/dla-medyka', '/dla-placowki', '/dla-organizatora'].every(p => page.includes(p))],
   ["small step numbers use the accessible dark teal", page.includes('bg-crpe-punkt-text text-[13px] font-extrabold text-white')],
-  ["preview caption uses readable text color", page.includes('font-semibold text-crpe-muted">Podgląd CRPE')],
+  ["preview caption uses readable text color", page.includes('font-semibold text-crpe-muted">Dane przykładowe')],
   ["FAQ retains native disclosure controls", page.includes('<details') && page.includes('<summary')],
   ["palette defines navy, punkt and brand tokens", ["--color-crpe-navy:", "--color-crpe-punkt:", "--color-crpe-brand:"].every((t) => css.includes(t))],
   ["brand stays the only CTA color", ui.includes("primary: `${pillBase} bg-crpe-brand")],
