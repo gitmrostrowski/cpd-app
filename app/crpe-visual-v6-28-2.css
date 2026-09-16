@@ -1,0 +1,395 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── CRPE v6.28 „Punkty = kropki” ─────────────────────────────────────────
+     Granat niesie powagę i czytelność, niebieski marki zostaje kolorem CTA,
+     a morski „punkt” (kolor szpitalnego fartucha) jest jedynym żywym akcentem:
+     kropki, pierścień postępu, znaczniki. Szary jest podbity granatem. */
+  --color-crpe-brand: #1D4ED8;
+  --color-crpe-brand-hover: #1740B4;
+  --color-crpe-brand-soft: #EDF3FE;
+  --color-crpe-brand-border: #CADBFB;
+
+  --color-crpe-navy: #0B2545;
+  --color-crpe-navy-2: #12325A;
+  --color-crpe-navy-line: #23446E;
+
+  --color-crpe-punkt: #12A39B;
+  --color-crpe-punkt-text: #0A7570;
+  --color-crpe-punkt-soft: #E4F5F3;
+  --color-crpe-punkt-border: #BFE6E2;
+
+  --color-crpe-ink: #0B2545;
+  --color-crpe-muted: #4B5E75;
+  --color-crpe-subtle: #7A8BA0;
+  --color-crpe-surface: #F3F7FB;
+  --color-crpe-ice: #E8F0F8;
+  --color-crpe-line: #DDE6F0;
+
+  /* Semantyka stanu — używać WYŁĄCZNIE do statusu danych, NIGDY do CTA i NIGDY jako tożsamość roli.
+     success = potwierdzony/kompletny; warning = wymaga uwagi/do uzupełnienia/zbliżający się termin;
+     danger = przeterminowane/błąd/krytyczne; crpe-brand = jedyny kolor wszystkich CTA w aplikacji. */
+  --color-crpe-success: #006A4E;
+  --color-crpe-success-soft: #E4F6F0;
+  --color-crpe-success-border: #C5E3D9;
+
+  --color-crpe-warning: #9A4600;
+  --color-crpe-warning-soft: #FFEEE2;
+  --color-crpe-warning-border: #FAD6C0;
+
+  --color-crpe-danger: #A42F30;
+  --color-crpe-danger-soft: #FFECE9;
+  --color-crpe-danger-border: #FFCEC8;
+
+  /* Tożsamość ról: medyk = morski, placówka = niebieski, organizator = granat. */
+  --color-crpe-medyk-soft: #E4F5F3;
+  --color-crpe-medyk-border: #BFE6E2;
+  --color-crpe-medyk-text: #0A7570;
+
+  --color-crpe-placowka-soft: #EDF3FE;
+  --color-crpe-placowka-border: #CADBFB;
+  --color-crpe-placowka-text: #1D4ED8;
+
+  --color-crpe-organizator-soft: #EAEFF6;
+  --color-crpe-organizator-border: #D2DCE9;
+  --color-crpe-organizator-text: #12325A;
+
+  --radius-crpe-lg: 28px;
+  --radius-crpe-md: 20px;
+
+  --shadow-crpe-soft: 0 1px 2px rgba(11, 37, 69, 0.04), 0 10px 30px -12px rgba(11, 37, 69, 0.14);
+  --shadow-crpe-lift: 0 2px 4px rgba(11, 37, 69, 0.05), 0 24px 56px -20px rgba(11, 37, 69, 0.28);
+  --shadow-crpe-cta: 0 10px 24px -8px rgba(29, 78, 216, 0.55);
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), "Plus Jakarta Sans", ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
+  --font-display: var(--font-display-face), var(--font-inter), ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: var(--color-crpe-ink);
+}
+
+/* Nagłówki mają własny krój z charakterem; treść zostaje w Plus Jakarta Sans. */
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  text-wrap: balance;
+}
+
+::selection {
+  background: rgba(18, 163, 155, 0.2);
+}
+
+@keyframes crpeHeroIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes crpePanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes crpeRoleSwap {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes crpeProgressGrow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes crpeRowIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.crpe-hero-in {
+  opacity: 0;
+  animation: crpeHeroIn 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--hero-delay, 0ms);
+}
+
+.crpe-hero-panel {
+  opacity: 0;
+  animation: crpePanelIn 0.72s cubic-bezier(0.22, 1, 0.36, 1) 180ms forwards;
+}
+
+.crpe-role-swap {
+  animation: crpeRoleSwap 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.crpe-progress-fill {
+  transform-origin: left;
+  animation: crpeProgressGrow 0.9s cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+.crpe-row-in {
+  animation: crpeRowIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.crpe-row-in:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.crpe-row-in:nth-child(3) {
+  animation-delay: 140ms;
+}
+
+.crpe-dashboard-shell {
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.32s ease;
+}
+
+.crpe-role-button {
+  transition:
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.24s ease;
+}
+
+.crpe-role-button:active {
+  transform: scale(0.98);
+}
+
+.crpe-interactive-card,
+.crpe-benefit-card,
+.crpe-step-card {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+}
+
+.crpe-card-icon {
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) {
+  .crpe-dashboard-shell:hover {
+    transform: translateY(-2px);
+  }
+
+  .crpe-role-button:hover {
+    transform: translateY(-0.5px);
+  }
+
+  .crpe-interactive-card:hover,
+  .crpe-benefit-card:hover,
+  .crpe-step-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-crpe-lift);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .crpe-hero-in,
+  .crpe-hero-panel,
+  .crpe-role-swap,
+  .crpe-progress-fill,
+  .crpe-row-in {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .crpe-dashboard-shell,
+  .crpe-role-button,
+  .crpe-interactive-card,
+  .crpe-benefit-card,
+  .crpe-step-card,
+  .crpe-card-icon {
+    transition: none !important;
+  }
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+:focus-visible {
+  outline-color: #1D4ED8;
+}
+
+.crpe-print-only {
+  display: none;
+}
+
+/*
+ * Wydruk raportu. „Pobierz PDF” otwiera okno wydruku przeglądarki, więc kartka
+ * musi być dokumentem, a nie zrzutem interfejsu: bez nawigacji, filtrów
+ * i przycisków, z pełną tabelą i widocznymi adresami źródeł.
+ */
+@media print {
+  :root {
+    --crpe-print: 1;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  header[data-crpe-chrome],
+  footer[data-crpe-chrome],
+  [data-print="hide"] {
+    display: none !important;
+  }
+
+  .crpe-report-print[data-print="area"] {
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  .crpe-report-print .crpe-print-only {
+    display: block !important;
+  }
+
+  .crpe-report-print [data-print="summary-grid"] {
+    display: block !important;
+  }
+
+  .crpe-report-print [data-print="summary"] {
+    width: 100% !important;
+  }
+
+  .crpe-report-print [data-print="table"] {
+    overflow: visible !important;
+  }
+
+  .crpe-report-print table {
+    width: 100%;
+    min-width: 0 !important;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .crpe-report-print thead {
+    display: table-header-group;
+  }
+
+  .crpe-report-print tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .crpe-report-print .sticky {
+    position: static !important;
+  }
+
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 9px;
+    color: #475569;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+}
+
+/* ── Landing page v6.28 ─────────────────────────────────────────────────── */
+
+/* Tło hero: chłodny lód z miękką poświatą za zdjęciem. */
+.crpe-home-hero {
+  background:
+    radial-gradient(52% 70% at 82% 38%, rgba(18, 163, 155, 0.10), transparent 70%),
+    radial-gradient(40% 50% at 100% 0%, rgba(29, 78, 216, 0.08), transparent 70%),
+    linear-gradient(180deg, var(--color-crpe-surface) 0%, #fff 100%);
+}
+
+/* Delikatny raster kropek — tekstura „punktów” dla ciemnych i jasnych sekcji. */
+.crpe-dot-grid {
+  background-image: radial-gradient(currentColor 1.1px, transparent 1.3px);
+  background-size: 18px 18px;
+}
+
+/* Kropka zamykająca nagłówek. */
+.crpe-dot {
+  color: var(--color-crpe-punkt);
+}
+
+/* Pierścień postępu: jedna, zaplanowana animacja przy wejściu na stronę. */
+@keyframes crpeRingDraw {
+  from { stroke-dashoffset: var(--ring-length); }
+  to { stroke-dashoffset: var(--ring-offset); }
+}
+
+.crpe-ring-progress {
+  animation: crpeRingDraw 1.4s cubic-bezier(0.22, 1, 0.36, 1) 300ms both;
+}
+
+@keyframes crpePhotoSwap {
+  from { opacity: 0; transform: scale(1.04); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.crpe-photo-swap {
+  animation: crpePhotoSwap 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Kropkowany łącznik między krokami. */
+.crpe-step-path {
+  background-image: radial-gradient(circle, var(--color-crpe-punkt) 1.6px, transparent 2px);
+  background-size: 12px 4px;
+  background-repeat: repeat-x;
+  background-position: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crpe-ring-progress,
+  .crpe-photo-swap {
+    animation: none !important;
+  }
+}
