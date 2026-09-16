@@ -404,7 +404,7 @@ function Hero({
       />
 
       <div className={`${pageWrap} relative`}>
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-10">
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-10">
           <div>
             <div className="crpe-hero-in [--hero-delay:40ms]">
               <Eyebrow>CRPE dla medyka, placówki i organizatora</Eyebrow>
@@ -421,21 +421,21 @@ function Hero({
             <p className="crpe-hero-in mt-5 max-w-[540px] text-[17px] leading-7 text-crpe-muted sm:text-[19px] sm:leading-8 [--hero-delay:180ms]">
               Zbieraj aktywności, certyfikaty i dane potrzebne do rozliczeń w jednym uporządkowanym miejscu — dopasowanym do Twojej roli.
             </p>
-
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Link href={active.href} className={cx(pill.primary, "w-full sm:w-auto")}>
+                {selected === "medyk" ? "Załóż konto medyka" : selected === "placowka" ? "Zobacz zakres dla placówki" : "Poznaj moduł organizatora"}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/login" className={cx(pill.secondary, "w-full sm:w-auto")}>Zaloguj się</Link>
+            </div>
           </div>
 
           <div data-hero-workspace className="crpe-hero-panel min-w-0 w-full">
             <RolePicker selected={selected} onSelect={onSelect} />
-            <div data-hero-preview className="mt-5 lg:min-h-[360px]">
+            <div data-hero-preview className="mt-4 lg:min-h-[360px]">
               <HeroDashboard selected={selected} />
             </div>
-            <div className="mt-5 flex flex-col gap-4 lg:min-h-[136px]">
-              <p className="text-[16px] font-semibold leading-6 text-crpe-ink" aria-live="polite">{active.title}</p>
-              <Link href={active.href} className={cx(pill.primary, "mt-auto w-full")}>
-                {selected === "medyk" ? "Załóż konto medyka" : selected === "placowka" ? "Zobacz zakres dla placówki" : "Poznaj moduł organizatora"}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
+
           </div>
         </div>
       </div>

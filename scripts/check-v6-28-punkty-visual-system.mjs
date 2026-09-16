@@ -15,7 +15,7 @@ const footer = read("components/Footer.tsx");
 const hero = page.slice(page.indexOf('function Hero({'), page.indexOf('function AudienceSection'));
 const checks = [
   ["layout imports the versioned visual stylesheet", layout.includes('import "./crpe-visual-v6-28-2.css";')],
-  ["hero keeps role controls, preview and CTA in order without photos", hero.indexOf("<RolePicker") < hero.indexOf("<HeroDashboard") && hero.indexOf("<HeroDashboard") < hero.indexOf("href={active.href}") && !hero.includes("<Image")],
+  ["hero aligns columns at top, keeps actions left and preview right", hero.includes("lg:items-start") && hero.indexOf("href={active.href}") < hero.indexOf("data-hero-workspace") && hero.includes('href="/login"') && !hero.includes("<Image")],
   ["role controls expose selected state and remain keyboard buttons", page.includes('aria-pressed={isSelected}') && page.includes('type="button"') && page.includes('group flex min-h-12')],
   ["role destinations remain intact", ['/rejestracja', '/dla-medyka', '/dla-placowki', '/dla-organizatora'].every(p => page.includes(p))],
   ["small step numbers use the accessible dark teal", page.includes('bg-crpe-punkt-text text-[13px] font-extrabold text-white')],
