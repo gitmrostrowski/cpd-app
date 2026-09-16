@@ -1,6 +1,6 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 
 import "./crpe-visual-v6-28-2.css";
 import { AuthProvider } from "@/components/AuthProvider";
@@ -13,14 +13,6 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-// Krój nagłówków (v6.28): ciepły grotesk z optycznymi rozmiarami i pełnym zestawem polskich znaków.
-const display = Bricolage_Grotesque({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-display-face",
-  display: "swap",
-  axes: ["opsz"],
-});
-
 export const metadata: Metadata = {
   title: "CRPE – panel CPD, aktywności, certyfikaty i raporty",
   description: "CRPE łączy panel CPD i kalkulator, ewidencję aktywności, certyfikaty, raport użytkownika oraz bazę szkoleń w jednym koncie.",
@@ -28,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pl" className={`${jakarta.variable} ${display.variable}`}>
+    <html lang="pl" className={jakarta.variable}>
       <body className={`${jakarta.className} antialiased`}>
         <AuthProvider>
           <div className="flex min-h-screen flex-col">

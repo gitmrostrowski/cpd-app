@@ -64,7 +64,7 @@
 
 @theme inline {
   --font-sans: var(--font-inter), "Plus Jakarta Sans", ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
-  --font-display: var(--font-display-face), var(--font-inter), ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
 }
 
 :root {
@@ -81,7 +81,7 @@ body {
   color: var(--color-crpe-ink);
 }
 
-/* Nagłówki mają własny krój z charakterem; treść zostaje w Plus Jakarta Sans. */
+/* Spokojna, spójna typografia: Plus Jakarta Sans także w nagłówkach. */
 h1, h2, h3, .font-display {
   font-family: var(--font-display);
   font-optical-sizing: auto;

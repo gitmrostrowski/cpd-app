@@ -137,9 +137,9 @@ const audiences: AudienceOption[] = [
     detailsLabel: "Dowiedz się więcej o rozwiązaniu dla placówki",
     facts: ["Jednostki", "E-mail", "Role"],
     benefits: ["Struktura placówki i jednostek", "Zaproszenia na konkretny e-mail", "Role i członkostwa zespołu"],
-    image: "/home/photo-placowka.webp",
-    imageAlt: "Zespół medyczny podczas spotkania przy stole w placówce",
-    imagePosition: "50% 45%",
+    image: "/home/photo-placowka-v3.webp",
+    imageAlt: "Koordynatorka placówki i lekarz przeglądają dokumentację na tablecie",
+    imagePosition: "50% 30%",
   },
   {
     key: "organizator",
@@ -158,9 +158,9 @@ const audiences: AudienceOption[] = [
     detailsLabel: "Dowiedz się więcej o rozwiązaniu dla organizatora",
     facts: ["Zgłoszenie", "Logo", "Link"],
     benefits: ["Zgłoszenie do publicznej bazy", "Strona wydarzenia po publikacji", "Dane organizatora i link do zapisów"],
-    image: "/home/photo-organizator.webp",
-    imageAlt: "Lekarz omawia z zespołem plan szkolenia zapisany na tablicy",
-    imagePosition: "40% 50%",
+    image: "/home/photo-organizator-v3.webp",
+    imageAlt: "Prowadząca warsztat medyczny omawia model anatomiczny z uczestnikami",
+    imagePosition: "50% 25%",
   },
 ];
 
@@ -222,33 +222,30 @@ function ChecklistDashboard({
   title,
   rows,
   note,
-  badgeTone,
 }: {
   eyebrow: string;
   title: string;
   rows: string[][];
   note: string;
-  badgeTone: string;
 }) {
   return (
     <>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[12px] font-semibold text-crpe-muted">{eyebrow}</p>
-          <p className="font-display mt-0.5 text-[20px] font-bold leading-tight text-crpe-ink">{title}</p>
+          <p className="font-display mt-0.5 text-[18px] font-bold leading-tight text-crpe-ink">{title}</p>
         </div>
-        <span className={cx(statusPill, "text-[11px]", badgeTone)}>Dostępne</span>
       </div>
 
       <ul className="mt-3 space-y-1.5">
         {rows.map(([name, description]) => (
-          <li key={name} className="crpe-row-in flex items-center gap-3 rounded-2xl bg-crpe-surface px-3 py-2.5">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-crpe-punkt text-white">
+          <li key={name} className="crpe-row-in flex items-center gap-2 rounded-xl bg-crpe-surface px-3 py-2">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-crpe-punkt-text text-white">
               <Check className="h-3.5 w-3.5" strokeWidth={3} />
             </span>
             <div className="min-w-0">
               <p className="text-[13px] font-bold text-crpe-ink">{name}</p>
-              <p className="text-[11px] text-crpe-muted">{description}</p>
+              <p className="sr-only">{description}</p>
             </div>
           </li>
         ))}
@@ -266,7 +263,6 @@ function PlacowkaDashboard() {
     <ChecklistDashboard
       eyebrow="Panel placówki"
       title="Struktura i dostęp zespołu"
-      badgeTone="bg-crpe-placowka-soft text-crpe-placowka-text ring-crpe-placowka-border"
       rows={[
         ["Jednostki organizacyjne", "Tworzenie struktury placówki"],
         ["Zaproszenia e-mail", "Dostęp dla wskazanej osoby"],
@@ -282,7 +278,6 @@ function OrganizatorDashboard() {
     <ChecklistDashboard
       eyebrow="Publiczna baza szkoleń"
       title="Zgłoś wydarzenie do publikacji"
-      badgeTone="bg-crpe-organizator-soft text-crpe-organizator-text ring-crpe-organizator-border"
       rows={[
         ["Dane wydarzenia", "Termin, format, miejsce i punkty"],
         ["Organizator", "Nazwa i logo po publikacji"],
@@ -307,7 +302,7 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
           <p className="text-[12px] font-semibold text-crpe-muted">Podgląd CRPE</p>
           <p className="flex min-w-0 items-center gap-1.5 text-[14px] font-bold leading-5 text-crpe-ink">
             <span className={cx("h-2 w-2 shrink-0 rounded-full", theme.accentStrong)} aria-hidden="true" />
-            <span>{active.label}</span>
+            <span>{active.mobileLabel}</span>
           </p>
         </div>
         <span className={cx(statusPill, "shrink-0 text-[11px]", active.statusTone)}>{active.status}</span>
@@ -320,9 +315,9 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
       </div>
 
       <div className="border-t border-crpe-line bg-crpe-surface/70 px-4 py-3">
-        <p className="text-[12px] leading-5 text-crpe-muted">
+        {selected === "medyk" ? <p className="text-[12px] leading-5 text-crpe-muted">
           Zobacz dokładnie, czym różni się zakres CRPE dla wybranej roli.
-        </p>
+        </p> : null}
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
           <Link
             href={active.detailsHref}
@@ -335,7 +330,7 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
               href="/bezpieczenstwo"
               className="text-[13px] font-semibold text-crpe-muted underline decoration-crpe-line underline-offset-4 hover:text-crpe-ink"
             >
-              Jak chronimy dane zespołu
+              Bezpieczeństwo danych
             </Link>
           ) : null}
         </div>
@@ -507,7 +502,7 @@ function Hero({
               <Eyebrow>CRPE dla medyka, placówki i organizatora</Eyebrow>
             </div>
 
-            <h1 className="crpe-hero-in mt-4 max-w-[600px] text-[40px] font-bold leading-[1] tracking-[-0.035em] text-crpe-ink sm:text-[56px] lg:text-[64px] [--hero-delay:110ms]">
+            <h1 className="crpe-hero-in mt-4 max-w-[600px] text-[36px] font-bold leading-[1.08] tracking-[-0.035em] text-crpe-ink sm:text-[48px] lg:text-[48px] xl:text-[56px] [--hero-delay:110ms]">
               <span className="block">Punkty edukacyjne</span>
               <span className="block">i certyfikaty</span>
               <span className="block">
