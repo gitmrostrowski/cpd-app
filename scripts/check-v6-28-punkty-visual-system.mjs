@@ -12,10 +12,10 @@ const layout = read("app/layout.tsx");
 const cta = read("components/BottomCTA.tsx");
 const footer = read("components/Footer.tsx");
 
-const hero = page.slice(page.indexOf('function Hero({'), page.indexOf('function Hero({') + 7000);
+const hero = page.slice(page.indexOf('function Hero({'), page.indexOf('function AudienceSection'));
 const checks = [
   ["layout imports the versioned visual stylesheet", layout.includes('import "./crpe-visual-v6-28-2.css";')],
-  ["mobile primary action precedes portrait and preview", hero.indexOf('href={active.href}') < hero.indexOf('<HeroPortrait selected={selected} compact') && hero.indexOf('href={active.href}') < hero.indexOf('<MobileRolePreview')],
+  ["hero keeps role controls, preview and CTA in order without photos", hero.indexOf("<RolePicker") < hero.indexOf("<HeroDashboard") && hero.indexOf("<HeroDashboard") < hero.indexOf("href={active.href}") && !hero.includes("<Image")],
   ["role controls expose selected state and remain keyboard buttons", page.includes('aria-pressed={isSelected}') && page.includes('type="button"') && page.includes('group flex min-h-12')],
   ["role destinations remain intact", ['/rejestracja', '/dla-medyka', '/dla-placowki', '/dla-organizatora'].every(p => page.includes(p))],
   ["small step numbers use the accessible dark teal", page.includes('bg-crpe-punkt-text text-[13px] font-extrabold text-white')],
@@ -25,7 +25,7 @@ const checks = [
   ["brand stays the only CTA color", ui.includes("primary: `${pillBase} bg-crpe-brand")],
   ["display typeface is loaded and wired to headings", layout.includes("Plus_Jakarta_Sans") && !layout.includes("Bricolage_Grotesque") && css.includes("--font-display:") && css.includes("h1, h2, h3, .font-display")],
   ["shared primitives exist", ["export function IconBadge", "export function SectionHeading", "export function DotRing", "export function Eyebrow", "export const pill"].every((t) => ui.includes(t))],
-  ["hero uses rectangular photos and a separate role indicator", page.includes("aspect-[4/3]") && page.includes("data-role-ring") && page.includes("HeroPortrait")],
+  ["hero retains the separate three-role indicator", page.includes("data-role-ring") && page.includes("strokeDashoffset={-index * 120}")],
   ["role photos are in place", ["medyk", "placowka-v3", "organizator-v3", "dokument"].every((k) => exists(`public/home/photo-${k}.webp`))],
   ["eyebrows are sentence case, not tracked caps", !page.includes("uppercase tracking-[")],
   ["steps are connected by a dotted path", page.includes("crpe-step-path") && css.includes(".crpe-step-path")],
@@ -40,3 +40,4 @@ for (const [label, ok] of checks) {
   if (!ok) failed += 1;
 }
 if (failed) process.exit(1);
+

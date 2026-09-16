@@ -62,39 +62,6 @@ type AudienceOption = {
   imagePosition: string;
 };
 
-type RoleTheme = {
-  accentStrong: string;
-  accentSoft: string;
-  accentText: string;
-  accentRing: string;
-  accentBorder: string;
-};
-
-// Kolor roli jest tylko sygnaturą (plakietka, kropka). CTA zawsze w kolorze marki.
-const roleThemes: Record<AudienceKey, RoleTheme> = {
-  medyk: {
-    accentStrong: "bg-crpe-medyk-text",
-    accentSoft: "bg-crpe-medyk-soft",
-    accentText: "text-crpe-medyk-text",
-    accentRing: "ring-crpe-medyk-border",
-    accentBorder: "border-crpe-medyk-border",
-  },
-  placowka: {
-    accentStrong: "bg-crpe-placowka-text",
-    accentSoft: "bg-crpe-placowka-soft",
-    accentText: "text-crpe-placowka-text",
-    accentRing: "ring-crpe-placowka-border",
-    accentBorder: "border-crpe-placowka-border",
-  },
-  organizator: {
-    accentStrong: "bg-crpe-organizator-text",
-    accentSoft: "bg-crpe-organizator-soft",
-    accentText: "text-crpe-organizator-text",
-    accentRing: "ring-crpe-organizator-border",
-    accentBorder: "border-crpe-organizator-border",
-  },
-};
-
 const statusPill = "rounded-full px-3 py-1 text-[12px] font-bold ring-1";
 
 const audiences: AudienceOption[] = [
@@ -358,18 +325,6 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
   );
 }
 
-function HeroPortrait({ selected, compact = false }: { selected: AudienceKey; compact?: boolean }) {
-  const active = audiences.find((item) => item.key === selected) ?? audiences[0];
-  return (
-    <div data-hero-portrait className="relative mx-auto aspect-[4/3] w-full overflow-hidden rounded-[24px] bg-crpe-ice shadow-crpe-soft ring-1 ring-crpe-line">
-      <Image key={active.image} src={active.image} alt={active.imageAlt} fill priority
-        sizes={compact ? "(max-width: 640px) 90vw, 600px" : "420px"}
-        className="crpe-photo-swap object-cover"
-        style={{ objectPosition: active.imagePosition }} />
-    </div>
-  );
-}
-
 function RolePicker({
   selected,
   onSelect,
@@ -432,60 +387,6 @@ function RolePicker({
   );
 }
 
-function MobileRolePreview({ active }: { active: AudienceOption }) {
-  const labels: Record<AudienceKey, [string, string, string]> = {
-    medyk: ["Postęp", "Certyfikaty", "Do uzupełnienia"],
-    placowka: ["Struktura", "Zaproszenia", "Dostęp"],
-    organizator: ["Publikacja", "Organizator", "Zapisy"],
-  };
-  return (
-    <div
-      className="mt-5 rounded-[24px] bg-white p-4 shadow-crpe-soft ring-1 ring-crpe-line lg:hidden"
-      aria-label="Przykładowy podgląd dla wybranej roli"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <RoleRing selected={active.key} />
-          <div>
-          <p className="text-[12px] font-semibold text-crpe-muted">Podgląd profilu</p>
-          <p className="text-[15px] font-bold text-crpe-ink">{active.mobileLabel}</p>
-          </div>
-        </div>
-        <span className={cx(statusPill, "text-[11px]", active.statusTone)}>{active.status}</span>
-      </div>
-
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        {active.facts.map((fact, index) => (
-          <div
-            key={fact}
-            className={cx("rounded-2xl px-2.5 py-2.5", index === 0 ? "bg-crpe-punkt-soft" : "bg-crpe-surface")}
-          >
-            <p className="text-[12px] font-semibold leading-4 text-crpe-muted">{labels[active.key][index]}</p>
-            <p
-              className={cx(
-                "mt-0.5 text-[12px] font-extrabold leading-4",
-                index === 0 ? "text-crpe-punkt-text" : "text-crpe-ink",
-              )}
-            >
-              {fact}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {active.key === "medyk" ? (
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-crpe-ice">
-          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-crpe-punkt" />
-        </div>
-      ) : null}
-
-      <Link href={active.detailsHref} className={cx(pill.secondary, "mt-3 min-h-11 w-full text-[14px]")}>
-        Dowiedz się więcej <ArrowRight className="h-4 w-4" />
-      </Link>
-    </div>
-  );
-}
-
 function Hero({
   selected,
   onSelect,
@@ -503,7 +404,7 @@ function Hero({
       />
 
       <div className={`${pageWrap} relative`}>
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.04fr)] lg:items-center lg:gap-10">
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-10">
           <div>
             <div className="crpe-hero-in [--hero-delay:40ms]">
               <Eyebrow>CRPE dla medyka, placówki i organizatora</Eyebrow>
@@ -521,48 +422,19 @@ function Hero({
               Zbieraj aktywności, certyfikaty i dane potrzebne do rozliczeń w jednym uporządkowanym miejscu — dopasowanym do Twojej roli.
             </p>
 
-            <div className="crpe-hero-in mt-7 max-w-[600px] [--hero-delay:250ms]">
-              <RolePicker selected={selected} onSelect={onSelect} />
-            </div>
-
-            <div key={selected} className="crpe-role-swap mt-7 max-w-[600px]" aria-live="polite">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[14px] font-bold text-crpe-ink">{active.label}</span>
-                <span className={cx(statusPill, active.statusTone)}>{active.status}</span>
-              </div>
-
-              <h2 className="mt-3 text-[24px] font-bold leading-[1.15] tracking-[-0.02em] text-crpe-ink sm:text-[28px]">
-                {active.title}
-              </h2>
-              <p className="mt-2.5 text-[16px] leading-7 text-crpe-muted">{active.description}</p>
-
-              <ul className="mt-4 grid gap-x-5 gap-y-2 sm:grid-cols-2">
-                {active.benefits.map((item) => (
-                  <li key={item} className="flex gap-2.5 text-[15px] leading-6 text-crpe-ink">
-                    <DotBullet />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-7">
-                <Link href={active.href} className={cx(pill.primary, "w-full sm:w-auto")}>
-                  {active.cta} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-              <div className="mt-8 lg:hidden">
-                <HeroPortrait selected={selected} compact />
-              </div>
-              <MobileRolePreview active={active} />
-            </div>
           </div>
 
-          <div className="relative hidden lg:block">
-            <div className="crpe-hero-panel mx-auto grid w-full max-w-[420px] gap-5">
-              <HeroPortrait selected={selected} />
-              <div data-hero-preview className="mx-auto w-full max-w-[420px]">
-                <HeroDashboard selected={selected} />
-              </div>
+          <div data-hero-workspace className="crpe-hero-panel min-w-0 w-full">
+            <RolePicker selected={selected} onSelect={onSelect} />
+            <div data-hero-preview className="mt-5 lg:min-h-[360px]">
+              <HeroDashboard selected={selected} />
+            </div>
+            <div className="mt-5 flex flex-col gap-4 lg:min-h-[136px]">
+              <p className="text-[16px] font-semibold leading-6 text-crpe-ink" aria-live="polite">{active.title}</p>
+              <Link href={active.href} className={cx(pill.primary, "mt-auto w-full")}>
+                {selected === "medyk" ? "Załóż konto medyka" : selected === "placowka" ? "Zobacz zakres dla placówki" : "Poznaj moduł organizatora"}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
         </div>
