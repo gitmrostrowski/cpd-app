@@ -1,14 +1,30 @@
 @import "tailwindcss";
 
 @theme {
+  /* ── CRPE v6.28 „Punkty = kropki” ─────────────────────────────────────────
+     Granat niesie powagę i czytelność, niebieski marki zostaje kolorem CTA,
+     a morski „punkt” (kolor szpitalnego fartucha) jest jedynym żywym akcentem:
+     kropki, pierścień postępu, znaczniki. Szary jest podbity granatem. */
   --color-crpe-brand: #1D4ED8;
-  --color-crpe-brand-hover: #0F3CAB;
-  --color-crpe-brand-soft: #EFF4FE;
-  --color-crpe-brand-border: #CFDDFB;
-  --color-crpe-ink: #171A21;
-  --color-crpe-muted: #5C6270;
-  --color-crpe-surface: #F7F8FA;
-  --color-crpe-line: #E4E6EC;
+  --color-crpe-brand-hover: #1740B4;
+  --color-crpe-brand-soft: #EDF3FE;
+  --color-crpe-brand-border: #CADBFB;
+
+  --color-crpe-navy: #0B2545;
+  --color-crpe-navy-2: #12325A;
+  --color-crpe-navy-line: #23446E;
+
+  --color-crpe-punkt: #12A39B;
+  --color-crpe-punkt-text: #0A7570;
+  --color-crpe-punkt-soft: #E4F5F3;
+  --color-crpe-punkt-border: #BFE6E2;
+
+  --color-crpe-ink: #0B2545;
+  --color-crpe-muted: #4B5E75;
+  --color-crpe-subtle: #7A8BA0;
+  --color-crpe-surface: #F3F7FB;
+  --color-crpe-ice: #E8F0F8;
+  --color-crpe-line: #DDE6F0;
 
   /* Semantyka stanu — używać WYŁĄCZNIE do statusu danych, NIGDY do CTA i NIGDY jako tożsamość roli.
      success = potwierdzony/kompletny; warning = wymaga uwagi/do uzupełnienia/zbliżający się termin;
@@ -25,17 +41,30 @@
   --color-crpe-danger-soft: #FFECE9;
   --color-crpe-danger-border: #FFCEC8;
 
-  --color-crpe-medyk-soft: #EAF6F7;
-  --color-crpe-medyk-border: #CBE3E5;
-  --color-crpe-medyk-text: #0F6B73;
+  /* Tożsamość ról: medyk = morski, placówka = niebieski, organizator = granat. */
+  --color-crpe-medyk-soft: #E4F5F3;
+  --color-crpe-medyk-border: #BFE6E2;
+  --color-crpe-medyk-text: #0A7570;
 
-  --color-crpe-placowka-soft: #EFF4FE;
-  --color-crpe-placowka-border: #CFDDFB;
+  --color-crpe-placowka-soft: #EDF3FE;
+  --color-crpe-placowka-border: #CADBFB;
   --color-crpe-placowka-text: #1D4ED8;
 
-  --color-crpe-organizator-soft: #F1F2F5;
-  --color-crpe-organizator-border: #DADDE2;
-  --color-crpe-organizator-text: #43474D;
+  --color-crpe-organizator-soft: #EAEFF6;
+  --color-crpe-organizator-border: #D2DCE9;
+  --color-crpe-organizator-text: #12325A;
+
+  --radius-crpe-lg: 28px;
+  --radius-crpe-md: 20px;
+
+  --shadow-crpe-soft: 0 1px 2px rgba(11, 37, 69, 0.04), 0 10px 30px -12px rgba(11, 37, 69, 0.14);
+  --shadow-crpe-lift: 0 2px 4px rgba(11, 37, 69, 0.05), 0 24px 56px -20px rgba(11, 37, 69, 0.28);
+  --shadow-crpe-cta: 0 10px 24px -8px rgba(29, 78, 216, 0.55);
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), "Plus Jakarta Sans", ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
+  --font-display: var(--font-display-face), var(--font-inter), ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
 }
 
 :root {
@@ -49,11 +78,18 @@ html {
 body {
   margin: 0;
   background: #ffffff;
-  color: #171A21;
+  color: var(--color-crpe-ink);
+}
+
+/* Nagłówki mają własny krój z charakterem; treść zostaje w Plus Jakarta Sans. */
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  text-wrap: balance;
 }
 
 ::selection {
-  background: rgba(29, 78, 216, 0.14);
+  background: rgba(18, 163, 155, 0.2);
 }
 
 @keyframes crpeHeroIn {
@@ -170,17 +206,6 @@ body {
     border-color 0.28s ease;
 }
 
-.crpe-interactive-card::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 3px;
-  background: linear-gradient(90deg, var(--card-accent, #E4E6EC), color-mix(in srgb, var(--card-accent, #E4E6EC) 58%, white));
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
 .crpe-card-icon {
   transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -188,7 +213,6 @@ body {
 @media (hover: hover) {
   .crpe-dashboard-shell:hover {
     transform: translateY(-2px);
-    box-shadow: 0 28px 72px rgba(15, 45, 75, 0.16);
   }
 
   .crpe-role-button:hover {
@@ -198,19 +222,8 @@ body {
   .crpe-interactive-card:hover,
   .crpe-benefit-card:hover,
   .crpe-step-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(214, 218, 227, 0.95);
-    box-shadow: 0 18px 42px rgba(15, 45, 75, 0.085);
-  }
-
-  .crpe-interactive-card:hover::before {
-    transform: scaleX(1);
-  }
-
-  .crpe-interactive-card:hover .crpe-card-icon,
-  .crpe-benefit-card:hover .crpe-card-icon,
-  .crpe-step-card:hover .crpe-card-icon {
-    transform: scale(1.07) rotate(-3deg);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-crpe-lift);
   }
 }
 
@@ -326,9 +339,57 @@ summary::-webkit-details-marker {
   }
 }
 
-/* Landing page v6.27.7 — spokojny brand-led hero; rola nie przemalowuje tla. */
+/* ── Landing page v6.28 ─────────────────────────────────────────────────── */
+
+/* Tło hero: chłodny lód z miękką poświatą za zdjęciem. */
 .crpe-home-hero {
   background:
-    radial-gradient(circle at 78% 5%, rgba(29, 78, 216, 0.075), transparent 30%),
+    radial-gradient(52% 70% at 82% 38%, rgba(18, 163, 155, 0.10), transparent 70%),
+    radial-gradient(40% 50% at 100% 0%, rgba(29, 78, 216, 0.08), transparent 70%),
     linear-gradient(180deg, var(--color-crpe-surface) 0%, #fff 100%);
+}
+
+/* Delikatny raster kropek — tekstura „punktów” dla ciemnych i jasnych sekcji. */
+.crpe-dot-grid {
+  background-image: radial-gradient(currentColor 1.1px, transparent 1.3px);
+  background-size: 18px 18px;
+}
+
+/* Kropka zamykająca nagłówek. */
+.crpe-dot {
+  color: var(--color-crpe-punkt);
+}
+
+/* Pierścień postępu: jedna, zaplanowana animacja przy wejściu na stronę. */
+@keyframes crpeRingDraw {
+  from { stroke-dashoffset: var(--ring-length); }
+  to { stroke-dashoffset: var(--ring-offset); }
+}
+
+.crpe-ring-progress {
+  animation: crpeRingDraw 1.4s cubic-bezier(0.22, 1, 0.36, 1) 300ms both;
+}
+
+@keyframes crpePhotoSwap {
+  from { opacity: 0; transform: scale(1.04); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.crpe-photo-swap {
+  animation: crpePhotoSwap 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Kropkowany łącznik między krokami. */
+.crpe-step-path {
+  background-image: radial-gradient(circle, var(--color-crpe-punkt) 1.6px, transparent 2px);
+  background-size: 12px 4px;
+  background-repeat: repeat-x;
+  background-position: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crpe-ring-progress,
+  .crpe-photo-swap {
+    animation: none !important;
+  }
 }

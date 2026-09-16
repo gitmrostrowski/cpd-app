@@ -1,5 +1,9 @@
 "use client";
 
+// Strona główna CRPE — v6.28 „Punkty = kropki”.
+// Treści bez zmian względem v6.27.x; zmieniony układ, kolorystyka, typografia, ikony i zdjęcia.
+// Wspólne elementy wizualne: components/ui/crpe.tsx.
+
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,6 +21,7 @@ import {
   GraduationCap,
   HelpCircle,
   LockKeyhole,
+  Plus,
   ShieldCheck,
   Stethoscope,
   UploadCloud,
@@ -24,6 +29,16 @@ import {
 } from "lucide-react";
 import BottomCTA from "@/components/BottomCTA";
 import { pageWrap } from "@/lib/layout";
+import {
+  DotBullet,
+  DotRing,
+  DottedCurve,
+  Eyebrow,
+  IconBadge,
+  SectionHeading,
+  cx,
+  pill,
+} from "@/components/ui/crpe";
 
 type AudienceKey = "medyk" | "placowka" | "organizator";
 
@@ -45,6 +60,7 @@ type AudienceOption = {
   benefits: [string, string, string];
   image: string;
   imageAlt: string;
+  imagePosition: string;
 };
 
 type RoleTheme = {
@@ -53,13 +69,9 @@ type RoleTheme = {
   accentText: string;
   accentRing: string;
   accentBorder: string;
-  ctaStrong: string;
-  ctaHover: string;
-  ctaShadow: string;
-  iconShadow: string;
-  mediaBackground: string;
 };
 
+// Kolor roli jest tylko sygnaturą (plakietka, kropka). CTA zawsze w kolorze marki.
 const roleThemes: Record<AudienceKey, RoleTheme> = {
   medyk: {
     accentStrong: "bg-crpe-medyk-text",
@@ -67,11 +79,6 @@ const roleThemes: Record<AudienceKey, RoleTheme> = {
     accentText: "text-crpe-medyk-text",
     accentRing: "ring-crpe-medyk-border",
     accentBorder: "border-crpe-medyk-border",
-    ctaStrong: "bg-crpe-brand",
-    ctaHover: "hover:bg-crpe-brand-hover",
-    ctaShadow: "shadow-[0_12px_26px_rgba(29,78,216,0.22)]",
-    iconShadow: "shadow-[0_8px_20px_rgba(0,89,93,0.14)]",
-    mediaBackground: "bg-crpe-medyk-soft",
   },
   placowka: {
     accentStrong: "bg-crpe-placowka-text",
@@ -79,11 +86,6 @@ const roleThemes: Record<AudienceKey, RoleTheme> = {
     accentText: "text-crpe-placowka-text",
     accentRing: "ring-crpe-placowka-border",
     accentBorder: "border-crpe-placowka-border",
-    ctaStrong: "bg-crpe-brand",
-    ctaHover: "hover:bg-crpe-brand-hover",
-    ctaShadow: "shadow-[0_12px_26px_rgba(29,78,216,0.22)]",
-    iconShadow: "shadow-[0_8px_20px_rgba(29,78,216,0.14)]",
-    mediaBackground: "bg-crpe-placowka-soft",
   },
   organizator: {
     accentStrong: "bg-crpe-organizator-text",
@@ -91,25 +93,10 @@ const roleThemes: Record<AudienceKey, RoleTheme> = {
     accentText: "text-crpe-organizator-text",
     accentRing: "ring-crpe-organizator-border",
     accentBorder: "border-crpe-organizator-border",
-    ctaStrong: "bg-crpe-brand",
-    ctaHover: "hover:bg-crpe-brand-hover",
-    ctaShadow: "shadow-[0_12px_26px_rgba(29,78,216,0.22)]",
-    iconShadow: "shadow-[0_8px_20px_rgba(67,71,77,0.14)]",
-    mediaBackground: "bg-crpe-organizator-soft",
   },
 };
-const panel =
-  "rounded-[20px] border border-crpe-line bg-white shadow-[0_16px_45px_rgba(15,45,75,0.065)]";
 
-function Reveal({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return <div className={className}>{children}</div>;
-}
+const statusPill = "rounded-full px-3 py-1 text-[12px] font-bold ring-1";
 
 const audiences: AudienceOption[] = [
   {
@@ -129,8 +116,9 @@ const audiences: AudienceOption[] = [
     detailsLabel: "Dowiedz się więcej o profilu medyka",
     facts: ["110/200 pkt", "18 certyfikatów", "2 wpisy do uzupełnienia"],
     benefits: ["Panel CPD i kalkulator celu", "Aktywności z certyfikatami", "Raport użytkownika i baza szkoleń"],
-    image: "/home/role-medyk.webp",
-    imageAlt: "Fartuch medyczny i stetoskop",
+    image: "/home/photo-medyk.webp",
+    imageAlt: "Uśmiechnięta lekarka pokazuje panel CPD na tablecie",
+    imagePosition: "50% 30%",
   },
   {
     key: "placowka",
@@ -149,8 +137,9 @@ const audiences: AudienceOption[] = [
     detailsLabel: "Dowiedz się więcej o rozwiązaniu dla placówki",
     facts: ["Jednostki", "E-mail", "Role"],
     benefits: ["Struktura placówki i jednostek", "Zaproszenia na konkretny e-mail", "Role i członkostwa zespołu"],
-    image: "/home/role-placowka.webp",
-    imageAlt: "Nowoczesny budynek placówki medycznej",
+    image: "/home/photo-placowka.webp",
+    imageAlt: "Zespół medyczny podczas spotkania przy stole w placówce",
+    imagePosition: "50% 45%",
   },
   {
     key: "organizator",
@@ -169,64 +158,29 @@ const audiences: AudienceOption[] = [
     detailsLabel: "Dowiedz się więcej o rozwiązaniu dla organizatora",
     facts: ["Zgłoszenie", "Logo", "Link"],
     benefits: ["Zgłoszenie do publicznej bazy", "Strona wydarzenia po publikacji", "Dane organizatora i link do zapisów"],
-    image: "/home/role-organizator.webp",
-    imageAlt: "Laptop i notes symbolizujące pracę organizatora",
+    image: "/home/photo-organizator.webp",
+    imageAlt: "Lekarz omawia z zespołem plan szkolenia zapisany na tablicy",
+    imagePosition: "40% 50%",
   },
 ];
 
-function SectionHeading({
-  eyebrow,
-  title,
-  text,
-  centered = false,
-}: {
-  eyebrow: string;
-  title: string;
-  text?: string;
-  centered?: boolean;
-}) {
-  return (
-    <div className={centered ? "mx-auto max-w-3xl text-center" : "max-w-2xl"}>
-      <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-crpe-brand">
-        {eyebrow}
-      </p>
-      <h2 className="mt-2 text-[22px] font-extrabold leading-[1.15] tracking-[-0.025em] text-crpe-ink sm:mt-3 sm:text-[28px]">
-        {title}
-      </h2>
-      {text ? (
-        <p className="mt-3 text-[15px] leading-6 text-crpe-muted sm:mt-4 sm:text-[16px] sm:leading-7">
-          {text}
-        </p>
-      ) : null}
-    </div>
-  );
-}
+/* ─────────────────────────────── Hero ─────────────────────────────────── */
 
 function Metric({
-  icon: Icon,
+  icon,
   label,
   value,
-  tone = "neutral",
 }: {
   icon: typeof FileCheck2;
   label: string;
   value: string;
-  tone?: "brand" | "neutral";
 }) {
-  const toneClass =
-    tone === "brand"
-      ? "bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border"
-      : "bg-white text-crpe-muted ring-1 ring-crpe-line";
   return (
-    <div className="rounded-2xl border border-crpe-line bg-white p-3.5">
-      <div className="flex items-center gap-3">
-        <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${toneClass}`}>
-          <Icon className="h-4 w-4" />
-        </span>
-        <div>
-          <p className="text-[11px] font-bold text-crpe-muted">{label}</p>
-          <p className="text-sm font-extrabold text-crpe-ink">{value}</p>
-        </div>
+    <div className="flex items-center gap-3 rounded-2xl bg-crpe-surface p-3">
+      <IconBadge icon={icon} size="sm" tone="white" dot={false} />
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold text-crpe-muted">{label}</p>
+        <p className="text-[13px] font-bold text-crpe-ink">{value}</p>
       </div>
     </div>
   );
@@ -235,185 +189,183 @@ function Metric({
 function MedykDashboard() {
   return (
     <>
-      <div className="rounded-2xl border border-crpe-line bg-crpe-surface p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-bold text-crpe-muted">Twój postęp</p>
-            <p className="mt-1 text-[28px] font-black tracking-tight text-crpe-ink">
-              110 <span className="text-sm font-bold text-crpe-muted">/ 200 pkt</span>
-            </p>
-          </div>
-          <div className="rounded-xl bg-crpe-brand-soft px-3 py-2 text-right ring-1 ring-crpe-brand-border">
-            <p className="text-[10px] font-bold text-crpe-muted">Brakuje</p>
-            <p className="text-sm font-black text-crpe-brand">90 pkt</p>
-          </div>
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-[12px] font-semibold text-crpe-muted">Twój postęp</p>
+          <p className="font-display mt-0.5 text-[40px] font-bold leading-none tracking-[-0.03em] text-crpe-ink">
+            110 <span className="font-sans text-[14px] font-bold tracking-normal text-crpe-muted">/ 200 pkt</span>
+          </p>
         </div>
-        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-crpe-brand-soft ring-1 ring-crpe-brand-border">
-          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-crpe-brand" />
-        </div>
-        <div className="mt-2 flex justify-between text-[11px] font-semibold text-crpe-muted">
-          <span>55% celu</span>
-          <span>2025–2028</span>
+        <div className="rounded-2xl bg-crpe-punkt-soft px-3 py-2 text-right">
+          <p className="text-[10px] font-semibold text-crpe-punkt-text">Brakuje</p>
+          <p className="text-[14px] font-extrabold text-crpe-punkt-text">90 pkt</p>
         </div>
       </div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-crpe-ice">
+        <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-crpe-punkt" />
+      </div>
+      <div className="mt-1.5 flex justify-between text-[11px] font-semibold text-crpe-muted">
+        <span>55% celu</span>
+        <span>2025–2028</span>
+      </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <Metric icon={FileCheck2} label="Certyfikaty" value="18 dokumentów" tone="brand" />
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <Metric icon={FileCheck2} label="Certyfikaty" value="18 dokumentów" />
         <Metric icon={ClipboardCheck} label="Do uzupełnienia" value="2 aktywności" />
       </div>
     </>
   );
 }
 
-function PlacowkaDashboard() {
+function ChecklistDashboard({
+  eyebrow,
+  title,
+  rows,
+  note,
+  badgeTone,
+}: {
+  eyebrow: string;
+  title: string;
+  rows: string[][];
+  note: string;
+  badgeTone: string;
+}) {
   return (
     <>
-      <div className="rounded-2xl border border-crpe-line bg-crpe-surface p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-bold text-crpe-muted">Panel placówki</p>
-            <p className="mt-1 text-[17px] font-black text-crpe-ink">Struktura i dostęp zespołu</p>
-          </div>
-          <span className="rounded-full bg-crpe-placowka-soft px-2.5 py-1 text-[10px] font-extrabold text-crpe-placowka-text ring-1 ring-crpe-placowka-border">
-            Dostępne
-          </span>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[12px] font-semibold text-crpe-muted">{eyebrow}</p>
+          <p className="font-display mt-0.5 text-[20px] font-bold leading-tight text-crpe-ink">{title}</p>
         </div>
+        <span className={cx(statusPill, "text-[11px]", badgeTone)}>Dostępne</span>
       </div>
 
-      <div className="mt-3 space-y-2">
-        {[
-          ["Jednostki organizacyjne", "Tworzenie struktury placówki"],
-          ["Zaproszenia e-mail", "Dostęp dla wskazanej osoby"],
-          ["Role i członkostwa", "Uprawnienia w zespole"],
-        ].map(([name, description]) => (
-          <div key={name} className="crpe-row-in flex items-center gap-3 rounded-2xl border border-crpe-line bg-white p-3.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border">
-              <CheckCircle2 className="h-4 w-4" />
+      <ul className="mt-3 space-y-1.5">
+        {rows.map(([name, description]) => (
+          <li key={name} className="crpe-row-in flex items-center gap-3 rounded-2xl bg-crpe-surface px-3 py-2.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-crpe-punkt text-white">
+              <Check className="h-3.5 w-3.5" strokeWidth={3} />
             </span>
-            <div>
-              <p className="text-[13px] font-extrabold text-crpe-ink">{name}</p>
-              <p className="mt-0.5 text-[10px] text-crpe-muted">{description}</p>
+            <div className="min-w-0">
+              <p className="text-[13px] font-bold text-crpe-ink">{name}</p>
+              <p className="text-[11px] text-crpe-muted">{description}</p>
             </div>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
 
-      <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] font-semibold text-amber-800">
-        Zbiorczy status, raporty i alerty — rozwijamy
-      </div>
+      <p className="mt-2.5 rounded-xl bg-crpe-warning-soft px-3 py-2 text-[11px] font-semibold text-crpe-warning">
+        {note}
+      </p>
     </>
+  );
+}
+
+function PlacowkaDashboard() {
+  return (
+    <ChecklistDashboard
+      eyebrow="Panel placówki"
+      title="Struktura i dostęp zespołu"
+      badgeTone="bg-crpe-placowka-soft text-crpe-placowka-text ring-crpe-placowka-border"
+      rows={[
+        ["Jednostki organizacyjne", "Tworzenie struktury placówki"],
+        ["Zaproszenia e-mail", "Dostęp dla wskazanej osoby"],
+        ["Role i członkostwa", "Uprawnienia w zespole"],
+      ]}
+      note="Zbiorczy status, raporty i alerty — rozwijamy"
+    />
   );
 }
 
 function OrganizatorDashboard() {
   return (
-    <>
-      <div className="rounded-2xl border border-crpe-line bg-crpe-surface p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-bold text-crpe-muted">Publiczna baza szkoleń</p>
-            <p className="mt-1 text-[17px] font-black text-crpe-ink">Zgłoś wydarzenie do publikacji</p>
-          </div>
-          <span className="rounded-full bg-crpe-organizator-soft px-2.5 py-1 text-[10px] font-extrabold text-crpe-organizator-text ring-1 ring-crpe-organizator-border">
-            Dostępne
-          </span>
-        </div>
-      </div>
-      <div className="mt-3 space-y-2">
-        {[
-          ["Dane wydarzenia", "Termin, format, miejsce i punkty"],
-          ["Organizator", "Nazwa i logo po publikacji"],
-          ["Zapisy", "Bezpośredni link do organizatora"],
-        ].map(([name, description]) => (
-          <div key={name} className="crpe-row-in flex items-center gap-3 rounded-2xl border border-crpe-line bg-white p-3.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border">
-              <CheckCircle2 className="h-4 w-4" />
-            </span>
-            <div>
-              <p className="text-[13px] font-extrabold text-crpe-ink">{name}</p>
-              <p className="mt-0.5 text-[10px] text-crpe-muted">{description}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] font-semibold text-amber-800">
-        Panel uczestników i obsługa certyfikatów — rozwijamy
-      </div>
-    </>
+    <ChecklistDashboard
+      eyebrow="Publiczna baza szkoleń"
+      title="Zgłoś wydarzenie do publikacji"
+      badgeTone="bg-crpe-organizator-soft text-crpe-organizator-text ring-crpe-organizator-border"
+      rows={[
+        ["Dane wydarzenia", "Termin, format, miejsce i punkty"],
+        ["Organizator", "Nazwa i logo po publikacji"],
+        ["Zapisy", "Bezpośredni link do organizatora"],
+      ]}
+      note="Panel uczestników i obsługa certyfikatów — rozwijamy"
+    />
   );
 }
 
-function HeroDashboard({
-  selected,
-  embedded = false,
-}: {
-  selected: AudienceKey;
-  embedded?: boolean;
-}) {
+function HeroDashboard({ selected }: { selected: AudienceKey }) {
   const active = audiences.find((item) => item.key === selected) ?? audiences[0];
   const theme = roleThemes[selected];
 
   return (
     <div
-      className="crpe-hero-panel relative mx-auto hidden w-full max-w-[570px] lg:block"
+      className="crpe-dashboard-shell overflow-hidden rounded-[24px] bg-white/97 shadow-crpe-lift ring-1 ring-crpe-line backdrop-blur"
       aria-live="polite"
     >
-      {!embedded ? (
-        <>
-          <div className="pointer-events-none absolute -right-10 -top-8 h-40 w-40 rounded-full bg-crpe-line/55 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-10 -left-8 h-44 w-44 rounded-full bg-slate-100/65 blur-3xl" />
-        </>
-      ) : null}
-
-      <div
-        className={`crpe-dashboard-shell relative overflow-hidden bg-white/95 ${
-          embedded
-            ? "rounded-[18px]"
-            : "rounded-[22px] border border-crpe-line shadow-[0_22px_56px_rgba(37,51,65,0.11)]"
-        }`}
-      >
-        <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-3.5">
-          <div className="min-w-0">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-crpe-muted">
-              Podgląd CRPE
-            </p>
-            <div className="mt-1 flex min-w-0 items-center gap-2">
-              <span className={`h-2 w-2 shrink-0 rounded-full ${theme.accentStrong}`} aria-hidden="true" />
-              <p className="truncate text-[15px] font-black text-crpe-ink">{active.label}</p>
-            </div>
-          </div>
-          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold ring-1 ${active.statusTone}`}>
-            {active.status}
-          </span>
-        </div>
-
-        <div key={selected} className="crpe-role-swap p-4">
-          {selected === "medyk" ? <MedykDashboard /> : null}
-          {selected === "placowka" ? <PlacowkaDashboard /> : null}
-          {selected === "organizator" ? <OrganizatorDashboard /> : null}
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-slate-100 bg-crpe-surface px-5 py-3.5">
-          <p className="max-w-[310px] text-[12px] font-semibold leading-5 text-crpe-muted">
-            Zobacz dokładnie, czym różni się zakres CRPE dla wybranej roli.
+      <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-3.5">
+        <div className="min-w-0">
+          <p className="text-[12px] font-semibold text-crpe-muted">Podgląd CRPE</p>
+          <p className="flex min-w-0 items-center gap-1.5 text-[14px] font-bold leading-5 text-crpe-ink">
+            <span className={cx("h-2 w-2 shrink-0 rounded-full", theme.accentStrong)} aria-hidden="true" />
+            <span>{active.label}</span>
           </p>
-          <div className="flex flex-wrap items-center gap-2">
-            {selected !== "medyk" ? (
-              <Link
-                href="/bezpieczenstwo"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-crpe-line bg-white px-3.5 py-2 text-[12px] font-extrabold text-crpe-muted transition hover:border-slate-300 hover:bg-crpe-surface"
-              >
-                Jak chronimy dane zespołu
-              </Link>
-            ) : null}
-            <Link
-              href={active.detailsHref}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-crpe-line bg-white px-3.5 py-2 text-[12px] font-extrabold text-crpe-ink transition hover:bg-crpe-surface"
-            >
-              Dowiedz się więcej <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
         </div>
+        <span className={cx(statusPill, "shrink-0 text-[11px]", active.statusTone)}>{active.status}</span>
+      </div>
+
+      <div key={selected} className="crpe-role-swap px-4 pb-4 pt-1">
+        {selected === "medyk" ? <MedykDashboard /> : null}
+        {selected === "placowka" ? <PlacowkaDashboard /> : null}
+        {selected === "organizator" ? <OrganizatorDashboard /> : null}
+      </div>
+
+      <div className="border-t border-crpe-line bg-crpe-surface/70 px-4 py-3">
+        <p className="text-[12px] leading-5 text-crpe-muted">
+          Zobacz dokładnie, czym różni się zakres CRPE dla wybranej roli.
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <Link
+            href={active.detailsHref}
+            className="inline-flex items-center gap-1.5 text-[13px] font-bold text-crpe-brand hover:text-crpe-brand-hover"
+          >
+            Dowiedz się więcej <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+          {selected !== "medyk" ? (
+            <Link
+              href="/bezpieczenstwo"
+              className="text-[13px] font-semibold text-crpe-muted underline decoration-crpe-line underline-offset-4 hover:text-crpe-ink"
+            >
+              Jak chronimy dane zespołu
+            </Link>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Zapamiętywalny element strony: zdjęcie roli w pierścieniu punktów. */
+function HeroPortrait({ selected, compact = false }: { selected: AudienceKey; compact?: boolean }) {
+  const active = audiences.find((item) => item.key === selected) ?? audiences[0];
+  return (
+    <div className={cx("relative mx-auto aspect-square w-full", compact ? "max-w-[260px]" : "max-w-[540px]")}>
+      <DotRing
+        key={selected}
+        progress={selected === "medyk" ? 0.55 : 0}
+        milestones={selected === "medyk" ? [] : [0.14, 0.3, 0.46]}
+        className="absolute inset-0 h-full w-full"
+      />
+      <div className="absolute inset-[7.5%] overflow-hidden rounded-full bg-crpe-ice shadow-crpe-lift">
+        <Image
+          key={active.image}
+          src={active.image}
+          alt={active.imageAlt}
+          fill
+          priority
+          sizes={compact ? "240px" : "(min-width: 1024px) 480px, 80vw"}
+          className="crpe-photo-swap object-cover"
+          style={{ objectPosition: active.imagePosition }}
+        />
       </div>
     </div>
   );
@@ -422,11 +374,9 @@ function HeroDashboard({
 function RolePicker({
   selected,
   onSelect,
-  embedded = false,
 }: {
   selected: AudienceKey;
   onSelect: (key: AudienceKey) => void;
-  embedded?: boolean;
 }) {
   const roleDescriptions: Record<AudienceKey, string> = {
     medyk: "Własna ewidencja",
@@ -436,52 +386,45 @@ function RolePicker({
 
   return (
     <div
-      className={`crpe-role-picker w-full p-1.5 ${
-        embedded
-          ? "rounded-[17px] border border-crpe-line/90 bg-slate-100/75 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]"
-          : "rounded-[18px] border border-crpe-line bg-slate-100/75 shadow-[0_12px_30px_rgba(37,51,65,0.055)] backdrop-blur"
-      }`}
+      className="crpe-role-picker w-full rounded-[22px] bg-white p-1.5 shadow-crpe-soft ring-1 ring-crpe-line sm:rounded-full"
+      role="group"
+      aria-label="Wybierz swoją rolę"
     >
-      <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
+      <div className="grid grid-cols-3 gap-1">
         {audiences.map(({ key, mobileLabel, icon: Icon }) => {
           const isSelected = selected === key;
-          const theme = roleThemes[key];
           return (
             <button
               key={key}
               type="button"
               aria-pressed={isSelected}
               onClick={() => onSelect(key)}
-              className={`crpe-role-button group relative flex min-w-0 w-full items-center justify-center gap-2 rounded-[13px] border px-2 py-2 text-left outline-none transition sm:min-h-[58px] sm:justify-start sm:gap-2.5 sm:px-3.5 ${
-                isSelected
-                  ? "border-white/90 bg-white shadow-[0_7px_18px_rgba(23,26,33,0.075)]"
-                  : "border-transparent bg-transparent hover:border-white/80 hover:bg-white/55 focus-visible:ring-2 focus-visible:ring-crpe-brand-border focus-visible:ring-offset-2"
-              }`}
+              className={cx(
+                "crpe-role-button group flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[16px] px-2 py-2 text-left outline-none sm:min-h-[56px] sm:justify-start sm:rounded-full sm:pl-2 sm:pr-4",
+                "focus-visible:ring-2 focus-visible:ring-crpe-brand focus-visible:ring-offset-2",
+                isSelected ? "bg-crpe-navy text-white shadow-crpe-soft" : "text-crpe-ink hover:bg-crpe-surface",
+              )}
             >
               <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border transition ${theme.accentSoft} ${theme.accentText} ${theme.accentBorder} ${
-                  isSelected ? "shadow-[0_4px_10px_rgba(15,23,42,0.07)]" : "opacity-80 group-hover:opacity-100"
-                }`}
+                className={cx(
+                  "hidden h-10 w-10 shrink-0 items-center justify-center rounded-full transition sm:flex",
+                  isSelected ? "bg-white/12 text-white" : "bg-crpe-ice text-crpe-navy",
+                )}
                 aria-hidden="true"
               >
-                <Icon className="h-[17px] w-[17px] shrink-0" strokeWidth={2.1} />
+                <Icon className="h-[18px] w-[18px]" strokeWidth={1.9} />
               </span>
-
               <span className="min-w-0">
-                <span className="block truncate text-[11px] font-extrabold leading-4 text-crpe-ink sm:text-[13px]">
-                  {mobileLabel}
-                </span>
-                <span className="mt-0.5 hidden truncate text-[9px] font-semibold leading-3.5 text-crpe-muted sm:block">
+                <span className="block truncate text-[13px] font-bold leading-4 sm:text-[14px]">{mobileLabel}</span>
+                <span
+                  className={cx(
+                    "mt-0.5 hidden truncate text-[11px] font-medium leading-4 sm:block",
+                    isSelected ? "text-white/65" : "text-crpe-muted",
+                  )}
+                >
                   {roleDescriptions[key]}
                 </span>
               </span>
-
-              {isSelected ? (
-                <span
-                  className={`absolute inset-x-5 bottom-0 h-[2px] rounded-full ${theme.accentStrong}`}
-                  aria-hidden="true"
-                />
-              ) : null}
             </button>
           );
         })}
@@ -498,24 +441,30 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
   };
   return (
     <div
-      className="mt-4 overflow-hidden rounded-2xl border border-crpe-line bg-white p-4 shadow-[0_18px_42px_rgba(37,51,65,0.09)] lg:hidden"
+      className="mt-5 rounded-[24px] bg-white p-4 shadow-crpe-soft ring-1 ring-crpe-line lg:hidden"
       aria-label="Przykładowy podgląd dla wybranej roli"
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-crpe-muted">Podgląd profilu</p>
-          <p className="mt-1 text-[14px] font-black text-crpe-ink">{active.label}</p>
+          <p className="text-[12px] font-semibold text-crpe-muted">Podgląd profilu</p>
+          <p className="text-[15px] font-bold text-crpe-ink">{active.label}</p>
         </div>
-        <span className={`rounded-full px-2 py-1 text-[9px] font-extrabold ring-1 ${active.statusTone}`}>
-          {active.status}
-        </span>
+        <span className={cx(statusPill, "text-[11px]", active.statusTone)}>{active.status}</span>
       </div>
 
       <div className="mt-3 grid grid-cols-3 gap-2">
         {active.facts.map((fact, index) => (
-          <div key={fact} className={`rounded-xl border px-2.5 py-2.5 ${index === 0 ? `${roleThemes[active.key].accentSoft} ${roleThemes[active.key].accentBorder}` : "border-crpe-line bg-crpe-surface"}`}>
-            <p className="text-[9px] font-bold leading-4 text-crpe-muted">{labels[active.key][index]}</p>
-            <p className={`mt-0.5 text-[12px] font-black leading-4 ${index === 0 ? roleThemes[active.key].accentText : "text-crpe-ink"}`}>
+          <div
+            key={fact}
+            className={cx("rounded-2xl px-2.5 py-2.5", index === 0 ? "bg-crpe-punkt-soft" : "bg-crpe-surface")}
+          >
+            <p className="text-[12px] font-semibold leading-4 text-crpe-muted">{labels[active.key][index]}</p>
+            <p
+              className={cx(
+                "mt-0.5 text-[12px] font-extrabold leading-4",
+                index === 0 ? "text-crpe-punkt-text" : "text-crpe-ink",
+              )}
+            >
               {fact}
             </p>
           </div>
@@ -523,16 +472,13 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
       </div>
 
       {active.key === "medyk" ? (
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-crpe-brand-soft ring-1 ring-crpe-brand-border">
-          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-crpe-brand" />
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-crpe-ice">
+          <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-crpe-punkt" />
         </div>
       ) : null}
 
-      <Link
-        href={active.detailsHref}
-        className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-crpe-line bg-crpe-surface px-3 py-2 text-[12px] font-extrabold text-crpe-ink"
-      >
-        Dowiedz się więcej <ArrowRight className="h-3.5 w-3.5" />
+      <Link href={active.detailsHref} className={cx(pill.secondary, "mt-3 min-h-11 w-full text-[14px]")}>
+        Dowiedz się więcej <ArrowRight className="h-4 w-4" />
       </Link>
     </div>
   );
@@ -547,79 +493,73 @@ function Hero({
 }) {
   const active = audiences.find((item) => item.key === selected) ?? audiences[0];
   return (
-    <section className="relative overflow-hidden crpe-home-hero py-7 sm:py-11 lg:py-14">
-      <div className="pointer-events-none absolute -left-36 top-0 h-[360px] w-[360px] rounded-full bg-slate-100/65 blur-3xl" />
-      <div className="pointer-events-none absolute -right-24 top-12 h-[340px] w-[340px] rounded-full bg-crpe-line/45 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-8 left-[44%] hidden h-24 w-24 rounded-full bg-slate-100/55 blur-3xl lg:block" />
+    <section className="crpe-home-hero relative overflow-hidden pb-10 pt-8 sm:pb-14 sm:pt-12 lg:pb-16 lg:pt-14">
+      <div
+        className="crpe-dot-grid pointer-events-none absolute inset-y-0 right-0 hidden w-[46%] text-crpe-navy opacity-[0.07] lg:block"
+        style={{ maskImage: "radial-gradient(70% 60% at 70% 45%, #000 20%, transparent 75%)" }}
+        aria-hidden="true"
+      />
 
       <div className={`${pageWrap} relative`}>
-        <p className="crpe-hero-in mb-4 text-center text-[10px] font-extrabold uppercase tracking-[0.2em] text-crpe-brand sm:text-[11px] lg:hidden [--hero-delay:40ms]">
-          CRPE dla medyka, placówki i organizatora
-        </p>
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.04fr)] lg:items-center lg:gap-10">
+          <div>
+            <div className="crpe-hero-in [--hero-delay:40ms]">
+              <Eyebrow>CRPE dla medyka, placówki i organizatora</Eyebrow>
+            </div>
 
-        <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-14">
-          <div className="lg:pt-1">
-            <h1 className="crpe-hero-in max-w-[560px] text-[32px] font-extrabold leading-[1.06] tracking-[-0.03em] text-crpe-ink sm:text-[40px] lg:text-[44px] [--hero-delay:110ms]">
+            <h1 className="crpe-hero-in mt-4 max-w-[600px] text-[40px] font-bold leading-[1] tracking-[-0.035em] text-crpe-ink sm:text-[56px] lg:text-[64px] [--hero-delay:110ms]">
               <span className="block">Punkty edukacyjne</span>
               <span className="block">i certyfikaty</span>
-              <span className="block text-crpe-brand">w jednym miejscu.</span>
+              <span className="block">
+                w jednym miejscu<span className="crpe-dot">.</span>
+              </span>
             </h1>
 
-            <p className="crpe-hero-in mt-3 max-w-[570px] text-[15px] leading-6 text-crpe-muted sm:mt-4 sm:text-[17px] sm:leading-7 [--hero-delay:180ms]">
+            <p className="crpe-hero-in mt-5 max-w-[540px] text-[17px] leading-7 text-crpe-muted sm:text-[19px] sm:leading-8 [--hero-delay:180ms]">
               Zbieraj aktywności, certyfikaty i dane potrzebne do rozliczeń w jednym uporządkowanym miejscu — dopasowanym do Twojej roli.
             </p>
 
-            <div className="crpe-hero-in mt-5 lg:hidden [--hero-delay:250ms]">
+            <div className="crpe-hero-in mt-7 max-w-[600px] [--hero-delay:250ms]">
               <RolePicker selected={selected} onSelect={onSelect} />
             </div>
 
-            <div key={selected} className="crpe-role-swap mt-5 lg:mt-6" aria-live="polite">
+            <div key={selected} className="crpe-role-swap mt-7 max-w-[600px]" aria-live="polite">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[14px] font-black text-crpe-ink">{active.label}</span>
-                <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ${active.statusTone}`}>
-                  {active.status}
-                </span>
+                <span className="text-[14px] font-bold text-crpe-ink">{active.label}</span>
+                <span className={cx(statusPill, active.statusTone)}>{active.status}</span>
               </div>
 
-              <h2 className="mt-2.5 max-w-[560px] text-[19px] font-extrabold leading-[1.2] tracking-[-0.02em] text-crpe-ink sm:text-[22px]">
+              <h2 className="mt-3 text-[24px] font-bold leading-[1.15] tracking-[-0.02em] text-crpe-ink sm:text-[28px]">
                 {active.title}
               </h2>
-              <p className="mt-2 max-w-[590px] text-[14px] leading-6 text-crpe-muted sm:text-[15px]">
-                {active.description}
-              </p>
+              <p className="mt-2.5 text-[16px] leading-7 text-crpe-muted">{active.description}</p>
 
-              <ul className="mt-3.5 grid gap-2 sm:grid-cols-2">
+              <ul className="mt-4 grid gap-x-5 gap-y-2 sm:grid-cols-2">
                 {active.benefits.map((item) => (
-                  <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-crpe-muted">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-crpe-surface text-crpe-muted ring-1 ring-crpe-line">
-                      <Check className="h-3 w-3" />
-                    </span>
+                  <li key={item} className="flex gap-2.5 text-[15px] leading-6 text-crpe-ink">
+                    <DotBullet />
                     {item}
                   </li>
                 ))}
               </ul>
 
-              <MobileRolePreview active={active} />
-
-              <div className="mt-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
-                <Link
-                  href={active.href}
-                  className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-extrabold text-white transition sm:w-auto ${roleThemes[selected].ctaStrong} ${roleThemes[selected].ctaHover} ${roleThemes[selected].ctaShadow}`}
-                >
+              <div className="mt-7">
+                <Link href={active.href} className={cx(pill.primary, "w-full sm:w-auto")}>
                   {active.cta} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
+              <div className="mt-8 lg:hidden">
+                <HeroPortrait selected={selected} compact />
+              </div>
+              <MobileRolePreview active={active} />
             </div>
           </div>
 
-          <div className="hidden lg:block">
-            <div className="crpe-hero-in mx-auto w-full max-w-[580px] rounded-[24px] border border-crpe-line bg-white/92 p-2.5 shadow-[0_24px_64px_rgba(37,51,65,0.10)] [--hero-delay:230ms]">
-              <p className="px-2 pb-2 pt-1 text-center text-[10px] font-extrabold uppercase tracking-[0.2em] text-crpe-brand">
-                CRPE dla medyka, placówki i organizatora
-              </p>
-              <RolePicker selected={selected} onSelect={onSelect} embedded />
-              <div className="mt-2 border-t border-crpe-line/80 pt-2">
-                <HeroDashboard selected={selected} embedded />
+          <div className="relative hidden lg:block">
+            <div className="crpe-hero-panel relative ml-auto w-full max-w-[560px] pb-20">
+              <HeroPortrait selected={selected} />
+              <div className="absolute bottom-0 left-[-12px] w-[360px]">
+                <HeroDashboard selected={selected} />
               </div>
             </div>
           </div>
@@ -628,6 +568,8 @@ function Hero({
     </section>
   );
 }
+
+/* ──────────────────────────── Dla kogo ────────────────────────────────── */
 
 function AudienceSection({ selected }: { selected: AudienceKey }) {
   const cards = [
@@ -642,8 +584,6 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       benefits: ["Postęp i brakujące punkty", "Dokumenty przy aktywnościach", "Raport użytkownika"],
       cta: "Załóż konto",
       href: "/rejestracja",
-      image: "/home/role-medyk.webp",
-      imageAlt: "Fartuch medyczny i stetoskop",
     },
     {
       key: "placowka" as AudienceKey,
@@ -656,8 +596,6 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       benefits: ["Jednostki organizacyjne", "Zaproszenia e-mail", "Role i członkostwa"],
       cta: "Zobacz zakres",
       href: "/dla-placowki",
-      image: "/home/role-placowka.webp",
-      imageAlt: "Nowoczesny budynek placówki medycznej",
     },
     {
       key: "organizator" as AudienceKey,
@@ -670,106 +608,75 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
       benefits: ["Formularz zgłoszenia", "Publiczna strona szkolenia", "Logo i link do zapisów"],
       cta: "Zobacz zakres",
       href: "/dla-organizatora",
-      image: "/home/role-organizator.webp",
-      imageAlt: "Laptop i notes symbolizujące pracę organizatora",
     },
   ];
 
   return (
-    <section
-      id="dla-kogo"
-      className="relative scroll-mt-24 overflow-hidden bg-crpe-surface py-12 sm:py-16"
-    >
-      <div className="pointer-events-none absolute -left-32 top-12 h-72 w-72 rounded-full bg-slate-100/70 blur-3xl" />
-      <div className="pointer-events-none absolute -right-32 bottom-10 h-72 w-72 rounded-full bg-crpe-placowka-soft/45 blur-3xl" />
+    <section id="dla-kogo" className="relative scroll-mt-24 bg-white py-16 sm:py-24">
+      <div className={pageWrap}>
+        <div className="grid gap-4 lg:grid-cols-[1fr_1fr] lg:items-end lg:gap-16">
+          <SectionHeading eyebrow="Dla kogo jest CRPE" title="Trzy role, jeden spokojniejszy sposób pracy." />
+          <p className="max-w-[56ch] text-[16px] leading-7 text-crpe-muted sm:text-[17px] lg:pb-1">
+            CRPE porządkuje różne potrzeby w jednym produkcie. Profil medyka działa już teraz, a moduły organizacyjne rozwijamy etapami i jasno oznaczamy ich aktualny zakres.
+          </p>
+        </div>
 
-      <div className={`${pageWrap} relative`}>
-        <Reveal>
-          <SectionHeading
-            eyebrow="Dla kogo jest CRPE"
-            title="Trzy role, jeden spokojniejszy sposób pracy."
-            text="CRPE porządkuje różne potrzeby w jednym produkcie. Profil medyka działa już teraz, a moduły organizacyjne rozwijamy etapami i jasno oznaczamy ich aktualny zakres."
-            centered
-          />
-        </Reveal>
-
-        <div className="mt-9 grid gap-5 lg:mt-11 lg:grid-cols-3">
-          {cards.map(({ key, id, icon: Icon, title, status, statusClass, text, benefits, cta, href, image, imageAlt }) => {
+        <div className="mt-10 grid gap-6 lg:mt-14 lg:grid-cols-3">
+          {cards.map(({ key, id, icon, title, status, statusClass, text, benefits, cta, href }) => {
             const active = selected === key;
-            const theme = roleThemes[key];
+            const photo = audiences.find((item) => item.key === key)!;
             return (
-              <Reveal key={id} className="h-full">
-                <article
-                  id={id}
-                  className={`crpe-interactive-card group relative flex h-full scroll-mt-24 flex-col overflow-hidden rounded-[20px] border bg-white shadow-[0_12px_34px_rgba(37,51,65,0.06)] ${
-                    active ? "border-crpe-brand-border ring-1 ring-crpe-brand-border" : "border-crpe-line"
-                  }`}
-                  aria-current={active ? "true" : undefined}
-                  style={{
-                    "--card-accent":
-                      key === "medyk"
-                        ? "var(--color-crpe-medyk-text)"
-                        : key === "placowka"
-                          ? "var(--color-crpe-placowka-text)"
-                          : "var(--color-crpe-organizator-text)",
-                  } as React.CSSProperties}
-                >
-                  <div className={`h-1 w-full ${theme.accentStrong}`} aria-hidden="true" />
-                  <div className="crpe-role-media relative h-36 overflow-hidden border-b border-crpe-line bg-crpe-surface">
-                    <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/65 blur-2xl" />
-                    <Image
-                      src={image}
-                      alt={imageAlt}
-                      fill
-                      sizes="(min-width: 1024px) 31vw, (min-width: 640px) 80vw, 100vw"
-                      className="object-contain p-3.5 transition duration-500 ease-out group-hover:scale-[1.035]"
-                    />
-                  </div>
+              <article
+                key={id}
+                id={id}
+                className={cx(
+                  "crpe-interactive-card group flex h-full scroll-mt-24 flex-col rounded-[28px] bg-white p-2.5 shadow-crpe-soft ring-1",
+                  active ? "ring-2 ring-crpe-punkt" : "ring-crpe-line",
+                )}
+                aria-current={active ? "true" : undefined}
+              >
+                <div className="relative aspect-[16/10] overflow-hidden rounded-[22px] bg-crpe-ice">
+                  <Image
+                    src={photo.image}
+                    alt={photo.imageAlt}
+                    fill
+                    sizes="(min-width: 1024px) 380px, (min-width: 640px) 80vw, 100vw"
+                    className="object-cover transition duration-700 ease-out group-hover:scale-[1.03]"
+                    style={{ objectPosition: photo.imagePosition }}
+                  />
+                  <span
+                    className={cx(
+                      "absolute right-3 top-3 rounded-full px-3 py-1 text-[12px] font-bold backdrop-blur",
+                      active ? "bg-crpe-navy/90 text-white" : "bg-white/90 text-crpe-ink",
+                    )}
+                  >
+                    {active ? "Wybrana rola" : "Zobacz zakres"}
+                  </span>
+                </div>
 
-                  <div className="flex flex-1 flex-col p-5 sm:p-6">
-                    <div className="flex items-start justify-between gap-3">
-                      <span
-                        className={`crpe-card-icon flex h-11 w-11 items-center justify-center rounded-2xl ${
-                          active
-                            ? `text-white ${theme.accentStrong} ${theme.iconShadow}`
-                            : `${theme.accentSoft} ${theme.accentText} ring-1 ${theme.accentRing}`
-                        }`}
-                      >
-                        <Icon className="h-5 w-5" strokeWidth={2.1} />
-                      </span>
-                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ${active ? "bg-crpe-brand-soft text-crpe-brand ring-crpe-brand-border" : "bg-crpe-surface text-crpe-muted ring-crpe-line"}`}>
-                        {active ? "Wybrana rola" : "Zobacz zakres"}
-                      </span>
-                    </div>
+                <div className="flex flex-1 flex-col px-3.5 pb-3.5 sm:px-4 sm:pb-4">
+                  <IconBadge icon={icon} size="lg" tone="white" className="-mt-9 ring-4 ring-white" />
 
-                    <h3 className="mt-4 text-xl font-black tracking-[-0.025em] text-crpe-ink">{title}</h3>
-                    <p className="mt-2 text-[14px] leading-6 text-crpe-muted">{text}</p>
-                    <p className={`mt-3 inline-flex w-fit rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ${statusClass}`}>{status}</p>
+                  <h3 className="mt-3 text-[24px] font-bold tracking-[-0.02em] text-crpe-ink">{title}</h3>
+                  <p className="mt-2 text-[15px] leading-6 text-crpe-muted">{text}</p>
+                  <p className={cx(statusPill, "mt-4 inline-flex w-fit", statusClass)}>{status}</p>
 
-                    <ul className="mt-4 grid gap-2.5">
-                      {benefits.map((item) => (
-                        <li key={item} className="flex gap-2.5 text-[14px] leading-5 text-crpe-muted">
-                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-crpe-surface text-crpe-muted ring-1 ring-crpe-line">
-                            <Check className="h-3 w-3" />
-                          </span>
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
+                  <ul className="mt-4 grid gap-2">
+                    {benefits.map((item) => (
+                      <li key={item} className="flex gap-2.5 text-[15px] leading-6 text-crpe-ink">
+                        <DotBullet />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
 
-                    <Link
-                      href={href}
-                      className={`mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 py-2 text-[14px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 ${
-                        active
-                          ? "border-transparent bg-crpe-brand text-white shadow-[0_12px_26px_rgba(29,78,216,0.22)] hover:bg-crpe-brand-hover"
-                          : "border-crpe-line bg-white text-crpe-ink hover:bg-crpe-surface"
-                      }`}
-                    >
+                  <div className="mt-auto pt-6">
+                    <Link href={href} className={cx(active ? pill.primary : pill.secondary, "w-full")}>
                       {cta} <ArrowRight className="h-4 w-4" />
                     </Link>
                   </div>
-                </article>
-              </Reveal>
+                </div>
+              </article>
             );
           })}
         </div>
@@ -777,6 +684,8 @@ function AudienceSection({ selected }: { selected: AudienceKey }) {
     </section>
   );
 }
+
+/* ───────────────────────────── Narzędzia ──────────────────────────────── */
 
 function ProductToolsSection() {
   const tools = [
@@ -807,78 +716,81 @@ function ProductToolsSection() {
   ];
 
   return (
-    <section id="narzedzia" className="scroll-mt-24 bg-crpe-surface py-12 sm:py-16">
+    <section id="narzedzia" className="scroll-mt-24 bg-crpe-surface py-16 sm:py-24">
       <div className={pageWrap}>
-        <Reveal>
-          <SectionHeading
-            eyebrow="Dostępne narzędzia"
-            title="Po zalogowaniu widzisz cały warsztat CRPE, nie tylko kalkulator."
-            text="Panel, aktywności, dokumenty, raport i baza szkoleń działają w jednym koncie i prowadzą użytkownika przez kolejne etapy ewidencji."
-            centered
-          />
-        </Reveal>
+        <SectionHeading
+          eyebrow="Dostępne narzędzia"
+          title="Po zalogowaniu widzisz cały warsztat CRPE, nie tylko kalkulator."
+          text="Panel, aktywności, dokumenty, raport i baza szkoleń działają w jednym koncie i prowadzą użytkownika przez kolejne etapy ewidencji."
+          centered
+        />
 
-        <Reveal>
-          <div className={`${panel} mt-9 overflow-hidden sm:mt-11`}>
-            <div className="bg-slate-950 px-5 py-5 text-white sm:px-7 sm:py-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-300">
-                    Stałe menu aplikacji
-                  </p>
-                  <p className="mt-1 text-[15px] font-black sm:text-base">
-                    Najważniejsze funkcje są widoczne od razu po zalogowaniu.
-                  </p>
-                </div>
-                <span className="inline-flex w-fit rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-extrabold text-slate-200 ring-1 ring-white/10">
-                  Profil medyka dostępny teraz
-                </span>
+        <div className="mt-10 overflow-hidden rounded-[28px] bg-white shadow-crpe-soft ring-1 ring-crpe-line sm:mt-14">
+          <div className="relative overflow-hidden bg-crpe-navy px-5 py-6 text-white sm:px-8">
+            <div className="crpe-dot-grid pointer-events-none absolute inset-0 text-white opacity-[0.06]" aria-hidden="true" />
+            <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[13px] font-semibold text-white/60">Stałe menu aplikacji</p>
+                <p className="font-display mt-1 text-[19px] font-bold sm:text-[21px]">
+                  Najważniejsze funkcje są widoczne od razu po zalogowaniu.
+                </p>
               </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {tools.map(({ icon: Icon, title }, index) => (
-                  <div
-                    key={title}
-                    className={`flex min-h-12 items-center gap-2 rounded-xl border px-3 py-2.5 text-[12px] font-extrabold ${
-                      index === 0
-                        ? "border-blue-400/40 bg-blue-500/20 text-white"
-                        : "border-white/10 bg-white/5 text-slate-200"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4 shrink-0 text-blue-300" />
-                    <span>{title.replace(" i kalkulator", "")}</span>
-                  </div>
-                ))}
-              </div>
+              <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[12px] font-bold text-white ring-1 ring-white/15">
+                <span className="h-2 w-2 rounded-full bg-crpe-punkt" aria-hidden="true" />
+                Profil medyka dostępny teraz
+              </span>
             </div>
 
-            <div className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-4">
-              {tools.map(({ icon: Icon, title, text, bullets }) => (
-                <Reveal key={title} className="h-full last:[&>article]:border-b-0">
-                  <article className="crpe-interactive-card flex h-full min-h-[280px] flex-col rounded-[18px] border border-crpe-line bg-crpe-surface/75 p-5">
-                    <span className="crpe-card-icon flex h-10 w-10 items-center justify-center rounded-xl bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <h3 className="mt-4 min-h-[44px] text-[17px] font-bold leading-[1.25] tracking-[-0.02em] text-crpe-ink">{title}</h3>
-                    <p className="mt-2 text-[14px] leading-6 text-crpe-muted">{text}</p>
-                    <ul className="mt-4 grid gap-2">
-                      {bullets.map((item) => (
-                        <li key={item} className="flex gap-2 text-[13px] leading-5 text-crpe-muted">
-                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-crpe-brand" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </article>
-                </Reveal>
+            <div className="relative mt-5 flex flex-wrap gap-2">
+              {tools.map(({ icon: Icon, title }, index) => (
+                <div
+                  key={title}
+                  className={cx(
+                    "flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-bold",
+                    index === 0 ? "bg-white text-crpe-navy" : "bg-white/8 text-white/85 ring-1 ring-white/12",
+                  )}
+                >
+                  <Icon className={cx("h-4 w-4 shrink-0", index === 0 ? "text-crpe-punkt-text" : "text-white/60")} />
+                  <span>{title.replace(" i kalkulator", "")}</span>
+                </div>
               ))}
             </div>
           </div>
-        </Reveal>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4">
+            {tools.map(({ icon, title, text, bullets }, index) => (
+              <article
+                key={title}
+                className={cx(
+                  "flex h-full flex-col p-6 sm:p-7",
+                  index > 0 && "border-t border-crpe-line sm:border-t-0",
+                  index % 2 === 1 && "sm:border-l",
+                  index >= 2 && "sm:border-t lg:border-t-0",
+                  index === 2 && "lg:border-l",
+                  "border-crpe-line",
+                )}
+              >
+                <IconBadge icon={icon} size="md" tone="punkt" dot={false} />
+                <h3 className="mt-5 text-[20px] font-bold leading-[1.2] tracking-[-0.015em] text-crpe-ink">{title}</h3>
+                <p className="mt-2 text-[15px] leading-6 text-crpe-muted">{text}</p>
+                <ul className="mt-auto grid gap-2 pt-5">
+                  {bullets.map((item) => (
+                    <li key={item} className="flex gap-2 text-[14px] leading-5 text-crpe-ink">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-crpe-punkt" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
 }
+
+/* ───────────────────────────── W praktyce ─────────────────────────────── */
 
 function PracticeSection() {
   const rows = [
@@ -887,88 +799,112 @@ function PracticeSection() {
   ];
 
   return (
-    <section className="bg-slate-950 py-16 text-white sm:py-20">
-      <div className={`${pageWrap} grid gap-7 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:gap-12`}>
-        <Reveal>
-          <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-blue-300/10 px-2.5 py-1 text-[10px] font-extrabold text-blue-200 ring-1 ring-blue-300/20">
-            Przykład: profil medyka
-          </div>
-          <p className="mt-4 text-[11px] font-extrabold uppercase tracking-[0.18em] text-blue-300">CRPE w praktyce</p>
-          <h2 className="mt-2 text-[28px] font-black leading-[1.1] tracking-[-0.035em] sm:text-[39px]">
-            Panel CPD łączy kalkulator, aktywności i dokumenty.
-          </h2>
-          <p className="mt-3 text-[15px] leading-6 text-slate-300 sm:mt-4 sm:text-[16px] sm:leading-7">
-            Panel CPD pokazuje postęp, Aktywności przechowują wpisy i certyfikaty, a Raport zbiera wszystko w jedno zestawienie.
-          </p>
+    <section className="relative overflow-hidden bg-crpe-navy py-16 text-white sm:py-24">
+      <div className="crpe-dot-grid pointer-events-none absolute inset-0 text-white opacity-[0.05]" aria-hidden="true" />
+      <div
+        className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-crpe-punkt/15 blur-3xl"
+        aria-hidden="true"
+      />
+      <DottedCurve className="pointer-events-none absolute -bottom-2 right-8 hidden w-[380px] text-white/25 lg:block" />
 
-          <ul className="mt-5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-1">
+      <div className={`${pageWrap} relative grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:gap-16`}>
+        <div>
+          <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-[12px] font-bold text-white/85 ring-1 ring-white/15">
+            Przykład: profil medyka
+          </span>
+          <div className="mt-5">
+            <SectionHeading
+              tone="dark"
+              eyebrow="CRPE w praktyce"
+              title="Panel CPD łączy kalkulator, aktywności i dokumenty."
+              text="Panel CPD pokazuje postęp, Aktywności przechowują wpisy i certyfikaty, a Raport zbiera wszystko w jedno zestawienie."
+            />
+          </div>
+
+          <ul className="mt-6 grid gap-3">
             {["Stały dostęp do Aktywności i Raportów", "Braki oznaczone przed rozliczeniem"].map((item) => (
-              <li key={item} className="flex gap-3 text-[13px] leading-5 text-slate-200 sm:text-sm">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-400/10 text-blue-300 ring-1 ring-blue-300/30">
-                  <Check className="h-3 w-3" />
-                </span>
+              <li key={item} className="flex gap-3 text-[15px] leading-6 text-white/90">
+                <DotBullet tone="dark" />
                 {item}
               </li>
             ))}
           </ul>
-          </div>
-        </Reveal>
+        </div>
 
-        <Reveal>
-          <div className="crpe-dashboard-shell overflow-hidden rounded-[20px] border border-white/10 bg-white p-4 text-crpe-ink shadow-[0_24px_64px_rgba(0,0,0,0.28)] sm:p-6">
-          <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-600">Panel CPD</p>
-              <p className="mt-1 text-[13px] font-extrabold text-crpe-ink">Podgląd statusu dokumentacji</p>
+        <div className="crpe-dashboard-shell rounded-[28px] bg-white p-5 text-crpe-ink shadow-[0_40px_80px_-30px_rgba(0,0,0,0.55)] sm:p-7">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <IconBadge icon={BarChart3} size="sm" tone="punkt" dot={false} />
+              <div>
+                <p className="text-[12px] font-semibold text-crpe-punkt-text">Panel CPD</p>
+                <p className="text-[14px] font-bold text-crpe-ink">Podgląd statusu dokumentacji</p>
+              </div>
             </div>
-            <span className="rounded-full bg-crpe-surface px-2.5 py-1 text-[9px] font-extrabold text-crpe-muted ring-1 ring-crpe-line">Dane przykładowe</span>
+            <span className="rounded-full bg-crpe-surface px-3 py-1 text-[11px] font-semibold text-crpe-muted ring-1 ring-crpe-line">
+              Dane przykładowe
+            </span>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-[0.64fr_0.36fr]">
-            <div className="rounded-2xl border border-crpe-line bg-crpe-surface p-3.5 sm:p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-600">Status dokumentacji</p>
-              <div className="mt-2 flex items-end gap-2">
-                <span className="text-[30px] font-black tracking-tight text-crpe-ink">110/200</span>
-                <span className="pb-1 text-xs font-bold text-slate-500">pkt</span>
+          <div className="mt-5 grid gap-3 sm:grid-cols-[0.64fr_0.36fr]">
+            <div className="rounded-[22px] bg-crpe-surface p-4 sm:p-5">
+              <p className="text-[12px] font-semibold text-crpe-muted">Status dokumentacji</p>
+              <div className="mt-1 flex items-end gap-2">
+                <span className="font-display text-[44px] font-bold leading-none tracking-[-0.03em] text-crpe-ink">110/200</span>
+                <span className="pb-1 text-[13px] font-bold text-crpe-muted">pkt</span>
               </div>
-              <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white ring-1 ring-crpe-line">
-                <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-crpe-brand" />
+              <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white">
+                <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-crpe-punkt" />
               </div>
-              <div className="mt-3 space-y-2">
+              <div className="mt-4 space-y-2">
                 {rows.map(([name, points, status], index) => (
-                  <div key={name} className="rounded-xl border border-crpe-line bg-white p-3">
-                    <div className="flex items-start justify-between gap-3">
+                  <div key={name} className="flex items-center justify-between gap-3 rounded-2xl bg-white p-3">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cx(
+                          "h-2.5 w-2.5 shrink-0 rounded-full",
+                          index === 1 ? "bg-crpe-warning" : "bg-crpe-punkt",
+                        )}
+                        aria-hidden="true"
+                      />
                       <div>
-                        <p className="text-[13px] font-extrabold text-crpe-ink">{name}</p>
-                        <p className="mt-0.5 text-[11px] text-slate-500">{points}</p>
+                        <p className="text-[14px] font-bold text-crpe-ink">{name}</p>
+                        <p className="text-[12px] text-crpe-muted">{points}</p>
                       </div>
-                      <span className={`rounded-full px-2 py-1 text-[9px] font-extrabold ${index === 1 ? "bg-white text-crpe-muted ring-1 ring-crpe-line" : "bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border"}`}>
-                        {status}
-                      </span>
                     </div>
+                    <span
+                      className={cx(
+                        statusPill,
+                        "text-[11px]",
+                        index === 1
+                          ? "bg-crpe-warning-soft text-crpe-warning ring-crpe-warning-border"
+                          : "bg-crpe-punkt-soft text-crpe-punkt-text ring-crpe-punkt-border",
+                      )}
+                    >
+                      {status}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
-              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3.5">
-                <p className="text-[10px] font-bold text-slate-500">Najbliższy krok</p>
-                <p className="mt-1.5 text-[13px] font-black text-crpe-ink">Uzupełnij 1 dokument</p>
+              <div className="flex flex-col justify-between rounded-[22px] bg-crpe-navy p-4 text-white">
+                <p className="text-[12px] font-semibold text-white/60">Najbliższy krok</p>
+                <p className="font-display mt-3 text-[20px] font-bold leading-tight">Uzupełnij 1 dokument</p>
               </div>
-              <div className="rounded-2xl border border-crpe-line p-3.5">
-                <UploadCloud className="h-5 w-5 text-blue-600" />
-                <p className="mt-2 text-[13px] font-black text-crpe-ink">Dodaj PDF lub zdjęcie</p>
+              <div className="flex flex-col justify-between rounded-[22px] border-2 border-dashed border-crpe-line p-4">
+                <IconBadge icon={UploadCloud} size="sm" tone="brand" dot={false} />
+                <p className="mt-3 text-[14px] font-bold leading-5 text-crpe-ink">Dodaj PDF lub zdjęcie</p>
               </div>
             </div>
           </div>
-          </div>
-        </Reveal>
+        </div>
       </div>
     </section>
   );
 }
+
+/* ──────────────────────────── Jak to działa ───────────────────────────── */
 
 function HowItWorks({ selected }: { selected: AudienceKey }) {
   const variants: Record<AudienceKey, {
@@ -1010,25 +946,28 @@ function HowItWorks({ selected }: { selected: AudienceKey }) {
   const active = variants[selected];
 
   return (
-    <section id="jak-to-dziala" className="scroll-mt-24 bg-white py-12 sm:py-16">
+    <section
+      id="jak-to-dziala"
+      className="scroll-mt-24 bg-[linear-gradient(180deg,#fff_0%,var(--color-crpe-surface)_100%)] py-16 sm:py-24"
+    >
       <div className={pageWrap}>
-        <Reveal>
-          <SectionHeading eyebrow="Jak to działa" title={active.title} text={active.text} centered />
-        </Reveal>
+        <SectionHeading eyebrow="Jak to działa" title={active.title} text={active.text} centered />
 
-        <ol key={selected} className="crpe-role-swap mx-auto mt-9 grid max-w-[1040px] gap-3 sm:mt-10 md:grid-cols-2 lg:grid-cols-4">
+        <ol key={selected} className="crpe-role-swap relative mx-auto mt-12 grid max-w-[1080px] gap-10 sm:mt-16 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+          <li aria-hidden="true" className="crpe-step-path pointer-events-none absolute left-[12.5%] right-[12.5%] top-[46px] hidden h-1 lg:block" />
           {active.steps.map(({ icon: Icon, title, text }, index) => (
-            <li key={title} className="crpe-step-card relative rounded-[18px] border border-crpe-line bg-white p-5 shadow-[0_12px_32px_rgba(15,45,75,0.045)]">
-              <div className="flex items-center justify-between gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border">
-                  <Icon className="h-[18px] w-[18px]" />
-                </span>
-                <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-crpe-surface px-2 text-[11px] font-black text-crpe-muted ring-1 ring-crpe-line">
-                  {String(index + 1).padStart(2, "0")}
+            <li key={title} className="relative text-center">
+              <div className="relative mx-auto flex h-[92px] w-[92px] items-center justify-center rounded-full bg-white text-crpe-navy shadow-crpe-soft ring-1 ring-crpe-line">
+                <Icon className="h-8 w-8" strokeWidth={1.7} />
+                <span className="absolute -right-1 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-crpe-punkt-text text-[13px] font-extrabold text-white ring-4 ring-white">
+                  {index + 1}
                 </span>
               </div>
-              <h3 className="mt-4 text-[16px] font-black leading-5 text-crpe-ink"><span className="sr-only">Krok {index + 1}: </span>{title}</h3>
-              <p className="mt-2 text-[13px] leading-5 text-crpe-muted">{text}</p>
+              <h3 className="mt-5 text-[20px] font-bold leading-6 text-crpe-ink">
+                <span className="sr-only">Krok {index + 1}: </span>
+                {title}
+              </h3>
+              <p className="mx-auto mt-2 max-w-[24ch] text-[15px] leading-6 text-crpe-muted">{text}</p>
             </li>
           ))}
         </ol>
@@ -1036,6 +975,8 @@ function HowItWorks({ selected }: { selected: AudienceKey }) {
     </section>
   );
 }
+
+/* ───────────────────── Zakres placówki / organizatora ─────────────────── */
 
 function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"> }) {
   const variants = {
@@ -1079,47 +1020,44 @@ function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"
     developing: string[];
   }>;
   const active = variants[selected];
-  const theme = roleThemes[selected];
 
   return (
-    <section className="bg-crpe-surface py-12 sm:py-16">
+    <section className="bg-crpe-surface py-16 sm:py-24">
       <div className={pageWrap}>
         <SectionHeading eyebrow={active.eyebrow} title={active.title} text={active.text} centered />
-        <div key={selected} className="crpe-role-swap mx-auto mt-9 grid max-w-[980px] gap-4 md:grid-cols-2 sm:mt-11">
-          <article className={`rounded-[20px] border bg-white p-5 shadow-[0_14px_38px_rgba(15,45,75,0.055)] sm:p-6 ${theme.accentBorder}`}>
-            <div className="flex items-center gap-3">
-              <span className={`flex h-10 w-10 items-center justify-center rounded-xl ring-1 ${theme.accentSoft} ${theme.accentText} ${theme.accentRing}`}>
-                <CheckCircle2 className="h-5 w-5" />
-              </span>
+        <div key={selected} className="crpe-role-swap mx-auto mt-10 grid max-w-[1000px] gap-5 sm:mt-14 md:grid-cols-2">
+          <article className="rounded-[28px] bg-white p-6 shadow-crpe-soft ring-1 ring-crpe-line sm:p-8">
+            <div className="flex items-center gap-4">
+              <IconBadge icon={CheckCircle2} size="md" tone="punkt" />
               <div>
-                <p className={`text-[10px] font-extrabold uppercase tracking-[0.15em] ${theme.accentText}`}>Dostępne</p>
-                <h3 className="mt-0.5 text-[18px] font-bold text-crpe-ink">Działa dziś</h3>
+                <p className="text-[13px] font-semibold text-crpe-punkt-text">Dostępne</p>
+                <h3 className="text-[24px] font-bold leading-tight text-crpe-ink">Działa dziś</h3>
               </div>
             </div>
-            <ul className="mt-5 grid gap-3">
+            <ul className="mt-6 grid gap-3">
               {active.available.map((item) => (
-                <li key={item} className="flex gap-2.5 text-[14px] leading-6 text-crpe-muted">
-                  <Check className={`mt-1 h-4 w-4 shrink-0 ${theme.accentText}`} />
+                <li key={item} className="flex gap-3 text-[15px] leading-6 text-crpe-ink">
+                  <Check className="mt-1 h-4 w-4 shrink-0 text-crpe-punkt" strokeWidth={2.6} />
                   {item}
                 </li>
               ))}
             </ul>
           </article>
 
-          <article className="rounded-[20px] border border-amber-200 bg-white p-5 shadow-[0_14px_38px_rgba(15,45,75,0.055)] sm:p-6">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100">
-                <BarChart3 className="h-5 w-5" />
+          <article className="rounded-[28px] border-2 border-dashed border-crpe-warning-border bg-white/60 p-6 sm:p-8">
+            <div className="flex items-center gap-4">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-crpe-warning-soft text-crpe-warning" aria-hidden="true">
+                <BarChart3 className="h-[22px] w-[22px]" strokeWidth={1.8} />
               </span>
               <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-amber-700">Kolejny etap</p>
-                <h3 className="mt-0.5 text-[18px] font-bold text-crpe-ink">Rozwijamy</h3>
+                <p className="text-[13px] font-semibold text-crpe-warning">Kolejny etap</p>
+                <h3 className="text-[24px] font-bold leading-tight text-crpe-ink">Rozwijamy</h3>
               </div>
             </div>
-            <ul className="mt-5 grid gap-3">
+            <ul className="mt-6 grid gap-3">
               {active.developing.map((item) => (
-                <li key={item} className="flex gap-2.5 text-[14px] leading-6 text-crpe-muted">
-                  <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-amber-600" />
+                <li key={item} className="flex gap-3 text-[15px] leading-6 text-crpe-muted">
+                  <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-crpe-warning" />
                   {item}
                 </li>
               ))}
@@ -1130,6 +1068,8 @@ function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"
     </section>
   );
 }
+
+/* ──────────────────────────── Bezpieczeństwo ──────────────────────────── */
 
 function TrustSection() {
   const items = [
@@ -1151,47 +1091,58 @@ function TrustSection() {
   ];
 
   return (
-    <section id="bezpieczenstwo" className="scroll-mt-24 border-t border-crpe-line bg-white py-12 sm:py-16">
-      <div className={pageWrap}>
-      <Reveal>
-        <div className={`${panel} overflow-hidden p-5 sm:p-8 lg:p-9`}>
-          <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-10">
-            <div>
-              <SectionHeading
-                eyebrow="Zakres i bezpieczeństwo"
-                title="CRPE pomaga prowadzić własną ewidencję."
-                text="System porządkuje aktywności, punkty i dokumenty, ale nie zastępuje oficjalnych rejestrów ani wymaganej procedury rozliczenia."
-              />
-              <div className="mt-5 flex flex-wrap gap-2">
-                <Link href="/polityka-prywatnosci" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-[14px] font-extrabold text-crpe-muted hover:border-crpe-brand-border hover:bg-crpe-brand-soft">
-                  Polityka prywatności
-                </Link>
-                <Link href="/regulamin" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-[14px] font-extrabold text-crpe-muted hover:border-crpe-brand-border hover:bg-crpe-brand-soft">
-                  Regulamin
-                </Link>
-              </div>
-            </div>
+    <section id="bezpieczenstwo" className="relative scroll-mt-24 overflow-hidden bg-white py-16 sm:py-24">
+      <div className={`${pageWrap} grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-20`}>
+        <div className="relative mx-auto w-full max-w-[460px] lg:mx-0">
+          <div className="absolute -left-10 -top-10 h-56 w-56 rounded-full bg-crpe-punkt-soft" aria-hidden="true" />
+          <div className="crpe-dot-grid absolute -bottom-8 -right-8 h-40 w-40 text-crpe-navy opacity-20" aria-hidden="true" />
+          <div className="relative aspect-[4/5] overflow-hidden rounded-[32px] shadow-crpe-lift">
+            <Image
+              src="/home/photo-dokument.webp"
+              alt="Dłonie trzymające tablet z certyfikatem w CRPE"
+              fill
+              sizes="(min-width: 1024px) 460px, 90vw"
+              className="object-cover"
+              style={{ objectPosition: "55% 40%" }}
+            />
+          </div>
+          <IconBadge icon={ShieldCheck} size="lg" tone="white" className="absolute -bottom-6 left-6 ring-4 ring-white" />
+        </div>
 
-            <div className="divide-y divide-slate-200 rounded-2xl border border-crpe-line bg-crpe-surface px-4 sm:px-5">
-              {items.map(({ icon: Icon, title, text }) => (
-                <div key={title} className="flex gap-3 py-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-crpe-brand shadow-sm ring-1 ring-crpe-line">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <h3 className="text-[15px] font-black text-crpe-ink">{title}</h3>
-                    <p className="mt-1 text-[14px] leading-5 text-crpe-muted">{text}</p>
-                  </div>
+        <div>
+          <SectionHeading
+            eyebrow="Zakres i bezpieczeństwo"
+            title="CRPE pomaga prowadzić własną ewidencję."
+            text="System porządkuje aktywności, punkty i dokumenty, ale nie zastępuje oficjalnych rejestrów ani wymaganej procedury rozliczenia."
+          />
+
+          <ul className="mt-8 grid gap-5">
+            {items.map(({ icon, title, text }) => (
+              <li key={title} className="flex gap-4">
+                <IconBadge icon={icon} size="md" tone="soft" />
+                <div>
+                  <h3 className="text-[19px] font-bold text-crpe-ink">{title}</h3>
+                  <p className="mt-1 text-[15px] leading-6 text-crpe-muted">{text}</p>
                 </div>
-              ))}
-            </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/polityka-prywatnosci" className={pill.secondary}>
+              Polityka prywatności
+            </Link>
+            <Link href="/regulamin" className={pill.secondary}>
+              Regulamin
+            </Link>
           </div>
         </div>
-      </Reveal>
       </div>
     </section>
   );
 }
+
+/* ──────────────────────────────── FAQ ─────────────────────────────────── */
 
 function FaqSection() {
   const items = [
@@ -1222,41 +1173,40 @@ function FaqSection() {
   ];
 
   return (
-    <section id="faq" className="scroll-mt-24 border-t border-crpe-line bg-crpe-surface py-12 sm:py-16">
+    <section id="faq" className="scroll-mt-24 bg-crpe-surface py-16 sm:py-24">
       <div className={pageWrap}>
-      <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-8">
-        <Reveal>
-          <div>
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-crpe-brand-soft text-crpe-brand ring-1 ring-crpe-brand-border sm:h-11 sm:w-11">
-              <HelpCircle className="h-5 w-5" />
-            </span>
-            <div className="mt-3">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start lg:gap-16">
+          <div className="lg:sticky lg:top-28">
+            <IconBadge icon={HelpCircle} size="lg" tone="white" />
+            <div className="mt-6">
               <SectionHeading
                 eyebrow="FAQ"
                 title="Najczęstsze pytania przed wyborem swojej ścieżki."
                 text="Najważniejsze informacje dla medyka, placówki i organizatora kształcenia."
               />
             </div>
-            <Link href="/kontakt#formularz" className="mt-4 inline-flex items-center gap-2 text-[13px] font-extrabold text-crpe-brand underline decoration-crpe-brand-border underline-offset-4 sm:mt-5 sm:text-sm">
+            <Link href="/kontakt#formularz" className={cx(pill.secondary, "mt-7")}>
               Masz inne pytanie? Napisz do nas <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-        </Reveal>
 
-        <div className="space-y-3">
-          {items.map(([question, answer]) => (
-            <Reveal key={question}>
-              <details className="group rounded-[16px] border border-crpe-line bg-white px-4 py-3 shadow-[0_9px_26px_rgba(15,45,75,0.045)] transition hover:border-crpe-brand-border hover:bg-crpe-brand-soft/40 hover:shadow-[0_13px_32px_rgba(15,45,75,0.065)] sm:px-5 sm:py-3.5">
-                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-bold leading-5 text-crpe-ink sm:min-h-14 sm:text-[15px]">
+          <div className="space-y-3">
+            {items.map(([question, answer]) => (
+              <details
+                key={question}
+                className="group rounded-[22px] bg-white px-5 py-2 shadow-crpe-soft ring-1 ring-crpe-line transition open:ring-crpe-punkt-border sm:px-6"
+              >
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-2 text-[16px] font-bold leading-6 text-crpe-ink sm:text-[17px]">
                   {question}
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-crpe-surface text-crpe-muted ring-1 ring-crpe-line transition duration-200 group-open:rotate-45 group-open:bg-crpe-brand-soft group-open:text-crpe-brand">+</span>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-crpe-ice text-crpe-navy transition duration-200 group-open:rotate-45 group-open:bg-crpe-punkt group-open:text-white">
+                    <Plus className="h-4 w-4" strokeWidth={2.4} aria-hidden="true" />
+                  </span>
                 </summary>
-                <p className="mt-1 max-w-3xl border-t border-slate-100 pb-2 pt-4 pr-8 text-[14px] leading-6 text-crpe-muted">{answer}</p>
+                <p className="max-w-[62ch] pb-4 pr-10 pt-1 text-[15px] leading-7 text-crpe-muted">{answer}</p>
               </details>
-            </Reveal>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
       </div>
     </section>
   );

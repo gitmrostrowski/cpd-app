@@ -1,0 +1,42 @@
+{
+  "base_zip_sha256": "f469baaa6a9d9fda7801a1f2a117c1d0f34dc554da809ebea884f3653668288e",
+  "changed": [
+    "app/globals.css",
+    "app/layout.tsx",
+    "app/page.tsx",
+    "components/BottomCTA.tsx",
+    "components/Footer.tsx",
+    "components/Header.tsx",
+    "package.json",
+    "scripts/check-v6-27-10-role-switcher-polish.mjs",
+    "scripts/check-v6-27-7-home-visual-coherence.mjs",
+    "scripts/check-v6-27-8-home-hero-and-panel-balance.mjs",
+    "scripts/check-v6-27-9-home-role-strip-and-compact-status.mjs"
+  ],
+  "added": [
+    "CHANGES-v6.28.md",
+    "RELEASE-FILE-MANIFEST.json",
+    "RELEASE-HOME-v6.28.1.md",
+    "components/ui/crpe.tsx",
+    "public/home/photo-dokument.webp",
+    "public/home/photo-medyk.webp",
+    "public/home/photo-organizator.webp",
+    "public/home/photo-placowka.webp",
+    "scripts/check-release.mjs",
+    "scripts/check-v6-28-punkty-visual-system.mjs"
+  ],
+  "removed": [],
+  "critical_directories_unchanged": [
+    "app/api/",
+    "lib/",
+    "supabase/",
+    "integrations/",
+    "app/panel-cpd/",
+    "app/aktywnosci/",
+    "app/placowka/",
+    "app/admin/",
+    "app/raporty/",
+    "types/"
+  ],
+  "package_lock_unchanged": true
+}

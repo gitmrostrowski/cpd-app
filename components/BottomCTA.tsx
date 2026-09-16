@@ -1,6 +1,8 @@
 import Link from "next/link";
 import RoleContactModal from "@/components/RoleContactModal";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Building2, FileCheck2, GraduationCap } from "lucide-react";
+import { DotBullet, DotTitle, DottedCurve, Eyebrow, IconBadge, cx, pill } from "@/components/ui/crpe";
+import { pageWrap } from "@/lib/layout";
 
 type AudienceKey = "medyk" | "placowka" | "organizator";
 
@@ -38,55 +40,57 @@ const variants: Record<AudienceKey, {
   },
 };
 
+const roleIcon = { medyk: FileCheck2, placowka: Building2, organizator: GraduationCap } as const;
+
 export default function BottomCTA({ selected }: { selected: AudienceKey }) {
   const active = variants[selected];
+  const ctaClass = cx(pill.onDark, "min-h-14 px-7 text-[15px]");
 
   return (
-    <section className="mx-auto w-full max-w-[1200px] px-4 pb-16 sm:px-6 sm:pb-20 lg:px-8">
-      <div className="relative overflow-hidden rounded-[20px] bg-crpe-brand px-5 py-8 text-white shadow-[0_22px_58px_rgba(29,78,216,0.22)] sm:px-10 sm:py-11 lg:px-12">
-        <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-28 -left-20 h-64 w-64 rounded-full bg-white/[0.06] blur-3xl" />
+    <section className="bg-crpe-surface pb-16 sm:pb-24">
+      <div className={pageWrap}>
+      <div className="relative overflow-hidden rounded-[32px] bg-crpe-navy px-6 py-10 text-white sm:px-10 sm:py-14 lg:px-14">
+        <div className="crpe-dot-grid pointer-events-none absolute inset-0 text-white opacity-[0.05]" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-40 -right-24 h-96 w-96 rounded-full bg-crpe-punkt/20 blur-3xl" aria-hidden="true" />
+        <DottedCurve className="pointer-events-none absolute -right-6 top-4 hidden w-[340px] text-white/25 lg:block" />
 
-        <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-12">
+        <div className="relative grid gap-8 lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-12">
+          <span className="hidden h-28 w-28 items-center justify-center rounded-full bg-white lg:flex" aria-hidden="true">
+            <IconBadge icon={roleIcon[selected]} size="lg" tone="punkt" />
+          </span>
+
           <div className="max-w-2xl">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-white/80">
-              {active.eyebrow}
-            </p>
-            <h2 className="mt-2 text-[27px] font-black leading-[1.08] tracking-[-0.035em] sm:mt-3 sm:text-[37px]">
-              {active.title}
+            <Eyebrow tone="dark">{active.eyebrow}</Eyebrow>
+            <h2 className="mt-3 text-[30px] font-bold leading-[1.06] tracking-[-0.03em] sm:text-[42px]">
+              <DotTitle>{active.title}</DotTitle>
             </h2>
-            <p className="mt-3 max-w-2xl text-[15px] leading-6 text-white/80 sm:mt-4 sm:text-[16px] sm:leading-7">
-              {active.text}
-            </p>
-            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2.5 text-[13px] font-semibold text-white/90 sm:mt-5 sm:text-sm">
+            <p className="mt-4 max-w-2xl text-[16px] leading-7 text-white/72 sm:text-[17px]">{active.text}</p>
+            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2.5 text-[14px] font-semibold text-white/90">
               {active.facts.map((item) => (
-                <span key={item} className="inline-flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-white/70" /> {item}
-                </span>
+                <li key={item} className="flex gap-2">
+                  <DotBullet tone="dark" /> {item}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
-          <div className="flex flex-col items-stretch gap-3 lg:items-center">
+          <div className="flex flex-col items-stretch gap-4 lg:items-center">
             {selected === "medyk" ? (
-              <Link
-                href={active.href}
-                className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-[14px] font-black text-crpe-brand shadow-lg transition hover:bg-crpe-placowka-soft"
-              >
+              <Link href={active.href} className={ctaClass}>
                 {active.cta} <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (
-              <RoleContactModal
-                role={selected}
-                triggerLabel={active.cta}
-                triggerClassName="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-[14px] font-black text-crpe-brand shadow-lg transition hover:bg-crpe-placowka-soft"
-              />
+              <RoleContactModal role={selected} triggerLabel={active.cta} triggerClassName={ctaClass} />
             )}
-            <Link href="/pomoc" className="text-center text-[13px] font-bold text-white/80 underline decoration-white/35 underline-offset-4 hover:text-white">
+            <Link
+              href="/pomoc"
+              className="text-center text-[14px] font-semibold text-white/75 underline decoration-white/30 underline-offset-4 hover:text-white"
+            >
               Najpierw zobacz centrum pomocy
             </Link>
           </div>
         </div>
+      </div>
       </div>
     </section>
   );

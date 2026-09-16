@@ -296,10 +296,10 @@ export default function Header() {
     <header
       data-crpe-chrome="true"
       className={cx(
-        "sticky top-0 z-50 border-b bg-white/95 backdrop-blur transition-[box-shadow,border-color,background-color] duration-300",
+        "sticky top-0 z-50 border-b bg-white/90 backdrop-blur-md transition-[box-shadow,border-color,background-color] duration-300",
         scrolled
-          ? "border-slate-200 shadow-[0_10px_30px_rgba(15,45,75,0.08)]"
-          : "border-slate-200/80",
+          ? "border-crpe-line shadow-[0_10px_30px_-12px_rgba(11,37,69,0.18)]"
+          : "border-transparent",
       )}
     >
       <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
@@ -311,7 +311,9 @@ export default function Header() {
             title="Wróć na stronę główną"
           >
             <Image src="/logo.svg" alt="Logo CRPE" width={30} height={30} />
-            <span className="text-base font-black tracking-tight text-slate-950">CRPE</span>
+            <span className="font-display text-[19px] font-bold tracking-tight text-crpe-ink">
+              CRPE<span className="text-crpe-punkt">.</span>
+            </span>
           </Link>
 
           <nav className="ml-auto hidden min-w-0 items-center justify-end lg:flex" aria-label="Główna nawigacja">
@@ -336,7 +338,7 @@ export default function Header() {
                     className={cx(
                       "inline-flex items-center gap-2 text-sm font-bold transition",
                       showPublicNav
-                        ? "px-3 py-2 text-slate-700 hover:text-blue-700"
+                        ? "rounded-full px-3.5 py-2 font-semibold text-crpe-muted hover:bg-crpe-surface hover:text-crpe-ink"
                         : "rounded-xl px-3 py-2.5",
                       !showPublicNav && active
                         ? "bg-blue-50 text-blue-700 ring-1 ring-blue-100"
@@ -604,13 +606,13 @@ export default function Header() {
               <>
                 <Link
                   href={LOGIN_HREF}
-                  className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 transition hover:text-blue-700"
+                  className="rounded-full px-4 py-2.5 text-sm font-bold text-crpe-ink transition hover:bg-crpe-surface"
                 >
                   Zaloguj się
                 </Link>
                 <Link
                   href={REGISTER_HREF}
-                  className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(37,99,235,0.20)] transition hover:bg-blue-700"
+                  className="rounded-full bg-crpe-brand px-5 py-2.5 text-sm font-bold text-white shadow-crpe-cta transition hover:bg-crpe-brand-hover"
                 >
                   Załóż konto
                 </Link>
@@ -622,7 +624,7 @@ export default function Header() {
             {!loading && !user ? (
               <Link
                 href={LOGIN_HREF}
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 px-3 text-[12px] font-extrabold text-blue-700"
+                className="inline-flex h-9 items-center justify-center rounded-full bg-crpe-brand-soft px-4 text-[12px] font-extrabold text-crpe-brand"
               >
                 Zaloguj
               </Link>
@@ -633,7 +635,7 @@ export default function Header() {
               </span>
             ) : null}
             <button
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-crpe-line bg-white text-crpe-ink transition hover:bg-crpe-surface"
               onClick={() => setOpenMobile((v) => !v)}
               aria-label={openMobile ? "Zamknij menu" : "Otwórz menu"}
               aria-expanded={openMobile}
