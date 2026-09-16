@@ -25,7 +25,7 @@ const checks = [
   ["brand stays the only CTA color", ui.includes("primary: `${pillBase} bg-crpe-brand")],
   ["display typeface is loaded and wired to headings", layout.includes("Plus_Jakarta_Sans") && !layout.includes("Bricolage_Grotesque") && css.includes("--font-display:") && css.includes("h1, h2, h3, .font-display")],
   ["shared primitives exist", ["export function IconBadge", "export function SectionHeading", "export function DotRing", "export function Eyebrow", "export const pill"].every((t) => ui.includes(t))],
-  ["hero uses the dotted progress ring with role photos", page.includes("<DotRing") && page.includes("HeroPortrait")],
+  ["hero uses rectangular photos and a separate role indicator", page.includes("aspect-[4/3]") && page.includes("data-role-ring") && page.includes("HeroPortrait")],
   ["role photos are in place", ["medyk", "placowka-v3", "organizator-v3", "dokument"].every((k) => exists(`public/home/photo-${k}.webp`))],
   ["eyebrows are sentence case, not tracked caps", !page.includes("uppercase tracking-[")],
   ["steps are connected by a dotted path", page.includes("crpe-step-path") && css.includes(".crpe-step-path")],

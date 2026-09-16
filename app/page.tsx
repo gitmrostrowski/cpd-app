@@ -31,7 +31,6 @@ import BottomCTA from "@/components/BottomCTA";
 import { pageWrap } from "@/lib/layout";
 import {
   DotBullet,
-  DotRing,
   DottedCurve,
   Eyebrow,
   IconBadge,
@@ -288,9 +287,27 @@ function OrganizatorDashboard() {
   );
 }
 
+/** Decorative role indicator; the adjacent label supplies the accessible name. */
+function RoleRing({ selected }: { selected: AudienceKey }) {
+  const active = audiences.find((item) => item.key === selected) ?? audiences[0];
+  const Icon = active.icon;
+  return (
+    <span data-role-ring={selected} className="relative flex h-11 w-11 shrink-0 items-center justify-center text-crpe-navy" aria-hidden="true">
+      <svg viewBox="0 0 44 44" className="absolute inset-0 h-full w-full fill-none" style={{ transform: "rotate(-90deg)" }}>
+        {audiences.map((role, index) => (
+          <circle key={role.key} cx="22" cy="22" r="19" pathLength="360"
+            stroke="currentColor" strokeWidth="3" strokeLinecap="round"
+            strokeDasharray="108 252" strokeDashoffset={-index * 120}
+            className={cx("transition-colors duration-200 motion-reduce:transition-none", role.key === selected ? "text-crpe-punkt" : "text-crpe-line")} />
+        ))}
+      </svg>
+      <Icon className="h-[18px] w-[18px]" strokeWidth={1.9} />
+    </span>
+  );
+}
+
 function HeroDashboard({ selected }: { selected: AudienceKey }) {
   const active = audiences.find((item) => item.key === selected) ?? audiences[0];
-  const theme = roleThemes[selected];
 
   return (
     <div
@@ -298,12 +315,14 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
       aria-live="polite"
     >
       <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-3.5">
-        <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <RoleRing selected={selected} />
+          <div className="min-w-0">
           <p className="text-[12px] font-semibold text-crpe-muted">Podgląd CRPE</p>
           <p className="flex min-w-0 items-center gap-1.5 text-[14px] font-bold leading-5 text-crpe-ink">
-            <span className={cx("h-2 w-2 shrink-0 rounded-full", theme.accentStrong)} aria-hidden="true" />
             <span>{active.mobileLabel}</span>
           </p>
+          </div>
         </div>
         <span className={cx(statusPill, "shrink-0 text-[11px]", active.statusTone)}>{active.status}</span>
       </div>
@@ -339,29 +358,14 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
   );
 }
 
-/** Zapamiętywalny element strony: zdjęcie roli w pierścieniu punktów. */
 function HeroPortrait({ selected, compact = false }: { selected: AudienceKey; compact?: boolean }) {
   const active = audiences.find((item) => item.key === selected) ?? audiences[0];
   return (
-    <div data-hero-portrait className={cx("relative mx-auto aspect-square w-full", compact ? "max-w-[260px]" : "max-w-[380px]")}>
-      <DotRing
-        key={selected}
-        progress={selected === "medyk" ? 0.55 : 0}
-        milestones={selected === "medyk" ? [] : [0.14, 0.3, 0.46]}
-        className="absolute inset-0 h-full w-full"
-      />
-      <div className="absolute inset-[7.5%] overflow-hidden rounded-full bg-crpe-ice shadow-crpe-lift">
-        <Image
-          key={active.image}
-          src={active.image}
-          alt={active.imageAlt}
-          fill
-          priority
-          sizes={compact ? "240px" : "(min-width: 1024px) 480px, 80vw"}
-          className="crpe-photo-swap object-cover"
-          style={{ objectPosition: active.imagePosition }}
-        />
-      </div>
+    <div data-hero-portrait className="relative mx-auto aspect-[4/3] w-full overflow-hidden rounded-[24px] bg-crpe-ice shadow-crpe-soft ring-1 ring-crpe-line">
+      <Image key={active.image} src={active.image} alt={active.imageAlt} fill priority
+        sizes={compact ? "(max-width: 640px) 90vw, 600px" : "420px"}
+        className="crpe-photo-swap object-cover"
+        style={{ objectPosition: active.imagePosition }} />
     </div>
   );
 }
@@ -440,9 +444,12 @@ function MobileRolePreview({ active }: { active: AudienceOption }) {
       aria-label="Przykładowy podgląd dla wybranej roli"
     >
       <div className="flex items-center justify-between gap-3">
-        <div>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <RoleRing selected={active.key} />
+          <div>
           <p className="text-[12px] font-semibold text-crpe-muted">Podgląd profilu</p>
-          <p className="text-[15px] font-bold text-crpe-ink">{active.label}</p>
+          <p className="text-[15px] font-bold text-crpe-ink">{active.mobileLabel}</p>
+          </div>
         </div>
         <span className={cx(statusPill, "text-[11px]", active.statusTone)}>{active.status}</span>
       </div>
@@ -551,7 +558,7 @@ function Hero({
           </div>
 
           <div className="relative hidden lg:block">
-            <div className="crpe-hero-panel mx-auto grid w-full max-w-[460px] gap-6">
+            <div className="crpe-hero-panel mx-auto grid w-full max-w-[420px] gap-5">
               <HeroPortrait selected={selected} />
               <div data-hero-preview className="mx-auto w-full max-w-[420px]">
                 <HeroDashboard selected={selected} />
