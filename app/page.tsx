@@ -60,7 +60,6 @@ import {
 
   DotBullet,
 
-  DottedCurve,
 
   Eyebrow,
 
@@ -596,7 +595,7 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
 
       </div>
 
-      <div key={selected} className="crpe-role-swap px-4 pb-4 pt-3 sm:px-5 lg:min-h-[296px]">
+      <div key={selected} className="crpe-role-swap px-4 pb-4 pt-3 sm:px-5 lg:min-h-[260px]">
 
         {selected === "medyk" ? <MedykDashboard /> : null}
 
@@ -854,9 +853,9 @@ function Hero({
 
           </div>
 
-          <div data-hero-workspace className="crpe-hero-panel min-w-0 w-full overflow-hidden rounded-[24px] bg-white shadow-crpe-soft ring-1 ring-crpe-line">
+          <div data-hero-workspace className="crpe-hero-panel lg:mt-9 min-w-0 w-full overflow-hidden rounded-[24px] bg-white shadow-crpe-soft ring-1 ring-crpe-line">
 
-            <div data-hero-preview className="lg:min-h-[420px]">
+            <div data-hero-preview className="lg:min-h-[384px]">
 
               <HeroDashboard selected={selected} />
 
@@ -1314,7 +1313,7 @@ function PracticeSection() {
 
       />
 
-      <DottedCurve className="pointer-events-none absolute -bottom-2 right-8 hidden w-[380px] text-white/25 lg:block" />
+
 
       <div className={`${pageWrap} relative grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:gap-16`}>
 
