@@ -393,3 +393,16 @@ summary::-webkit-details-marker {
     animation: none !important;
   }
 }
+
+/* v6.28.10: neutral public Home palette, scoped away from application screens. */
+.crpe-home-neutral {
+  --color-crpe-ink: #171A21;
+  --color-crpe-muted: #5C6270;
+  --color-crpe-surface: #F7F8FA;
+  --color-crpe-line: #E4E6EC;
+  --color-crpe-ice: #F0F2F5;
+  color: var(--color-crpe-ink);
+}
+.crpe-home-neutral .crpe-home-hero { background: linear-gradient(180deg, #F7F8FA 0%, #FFFFFF 100%); }
+.crpe-home-neutral .crpe-home-hero .crpe-dot-grid { display: none; }
+.crpe-home-neutral .crpe-dot { color: var(--color-crpe-brand); }

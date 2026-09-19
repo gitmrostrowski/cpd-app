@@ -16,7 +16,7 @@ const hero = page.slice(page.indexOf('function Hero({'), page.indexOf('function 
 const checks = [
   ["layout imports the versioned visual stylesheet", layout.includes('import "./crpe-visual-v6-28-2.css";')],
   // v6.28.9: hero wraca do zdjęcia roli (scena), karta przykładowa leży tylko na dolnym lewym rogu.
-  ["hero aligns columns at top, keeps actions left and stage right", hero.includes("lg:items-start") && hero.indexOf("href={active.href}") < hero.indexOf("data-hero-workspace") && hero.includes('href="/login"') && hero.includes("<HeroStage") && hero.includes("data-hero-preview")],
+  ["hero aligns columns at top, keeps actions left and stage right", hero.includes("lg:items-start") && hero.indexOf("href={active.href}") < hero.indexOf("data-hero-workspace") && hero.includes('href="/login"') && !hero.includes("<HeroStage") && hero.includes("data-hero-preview")],
   ["role controls expose selected state and remain keyboard buttons", page.includes('aria-pressed={isSelected}') && page.includes('type="button"') && page.includes('group flex min-h-12')],
   ["role destinations remain intact", ['/rejestracja', '/dla-medyka', '/dla-placowki', '/dla-organizatora'].every(p => page.includes(p))],
   ["small step numbers use the accessible dark teal", page.includes('bg-crpe-punkt-text text-[13px] font-extrabold text-white')],
@@ -30,7 +30,7 @@ const checks = [
   ["role photos are in place", ["medyk", "placowka-v3", "organizator-v3", "dokument"].every((k) => exists(`public/home/photo-${k}.webp`))],
   ["eyebrows are sentence case, not tracked caps", !page.includes("uppercase tracking-[")],
   ["steps are connected by a dotted path", page.includes("crpe-step-path") && css.includes(".crpe-step-path")],
-  ["bottom CTA and footer use the navy system", cta.includes("bg-crpe-navy") && footer.includes("bg-crpe-navy")],
+  ["bottom CTA uses brand blue and footer retains navy", cta.includes("pill.primary") && footer.includes("bg-crpe-navy")],
   ["motion respects reduced-motion", css.includes(".crpe-ring-progress") && /prefers-reduced-motion[\s\S]*crpe-ring-progress/.test(css)],
   ["hero copy is unchanged", page.includes("Punkty edukacyjne") && page.includes("i certyfikaty") && page.includes("w jednym miejscu<span className=\"crpe-dot\">.</span>")],
 ];
