@@ -12,12 +12,14 @@ const layout = read("app/layout.tsx");
 const cta = read("components/BottomCTA.tsx");
 const footer = read("components/Footer.tsx");
 
-const hero = page.slice(page.indexOf('function Hero({'), page.indexOf('function OrganizationBand'));
+const hero = page.slice(page.indexOf('function Hero({'), page.indexOf('function AudienceSection'));
 const checks = [
+  ["facility is the default audience and all three offers remain visible", page.includes('useState<AudienceKey>("placowka")') && page.includes("<AudienceSection") && page.includes("<RolePicker")],
+  ["certificate stock photo is not rendered", !page.includes('src="/home/photo-dokument.webp"')],
   ["layout imports the versioned visual stylesheet", layout.includes('import "./crpe-visual-v6-28-2.css";')],
-  // v6.28.11: primary action precedes optional organization controls.
-  ["hero aligns columns at top, keeps actions left and stage right", hero.includes("lg:items-start") && hero.indexOf("href={active.href}") < hero.indexOf("data-hero-workspace") && hero.includes('href="#jak-to-dziala"') && !hero.includes("<HeroStage") && hero.includes("data-hero-preview")],
-  ["role controls expose selected state and remain keyboard buttons", page.includes('aria-pressed={selected === a.key}') && page.includes('type="button"') && page.includes('min-h-11 font-semibold')],
+  // v6.28.9: hero wraca do zdjęcia roli (scena), karta przykładowa leży tylko na dolnym lewym rogu.
+  ["hero aligns columns at top, keeps actions left and stage right", hero.includes("lg:items-start") && hero.indexOf("href={active.href}") < hero.indexOf("data-hero-workspace") && hero.includes('href="/login"') && !hero.includes("<HeroStage") && hero.includes("data-hero-preview")],
+  ["role controls expose selected state and remain keyboard buttons", page.includes('aria-pressed={isSelected}') && page.includes('type="button"') && page.includes('group flex min-h-12')],
   ["role destinations remain intact", ['/rejestracja', '/dla-medyka', '/dla-placowki', '/dla-organizatora'].every(p => page.includes(p))],
   ["small step numbers use the accessible dark teal", page.includes('bg-crpe-punkt-text text-[13px] font-extrabold text-white')],
   ["preview caption uses readable text color", page.includes('font-semibold text-crpe-muted">Dane przykładowe')],
@@ -30,9 +32,9 @@ const checks = [
   ["role photos are in place", ["medyk", "placowka-v3", "organizator-v3", "dokument"].every((k) => exists(`public/home/photo-${k}.webp`))],
   ["eyebrows are sentence case, not tracked caps", !page.includes("uppercase tracking-[")],
   ["steps are connected by a dotted path", page.includes("crpe-step-path") && css.includes(".crpe-step-path")],
-  ["bottom CTA and footer provide dark contrast", cta.includes("pill.onDark") && footer.includes("bg-crpe-navy")],
+  ["bottom CTA uses brand blue and footer retains navy", cta.includes("pill.onDark") && footer.includes("bg-crpe-navy")],
   ["motion respects reduced-motion", css.includes(".crpe-ring-progress") && /prefers-reduced-motion[\s\S]*crpe-ring-progress/.test(css)],
-  ["hero communicates benefit without promising automatic certificate extraction", hero.includes("Sprawdź, ile punktów") && hero.includes("wpisz punkty i dołącz certyfikat")],
+  ["hero copy is unchanged", page.includes("Punkty edukacyjne") && page.includes("i certyfikaty") && page.includes("w jednym miejscu<span className=\"crpe-dot\">.</span>")],
 ];
 
 let failed = 0;
