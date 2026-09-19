@@ -406,3 +406,5 @@ summary::-webkit-details-marker {
 .crpe-home-neutral .crpe-home-hero { background: linear-gradient(180deg, #F7F8FA 0%, #FFFFFF 100%); }
 .crpe-home-neutral .crpe-home-hero .crpe-dot-grid { display: none; }
 .crpe-home-neutral .crpe-dot { color: var(--color-crpe-brand); }
+
+.crpe-home-neutral .crpe-home-hero { background: radial-gradient(ellipse at 95% 25%, #e5f4f2 0%, transparent 55%), radial-gradient(ellipse at 5% 95%, #edf2fc 0%, transparent 50%), #fafbfd; }

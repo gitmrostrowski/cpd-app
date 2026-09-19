@@ -44,12 +44,12 @@ const roleIcon = { medyk: FileCheck2, placowka: Building2, organizator: Graduati
 
 export default function BottomCTA({ selected }: { selected: AudienceKey }) {
   const active = variants[selected];
-  const ctaClass = cx(pill.primary, "min-h-14 px-7 text-[15px]");
+  const ctaClass = cx(pill.onDark, "min-h-14 px-7 text-[15px]");
 
   return (
     <section className="bg-crpe-surface pb-16 sm:pb-24">
       <div className={pageWrap}>
-      <div className="relative overflow-hidden rounded-[32px] bg-white px-6 py-10 text-crpe-ink ring-1 ring-crpe-line sm:px-10 sm:py-14 lg:px-14">
+      <div className="relative overflow-hidden rounded-[32px] bg-crpe-navy px-6 py-10 text-white sm:px-10 sm:py-14 lg:px-14">
         <div className="crpe-dot-grid pointer-events-none absolute inset-0 text-white opacity-[0.05]" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-40 -right-24 h-96 w-96 rounded-full bg-crpe-punkt/20 blur-3xl" aria-hidden="true" />
         <DottedCurve className="pointer-events-none absolute -right-6 top-4 hidden w-[340px] text-white/25 lg:block" />
@@ -60,15 +60,15 @@ export default function BottomCTA({ selected }: { selected: AudienceKey }) {
           </span>
 
           <div className="max-w-2xl">
-            <Eyebrow>{active.eyebrow}</Eyebrow>
+            <Eyebrow tone="dark">{active.eyebrow}</Eyebrow>
             <h2 className="mt-3 text-[30px] font-bold leading-[1.06] tracking-[-0.03em] sm:text-[42px]">
               <DotTitle>{active.title}</DotTitle>
             </h2>
-            <p className="mt-4 max-w-2xl text-[16px] leading-7 text-crpe-muted sm:text-[17px]">{active.text}</p>
-            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2.5 text-[14px] font-semibold text-crpe-muted">
+            <p className="mt-4 max-w-2xl text-[16px] leading-7 text-white/72 sm:text-[17px]">{active.text}</p>
+            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2.5 text-[14px] font-semibold text-white/90">
               {active.facts.map((item) => (
                 <li key={item} className="flex gap-2">
-                  <DotBullet /> {item}
+                  <DotBullet tone="dark" /> {item}
                 </li>
               ))}
             </ul>
@@ -84,7 +84,7 @@ export default function BottomCTA({ selected }: { selected: AudienceKey }) {
             )}
             <Link
               href="/pomoc"
-              className="text-center text-[14px] font-semibold text-crpe-muted underline decoration-crpe-line underline-offset-4 hover:text-crpe-brand"
+              className="text-center text-[14px] font-semibold text-white/75 underline decoration-white/30 underline-offset-4 hover:text-white"
             >
               Najpierw zobacz centrum pomocy
             </Link>

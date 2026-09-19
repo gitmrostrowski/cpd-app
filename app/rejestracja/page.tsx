@@ -256,11 +256,13 @@ export default function RegisterPage() {
         ) : null}
       </p>
 
+      {!invitationFlow ? <aside className="mt-5 rounded-2xl bg-blue-50 p-4 text-sm leading-6 text-slate-700"><p className="font-semibold text-slate-900">Zacznij od jednej aktywności.</p><ul className="mt-2 list-inside list-disc"><li>Sprawdzaj postęp punktowy.</li><li>Przechowuj certyfikaty przy wpisach.</li><li>Przygotuj zestawienie do rozliczenia.</li></ul></aside> : null}
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div className="space-y-1">
-          <label className="text-sm">E-mail</label>
+          <label htmlFor="register-email" className="text-sm">E-mail</label>
           <input
             className="w-full rounded-xl border px-3 py-2"
+            id="register-email"
             type="email"
             autoComplete="email"
             value={email}
@@ -278,9 +280,11 @@ export default function RegisterPage() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm">Hasło</label>
+          <label htmlFor="register-password" className="text-sm">Hasło</label>
           <input
             className="w-full rounded-xl border px-3 py-2"
+            id="register-password"
+            aria-describedby="password-hint"
             type="password"
             autoComplete="new-password"
             value={password}
@@ -288,7 +292,7 @@ export default function RegisterPage() {
             required
             minLength={6}
           />
-          <p className="text-xs opacity-60">Minimum 6 znaków.</p>
+          <p id="password-hint" className="text-xs text-slate-600" aria-live="polite">{password.length >= 6 ? "✓ Minimum 6 znaków — spełnione." : "Minimum 6 znaków."}</p>
         </div>
 
         {/* checkbox + linki */}

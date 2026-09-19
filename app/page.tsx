@@ -1,14 +1,10 @@
 "use client";
 
-
-
 // Strona główna CRPE — v6.28 „Punkty = kropki”.
 
 // Treści bez zmian względem v6.27.x; zmieniony układ, kolorystyka, typografia, ikony i zdjęcia.
 
 // Wspólne elementy wizualne: components/ui/crpe.tsx.
-
-
 
 import React, { useState } from "react";
 
@@ -64,7 +60,6 @@ import {
 
   DotBullet,
 
-  DottedCurve,
 
   Eyebrow,
 
@@ -78,11 +73,7 @@ import {
 
 } from "@/components/ui/crpe";
 
-
-
 type AudienceKey = "medyk" | "placowka" | "organizator";
-
-
 
 type AudienceOption = {
 
@@ -124,11 +115,7 @@ type AudienceOption = {
 
 };
 
-
-
 const statusPill = "rounded-full px-3 py-1 text-[12px] font-bold ring-1";
-
-
 
 const audiences: AudienceOption[] = [
 
@@ -260,11 +247,7 @@ const audiences: AudienceOption[] = [
 
 ];
 
-
-
 /* ─────────────────────────────── Hero ─────────────────────────────────── */
-
-
 
 function Metric({
 
@@ -304,169 +287,110 @@ function Metric({
 
 }
 
-
-
 function PointsGauge({ value, goal }: { value: number; goal: number }) {
-
 
   const r = 62;
 
-
   const length = 2 * Math.PI * r;
-
 
   const ratio = Math.min(value / goal, 1);
 
-
   const offset = length * (1 - ratio);
 
-
   return (
-
 
     <div className="relative h-[112px] w-[112px] shrink-0 sm:h-[180px] sm:w-[180px]">
 
-
       <svg viewBox="0 0 150 150" className="absolute inset-0 h-full w-full" aria-hidden="true" fill="none">
-
 
         <circle cx="75" cy="75" r={r} stroke="var(--color-crpe-line)" strokeWidth="3" strokeLinecap="round" strokeDasharray="0 7.5" />
 
-
         <circle
-
 
           cx="75"
 
-
           cy="75"
-
 
           r={r}
 
-
           transform="rotate(-90 75 75)"
-
 
           stroke="var(--color-crpe-punkt)"
 
-
           strokeWidth="9"
-
 
           strokeLinecap="round"
 
-
           strokeDasharray={length}
-
 
           className="crpe-ring-progress"
 
-
           style={{ strokeDashoffset: offset, "--ring-length": `${length}`, "--ring-offset": `${offset}` } as React.CSSProperties}
-
 
         />
 
-
       </svg>
-
 
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
 
-
         <span className="text-[32px] font-extrabold leading-none tracking-[-0.04em] text-crpe-ink sm:text-[40px]">{value}</span>
-
 
         <span className="mt-1 text-[13px] font-bold text-crpe-muted">/ {goal} pkt</span>
 
-
       </div>
-
 
     </div>
 
-
   );
 
-
 }
-
-
-
-
 
 function MedykDashboard() {
 
-
   return (
-
 
     <>
 
-
       <div className="flex items-center gap-5 sm:gap-7">
-
 
         <PointsGauge value={110} goal={200} />
 
-
         <div className="min-w-0 flex-1">
-
 
           <p className="text-[13px] font-semibold text-crpe-muted">Postęp punktowy</p>
 
-
           <p className="mt-1 text-[22px] font-extrabold leading-tight tracking-[-0.02em] text-crpe-ink">55% celu</p>
-
 
           <p className="mt-0.5 text-[13px] font-semibold text-crpe-muted">2025–2028</p>
 
-
           <div className="mt-4 inline-flex items-baseline gap-2 rounded-2xl bg-crpe-punkt-soft px-3.5 py-2">
-
 
             <span className="text-[12px] font-semibold text-crpe-punkt-text">Brakuje</span>
 
-
             <span className="text-[17px] font-extrabold text-crpe-punkt-text">90 pkt</span>
-
 
           </div>
 
-
         </div>
 
-
       </div>
-
-
-
-
 
       <div className="mt-5 grid grid-cols-2 gap-2">
 
-
         <Metric icon={FileCheck2} label="Certyfikaty" value="18 dokumentów" />
-
 
         <Metric icon={ClipboardCheck} label="Do uzupełnienia" value="2 aktywności" />
 
-
       </div>
 
-
+      <div className="mt-5"><p className="mb-2 text-[12px] font-semibold text-crpe-muted">Ostatnie aktywności — przykład</p><ul className="space-y-2">
+        {[["Kurs specjalistyczny", "25 pkt", "Certyfikat"], ["Webinar", "8 pkt", "Brak pliku"]].map(([title,points,status]) => <li key={title} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-crpe-surface p-3 text-[12px]"><span className="font-bold text-crpe-ink">{title}</span><span className="text-crpe-muted">{points} · {status}</span></li>)}
+      </ul></div>
     </>
-
 
   );
 
-
 }
-
-
-
-
 
 function ChecklistDashboard({
 
@@ -506,8 +430,6 @@ function ChecklistDashboard({
 
       </div>
 
-
-
       <ul className="mt-3 space-y-1.5">
 
         {rows.map(([name, description]) => (
@@ -534,8 +456,6 @@ function ChecklistDashboard({
 
       </ul>
 
-
-
       <p className="mt-2.5 rounded-xl bg-crpe-warning-soft px-3 py-2 text-[11px] font-semibold text-crpe-warning">
 
         {note}
@@ -547,8 +467,6 @@ function ChecklistDashboard({
   );
 
 }
-
-
 
 function PlacowkaDashboard() {
 
@@ -578,8 +496,6 @@ function PlacowkaDashboard() {
 
 }
 
-
-
 function OrganizatorDashboard() {
 
   return (
@@ -607,8 +523,6 @@ function OrganizatorDashboard() {
   );
 
 }
-
-
 
 /** Decorative role indicator; the adjacent label supplies the accessible name. */
 
@@ -646,13 +560,9 @@ function RoleRing({ selected }: { selected: AudienceKey }) {
 
 }
 
-
-
 function HeroDashboard({ selected }: { selected: AudienceKey }) {
 
   const active = audiences.find((item) => item.key === selected) ?? audiences[0];
-
-
 
   return (
 
@@ -688,8 +598,6 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
 
       </div>
 
-
-
       <div key={selected} className="crpe-role-swap px-4 pb-4 pt-3 sm:px-5 lg:min-h-[296px]">
 
         {selected === "medyk" ? <MedykDashboard /> : null}
@@ -699,8 +607,6 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
         {selected === "organizator" ? <OrganizatorDashboard /> : null}
 
       </div>
-
-
 
       <div className="border-t border-crpe-line bg-crpe-surface/70 px-4 py-3">
 
@@ -744,482 +650,60 @@ function HeroDashboard({ selected }: { selected: AudienceKey }) {
 
 }
 
-
-
-function RolePicker({
-
-  selected,
-
-  onSelect,
-
-}: {
-
-  selected: AudienceKey;
-
-  onSelect: (key: AudienceKey) => void;
-
-}) {
-
-  const roleDescriptions: Record<AudienceKey, string> = {
-
-    medyk: "Własna ewidencja",
-
-    placowka: "Zespół i dostęp",
-
-    organizator: "Publikacja szkoleń",
-
-  };
-
-
-
-  return (
-
-    <div
-
-      className="crpe-role-picker w-full rounded-2xl bg-crpe-surface p-1.5 ring-1 ring-crpe-line"
-
-      role="group"
-
-      aria-label="Wybierz swoją rolę"
-
-    >
-
-      <div className="grid grid-cols-3 gap-1">
-
-        {audiences.map(({ key, mobileLabel, icon: Icon }) => {
-
-          const isSelected = selected === key;
-
-          return (
-
-            <button
-
-              key={key}
-
-              type="button"
-
-              aria-pressed={isSelected}
-
-              onClick={() => onSelect(key)}
-
-              className={cx(
-
-                "crpe-role-button group flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[16px] px-2 py-2 text-left outline-none sm:min-h-[56px] sm:justify-start sm:rounded-xl sm:pl-2 sm:pr-2",
-
-                "focus-visible:ring-2 focus-visible:ring-crpe-brand focus-visible:ring-offset-2",
-
-                isSelected ? "bg-white text-crpe-brand shadow-crpe-soft ring-1 ring-crpe-brand-border" : "text-crpe-muted hover:bg-white",
-
-              )}
-
-            >
-
-              <span
-
-                className={cx(
-
-                  "hidden h-8 w-8 shrink-0 items-center justify-center rounded-full transition sm:flex",
-
-                  isSelected ? "bg-crpe-brand-soft text-crpe-brand" : "bg-white text-crpe-muted",
-
-                )}
-
-                aria-hidden="true"
-
-              >
-
-                <Icon className="h-[18px] w-[18px]" strokeWidth={1.9} />
-
-              </span>
-
-              <span className="min-w-0">
-
-                <span className="block truncate text-[13px] font-bold leading-4 sm:text-[14px]">{mobileLabel}</span>
-
-                <span
-
-                  className={cx(
-
-                    "mt-0.5 hidden truncate text-[11px] font-medium leading-4 sm:block",
-
-                    isSelected ? "text-crpe-muted" : "text-crpe-muted",
-
-                  )}
-
-                >
-
-                  {roleDescriptions[key]}
-
-                </span>
-
-              </span>
-
-            </button>
-
-          );
-
-        })}
-
-      </div>
-
-    </div>
-
-  );
-
-}
-
-
-
-function Hero({
-
-  selected,
-
-  onSelect,
-
-}: {
-
-  selected: AudienceKey;
-
-  onSelect: (key: AudienceKey) => void;
-
-}) {
-
+function Hero({ selected, onSelect }: { selected: AudienceKey; onSelect: (key: AudienceKey) => void }) {
   const active = audiences.find((item) => item.key === selected) ?? audiences[0];
-
   return (
-
-    <section className="crpe-home-hero relative overflow-hidden pb-10 pt-8 sm:pb-14 sm:pt-12 lg:pb-16 lg:pt-14">
-
-      <div
-
-        className="crpe-dot-grid pointer-events-none absolute inset-y-0 right-0 hidden w-[46%] text-crpe-navy opacity-[0.07] lg:block"
-
-        style={{ maskImage: "radial-gradient(70% 60% at 70% 45%, #000 20%, transparent 75%)" }}
-
-        aria-hidden="true"
-
-      />
-
-
-
-      <div className={`${pageWrap} relative`}>
-
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-10">
-
-          <div>
-
-            <div className="crpe-hero-in [--hero-delay:40ms]">
-
-              <Eyebrow>CRPE dla medyka, placówki i organizatora</Eyebrow>
-
-            </div>
-
-
-
-            <h1 className="crpe-hero-in mt-4 max-w-[600px] text-[32px] font-bold leading-[1.08] tracking-[-0.035em] text-crpe-ink sm:text-[48px] lg:text-[48px] xl:text-[52px] [--hero-delay:110ms]">
-
-              <span className="block">Punkty edukacyjne</span>
-
-              <span className="block">i certyfikaty</span>
-
-              <span className="block">
-
-                w jednym miejscu<span className="crpe-dot">.</span>
-
-              </span>
-
-            </h1>
-
-
-
-            <p className="crpe-hero-in mt-5 max-w-[540px] text-[17px] leading-7 text-crpe-muted sm:text-[19px] sm:leading-8 [--hero-delay:180ms]">
-
-              Zbieraj aktywności, punkty i certyfikaty w jednym miejscu. Sprawdzaj postęp i przygotuj dane do rozliczenia.
-
-            </p>
-
-            <div className="mt-7">
-              <p className="mb-3 text-[13px] font-semibold text-crpe-muted">Wybierz swoją rolę</p>
-              <RolePicker selected={selected} onSelect={onSelect} />
-            </div>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-
-              <Link href={active.href} className={cx(pill.primary, "w-full sm:w-auto")}>
-
-                {selected === "medyk" ? "Załóż konto medyka" : selected === "placowka" ? "Zobacz zakres dla placówki" : "Poznaj moduł organizatora"}
-
-                <ArrowRight className="h-4 w-4" />
-
-              </Link>
-
-              <Link href="/login" className="inline-flex min-h-12 items-center justify-center px-4 text-[15px] font-semibold text-crpe-muted underline underline-offset-4 hover:text-crpe-brand">Zaloguj się</Link>
-
-            </div>
-
-          </div>
-
-
-
-          <div data-hero-workspace className="crpe-hero-panel min-w-0 w-full overflow-hidden rounded-[24px] bg-white shadow-crpe-soft ring-1 ring-crpe-line">
-
-
-            <div data-hero-preview className="lg:min-h-[420px]">
-
-              <HeroDashboard selected={selected} />
-
-            </div>
-
-
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-  );
-
-}
-
-
-
-/* ──────────────────────────── Dla kogo ────────────────────────────────── */
-
-
-
-function AudienceSection({ selected }: { selected: AudienceKey }) {
-
-  const cards = [
-
-    {
-
-      key: "medyk" as AudienceKey,
-
-      id: "dla-medyka",
-
-      icon: Stethoscope,
-
-      title: "Medyk",
-
-      status: "Dostępne teraz",
-
-      statusClass: "bg-crpe-medyk-soft text-crpe-medyk-text ring-crpe-medyk-border",
-
-      text: "Prowadź własną ewidencję punktów, aktywności i certyfikatów w jednym panelu.",
-
-      benefits: ["Postęp i brakujące punkty", "Dokumenty przy aktywnościach", "Raport użytkownika"],
-
-      cta: "Załóż konto",
-
-      href: "/rejestracja",
-
-    },
-
-    {
-
-      key: "placowka" as AudienceKey,
-
-      id: "dla-placowki",
-
-      icon: Building2,
-
-      title: "Placówka / jednostka",
-
-      status: "Struktura, zaproszenia i role dostępne",
-
-      statusClass: "bg-crpe-placowka-soft text-crpe-placowka-text ring-crpe-placowka-border",
-
-      text: "Zbuduj strukturę jednostki, zapraszaj pracowników i nadawaj role. Zbiorczy status oraz raporty pozostają w rozwoju.",
-
-      benefits: ["Jednostki organizacyjne", "Zaproszenia e-mail", "Role i członkostwa"],
-
-      cta: "Zobacz zakres",
-
-      href: "/dla-placowki",
-
-    },
-
-    {
-
-      key: "organizator" as AudienceKey,
-
-      id: "dla-organizatora",
-
-      icon: GraduationCap,
-
-      title: "Organizator kształcenia",
-
-      status: "Zgłoszenie do bazy dostępne",
-
-      statusClass: "bg-crpe-organizator-soft text-crpe-organizator-text ring-crpe-organizator-border",
-
-      text: "Zgłoś szkolenie do publicznej bazy. Po publikacji użytkownicy zobaczą stronę wydarzenia, dane organizatora i link do zapisów.",
-
-      benefits: ["Formularz zgłoszenia", "Publiczna strona szkolenia", "Logo i link do zapisów"],
-
-      cta: "Zobacz zakres",
-
-      href: "/dla-organizatora",
-
-    },
-
-  ];
-
-
-
-  return (
-
-    <section id="dla-kogo" className="relative scroll-mt-24 bg-white py-16 sm:py-24">
-
-      <div className={pageWrap}>
-
-        <div className="grid gap-4 lg:grid-cols-[1fr_1fr] lg:items-end lg:gap-16">
-
-          <SectionHeading eyebrow="Dla kogo jest CRPE" title="Trzy role, jeden spokojniejszy sposób pracy." />
-
-          <p className="max-w-[56ch] text-[16px] leading-7 text-crpe-muted sm:text-[17px] lg:pb-1">
-
-            CRPE porządkuje różne potrzeby w jednym produkcie. Profil medyka działa już teraz, a moduły organizacyjne rozwijamy etapami i jasno oznaczamy ich aktualny zakres.
-
+    <section className="crpe-home-hero relative overflow-hidden py-10 sm:py-16 lg:py-20">
+      <div className={`${pageWrap} grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-12`}>
+        <div>
+          <Eyebrow>{selected === "medyk" ? "Dla medyków rozliczających punkty edukacyjne" : active.label}</Eyebrow>
+          <h1 className="mt-5 text-[36px] font-bold leading-[1.08] tracking-[-0.035em] text-crpe-ink sm:text-[48px] xl:text-[56px]">
+            {selected === "medyk" ? <>Sprawdź, ile punktów <span className="text-crpe-punkt-text">Ci brakuje.</span></> : active.title}
+          </h1>
+          <p className="mt-6 max-w-[540px] text-[17px] leading-7 text-crpe-muted sm:text-[19px] sm:leading-8">
+            {selected === "medyk" ? "Dodaj aktywność, wpisz punkty i dołącz certyfikat. CRPE pokaże postęp oraz braki w dokumentach. Bez szukania plików przed rozliczeniem." : active.description}
           </p>
-
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link href={active.href} className={cx(pill.primary, "min-h-14 w-full sm:w-auto")}>{selected === "medyk" ? "Załóż konto medyka" : active.cta}<ArrowRight className="h-4 w-4" /></Link>
+            <Link href="#jak-to-dziala" className={cx(pill.secondary, "min-h-14 w-full sm:w-auto")}>Zobacz, jak to działa</Link>
+          </div>
+          {selected === "medyk" ? <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[13px] font-semibold text-crpe-muted">
+            {["Bez karty płatniczej", "Dostęp z telefonu", "Certyfikat jako PDF lub zdjęcie"].map(t => <li key={t} className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-crpe-punkt-text" aria-hidden="true" />{t}</li>)}
+          </ul> : null}
+          <div className="mt-8 border-t border-crpe-line pt-5 text-[14px] leading-6 text-crpe-muted">
+            <p>Reprezentujesz placówkę lub organizujesz szkolenia?</p>
+            <div role="group" aria-label="Wybierz swoją rolę" className="mt-1 flex flex-wrap gap-x-4">
+              {audiences.filter(a => a.key !== "medyk" || selected !== "medyk").map(a => <button key={a.key} type="button" aria-pressed={selected === a.key} onClick={() => onSelect(a.key)} className="min-h-11 font-semibold text-crpe-brand underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-crpe-brand">{a.mobileLabel}</button>)}
+            </div>
+          </div>
         </div>
-
-
-
-        <div className="mt-10 grid gap-6 lg:mt-14 lg:grid-cols-3">
-
-          {cards.map(({ key, id, icon, title, status, statusClass, text, benefits, cta, href }) => {
-
-            const active = selected === key;
-
-            const photo = audiences.find((item) => item.key === key)!;
-
-            return (
-
-              <article
-
-                key={id}
-
-                id={id}
-
-                className={cx(
-
-                  "crpe-interactive-card group flex h-full scroll-mt-24 flex-col rounded-[28px] bg-white p-2.5 shadow-crpe-soft ring-1",
-
-                  active ? "ring-2 ring-crpe-punkt" : "ring-crpe-line",
-
-                )}
-
-                aria-current={active ? "true" : undefined}
-
-              >
-
-                <div className="relative aspect-[16/10] overflow-hidden rounded-[22px] bg-crpe-ice">
-
-                  <Image
-
-                    src={photo.image}
-
-                    alt={photo.imageAlt}
-
-                    fill
-
-                    sizes="(min-width: 1024px) 380px, (min-width: 640px) 80vw, 100vw"
-
-                    className="object-cover transition duration-700 ease-out group-hover:scale-[1.03]"
-
-                    style={{ objectPosition: photo.imagePosition }}
-
-                  />
-
-                  <span
-
-                    className={cx(
-
-                      "absolute right-3 top-3 rounded-full px-3 py-1 text-[12px] font-bold backdrop-blur",
-
-                      active ? "bg-crpe-navy/90 text-white" : "bg-white/90 text-crpe-ink",
-
-                    )}
-
-                  >
-
-                    {active ? "Wybrana rola" : "Zobacz zakres"}
-
-                  </span>
-
-                </div>
-
-
-
-                <div className="flex flex-1 flex-col px-3.5 pb-3.5 sm:px-4 sm:pb-4">
-
-                  <IconBadge icon={icon} size="lg" tone="white" className="-mt-9 ring-4 ring-white" />
-
-
-
-                  <h3 className="mt-3 text-[24px] font-bold tracking-[-0.02em] text-crpe-ink">{title}</h3>
-
-                  <p className="mt-2 text-[15px] leading-6 text-crpe-muted">{text}</p>
-
-                  <p className={cx(statusPill, "mt-4 inline-flex w-fit", statusClass)}>{status}</p>
-
-
-
-                  <ul className="mt-4 grid gap-2">
-
-                    {benefits.map((item) => (
-
-                      <li key={item} className="flex gap-2.5 text-[15px] leading-6 text-crpe-ink">
-
-                        <DotBullet />
-
-                        {item}
-
-                      </li>
-
-                    ))}
-
-                  </ul>
-
-
-
-                  <div className="mt-auto pt-6">
-
-                    <Link href={href} className={cx(active ? pill.primary : pill.secondary, "w-full")}>
-
-                      {cta} <ArrowRight className="h-4 w-4" />
-
-                    </Link>
-
-                  </div>
-
-                </div>
-
-              </article>
-
-            );
-
-          })}
-
+        <div data-hero-workspace className="relative min-w-0 pb-5">
+          <div className="overflow-hidden rounded-[24px] bg-white shadow-crpe-soft ring-1 ring-crpe-line">
+            <div className="flex items-center justify-between border-b border-crpe-line bg-crpe-surface px-4 py-3 text-[12px] font-semibold text-crpe-muted"><span>CRPE / {active.mobileLabel}</span><span>Podgląd aplikacji</span></div>
+            <div data-hero-preview><HeroDashboard selected={selected} /></div>
+          </div>
+          {selected === "medyk" ? <div className="relative mx-3 mt-3 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-crpe-soft ring-1 ring-crpe-line sm:mx-6">
+            <UploadCloud className="h-8 w-8 shrink-0 text-crpe-punkt-text" aria-hidden="true" /><div><p className="text-[14px] font-bold text-crpe-ink">Zdjęcie certyfikatu przy aktywności</p><p className="text-[12px] text-crpe-muted">Przykład: plik dołączony do szkolenia</p></div>
+          </div> : null}
         </div>
-
       </div>
-
     </section>
-
   );
-
 }
 
+function OrganizationBand({ onSelect }: { onSelect: (key: AudienceKey) => void }) {
+  return <section id="dla-kogo" className="scroll-mt-24 bg-crpe-surface py-12 sm:py-16"><div className={pageWrap}>
+    <SectionHeading eyebrow="Dla organizacji" title="Placówka lub firma szkoleniowa?" text="Poznaj dostępne funkcje i aktualny zakres rozwoju." />
+    <div className="mt-6 grid gap-4 sm:grid-cols-2">{audiences.filter(a => a.key !== "medyk").map(a => <article key={a.key} className="rounded-2xl bg-white p-6 ring-1 ring-crpe-line">
+      <h3 className="text-xl font-bold text-crpe-ink">{a.label}</h3><p className="mt-2 text-sm leading-6 text-crpe-muted">{a.description}</p>
+      <div className="mt-4 flex flex-wrap gap-4"><Link href={a.detailsHref} className="font-semibold text-crpe-brand">Poznaj zakres →</Link><button type="button" onClick={() => { onSelect(a.key); window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }} className="font-semibold text-crpe-muted underline underline-offset-4">Pokaż podgląd</button></div>
+    </article>)}</div>
+  </div></section>;
+}
 
-
-/* ───────────────────────────── Narzędzia ──────────────────────────────── */
-
-
+function RegistrationPrompt() {
+  return <div className="bg-white px-4 py-7 text-center"><Link href="/rejestracja" className={cx(pill.primary, "min-h-12")}>Załóż konto i dodaj pierwszą aktywność <ArrowRight className="h-4 w-4" /></Link></div>;
+}
 
 function ProductToolsSection() {
 
@@ -1275,8 +759,6 @@ function ProductToolsSection() {
 
   ];
 
-
-
   return (
 
     <section id="narzedzia" className="scroll-mt-24 bg-crpe-surface py-16 sm:py-24">
@@ -1287,15 +769,13 @@ function ProductToolsSection() {
 
           eyebrow="Dostępne narzędzia"
 
-          title="Po zalogowaniu widzisz cały warsztat CRPE, nie tylko kalkulator."
+          title="Punkty, dokumenty i raport w jednym koncie."
 
           text="Panel, aktywności, dokumenty, raport i baza szkoleń działają w jednym koncie i prowadzą użytkownika przez kolejne etapy ewidencji."
 
           centered
 
         />
-
-
 
         <div className="mt-10 overflow-hidden rounded-[28px] bg-white shadow-crpe-soft ring-1 ring-crpe-line sm:mt-14">
 
@@ -1327,8 +807,6 @@ function ProductToolsSection() {
 
             </div>
 
-
-
             <div className="relative mt-5 flex flex-wrap gap-2">
 
               {tools.map(({ icon: Icon, title }, index) => (
@@ -1358,8 +836,6 @@ function ProductToolsSection() {
             </div>
 
           </div>
-
-
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4">
 
@@ -1425,11 +901,7 @@ function ProductToolsSection() {
 
 }
 
-
-
 /* ───────────────────────────── W praktyce ─────────────────────────────── */
-
-
 
 function PracticeSection() {
 
@@ -1441,13 +913,10 @@ function PracticeSection() {
 
   ];
 
-
-
   return (
 
     <section className="relative overflow-hidden bg-crpe-surface py-16 text-crpe-ink sm:py-24">
 
-      <div className="crpe-dot-grid pointer-events-none absolute inset-0 text-white opacity-[0.05]" aria-hidden="true" />
 
       <div
 
@@ -1456,9 +925,6 @@ function PracticeSection() {
         aria-hidden="true"
 
       />
-
-      <DottedCurve className="pointer-events-none absolute -bottom-2 right-8 hidden w-[380px] text-white/25 lg:block" />
-
 
 
       <div className={`${pageWrap} relative grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:gap-16`}>
@@ -1479,15 +945,13 @@ function PracticeSection() {
 
               eyebrow="CRPE w praktyce"
 
-              title="Panel CPD łączy kalkulator, aktywności i dokumenty."
+              title="Certyfikat zawsze przy właściwej aktywności."
 
               text="Panel CPD pokazuje postęp, Aktywności przechowują wpisy i certyfikaty, a Raport zbiera wszystko w jedno zestawienie."
 
             />
 
           </div>
-
-
 
           <ul className="mt-6 grid gap-3">
 
@@ -1506,8 +970,6 @@ function PracticeSection() {
           </ul>
 
         </div>
-
-
 
         <div className="crpe-dashboard-shell rounded-[28px] bg-white p-5 text-crpe-ink shadow-crpe-soft ring-1 ring-crpe-line sm:p-7">
 
@@ -1534,8 +996,6 @@ function PracticeSection() {
             </span>
 
           </div>
-
-
 
           <div className="mt-5 grid gap-3 sm:grid-cols-[0.64fr_0.36fr]">
 
@@ -1619,8 +1079,6 @@ function PracticeSection() {
 
             </div>
 
-
-
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
 
               <div className="flex flex-col justify-between rounded-[22px] bg-crpe-navy p-4 text-white">
@@ -1653,11 +1111,7 @@ function PracticeSection() {
 
 }
 
-
-
 /* ──────────────────────────── Jak to działa ───────────────────────────── */
-
-
 
 function HowItWorks({ selected }: { selected: AudienceKey }) {
 
@@ -1735,8 +1189,6 @@ function HowItWorks({ selected }: { selected: AudienceKey }) {
 
   const active = variants[selected];
 
-
-
   return (
 
     <section
@@ -1750,8 +1202,6 @@ function HowItWorks({ selected }: { selected: AudienceKey }) {
       <div className={pageWrap}>
 
         <SectionHeading eyebrow="Jak to działa" title={active.title} text={active.text} centered />
-
-
 
         <ol key={selected} className="crpe-role-swap relative mx-auto mt-12 grid max-w-[1080px] gap-10 sm:mt-16 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
 
@@ -1797,11 +1247,7 @@ function HowItWorks({ selected }: { selected: AudienceKey }) {
 
 }
 
-
-
 /* ───────────────────── Zakres placówki / organizatora ─────────────────── */
-
-
 
 function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"> }) {
 
@@ -1887,8 +1333,6 @@ function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"
 
   const active = variants[selected];
 
-
-
   return (
 
     <section className="bg-crpe-surface py-16 sm:py-24">
@@ -1932,8 +1376,6 @@ function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"
             </ul>
 
           </article>
-
-
 
           <article className="rounded-[28px] border-2 border-dashed border-crpe-warning-border bg-white/60 p-6 sm:p-8">
 
@@ -1983,11 +1425,7 @@ function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"
 
 }
 
-
-
 /* ──────────────────────────── Bezpieczeństwo ──────────────────────────── */
-
-
 
 function TrustSection() {
 
@@ -2025,8 +1463,6 @@ function TrustSection() {
 
   ];
 
-
-
   return (
 
     <section id="bezpieczenstwo" className="relative scroll-mt-24 overflow-hidden bg-white py-16 sm:py-24">
@@ -2063,8 +1499,6 @@ function TrustSection() {
 
         </div>
 
-
-
         <div>
 
           <SectionHeading
@@ -2076,8 +1510,6 @@ function TrustSection() {
             text="System porządkuje aktywności, punkty i dokumenty, ale nie zastępuje oficjalnych rejestrów ani wymaganej procedury rozliczenia."
 
           />
-
-
 
           <ul className="mt-8 grid gap-5">
 
@@ -2100,8 +1532,6 @@ function TrustSection() {
             ))}
 
           </ul>
-
-
 
           <div className="mt-8 flex flex-wrap gap-3">
 
@@ -2129,11 +1559,7 @@ function TrustSection() {
 
 }
 
-
-
 /* ──────────────────────────────── FAQ ─────────────────────────────────── */
-
-
 
 function FaqSection() {
 
@@ -2189,8 +1615,6 @@ function FaqSection() {
 
   ];
 
-
-
   return (
 
     <section id="faq" className="scroll-mt-24 bg-crpe-surface py-16 sm:py-24">
@@ -2224,8 +1648,6 @@ function FaqSection() {
             </Link>
 
           </div>
-
-
 
           <div className="space-y-3">
 
@@ -2269,13 +1691,9 @@ function FaqSection() {
 
 }
 
-
-
 export default function Page() {
 
   const [selectedAudience, setSelectedAudience] = useState<AudienceKey>("medyk");
-
-
 
   return (
 
@@ -2283,9 +1701,9 @@ export default function Page() {
 
       <Hero selected={selectedAudience} onSelect={setSelectedAudience} />
 
-      <AudienceSection selected={selectedAudience} />
 
       <HowItWorks selected={selectedAudience} />
+      {selectedAudience === "medyk" ? <RegistrationPrompt /> : null}
 
       {selectedAudience === "medyk" ? (
 
@@ -2294,6 +1712,7 @@ export default function Page() {
           <PracticeSection />
 
           <ProductToolsSection />
+          <RegistrationPrompt />
 
         </>
 
@@ -2305,6 +1724,7 @@ export default function Page() {
 
       <TrustSection />
 
+      <OrganizationBand onSelect={setSelectedAudience} />
       <FaqSection />
 
       <BottomCTA selected={selectedAudience} />
