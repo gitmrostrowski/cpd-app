@@ -165,7 +165,6 @@ export default function Home() {
       <div className="tpane is-on" id="tpane-0" role="tabpanel" aria-labelledby="tnav-0">
         <div className="tpane-hd"><b>Panel CPD</b><span className="tpane-tags"><i>Cel 200 pkt</i><i>Okres 2024–2027</i></span></div>
         <div className="tp-body">
-            <div className="tp-top"><span className="tp-app"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 16l5-5 3 3 6-7"></path><path d="M18 7h-4M18 7v4"></path></svg></span><div className="tp-ttl"><small>Widok użytkownika</small></div><span className="tp-badge">Dane przykładowe</span></div>
             <div className="cpd">
               <div className="tp-ring">
                 <svg aria-hidden="true" viewBox="0 0 120 120"><circle className="tr-bg" cx="60" cy="60" r="51"></circle><circle className="tr-fg" cx="60" cy="60" r="51" pathLength="1"></circle></svg>
