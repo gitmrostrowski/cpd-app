@@ -1299,3 +1299,46 @@
  .crpe-home-v14 .tools-section { padding-top:20px; }
  .crpe-home-v14 .tools-stage { padding:16px; }
 }
+/* v6.28.22: shared page grid, clear section spacing and compact previews. */
+.crpe-home-v14 { --max:1200px; }
+.crpe-home-v14 .wrap { padding-inline:32px; }
+.crpe-home-v14 .hero-pick { margin-top:44px; }
+.crpe-home-v14 .hero-strip { padding-block:56px 24px; }
+.crpe-home-v14 .tools-section { padding-top:24px; }
+.crpe-home-v14 .tools-ui { max-width:none; grid-template-columns:minmax(0,1fr); gap:18px; }
+.crpe-home-v14 .tools-nav { position:static; display:flex; flex-direction:row; gap:10px; overflow-x:auto; padding:4px; }
+.crpe-home-v14 .tnav { flex:1; width:auto; min-height:56px; grid-template-columns:34px minmax(0,1fr); gap:10px; padding:10px 14px; border-radius:14px; }
+.crpe-home-v14 .tnav-ic { width:34px; height:34px; border-radius:10px; }
+.crpe-home-v14 .tnav-tx em, .crpe-home-v14 .tnav-ar { display:none; }
+.crpe-home-v14 .tools-stage .cpd { grid-template-columns:120px minmax(0,1fr); gap:24px; }
+.crpe-home-v14 .tools-stage .cpd .tp-ring { width:120px; height:120px; }
+.crpe-home-v14 .tools-stage .cpd-tiles { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.crpe-home-v14 .tools-stage .tp-chart .tp-spark { height:48px; }
+.crpe-home-v14 .sec-split { display:block; max-width:none; }
+.crpe-home-v14 .sec-copy { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); column-gap:56px; align-items:start; }
+.crpe-home-v14 .sec-copy > .sec-eyebrow, .crpe-home-v14 .sec-copy > h2, .crpe-home-v14 .sec-copy > p, .crpe-home-v14 .sec-actions { grid-column:1; }
+.crpe-home-v14 .sec-list { grid-column:2; grid-row:1 / span 4; margin-top:0; }
+.crpe-home-v14 .faq > .wrap { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:56px; align-items:start; }
+.crpe-home-v14 .faq .section-head { text-align:left; margin:0; }
+.crpe-home-v14 .faq .eyebrow { margin-left:0; }
+.crpe-home-v14 .faq-list { width:100%; max-width:none; margin:0; }
+@media(max-width:900px){
+ .crpe-home-v14 .sec-copy, .crpe-home-v14 .faq > .wrap { display:block; }
+ .crpe-home-v14 .sec-list { margin-top:24px; }
+ .crpe-home-v14 .faq .section-head { margin-bottom:28px; }
+}
+@media(max-width:1023px){ .crpe-home-v14 .wrap { padding-inline:24px; } }
+@media(max-width:639px){
+ .crpe-home-v14 .wrap { padding-inline:16px; }
+ .crpe-home-v14 .hero-pick { margin-top:36px; }
+ .crpe-home-v14 .hero-strip { padding-block:40px 20px; gap:8px; }
+ .crpe-home-v14 .hero-strip i { width:20px; }
+ .crpe-home-v14 .hero-strip span { white-space:nowrap; }
+ .crpe-home-v14 .tnav { flex:0 0 auto; min-height:48px; padding:8px 12px; }
+ .crpe-home-v14 .tools-stage .cpd { grid-template-columns:minmax(0,1fr); gap:16px; }
+ .crpe-home-v14 .tools-stage .cpd-tiles { gap:6px; }
+}
+.crpe-home-v14 .header-inner { padding-inline:32px; }
+.crpe-home-v14 .sec-copy > .sec-eyebrow { justify-self:start; }
+@media(max-width:1023px){ .crpe-home-v14 .header-inner { padding-inline:24px; } }
+@media(max-width:639px){ .crpe-home-v14 .header-inner { padding-inline:16px; } }
