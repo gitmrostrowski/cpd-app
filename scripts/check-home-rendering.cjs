@@ -49,3 +49,7 @@ assert(!signedIn.includes('Załóż konto'));
 assert(signedIn.includes('href="/panel-cpd"'));
 assert(!signedIn.includes('id="menuToggle"'));
 console.log('PASS Home rendering: guest/account navigation, CTA, landmarks, focus target, visible-scope markup');
+assert(!signedIn.includes('Wybierz, kim jesteś'));
+assert(signedIn.includes('Przejdź do swoich narzędzi'));
+assert(guest.includes('hero-choose'));
+assert(!guest.includes('Trzy role. Jeden CRPE.'));

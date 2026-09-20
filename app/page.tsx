@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { Montserrat } from "next/font/google";
 import HomeFrame from "@/components/home/HomeFrame";
+import HomeAudience from "@/components/home/HomeAudience";
 import HomeAction from "@/components/home/HomeAction";
 import "./home-v14.css";
 const font = Montserrat({ subsets: ["latin", "latin-ext"], display: "swap", variable: "--font-home" });
@@ -80,41 +81,10 @@ export default function Home() {
   <div className="hero-inner">
     <div className="hero-copy">
       <span className="eyebrow"><span className="dot"></span>CRPE dla medyków, placówek i organizatorów</span>
-      <h1><span className="l1">Edukacja medyczna</span><br /><span className="accent">Prościej.</span></h1>
-      <p className="lead">Szkolenia, punkty edukacyjne i certyfikaty w jednym miejscu.</p>
+      <h1>Punkty edukacyjne i certyfikaty <span className="accent">w jednym miejscu.</span></h1>
+      <p className="lead">Porządkuj aktywności i dokumenty. Poznaj narzędzia dla medyka, placówki i organizatora kształcenia.</p>
       <div className="hero-cta">
         <HomeAction /><Link href="#narzedzia" className="btn btn-ghost">Zobacz narzędzia</Link>
-      </div>
-      <h2 className="hero-pick" id="dla-kogo">Wybierz, kim jesteś</h2>
-      <div className="hero-roles" id="kim-jestes" tabIndex={-1} aria-labelledby="dla-kogo">
-        <Link href="/dla-medyka" className="how-card role-green">
-          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3v5.5a4.5 4.5 0 0 0 9 0V3"></path><path d="M5 3h2M14 3h2"></path><path d="M10.5 13v2.5a4 4 0 0 0 8 0v-1"></path><circle cx="18.5" cy="10" r="2.2"></circle></svg></span><span className="ct-txt"><h3>Medyk</h3><span className="ct-mini">Twoje punkty i certyfikaty</span></span></div>
-          <div className="card-swap">
-          <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-medyk.webp" width={400} height={400} alt="" loading="eager" /></figure></div>
-
-          </div>
-          <span className="ct-go"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
-        </Link>
-        <Link href="/dla-placowki" className="how-card role-blue">
-          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21V8l8-4.5L20 8v13"></path><path d="M2 21h20"></path><path d="M12 8.5v4.5M9.75 10.75h4.5"></path><rect x="8" y="16" width="3.2" height="5"></rect><rect x="12.8" y="16" width="3.2" height="5"></rect></svg></span><span className="ct-txt"><h3>Placówka medyczna</h3><span className="ct-mini">Zespół, jednostki i dostęp</span></span></div>
-          <div className="card-swap">
-          <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-placowka.webp" width={400} height={400} alt="" loading="eager" /></figure></div>
-
-          </div>
-          <span className="ct-go"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
-        </Link>
-        <Link href="/dla-organizatora" className="how-card role-violet">
-          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="7.5" r="2.8"></circle><path d="M7.2 17c0-2.6 2.1-4.3 4.8-4.3s4.8 1.7 4.8 4.3"></path><circle cx="5" cy="10" r="2.1"></circle><path d="M1.5 18c0-2 1.4-3.3 3.5-3.3"></path><circle cx="19" cy="10" r="2.1"></circle><path d="M22.5 18c0-2-1.4-3.3-3.5-3.3"></path></svg></span><span className="ct-txt"><h3>Organizator</h3><span className="ct-mini">Zgłoś szkolenie do bazy</span></span></div>
-          <div className="card-swap">
-          <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-organizator.webp" width={400} height={400} alt="" loading="eager" /></figure></div>
-
-          </div>
-          <span className="ct-go"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
-        </Link>
-      </div>
-      <div className="role-scope" aria-label="Zakres funkcji organizacyjnych">
-        <p><strong>Placówka:</strong> jednostki, zaproszenia i role dostępne. Raporty zbiorcze są rozwijane.</p>
-        <p><strong>Organizator:</strong> zgłoszenia szkoleń do bazy dostępne. Obsługa uczestników jest rozwijana.</p>
       </div>
     </div>
     <figure className="hero-figure">
@@ -122,11 +92,36 @@ export default function Home() {
       <span className="hf-dots hf-dots-b" aria-hidden="true"></span>
       <img src="/home/v14/crpe-hero-lekarka.webp" width={1370} height={1148} alt="Lekarka w gabinecie" fetchPriority="high" />
       <span className="hf-chip" aria-hidden="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-4 9 4-9 4z"></path><path d="M7 11.5V16c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4.5"></path></svg></span>
-      <figcaption className="hero-stat">
-        <span className="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="2.6"></circle><path d="M3.5 18c0-2.8 2.4-4.4 5.5-4.4s5.5 1.6 5.5 4.4"></path><circle cx="17" cy="9" r="2.1"></circle><path d="M15.5 13.9c2.6.2 4.5 1.7 4.5 4.1"></path></svg></span>
-        <span><b>Trzy role. Jeden CRPE.</b><em>Medyk, placówka, organizator</em></span>
-      </figcaption>
+
     </figure>
+    <HomeAudience>      <h2 className="hero-pick" id="dla-kogo">Wybierz, kim jesteś</h2>
+      <div className="hero-roles" id="kim-jestes" tabIndex={-1} aria-labelledby="dla-kogo">
+        <Link href="/dla-medyka" className="how-card role-green">
+          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3v5.5a4.5 4.5 0 0 0 9 0V3"></path><path d="M5 3h2M14 3h2"></path><path d="M10.5 13v2.5a4 4 0 0 0 8 0v-1"></path><circle cx="18.5" cy="10" r="2.2"></circle></svg></span><span className="ct-txt"><h3>Medyk</h3><span className="ct-mini">Twoje punkty i certyfikaty</span><span className="role-scope">Aktywności, certyfikaty i raport użytkownika.</span></span></div>
+          <div className="card-swap">
+          <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-medyk.webp" width={400} height={400} alt="" loading="eager" /></figure></div>
+
+          </div>
+          <span className="ct-go"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+        </Link>
+        <Link href="/dla-placowki" className="how-card role-blue">
+          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21V8l8-4.5L20 8v13"></path><path d="M2 21h20"></path><path d="M12 8.5v4.5M9.75 10.75h4.5"></path><rect x="8" y="16" width="3.2" height="5"></rect><rect x="12.8" y="16" width="3.2" height="5"></rect></svg></span><span className="ct-txt"><h3>Placówka medyczna</h3><span className="ct-mini">Zespół, jednostki i dostęp</span><span className="role-scope">Jednostki, zaproszenia i role dostępne. Raporty zbiorcze są rozwijane.</span></span></div>
+          <div className="card-swap">
+          <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-placowka.webp" width={400} height={400} alt="" loading="eager" /></figure></div>
+
+          </div>
+          <span className="ct-go"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+        </Link>
+        <Link href="/dla-organizatora" className="how-card role-violet">
+          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="7.5" r="2.8"></circle><path d="M7.2 17c0-2.6 2.1-4.3 4.8-4.3s4.8 1.7 4.8 4.3"></path><circle cx="5" cy="10" r="2.1"></circle><path d="M1.5 18c0-2 1.4-3.3 3.5-3.3"></path><circle cx="19" cy="10" r="2.1"></circle><path d="M22.5 18c0-2-1.4-3.3-3.5-3.3"></path></svg></span><span className="ct-txt"><h3>Organizator</h3><span className="ct-mini">Zgłoś szkolenie do bazy</span><span className="role-scope">Zgłoszenia do bazy dostępne. Obsługa uczestników jest rozwijana.</span></span></div>
+          <div className="card-swap">
+          <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-organizator.webp" width={400} height={400} alt="" loading="eager" /></figure></div>
+
+          </div>
+          <span className="ct-go"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+        </Link>
+      </div>
+</HomeAudience>
   </div>
   <div className="hero-strip"><i></i><span>Wiedza</span><b>·</b><span>Rozwój</span><b>·</b><span>Lepsza opieka</span><i></i></div>
 </section>
