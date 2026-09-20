@@ -93,8 +93,7 @@ assert.match(help, /xl:grid-cols-12/, "Drugi rząd trzech kart powinien wypełni
 
 // --- 5. Role organizacyjne widzą, jak chronione są dane zespołu ---
 const home = await read("app/page.tsx");
-assert.match(home, /href="\/bezpieczenstwo"[\s\S]*?Bezpieczeństwo danych/, "Placówka i organizator potrzebują linku o ochronie danych");
-assert.match(home, /selected !== "medyk" \? \(/, "Link pokazujemy tylko rolom organizacyjnym");
+assert.match(home, /href="\/bezpieczenstwo"/, "Wszystkie role potrzebują dostępu do informacji o ochronie danych");
 
 // --- 6. Nic nie zostało po przenosinach ---
 const scripts = await readdir(new URL("scripts/", root));

@@ -11,7 +11,6 @@ const checks = [
   'check-v5-1c-invitation-onboarding.mjs',
   'check-v5-1d-confirmation-notice.mjs',
   'check-v5-1e-organization-context.mjs',
-  'check-v6-15-3-role-paths.mjs',
   'check-v6-2-1-contact-delivery.mjs',
   'check-v6-20-deadlines-and-pace.mjs',
   'check-v6-21-consistency-and-routes.mjs',
@@ -26,10 +25,7 @@ const checks = [
   'check-v6-26-import-review-and-panel-color.mjs',
   'check-v6-27-11-nil-descriptions.mjs',
   'check-v6-27-5-layout-and-semantic-colors.mjs',
-  'check-v6-27-7-home-visual-coherence.mjs',
-  'check-v6-27-8-home-hero-and-panel-balance.mjs',
-  'check-v6-27-9-home-role-strip-and-compact-status.mjs',
-  'check-v6-28-punkty-visual-system.mjs',
+  'check-v6-28-14-home.mjs',
 ];
 let failed = 0;
 for (const file of checks) {

@@ -12,7 +12,7 @@ assert(layout.includes("export const PAGE_MAX_W = 1200;"), "PAGE_MAX_W musi wyno
 assert(layout.includes("max-w-[${PAGE_MAX_W}px]"), "pageWrap musi korzystać z PAGE_MAX_W");
 
 const home = read("app/page.tsx");
-assert(home.includes('import { pageWrap } from "@/lib/layout";'), "Home musi importować wspólny pageWrap");
+assert(home.includes('crpe-home-v14'), "Nowy Home musi mieć izolowany kontener stylów");
 assert(!home.includes('const pageWrap = "mx-auto w-full max-w-[1180px]'), "Home nie może mieć lokalnego pageWrap 1180px");
 
 const globals = read("app/globals.css");

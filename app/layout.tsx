@@ -6,6 +6,7 @@ import "./crpe-visual-v6-28-2.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import HomeChrome from "@/components/HomeChrome";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin", "latin-ext"],
@@ -24,9 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${jakarta.className} antialiased`}>
         <AuthProvider>
           <div className="flex min-h-screen flex-col">
-            <Header />
+            <HomeChrome><Header /></HomeChrome>
             <main className="flex-1">{children}</main>
-            <Footer />
+            <HomeChrome><Footer /></HomeChrome>
           </div>
         </AuthProvider>
       </body>

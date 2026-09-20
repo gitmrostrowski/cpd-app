@@ -1,2092 +1,354 @@
+/* eslint-disable @next/next/no-img-element -- supplied landing page artwork */
 "use client";
-
-// Strona główna CRPE — v6.28 „Punkty = kropki”.
-
-// Treści bez zmian względem v6.27.x; zmieniony układ, kolorystyka, typografia, ikony i zdjęcia.
-
-// Wspólne elementy wizualne: components/ui/crpe.tsx.
-
-import React, { useState } from "react";
-
-import Image from "next/image";
-
+import { useEffect, useRef, type CSSProperties } from "react";
 import Link from "next/link";
-
-import {
-
-  ArrowRight,
-
-  BarChart3,
-
-  Building2,
-
-  CalendarCheck2,
-
-  Check,
-
-  CheckCircle2,
-
-  ClipboardCheck,
-
-  FileCheck2,
-
-  FileText,
-
-  FolderOpen,
-
-  GraduationCap,
-
-  HelpCircle,
-
-  LockKeyhole,
-
-  Plus,
-
-  ShieldCheck,
-
-  Stethoscope,
-
-  UploadCloud,
-
-  UserRound,
-
-} from "lucide-react";
-
-import BottomCTA from "@/components/BottomCTA";
-
-import { pageWrap } from "@/lib/layout";
-
-import {
-
-  DotBullet,
-
-
-  Eyebrow,
-
-  IconBadge,
-
-  SectionHeading,
-
-  cx,
-
-  pill,
-
-} from "@/components/ui/crpe";
-
-type AudienceKey = "medyk" | "placowka" | "organizator";
-
-type AudienceOption = {
-
-  key: AudienceKey;
-
-  label: string;
-
-  mobileLabel: string;
-
-  shortLabel: string;
-
-  icon: typeof Stethoscope;
-
-  status: string;
-
-  statusTone: string;
-
-  title: string;
-
-  description: string;
-
-  cta: string;
-
-  href: string;
-
-  detailsHref: string;
-
-  detailsLabel: string;
-
-  facts: [string, string, string];
-
-  benefits: [string, string, string];
-
-  image: string;
-
-  imageAlt: string;
-
-  imagePosition: string;
-
-};
-
-const statusPill = "rounded-full px-3 py-1 text-[12px] font-bold ring-1";
-
-const audiences: AudienceOption[] = [
-
-  {
-
-    key: "medyk",
-
-    label: "Medyk",
-
-    mobileLabel: "Medyk",
-
-    shortLabel: "Prowadzę własną ewidencję",
-
-    icon: Stethoscope,
-
-    status: "Dostępne teraz",
-
-    statusTone: "bg-crpe-medyk-soft text-crpe-medyk-text ring-crpe-medyk-border",
-
-    title: "Prowadź własną ewidencję bez arkuszy i osobnych folderów.",
-
-    description:
-
-      "Dodawaj aktywności, przechowuj certyfikaty i sprawdzaj aktualny status w jednym panelu.",
-
-    cta: "Załóż konto medyka",
-
-    href: "/rejestracja",
-
-    detailsHref: "/dla-medyka",
-
-    detailsLabel: "Dowiedz się więcej o profilu medyka",
-
-    facts: ["110/200 pkt", "18 certyfikatów", "2 wpisy do uzupełnienia"],
-
-    benefits: ["Panel CPD i kalkulator celu", "Aktywności z certyfikatami", "Raport użytkownika i baza szkoleń"],
-
-    image: "/home/photo-medyk.webp",
-
-    imageAlt: "Uśmiechnięta lekarka pokazuje panel CPD na tablecie",
-
-    imagePosition: "50% 30%",
-
-  },
-
-  {
-
-    key: "placowka",
-
-    label: "Placówka / jednostka",
-
-    mobileLabel: "Placówka",
-
-    shortLabel: "Wspieram zespół",
-
-    icon: Building2,
-
-    status: "Fundament dostępny",
-
-    statusTone: "bg-crpe-placowka-soft text-crpe-placowka-text ring-crpe-placowka-border",
-
-    title: "Zbuduj strukturę placówki i uporządkuj dostęp zespołu.",
-
-    description:
-
-      "Struktura placówki, zaproszenia i role są dostępne już dziś. Zbiorczy status zespołu, raporty i alerty są rozwijane.",
-
-    cta: "Zobacz zakres",
-
-    href: "/dla-placowki",
-
-    detailsHref: "/dla-placowki",
-
-    detailsLabel: "Dowiedz się więcej o rozwiązaniu dla placówki",
-
-    facts: ["Jednostki", "E-mail", "Role"],
-
-    benefits: ["Struktura placówki i jednostek", "Zaproszenia na konkretny e-mail", "Role i członkostwa zespołu"],
-
-    image: "/home/photo-placowka-v3.webp",
-
-    imageAlt: "Koordynatorka placówki i lekarz przeglądają dokumentację na tablecie",
-
-    imagePosition: "50% 30%",
-
-  },
-
-  {
-
-    key: "organizator",
-
-    label: "Organizator kształcenia",
-
-    mobileLabel: "Organizator",
-
-    shortLabel: "Organizuję szkolenia",
-
-    icon: GraduationCap,
-
-    status: "Zgłoszenia dostępne",
-
-    statusTone: "bg-crpe-organizator-soft text-crpe-organizator-text ring-crpe-organizator-border",
-
-    title: "Opublikuj szkolenie i skieruj użytkowników do zapisów.",
-
-    description:
-
-      "Możesz zgłosić szkolenie do publicznej bazy i zaprezentować dane wydarzenia, logo oraz link do zapisów. Dalszy zakres rozwijamy.",
-
-    cta: "Poznaj zakres modułu",
-
-    href: "/dla-organizatora",
-
-    detailsHref: "/dla-organizatora",
-
-    detailsLabel: "Dowiedz się więcej o rozwiązaniu dla organizatora",
-
-    facts: ["Zgłoszenie", "Logo", "Link"],
-
-    benefits: ["Zgłoszenie do publicznej bazy", "Strona wydarzenia po publikacji", "Dane organizatora i link do zapisów"],
-
-    image: "/home/photo-organizator-v3.webp",
-
-    imageAlt: "Prowadząca warsztat medyczny omawia model anatomiczny z uczestnikami",
-
-    imagePosition: "50% 25%",
-
-  },
-
-];
-
-/* ─────────────────────────────── Hero ─────────────────────────────────── */
-
-function Metric({
-
-  icon,
-
-  label,
-
-  value,
-
-}: {
-
-  icon: typeof FileCheck2;
-
-  label: string;
-
-  value: string;
-
-}) {
-
-  return (
-
-    <div className="flex items-center gap-3 rounded-2xl bg-crpe-surface p-3">
-
-      <IconBadge icon={icon} size="sm" tone="white" dot={false} />
-
-      <div className="min-w-0">
-
-        <p className="text-[11px] font-semibold text-crpe-muted">{label}</p>
-
-        <p className="text-[13px] font-bold text-crpe-ink">{value}</p>
-
-      </div>
-
+import { Montserrat } from "next/font/google";
+import { initializeHome } from "@/components/home/initializeHome";
+import "./home-v14.css";
+const font = Montserrat({ subsets: ["latin", "latin-ext"], display: "swap" });
+export default function Home() {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => root.current ? initializeHome(root.current) : undefined, []);
+  return <div ref={root} className={`crpe-home-v14 ${font.className}`}>
+  <Link className="skip-home" href="#kim-jestes">Przejdź do wyboru odbiorcy</Link>
+
+
+
+
+
+<header className="site-header">
+  <span className="scroll-progress" id="scrollProgress"></span>
+  <div className="header-inner">
+    <Link href="/" className="logo"><span className="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l7.5 3.2v5.4c0 4.7-3.2 8-7.5 9.4-4.3-1.4-7.5-4.7-7.5-9.4V6.2z"></path><path d="M9 12.2l2.1 2.1L15.2 10"></path></svg></span>CRPE</Link>
+    <nav className="main-nav" id="mainNav">
+      <span className="nav-pill" id="navPill"></span>
+      <Link href="#narzedzia">Narzędzia</Link>
+      <Link href="#bezpieczenstwo">Bezpieczeństwo</Link>
+      <Link href="#faq">FAQ</Link>
+    </nav>
+    <div className="header-actions">
+      <Link href="/login" className="btn btn-ghost">Zaloguj się</Link>
+      <Link href="/rejestracja" className="btn btn-primary">Załóż konto</Link>
+      <button type="button" className="menu-toggle-btn" id="menuToggle" aria-label="Otwórz menu" aria-expanded="false" aria-controls="sideDrawer">
+        <i></i><i></i><i></i>
+      </button>
     </div>
+  </div>
+</header>
+<button type="button" className="drawer-backdrop" id="drawerBackdrop" tabIndex={-1} aria-hidden="true"></button>
+<nav className="side-drawer" id="sideDrawer" aria-label="Menu" aria-hidden="true">
+  <div className="drawer-head">
+    <span>Menu</span>
+    <button type="button" className="drawer-close" id="drawerClose" aria-label="Zamknij menu">✕</button>
+  </div>
+  <Link href="#narzedzia">Narzędzia</Link>
+  <Link href="#bezpieczenstwo">Bezpieczeństwo</Link>
+  <Link href="#faq">FAQ</Link>
+  <Link href="/pomoc">Centrum pomocy</Link>
+  <div className="drawer-cta">
+    <Link href="/login" className="btn btn-ghost">Zaloguj się</Link>
+    <Link href="/rejestracja" className="btn btn-primary">Załóż konto</Link>
+  </div>
+</nav>
 
-  );
-
-}
-
-function PointsGauge({ value, goal }: { value: number; goal: number }) {
-
-  const r = 62;
-
-  const length = 2 * Math.PI * r;
-
-  const ratio = Math.min(value / goal, 1);
-
-  const offset = length * (1 - ratio);
-
-  return (
-
-    <div className="relative h-[112px] w-[112px] shrink-0 sm:h-[180px] sm:w-[180px]">
-
-      <svg viewBox="0 0 150 150" className="absolute inset-0 h-full w-full" aria-hidden="true" fill="none">
-
-        <circle cx="75" cy="75" r={r} stroke="var(--color-crpe-line)" strokeWidth="3" strokeLinecap="round" strokeDasharray="0 7.5" />
-
-        <circle
-
-          cx="75"
-
-          cy="75"
-
-          r={r}
-
-          transform="rotate(-90 75 75)"
-
-          stroke="var(--color-crpe-punkt)"
-
-          strokeWidth="9"
-
-          strokeLinecap="round"
-
-          strokeDasharray={length}
-
-          className="crpe-ring-progress"
-
-          style={{ strokeDashoffset: offset, "--ring-length": `${length}`, "--ring-offset": `${offset}` } as React.CSSProperties}
-
-        />
-
-      </svg>
-
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-
-        <span className="text-[32px] font-extrabold leading-none tracking-[-0.04em] text-crpe-ink sm:text-[40px]">{value}</span>
-
-        <span className="mt-1 text-[13px] font-bold text-crpe-muted">/ {goal} pkt</span>
-
+<section className="hero">
+  <div className="hero-inner">
+    <div className="hero-copy">
+      <span className="eyebrow"><span className="dot"></span>CRPE dla medyków, placówek i organizatorów</span>
+      <h1><span className="l1">Edukacja medyczna</span><br /><span className="accent">Prościej.</span></h1>
+      <p className="lead">Szkolenia, punkty edukacyjne i certyfikaty w jednym miejscu.</p>
+      <div className="hero-cta">
+        <Link href="#kim-jestes" className="btn btn-primary hcta">Poznaj CRPE <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></Link>
       </div>
-
+      <span className="hero-pick">Wybierz, kim jesteś</span>
+      <div className="hero-roles" id="kim-jestes">
+        <Link href="/dla-medyka" className="how-card role-green">
+          <div className="card-top"><span className="rc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3v5.5a4.5 4.5 0 0 0 9 0V3"></path><path d="M5 3h2M14 3h2"></path><path d="M10.5 13v2.5a4 4 0 0 0 8 0v-1"></path><circle cx="18.5" cy="10" r="2.2"></circle></svg></span><span className="ct-txt"><h3>Medyk</h3><span className="ct-mini">Rozwijaj swoje kompetencje</span></span></div>
+          <div className="card-swap">
+          <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-medyk.webp" width={1254} height={1254} alt="Fartuch medyczny i stetoskop" loading="lazy" /></figure></div>
+          <div className="cs-text">
+            <div className="eyebrow-label">Dla indywidualnych użytkowników</div>
+            <p className="desc">Zbieraj punkty CPD, aktywności i certyfikaty w swoim profilu.</p>
+            <span className="go">Wybierz medyka <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round"></path></svg></span>
+          </div>
+          </div>
+          <span className="ct-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+        </Link>
+        <Link href="/dla-placowki" className="how-card role-blue">
+          <div className="card-top"><span className="rc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21V8l8-4.5L20 8v13"></path><path d="M2 21h20"></path><path d="M12 8.5v4.5M9.75 10.75h4.5"></path><rect x="8" y="16" width="3.2" height="5"></rect><rect x="12.8" y="16" width="3.2" height="5"></rect></svg></span><span className="ct-txt"><h3>Placówka medyczna</h3><span className="ct-mini">Uporządkuj strukturę i dostęp</span></span></div>
+          <div className="card-swap">
+          <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-placowka.webp" width={1254} height={1254} alt="Budynek placówki medycznej" loading="lazy" /></figure></div>
+          <div className="cs-text">
+            <div className="eyebrow-label">Dla klinik i placówek</div>
+            <p className="desc">Twórz jednostki, zapraszaj zespół i nadawaj role. Raporty zbiorcze są rozwijane.</p>
+            <span className="go">Wybierz placówkę <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round"></path></svg></span>
+          </div>
+          </div>
+          <span className="ct-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+        </Link>
+        <Link href="/dla-organizatora" className="how-card role-violet">
+          <div className="card-top"><span className="rc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="7.5" r="2.8"></circle><path d="M7.2 17c0-2.6 2.1-4.3 4.8-4.3s4.8 1.7 4.8 4.3"></path><circle cx="5" cy="10" r="2.1"></circle><path d="M1.5 18c0-2 1.4-3.3 3.5-3.3"></path><circle cx="19" cy="10" r="2.1"></circle><path d="M22.5 18c0-2-1.4-3.3-3.5-3.3"></path></svg></span><span className="ct-txt"><h3>Organizator</h3><span className="ct-mini">Zgłoś szkolenie do publicznej bazy</span></span></div>
+          <div className="card-swap">
+          <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-organizator.webp" width={1254} height={1254} alt="Laptop, notes i roślina na biurku" loading="lazy" /></figure></div>
+          <div className="cs-text">
+            <div className="eyebrow-label">Dla organizatorów szkoleń</div>
+            <p className="desc">Zgłoś szkolenie do publikacji i skieruj odbiorców do zapisów. Obsługa uczestników jest rozwijana.</p>
+            <span className="go">Wybierz organizatora <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round"></path></svg></span>
+          </div>
+          </div>
+          <span className="ct-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+        </Link>
+      </div>
     </div>
-
-  );
-
-}
-
-function MedykDashboard() {
-
-  return (
-
-    <>
-
-      <div className="flex items-center gap-5 sm:gap-7">
-
-        <PointsGauge value={110} goal={200} />
-
-        <div className="min-w-0 flex-1">
-
-          <p className="text-[13px] font-semibold text-crpe-muted">Postęp punktowy</p>
-
-          <p className="mt-1 text-[22px] font-extrabold leading-tight tracking-[-0.02em] text-crpe-ink">55% celu</p>
-
-          <p className="mt-0.5 text-[13px] font-semibold text-crpe-muted">2025–2028</p>
-
-          <div className="mt-4 inline-flex items-baseline gap-2 rounded-2xl bg-crpe-punkt-soft px-3.5 py-2">
-
-            <span className="text-[12px] font-semibold text-crpe-punkt-text">Brakuje</span>
-
-            <span className="text-[17px] font-extrabold text-crpe-punkt-text">90 pkt</span>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      <div className="mt-5 grid grid-cols-2 gap-2">
-
-        <Metric icon={FileCheck2} label="Certyfikaty" value="18 dokumentów" />
-
-        <Metric icon={ClipboardCheck} label="Do uzupełnienia" value="2 aktywności" />
-
-      </div>
-
-    </>
-
-  );
-
-}
-
-function ChecklistDashboard({
-
-  eyebrow,
-
-  title,
-
-  rows,
-
-  note,
-
-}: {
-
-  eyebrow: string;
-
-  title: string;
-
-  rows: string[][];
-
-  note: string;
-
-}) {
-
-  return (
-
-    <>
-
-      <div className="flex items-start justify-between gap-3">
-
-        <div>
-
-          <p className="text-[12px] font-semibold text-crpe-muted">{eyebrow}</p>
-
-          <p className="font-display mt-0.5 text-[18px] font-bold leading-tight text-crpe-ink">{title}</p>
-
-        </div>
-
-      </div>
-
-      <ul className="mt-3 space-y-1.5">
-
-        {rows.map(([name, description]) => (
-
-          <li key={name} className="crpe-row-in flex items-center gap-2 rounded-xl bg-crpe-surface px-3 py-2">
-
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-crpe-punkt-text text-white">
-
-              <Check className="h-3.5 w-3.5" strokeWidth={3} />
-
-            </span>
-
-            <div className="min-w-0">
-
-              <p className="text-[13px] font-bold text-crpe-ink">{name}</p>
-
-              <p className="sr-only">{description}</p>
-
-            </div>
-
-          </li>
-
-        ))}
-
-      </ul>
-
-      <p className="mt-2.5 rounded-xl bg-crpe-warning-soft px-3 py-2 text-[11px] font-semibold text-crpe-warning">
-
-        {note}
-
-      </p>
-
-    </>
-
-  );
-
-}
-
-function PlacowkaDashboard() {
-
-  return (
-
-    <ChecklistDashboard
-
-      eyebrow="Panel placówki"
-
-      title="Struktura i dostęp zespołu"
-
-      rows={[
-
-        ["Jednostki organizacyjne", "Tworzenie struktury placówki"],
-
-        ["Zaproszenia e-mail", "Dostęp dla wskazanej osoby"],
-
-        ["Role i członkostwa", "Uprawnienia w zespole"],
-
-      ]}
-
-      note="Zbiorczy status, raporty i alerty — rozwijamy"
-
-    />
-
-  );
-
-}
-
-function OrganizatorDashboard() {
-
-  return (
-
-    <ChecklistDashboard
-
-      eyebrow="Publiczna baza szkoleń"
-
-      title="Zgłoś wydarzenie do publikacji"
-
-      rows={[
-
-        ["Dane wydarzenia", "Termin, format, miejsce i punkty"],
-
-        ["Organizator", "Nazwa i logo po publikacji"],
-
-        ["Zapisy", "Bezpośredni link do organizatora"],
-
-      ]}
-
-      note="Panel uczestników i obsługa certyfikatów — rozwijamy"
-
-    />
-
-  );
-
-}
-
-/** Decorative role indicator; the adjacent label supplies the accessible name. */
-
-function RoleRing({ selected }: { selected: AudienceKey }) {
-
-  const active = audiences.find((item) => item.key === selected) ?? audiences[0];
-
-  const Icon = active.icon;
-
-  return (
-
-    <span data-role-ring={selected} className="relative flex h-11 w-11 shrink-0 items-center justify-center text-crpe-navy" aria-hidden="true">
-
-      <svg viewBox="0 0 44 44" className="absolute inset-0 h-full w-full fill-none" style={{ transform: "rotate(-90deg)" }}>
-
-        {audiences.map((role, index) => (
-
-          <circle key={role.key} cx="22" cy="22" r="19" pathLength="360"
-
-            stroke="currentColor" strokeWidth="3" strokeLinecap="round"
-
-            strokeDasharray="108 252" strokeDashoffset={-index * 120}
-
-            className={cx("transition-colors duration-200 motion-reduce:transition-none", role.key === selected ? "text-crpe-punkt" : "text-crpe-line")} />
-
-        ))}
-
-      </svg>
-
-      <Icon className="h-[18px] w-[18px]" strokeWidth={1.9} />
-
-    </span>
-
-  );
-
-}
-
-function HeroDashboard({ selected }: { selected: AudienceKey }) {
-
-  const active = audiences.find((item) => item.key === selected) ?? audiences[0];
-
-  return (
-
-    <div
-
-      className="crpe-dashboard-shell overflow-hidden bg-white"
-
-      aria-live="polite"
-
-    >
-
-      <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-3.5">
-
-        <div className="flex min-w-0 items-center gap-2.5">
-
-          <RoleRing selected={selected} />
-
-          <div className="min-w-0">
-
-          <p className="text-[12px] font-semibold text-crpe-muted">Dane przykładowe</p>
-
-          <p className="flex min-w-0 items-center gap-1.5 text-[14px] font-bold leading-5 text-crpe-ink">
-
-            <span>{active.mobileLabel}</span>
-
-          </p>
-
-          </div>
-
-        </div>
-
-        <span className={cx(statusPill, "shrink-0 text-[11px]", active.statusTone)}>{active.status}</span>
-
-      </div>
-
-      <div key={selected} className="crpe-role-swap px-4 pb-4 pt-3 sm:px-5 lg:min-h-[260px]">
-
-        {selected === "medyk" ? <MedykDashboard /> : null}
-
-        {selected === "placowka" ? <PlacowkaDashboard /> : null}
-
-        {selected === "organizator" ? <OrganizatorDashboard /> : null}
-
-      </div>
-
-      <div className="border-t border-crpe-line bg-crpe-surface/70 px-4 py-3">
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-
-          <Link
-
-            href={active.detailsHref}
-
-            className="inline-flex items-center gap-1.5 text-[13px] font-bold text-crpe-brand hover:text-crpe-brand-hover"
-
-          >
-
-            Dowiedz się więcej <ArrowRight className="h-3.5 w-3.5" />
-
-          </Link>
-
-          {selected !== "medyk" ? (
-
-            <Link
-
-              href="/bezpieczenstwo"
-
-              className="text-[13px] font-semibold text-crpe-muted underline decoration-crpe-line underline-offset-4 hover:text-crpe-ink"
-
-            >
-
-              Bezpieczeństwo danych
-
-            </Link>
-
-          ) : null}
-
-        </div>
-
-      </div>
-
+    <figure className="hero-figure">
+      <span className="hf-dots hf-dots-a" aria-hidden="true"></span>
+      <span className="hf-dots hf-dots-b" aria-hidden="true"></span>
+      <img src="/home/v14/crpe-hero-lekarka.webp" width={1370} height={1148} alt="Lekarka w gabinecie" fetchPriority="high" />
+      <span className="hf-chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-4 9 4-9 4z"></path><path d="M7 11.5V16c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4.5"></path></svg></span>
+      <figcaption className="hero-stat">
+        <span className="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="2.6"></circle><path d="M3.5 18c0-2.8 2.4-4.4 5.5-4.4s5.5 1.6 5.5 4.4"></path><circle cx="17" cy="9" r="2.1"></circle><path d="M15.5 13.9c2.6.2 4.5 1.7 4.5 4.1"></path></svg></span>
+        <span><b>Trzy role. Jeden CRPE.</b><em>Medyk, placówka, organizator</em></span>
+      </figcaption>
+    </figure>
+  </div>
+  <div className="hero-strip"><i></i><span>Wiedza</span><b>·</b><span>Rozwój</span><b>·</b><span>Lepsza opieka</span><i></i></div>
+</section>
+
+<section className="section tools-section" id="narzedzia">
+  <div className="wrap">
+    <div className="tools-head reveal-up">
+      <span className="tools-eyebrow"><i></i>Nasze narzędzia</span>
+      <h2>Wszystko, czego potrzebujesz, <span className="accent">w jednym koncie</span></h2>
+      <p>Cztery narzędzia konta medyka. Poniżej pokazujemy dane przykładowe.</p>
     </div>
-
-  );
-
-}
-
-function RolePicker({
-
-  selected,
-
-  onSelect,
-
-}: {
-
-  selected: AudienceKey;
-
-  onSelect: (key: AudienceKey) => void;
-
-}) {
-
-  const roleDescriptions: Record<AudienceKey, string> = {
-
-    medyk: "Własna ewidencja",
-
-    placowka: "Zespół i dostęp",
-
-    organizator: "Publikacja szkoleń",
-
-  };
-
-  return (
-
-    <div
-
-      className="crpe-role-picker w-full rounded-2xl bg-crpe-surface p-1.5 ring-1 ring-crpe-line"
-
-      role="group"
-
-      aria-label="Wybierz swoją rolę"
-
-    >
-
-      <div className="grid grid-cols-3 gap-1">
-
-        {audiences.map(({ key, mobileLabel, icon: Icon }) => {
-
-          const isSelected = selected === key;
-
-          return (
-
-            <button
-
-              key={key}
-
-              type="button"
-
-              aria-pressed={isSelected}
-
-              onClick={() => onSelect(key)}
-
-              className={cx(
-
-                "crpe-role-button group flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[16px] px-2 py-2 text-left outline-none sm:min-h-[56px] sm:justify-start sm:rounded-xl sm:pl-2 sm:pr-2",
-
-                "focus-visible:ring-2 focus-visible:ring-crpe-brand focus-visible:ring-offset-2",
-
-                isSelected ? "bg-white text-crpe-brand shadow-crpe-soft ring-1 ring-crpe-brand-border" : "text-crpe-muted hover:bg-white",
-
-              )}
-
-            >
-
-              <span
-
-                className={cx(
-
-                  "hidden h-8 w-8 shrink-0 items-center justify-center rounded-full transition sm:flex",
-
-                  isSelected ? "bg-crpe-brand-soft text-crpe-brand" : "bg-white text-crpe-muted",
-
-                )}
-
-                aria-hidden="true"
-
-              >
-
-                <Icon className="h-[18px] w-[18px]" strokeWidth={1.9} />
-
-              </span>
-
-              <span className="min-w-0">
-
-                <span className="block truncate text-[13px] font-bold leading-4 sm:text-[14px]">{mobileLabel}</span>
-
-                <span
-
-                  className={cx(
-
-                    "mt-0.5 hidden truncate text-[11px] font-medium leading-4 sm:block",
-
-                    isSelected ? "text-crpe-muted" : "text-crpe-muted",
-
-                  )}
-
-                >
-
-                  {roleDescriptions[key]}
-
-                </span>
-
-              </span>
-
-            </button>
-
-          );
-
-        })}
-
+    <div className="tools-ui reveal-up">
+      <div className="tools-nav" role="tablist" aria-label="Narzędzia CRPE">
+        <button type="button" className="tnav is-on" role="tab" id="tnav-0" aria-selected="true" aria-controls="tpane-0" data-i="0">
+          <span className="tnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 16l5-5 3 3 6-7"></path><path d="M18 7h-4M18 7v4"></path><path d="M4 20h16"></path></svg></span>
+          <span className="tnav-tx"><b>Panel CPD</b><em>Postęp i cel okresu w jednym widoku.</em></span>
+          <span className="tnav-ar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+        </button>
+        <button type="button" className="tnav" role="tab" id="tnav-1" aria-selected="false" aria-controls="tpane-1" data-i="1">
+          <span className="tnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6h11M9 12h11M9 18h11"></path><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg></span>
+          <span className="tnav-tx"><b>Aktywności</b><em>Wpis z punktami i certyfikatem.</em></span>
+          <span className="tnav-ar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+        </button>
+        <button type="button" className="tnav" role="tab" id="tnav-2" aria-selected="false" aria-controls="tpane-2" data-i="2">
+          <span className="tnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path><path d="M9 13h6M9 17h4"></path></svg></span>
+          <span className="tnav-tx"><b>Raport</b><em>Zestawienie okresu do pobrania.</em></span>
+          <span className="tnav-ar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+        </button>
+        <button type="button" className="tnav" role="tab" id="tnav-3" aria-selected="false" aria-controls="tpane-3" data-i="3">
+          <span className="tnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"></path><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H19v3H6.5A2.5 2.5 0 0 1 4 20.5z"></path><path d="M9 7.5h6"></path></svg></span>
+          <span className="tnav-tx"><b>Baza szkoleń</b><em>Kursy i wydarzenia do planu CPD.</em></span>
+          <span className="tnav-ar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+        </button>
       </div>
-
-    </div>
-
-  );
-
-}
-
-function Hero({
-
-  selected,
-
-  onSelect,
-
-}: {
-
-  selected: AudienceKey;
-
-  onSelect: (key: AudienceKey) => void;
-
-}) {
-
-  const active = audiences.find((item) => item.key === selected) ?? audiences[0];
-
-  return (
-
-    <section className="crpe-home-hero relative overflow-hidden pb-10 pt-8 sm:pb-14 sm:pt-12 lg:pb-16 lg:pt-14">
-
-      <div
-
-        className="crpe-dot-grid pointer-events-none absolute inset-y-0 right-0 hidden w-[46%] text-crpe-navy opacity-[0.07] lg:block"
-
-        style={{ maskImage: "radial-gradient(70% 60% at 70% 45%, #000 20%, transparent 75%)" }}
-
-        aria-hidden="true"
-
-      />
-
-      <div className={`${pageWrap} relative`}>
-
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-10">
-
-          <div>
-
-            <div className="crpe-hero-in [--hero-delay:40ms]">
-
-              <Eyebrow>CRPE dla medyka, placówki i organizatora</Eyebrow>
-
-            </div>
-
-            <h1 className="crpe-hero-in mt-4 max-w-[600px] text-[32px] font-bold leading-[1.08] tracking-[-0.035em] text-crpe-ink sm:text-[48px] lg:text-[48px] xl:text-[52px] [--hero-delay:110ms]">
-
-              <span className="block">Punkty edukacyjne</span>
-
-              <span className="block">i certyfikaty</span>
-
-              <span className="block">
-
-                w jednym miejscu<span className="crpe-dot">.</span>
-
-              </span>
-
-            </h1>
-
-            <p className="crpe-hero-in mt-5 max-w-[540px] text-[17px] leading-7 text-crpe-muted sm:text-[19px] sm:leading-8 [--hero-delay:180ms]">
-
-              Zbieraj aktywności, punkty i certyfikaty w jednym miejscu. Sprawdzaj postęp i przygotuj dane do rozliczenia.
-
-            </p>
-
-            <div className="mt-7">
-              <p className="mb-3 text-[13px] font-semibold text-crpe-muted">Wybierz swoją rolę</p>
-              <RolePicker selected={selected} onSelect={onSelect} />
-            </div>
-            <div className="mt-5" aria-live="polite">
-              <h2 className="text-[20px] font-bold leading-7 text-crpe-ink">{active.title}</h2>
-              <p className="mt-2 text-[15px] leading-6 text-crpe-muted">{active.description}</p>
-            </div>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-
-              <Link href={active.href} className={cx(pill.primary, "w-full sm:w-auto")}>
-
-                {selected === "medyk" ? "Załóż konto medyka" : selected === "placowka" ? "Zobacz zakres dla placówki" : "Poznaj moduł organizatora"}
-
-                <ArrowRight className="h-4 w-4" />
-
-              </Link>
-
-              <Link href="/login" className="inline-flex min-h-12 items-center justify-center px-4 text-[15px] font-semibold text-crpe-muted underline underline-offset-4 hover:text-crpe-brand">Zaloguj się</Link>
-
-            </div>
-
-          </div>
-
-          <div data-hero-workspace className="crpe-hero-panel lg:mt-9 min-w-0 w-full overflow-hidden rounded-[24px] bg-white shadow-crpe-soft ring-1 ring-crpe-line">
-
-            <div data-hero-preview className="lg:min-h-[384px]">
-
-              <HeroDashboard selected={selected} />
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-  );
-
-}
-
-/* ──────────────────────────── Dla kogo ────────────────────────────────── */
-
-function AudienceSection({ selected }: { selected: AudienceKey }) {
-
-  const cards = [
-
-    {
-
-      key: "medyk" as AudienceKey,
-
-      id: "dla-medyka",
-
-      icon: Stethoscope,
-
-      title: "Medyk",
-
-      status: "Dostępne teraz",
-
-      statusClass: "bg-crpe-medyk-soft text-crpe-medyk-text ring-crpe-medyk-border",
-
-      text: "Prowadź własną ewidencję punktów, aktywności i certyfikatów w jednym panelu.",
-
-      benefits: ["Postęp i brakujące punkty", "Dokumenty przy aktywnościach", "Raport użytkownika"],
-
-      cta: "Załóż konto",
-
-      href: "/rejestracja",
-
-    },
-
-    {
-
-      key: "placowka" as AudienceKey,
-
-      id: "dla-placowki",
-
-      icon: Building2,
-
-      title: "Placówka / jednostka",
-
-      status: "Struktura, zaproszenia i role dostępne",
-
-      statusClass: "bg-crpe-placowka-soft text-crpe-placowka-text ring-crpe-placowka-border",
-
-      text: "Zbuduj strukturę jednostki, zapraszaj pracowników i nadawaj role. Zbiorczy status oraz raporty pozostają w rozwoju.",
-
-      benefits: ["Jednostki organizacyjne", "Zaproszenia e-mail", "Role i członkostwa"],
-
-      cta: "Zobacz zakres",
-
-      href: "/dla-placowki",
-
-    },
-
-    {
-
-      key: "organizator" as AudienceKey,
-
-      id: "dla-organizatora",
-
-      icon: GraduationCap,
-
-      title: "Organizator kształcenia",
-
-      status: "Zgłoszenie do bazy dostępne",
-
-      statusClass: "bg-crpe-organizator-soft text-crpe-organizator-text ring-crpe-organizator-border",
-
-      text: "Zgłoś szkolenie do publicznej bazy. Po publikacji użytkownicy zobaczą stronę wydarzenia, dane organizatora i link do zapisów.",
-
-      benefits: ["Formularz zgłoszenia", "Publiczna strona szkolenia", "Logo i link do zapisów"],
-
-      cta: "Zobacz zakres",
-
-      href: "/dla-organizatora",
-
-    },
-
-  ];
-
-  return (
-
-    <section id="dla-kogo" className="relative scroll-mt-24 bg-white py-16 sm:py-24">
-
-      <div className={pageWrap}>
-
-        <div className="grid gap-4 lg:grid-cols-[1fr_1fr] lg:items-end lg:gap-16">
-
-          <SectionHeading eyebrow="Dla kogo jest CRPE" title="Trzy role, jeden spokojniejszy sposób pracy." />
-
-          <p className="max-w-[56ch] text-[16px] leading-7 text-crpe-muted sm:text-[17px] lg:pb-1">
-
-            CRPE porządkuje różne potrzeby w jednym produkcie. Profil medyka działa już teraz, a moduły organizacyjne rozwijamy etapami i jasno oznaczamy ich aktualny zakres.
-
-          </p>
-
-        </div>
-
-        <div className="mt-10 grid gap-6 lg:mt-14 lg:grid-cols-3">
-
-          {cards.map(({ key, id, icon, title, status, statusClass, text, benefits, cta, href }) => {
-
-            const active = selected === key;
-
-            const photo = audiences.find((item) => item.key === key)!;
-
-            return (
-
-              <article
-
-                key={id}
-
-                id={id}
-
-                className={cx(
-
-                  "crpe-interactive-card group flex h-full scroll-mt-24 flex-col rounded-[28px] bg-white p-2.5 shadow-crpe-soft ring-1",
-
-                  active ? "ring-2 ring-crpe-punkt" : "ring-crpe-line",
-
-                )}
-
-                aria-current={active ? "true" : undefined}
-
-              >
-
-                <div className="relative aspect-[16/10] overflow-hidden rounded-[22px] bg-crpe-ice">
-
-                  <Image
-
-                    src={photo.image}
-
-                    alt={photo.imageAlt}
-
-                    fill
-
-                    sizes="(min-width: 1024px) 380px, (min-width: 640px) 80vw, 100vw"
-
-                    className="object-cover transition duration-700 ease-out group-hover:scale-[1.03]"
-
-                    style={{ objectPosition: photo.imagePosition }}
-
-                  />
-
-                  <span
-
-                    className={cx(
-
-                      "absolute right-3 top-3 rounded-full px-3 py-1 text-[12px] font-bold backdrop-blur",
-
-                      active ? "bg-crpe-navy/90 text-white" : "bg-white/90 text-crpe-ink",
-
-                    )}
-
-                  >
-
-                    {active ? "Wybrana rola" : "Zobacz zakres"}
-
-                  </span>
-
+      <div className="tools-stage"><p className="demo-label">Podgląd możliwości · dane przykładowe</p>
+      <div className="tpane is-on" id="tpane-0" role="tabpanel" aria-labelledby="tnav-0">
+        <div className="tpane-hd"><b>Panel CPD</b><span className="tpane-tags"><i>Cel 200 pkt</i><i>Okres 2024–2027</i></span></div>
+        <div className="tp-body">
+            <div className="tp-top"><span className="tp-app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 16l5-5 3 3 6-7"></path><path d="M18 7h-4M18 7v4"></path></svg></span><div className="tp-ttl"><small>Widok użytkownika</small></div><span className="tp-badge">Stan na 09.2025</span></div>
+            <div className="cpd">
+              <div className="tp-ring">
+                <svg viewBox="0 0 120 120"><circle className="tr-bg" cx="60" cy="60" r="51"></circle><circle className="tr-fg" cx="60" cy="60" r="51" pathLength="1"></circle></svg>
+                <div className="tp-ring-c"><b>55<i>%</i></b><small>celu okresu</small></div>
+              </div>
+              <div className="cpd-main">
+                <div className="cpd-lbl">Punkty w okresie</div>
+                <div className="cpd-val"><b>110<i>/ 200 pkt</i></b><span className="gap">brakuje 90 pkt</span></div>
+                <div className="cpd-bar"><i style={{"--w": "55%"} as CSSProperties}></i></div>
+                <div className="cpd-years"><span>Okres 2024–2027</span><span>18 miesięcy do końca</span></div>
+                <div className="cpd-tiles">
+                  <div><small>Aktywności</small><b>26</b></div>
+                  <div><small>Certyfikaty</small><b>18</b></div>
+                  <div><small>Średnio / rok</small><b>42 pkt</b></div>
                 </div>
-
-                <div className="flex flex-1 flex-col px-3.5 pb-3.5 sm:px-4 sm:pb-4">
-
-                  <IconBadge icon={icon} size="lg" tone="white" className="-mt-9 ring-4 ring-white" />
-
-                  <h3 className="mt-3 text-[24px] font-bold tracking-[-0.02em] text-crpe-ink">{title}</h3>
-
-                  <p className="mt-2 text-[15px] leading-6 text-crpe-muted">{text}</p>
-
-                  <p className={cx(statusPill, "mt-4 inline-flex w-fit", statusClass)}>{status}</p>
-
-                  <ul className="mt-4 grid gap-2">
-
-                    {benefits.map((item) => (
-
-                      <li key={item} className="flex gap-2.5 text-[15px] leading-6 text-crpe-ink">
-
-                        <DotBullet />
-
-                        {item}
-
-                      </li>
-
-                    ))}
-
-                  </ul>
-
-                  <div className="mt-auto pt-6">
-
-                    <Link href={href} className={cx(active ? pill.primary : pill.secondary, "w-full")}>
-
-                      {cta} <ArrowRight className="h-4 w-4" />
-
-                    </Link>
-
-                  </div>
-
+              </div>
+            </div>
+            <div className="tp-chart">
+              <div className="tp-chart-hd"><span>Przyrost punktów</span><span className="hl">+42 pkt w tym roku</span></div>
+              <div className="tp-spark">
+                <svg viewBox="0 0 520 86" preserveAspectRatio="none">
+                  <line className="grid" x1="0" y1="22" x2="520" y2="22" vectorEffect="non-scaling-stroke"></line>
+                  <line className="grid" x1="0" y1="52" x2="520" y2="52" vectorEffect="non-scaling-stroke"></line>
+                  <path className="area" d="M0 70 C60 66 96 52 150 55 C210 58 244 34 300 32 C360 30 396 20 450 14 L510 9 L510 86 L0 86 Z"></path>
+                  <path className="line" pathLength="1" d="M0 70 C60 66 96 52 150 55 C210 58 244 34 300 32 C360 30 396 20 450 14 L510 9"></path>
+                </svg>
+                <span className="end-dot"></span>
+              </div>
+              <div className="tp-months"><span>2024</span><span>2025</span><span>2026</span><span>2027</span></div>
+            </div>
+        </div>
+      </div>
+      <div className="tpane" id="tpane-1" role="tabpanel" aria-labelledby="tnav-1" hidden>
+        <div className="tpane-hd"><b>Aktywności</b><span className="tpane-tags"><i>24 pkt / miesiąc</i><i>Certyfikat w PDF</i></span></div>
+        <div className="tp-body">
+            <div className="tp-top"><span className="tp-app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg></span><div className="tp-ttl"><strong>Aktywności</strong><small>Wrzesień 2025</small></div><span className="tp-badge">24 pkt w miesiącu</span></div>
+            <div className="tp-sum">
+              <div className="tp-sum-hd"><span>Podział punktów</span><b>24 pkt</b></div>
+              <div className="tp-seg"><i className="a" style={{"--w": "50%"} as CSSProperties}></i><i className="b" style={{"--w": "17%"} as CSSProperties}></i><i className="c" style={{"--w": "33%"} as CSSProperties}></i></div>
+              <div className="tp-legend"><span className="a">Kursy · 12</span><span className="b">Webinary · 4</span><span className="c">Konferencje · 8</span></div>
+            </div>
+            <div className="tp-time">
+              <div className="tp-ev done"><time>14.09</time><span className="mk"><span></span></span><p>Kurs: Postępowanie w sepsie<small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.2 4.2L19 7"></path></svg>Certyfikat załączony</small></p><span className="tp-pts">12 pkt</span></div>
+              <div className="tp-ev done"><time>02.09</time><span className="mk"><span></span></span><p>Webinar: EKG w praktyce<small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.2 4.2L19 7"></path></svg>Certyfikat załączony</small></p><span className="tp-pts">4 pkt</span></div>
+              <div className="tp-ev"><time>26.08</time><span className="mk"><span></span></span><p>Konferencja PTK<small className="wait"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>Czeka na dokument</small></p><span className="tp-pts">8 pkt</span></div>
+            </div>
+        </div>
+      </div>
+      <div className="tpane" id="tpane-2" role="tabpanel" aria-labelledby="tnav-2" hidden>
+        <div className="tpane-hd"><b>Raport</b><span className="tpane-tags"><i>PDF</i><i>CSV</i></span></div>
+        <div className="tp-body">
+            <div className="tp-top"><span className="tp-app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg></span><div className="tp-ttl"><strong>Raport okresu</strong><small>PDF · CSV</small></div><span className="tp-badge">Gotowy do pobrania</span></div>
+            <div className="tp-report">
+              <div className="tp-paper">
+                <div className="ts-head"><span className="ts-mark">CRPE</span><div><strong>Zestawienie okresu</strong><small>2024–2027 · konto medyka</small></div></div>
+                <div className="ts-table">
+                  <div className="ts-row"><span>Aktywności</span><b>26</b></div>
+                  <div className="ts-row"><span>Certyfikaty</span><b>18</b></div>
+                  <div className="ts-row"><span>Punkty edukacyjne</span><b>110</b></div>
+                  <div className="ts-row total"><span>Realizacja celu</span><b>55%</b></div>
                 </div>
-
-              </article>
-
-            );
-
-          })}
-
-        </div>
-
-      </div>
-
-    </section>
-
-  );
-
-}
-
-/* ───────────────────────────── Narzędzia ──────────────────────────────── */
-
-function ProductToolsSection() {
-
-  const tools = [
-
-    {
-
-      icon: BarChart3,
-
-      title: "Panel CPD i kalkulator",
-
-      text: "Ustaw okres i wymagany cel, sprawdzaj postęp, limity oraz podpowiedź kolejnego kroku.",
-
-      bullets: ["Cel i okres rozliczeniowy", "Postęp, limity i braki"],
-
-    },
-
-    {
-
-      icon: CalendarCheck2,
-
-      title: "Aktywności i certyfikaty",
-
-      text: "Dodawaj i edytuj aktywności, wpisuj punkty oraz dołączaj PDF lub zdjęcie certyfikatu.",
-
-      bullets: ["Dokument przy właściwym wpisie", "Edycja i kontrola kompletności"],
-
-    },
-
-    {
-
-      icon: FileText,
-
-      title: "Raport użytkownika",
-
-      text: "Przygotuj zestawienie aktywności, punktów i kompletności załączników.",
-
-      bullets: ["Podsumowanie wybranego okresu", "Wydruk PDF i eksport CSV"],
-
-    },
-
-    {
-
-      icon: FolderOpen,
-
-      title: "Baza szkoleń",
-
-      text: "Wyszukuj kursy, webinary i wydarzenia, filtruj je i dodawaj wybrane pozycje do planu CPD.",
-
-      bullets: ["Filtry zawodu, miejsca i terminu", "Plan CPD bez automatycznego zapisu"],
-
-    },
-
-  ];
-
-  return (
-
-    <section id="narzedzia" className="scroll-mt-24 bg-crpe-surface py-16 sm:py-24">
-
-      <div className={pageWrap}>
-
-        <SectionHeading
-
-          eyebrow="Dostępne narzędzia"
-
-          title="Po zalogowaniu widzisz cały warsztat CRPE, nie tylko kalkulator."
-
-          text="Panel, aktywności, dokumenty, raport i baza szkoleń działają w jednym koncie i prowadzą użytkownika przez kolejne etapy ewidencji."
-
-          centered
-
-        />
-
-        <div className="mt-10 overflow-hidden rounded-[28px] bg-white shadow-crpe-soft ring-1 ring-crpe-line sm:mt-14">
-
-          <div className="relative overflow-hidden bg-crpe-navy px-5 py-6 text-white sm:px-8">
-
-            <div className="crpe-dot-grid pointer-events-none absolute inset-0 text-white opacity-[0.06]" aria-hidden="true" />
-
-            <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-              <div>
-
-                <p className="text-[13px] font-semibold text-white/60">Stałe menu aplikacji</p>
-
-                <p className="font-display mt-1 text-[19px] font-bold sm:text-[21px]">
-
-                  Najważniejsze funkcje są widoczne od razu po zalogowaniu.
-
-                </p>
-
+                <div className="ts-foot"><span className="ts-seal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.2 4.2L19 7"></path></svg></span>Zestawienie zgodne z wpisami w koncie</div>
               </div>
-
-              <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[12px] font-bold text-white ring-1 ring-white/15">
-
-                <span className="h-2 w-2 rounded-full bg-crpe-punkt" aria-hidden="true" />
-
-                Profil medyka dostępny teraz
-
-              </span>
-
-            </div>
-
-            <div className="relative mt-5 flex flex-wrap gap-2">
-
-              {tools.map(({ icon: Icon, title }, index) => (
-
-                <div
-
-                  key={title}
-
-                  className={cx(
-
-                    "flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-bold",
-
-                    index === 0 ? "bg-white text-crpe-navy" : "bg-white/8 text-white/85 ring-1 ring-white/12",
-
-                  )}
-
-                >
-
-                  <Icon className={cx("h-4 w-4 shrink-0", index === 0 ? "text-crpe-punkt-text" : "text-white/60")} />
-
-                  <span>{title.replace(" i kalkulator", "")}</span>
-
+              <div className="tp-side">
+                <div className="tp-total"><small>Punkty w okresie</small><b>110 / 200</b></div>
+                <div className="tp-fmt">
+                  <span className="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v10"></path><path d="M8 11l4 4 4-4"></path><path d="M5 19h14"></path></svg>Pobierz PDF</span>
+                  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M4 10h16M10 10v10"></path></svg>Pobierz CSV</span>
                 </div>
-
-              ))}
-
+              </div>
             </div>
-
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4">
-
-            {tools.map(({ icon, title, text, bullets }, index) => (
-
-              <article
-
-                key={title}
-
-                className={cx(
-
-                  "flex h-full flex-col p-6 sm:p-7",
-
-                  index > 0 && "border-t border-crpe-line sm:border-t-0",
-
-                  index % 2 === 1 && "sm:border-l",
-
-                  index >= 2 && "sm:border-t lg:border-t-0",
-
-                  index === 2 && "lg:border-l",
-
-                  "border-crpe-line",
-
-                )}
-
-              >
-
-                <IconBadge icon={icon} size="md" tone="punkt" dot={false} />
-
-                <h3 className="mt-5 text-[20px] font-bold leading-[1.2] tracking-[-0.015em] text-crpe-ink">{title}</h3>
-
-                <p className="mt-2 text-[15px] leading-6 text-crpe-muted">{text}</p>
-
-                <ul className="mt-auto grid gap-2 pt-5">
-
-                  {bullets.map((item) => (
-
-                    <li key={item} className="flex gap-2 text-[14px] leading-5 text-crpe-ink">
-
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-crpe-punkt" />
-
-                      {item}
-
-                    </li>
-
-                  ))}
-
-                </ul>
-
-              </article>
-
-            ))}
-
-          </div>
-
         </div>
-
       </div>
-
-    </section>
-
-  );
-
-}
-
-/* ───────────────────────────── W praktyce ─────────────────────────────── */
-
-function PracticeSection() {
-
-  const rows = [
-
-    ["Kurs specjalistyczny", "25 pkt", "Certyfikat dodany"],
-
-    ["Webinar", "8 pkt", "Uzupełnij dokument"],
-
-  ];
-
-  return (
-
-    <section className="relative overflow-hidden bg-crpe-surface py-16 text-crpe-ink sm:py-24">
-
-      <div className="crpe-dot-grid pointer-events-none absolute inset-0 text-white opacity-[0.05]" aria-hidden="true" />
-
-      <div
-
-        className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-crpe-punkt/15 blur-3xl"
-
-        aria-hidden="true"
-
-      />
-
-
-
-      <div className={`${pageWrap} relative grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:gap-16`}>
-
-        <div>
-
-          <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[12px] font-bold text-crpe-muted ring-1 ring-crpe-line">
-
-            Przykład: profil medyka
-
-          </span>
-
-          <div className="mt-5">
-
-            <SectionHeading
-
-              tone="light"
-
-              eyebrow="CRPE w praktyce"
-
-              title="Panel CPD łączy kalkulator, aktywności i dokumenty."
-
-              text="Panel CPD pokazuje postęp, Aktywności przechowują wpisy i certyfikaty, a Raport zbiera wszystko w jedno zestawienie."
-
-            />
-
-          </div>
-
-          <ul className="mt-6 grid gap-3">
-
-            {["Stały dostęp do Aktywności i Raportów", "Braki oznaczone przed rozliczeniem"].map((item) => (
-
-              <li key={item} className="flex gap-3 text-[15px] leading-6 text-crpe-muted">
-
-                <DotBullet />
-
-                {item}
-
-              </li>
-
-            ))}
-
-          </ul>
-
+      <div className="tpane" id="tpane-3" role="tabpanel" aria-labelledby="tnav-3" hidden>
+        <div className="tpane-hd"><b>Baza szkoleń</b><span className="tpane-tags"><i>318 wydarzeń</i><i>Filtry</i></span></div>
+        <div className="tp-body">
+            <div className="tp-top"><span className="tp-app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"></path><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H19v3H6.5A2.5 2.5 0 0 1 4 20.5z"></path></svg></span><div className="tp-ttl"><strong>Baza szkoleń</strong><small>Kursy, webinary i konferencje</small></div><span className="tp-badge">318 wydarzeń</span></div>
+            <div className="tp-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.2-4.2"></path></svg>Szukaj szkoleń, kursów i webinarów<span className="tp-caret"></span></div>
+            <div className="tp-chips"><span className="on">Wszystkie</span><span>Kursy</span><span>Webinary</span><span>Konferencje</span></div>
+            <div className="tp-res">
+              <div className="tp-course"><span className="tag">Kurs stacjonarny</span><h5>Kardiologia interwencyjna</h5><div className="meta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>Warszawa · 14.09<b>12 pkt</b></div><div className="tc-foot"><span className="tc-org">Centrum Medyczne Warszawa</span><span className="tc-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"></path></svg>Dodaj</span></div></div>
+              <div className="tp-course"><span className="tag">Webinar</span><h5>Antybiotykoterapia w POZ</h5><div className="meta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>Online · 22.09<b>4 pkt</b></div><div className="tc-foot"><span className="tc-org">Polskie Towarzystwo POZ</span><span className="tc-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"></path></svg>Dodaj</span></div></div>
+            </div>
         </div>
-
-        <div className="crpe-dashboard-shell rounded-[28px] bg-white p-5 text-crpe-ink shadow-crpe-soft ring-1 ring-crpe-line sm:p-7">
-
-          <div className="flex items-center justify-between gap-3">
-
-            <div className="flex items-center gap-3">
-
-              <IconBadge icon={BarChart3} size="sm" tone="punkt" dot={false} />
-
-              <div>
-
-                <p className="text-[12px] font-semibold text-crpe-punkt-text">Panel CPD</p>
-
-                <p className="text-[14px] font-bold text-crpe-ink">Podgląd statusu dokumentacji</p>
-
-              </div>
-
-            </div>
-
-            <span className="rounded-full bg-crpe-surface px-3 py-1 text-[11px] font-semibold text-crpe-muted ring-1 ring-crpe-line">
-
-              Dane przykładowe
-
-            </span>
-
-          </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-[0.64fr_0.36fr]">
-
-            <div className="rounded-[22px] bg-crpe-surface p-4 sm:p-5">
-
-              <p className="text-[12px] font-semibold text-crpe-muted">Status dokumentacji</p>
-
-              <div className="mt-1 flex items-end gap-2">
-
-                <span className="font-display text-[44px] font-bold leading-none tracking-[-0.03em] text-crpe-ink">110/200</span>
-
-                <span className="pb-1 text-[13px] font-bold text-crpe-muted">pkt</span>
-
-              </div>
-
-              <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white">
-
-                <div className="crpe-progress-fill h-full w-[55%] rounded-full bg-crpe-punkt" />
-
-              </div>
-
-              <div className="mt-4 space-y-2">
-
-                {rows.map(([name, points, status], index) => (
-
-                  <div key={name} className="flex items-center justify-between gap-3 rounded-2xl bg-white p-3">
-
-                    <div className="flex items-center gap-3">
-
-                      <span
-
-                        className={cx(
-
-                          "h-2.5 w-2.5 shrink-0 rounded-full",
-
-                          index === 1 ? "bg-crpe-warning" : "bg-crpe-punkt",
-
-                        )}
-
-                        aria-hidden="true"
-
-                      />
-
-                      <div>
-
-                        <p className="text-[14px] font-bold text-crpe-ink">{name}</p>
-
-                        <p className="text-[12px] text-crpe-muted">{points}</p>
-
-                      </div>
-
-                    </div>
-
-                    <span
-
-                      className={cx(
-
-                        statusPill,
-
-                        "text-[11px]",
-
-                        index === 1
-
-                          ? "bg-crpe-warning-soft text-crpe-warning ring-crpe-warning-border"
-
-                          : "bg-crpe-punkt-soft text-crpe-punkt-text ring-crpe-punkt-border",
-
-                      )}
-
-                    >
-
-                      {status}
-
-                    </span>
-
-                  </div>
-
-                ))}
-
-              </div>
-
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
-
-              <div className="flex flex-col justify-between rounded-[22px] bg-crpe-navy p-4 text-white">
-
-                <p className="text-[12px] font-semibold text-white/60">Najbliższy krok</p>
-
-                <p className="font-display mt-3 text-[20px] font-bold leading-tight">Uzupełnij 1 dokument</p>
-
-              </div>
-
-              <div className="flex flex-col justify-between rounded-[22px] border-2 border-dashed border-crpe-line p-4">
-
-                <IconBadge icon={UploadCloud} size="sm" tone="brand" dot={false} />
-
-                <p className="mt-3 text-[14px] font-bold leading-5 text-crpe-ink">Dodaj PDF lub zdjęcie</p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
       </div>
-
-    </section>
-
-  );
-
-}
-
-/* ──────────────────────────── Jak to działa ───────────────────────────── */
-
-function HowItWorks({ selected }: { selected: AudienceKey }) {
-
-  const variants: Record<AudienceKey, {
-
-    title: string;
-
-    text: string;
-
-    steps: Array<{ icon: typeof UserRound; title: string; text: string }>;
-
-  }> = {
-
-    medyk: {
-
-      title: "Zacznij prowadzić własną ewidencję w czterech krokach.",
-
-      text: "Profil medyka jest dostępny od razu — bez wdrożenia i bez przenoszenia wszystkiego jednego dnia.",
-
-      steps: [
-
-        { icon: UserRound, title: "Załóż konto", text: "Ustaw okres i wymagany cel." },
-
-        { icon: CalendarCheck2, title: "Dodaj aktywność", text: "Wpisz wydarzenie i punkty." },
-
-        { icon: UploadCloud, title: "Dołącz dokument", text: "Dodaj PDF lub zdjęcie." },
-
-        { icon: ClipboardCheck, title: "Sprawdź status", text: "Zobacz postęp i braki." },
-
-      ],
-
-    },
-
-    placowka: {
-
-      title: "Uporządkuj sposób pracy zespołu w czterech krokach.",
-
-      text: "Fundament organizacyjny jest dostępny teraz. Zbiorczy status zespołu i raporty pozostają kolejnym etapem rozwoju.",
-
-      steps: [
-
-        { icon: Building2, title: "Utwórz placówkę", text: "Rozpocznij pracę w panelu organizacji." },
-
-        { icon: ClipboardCheck, title: "Dodaj strukturę", text: "Przygotuj jednostki i role dostępu." },
-
-        { icon: UserRound, title: "Zaproś pracowników", text: "Wyślij zaproszenia na konkretne adresy e-mail." },
-
-        { icon: BarChart3, title: "Ustal kolejny zakres", text: "Zaplanuj pilotaż statusów i raportów zespołu." },
-
-      ],
-
-    },
-
-    organizator: {
-
-      title: "Opublikuj szkolenie w bazie w czterech krokach.",
-
-      text: "Zgłoszenie wydarzenia działa już dziś. Rozbudowany panel uczestników i dokumentacji pozostaje osobnym etapem.",
-
-      steps: [
-
-        { icon: CalendarCheck2, title: "Przygotuj dane", text: "Uzupełnij termin, format, miejsce i punkty." },
-
-        { icon: ClipboardCheck, title: "Zgłoś szkolenie", text: "Prześlij formularz do publicznej bazy." },
-
-        { icon: CheckCircle2, title: "Poczekaj na weryfikację", text: "Zgłoszenie jest sprawdzane przed publikacją." },
-
-        { icon: ArrowRight, title: "Kieruj do zapisów", text: "Opublikowana strona prowadzi do organizatora." },
-
-      ],
-
-    },
-
-  };
-
-  const active = variants[selected];
-
-  return (
-
-    <section
-
-      id="jak-to-dziala"
-
-      className="scroll-mt-24 bg-[linear-gradient(180deg,#fff_0%,var(--color-crpe-surface)_100%)] py-16 sm:py-24"
-
-    >
-
-      <div className={pageWrap}>
-
-        <SectionHeading eyebrow="Jak to działa" title={active.title} text={active.text} centered />
-
-        <ol key={selected} className="crpe-role-swap relative mx-auto mt-12 grid max-w-[1080px] gap-10 sm:mt-16 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-
-          <li aria-hidden="true" className="crpe-step-path pointer-events-none absolute left-[12.5%] right-[12.5%] top-[46px] hidden h-1 lg:block" />
-
-          {active.steps.map(({ icon: Icon, title, text }, index) => (
-
-            <li key={title} className="relative text-center">
-
-              <div className="relative mx-auto flex h-[92px] w-[92px] items-center justify-center rounded-full bg-white text-crpe-navy shadow-crpe-soft ring-1 ring-crpe-line">
-
-                <Icon className="h-8 w-8" strokeWidth={1.7} />
-
-                <span className="absolute -right-1 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-crpe-punkt-text text-[13px] font-extrabold text-white ring-4 ring-white">
-
-                  {index + 1}
-
-                </span>
-
-              </div>
-
-              <h3 className="mt-5 text-[20px] font-bold leading-6 text-crpe-ink">
-
-                <span className="sr-only">Krok {index + 1}: </span>
-
-                {title}
-
-              </h3>
-
-              <p className="mx-auto mt-2 max-w-[24ch] text-[15px] leading-6 text-crpe-muted">{text}</p>
-
-            </li>
-
-          ))}
-
-        </ol>
-
       </div>
-
-    </section>
-
-  );
-
-}
-
-/* ───────────────────── Zakres placówki / organizatora ─────────────────── */
-
-function RoleStateSection({ selected }: { selected: Exclude<AudienceKey, "medyk"> }) {
-
-  const variants = {
-
-    placowka: {
-
-      eyebrow: "Aktualny zakres placówki",
-
-      title: "Fundament organizacji działa. Zbiorcze zarządzanie jest kolejnym etapem.",
-
-      text: "Oddzielamy funkcje dostępne w panelu od planowanego widoku statusów, aby placówka wiedziała dokładnie, z czego może skorzystać już teraz.",
-
-      available: [
-
-        "Struktura placówki i jednostek organizacyjnych",
-
-        "Zaproszenia wysyłane na konkretny adres e-mail",
-
-        "Role, członkostwa i kontrolowany dostęp",
-
-        "Indywidualna ewidencja na kontach pracowników",
-
-      ],
-
-      developing: [
-
-        "Zbiorczy status i kompletność zespołu",
-
-        "Kolejka weryfikacji aktywności i dokumentów",
-
-        "Raporty jednostki, alerty i terminy",
-
-      ],
-
-    },
-
-    organizator: {
-
-      eyebrow: "Aktualny zakres organizatora",
-
-      title: "Publikacja szkolenia działa. Panel operacyjny rozwijamy osobno.",
-
-      text: "Organizator może już przekazać wydarzenie do publicznej bazy. Rozszerzona obsługa uczestników i dokumentacji nie jest przedstawiana jako gotowa funkcja.",
-
-      available: [
-
-        "Formularz zgłoszenia szkolenia do publicznej bazy",
-
-        "Publiczna, linkowalna strona wydarzenia po publikacji",
-
-        "Prezentacja danych oraz logo organizatora",
-
-        "Bezpośredni link do zapisów u organizatora",
-
-      ],
-
-      developing: [
-
-        "Samoobsługowy panel organizatora",
-
-        "Listy uczestników i statusy wydarzenia",
-
-        "Obsługa certyfikatów i dokumentacji uczestników",
-
-      ],
-
-    },
-
-  } satisfies Record<Exclude<AudienceKey, "medyk">, {
-
-    eyebrow: string;
-
-    title: string;
-
-    text: string;
-
-    available: string[];
-
-    developing: string[];
-
-  }>;
-
-  const active = variants[selected];
-
-  return (
-
-    <section className="bg-crpe-surface py-16 sm:py-24">
-
-      <div className={pageWrap}>
-
-        <SectionHeading eyebrow={active.eyebrow} title={active.title} text={active.text} centered />
-
-        <div key={selected} className="crpe-role-swap mx-auto mt-10 grid max-w-[1000px] gap-5 sm:mt-14 md:grid-cols-2">
-
-          <article className="rounded-[28px] bg-white p-6 shadow-crpe-soft ring-1 ring-crpe-line sm:p-8">
-
-            <div className="flex items-center gap-4">
-
-              <IconBadge icon={CheckCircle2} size="md" tone="punkt" />
-
-              <div>
-
-                <p className="text-[13px] font-semibold text-crpe-punkt-text">Dostępne</p>
-
-                <h3 className="text-[24px] font-bold leading-tight text-crpe-ink">Działa dziś</h3>
-
-              </div>
-
-            </div>
-
-            <ul className="mt-6 grid gap-3">
-
-              {active.available.map((item) => (
-
-                <li key={item} className="flex gap-3 text-[15px] leading-6 text-crpe-ink">
-
-                  <Check className="mt-1 h-4 w-4 shrink-0 text-crpe-punkt" strokeWidth={2.6} />
-
-                  {item}
-
-                </li>
-
-              ))}
-
-            </ul>
-
-          </article>
-
-          <article className="rounded-[28px] border-2 border-dashed border-crpe-warning-border bg-white/60 p-6 sm:p-8">
-
-            <div className="flex items-center gap-4">
-
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-crpe-warning-soft text-crpe-warning" aria-hidden="true">
-
-                <BarChart3 className="h-[22px] w-[22px]" strokeWidth={1.8} />
-
-              </span>
-
-              <div>
-
-                <p className="text-[13px] font-semibold text-crpe-warning">Kolejny etap</p>
-
-                <h3 className="text-[24px] font-bold leading-tight text-crpe-ink">Rozwijamy</h3>
-
-              </div>
-
-            </div>
-
-            <ul className="mt-6 grid gap-3">
-
-              {active.developing.map((item) => (
-
-                <li key={item} className="flex gap-3 text-[15px] leading-6 text-crpe-muted">
-
-                  <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-crpe-warning" />
-
-                  {item}
-
-                </li>
-
-              ))}
-
-            </ul>
-
-          </article>
-
-        </div>
-
-      </div>
-
-    </section>
-
-  );
-
-}
-
-/* ──────────────────────────── Bezpieczeństwo ──────────────────────────── */
-
-function TrustSection() {
-
-  const items = [
-
-    {
-
-      icon: LockKeyhole,
-
-      title: "Dane na Twoim koncie",
-
-      text: "Dostęp do aktywności i dokumentów wymaga zalogowania.",
-
-    },
-
-    {
-
-      icon: FileText,
-
-      title: "Dokument przy aktywności",
-
-      text: "Certyfikat pozostaje przypisany do właściwego wpisu.",
-
-    },
-
-    {
-
-      icon: ShieldCheck,
-
-      title: "Jasna rola systemu",
-
-      text: "CRPE nie jest państwowym rejestrem ani automatycznym rozliczeniem obowiązku.",
-
-    },
-
-  ];
-
-  return (
-
-    <section id="bezpieczenstwo" className="relative scroll-mt-24 overflow-hidden bg-white py-16 sm:py-24">
-
-      <div className={`${pageWrap} max-w-[960px]`}>
-
-        <div>
-          <SectionHeading
-
-            eyebrow="Zakres i bezpieczeństwo"
-
-            title="CRPE pomaga prowadzić własną ewidencję."
-
-            text="System porządkuje aktywności, punkty i dokumenty, ale nie zastępuje oficjalnych rejestrów ani wymaganej procedury rozliczenia."
-
-          />
-
-          <ul className="mt-8 grid gap-5">
-
-            {items.map(({ icon, title, text }) => (
-
-              <li key={title} className="flex gap-4">
-
-                <IconBadge icon={icon} size="md" tone="soft" />
-
-                <div>
-
-                  <h3 className="text-[19px] font-bold text-crpe-ink">{title}</h3>
-
-                  <p className="mt-1 text-[15px] leading-6 text-crpe-muted">{text}</p>
-
-                </div>
-
-              </li>
-
-            ))}
-
-          </ul>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-
-            <Link href="/polityka-prywatnosci" className={pill.secondary}>
-
-              Polityka prywatności
-
-            </Link>
-
-            <Link href="/regulamin" className={pill.secondary}>
-
-              Regulamin
-
-            </Link>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-  );
-
-}
-
-/* ──────────────────────────────── FAQ ─────────────────────────────────── */
-
-function FaqSection() {
-
-  const items = [
-
-    [
-
-      "Czy CRPE jest połączone z systemem państwowym?",
-
-      "Nie. CRPE służy do prowadzenia własnej ewidencji aktywności, punktów i dokumentów. Nie zastępuje oficjalnych rejestrów ani wymaganej procedury rozliczenia.",
-
-    ],
-
-    [
-
-      "Co CRPE oferuje medykowi już teraz?",
-
-      "Medyk może prowadzić ewidencję aktywności, punktów i dokumentów, kontrolować postęp oraz przygotować raport użytkownika.",
-
-    ],
-
-    [
-
-      "Czy kalkulator, aktywności i raport działają w jednym koncie?",
-
-      "Tak. Panel CPD pokazuje postęp, Aktywności przechowują wpisy i certyfikaty, Raport przygotowuje zestawienie, a Baza szkoleń pomaga planować kolejne działania.",
-
-    ],
-
-    [
-
-      "Co CRPE daje placówce lub jednostce?",
-
-      "Panel pozwala tworzyć strukturę jednostki, wysyłać zaproszenia i nadawać role. Zbiorczy status zespołu, raporty i alerty są rozwijane.",
-
-    ],
-
-    [
-
-      "Czy CRPE jest dla organizatorów kształcenia?",
-
-      "Tak. Organizator może zgłosić szkolenie do publicznej bazy wraz z danymi, logo i linkiem do zapisów. Panel uczestników i obsługa certyfikatów są rozwijane.",
-
-    ],
-
-    [
-
-      "Czy mogę dodać certyfikat z telefonu?",
-
-      "Tak. Dokument możesz dodać jako plik PDF lub zdjęcie i przypisać do konkretnej aktywności.",
-
-    ],
-
-  ];
-
-  return (
-
-    <section id="faq" className="scroll-mt-24 bg-crpe-surface py-16 sm:py-24">
-
-      <div className={pageWrap}>
-
-        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start lg:gap-16">
-
-          <div className="lg:sticky lg:top-28">
-
-            <IconBadge icon={HelpCircle} size="lg" tone="white" />
-
-            <div className="mt-6">
-
-              <SectionHeading
-
-                eyebrow="FAQ"
-
-                title="Najczęstsze pytania przed wyborem swojej ścieżki."
-
-                text="Najważniejsze informacje dla medyka, placówki i organizatora kształcenia."
-
-              />
-
-            </div>
-
-            <Link href="/kontakt#formularz" className={cx(pill.secondary, "mt-7")}>
-
-              Masz inne pytanie? Napisz do nas <ArrowRight className="h-4 w-4" />
-
-            </Link>
-
-          </div>
-
-          <div className="space-y-3">
-
-            {items.map(([question, answer]) => (
-
-              <details
-
-                key={question}
-
-                className="group rounded-[22px] bg-white px-5 py-2 shadow-crpe-soft ring-1 ring-crpe-line transition open:ring-crpe-punkt-border sm:px-6"
-
-              >
-
-                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-2 text-[16px] font-bold leading-6 text-crpe-ink sm:text-[17px]">
-
-                  {question}
-
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-crpe-ice text-crpe-navy transition duration-200 group-open:rotate-45 group-open:bg-crpe-punkt group-open:text-white">
-
-                    <Plus className="h-4 w-4" strokeWidth={2.4} aria-hidden="true" />
-
-                  </span>
-
-                </summary>
-
-                <p className="max-w-[62ch] pb-4 pr-10 pt-1 text-[15px] leading-7 text-crpe-muted">{answer}</p>
-
-              </details>
-
-            ))}
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-  );
-
-}
-
-export default function Page() {
-
-  const [selectedAudience, setSelectedAudience] = useState<AudienceKey>("placowka");
-
-  return (
-
-    <div className="crpe-home-neutral min-h-screen bg-white">
-
-      <Hero selected={selectedAudience} onSelect={setSelectedAudience} />
-
-      <AudienceSection selected={selectedAudience} />
-
-      <HowItWorks selected={selectedAudience} />
-
-      {selectedAudience === "medyk" ? (
-
-        <>
-
-          <PracticeSection />
-
-          <ProductToolsSection />
-
-        </>
-
-      ) : (
-
-        <RoleStateSection selected={selectedAudience} />
-
-      )}
-
-      <TrustSection />
-
-      <FaqSection />
-
-      <BottomCTA selected={selectedAudience} />
-
     </div>
+  </div>
+</section>
 
-  );
+<section className="section sec-section" id="bezpieczenstwo">
+  <div className="wrap">
+    <div className="sec-split">
+      <figure className="sec-figure reveal-up">
+        <img src="/home/v14/crpe-certyfikat-tablet.webp" width={640} height={909} alt="Lekarz trzymający tablet z certyfikatem CRPE" loading="lazy" />
+        <span className="sec-badge"><i></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" strokeLinejoin="round"></path><path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round"></path></svg></span>
+      </figure>
+      <div className="sec-copy reveal-up">
+        <span className="tools-eyebrow sec-eyebrow"><i></i>Zakres i bezpieczeństwo</span>
+        <h2>CRPE pomaga prowadzić własną ewidencję<span className="dot">.</span></h2>
+        <p>System porządkuje aktywności, punkty i dokumenty, ale nie zastępuje oficjalnych rejestrów ani wymaganej procedury rozliczenia.</p>
+        <div className="sec-list">
+          <div className="sec-item">
+            <span className="sec-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3" strokeLinecap="round"></path></svg></span>
+            <div>
+              <h4>Dane na Twoim koncie</h4>
+              <p>Dostęp do aktywności i dokumentów wymaga zalogowania.</p>
+            </div>
+          </div>
+          <div className="sec-item">
+            <span className="sec-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 4h9l3 3v13H6z" strokeLinejoin="round"></path><path d="M9 12h6M9 16h6" strokeLinecap="round"></path></svg></span>
+            <div>
+              <h4>Dokument przy aktywności</h4>
+              <p>Certyfikat pozostaje przypisany do właściwego wpisu.</p>
+            </div>
+          </div>
+          <div className="sec-item">
+            <span className="sec-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" strokeLinejoin="round"></path></svg></span>
+            <div>
+              <h4>Jasna rola systemu</h4>
+              <p>CRPE nie jest państwowym rejestrem ani automatycznym rozliczeniem obowiązku.</p>
+            </div>
+          </div>
+        </div>
+        <div className="sec-actions">
+          <Link href="/polityka-prywatnosci" className="sec-btn">Polityka prywatności</Link>
+          <Link href="/regulamin" className="sec-btn">Regulamin</Link>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
+<section className="section faq" id="faq">
+  <div className="wrap">
+    <div className="section-head reveal-up">
+      <span className="eyebrow center"><span className="dot"></span>FAQ</span>
+      <h2>Najczęstsze pytania.</h2>
+      <p>Jeśli nie znajdziesz odpowiedzi, <Link href="/kontakt" style={{"color": "var(--blue)", "fontWeight": "600"} as CSSProperties}>napisz do nas</Link>.</p>
+    </div>
+    <div className="faq-list reveal-up">
+      <details className="faq-item">
+        <summary>Czy CRPE jest połączone z systemem państwowym?
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" strokeLinecap="round"></path></svg>
+        </summary>
+        <div className="faq-body">Nie. CRPE służy do prowadzenia własnej ewidencji aktywności, punktów i dokumentów. Nie zastępuje oficjalnych rejestrów ani wymaganej procedury rozliczenia.</div>
+      </details>
+      <details className="faq-item">
+        <summary>Co CRPE oferuje medykowi już teraz?
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" strokeLinecap="round"></path></svg>
+        </summary>
+        <div className="faq-body">Medyk może prowadzić ewidencję aktywności, punktów i dokumentów, kontrolować postęp oraz przygotować raport użytkownika.</div>
+      </details>
+      <details className="faq-item">
+        <summary>Czy mogę dodać certyfikat z telefonu?
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" strokeLinecap="round"></path></svg>
+        </summary>
+        <div className="faq-body">Tak. Dokument możesz dodać jako plik PDF lub zdjęcie i przypisać do konkretnej aktywności.</div>
+      </details>
+      <details className="faq-item">
+        <summary>Co CRPE daje placówce lub jednostce?
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" strokeLinecap="round"></path></svg>
+        </summary>
+        <div className="faq-body">Panel pozwala tworzyć strukturę jednostki, wysyłać zaproszenia i nadawać role. Zbiorczy status zespołu, raporty i alerty są rozwijane.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<footer className="site-footer">
+  <div className="wrap">
+    <div className="footer-top">
+      <div className="footer-brand">
+        <span className="logo">CRPE</span>
+        <p>Narzędzie do własnej ewidencji aktywności, punktów i dokumentów. CRPE nie jest państwowym rejestrem ani oficjalnym systemem rozliczeniowym.</p>
+      </div>
+      <div className="footer-col">
+        <h4>Dla kogo</h4>
+        <Link href="/dla-medyka">Dla medyka</Link>
+        <Link href="/dla-placowki">Dla placówki</Link>
+        <Link href="/dla-organizatora">Dla organizatora</Link>
+      </div>
+      <div className="footer-col">
+        <h4>Serwis</h4>
+        <Link href="/narzedzia">Narzędzia</Link>
+        <Link href="/bezpieczenstwo">Bezpieczeństwo</Link>
+        <Link href="/pomoc">Centrum pomocy</Link>
+        <Link href="/kontakt">Kontakt</Link>
+      </div>
+      <div className="footer-col">
+        <h4>Dokumenty</h4>
+        <Link href="/regulamin">Regulamin</Link>
+        <Link href="/polityka-prywatnosci">Polityka prywatności</Link>
+      </div>
+    </div>
+    <div className="footer-bottom">© 2026 CRPE.pl</div>
+  </div>
+</footer>
+
+
+
+</div>;
 }
-
