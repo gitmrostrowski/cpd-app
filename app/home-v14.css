@@ -1257,3 +1257,21 @@
  .crpe-home-v14 .hero h1 { font-size:36px; }
  .crpe-home-v14 .hero-figure { width:230px; margin-top:8px; }
 }
+/* v6.28.20: full-width two-line descriptions and compact role cards. */
+.crpe-home-v14 .hero-roles { grid-template-rows:auto 120px; row-gap:8px; }
+.crpe-home-v14 .hero-roles .how-card {
+ grid-row:span 2; grid-template-rows:subgrid; padding:14px; position:relative;
+}
+.crpe-home-v14 .hero-roles .card-top {
+ display:grid; grid-template-columns:36px minmax(0,1fr); grid-template-rows:auto auto;
+ column-gap:10px; row-gap:8px; align-items:center;
+}
+.crpe-home-v14 .hero-roles .ct-txt { display:contents; }
+.crpe-home-v14 .hero-roles .card-top .rc-ic { grid-column:1; grid-row:1; width:36px; height:36px; }
+.crpe-home-v14 .hero-roles .card-top h3 { grid-column:2; grid-row:1; margin:0; }
+.crpe-home-v14 .hero-roles .ct-mini { grid-column:1 / -1; grid-row:2; display:block; margin:0; font-size:12px; line-height:1.45; }
+.crpe-home-v14 .hero-roles .ct-go { position:absolute; right:10px; bottom:10px; left:auto; margin:0; z-index:2; }
+@media(max-width:640px){
+ .crpe-home-v14 .hero-roles { grid-template-rows:none; }
+ .crpe-home-v14 .hero-roles .how-card { grid-row:auto; grid-template-rows:auto 140px; }
+}

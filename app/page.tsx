@@ -88,7 +88,7 @@ export default function Home() {
       <h2 className="hero-pick" id="dla-kogo">Wybierz, kim jesteś</h2>
       <div className="hero-roles" id="kim-jestes" tabIndex={-1} aria-labelledby="dla-kogo">
         <Link href="/dla-medyka" className="how-card role-green">
-          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3v5.5a4.5 4.5 0 0 0 9 0V3"></path><path d="M5 3h2M14 3h2"></path><path d="M10.5 13v2.5a4 4 0 0 0 8 0v-1"></path><circle cx="18.5" cy="10" r="2.2"></circle></svg></span><span className="ct-txt"><h3>Medyk</h3><span className="ct-mini">Rozwijaj swoje kompetencje</span></span></div>
+          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3v5.5a4.5 4.5 0 0 0 9 0V3"></path><path d="M5 3h2M14 3h2"></path><path d="M10.5 13v2.5a4 4 0 0 0 8 0v-1"></path><circle cx="18.5" cy="10" r="2.2"></circle></svg></span><span className="ct-txt"><h3>Medyk</h3><span className="ct-mini">Twoje punkty i certyfikaty</span></span></div>
           <div className="card-swap">
           <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-medyk.webp" width={400} height={400} alt="" loading="eager" /></figure></div>
 
@@ -96,7 +96,7 @@ export default function Home() {
           <span className="ct-go"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
         </Link>
         <Link href="/dla-placowki" className="how-card role-blue">
-          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21V8l8-4.5L20 8v13"></path><path d="M2 21h20"></path><path d="M12 8.5v4.5M9.75 10.75h4.5"></path><rect x="8" y="16" width="3.2" height="5"></rect><rect x="12.8" y="16" width="3.2" height="5"></rect></svg></span><span className="ct-txt"><h3>Placówka medyczna</h3><span className="ct-mini">Uporządkuj strukturę i dostęp</span></span></div>
+          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21V8l8-4.5L20 8v13"></path><path d="M2 21h20"></path><path d="M12 8.5v4.5M9.75 10.75h4.5"></path><rect x="8" y="16" width="3.2" height="5"></rect><rect x="12.8" y="16" width="3.2" height="5"></rect></svg></span><span className="ct-txt"><h3>Placówka medyczna</h3><span className="ct-mini">Zespół, jednostki i dostęp</span></span></div>
           <div className="card-swap">
           <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-placowka.webp" width={400} height={400} alt="" loading="eager" /></figure></div>
 
@@ -104,7 +104,7 @@ export default function Home() {
           <span className="ct-go"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
         </Link>
         <Link href="/dla-organizatora" className="how-card role-violet">
-          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="7.5" r="2.8"></circle><path d="M7.2 17c0-2.6 2.1-4.3 4.8-4.3s4.8 1.7 4.8 4.3"></path><circle cx="5" cy="10" r="2.1"></circle><path d="M1.5 18c0-2 1.4-3.3 3.5-3.3"></path><circle cx="19" cy="10" r="2.1"></circle><path d="M22.5 18c0-2-1.4-3.3-3.5-3.3"></path></svg></span><span className="ct-txt"><h3>Organizator</h3><span className="ct-mini">Zgłoś szkolenie do publicznej bazy</span></span></div>
+          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="7.5" r="2.8"></circle><path d="M7.2 17c0-2.6 2.1-4.3 4.8-4.3s4.8 1.7 4.8 4.3"></path><circle cx="5" cy="10" r="2.1"></circle><path d="M1.5 18c0-2 1.4-3.3 3.5-3.3"></path><circle cx="19" cy="10" r="2.1"></circle><path d="M22.5 18c0-2-1.4-3.3-3.5-3.3"></path></svg></span><span className="ct-txt"><h3>Organizator</h3><span className="ct-mini">Zgłoś szkolenie do bazy</span></span></div>
           <div className="card-swap">
           <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-organizator.webp" width={400} height={400} alt="" loading="eager" /></figure></div>
 
