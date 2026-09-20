@@ -297,8 +297,8 @@ export default function Home() {
 
 <section className="section faq" id="faq">
   <div className="wrap">
+    <span className="eyebrow faq-eyebrow"><span className="dot"></span>FAQ</span>
     <div className="section-head reveal-up">
-      <span className="eyebrow center"><span className="dot"></span>FAQ</span>
       <h2>Najczęstsze pytania.</h2>
       <p>Jeśli nie znajdziesz odpowiedzi, <Link href="/kontakt" style={{"color": "var(--blue)", "fontWeight": "600"} as CSSProperties}>napisz do nas</Link>.</p>
     </div>

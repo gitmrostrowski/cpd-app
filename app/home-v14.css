@@ -1358,3 +1358,27 @@
  .crpe-home-v14 .hero-strip { padding-block:40px 20px; }
  .crpe-home-v14 .tools-section { padding-top:20px; }
 }
+/* v6.28.24: deliberate vertical rhythm and shared heading rows. */
+.crpe-home-v14 .hero { padding-top:56px; }
+.crpe-home-v14 .hero-strip { padding-block:80px 40px; }
+.crpe-home-v14 .tools-section { padding-top:40px; }
+.crpe-home-v14 .home-final-cta { padding-block:80px; }
+.crpe-home-v14 .faq-eyebrow { justify-self:start; margin:0 0 24px; }
+@media(min-width:901px){
+ .crpe-home-v14 .sec-copy > .sec-eyebrow { grid-column:1 / -1; grid-row:1; margin:0 0 24px; }
+ .crpe-home-v14 .sec-copy > h2 { grid-row:2; margin-top:0; }
+ .crpe-home-v14 .sec-copy > p { grid-row:3; }
+ .crpe-home-v14 .sec-actions { grid-row:4; }
+ .crpe-home-v14 .sec-list { grid-row:2 / span 3; }
+ .crpe-home-v14 .faq > .wrap { row-gap:0; }
+ .crpe-home-v14 .faq-eyebrow { grid-column:1 / -1; grid-row:1; }
+ .crpe-home-v14 .faq .section-head { grid-column:1; grid-row:2; }
+ .crpe-home-v14 .faq .section-head h2 { margin-top:0; }
+ .crpe-home-v14 .faq-list { grid-column:2; grid-row:2; }
+}
+@media(max-width:760px){
+ .crpe-home-v14 .hero { padding-top:32px; }
+ .crpe-home-v14 .hero-strip { padding-block:48px 24px; }
+ .crpe-home-v14 .tools-section { padding-top:24px; }
+ .crpe-home-v14 .home-final-cta { padding-block:56px; }
+}
