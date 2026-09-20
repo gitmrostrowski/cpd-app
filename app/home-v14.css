@@ -2050,3 +2050,38 @@
  .crpe-home-v14 .hero-stat { left:50%; right:auto; }
  .crpe-home-v14 .hero::before { right:50%; transform:translateX(50%); }
 }
+/* v6.28.16: equal artwork rows, independent of label length. */
+.crpe-home-v14 .hero-roles .how-card {
+ display:grid; grid-template-rows:132px 140px 32px;
+ gap:0; aspect-ratio:auto; height:auto; min-height:0; padding:16px;
+}
+.crpe-home-v14 .hero-roles .card-top {
+ min-height:0; margin:0; align-self:start;
+}
+.crpe-home-v14 .hero-roles .card-swap {
+ display:grid; height:140px; min-height:140px; margin:0; flex:none;
+}
+.crpe-home-v14 .hero-roles .cs-vis {
+ display:grid; height:140px; min-height:140px; width:100%;
+}
+.crpe-home-v14 .hero-roles .rc-photo {
+ display:grid; width:100%; height:140px; min-height:140px; padding:0; margin:0;
+}
+.crpe-home-v14 .hero-roles .rc-photo img,
+.crpe-home-v14 .hero-roles .how-card:hover .rc-photo img {
+ display:block; width:100%; height:140px; max-height:none;
+ object-fit:contain; object-position:center; transform:none;
+}
+.crpe-home-v14 .hero-roles .ct-go { align-self:end; margin:0; }
+@media(min-width:641px) and (max-width:1080px){
+ .crpe-home-v14 .hero-roles .how-card { grid-template-rows:180px 140px 32px; padding:12px; }
+}
+@media(max-width:640px){
+ .crpe-home-v14 .hero-roles .how-card { grid-template-rows:88px 160px 32px; }
+ .crpe-home-v14 .hero-roles .card-top { flex-direction:row; }
+ .crpe-home-v14 .hero-roles .card-swap,
+ .crpe-home-v14 .hero-roles .cs-vis,
+ .crpe-home-v14 .hero-roles .rc-photo { height:160px; min-height:160px; }
+ .crpe-home-v14 .hero-roles .rc-photo img,
+ .crpe-home-v14 .hero-roles .how-card:hover .rc-photo img { height:160px; }
+}
