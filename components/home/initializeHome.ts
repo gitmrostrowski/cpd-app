@@ -6,12 +6,14 @@ export function initializeHome(root: HTMLElement) {
   const nav = root.querySelector<HTMLElement>("#mainNav");
   const pill = root.querySelector<HTMLElement>("#navPill");
   const links = Array.from(nav?.querySelectorAll<HTMLAnchorElement>("a") ?? []);
+  const sections = links.map(link => link.hash ? root.querySelector(link.hash) : null);
+  let frame = 0;
   function update() {
     const max = document.documentElement.scrollHeight - innerHeight;
     if (bar) bar.style.width = `${max > 0 ? window.scrollY / max * 100 : 0}%`;
     let active: HTMLAnchorElement | undefined;
-    for (const link of links) {
-      const section = root.querySelector(link.hash);
+    for (const [index, link] of links.entries()) {
+      const section = sections[index];
       if (section && section.getBoundingClientRect().top <= 100) active = link;
     }
     for (const link of links) link.classList.toggle("is-active", link === active);
@@ -23,8 +25,12 @@ export function initializeHome(root: HTMLElement) {
       }
     }
   }
-  window.addEventListener("scroll", update, { ...options, passive: true });
-  window.addEventListener("resize", update, options);
+  function scheduleUpdate() {
+    if (!frame) frame = requestAnimationFrame(() => { frame = 0; update(); });
+  }
+  function cleanup() { controller.abort(); cancelAnimationFrame(frame); }
+  window.addEventListener("scroll", scheduleUpdate, { ...options, passive: true });
+  window.addEventListener("resize", scheduleUpdate, options);
   update();
 
   const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
@@ -55,23 +61,25 @@ export function initializeHome(root: HTMLElement) {
   });
   select(0);
 
-  const trigger = root.querySelector<HTMLButtonElement>("#menuToggle")!;
-  const drawer = root.querySelector<HTMLElement>("#sideDrawer")!;
-  const backdrop = root.querySelector<HTMLButtonElement>("#drawerBackdrop")!;
-  const close = root.querySelector<HTMLButtonElement>("#drawerClose")!;
+  const trigger = root.querySelector<HTMLButtonElement>("#menuToggle");
+  const drawer = root.querySelector<HTMLElement>("#sideDrawer");
+  const backdrop = root.querySelector<HTMLButtonElement>("#drawerBackdrop");
+  const close = root.querySelector<HTMLButtonElement>("#drawerClose");
+  if (!trigger || !drawer || !backdrop || !close) return cleanup;
+  const menuTrigger = trigger, menuDrawer = drawer, menuBackdrop = backdrop, menuClose = close;
   const previousOverflow = document.body.style.overflow;
   let opened = false;
   drawer.inert = true;
   function setOpen(value: boolean) {
     opened = value;
-    drawer.inert = !value;
-    drawer.classList.toggle("is-open", value);
-    backdrop.classList.toggle("is-open", value);
-    drawer.setAttribute("aria-hidden", String(!value));
-    trigger.setAttribute("aria-expanded", String(value));
-    trigger.setAttribute("aria-label", value ? "Zamknij menu" : "Otwórz menu");
+    menuDrawer.inert = !value;
+    menuDrawer.classList.toggle("is-open", value);
+    menuBackdrop.classList.toggle("is-open", value);
+    menuDrawer.setAttribute("aria-hidden", String(!value));
+    menuTrigger.setAttribute("aria-expanded", String(value));
+    menuTrigger.setAttribute("aria-label", value ? "Zamknij menu" : "Otwórz menu");
     document.body.style.overflow = value ? "hidden" : previousOverflow;
-    if (value) close.focus(); else trigger.focus();
+    if (value) menuClose.focus(); else menuTrigger.focus();
   }
   trigger.addEventListener("click", () => setOpen(!opened), options);
   close.addEventListener("click", () => setOpen(false), options);
@@ -88,5 +96,5 @@ export function initializeHome(root: HTMLElement) {
     }
   }, options);
   window.addEventListener("resize", () => { if (opened && innerWidth > 860) setOpen(false); }, options);
-  return () => { controller.abort(); document.body.style.overflow = previousOverflow; };
+  return () => { cleanup(); document.body.style.overflow = previousOverflow; };
 }

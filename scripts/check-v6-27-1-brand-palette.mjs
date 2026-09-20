@@ -5,7 +5,7 @@ import process from "node:process";
 const root = process.cwd();
 const home = fs.readFileSync(path.join(root, "app/page.tsx"), "utf8");
 const chart = fs.readFileSync(path.join(root, "app/panel-cpd/CalculatorClient.tsx"), "utf8");
-const css = fs.readFileSync(path.join(root, "app/globals.css"), "utf8");
+const css = fs.readFileSync(path.join(root, "app/crpe-visual-v6-28-2.css"), "utf8");
 
 if (css.includes("--color-crpe-organizator-text: #6D3967;")) {
   for (const token of ["--color-crpe-brand: #1D4ED8;", "--color-crpe-surface: #F7F8FA;", "--color-crpe-line: #E4E6EC;"]) {

@@ -15,7 +15,7 @@ const home = read("app/page.tsx");
 assert(home.includes('crpe-home-v14'), "Nowy Home musi mieć izolowany kontener stylów");
 assert(!home.includes('const pageWrap = "mx-auto w-full max-w-[1180px]'), "Home nie może mieć lokalnego pageWrap 1180px");
 
-const globals = read("app/globals.css");
+const globals = read("app/crpe-visual-v6-28-2.css");
 for (const token of [
   "--color-crpe-success: #006A4E;",
   "--color-crpe-success-soft: #E4F6F0;",

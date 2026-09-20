@@ -7,6 +7,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HomeChrome from "@/components/HomeChrome";
+import PageContent from "@/components/PageContent";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin", "latin-ext"],
@@ -26,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <div className="flex min-h-screen flex-col">
             <HomeChrome><Header /></HomeChrome>
-            <main className="flex-1">{children}</main>
+            <PageContent>{children}</PageContent>
             <HomeChrome><Footer /></HomeChrome>
           </div>
         </AuthProvider>

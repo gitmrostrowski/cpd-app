@@ -39,7 +39,7 @@ assert.match(report, /disabled=\{included\.length === 0\}/, "Pusty raport nie mo
 assert.match(report, /downloadCsv\(/, "Ekran musi korzystać ze wspólnego helpera");
 
 // --- Wydruk jest dokumentem, nie zrzutem interfejsu ---
-const css = await read("app/globals.css");
+const css = await read("app/crpe-visual-v6-28-2.css");
 assert.match(css, /@media print/, "Brak arkusza wydruku");
 assert.match(css, /\[data-print="hide"\][\s\S]*display: none/, "Sterowanie musi znikać z wydruku");
 assert.match(css, /thead\s*\{\s*display: table-header-group/, "Nagłówek tabeli musi się powtarzać na kolejnych stronach");

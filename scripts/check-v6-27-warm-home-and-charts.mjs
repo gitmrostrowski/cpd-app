@@ -5,7 +5,7 @@ import process from "node:process";
 const root = process.cwd();
 const homePath = path.join(root, "app/page.tsx");
 const chartPath = path.join(root, "app/panel-cpd/CalculatorClient.tsx");
-const cssPath = path.join(root, "app/globals.css");
+const cssPath = path.join(root, "app/crpe-visual-v6-28-2.css");
 
 const home = fs.readFileSync(homePath, "utf8");
 const chart = fs.readFileSync(chartPath, "utf8");
