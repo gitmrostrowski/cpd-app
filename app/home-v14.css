@@ -2025,3 +2025,28 @@
  .crpe-home-v14 .hero-stat { width:max-content; }
  .crpe-home-v14 .hero-roles .ct-mini { display:block; font-size:12px; line-height:1.4; }
 }
+/* v6.28.15: one centered composition at every desktop zoom level. */
+.crpe-home-v14 .hero-inner {
+  width:100%; max-width:var(--max); margin-inline:auto;
+  grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);
+  column-gap:40px;
+}
+.crpe-home-v14 .hero-figure {
+  width:100%; max-width:420px; margin:0; justify-self:center;
+}
+.crpe-home-v14 .hero::before {
+  right:max(0px,calc((100% - var(--max))/2 - 100px));
+  width:650px; height:650px;
+}
+.crpe-home-v14 .hero-stat { right:0; }
+@media(min-width:761px) and (max-width:1080px){
+ .crpe-home-v14 .hero-inner { column-gap:28px; }
+ .crpe-home-v14 .hero h1 .l1 { white-space:normal; }
+ .crpe-home-v14 .hero-stat { left:50%; right:auto; width:max-content; max-width:100%; }
+}
+@media(max-width:760px){
+ .crpe-home-v14 .hero-inner { grid-template-columns:minmax(0,1fr); }
+ .crpe-home-v14 .hero-figure { width:230px; max-width:100%; margin-inline:auto; }
+ .crpe-home-v14 .hero-stat { left:50%; right:auto; }
+ .crpe-home-v14 .hero::before { right:50%; transform:translateX(50%); }
+}
