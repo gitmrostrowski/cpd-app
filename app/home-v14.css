@@ -1342,3 +1342,19 @@
 .crpe-home-v14 .sec-copy > .sec-eyebrow { justify-self:start; }
 @media(max-width:1023px){ .crpe-home-v14 .header-inner { padding-inline:24px; } }
 @media(max-width:639px){ .crpe-home-v14 .header-inner { padding-inline:16px; } }
+/* v6.28.23: compact side navigation and consistent section proportions. */
+.crpe-home-v14 .hero-strip { padding-block:64px 32px; }
+.crpe-home-v14 .tools-section { padding-top:32px; }
+@media(min-width:981px){
+ .crpe-home-v14 .tools-ui { grid-template-columns:260px minmax(0,1fr); gap:24px; align-items:start; }
+ .crpe-home-v14 .tools-nav { flex-direction:column; gap:10px; overflow:visible; padding:0; }
+ .crpe-home-v14 .tnav { flex:none; width:100%; min-height:56px; }
+}
+@media(min-width:901px){
+ .crpe-home-v14 .sec-copy, .crpe-home-v14 .faq > .wrap { grid-template-columns:minmax(0,1fr) minmax(0,2fr); column-gap:40px; }
+ .crpe-home-v14 .sec-copy h2, .crpe-home-v14 .faq .section-head h2 { font-size:clamp(28px,2.5vw,32px); line-height:1.2; }
+}
+@media(max-width:639px){
+ .crpe-home-v14 .hero-strip { padding-block:40px 20px; }
+ .crpe-home-v14 .tools-section { padding-top:20px; }
+}
