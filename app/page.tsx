@@ -81,8 +81,8 @@ export default function Home() {
   <div className="hero-inner">
     <div className="hero-copy">
       <span className="eyebrow"><span className="dot"></span>CRPE dla medyków, placówek i organizatorów</span>
-      <h1>Punkty edukacyjne i certyfikaty <span className="accent">w jednym miejscu.</span></h1>
-      <p className="lead">Porządkuj aktywności i dokumenty. Poznaj narzędzia dla medyka, placówki i organizatora kształcenia.</p>
+      <h1>Punkty edukacyjne i certyfikaty <span className="accent">w&nbsp;jednym miejscu.</span></h1>
+      <p className="lead">Dodaj aktywność, dołącz certyfikat i sprawdź, ile punktów brakuje Ci do celu.</p>
       <div className="hero-cta">
         <HomeAction /><Link href="#narzedzia" className="btn btn-ghost">Zobacz narzędzia</Link>
       </div>
@@ -97,7 +97,7 @@ export default function Home() {
     <HomeAudience>      <h2 className="hero-pick" id="dla-kogo">Wybierz, kim jesteś</h2>
       <div className="hero-roles" id="kim-jestes" tabIndex={-1} aria-labelledby="dla-kogo">
         <Link href="/dla-medyka" className="how-card role-green">
-          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3v5.5a4.5 4.5 0 0 0 9 0V3"></path><path d="M5 3h2M14 3h2"></path><path d="M10.5 13v2.5a4 4 0 0 0 8 0v-1"></path><circle cx="18.5" cy="10" r="2.2"></circle></svg></span><span className="ct-txt"><h3>Medyk</h3><span className="ct-mini">Twoje punkty i certyfikaty</span><span className="role-scope">Aktywności, certyfikaty i raport użytkownika.</span></span></div>
+          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3v5.5a4.5 4.5 0 0 0 9 0V3"></path><path d="M5 3h2M14 3h2"></path><path d="M10.5 13v2.5a4 4 0 0 0 8 0v-1"></path><circle cx="18.5" cy="10" r="2.2"></circle></svg></span><span className="ct-txt"><h3>Medyk</h3><span className="ct-mini">Zbieraj punkty w swoim profilu</span><span className="role-scope">Aktywności, certyfikaty i raport okresu — dostępne.</span></span></div>
           <div className="card-swap">
           <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-medyk.webp" width={400} height={400} alt="" loading="eager" /></figure></div>
 
@@ -105,7 +105,7 @@ export default function Home() {
           <span className="ct-go"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
         </Link>
         <Link href="/dla-placowki" className="how-card role-blue">
-          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21V8l8-4.5L20 8v13"></path><path d="M2 21h20"></path><path d="M12 8.5v4.5M9.75 10.75h4.5"></path><rect x="8" y="16" width="3.2" height="5"></rect><rect x="12.8" y="16" width="3.2" height="5"></rect></svg></span><span className="ct-txt"><h3>Placówka medyczna</h3><span className="ct-mini">Zespół, jednostki i dostęp</span><span className="role-scope">Jednostki, zaproszenia i role dostępne. Raporty zbiorcze są rozwijane.</span></span></div>
+          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21V8l8-4.5L20 8v13"></path><path d="M2 21h20"></path><path d="M12 8.5v4.5M9.75 10.75h4.5"></path><rect x="8" y="16" width="3.2" height="5"></rect><rect x="12.8" y="16" width="3.2" height="5"></rect></svg></span><span className="ct-txt"><h3>Placówka medyczna</h3><span className="ct-mini">Uporządkuj zespół i dostęp</span><span className="role-scope">Jednostki, zaproszenia i role — dostępne. Raporty zbiorcze w przygotowaniu.</span></span></div>
           <div className="card-swap">
           <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-placowka.webp" width={400} height={400} alt="" loading="eager" /></figure></div>
 
@@ -113,7 +113,7 @@ export default function Home() {
           <span className="ct-go"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
         </Link>
         <Link href="/dla-organizatora" className="how-card role-violet">
-          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="7.5" r="2.8"></circle><path d="M7.2 17c0-2.6 2.1-4.3 4.8-4.3s4.8 1.7 4.8 4.3"></path><circle cx="5" cy="10" r="2.1"></circle><path d="M1.5 18c0-2 1.4-3.3 3.5-3.3"></path><circle cx="19" cy="10" r="2.1"></circle><path d="M22.5 18c0-2-1.4-3.3-3.5-3.3"></path></svg></span><span className="ct-txt"><h3>Organizator</h3><span className="ct-mini">Zgłoś szkolenie do bazy</span><span className="role-scope">Zgłoszenia do bazy dostępne. Obsługa uczestników jest rozwijana.</span></span></div>
+          <div className="card-top"><span className="rc-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="7.5" r="2.8"></circle><path d="M7.2 17c0-2.6 2.1-4.3 4.8-4.3s4.8 1.7 4.8 4.3"></path><circle cx="5" cy="10" r="2.1"></circle><path d="M1.5 18c0-2 1.4-3.3 3.5-3.3"></path><circle cx="19" cy="10" r="2.1"></circle><path d="M22.5 18c0-2-1.4-3.3-3.5-3.3"></path></svg></span><span className="ct-txt"><h3>Organizator</h3><span className="ct-mini">Pokaż szkolenie medykom</span><span className="role-scope">Zgłoszenie do publicznej bazy — dostępne. Obsługa uczestników w przygotowaniu.</span></span></div>
           <div className="card-swap">
           <div className="cs-vis"><figure className="rc-photo"><img src="/home/v14/rola-organizator.webp" width={400} height={400} alt="" loading="eager" /></figure></div>
 
@@ -123,7 +123,12 @@ export default function Home() {
       </div>
 </HomeAudience>
   </div>
-  <div className="hero-strip"><i></i><span>Wiedza</span><b>·</b><span>Rozwój</span><b>·</b><span>Lepsza opieka</span><i></i></div>
+  <div className="wrap home-how"><h2>Jak korzystać z konta medyka?</h2><ol>
+<li><span>1</span><div><h3>Dodaj aktywność</h3><p>Kurs, webinar lub konferencję.</p></div></li>
+<li><span>2</span><div><h3>Dołącz certyfikat</h3><p>PDF albo zdjęcie z telefonu.</p></div></li>
+<li><span>3</span><div><h3>Sprawdź postęp</h3><p>Ile punktów brakuje do celu.</p></div></li>
+<li><span>4</span><div><h3>Pobierz raport</h3><p>Zestawienie okresu w PDF.</p></div></li>
+</ol><p className="home-role-links"><Link href="/dla-placowki">Placówka: struktura, zaproszenia i role →</Link><Link href="/dla-organizatora">Organizator: zgłoszenie szkolenia →</Link></p></div>
 </section>
 
 <section className="section tools-section" id="narzedzia">
@@ -131,7 +136,7 @@ export default function Home() {
     <div className="tools-head reveal-up">
       <span className="tools-eyebrow"><i></i>Nasze narzędzia</span>
       <h2>Wszystko, czego potrzebujesz, <span className="accent">w jednym koncie</span></h2>
-      <p>Cztery narzędzia konta medyka. Poniżej pokazujemy dane przykładowe.</p>
+      <p>Poznaj narzędzia konta medyka i publiczną bazę szkoleń. Poniżej dane przykładowe.</p>
     </div>
     <div className="tools-ui reveal-up">
       <div className="tools-nav" role="tablist" aria-label="Narzędzia CRPE">
@@ -240,8 +245,8 @@ export default function Home() {
             <div className="tp-search"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.2-4.2"></path></svg>Szukaj szkoleń, kursów i webinarów<span className="tp-caret"></span></div>
             <div className="tp-chips"><span className="on">Wszystkie</span><span>Kursy</span><span>Webinary</span><span>Konferencje</span></div>
             <div className="tp-res">
-              <div className="tp-course"><span className="tag">Kurs stacjonarny</span><h3 className="demo-course-title">Kardiologia interwencyjna</h3><div className="meta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>Warszawa · 14.09<b>12 pkt</b></div><div className="tc-foot"><span className="tc-org">Przykładowy organizator</span><span className="tc-add"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"></path></svg>Dodaj</span></div></div>
-              <div className="tp-course"><span className="tag">Webinar</span><h3 className="demo-course-title">Antybiotykoterapia w POZ</h3><div className="meta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>Online · 22.09<b>4 pkt</b></div><div className="tc-foot"><span className="tc-org">Przykładowa firma szkoleniowa</span><span className="tc-add"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"></path></svg>Dodaj</span></div></div>
+              <div className="tp-course"><span className="tag">Kurs stacjonarny</span><h3 className="demo-course-title">Kardiologia interwencyjna</h3><div className="meta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>Warszawa · 14.09.2026<b>12 pkt</b></div><div className="tc-foot"><span className="tc-org">Przykładowy organizator</span><span className="tc-add"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"></path></svg>Dodaj</span></div></div>
+              <div className="tp-course"><span className="tag">Webinar</span><h3 className="demo-course-title">Antybiotykoterapia w POZ</h3><div className="meta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>Online · 22.09.2026<b>4 pkt</b></div><div className="tc-foot"><span className="tc-org">Przykładowa firma szkoleniowa</span><span className="tc-add"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"></path></svg>Dodaj</span></div></div>
             </div>
         </div>
       </div>
@@ -295,7 +300,7 @@ export default function Home() {
     <span className="eyebrow faq-eyebrow"><span className="dot"></span>FAQ</span>
     <div className="section-head reveal-up">
       <h2>Najczęstsze pytania.</h2>
-      <p>Jeśli nie znajdziesz odpowiedzi, <Link href="/kontakt" style={{"color": "var(--blue)", "fontWeight": "600"} as CSSProperties}>napisz do nas</Link>.</p>
+      <p>Jeśli nie znajdziesz odpowiedzi, <Link href="/kontakt" style={{"color": "var(--blue)", "fontWeight": "600"} as CSSProperties} className="nowrap">napisz do nas</Link>.</p>
     </div>
     <div className="faq-list reveal-up">
       <details className="faq-item">
@@ -322,6 +327,7 @@ export default function Home() {
         </summary>
         <div className="faq-body">Panel pozwala tworzyć strukturę jednostki, wysyłać zaproszenia i nadawać role. Zbiorczy status zespołu, raporty i alerty są rozwijane.</div>
       </details>
+      <details className="faq-item"><summary>Co CRPE oferuje organizatorowi kształcenia?</summary><div className="faq-body">Organizator może zgłosić szkolenie do publicznej bazy i podać link do zapisów. Obsługa uczestników jest w przygotowaniu. <Link href="/dla-organizatora">Poznaj zakres dla organizatora →</Link></div></details>
     </div>
   </div>
 </section>
@@ -331,7 +337,7 @@ export default function Home() {
   <div className="wrap">
     <h2 id="home-start-title">Zacznij porządkować swoją edukację.</h2>
     <p>Własna ewidencja dla medyka. Osobne ścieżki dla placówki i organizatora.</p>
-    <div className="home-final-actions"><HomeAction /><Link href="/dla-placowki" className="btn btn-ghost">Poznaj ofertę dla placówki</Link></div>
+    <div className="home-final-actions"><HomeAction /><Link href="/dla-placowki" className="btn btn-ghost">Poznaj ofertę dla placówki</Link><Link href="/dla-organizatora" className="btn btn-ghost">Dla organizatora</Link></div>
   </div>
 </section>
 

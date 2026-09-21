@@ -7,8 +7,8 @@ for(const route of ['/dla-medyka','/dla-placowki','/dla-organizatora','/login','
 assert(!page.includes('href="#"'));
 assert(!page.includes('20 000'));
 assert(page.includes('dane przykładowe'));
-assert(page.includes('Raporty zbiorcze są rozwijane'));
-assert(page.includes('Obsługa uczestników jest rozwijana'));
+assert(page.includes('Raporty zbiorcze w przygotowaniu'));
+assert(page.includes('Obsługa uczestników w przygotowaniu'));
 for(const match of page.matchAll(/href="([^"]+)"/g)) {
  const route=match[1];
  if(route.startsWith('#')) assert(page.includes(`id="${route.slice(1)}"`),route);
@@ -21,3 +21,4 @@ postcss.parse(readFileSync('app/home-v14.css','utf8')).walkRules(rule=> {
  for(const selector of rule.selectors) assert(selector.startsWith('.crpe-home-v14'),selector);
 });
 console.log('Home v14: routes, assets, scope of offers, tab associations and CSS isolation verified');
+

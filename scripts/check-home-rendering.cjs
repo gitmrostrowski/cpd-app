@@ -37,8 +37,8 @@ assert(guest.indexOf('<footer') > guest.indexOf('</main>'));
 assert.equal((guest.match(/<main\b/g)||[]).length,1);
 assert(guest.includes('id="kim-jestes" tabindex="-1"'));
 assert(guest.includes('class="role-scope"'));
-assert(guest.includes('Raporty zbiorcze są rozwijane'));
-assert(guest.includes('Obsługa uczestników jest rozwijana'));
+assert(guest.includes('Raporty zbiorcze w przygotowaniu'));
+assert(guest.includes('Obsługa uczestników w przygotowaniu'));
 assert(!guest.includes('class="cs-text"'));
 assert(!guest.includes('crpe-certyfikat-tablet'));
 sessionUser={id:'test-account'};
@@ -56,4 +56,5 @@ assert(signedIn.includes('rola-placowka.webp'));
 assert(signedIn.includes('rola-organizator.webp'));
 assert(guest.includes('hero-choose'));
 assert(!guest.includes('Trzy role. Jeden CRPE.'));
+
 

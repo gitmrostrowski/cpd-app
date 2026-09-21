@@ -1191,3 +1191,17 @@
 
 @media(min-width:861px){ .crpe-home-v14 .hero-figure { left:-24px; } }
 
+/* v6.28.28: clear copy and a practical transition into the tools. */
+.crpe-home-v14 .hero-copy h1 { max-width:19ch; text-wrap:balance; }
+.crpe-home-v14 .hero-copy h1 .accent { display:block; }
+.crpe-home-v14 .nowrap { white-space:nowrap; }
+.crpe-home-v14 .home-how { padding-top:64px; padding-bottom:32px; }
+.crpe-home-v14 .home-how > h2 { font-size:18px; margin-bottom:18px; font-weight:700; }
+.crpe-home-v14 .home-how ol { list-style:none; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+.crpe-home-v14 .home-how li { display:flex; gap:12px; padding:16px; background:white; border:1px solid #E7E9EE; border-radius:16px; }
+.crpe-home-v14 .home-how li > span { display:grid; place-items:center; flex:none; width:28px; height:28px; background:#EEF1FF; color:#234BE1; border-radius:50%; font-weight:700; }
+.crpe-home-v14 .home-how h3 { font-size:14px; font-weight:700; }
+.crpe-home-v14 .home-how li p { font-size:12px; color:#4B5563; margin-top:6px; }
+.crpe-home-v14 .home-role-links { display:flex; flex-wrap:wrap; gap:12px 24px; font-size:13px; margin-top:24px; color:#234BE1; }
+@media(max-width:900px){ .crpe-home-v14 .home-how ol { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:480px){ .crpe-home-v14 .home-how ol { grid-template-columns:1fr; } .crpe-home-v14 .home-how { padding-top:40px; } }
