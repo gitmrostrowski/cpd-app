@@ -1158,7 +1158,7 @@
 .crpe-home-v14 .hero-choose { grid-area:choose; min-width:0; }
 .crpe-home-v14 .hero-pick { margin-top:0; }
 .crpe-home-v14 .hero-roles { grid-template-rows:none; gap:18px; margin-top:24px; }
-.crpe-home-v14 .hero-roles .how-card { grid-row:auto; grid-template-columns:minmax(0,1fr) 108px; grid-template-rows:1fr auto; gap:12px; padding:16px; min-height:190px; }
+.crpe-home-v14 .hero-roles .how-card { grid-row:auto; grid-template-columns:minmax(0,1fr) 108px; grid-template-rows:1fr auto; gap:8px; padding:14px; min-height:170px; }
 .crpe-home-v14 .hero-roles .card-top { grid-column:1; grid-row:1; grid-template-columns:28px minmax(0,1fr); gap:8px; }
 .crpe-home-v14 .hero-roles .card-top .rc-ic { width:28px; height:28px; }
 .crpe-home-v14 .hero-roles .card-top h3 { font-size:15px; }
@@ -1187,4 +1187,7 @@
 .crpe-home-v14 .tp-spark .line { stroke-dashoffset:0; }
 .crpe-home-v14 .tp-spark .area { opacity:.16; }
 .crpe-home-v14 .tp-spark .end-dot { opacity:1; }
-@media(max-width:860px){ .crpe-home-v14 .hero-roles .how-card { min-height:200px; } }
+@media(max-width:860px){ .crpe-home-v14 .hero-roles .how-card { min-height:180px; } }
+
+@media(min-width:861px){ .crpe-home-v14 .hero-figure { left:-24px; } }
+
