@@ -2,7 +2,10 @@ import Link from "next/link";
 import HomeFrame from "@/components/home/HomeFrame";
 import HomeAction from "@/components/home/HomeAction";
 import { MarketingFooter, MarketingNav } from "@/components/home/MarketingChrome";
+import PlacowkaPreview from "@/components/home/PlacowkaPreview";
+import RoleContactModal from "@/components/RoleContactModal";
 import "./home-v15.css";
+import "./role-v15.css";
 
 /*
  * Home v15 – układ oparty na produkcie.
@@ -27,6 +30,7 @@ export default function Home() {
         <p className="lead">Dodawaj kursy i certyfikaty, także zdjęciem z telefonu. CRPE liczy punkty w Twoim okresie rozliczeniowym i pokazuje, ile jeszcze brakuje.</p>
         <div className="hero-cta"><HomeAction /><Link href="#jak-to-dziala" className="btn btn-ghost">Zobacz, jak działa</Link></div>
         <p className="hero-note">Dla lekarzy, pielęgniarek, fizjoterapeutów i innych zawodów medycznych.</p>
+        <Link href="#dla-placowek" className="hero-org"><span className="hero-org-tag">Dla placówek</span><span>Zespół, jednostki i role w jednym panelu</span><span aria-hidden="true">→</span></Link>
       </div>
     </div>
 
@@ -104,8 +108,31 @@ export default function Home() {
   </div>
 </section>
 
+{/* 2b. DLA PLACÓWEK: wyróżniona ścieżka */}
+<section className="org-band" id="dla-placowek" aria-labelledby="org-title">
+  <div className="wrap org-grid">
+    <div className="org-copy">
+      <span className="pill org-pill">Panel pilotażowy dla placówek</span>
+      <h2 id="org-title">Cały zespół w jednym panelu.</h2>
+      <p className="org-lead">Szpital, przychodnia albo sieć placówek: budujesz strukturę, zapraszasz pracowników i nadajesz role. Każdy prowadzi własne konto, a jego dokumenty nie są udostępniane automatycznie.</p>
+      <ul className="org-list">
+        <li>Oddziały, zespoły i jednostki</li>
+        <li>Zaproszenia na adres e-mail</li>
+        <li>Role: właściciel, administrator, koordynator</li>
+        <li>Dane pracownika oddzielone od placówki</li>
+      </ul>
+      <p className="org-soon">Status zespołu i alerty o brakach są w przygotowaniu. Raporty zbiorcze w przygotowaniu.</p>
+      <div className="hero-cta">
+        <RoleContactModal role="placowka" triggerLabel="Zapytaj o pilotaż" triggerClassName="btn btn-on-dark" compact />
+        <Link href="/dla-placowki" className="btn btn-ghost-dark">Zobacz, co obejmuje</Link>
+      </div>
+    </div>
+    <div className="org-preview"><PlacowkaPreview /></div>
+  </div>
+</section>
+
 {/* 3. NARZĘDZIA */}
-<section className="block block-flush" id="narzedzia" aria-labelledby="tools-title">
+<section className="block" id="narzedzia" aria-labelledby="tools-title">
   <div className="wrap">
     <div className="sec-head"><h2 id="tools-title">Jedno konto na cały okres.</h2><p>Aktywności, dokumenty, raport i plan szkoleń w jednym miejscu. W podglądach są dane przykładowe.</p></div>
     <div className="tools">
@@ -164,35 +191,20 @@ export default function Home() {
   </div>
 </section>
 
-{/* 4. DLA KOGO */}
+{/* 4. DLA KOGO: pozostałe ścieżki */}
 <section className="block block-flush" id="dla-kogo" aria-labelledby="aud-title">
   <div className="wrap">
     <h2 id="aud-title" className="visually-hidden">Dla kogo jest CRPE</h2>
-    <div className="aud">
-      <div className="aud-main">
-        <div>
-          <h3>Dla medyka</h3>
-          <p>Prywatny profil edukacyjny. Punkty, dokumenty i raport w jednym miejscu, na komputerze i telefonie.</p>
-        </div>
-        <ul>
-          <li>Licznik punktów w okresie</li>
-          <li>Certyfikaty przy wpisach</li>
-          <li>Tempo potrzebne do celu</li>
-          <li>Raport PDF i CSV</li>
-        </ul>
-        <div className="aud-actions"><HomeAction /><Link href="/dla-medyka" className="text-link light">Więcej dla medyka</Link></div>
+    <div className="aud-pair">
+      <div className="aud-card">
+        <h3>Dla medyka</h3>
+        <p>Prywatny profil edukacyjny: licznik punktów, certyfikaty przy wpisach, tempo potrzebne do celu i raport PDF lub CSV.</p>
+        <div className="aud-actions"><HomeAction /><Link href="/dla-medyka" className="text-link">Więcej dla medyka</Link></div>
       </div>
-      <div className="aud-side">
-        <div className="aud-card">
-          <h3>Dla placówki</h3>
-          <p>Jednostki, zaproszenia i role są dostępne. Raporty zbiorcze w przygotowaniu.</p>
-          <Link href="/dla-placowki" className="text-link">Poznaj panel placówki</Link>
-        </div>
-        <div className="aud-card">
-          <h3>Dla organizatora szkoleń</h3>
-          <p>Zgłoszenie szkolenia do publicznej bazy jest dostępne. Obsługa uczestników w przygotowaniu.</p>
-          <Link href="/dla-organizatora" className="text-link">Zgłoś szkolenie</Link>
-        </div>
+      <div className="aud-card">
+        <h3>Dla organizatora szkoleń</h3>
+        <p>Zgłoszenie szkolenia do publicznej bazy jest dostępne. Obsługa uczestników w przygotowaniu.</p>
+        <Link href="/dla-organizatora" className="text-link">Zgłoś szkolenie</Link>
       </div>
     </div>
   </div>

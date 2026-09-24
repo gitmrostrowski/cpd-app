@@ -5,7 +5,7 @@ import Link from "next/link";
  * Na Home kotwice prowadzą w obrębie strony, na pozostałych do sekcji Home.
  */
 
-export const MARKETING_PATHS = ["/", "/dla-medyka", "/dla-placowki", "/dla-organizatora"];
+export const MARKETING_PATHS = ["/", "/dla-medyka", "/dla-placowki", "/dla-organizatora", "/narzedzia", "/bezpieczenstwo", "/kontakt"];
 
 function Logo() {
   return <span className="mark"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l7.5 3.2v5.4c0 4.7-3.2 8-7.5 9.4-4.3-1.4-7.5-4.7-7.5-9.4V6.2z" /><path d="M9 12.2l2.1 2.1L15.2 10" /></svg></span>;
@@ -16,9 +16,9 @@ export function MarketingNav({ onHome = false }: { onHome?: boolean }) {
   const links = <>
     <Link href={a("#jak-to-dziala")}>Jak to działa</Link>
     <Link href={a("#narzedzia")}>Narzędzia</Link>
-    <Link href={a("#dla-kogo")}>Dla kogo</Link>
     <Link href="/baza-szkolen">Baza szkoleń</Link>
     <Link href={a("#faq")}>Pytania</Link>
+    <Link href="/dla-placowki" className="nav-org">Dla placówek</Link>
   </>;
   return <>
 <header className="site-header">

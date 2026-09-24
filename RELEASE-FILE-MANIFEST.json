@@ -1,37 +1,34 @@
 {
-  "version": "6.29.4",
-  "baseline": "6.29.1",
+  "version": "6.31",
+  "baseline": "6.29.4",
+  "source": "Full v6.30 inside files (8).zip",
   "changed": [
-    "app/home-v15.css",
-    "app/page.tsx",
-    "components/HomeChrome.tsx",
-    "components/PageContent.tsx",
-    "components/RoleLandingPage.tsx",
     "package.json",
-    "scripts/check-home-rendering.cjs",
-    "scripts/check-release.mjs",
-    "scripts/check-v6-29-home.mjs"
-  ],
-  "added": [
-    "START-TUTAJ-v6.29.2.md",
-    "START-TUTAJ-v6.29.3.md",
-    "START-TUTAJ-v6.29.4.md",
+    "RELEASE-FILE-MANIFEST.json",
+    "app/crpe-visual-v6-28-2.css",
+    "app/home-v15.css",
+    "app/layout.tsx",
+    "app/page.tsx",
     "app/role-v15.css",
+    "app/bezpieczenstwo/page.tsx",
+    "app/kontakt/page.tsx",
+    "app/narzedzia/page.tsx",
+    "app/panel-cpd/CalculatorClient.tsx",
+    "components/AppPageHeader.tsx",
+    "components/Footer.tsx",
+    "components/Header.tsx",
+    "components/RoleLandingPage.tsx",
     "components/home/MarketingChrome.tsx",
+    "scripts/check-release.mjs",
     "scripts/check-v6-29-3-role-pages.mjs"
   ],
-  "removed": [],
-  "unchanged_critical_directories": [
-    "app/api/",
-    "lib/",
-    "supabase/",
-    "integrations/",
-    "app/panel-cpd/",
-    "app/aktywnosci/",
-    "app/placowka/",
-    "app/admin/",
-    "app/raporty/",
-    "types/"
+  "added": [
+    "START-TUTAJ-v6.30.md",
+    "START-TUTAJ-v6.31.md",
+    "app/app-v15.css",
+    "components/home/MarketingPage.tsx",
+    "components/home/PlacowkaPreview.tsx",
+    "scripts/check-v6-30-app-style.mjs"
   ],
-  "package_lock_unchanged": true
+  "removed": []
 }

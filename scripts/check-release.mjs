@@ -27,6 +27,7 @@ const checks = [
   'check-v6-27-5-layout-and-semantic-colors.mjs',
   'check-v6-29-home.mjs',
   'check-v6-29-3-role-pages.mjs',
+  'check-v6-30-app-style.mjs',
   'check-home-rendering.cjs',
 ];
 let failed = 0;

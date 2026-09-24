@@ -1920,8 +1920,8 @@ export default function CalculatorClient() {
         ]}
       />
 
-      <nav className="sticky top-[62px] z-30 rounded-[18px] border border-slate-200 bg-white/95 p-1.5 shadow-[0_12px_32px_rgba(15,45,75,0.09)] backdrop-blur sm:top-[70px]">
-        <div className="grid grid-cols-2 gap-1 sm:flex sm:items-center">
+      <nav className="sticky top-[70px] z-30 rounded-[18px] border border-slate-200 bg-white/95 p-1.5 shadow-[0_12px_32px_rgba(15,45,75,0.09)] backdrop-blur sm:top-[70px]">
+        <div className="grid grid-cols-3 gap-1 sm:flex sm:items-center">
           {panelSections.map(({ id, label, mobileLabel, icon }) => {
             const active = activeNav === id;
             return (

@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+// v6.30: placówka wyróżniona na Home, jeden system wizualny w całej aplikacji.
+const read=(f)=>readFileSync(f,'utf8');
+const home=read('app/page.tsx'), chrome=read('components/home/MarketingChrome.tsx'), header=read('components/Header.tsx');
+assert(home.includes('id="dla-placowek"')&&home.includes('<PlacowkaPreview />'),'Home: osobna sekcja placówek z podglądem panelu');
+assert(home.includes('href="#dla-placowek"'),'Home: wejście dla placówek w hero');
+assert(chrome.includes('href="/dla-placowki" className="nav-org"'),'Menu: wyróżniona pozycja Dla placówek');
+assert(header.includes('{ href: "/dla-placowki", label: "Dla placówek" }'),'Nagłówek aplikacji: pozycja Dla placówek');
+const layout=read('app/layout.tsx');
+assert(layout.includes('import "./app-v15.css";')&&layout.includes('import "./home-v15.css";'),'Globalna warstwa stylu v15');
+assert(layout.includes('from "next/font/google"'),'Właściwy font, bez zastępczego');
+assert(read('components/Footer.tsx').includes('MarketingFooter'),'Jedna stopka w całej aplikacji');
+const app=read('components/AppPageHeader.tsx');
+assert(!/blur-3xl|bg-gradient-to-br|uppercase/.test(app),'Płaski nagłówek ekranów aplikacji');
+for(const p of ['narzedzia','bezpieczenstwo','kontakt']) assert(read(`app/${p}/page.tsx`).includes('MarketingPage'),`${p} w systemie v15`);
+for(const p of ['/narzedzia','/bezpieczenstwo','/kontakt']) assert(chrome.includes(`"${p}"`),`${p} w MARKETING_PATHS`);
+const css=read('app/crpe-visual-v6-28-2.css');
+assert(css.includes('--color-blue-600: #1D4ED8;')&&css.includes('--color-slate-950: #0B2545;'),'Kolory Tailwinda zmapowane na markę');
+console.log('v6.30: placówka na Home, wspólny nagłówek, stopka i styl aplikacji zweryfikowane');

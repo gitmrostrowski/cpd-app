@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 import postcss from 'postcss';
 // Strony ról w systemie Home v15: wspólna nawigacja, zgodny zakres funkcji, izolowane style.
-const role=readFileSync('components/RoleLandingPage.tsx','utf8');
+const role=readFileSync('components/RoleLandingPage.tsx','utf8')+readFileSync('components/home/PlacowkaPreview.tsx','utf8');
 const chrome=readFileSync('components/home/MarketingChrome.tsx','utf8');
 const homeChrome=readFileSync('components/HomeChrome.tsx','utf8');
 const pageContent=readFileSync('components/PageContent.tsx','utf8');
@@ -28,5 +28,5 @@ postcss.parse(readFileSync('app/role-v15.css','utf8')).walkRules(rule=>{
 });
 // Style Home nie mogą nadpisywać okna kontaktowego (Tailwind jest w warstwie).
 const css=readFileSync('app/home-v15.css','utf8');
-for(const tag of ['h1','h2','h3']) assert(css.includes(`.crpe-home-v15 ${tag}:where(:not([role="dialog"] *))`),tag);
+for(const tag of ['h1','h2','h3']) assert(css.includes(`.crpe-home-v15 ${tag}:where(:not(:is([role="dialog"],[data-app-ui]) *))`),tag);
 console.log('Strony ról v15: nawigacja, zakres funkcji, trasy i izolacja CSS zweryfikowane');

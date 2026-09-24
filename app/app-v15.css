@@ -1,0 +1,49 @@
+/*
+ * CRPE v6.30 – wspólna warstwa stylu aplikacji (system Home v15).
+ *
+ * Ten plik NIE jest w warstwie Tailwinda, więc wygrywa z klasami narzędziowymi.
+ * Ujednolica starsze ekrany bez przepisywania każdego z nich:
+ *  – spokojniejsze wagi fontu i luźniejszy odstęp liter w nagłówkach,
+ *  – etykiety sekcji zwykłym zapisem zamiast wersalików,
+ *  – przyciski jako pigułki (jak na Home),
+ *  – płaskie tła zamiast gradientów i rozmytych plam,
+ *  – jedna skala zaokrągleń kart.
+ * Nie dotyka okna kontaktowego ani stron marketingowych (.crpe-home-v15).
+ */
+
+/* Typografia */
+.font-black{font-weight:700}
+.font-extrabold{font-weight:650}
+h1,h2{letter-spacing:-.022em}
+h3{letter-spacing:-.01em}
+
+/* Etykiety sekcji: zdanie zamiast wersalików z rozstrzeleniem */
+.uppercase[class*="tracking-[0."]{
+  text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;line-height:1.4;
+}
+
+/* Przyciski tekstowe jako pigułki; kafle ikon i pola formularzy bez zmian */
+:is(a,button).rounded-xl:is(.inline-flex,.flex)[class*="px-"]:not([role="menuitem"]):not(.w-full):not(.justify-between){border-radius:999px}
+:is(a,button).rounded-xl[class*="bg-blue-600"],
+:is(a,button).rounded-xl[class*="bg-crpe-brand "]{border-radius:999px}
+
+/* Karty: jedna skala zaokrągleń */
+.rounded-\[26px\],.rounded-\[28px\],.rounded-\[30px\],.rounded-\[32px\]{border-radius:22px}
+
+/* Płaskie tła sekcji i paneli zamiast gradientów */
+:is(section,div,header,main)[class*="bg-[radial-gradient"],
+:is(section,div,header,main)[class*="bg-[linear-gradient(180deg,#f"],
+:is(section,div,header,main)[class*="bg-[linear-gradient(135deg,#eff6ff"]{background:#F3F7FB}
+:is(section,div,header,main).bg-gradient-to-br[class*="from-white"]{background:#fff}
+
+/* Dekoracyjne rozmyte plamy światła */
+.pointer-events-none.blur-3xl{display:none}
+
+/* Miękkie, jednolite cienie kart */
+[class*="shadow-[0_18px_52px"],[class*="shadow-[0_14px_40px"],[class*="shadow-[0_15px_42px"],[class*="shadow-[0_20px_55px_rgba(15,45,75,0.08)"]{
+  box-shadow:0 1px 0 rgba(11,37,69,.04),0 16px 36px -24px rgba(11,37,69,.22);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .crpe-interactive-card:hover{transform:none}
+}

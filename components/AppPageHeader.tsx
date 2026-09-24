@@ -36,50 +36,36 @@ export default function AppPageHeader({
   accent?: "blue" | "amber" | "emerald";
   children?: ReactNode;
 }) {
-  const accentBar =
-    accent === "amber"
-      ? "bg-amber-400"
-      : accent === "emerald"
-        ? "bg-emerald-500"
-        : "bg-blue-600";
-
+  /* v6.30: płaski nagłówek w systemie Home v15 – bez karty, paska i plam światła.
+     Kolor akcentu zostaje tylko w kaflu ikony, żeby moduły dało się odróżnić. */
   const bubbleTone =
     accent === "amber"
-      ? "border-amber-100 bg-amber-50 text-amber-700"
+      ? "border-amber-200 bg-amber-50 text-amber-800"
       : accent === "emerald"
-        ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-        : "border-blue-100 bg-blue-50 text-blue-700";
+        ? "border-crpe-success-border bg-crpe-success-soft text-crpe-success"
+        : "border-crpe-brand-border bg-crpe-brand-soft text-crpe-brand";
 
   return (
-    <header className="relative overflow-hidden rounded-[24px] border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50/80 px-5 py-5 shadow-[0_18px_48px_rgba(15,45,75,0.08)] sm:px-6 sm:py-6">
-      <span
-        className={`pointer-events-none absolute inset-y-0 left-0 w-1 ${accentBar}`}
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-cyan-200/30 blur-3xl"
-        aria-hidden="true"
-      />
-
-      <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-start gap-3.5">
+    <header className="border-b border-crpe-line pb-6 pt-2 sm:pb-7">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex items-start gap-4">
           {icon ? (
             <span
-              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border shadow-sm [&_svg]:h-7 [&_svg]:w-7 [&_svg]:stroke-[1.75] ${bubbleTone}`}
+              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border [&_svg]:h-7 [&_svg]:w-7 [&_svg]:stroke-[1.75] ${bubbleTone}`}
             >
               {icon}
             </span>
           ) : null}
 
           <div className="min-w-0">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-blue-700">
+            <p className="text-[14px] font-medium text-crpe-subtle">
               {eyebrow}
             </p>
-            <h1 className="mt-1 text-[28px] font-black tracking-[-0.035em] text-slate-950 sm:text-[32px]">
+            <h1 className="mt-0.5 text-[28px] font-black leading-[1.12] text-crpe-ink sm:text-[32px]">
               {title}
             </h1>
             {description ? (
-              <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-[15px]">
+              <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-crpe-muted">
                 {description}
               </p>
             ) : null}
@@ -100,8 +86,8 @@ export default function AppPageHeader({
                 href={action.href}
                 className={
                   action.variant === "secondary"
-                    ? "inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
-                    : "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white shadow-[0_10px_22px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 active:scale-95"
+                    ? "inline-flex h-11 items-center justify-center gap-2 rounded-full border border-crpe-line bg-white px-5 text-[15px] font-semibold text-crpe-ink transition hover:border-crpe-subtle"
+                    : "inline-flex h-11 items-center justify-center gap-2 rounded-full bg-crpe-brand px-5 text-[15px] font-semibold text-white transition hover:bg-crpe-brand-hover"
                 }
               >
                 {action.icon}
@@ -112,7 +98,7 @@ export default function AppPageHeader({
         ) : null}
       </div>
 
-      {children ? <div className="relative mt-4">{children}</div> : null}
+      {children ? <div className="mt-5">{children}</div> : null}
     </header>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
@@ -37,14 +36,15 @@ type NavItem = {
 };
 
 const PUBLIC_NAV: NavItem[] = [
-  { href: "/#kim-jestes", label: "Dla kogo" },
-  { href: "/baza-szkolen", label: "Baza szkoleń" },
+  { href: "/#jak-to-dziala", label: "Jak to działa" },
   { href: "/narzedzia", label: "Narzędzia" },
-  { href: "/bezpieczenstwo", label: "Bezpieczeństwo" },
+  { href: "/baza-szkolen", label: "Baza szkoleń" },
   { href: "/pomoc", label: "Pomoc" },
+  { href: "/dla-placowki", label: "Dla placówek" },
 ];
 
 const APP_NAV: NavItem[] = [
+  { href: "/dla-placowki", label: "Dla placówek", mobileDescription: "Zespół, jednostki i role" },
   {
     href: "/",
     label: "Home",
@@ -303,17 +303,17 @@ export default function Header() {
       )}
     >
       <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
-        <div className="flex h-14 items-center gap-3 sm:h-16 sm:gap-4">
+        <div className="flex h-16 items-center gap-3 sm:gap-4">
           <Link
             href={logoHref}
             className="flex shrink-0 items-center gap-2.5"
             aria-label="CRPE — strona główna"
             title="Wróć na stronę główną"
           >
-            <Image src="/logo.svg" alt="Logo CRPE" width={30} height={30} />
-            <span className="font-display text-[19px] font-bold tracking-tight text-crpe-ink">
-              CRPE<span className="text-crpe-punkt">.</span>
+            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-crpe-brand text-white" aria-hidden="true">
+              <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l7.5 3.2v5.4c0 4.7-3.2 8-7.5 9.4-4.3-1.4-7.5-4.7-7.5-9.4V6.2z" /><path d="M9 12.2l2.1 2.1L15.2 10" /></svg>
             </span>
+            <span className="text-[19px] font-extrabold tracking-tight text-crpe-ink">CRPE</span>
           </Link>
 
           <nav className="ml-auto hidden min-w-0 items-center justify-end lg:flex" aria-label="Główna nawigacja">
@@ -329,26 +329,22 @@ export default function Header() {
               </div>
             ) : (
               <div className={cx("flex items-center", showPublicNav ? "gap-2" : "gap-1")}>
-                {navItems.map(({ href, label, icon: Icon }) => {
+                {navItems.map(({ href, label }) => {
                 const active = isActive(href);
                 return (
                   <Link
                     key={href}
                     href={href}
                     className={cx(
-                      "inline-flex items-center gap-2 text-sm font-bold transition",
-                      showPublicNav
-                        ? "rounded-full px-3.5 py-2 font-semibold text-crpe-muted hover:bg-crpe-surface hover:text-crpe-ink"
-                        : "rounded-xl px-3 py-2.5",
-                      !showPublicNav && active
-                        ? "bg-blue-50 text-blue-700 ring-1 ring-blue-100"
-                        : !showPublicNav
-                          ? "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                          : "",
+                      "inline-flex items-center rounded-full px-3.5 py-2 text-[15px] font-medium transition",
+                      href === "/dla-placowki"
+                        ? "ml-1 border border-crpe-brand-border bg-crpe-brand-soft font-semibold text-crpe-brand hover:border-crpe-brand"
+                        : active
+                          ? "bg-crpe-surface text-crpe-ink"
+                          : "text-crpe-muted hover:text-crpe-ink",
                     )}
                     aria-current={active ? "page" : undefined}
                   >
-                    {Icon ? <Icon className="h-4 w-4" strokeWidth={2.2} /> : null}
                     <span>{label}</span>
                   </Link>
                 );
@@ -375,10 +371,10 @@ export default function Header() {
                     <Link
                       href={`/placowka/${organizationContexts[0].organization_id}`}
                       className={cx(
-                        "inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-[13px] font-extrabold transition",
+                        "inline-flex h-10 items-center gap-2 rounded-full border px-4 text-[14px] font-semibold transition",
                         pathname?.startsWith("/placowka")
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                          ? "border-crpe-brand bg-crpe-brand text-white"
+                          : "border-crpe-brand-border bg-crpe-brand-soft text-crpe-brand hover:border-crpe-brand",
                       )}
                       title={organizationContexts[0].display_name}
                     >
@@ -511,7 +507,7 @@ export default function Header() {
                     type="button"
                     onClick={() => setOpenUser((v) => !v)}
                     className={cx(
-                      "inline-flex h-10 w-10 items-center justify-center rounded-xl border transition",
+                      "relative inline-flex h-10 w-10 items-center justify-center rounded-full border transition",
                       openUser
                         ? "border-blue-200 bg-blue-50 text-blue-700"
                         : "border-slate-200 bg-slate-50 text-blue-800 hover:bg-blue-50",
@@ -519,7 +515,7 @@ export default function Header() {
                     aria-label="Menu użytkownika"
                     title="Profil i ustawienia"
                   >
-                    <span className="text-xs font-black tracking-wide">
+                    <span className="text-xs font-bold tracking-wide">
                       {initials}
                     </span>
                     <span
@@ -656,7 +652,7 @@ export default function Header() {
               </div>
             ) : !showPublicNav ? (
               <div className="grid grid-cols-2 gap-2">
-                {navItems.map(({ href, label, mobileDescription, icon: Icon }) => {
+                {navItems.map(({ href, label, mobileDescription }) => {
                   const active = isActive(href);
                   return (
                     <Link
@@ -665,14 +661,15 @@ export default function Header() {
                       className={cx(
                         "rounded-2xl border p-3 transition",
                         href === "/" && "col-span-2",
-                        active
-                          ? "border-blue-200 bg-blue-50 text-blue-700"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                        href === "/dla-placowki"
+                          ? "border-crpe-brand-border bg-crpe-brand-soft text-crpe-brand"
+                          : active
+                          ? "border-crpe-ink bg-white text-crpe-ink"
+                          : "border-crpe-line bg-white text-crpe-muted hover:text-crpe-ink",
                       )}
                       aria-current={active ? "page" : undefined}
                     >
                       <div className="flex items-center gap-2 text-sm font-extrabold">
-                        {Icon ? <Icon className="h-4 w-4" /> : null}
                         {label}
                       </div>
                       <p className="mt-1 text-[11px] leading-4 text-slate-500">
@@ -688,7 +685,7 @@ export default function Header() {
                   <Link
                     key={href}
                     href={href}
-                    className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-blue-700"
+                    className={cx("rounded-full px-3 py-2.5 text-sm font-semibold", href === "/dla-placowki" ? "border border-crpe-brand-border bg-crpe-brand-soft text-crpe-brand" : "text-crpe-muted hover:bg-crpe-surface")}
                   >
                     {label}
                   </Link>

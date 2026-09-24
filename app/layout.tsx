@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 
 import "./crpe-visual-v6-28-2.css";
+import "./home-v15.css";
+import "./app-v15.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
