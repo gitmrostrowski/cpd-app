@@ -1,0 +1,306 @@
+/* Home v15: produkt w hero, jeden system tokenów wspólny z aplikacją (crpe-visual). */
+.crpe-home-v15{
+  --brand:#1D4ED8; --brand-hover:#1740B4; --brand-soft:#EDF3FE;
+  --ink:#0B2545; --ink-2:#4B5E75; --ink-3:#7A8BA0;
+  --surface:#F3F7FB; --line:#DDE6F0; --line-2:#E9EFF6; --panel:#FFFFFF;
+  --ok:#006A4E; --ok-soft:#E4F6F0; --warn:#9A4600; --warn-soft:#FFEEE2;
+  --punkt:#12A39B;
+  --shadow:0 1px 0 rgba(11,37,69,.04),0 28px 56px -28px rgba(11,37,69,.22);
+  --r-s:8px; --r-m:14px; --r-l:22px;
+  --space-section:120px;
+  color:var(--ink);background:#fff;line-height:1.55;font-size:17px;
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;overflow-x:clip;
+}
+.crpe-home-v15 *,.crpe-home-v15 *::before,.crpe-home-v15 *::after{box-sizing:border-box}
+.crpe-home-v15 h1,.crpe-home-v15 h2,.crpe-home-v15 h3,.crpe-home-v15 p,.crpe-home-v15 ul,.crpe-home-v15 ol{margin:0;padding:0}
+.crpe-home-v15 ul,.crpe-home-v15 ol{list-style:none}
+.crpe-home-v15 a{color:inherit;text-decoration:none}
+.crpe-home-v15 svg{display:block}
+.crpe-home-v15 :focus-visible{outline:2px solid var(--brand);outline-offset:3px;border-radius:6px}
+.crpe-home-v15 section[id]{scroll-margin-top:88px}
+.crpe-home-v15 .wrap{max-width:1200px;margin:0 auto;padding:0 32px}
+.crpe-home-v15 .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.crpe-home-v15 .skip-home{position:absolute;left:16px;top:-60px;z-index:100;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--r-s)}
+.crpe-home-v15 .skip-home:focus{top:12px}
+.crpe-home-v15 main:focus{outline:none}
+
+/* typografia: 76 / 46 / 20 / 17 */
+.crpe-home-v15 h1{font-size:clamp(40px,5.6vw,68px);line-height:1;letter-spacing:-.045em;font-weight:700}
+.crpe-home-v15 h2{font-size:clamp(30px,3.6vw,46px);line-height:1.08;letter-spacing:-.035em;font-weight:700}
+.crpe-home-v15 h3{font-size:20px;line-height:1.3;letter-spacing:-.02em;font-weight:700}
+.crpe-home-v15 .muted{color:var(--ink-2)}
+
+/* przyciski */
+.crpe-home-v15 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 22px;border-radius:999px;font-weight:600;font-size:16px;border:1px solid transparent;white-space:nowrap;transition:background .15s,border-color .15s}
+.crpe-home-v15 .btn-s{height:40px;padding:0 16px;font-size:15px}
+.crpe-home-v15 .btn-primary{background:var(--brand);color:#fff}
+.crpe-home-v15 .btn-primary:hover{background:var(--brand-hover)}
+.crpe-home-v15 .btn-ghost{border-color:var(--line);color:var(--ink)}
+.crpe-home-v15 .btn-ghost:hover{border-color:var(--ink-3)}
+.crpe-home-v15 .text-link{font-weight:600;color:var(--brand);font-size:15px}
+.crpe-home-v15 .text-link:hover{text-decoration:underline;text-underline-offset:3px}
+.crpe-home-v15 .text-link.light{color:#fff}
+
+/* nagłówek */
+.crpe-home-v15 .site-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line-2)}
+.crpe-home-v15 .header-inner{display:flex;align-items:center;gap:40px;height:72px}
+.crpe-home-v15 .logo{display:inline-flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.02em}
+.crpe-home-v15 .logo .mark{width:30px;height:30px;border-radius:9px;background:var(--brand);color:#fff;display:grid;place-items:center}
+.crpe-home-v15 .logo .mark svg{width:17px;height:17px}
+.crpe-home-v15 .main-nav{display:flex;gap:28px;font-size:15px}
+.crpe-home-v15 .main-nav a{color:var(--ink-2)}
+.crpe-home-v15 .main-nav a:hover,.crpe-home-v15 .main-nav a.is-active{color:var(--ink)}
+.crpe-home-v15 .header-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.crpe-home-v15 .menu-toggle-btn{display:none;width:44px;height:44px;border:1px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.crpe-home-v15 .menu-toggle-btn i{display:block;width:18px;height:2px;border-radius:2px;background:var(--ink)}
+.crpe-home-v15 .drawer-backdrop{position:fixed;inset:0;z-index:60;border:0;background:rgba(11,37,69,.35);opacity:0;pointer-events:none;transition:opacity .2s}
+.crpe-home-v15 .drawer-backdrop.is-open{opacity:1;pointer-events:auto}
+.crpe-home-v15 .side-drawer{position:fixed;top:0;right:0;bottom:0;z-index:70;width:min(340px,86vw);background:#fff;padding:20px 24px;display:flex;flex-direction:column;gap:4px;transform:translateX(100%);transition:transform .25s ease;box-shadow:var(--shadow)}
+.crpe-home-v15 .side-drawer.is-open{transform:none}
+.crpe-home-v15 .side-drawer > a{padding:12px 0;border-bottom:1px solid var(--line-2);font-weight:500}
+.crpe-home-v15 .drawer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700}
+.crpe-home-v15 .drawer-close{width:40px;height:40px;border:0;background:var(--surface);border-radius:10px;cursor:pointer;font-size:16px;color:var(--ink)}
+.crpe-home-v15 .drawer-cta{display:grid;gap:10px;margin-top:auto}
+
+/* 1. hero */
+.crpe-home-v15 .hero{padding:88px 0 0}
+.crpe-home-v15 .hero-grid{display:grid;grid-template-columns:7fr 5fr;gap:48px;align-items:end}
+.crpe-home-v15 .hero h1{max-width:12ch;text-wrap:balance}
+.crpe-home-v15 .hero-side{display:grid;gap:24px;padding-bottom:6px}
+.crpe-home-v15 .lead{font-size:18px;color:var(--ink-2);max-width:42ch}
+.crpe-home-v15 .hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+.crpe-home-v15 .hero-note{font-size:14px;color:var(--ink-3)}
+.crpe-home-v15 .stage{position:relative;margin-top:64px}
+.crpe-home-v15 .stage::before{content:"";position:absolute;inset:88px -32px 0;background:var(--surface);border-radius:32px 32px 0 0}
+.crpe-home-v15 .panel{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--shadow);padding:32px}
+.crpe-home-v15 .panel-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.crpe-home-v15 .who{display:flex;align-items:center;gap:12px}
+.crpe-home-v15 .who span:not(.avatar){display:block;font-size:14px;color:var(--ink-3)}
+.crpe-home-v15 .avatar{width:40px;height:40px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-weight:700;font-size:14px}
+.crpe-home-v15 .pill{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
+.crpe-home-v15 .pill-brand{background:var(--brand-soft);color:var(--brand)}
+.crpe-home-v15 .pill-ok{background:var(--ok-soft);color:var(--ok)}
+.crpe-home-v15 .pill-warn{background:var(--warn-soft);color:var(--warn)}
+.crpe-home-v15 .pill-line{border:1px solid var(--line);color:var(--ink-2)}
+.crpe-home-v15 .score{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:28px 0 6px}
+.crpe-home-v15 .score b{font-size:clamp(56px,7vw,88px);font-weight:700;letter-spacing:-.05em;line-height:.9}
+.crpe-home-v15 .score span{font-size:20px;color:var(--ink-2)}
+.crpe-home-v15 .score-note{color:var(--ink-2);max-width:60ch}
+
+/* linijka okresu: element charakterystyczny */
+.crpe-home-v15 .ruler{position:relative;margin:36px 0 8px;padding-top:30px}
+.crpe-home-v15 .ruler-track{position:relative;height:14px;border-radius:999px;background:var(--line-2)}
+.crpe-home-v15 .ruler-fill{position:absolute;inset:0 auto 0 0;width:55%;border-radius:999px;background:var(--brand);transform-origin:left;animation:crpe-v15-fill 1.4s cubic-bezier(.2,.7,.2,1) .3s both}
+.crpe-home-v15 .tick{position:absolute;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#fff}
+.crpe-home-v15 .today{position:absolute;top:-30px;bottom:-10px;left:68%;border-left:2px dashed var(--ink)}
+.crpe-home-v15 .today span{position:absolute;top:0;left:8px;font-size:13px;font-weight:700}
+.crpe-home-v15 .years{display:grid;grid-template-columns:repeat(4,1fr);margin-top:12px;font-size:13px;color:var(--ink-3)}
+.crpe-home-v15 .years span{border-left:1px solid var(--line);padding-left:8px}
+.crpe-home-v15 .ruler-legend{display:flex;gap:24px;flex-wrap:wrap;font-size:14px;color:var(--ink-2);margin-top:18px}
+.crpe-home-v15 .ruler-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+.crpe-home-v15 .lg-fill{background:var(--brand)}
+.crpe-home-v15 .lg-tick{border:2px solid var(--brand);border-radius:50%!important}
+.crpe-home-v15 .lg-today{width:2px!important;border-left:2px dashed var(--ink);border-radius:0!important}
+@keyframes crpe-v15-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes crpe-v15-pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.crpe-home-v15 .panel-cols{display:grid;grid-template-columns:1.4fr 1fr;gap:32px;margin-top:32px;padding-top:28px;border-top:1px solid var(--line-2)}
+.crpe-home-v15 .list-h{font-size:14px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.crpe-home-v15 .entries li{display:grid;grid-template-columns:1fr auto auto;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line-2);font-size:15px}
+.crpe-home-v15 .entries li:last-child{border-bottom:0}
+.crpe-home-v15 .entries small,.crpe-home-v15 .table small{display:block;color:var(--ink-3);font-size:13px}
+.crpe-home-v15 .pts{font-weight:700}
+.crpe-home-v15 .doc{width:28px;height:28px;border-radius:8px;display:grid;place-items:center}
+.crpe-home-v15 .doc svg{width:14px;height:14px}
+.crpe-home-v15 .doc-l{width:36px;height:36px}
+.crpe-home-v15 .doc-l svg{width:18px;height:18px}
+.crpe-home-v15 .doc-ok{background:var(--ok-soft);color:var(--ok)}
+.crpe-home-v15 .doc-warn{background:var(--warn-soft);color:var(--warn)}
+.crpe-home-v15 .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.crpe-home-v15 .stats div{background:var(--surface);border-radius:var(--r-m);padding:16px}
+.crpe-home-v15 .stats small{display:block;font-size:13px;color:var(--ink-2)}
+.crpe-home-v15 .stats b{font-size:26px;letter-spacing:-.03em}
+.crpe-home-v15 .hint{margin-top:12px;background:var(--brand-soft);border-radius:var(--r-m);padding:16px;font-size:15px}
+.crpe-home-v15 .hint b{color:var(--brand)}
+.crpe-home-v15 .toast{position:absolute;z-index:2;right:-24px;top:128px;background:#fff;border:1px solid var(--line);border-radius:var(--r-m);box-shadow:var(--shadow);padding:12px 16px 12px 12px;display:flex;align-items:center;gap:12px;font-size:14px;animation:crpe-v15-pop .5s cubic-bezier(.2,.7,.2,1) 1.6s both}
+.crpe-home-v15 .toast span:not(.doc){display:block;color:var(--ink-2)}
+
+/* sekcje */
+.crpe-home-v15 .block{padding:var(--space-section) 0}
+.crpe-home-v15 .block-flush{padding-top:0}
+.crpe-home-v15 .sec-head{display:grid;grid-template-columns:5fr 7fr;gap:48px;align-items:end;margin-bottom:56px}
+.crpe-home-v15 .sec-head p{font-size:18px;color:var(--ink-2);max-width:46ch}
+
+/* 2. kroki */
+.crpe-home-v15 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;counter-reset:crpe-step}
+.crpe-home-v15 .steps h3{display:flex;gap:12px;align-items:baseline;margin:24px 0 8px}
+.crpe-home-v15 .steps h3::before{counter-increment:crpe-step;content:counter(crpe-step);font-size:15px;color:var(--brand)}
+.crpe-home-v15 .steps p{color:var(--ink-2);font-size:16px;max-width:34ch}
+.crpe-home-v15 .scene{height:220px;border-radius:var(--r-l);background:var(--surface);position:relative;overflow:hidden;display:grid;place-items:center}
+.crpe-home-v15 .mini{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);font-size:13px}
+.crpe-home-v15 .mini.form,.crpe-home-v15 .mini.sum{width:78%;padding:16px;display:grid;gap:6px}
+.crpe-home-v15 .field{border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink-2)}
+.crpe-home-v15 .field.on{border-color:var(--brand);color:var(--ink)}
+.crpe-home-v15 .sum-top{display:flex;justify-content:space-between;align-items:center}
+.crpe-home-v15 .sum-top .pill{height:22px;font-size:12px}
+.crpe-home-v15 .bar{display:block;height:6px;border-radius:3px;background:var(--line-2);overflow:hidden;margin:6px 0}
+.crpe-home-v15 .bar i{display:block;height:100%;width:55%;background:var(--brand)}
+.crpe-home-v15 .phone{width:132px;height:250px;border-radius:26px;border:6px solid var(--ink);background:#fff;padding:14px 10px;position:relative;top:40px}
+.crpe-home-v15 .phone small{display:block;text-align:center;font-size:12px;color:var(--ink-2);margin-bottom:10px}
+.crpe-home-v15 .cert{height:118px;border-radius:6px;background:var(--surface);border:1px solid var(--line);position:relative;padding:10px}
+.crpe-home-v15 .cert i{display:block;height:5px;border-radius:3px;background:var(--line);margin-bottom:7px}
+.crpe-home-v15 .cert i:nth-child(1){width:60%}
+.crpe-home-v15 .cert i:nth-child(3){width:80%}
+.crpe-home-v15 .cert i:nth-child(4){width:40%;margin-top:18px}
+.crpe-home-v15 .frame{position:absolute;inset:4px;border:2px solid var(--brand);border-radius:8px}
+.crpe-home-v15 .shutter{display:block;margin:14px auto 0;width:40px;height:40px;border-radius:50%;border:3px solid var(--brand)}
+
+/* 3. narzędzia */
+.crpe-home-v15 .tools{display:grid;grid-template-columns:4fr 8fr;gap:48px;align-items:start}
+.crpe-home-v15 .tools > *{min-width:0}
+.crpe-home-v15 .tablist{display:flex;flex-direction:column;gap:4px}
+.crpe-home-v15 .tab{appearance:none;border:0;background:transparent;text-align:left;font:inherit;color:inherit;cursor:pointer;padding:18px 20px;border-left:2px solid transparent;border-radius:0 var(--r-m) var(--r-m) 0}
+.crpe-home-v15 .tab strong{display:block;font-size:17px}
+.crpe-home-v15 .tab span{display:block;font-size:15px;color:var(--ink-2);margin-top:4px;max-height:0;overflow:hidden;transition:max-height .25s}
+.crpe-home-v15 .tab:hover{background:var(--surface)}
+.crpe-home-v15 .tab.is-on{background:var(--surface);border-left-color:var(--brand)}
+.crpe-home-v15 .tab.is-on span{max-height:80px}
+.crpe-home-v15 .viewer{background:var(--surface);border-radius:var(--r-l);padding:40px;min-height:460px;display:grid;place-items:center}
+.crpe-home-v15 .tpane{width:100%;display:grid;place-items:center}
+.crpe-home-v15 .tpane[hidden]{display:none}
+.crpe-home-v15 .tpane:focus-visible{outline-offset:8px}
+.crpe-home-v15 .mini.card{width:100%;max-width:560px;padding:24px;font-size:14px}
+.crpe-home-v15 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 6px}
+.crpe-home-v15 .table{width:100%;border-collapse:collapse}
+.crpe-home-v15 .table td{padding:12px 0;border-bottom:1px solid var(--line-2);vertical-align:middle}
+.crpe-home-v15 .table tr:last-child td{border-bottom:0}
+.crpe-home-v15 .table td:last-child{text-align:right;white-space:nowrap;padding-left:12px}
+.crpe-home-v15 .upload{display:flex;gap:32px;align-items:center;justify-content:center;flex-wrap:wrap}
+.crpe-home-v15 .phone-l{top:0;width:180px;height:340px;padding:18px 12px}
+.crpe-home-v15 .phone-l .cert{height:170px}
+.crpe-home-v15 .phone-l .shutter{width:52px;height:52px;border-width:4px;margin-top:18px}
+.crpe-home-v15 .upload-copy{max-width:240px;display:grid;gap:10px;justify-items:start}
+.crpe-home-v15 .upload-copy small{font-size:14px;color:var(--ink-2)}
+.crpe-home-v15 .paper{background:#fff;width:100%;max-width:400px;aspect-ratio:1/1.3;border-radius:6px;box-shadow:var(--shadow);padding:28px;font-size:13px;display:flex;flex-direction:column;gap:10px}
+.crpe-home-v15 .paper small{color:var(--ink-2)}
+.crpe-home-v15 .paper hr{border:0;border-top:1px solid var(--line);margin:4px 0;width:100%}
+.crpe-home-v15 .paper .row{display:flex;justify-content:space-between;gap:12px}
+.crpe-home-v15 .paper .faint{color:var(--ink-3)}
+.crpe-home-v15 .paper-foot{margin-top:auto;display:flex;gap:8px}
+.crpe-home-v15 .search{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:var(--ink-3);font-size:15px;margin-bottom:6px}
+.crpe-home-v15 .search svg{width:16px;height:16px}
+.crpe-home-v15 .course{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:14px 0;border-bottom:1px solid var(--line-2)}
+.crpe-home-v15 .course b{font-size:15px}
+.crpe-home-v15 .course small{color:var(--ink-2)}
+.crpe-home-v15 .course + .text-link{display:inline-block;margin-top:16px}
+
+/* 4. dla kogo */
+.crpe-home-v15 .aud{display:grid;grid-template-columns:7fr 5fr;gap:24px}
+.crpe-home-v15 .aud-main{background:var(--ink);color:#fff;border-radius:var(--r-l);padding:48px;display:flex;flex-direction:column;justify-content:space-between;gap:40px;min-height:420px}
+.crpe-home-v15 .aud-main h3{font-size:clamp(30px,3.6vw,46px);letter-spacing:-.035em;line-height:1.08}
+.crpe-home-v15 .aud-main p{color:rgba(255,255,255,.74);font-size:18px;max-width:40ch;margin-top:14px}
+.crpe-home-v15 .aud-main ul{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;font-size:16px}
+.crpe-home-v15 .aud-main li::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--punkt);margin-right:10px;vertical-align:1px}
+.crpe-home-v15 .aud-actions{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.crpe-home-v15 .aud-main .btn-primary{background:#fff;color:var(--ink)}
+.crpe-home-v15 .aud-main .btn-primary:hover{background:var(--brand-soft)}
+.crpe-home-v15 .aud-side{display:grid;gap:24px}
+.crpe-home-v15 .aud-card{border:1px solid var(--line);border-radius:var(--r-l);padding:32px;display:flex;flex-direction:column;gap:10px}
+.crpe-home-v15 .aud-card p{color:var(--ink-2);font-size:16px;margin-bottom:12px}
+.crpe-home-v15 .aud-card .text-link{margin-top:auto}
+
+/* 5. jest / nie jest */
+.crpe-home-v15 .honest{background:var(--surface)}
+.crpe-home-v15 .cols2{display:grid;grid-template-columns:1fr 1fr;gap:64px}
+.crpe-home-v15 .cols2 h3{margin-bottom:20px}
+.crpe-home-v15 .checks li{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:16px 0;border-top:1px solid var(--line);font-size:16px}
+.crpe-home-v15 .checks b{display:block}
+.crpe-home-v15 .checks span:not(.mark){color:var(--ink-2)}
+.crpe-home-v15 .mark{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px}
+.crpe-home-v15 .mark svg{width:13px;height:13px}
+.crpe-home-v15 .mark.ok{background:var(--ok-soft);color:var(--ok)}
+.crpe-home-v15 .mark.no{background:var(--line);color:var(--ink-2)}
+.crpe-home-v15 .links{display:flex;gap:20px;flex-wrap:wrap;margin-top:40px;font-size:15px}
+.crpe-home-v15 .links a{color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line)}
+.crpe-home-v15 .links a:hover{color:var(--ink)}
+
+/* 6. FAQ */
+.crpe-home-v15 .faq{display:grid;grid-template-columns:4fr 8fr;gap:48px}
+.crpe-home-v15 .faq-lead{margin-top:16px;color:var(--ink-2)}
+.crpe-home-v15 .faq-lead a,.crpe-home-v15 .faq-list p a{color:var(--brand);font-weight:600}
+.crpe-home-v15 .faq-list details{border-bottom:1px solid var(--line)}
+.crpe-home-v15 .faq-list details:first-child{border-top:1px solid var(--line)}
+.crpe-home-v15 .faq-list summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:24px;padding:22px 0;font-size:18px;font-weight:600}
+.crpe-home-v15 .faq-list summary::-webkit-details-marker{display:none}
+.crpe-home-v15 .faq-list summary::after{content:"";flex:none;width:10px;height:10px;margin-top:8px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(45deg);transition:transform .2s}
+.crpe-home-v15 .faq-list details[open] summary::after{transform:rotate(-135deg)}
+.crpe-home-v15 .faq-list p{padding:0 48px 24px 0;color:var(--ink-2);max-width:62ch}
+
+/* 7. zamknięcie i stopka */
+.crpe-home-v15 .final{padding:0 0 var(--space-section)}
+.crpe-home-v15 .final-box{display:grid;grid-template-columns:7fr 5fr;gap:48px;align-items:end}
+.crpe-home-v15 .final-box::before{content:"";grid-column:1/-1;border-top:1px solid var(--line);margin-bottom:16px}
+.crpe-home-v15 .final-box p{font-size:18px;color:var(--ink-2);margin-bottom:24px}
+.crpe-home-v15 .site-footer{border-top:1px solid var(--line);padding:56px 0 40px;font-size:15px}
+.crpe-home-v15 .footer-top{display:grid;grid-template-columns:4fr 2fr 2fr 2fr;gap:32px}
+.crpe-home-v15 .footer-brand p{color:var(--ink-2);margin-top:14px;max-width:34ch;font-size:14px}
+.crpe-home-v15 .footer-col{display:grid;gap:10px;align-content:start}
+.crpe-home-v15 .footer-heading{font-size:14px;font-weight:700;letter-spacing:0;margin-bottom:4px}
+.crpe-home-v15 .footer-col a{color:var(--ink-2)}
+.crpe-home-v15 .footer-col a:hover{color:var(--ink)}
+.crpe-home-v15 .footer-bottom{margin-top:48px;color:var(--ink-3);font-size:14px}
+
+/* responsywność */
+@media (max-width:980px){
+  .crpe-home-v15{--space-section:96px}
+  .crpe-home-v15 .main-nav{display:none}
+  .crpe-home-v15 .menu-toggle-btn{display:flex}
+  .crpe-home-v15 .hero-grid,.crpe-home-v15 .sec-head,.crpe-home-v15 .tools,.crpe-home-v15 .aud,.crpe-home-v15 .cols2,.crpe-home-v15 .faq,.crpe-home-v15 .final-box,.crpe-home-v15 .panel-cols{grid-template-columns:1fr}
+  .crpe-home-v15 .steps{grid-template-columns:1fr}
+  .crpe-home-v15 .footer-top{grid-template-columns:1fr 1fr}
+  .crpe-home-v15 .toast{right:12px}
+  .crpe-home-v15 .tablist{flex-direction:row;overflow-x:auto;gap:8px;padding-bottom:4px}
+  .crpe-home-v15 .tab{white-space:nowrap;padding:10px 16px;border:1px solid var(--line);border-radius:999px}
+  .crpe-home-v15 .tab span{display:none}
+  .crpe-home-v15 .tab.is-on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .crpe-home-v15 .cols2{gap:40px}
+  .crpe-home-v15 .sec-head{gap:16px;margin-bottom:40px}
+}
+@media (max-width:600px){
+  .crpe-home-v15{--space-section:72px;font-size:16px}
+  .crpe-home-v15 .wrap{padding:0 20px}
+  .crpe-home-v15 .header-inner{gap:12px}
+  .crpe-home-v15 .header-actions{gap:8px}
+  .crpe-home-v15 .header-actions .btn-s{padding:0 12px;font-size:13px}
+  .crpe-home-v15 .hero{padding-top:48px}
+  .crpe-home-v15 .header-actions .btn-ghost{display:none}
+  .crpe-home-v15 .panel{padding:20px}
+  .crpe-home-v15 .stage::before{inset:88px -20px 0}
+  .crpe-home-v15 .toast{display:none}
+  .crpe-home-v15 .ruler-legend{gap:6px 16px;font-size:13px}
+  .crpe-home-v15 .panel-cols > div + div{display:none}
+  .crpe-home-v15 .today span{left:auto;right:8px}
+  .crpe-home-v15 .entries li{grid-template-columns:1fr auto}
+  .crpe-home-v15 .entries .doc{display:none}
+  .crpe-home-v15 .aud-main{padding:28px;min-height:0}
+  .crpe-home-v15 .aud-main ul{grid-template-columns:1fr}
+  .crpe-home-v15 .viewer{padding:12px;min-height:0}
+  .crpe-home-v15 .mini.card{padding:16px}
+  .crpe-home-v15 .scene{height:180px}
+  .crpe-home-v15 .faq-list p{padding-right:0}
+  .crpe-home-v15 .footer-top{grid-template-columns:1fr}
+}
+@media (max-width:380px){
+  .crpe-home-v15 .table{table-layout:fixed;font-size:12px}
+  .crpe-home-v15 .table td:first-child{width:48%;overflow-wrap:anywhere;padding-right:6px}
+  .crpe-home-v15 .table td:nth-child(2){width:30%}
+  .crpe-home-v15 .table td:last-child{width:22%;padding-left:3px}
+  .crpe-home-v15 .table .pill{font-size:10px;padding:0 5px;height:24px}
+  .crpe-home-v15 .table small{font-size:11px}
+  .crpe-home-v15 .paper{padding:16px}
+  .crpe-home-v15 .paper-foot{flex-wrap:wrap}
+}
+@media (prefers-reduced-motion:reduce){
+  .crpe-home-v15 *,.crpe-home-v15 *::before,.crpe-home-v15 *::after{animation:none!important;transition:none!important}
+}
+

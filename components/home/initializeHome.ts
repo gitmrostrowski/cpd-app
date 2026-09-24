@@ -95,6 +95,8 @@ export function initializeHome(root: HTMLElement) {
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     }
   }, options);
-  window.addEventListener("resize", () => { if (opened && innerWidth > 860) setOpen(false); }, options);
+  window.addEventListener("resize", () => {
+    if (opened && getComputedStyle(menuTrigger).display === "none") setOpen(false);
+  }, options);
   return () => { cleanup(); document.body.style.overflow = previousOverflow; };
 }

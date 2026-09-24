@@ -70,7 +70,8 @@
     "check:v6.27.10": "node scripts/check-v6-27-10-role-switcher-polish.mjs",
     "check:v6.27.11": "node scripts/check-v6-27-11-nil-descriptions.mjs",
     "check:v6.28": "node scripts/check-v6-28-punkty-visual-system.mjs",
-    "check:release": "node scripts/check-release.mjs"
+    "check:release": "node scripts/check-release.mjs",
+    "check:v6.29": "node scripts/check-v6-29-home.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",

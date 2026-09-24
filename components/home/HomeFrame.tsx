@@ -15,9 +15,9 @@ export default function HomeFrame({ children, navigation, footer, className }: {
   return <>
     {user ? <Header /> : null}
     <div ref={root} className={className}>
-      <a className="skip-home" href="#kim-jestes">Przejdź do wyboru odbiorcy</a>
+      <a className="skip-home" href="#home-content">Przejdź do treści</a>
       {user ? null : navigation}
-      <main id="home-content">{children}</main>
+      <main id="home-content" tabIndex={-1}>{children}</main>
       {footer}
     </div>
   </>;

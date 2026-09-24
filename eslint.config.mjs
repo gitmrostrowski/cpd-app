@@ -6,6 +6,12 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    files: ["scripts/**/*.cjs"],
+    // Node verification scripts intentionally use CommonJS.
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+  {
+    files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     // v6.24 contains legacy patterns covered by stricter rules introduced with
     // the Next.js 16 / React 19 lint presets. Keep them visible as technical
     // debt without making the existing application fail its release lint.
