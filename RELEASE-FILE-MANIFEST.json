@@ -1,23 +1,24 @@
 {
-  "version": "6.29.1",
-  "baseline": "6.28.29",
+  "version": "6.29.4",
+  "baseline": "6.29.1",
   "changed": [
+    "app/home-v15.css",
     "app/page.tsx",
-    "components/home/HomeFrame.tsx",
-    "components/home/initializeHome.ts",
-    "eslint.config.mjs",
+    "components/HomeChrome.tsx",
+    "components/PageContent.tsx",
+    "components/RoleLandingPage.tsx",
     "package.json",
     "scripts/check-home-rendering.cjs",
     "scripts/check-release.mjs",
-    "scripts/check-v6-27-5-layout-and-semantic-colors.mjs"
+    "scripts/check-v6-29-home.mjs"
   ],
   "added": [
-    "AGENTS.md",
-    "CLAUDE.md",
-    "START-TUTAJ-v6.29.1.md",
-    "START-TUTAJ-v6.29.md",
-    "app/home-v15.css",
-    "scripts/check-v6-29-home.mjs"
+    "START-TUTAJ-v6.29.2.md",
+    "START-TUTAJ-v6.29.3.md",
+    "START-TUTAJ-v6.29.4.md",
+    "app/role-v15.css",
+    "components/home/MarketingChrome.tsx",
+    "scripts/check-v6-29-3-role-pages.mjs"
   ],
   "removed": [],
   "unchanged_critical_directories": [

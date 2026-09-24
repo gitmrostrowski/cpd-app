@@ -51,3 +51,16 @@ assert(signedIn.includes('href="/panel-cpd"'));
 assert(!signedIn.includes('id="menuToggle"'));
 assert(signedIn.includes('Dla placówki'));
 console.log('PASS Home rendering: guest/account navigation, CTA, landmarks, skip link, role scope');
+
+// Strony ról: wspólna nawigacja, jeden <main>, zakres funkcji.
+sessionUser=null;
+const Role=load('components/RoleLandingPage.tsx').default;
+for (const [role, needle] of [['medyk','Twoje punkty'],['placowka','Zapytaj o pilotaż'],['organizator','Zgłoś szkolenie']]) {
+  const html=renderToStaticMarkup(React.createElement(Role,{role}));
+  assert(html.includes(needle),role);
+  assert(html.includes('class="site-header"'),role+' nawigacja');
+  assert.equal((html.match(/<main\b/g)||[]).length,1,role+' main');
+  assert(html.includes('href="/#jak-to-dziala"'),role+' kotwice prowadzą do Home');
+}
+console.log('PASS Role pages rendering: shared navigation, landmarks, role scope');
+

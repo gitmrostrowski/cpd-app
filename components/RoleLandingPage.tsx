@@ -1,312 +1,291 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  BarChart3,
-  Building2,
-  CalendarCheck2,
-  Check,
-  CheckCircle2,
-  ClipboardCheck,
-  FileCheck2,
-  FileText,
-  FolderOpen,
-  GraduationCap,
-  ShieldCheck,
-  Stethoscope,
-  UserRound,
-  UsersRound,
-  type LucideIcon,
-} from "lucide-react";
+import type { ReactNode } from "react";
+import HomeFrame from "@/components/home/HomeFrame";
+import HomeAction from "@/components/home/HomeAction";
+import { MarketingFooter, MarketingNav } from "@/components/home/MarketingChrome";
 import RoleContactModal from "@/components/RoleContactModal";
+import "@/app/home-v15.css";
+import "@/app/role-v15.css";
+
+/*
+ * Strony ról w systemie Home v15: ta sama nawigacja, typografia i tokeny.
+ * Każda strona: hero z podglądem interfejsu, zakres (dostępne / w przygotowaniu),
+ * kroki, pytania i zamknięcie. Opisujemy wyłącznie to, co działa w aplikacji.
+ */
 
 type RoleKind = "medyk" | "placowka" | "organizator";
 
-type Props = {
-  role: RoleKind;
-};
-
 type RoleContent = {
-  icon: LucideIcon;
-  eyebrow: string;
   title: string;
   lead: string;
   status: string;
-  statusClass: string;
-  availableTitle: string;
-  availableText: string;
-  available: Array<{ icon: LucideIcon; title: string; text: string }>;
-  roadmapTitle: string;
-  roadmapText: string;
-  roadmap: string[];
-  steps: Array<{ title: string; text: string }>;
+  note?: string;
+  available: Array<[string, string]>;
+  laterTitle: string;
+  later: Array<[string, string]>;
+  stepsTitle: string;
+  steps: Array<[string, string]>;
   faq: Array<[string, string]>;
-  contactRole?: "placowka" | "organizator";
+  finalTitle: string;
+  finalText: string;
 };
-
-const wrap = "mx-auto w-full max-w-[1160px] px-4 sm:px-6 lg:px-8";
 
 const content: Record<RoleKind, RoleContent> = {
   medyk: {
-    icon: Stethoscope,
-    eyebrow: "CRPE dla medyka",
-    title: "Prowadź własną ewidencję punktów, aktywności i certyfikatów.",
-    lead: "Panel CPD, aktywności, dokumenty, raport i baza szkoleń działają w jednym koncie. Zaczynasz od własnego celu i prowadzisz ewidencję we własnym tempie.",
+    title: "Twoje punkty, certyfikaty i raport w jednym koncie.",
+    lead: "Ustawiasz zawód, okres i cel. Dodajesz aktywności z dokumentami, a CRPE pokazuje postęp i tempo potrzebne do końca okresu.",
     status: "Dostępne teraz",
-    statusClass: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-    availableTitle: "Cały podstawowy warsztat medyka jest dostępny od razu.",
-    availableText: "CRPE prowadzi od ustawienia celu, przez dodawanie aktywności, aż do przygotowania zestawienia.",
+    note: "Dla lekarzy, lekarzy dentystów, pielęgniarek, położnych, fizjoterapeutów, ratowników medycznych, farmaceutów i diagnostów laboratoryjnych.",
     available: [
-      { icon: BarChart3, title: "Panel CPD i kalkulator", text: "Ustaw okres i własny cel, obserwuj punkty zadeklarowane oraz kompletność dokumentów." },
-      { icon: CalendarCheck2, title: "Aktywności i certyfikaty", text: "Dodawaj wpisy, punkty i dokumenty PDF lub zdjęcia certyfikatów." },
-      { icon: FileText, title: "Raport użytkownika", text: "Przygotuj zestawienie wybranego okresu oraz eksport dokumentów." },
-      { icon: FolderOpen, title: "Baza szkoleń", text: "Wyszukuj wydarzenia i dodawaj wybrane pozycje do własnego planu CPD." },
+      ["Panel CPD", "Postęp według okresu i celu oraz liczba punktów rocznie potrzebna do końca okresu."],
+      ["Aktywności", "Kursy, webinary, konferencje i publikacje z datą i punktami."],
+      ["Certyfikaty", "PDF albo zdjęcie z telefonu, przypięte do właściwego wpisu."],
+      ["Raport okresu", "Zestawienie do wydruku lub zapisania jako PDF oraz plik CSV."],
+      ["Baza szkoleń", "Wyszukiwanie szkoleń z punktami i dodawanie ich do planu."],
     ],
-    roadmapTitle: "Co warto wiedzieć przed rozpoczęciem",
-    roadmapText: "CRPE pomaga prowadzić własną ewidencję, ale nie zastępuje oficjalnego rejestru ani wymaganej procedury rozliczenia.",
-    roadmap: [
-      "Dokument jest zawsze przypisany do konkretnej aktywności.",
-      "Panel CPD pokazuje postęp według ustawionego celu i okresu.",
-      "Dodanie szkolenia do planu nie oznacza zapisu u organizatora.",
-      "Dane i pliki są dostępne po zalogowaniu.",
+    laterTitle: "Dobrze wiedzieć",
+    later: [
+      ["CRPE nie rozlicza obowiązku za Ciebie", "To prywatna ewidencja. Rozliczenie składasz zgodnie z obowiązującą procedurą."],
+      ["Plan to nie zapis", "Dodanie szkolenia do planu nie zapisuje Cię u organizatora."],
+      ["Dane widzisz tylko Ty", "Aktywności i pliki są dostępne po zalogowaniu."],
     ],
+    stepsTitle: "Cztery kroki do porządku w punktach.",
     steps: [
-      { title: "Załóż konto", text: "Wybierz zawód, okres rozliczeniowy i wymagany cel." },
-      { title: "Dodaj aktywność", text: "Wpisz wydarzenie, datę, kategorię i liczbę punktów." },
-      { title: "Dołącz dokument", text: "Dodaj PDF lub zdjęcie certyfikatu do właściwego wpisu." },
-      { title: "Sprawdzaj status", text: "Kontroluj postęp, braki i przygotuj raport użytkownika." },
+      ["Załóż konto", "Wybierz zawód, okres rozliczeniowy i cel."],
+      ["Dodaj aktywność", "Nazwa, rodzaj, data i liczba punktów."],
+      ["Dołącz dokument", "Zdjęcie certyfikatu albo plik PDF."],
+      ["Sprawdzaj postęp", "Panel pokazuje, ile brakuje i jakie tempo utrzymać."],
     ],
     faq: [
-      ["Czy mogę dodać starsze certyfikaty?", "Tak. Aktywność możesz dodać ręcznie i przypisać do niej posiadany dokument."],
-      ["Czy CRPE automatycznie mnie rozlicza?", "Nie. CRPE porządkuje dane i pomaga przygotować zestawienie, ale nie wykonuje oficjalnego rozliczenia w imieniu użytkownika."],
-      ["Czy mogę korzystać z telefonu?", "Tak. Widoki są responsywne, a certyfikat możesz dodać także jako zdjęcie."],
-      ["Czy raport można pobrać?", "Tak. Raport użytkownika służy do przygotowania zestawienia i eksportu dokumentów."],
+      ["Czy mogę dodać starsze certyfikaty?", "Tak. Aktywność dodasz ręcznie z datą z przeszłości i przypiszesz do niej posiadany dokument."],
+      ["Czy CRPE automatycznie mnie rozlicza?", "Nie. CRPE porządkuje dane i przygotowuje zestawienie, ale nie wykonuje oficjalnego rozliczenia."],
+      ["Czy mogę korzystać z telefonu?", "Tak. Strona działa na telefonie, a certyfikat dodasz jako zdjęcie."],
+      ["Czy raport można pobrać?", "Tak. Zestawienie okresu wydrukujesz albo zapiszesz jako PDF, a dane pobierzesz w pliku CSV."],
     ],
+    finalTitle: "Zacznij od ostatniego szkolenia.",
+    finalText: "Dodaj jedną aktywność z certyfikatem i zobacz, ile punktów masz już w tym okresie.",
   },
   placowka: {
-    icon: Building2,
-    eyebrow: "CRPE dla placówki i jednostki",
-    title: "Ujednolić ewidencję zespołu i szybciej wychwytywać braki.",
-    lead: "Panel pilotażowy łączy indywidualne konta pracowników ze strukturą placówki, zaproszeniami i rolami. Dane pracownika pozostają oddzielone i nie są udostępniane automatycznie.",
-    status: "Panel pilotażowy v5",
-    statusClass: "bg-emerald-50 text-emerald-800 ring-emerald-100",
-    availableTitle: "Co obejmuje pierwszy panel placówki",
-    availableText: "Właściciel i administrator mogą zbudować zespół oraz strukturę, a każda osoba nadal korzysta z własnego konta.",
+    title: "Zespół, jednostki i dostęp w jednym panelu.",
+    lead: "Placówka buduje strukturę, zaprasza pracowników i nadaje role. Każdy pracownik prowadzi własne konto, a jego dokumenty nie są udostępniane automatycznie.",
+    status: "Panel pilotażowy",
     available: [
-      { icon: UserRound, title: "Indywidualne konta", text: "Pracownicy prowadzą własne wpisy, punkty i certyfikaty w spójnym standardzie." },
-      { icon: FileCheck2, title: "Zespół i jednostki", text: "Placówka tworzy oddziały, zespoły i przypisuje odpowiedzialność na właściwym poziomie." },
-      { icon: FileText, title: "Zaproszenia i role", text: "Dostęp jest nadawany na konkretny e-mail jako właściciel, administrator lub rola operacyjna." },
-      { icon: ShieldCheck, title: "Rozdzielenie danych", text: "Członkostwo nie daje automatycznie dostępu do prywatnych certyfikatów pracownika." },
+      ["Struktura placówki", "Oddziały, zespoły i jednostki z przypisaną odpowiedzialnością."],
+      ["Zaproszenia", "Dostęp nadawany na konkretny adres e-mail pracownika."],
+      ["Role", "Właściciel, administrator, koordynator, weryfikator i inne role operacyjne."],
+      ["Rozdzielenie danych", "Członkostwo nie daje dostępu do prywatnych certyfikatów pracownika."],
     ],
-    roadmapTitle: "Kolejny zakres pilotażu",
-    roadmapText: "Fundament dostępu jest gotowy. Kolejne ekrany rozwiną proces pracy na danych dobrowolnie udostępnionych placówce.",
-    roadmap: [
-      "Widok zbiorczy statusów i kompletności zespołu.",
-      "Kolejka weryfikacji aktywności i dokumentów.",
-      "Alerty o brakach, terminach i dokumentach.",
-      "Raport jednostki oraz eksport danych zgodny z uprawnieniami.",
+    laterTitle: "W przygotowaniu",
+    later: [
+      ["Status zespołu", "Zbiorczy widok punktów i kompletności dokumentów."],
+      ["Weryfikacja", "Kolejka aktywności i dokumentów udostępnionych placówce."],
+      ["Alerty", "Przypomnienia o brakach i zbliżających się terminach."],
+      ["Raporty zbiorcze", "Raport jednostki i eksport zgodny z uprawnieniami."],
     ],
+    stepsTitle: "Jak uruchomić panel placówki.",
     steps: [
-      { title: "Ustal zakres", text: "Określ liczbę pracowników, strukturę i oczekiwany poziom raportowania." },
-      { title: "Dodaj strukturę", text: "Przygotuj zespoły, role administratorów i sposób nadawania dostępu." },
-      { title: "Zaproś pracowników", text: "Każdy prowadzi własne dane i dokumenty w indywidualnym koncie." },
-      { title: "Kontroluj kompletność", text: "Administrator widzi uzgodnione statusy, braki i terminy." },
+      ["Napisz do nas", "Podaj nazwę placówki, liczbę osób i strukturę."],
+      ["Ustalamy pilotaż", "Zakładamy placówkę i konto właściciela."],
+      ["Dodaj jednostki", "Oddziały i zespoły, w których pracują ludzie."],
+      ["Zaproś zespół", "Wyślij zaproszenia i nadaj role."],
     ],
     faq: [
-      ["Czy placówka może założyć jedno konto dla całego zespołu?", "Nie rekomendujemy wspólnego konta. Docelowy model zakłada indywidualne konta pracowników oraz osobne uprawnienia administratora."],
-      ["Czy administrator zobaczy wszystkie dokumenty?", "Zakres dostępu powinien wynikać z roli, uprawnień i zasad wdrożenia. Nie zakładamy automatycznie pełnego dostępu do wszystkich danych."],
-      ["Czy moduł jest już gotowy?", "Dostępny jest panel pilotażowy z placówką, jednostkami, członkostwami, zaproszeniami i rolami. Weryfikacje oraz raporty zespołu są rozwijane w kolejnych etapach."],
-      ["Czy można zacząć od małego zespołu?", "Tak. Rozmowę warto rozpocząć od jednego zespołu lub jednostki pilotażowej."],
+      ["Czy placówka może mieć jedno wspólne konto?", "Nie. Każdy pracownik korzysta z własnego konta, a administrator ma osobne uprawnienia."],
+      ["Czy administrator zobaczy dokumenty pracowników?", "Nie automatycznie. Członkostwo w placówce nie daje dostępu do prywatnych certyfikatów."],
+      ["Co jest dostępne już teraz?", "Struktura placówki, jednostki, członkostwa, zaproszenia i role. Status zespołu, weryfikacja i raporty zbiorcze są w przygotowaniu."],
+      ["Dostałem zaproszenie. Co dalej?", "Zaloguj się adresem e-mail, na który przyszło zaproszenie, i otwórz panel placówki."],
     ],
-    contactRole: "placowka",
+    finalTitle: "Zacznijmy od jednego zespołu.",
+    finalText: "Opisz placówkę, a ustalimy zakres pilotażu i uruchomimy panel.",
   },
   organizator: {
-    icon: GraduationCap,
-    eyebrow: "CRPE dla organizatora kształcenia",
-    title: "Porządkuj wydarzenia, uczestników i dokumentację edukacyjną.",
-    lead: "Zakres narzędzi dla organizatora ustalamy indywidualnie. Punktem wyjścia jest rodzaj wydarzeń, liczba uczestników oraz sposób przygotowania i wydawania dokumentów.",
-    status: "Zakres indywidualny",
-    statusClass: "bg-blue-50 text-blue-700 ring-blue-100",
-    availableTitle: "Jaki proces może wspierać CRPE",
-    availableText: "Rozwiązanie może łączyć publikację wydarzeń, obsługę uczestników i dokumentację, ale zakres zależy od faktycznych potrzeb i uprawnień.",
+    title: "Pokaż szkolenie medykom, którzy planują punkty.",
+    lead: "Zgłoś szkolenie do publicznej bazy CRPE z terminem, formą, punktami i linkiem do zapisów. Po weryfikacji zobaczą je użytkownicy planujący kolejne aktywności.",
+    status: "Zgłaszanie dostępne",
     available: [
-      { icon: CalendarCheck2, title: "Baza wydarzeń", text: "Porządkuj terminy, lokalizacje, grupy zawodowe i informacje o punktach." },
-      { icon: UsersRound, title: "Dane uczestników", text: "Obsługuj listy uczestników i statusy związane z konkretnym wydarzeniem." },
-      { icon: FileCheck2, title: "Dokumentacja", text: "Przygotuj proces obsługi zaświadczeń, certyfikatów i wymaganych załączników." },
-      { icon: FolderOpen, title: "Publikacja w Bazie szkoleń", text: "Prezentuj wydarzenia użytkownikom planującym kolejne aktywności edukacyjne." },
+      ["Zgłoszenie szkolenia", "Formularz w bazie szkoleń, dostępny po zalogowaniu."],
+      ["Weryfikacja", "Każde zgłoszenie sprawdzamy przed publikacją."],
+      ["Link do zapisów", "Uczestnicy zapisują się bezpośrednio u Ciebie."],
+      ["Logo organizatora", "Twoje logo przy wydarzeniu w bazie."],
     ],
-    roadmapTitle: "Zakres do uzgodnienia przed wdrożeniem",
-    roadmapText: "Nie każdy organizator potrzebuje tego samego. Dlatego zakres administracyjny powinien wynikać z procesu, skali i odpowiedzialności organizacji.",
-    roadmap: [
-      "Tworzenie i aktualizowanie wydarzeń.",
-      "Listy uczestników oraz import danych.",
-      "Generowanie lub dystrybucja dokumentów.",
-      "Integracje, role użytkowników i zakres raportów.",
+    laterTitle: "W przygotowaniu",
+    later: [
+      ["Obsługa uczestników", "Listy uczestników i statusy dla wydarzenia."],
+      ["Dokumenty", "Wydawanie zaświadczeń i certyfikatów uczestnikom."],
+      ["Konto organizatora", "Zespół organizatora z rolami i własnym panelem."],
     ],
+    stepsTitle: "Jak zgłosić szkolenie.",
     steps: [
-      { title: "Opisz proces", text: "Określ typ wydarzeń, skalę i sposób obsługi uczestników." },
-      { title: "Ustal dane", text: "Wskaż informacje wymagane przy wydarzeniu, uczestniku i dokumencie." },
-      { title: "Dobierz zakres", text: "Uzgodnij role, uprawnienia, raporty i ewentualne integracje." },
-      { title: "Uruchom pilotaż", text: "Sprawdź rozwiązanie na wybranym typie wydarzenia lub grupie użytkowników." },
+      ["Załóż konto", "Albo zaloguj się, jeśli już je masz."],
+      ["Otwórz bazę szkoleń", "Wybierz „Zgłoś szkolenie”."],
+      ["Uzupełnij dane", "Termin, forma, punkty, zawody i link do zapisów."],
+      ["Poczekaj na publikację", "Po weryfikacji szkolenie pojawi się w bazie."],
     ],
     faq: [
-      ["Czy CRPE zapisuje użytkownika na szkolenie?", "Nie automatycznie. Dodanie wydarzenia do planu CPD nie oznacza zapisu u organizatora."],
-      ["Czy można publikować wydarzenia w Bazie szkoleń?", "Taki zakres może być elementem rozwiązania dla organizatora i wymaga uzgodnienia sposobu administracji."],
-      ["Czy CRPE generuje certyfikaty?", "Obsługa certyfikatów jest elementem planowanego zakresu i musi być dopasowana do procesu organizatora."],
-      ["Czy moduł ma gotowy cennik?", "Zakres jest ustalany indywidualnie, dlatego wycena zależy od funkcji, skali i sposobu wdrożenia."],
+      ["Czy CRPE zapisuje uczestników?", "Nie. Użytkownik trafia przez link do Twojej strony zapisów. Dodanie szkolenia do planu w CRPE nie jest zapisem."],
+      ["Czy mogę dodać logo?", "Tak. Logo dodasz w formularzu zgłoszenia."],
+      ["Czy CRPE wydaje certyfikaty uczestnikom?", "Jeszcze nie. Obsługa dokumentów dla uczestników jest w przygotowaniu."],
+      ["Mam dużo wydarzeń. Czy muszę zgłaszać każde osobno?", "Napisz do nas. Ustalimy wygodniejszy sposób przekazania danych."],
     ],
-    contactRole: "organizator",
+    finalTitle: "Twoje następne szkolenie może być w bazie.",
+    finalText: "Wystarczy konto CRPE i podstawowe dane szkolenia.",
   },
 };
 
-function SectionHeading({ eyebrow, title, text, centered = false }: { eyebrow: string; title: string; text?: string; centered?: boolean }) {
-  return (
-    <div className={centered ? "mx-auto max-w-3xl text-center" : "max-w-2xl"}>
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.19em] text-blue-700">{eyebrow}</p>
-      <h2 className="mt-2 text-[28px] font-black leading-[1.08] tracking-[-0.04em] text-slate-950 sm:text-[38px]">{title}</h2>
-      {text ? <p className="mt-3 text-[15px] leading-7 text-slate-600">{text}</p> : null}
+const Check = () => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.2 4.2L19 7" /></svg>;
+const Doc = () => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></svg>;
+
+function MedykPreview() {
+  return <div className="panel role-panel" role="img" aria-label="Przykładowy wpis aktywności z dołączonym certyfikatem">
+    <div className="panel-top">
+      <div><p className="rp-kicker">Aktywność</p><h2 className="rp-title">Ostre stany w kardiologii</h2></div>
+      <span className="pill pill-ok">Certyfikat dołączony</span>
     </div>
-  );
+    <dl className="rp-meta">
+      <div><dt>Rodzaj</dt><dd>Kurs online</dd></div>
+      <div><dt>Data</dt><dd>12.09.2026</dd></div>
+      <div><dt>Punkty</dt><dd>15</dd></div>
+    </dl>
+    <div className="rp-file"><span className="doc doc-ok doc-l"><Doc /></span><div><b>certyfikat-kardiologia.pdf</b><span>Przypięty do tego wpisu</span></div></div>
+    <div className="rp-progress">
+      <div className="sum-top"><b>110 / 200 pkt w okresie 2024–2027</b><span className="muted">+15 pkt</span></div>
+      <span className="bar"><i></i></span>
+      <span className="muted">Do końca okresu potrzebujesz około 71 pkt rocznie.</span>
+    </div>
+    <p className="rp-foot">Dane przykładowe</p>
+  </div>;
 }
 
-export default function RoleLandingPage({ role }: Props) {
-  const active = content[role];
-  const Icon = active.icon;
-
-  return (
-    <div className="bg-white">
-      <section className="relative overflow-hidden bg-[radial-gradient(circle_at_85%_10%,rgba(125,211,252,0.26),transparent_34%),linear-gradient(180deg,#f8fbff_0%,#eef6fc_100%)] py-12 sm:py-16 lg:py-20">
-        <div className={wrap}>
-          <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:gap-14">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 text-[11px] font-extrabold text-blue-800 shadow-sm">
-                <Icon className="h-4 w-4" /> {active.eyebrow}
-              </div>
-              <h1 className="mt-5 max-w-3xl text-[38px] font-black leading-[1.02] tracking-[-0.05em] text-slate-950 sm:text-[52px] lg:text-[60px]">{active.title}</h1>
-              <p className="mt-5 max-w-2xl text-[16px] leading-7 text-slate-600 sm:text-[18px] sm:leading-8">{active.lead}</p>
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <span className={`rounded-full px-3 py-1.5 text-xs font-extrabold ring-1 ${active.statusClass}`}>{active.status}</span>
-                <Link href="/bezpieczenstwo" className="inline-flex items-center gap-2 text-sm font-extrabold text-blue-700 hover:text-blue-800">Jak chronimy dane <ArrowRight className="h-4 w-4" /></Link>
-              </div>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                {role === "medyk" ? (
-                  <>
-                    <Link href="/rejestracja" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(37,99,235,0.22)] hover:bg-blue-700">Załóż konto medyka <ArrowRight className="h-4 w-4" /></Link>
-                    <Link href="/narzedzia" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-extrabold text-slate-700 hover:border-blue-200 hover:bg-blue-50">Zobacz narzędzia</Link>
-                  </>
-                ) : (
-                  role === "placowka" ? (
-                    <>
-                      <Link href="/placowka" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(37,99,235,0.22)] hover:bg-blue-700">Otwórz panel placówki <ArrowRight className="h-4 w-4" /></Link>
-                      <RoleContactModal role={active.contactRole} triggerLabel="Zapytaj o pilotaż" />
-                    </>
-                  ) : (
-                    <>
-                      <RoleContactModal role={active.contactRole} triggerLabel="Ustal zakres dla organizatora" />
-                      <Link href="/kontakt" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-extrabold text-slate-700 hover:border-blue-200 hover:bg-blue-50">Przejdź do kontaktu</Link>
-                    </>
-                  )
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-[28px] border border-blue-100 bg-white/90 p-5 shadow-[0_28px_75px_rgba(15,45,75,0.13)] backdrop-blur sm:p-7">
-              <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-5">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white"><Icon className="h-5 w-5" /></span>
-                  <div><p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-600">Ścieżka CRPE</p><p className="mt-1 text-lg font-black text-slate-950">{active.eyebrow.replace("CRPE dla ", "")}</p></div>
-                </div>
-                <span className={`hidden rounded-full px-3 py-1.5 text-[10px] font-extrabold ring-1 sm:inline-flex ${active.statusClass}`}>{active.status}</span>
-              </div>
-              <div className="mt-5 grid gap-3">
-                {active.available.slice(0, 3).map(({ icon: ItemIcon, title, text }) => (
-                  <div key={title} className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm ring-1 ring-slate-200"><ItemIcon className="h-5 w-5" /></span>
-                    <div><p className="text-sm font-black text-slate-950">{title}</p><p className="mt-1 text-xs leading-5 text-slate-600">{text}</p></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className={`${wrap} py-14 sm:py-18`}>
-        <SectionHeading eyebrow="Dostępny zakres" title={active.availableTitle} text={active.availableText} centered />
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {active.available.map(({ icon: ItemIcon, title, text }) => (
-            <article key={title} className="crpe-interactive-card rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,45,75,0.06)]">
-              <span className="crpe-card-icon flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100"><ItemIcon className="h-5 w-5" /></span>
-              <h3 className="mt-4 text-[17px] font-black text-slate-950">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-slate-950 py-14 text-white sm:py-18">
-        <div className={`${wrap} grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-14`}>
-          <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-cyan-300">Zakres i odpowiedzialność</p>
-            <h2 className="mt-3 text-[30px] font-black leading-[1.08] tracking-[-0.04em] sm:text-[42px]">{active.roadmapTitle}</h2>
-            <p className="mt-4 text-[15px] leading-7 text-slate-300">{active.roadmapText}</p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {active.roadmap.map((item) => (
-              <div key={item} className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
-                <p className="text-sm font-semibold leading-6 text-slate-100">{item}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className={`${wrap} py-14 sm:py-18`}>
-        <SectionHeading eyebrow="Jak zacząć" title={role === "medyk" ? "Cztery kroki do uporządkowanej ewidencji." : "Cztery kroki do dopasowanego wdrożenia."} centered />
-        <div className="mt-8 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-          {active.steps.map((step, index) => (
-            <article key={step.title} className="rounded-[22px] border border-slate-200 bg-slate-50 p-5">
-              <span className="text-[11px] font-black text-blue-600">0{index + 1}</span>
-              <h3 className="mt-2 text-[17px] font-black text-slate-950">{step.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{step.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-[linear-gradient(180deg,#f6f9fd_0%,#eef4fa_100%)] py-14 sm:py-18">
-        <div className={`${wrap} grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-10`}>
-          <div>
-            <SectionHeading eyebrow="FAQ" title={`Najczęstsze pytania: ${active.eyebrow.replace("CRPE dla ", "")}.`} text="Najważniejsze informacje przed rozpoczęciem pracy lub rozmową o wdrożeniu." />
-            <Link href="/pomoc" className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold text-blue-700">Przejdź do centrum pomocy <ArrowRight className="h-4 w-4" /></Link>
-          </div>
-          <div className="space-y-3">
-            {active.faq.map(([question, answer]) => (
-              <details key={question} className="group rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-[0_10px_28px_rgba(15,45,75,0.05)]">
-                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-slate-950">{question}<span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-700 transition group-open:rotate-45">+</span></summary>
-                <p className="pb-3 pr-8 text-sm leading-6 text-slate-600">{answer}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className={`${wrap} py-14 sm:py-18`}>
-        <div className="relative overflow-hidden rounded-[28px] bg-blue-600 px-6 py-9 text-white shadow-[0_26px_70px_rgba(37,99,235,0.25)] sm:px-10 sm:py-12">
-          <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-300/25 blur-3xl" />
-          <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div className="max-w-3xl">
-              <p className="text-[10px] font-black uppercase tracking-[0.19em] text-blue-100">Następny krok</p>
-              <h2 className="mt-2 text-[30px] font-black leading-[1.08] tracking-[-0.04em] sm:text-[42px]">{role === "medyk" ? "Załóż konto i dodaj pierwszą aktywność." : role === "placowka" ? "Ustalmy zakres pilotażu dla Twojej placówki." : "Porozmawiajmy o procesie wydarzeń i dokumentacji."}</h2>
-            </div>
-            {role === "medyk" ? (
-              <Link href="/rejestracja" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-extrabold text-blue-700 shadow-lg">Załóż konto <ArrowRight className="h-4 w-4" /></Link>
-            ) : (
-              <RoleContactModal role={active.contactRole} triggerLabel="Umów rozmowę o zakresie" triggerClassName="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-extrabold text-blue-700 shadow-lg transition hover:bg-blue-50" />
-            )}
-          </div>
-        </div>
-      </section>
+function PlacowkaPreview() {
+  const people: Array<[string, string, string, boolean]> = [
+    ["Anna Kowalska", "Kardiologia", "Właściciel", true],
+    ["Piotr Nowak", "Kardiologia", "Administrator", true],
+    ["Ewa Wiśniewska", "SOR", "Koordynator", true],
+    ["m.zielinska@…", "SOR", "Pracownik", false],
+  ];
+  return <div className="panel role-panel" role="img" aria-label="Przykładowy panel placówki z jednostkami, rolami i zaproszeniem">
+    <div className="panel-top">
+      <div><p className="rp-kicker">Panel placówki</p><h2 className="rp-title">Szpital przykładowy</h2></div>
+      <span className="pill pill-brand">3 jednostki</span>
     </div>
-  );
+    <div className="rp-org">
+      <ul className="rp-tree">
+        <li className="on">Kardiologia<span>12 osób</span></li>
+        <li>SOR<span>18 osób</span></li>
+        <li>Pediatria<span>9 osób</span></li>
+      </ul>
+      <table className="table rp-people"><tbody>
+        {people.map(([name, unit, roleName, active]) => <tr key={name}>
+          <td>{name}<small>{unit}</small></td>
+          <td>{roleName}</td>
+          <td>{active ? <span className="pill pill-ok">Aktywny</span> : <span className="pill pill-warn">Zaproszenie wysłane</span>}</td>
+        </tr>)}
+      </tbody></table>
+    </div>
+    <p className="rp-soon">Status punktów zespołu i raporty zbiorcze w przygotowaniu.</p>
+    <p className="rp-foot">Dane przykładowe</p>
+  </div>;
+}
+
+function OrganizatorPreview() {
+  return <div className="rp-pair" role="img" aria-label="Przykładowe zgłoszenie szkolenia i ta sama pozycja opublikowana w bazie szkoleń">
+    <div className="panel role-panel">
+      <div className="panel-top"><div><p className="rp-kicker">Zgłoszenie szkolenia</p><h2 className="rp-title">Niewydolność serca w praktyce</h2></div></div>
+      <div className="rp-form">
+        <span className="field">Kurs online</span>
+        <span className="field">8–9 października 2026</span>
+        <span className="field">10 punktów</span>
+        <span className="field">Lekarze, pielęgniarki</span>
+        <span className="field on">https://twoja-strona.pl/zapisy</span>
+      </div>
+      <span className="pill pill-warn">Czeka na weryfikację</span>
+    </div>
+    <div className="rp-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></div>
+    <div className="panel role-panel rp-published">
+      <div className="panel-top"><span className="rp-logo" aria-hidden="true">TO</span><span className="pill pill-ok">W bazie szkoleń</span></div>
+      <h3 className="rp-course">Niewydolność serca w praktyce</h3>
+      <p className="muted">Kurs online, 8–9 października</p>
+      <div className="rp-course-foot"><span className="pill pill-brand">10 pkt</span><span className="text-link">Zapisy u organizatora</span></div>
+      <p className="rp-foot">Dane przykładowe</p>
+    </div>
+  </div>;
+}
+
+function Actions({ role, variant }: { role: RoleKind; variant: "hero" | "final" }): ReactNode {
+  if (role === "medyk") return <div className="hero-cta"><HomeAction /><Link href={variant === "hero" ? "/#narzedzia" : "/baza-szkolen"} className="btn btn-ghost">{variant === "hero" ? "Zobacz narzędzia" : "Przeglądaj szkolenia"}</Link></div>;
+  if (role === "placowka") return <div className="hero-cta"><RoleContactModal role="placowka" triggerLabel="Zapytaj o pilotaż" triggerClassName="btn btn-primary" compact /><Link href="/placowka" className="btn btn-ghost">Mam zaproszenie</Link></div>;
+  return <div className="hero-cta"><Link href="/baza-szkolen" className="btn btn-primary">Zgłoś szkolenie</Link><RoleContactModal role="organizator" triggerLabel="Napisz do nas" triggerClassName="btn btn-ghost" compact /></div>;
+}
+
+export default function RoleLandingPage({ role }: { role: RoleKind }) {
+  const c = content[role];
+  const laterIsSoon = role !== "medyk";
+  return <HomeFrame className={`crpe-home-v15 crpe-role role-${role}`} navigation={<MarketingNav />} footer={<MarketingFooter />}>
+
+<section className="hero role-hero" aria-labelledby="role-title">
+  <div className="wrap">
+    <div className="hero-grid">
+      <div>
+        <span className={`pill ${role === "medyk" || role === "organizator" ? "pill-ok" : "pill-brand"} role-status`}>{c.status}</span>
+        <h1 id="role-title">{c.title}</h1>
+      </div>
+      <div className="hero-side">
+        <p className="lead">{c.lead}</p>
+        <Actions role={role} variant="hero" />
+        {c.note ? <p className="hero-note">{c.note}</p> : null}
+      </div>
+    </div>
+    <div className="stage">
+      {role === "medyk" ? <MedykPreview /> : role === "placowka" ? <PlacowkaPreview /> : <OrganizatorPreview />}
+    </div>
+  </div>
+</section>
+
+<section className="block" id="zakres" aria-labelledby="scope-title">
+  <div className="wrap">
+    <div className="sec-head"><h2 id="scope-title">Co możesz zrobić już teraz.</h2><p>{laterIsSoon ? "Opisujemy tylko to, co działa. Kolejne funkcje są wyraźnie oznaczone." : "Wszystko poniżej działa w koncie medyka od pierwszego dnia."}</p></div>
+    <div className="cols2">
+      <div>
+        <h3>Dostępne teraz</h3>
+        <ul className="checks">
+          {c.available.map(([title, text]) => <li key={title}><span className="mark ok"><Check /></span><div><b>{title}</b><span>{text}</span></div></li>)}
+        </ul>
+      </div>
+      <div>
+        <h3>{c.laterTitle}</h3>
+        <ul className="checks">
+          {c.later.map(([title, text]) => <li key={title}><span className={laterIsSoon ? "mark soon" : "mark no"}>{laterIsSoon ? "" : "i"}</span><div><b>{title}</b><span>{text}</span></div></li>)}
+        </ul>
+        <div className="links"><Link href="/bezpieczenstwo">Jak chronimy dane</Link><Link href="/polityka-prywatnosci">Polityka prywatności</Link><Link href="/regulamin">Regulamin</Link></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section className="block honest" aria-labelledby="steps-title">
+  <div className="wrap">
+    <div className="sec-head"><h2 id="steps-title">{c.stepsTitle}</h2><p>{role === "placowka" ? "Panel placówki uruchamiamy w pilotażu, razem z Tobą." : "Bez szkoleń i instrukcji. Każdy krok to jeden ekran."}</p></div>
+    <ol className="role-steps">
+      {c.steps.map(([title, text]) => <li key={title}><h3>{title}</h3><p>{text}</p></li>)}
+    </ol>
+  </div>
+</section>
+
+<section className="block" id="pytania" aria-labelledby="role-faq-title">
+  <div className="wrap faq">
+    <div><h2 id="role-faq-title">Pytania</h2><p className="faq-lead">Więcej odpowiedzi w <Link href="/pomoc">centrum pomocy</Link>.</p></div>
+    <div className="faq-list">
+      {c.faq.map(([q, a]) => <details key={q}><summary>{q}</summary><p>{a}</p></details>)}
+    </div>
+  </div>
+</section>
+
+<section className="final" aria-labelledby="role-final-title">
+  <div className="wrap final-box">
+    <h2 id="role-final-title">{c.finalTitle}</h2>
+    <div><p>{c.finalText}</p><Actions role={role} variant="final" /></div>
+  </div>
+</section>
+
+</HomeFrame>;
 }

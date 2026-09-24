@@ -7,14 +7,14 @@
   --punkt:#12A39B;
   --shadow:0 1px 0 rgba(11,37,69,.04),0 28px 56px -28px rgba(11,37,69,.22);
   --r-s:8px; --r-m:14px; --r-l:22px;
-  --space-section:120px;
-  color:var(--ink);background:#fff;line-height:1.55;font-size:17px;
+  --space-section:96px;
+  color:var(--ink);background:#fff;line-height:1.55;font-size:16px;
   font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;overflow-x:clip;
 }
 .crpe-home-v15 *,.crpe-home-v15 *::before,.crpe-home-v15 *::after{box-sizing:border-box}
-.crpe-home-v15 h1,.crpe-home-v15 h2,.crpe-home-v15 h3,.crpe-home-v15 p,.crpe-home-v15 ul,.crpe-home-v15 ol{margin:0;padding:0}
+.crpe-home-v15 :where(h1,h2,h3,p,ul,ol):where(:not([role="dialog"] *)){margin:0;padding:0}
 .crpe-home-v15 ul,.crpe-home-v15 ol{list-style:none}
-.crpe-home-v15 a{color:inherit;text-decoration:none}
+.crpe-home-v15 a:where(:not([role="dialog"] *)){color:inherit;text-decoration:none}
 .crpe-home-v15 svg{display:block}
 .crpe-home-v15 :focus-visible{outline:2px solid var(--brand);outline-offset:3px;border-radius:6px}
 .crpe-home-v15 section[id]{scroll-margin-top:88px}
@@ -25,14 +25,14 @@
 .crpe-home-v15 main:focus{outline:none}
 
 /* typografia: 76 / 46 / 20 / 17 */
-.crpe-home-v15 h1{font-size:clamp(40px,5.6vw,68px);line-height:1;letter-spacing:-.045em;font-weight:700}
-.crpe-home-v15 h2{font-size:clamp(30px,3.6vw,46px);line-height:1.08;letter-spacing:-.035em;font-weight:700}
-.crpe-home-v15 h3{font-size:20px;line-height:1.3;letter-spacing:-.02em;font-weight:700}
+.crpe-home-v15 h1:where(:not([role="dialog"] *)){font-size:clamp(36px,4.4vw,60px);line-height:1.04;letter-spacing:-.028em;font-weight:700}
+.crpe-home-v15 h2:where(:not([role="dialog"] *)){font-size:clamp(28px,2.8vw,38px);line-height:1.12;letter-spacing:-.022em;font-weight:700}
+.crpe-home-v15 h3:where(:not([role="dialog"] *)){font-size:18px;line-height:1.35;letter-spacing:-.01em;font-weight:700}
 .crpe-home-v15 .muted{color:var(--ink-2)}
 
 /* przyciski */
-.crpe-home-v15 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 22px;border-radius:999px;font-weight:600;font-size:16px;border:1px solid transparent;white-space:nowrap;transition:background .15s,border-color .15s}
-.crpe-home-v15 .btn-s{height:40px;padding:0 16px;font-size:15px}
+.crpe-home-v15 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:999px;font-weight:600;font-size:15px;border:1px solid transparent;white-space:nowrap;transition:background .15s,border-color .15s}
+.crpe-home-v15 .btn-s{height:38px;padding:0 16px;font-size:14px}
 .crpe-home-v15 .btn-primary{background:var(--brand);color:#fff}
 .crpe-home-v15 .btn-primary:hover{background:var(--brand-hover)}
 .crpe-home-v15 .btn-ghost{border-color:var(--line);color:var(--ink)}
@@ -43,7 +43,7 @@
 
 /* nagłówek */
 .crpe-home-v15 .site-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line-2)}
-.crpe-home-v15 .header-inner{display:flex;align-items:center;gap:40px;height:72px}
+.crpe-home-v15 .header-inner{display:flex;align-items:center;gap:40px;height:64px}
 .crpe-home-v15 .logo{display:inline-flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.02em}
 .crpe-home-v15 .logo .mark{width:30px;height:30px;border-radius:9px;background:var(--brand);color:#fff;display:grid;place-items:center}
 .crpe-home-v15 .logo .mark svg{width:17px;height:17px}
@@ -63,16 +63,16 @@
 .crpe-home-v15 .drawer-cta{display:grid;gap:10px;margin-top:auto}
 
 /* 1. hero */
-.crpe-home-v15 .hero{padding:88px 0 0}
+.crpe-home-v15 .hero{padding:56px 0 0}
 .crpe-home-v15 .hero-grid{display:grid;grid-template-columns:7fr 5fr;gap:48px;align-items:end}
-.crpe-home-v15 .hero h1{max-width:12ch;text-wrap:balance}
-.crpe-home-v15 .hero-side{display:grid;gap:24px;padding-bottom:6px}
-.crpe-home-v15 .lead{font-size:18px;color:var(--ink-2);max-width:42ch}
+.crpe-home-v15 .hero h1{max-width:15ch;text-wrap:balance}
+.crpe-home-v15 .hero-side{display:grid;gap:20px;padding-bottom:4px}
+.crpe-home-v15 .lead{font-size:17px;color:var(--ink-2);max-width:42ch}
 .crpe-home-v15 .hero-cta{display:flex;gap:12px;flex-wrap:wrap}
 .crpe-home-v15 .hero-note{font-size:14px;color:var(--ink-3)}
-.crpe-home-v15 .stage{position:relative;margin-top:64px}
-.crpe-home-v15 .stage::before{content:"";position:absolute;inset:88px -32px 0;background:var(--surface);border-radius:32px 32px 0 0}
-.crpe-home-v15 .panel{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--shadow);padding:32px}
+.crpe-home-v15 .stage{position:relative;margin-top:40px}
+.crpe-home-v15 .stage::before{content:"";position:absolute;inset:72px -32px 0;background:var(--surface);border-radius:32px 32px 0 0}
+.crpe-home-v15 .panel{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--shadow);padding:28px 32px}
 .crpe-home-v15 .panel-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
 .crpe-home-v15 .who{display:flex;align-items:center;gap:12px}
 .crpe-home-v15 .who span:not(.avatar){display:block;font-size:14px;color:var(--ink-3)}
@@ -82,21 +82,21 @@
 .crpe-home-v15 .pill-ok{background:var(--ok-soft);color:var(--ok)}
 .crpe-home-v15 .pill-warn{background:var(--warn-soft);color:var(--warn)}
 .crpe-home-v15 .pill-line{border:1px solid var(--line);color:var(--ink-2)}
-.crpe-home-v15 .score{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:28px 0 6px}
-.crpe-home-v15 .score b{font-size:clamp(56px,7vw,88px);font-weight:700;letter-spacing:-.05em;line-height:.9}
-.crpe-home-v15 .score span{font-size:20px;color:var(--ink-2)}
+.crpe-home-v15 .score{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:18px 0 4px}
+.crpe-home-v15 .score b{font-size:clamp(48px,5vw,68px);font-weight:700;letter-spacing:-.03em;line-height:.95}
+.crpe-home-v15 .score span{font-size:18px;color:var(--ink-2)}
 .crpe-home-v15 .score-note{color:var(--ink-2);max-width:60ch}
 
 /* linijka okresu: element charakterystyczny */
-.crpe-home-v15 .ruler{position:relative;margin:36px 0 8px;padding-top:30px}
-.crpe-home-v15 .ruler-track{position:relative;height:14px;border-radius:999px;background:var(--line-2)}
+.crpe-home-v15 .ruler{position:relative;margin:20px 0 6px;padding-top:28px}
+.crpe-home-v15 .ruler-track{position:relative;height:12px;border-radius:999px;background:var(--line-2)}
 .crpe-home-v15 .ruler-fill{position:absolute;inset:0 auto 0 0;width:55%;border-radius:999px;background:var(--brand);transform-origin:left;animation:crpe-v15-fill 1.4s cubic-bezier(.2,.7,.2,1) .3s both}
 .crpe-home-v15 .tick{position:absolute;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#fff}
 .crpe-home-v15 .today{position:absolute;top:-30px;bottom:-10px;left:68%;border-left:2px dashed var(--ink)}
 .crpe-home-v15 .today span{position:absolute;top:0;left:8px;font-size:13px;font-weight:700}
 .crpe-home-v15 .years{display:grid;grid-template-columns:repeat(4,1fr);margin-top:12px;font-size:13px;color:var(--ink-3)}
 .crpe-home-v15 .years span{border-left:1px solid var(--line);padding-left:8px}
-.crpe-home-v15 .ruler-legend{display:flex;gap:24px;flex-wrap:wrap;font-size:14px;color:var(--ink-2);margin-top:18px}
+.crpe-home-v15 .ruler-legend{display:flex;gap:24px;flex-wrap:wrap;font-size:14px;color:var(--ink-2);margin-top:14px}
 .crpe-home-v15 .ruler-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:-1px}
 .crpe-home-v15 .lg-fill{background:var(--brand)}
 .crpe-home-v15 .lg-tick{border:2px solid var(--brand);border-radius:50%!important}
@@ -104,7 +104,7 @@
 @keyframes crpe-v15-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes crpe-v15-pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-.crpe-home-v15 .panel-cols{display:grid;grid-template-columns:1.4fr 1fr;gap:32px;margin-top:32px;padding-top:28px;border-top:1px solid var(--line-2)}
+.crpe-home-v15 .panel-cols{display:grid;grid-template-columns:1.4fr 1fr;gap:32px;margin-top:24px;padding-top:20px;border-top:1px solid var(--line-2)}
 .crpe-home-v15 .list-h{font-size:14px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
 .crpe-home-v15 .entries li{display:grid;grid-template-columns:1fr auto auto;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line-2);font-size:15px}
 .crpe-home-v15 .entries li:last-child{border-bottom:0}
@@ -122,21 +122,21 @@
 .crpe-home-v15 .stats b{font-size:26px;letter-spacing:-.03em}
 .crpe-home-v15 .hint{margin-top:12px;background:var(--brand-soft);border-radius:var(--r-m);padding:16px;font-size:15px}
 .crpe-home-v15 .hint b{color:var(--brand)}
-.crpe-home-v15 .toast{position:absolute;z-index:2;right:-24px;top:128px;background:#fff;border:1px solid var(--line);border-radius:var(--r-m);box-shadow:var(--shadow);padding:12px 16px 12px 12px;display:flex;align-items:center;gap:12px;font-size:14px;animation:crpe-v15-pop .5s cubic-bezier(.2,.7,.2,1) 1.6s both}
+.crpe-home-v15 .toast{position:absolute;z-index:2;right:-24px;top:96px;background:#fff;border:1px solid var(--line);border-radius:var(--r-m);box-shadow:var(--shadow);padding:12px 16px 12px 12px;display:flex;align-items:center;gap:12px;font-size:14px;animation:crpe-v15-pop .5s cubic-bezier(.2,.7,.2,1) 1.6s both}
 .crpe-home-v15 .toast span:not(.doc){display:block;color:var(--ink-2)}
 
 /* sekcje */
 .crpe-home-v15 .block{padding:var(--space-section) 0}
 .crpe-home-v15 .block-flush{padding-top:0}
-.crpe-home-v15 .sec-head{display:grid;grid-template-columns:5fr 7fr;gap:48px;align-items:end;margin-bottom:56px}
-.crpe-home-v15 .sec-head p{font-size:18px;color:var(--ink-2);max-width:46ch}
+.crpe-home-v15 .sec-head{display:grid;grid-template-columns:5fr 7fr;gap:48px;align-items:end;margin-bottom:40px}
+.crpe-home-v15 .sec-head p{font-size:17px;color:var(--ink-2);max-width:46ch}
 
 /* 2. kroki */
 .crpe-home-v15 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;counter-reset:crpe-step}
-.crpe-home-v15 .steps h3{display:flex;gap:12px;align-items:baseline;margin:24px 0 8px}
+.crpe-home-v15 .steps h3{display:flex;gap:10px;align-items:baseline;margin:20px 0 6px}
 .crpe-home-v15 .steps h3::before{counter-increment:crpe-step;content:counter(crpe-step);font-size:15px;color:var(--brand)}
-.crpe-home-v15 .steps p{color:var(--ink-2);font-size:16px;max-width:34ch}
-.crpe-home-v15 .scene{height:220px;border-radius:var(--r-l);background:var(--surface);position:relative;overflow:hidden;display:grid;place-items:center}
+.crpe-home-v15 .steps p{color:var(--ink-2);font-size:15px;max-width:34ch}
+.crpe-home-v15 .scene{height:200px;border-radius:var(--r-l);background:var(--surface);position:relative;overflow:hidden;display:grid;place-items:center}
 .crpe-home-v15 .mini{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);font-size:13px}
 .crpe-home-v15 .mini.form,.crpe-home-v15 .mini.sum{width:78%;padding:16px;display:grid;gap:6px}
 .crpe-home-v15 .field{border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink-2)}
@@ -159,13 +159,13 @@
 .crpe-home-v15 .tools{display:grid;grid-template-columns:4fr 8fr;gap:48px;align-items:start}
 .crpe-home-v15 .tools > *{min-width:0}
 .crpe-home-v15 .tablist{display:flex;flex-direction:column;gap:4px}
-.crpe-home-v15 .tab{appearance:none;border:0;background:transparent;text-align:left;font:inherit;color:inherit;cursor:pointer;padding:18px 20px;border-left:2px solid transparent;border-radius:0 var(--r-m) var(--r-m) 0}
-.crpe-home-v15 .tab strong{display:block;font-size:17px}
+.crpe-home-v15 .tab{appearance:none;border:0;background:transparent;text-align:left;font:inherit;color:inherit;cursor:pointer;padding:14px 18px;border-left:2px solid transparent;border-radius:0 var(--r-m) var(--r-m) 0}
+.crpe-home-v15 .tab strong{display:block;font-size:16px}
 .crpe-home-v15 .tab span{display:block;font-size:15px;color:var(--ink-2);margin-top:4px;max-height:0;overflow:hidden;transition:max-height .25s}
 .crpe-home-v15 .tab:hover{background:var(--surface)}
 .crpe-home-v15 .tab.is-on{background:var(--surface);border-left-color:var(--brand)}
 .crpe-home-v15 .tab.is-on span{max-height:80px}
-.crpe-home-v15 .viewer{background:var(--surface);border-radius:var(--r-l);padding:40px;min-height:460px;display:grid;place-items:center}
+.crpe-home-v15 .viewer{background:var(--surface);border-radius:var(--r-l);padding:32px;min-height:420px;display:grid;place-items:center}
 .crpe-home-v15 .tpane{width:100%;display:grid;place-items:center}
 .crpe-home-v15 .tpane[hidden]{display:none}
 .crpe-home-v15 .tpane:focus-visible{outline-offset:8px}
@@ -196,24 +196,24 @@
 
 /* 4. dla kogo */
 .crpe-home-v15 .aud{display:grid;grid-template-columns:7fr 5fr;gap:24px}
-.crpe-home-v15 .aud-main{background:var(--ink);color:#fff;border-radius:var(--r-l);padding:48px;display:flex;flex-direction:column;justify-content:space-between;gap:40px;min-height:420px}
-.crpe-home-v15 .aud-main h3{font-size:clamp(30px,3.6vw,46px);letter-spacing:-.035em;line-height:1.08}
-.crpe-home-v15 .aud-main p{color:rgba(255,255,255,.74);font-size:18px;max-width:40ch;margin-top:14px}
-.crpe-home-v15 .aud-main ul{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;font-size:16px}
+.crpe-home-v15 .aud-main{background:var(--ink);color:#fff;border-radius:var(--r-l);padding:40px;display:flex;flex-direction:column;justify-content:space-between;gap:32px;min-height:0}
+.crpe-home-v15 .aud-main h3{font-size:clamp(26px,2.6vw,34px);letter-spacing:-.022em;line-height:1.12}
+.crpe-home-v15 .aud-main p{color:rgba(255,255,255,.74);font-size:16px;max-width:40ch;margin-top:14px}
+.crpe-home-v15 .aud-main ul{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px 24px;font-size:15px}
 .crpe-home-v15 .aud-main li::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--punkt);margin-right:10px;vertical-align:1px}
 .crpe-home-v15 .aud-actions{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
 .crpe-home-v15 .aud-main .btn-primary{background:#fff;color:var(--ink)}
 .crpe-home-v15 .aud-main .btn-primary:hover{background:var(--brand-soft)}
 .crpe-home-v15 .aud-side{display:grid;gap:24px}
-.crpe-home-v15 .aud-card{border:1px solid var(--line);border-radius:var(--r-l);padding:32px;display:flex;flex-direction:column;gap:10px}
-.crpe-home-v15 .aud-card p{color:var(--ink-2);font-size:16px;margin-bottom:12px}
+.crpe-home-v15 .aud-card{border:1px solid var(--line);border-radius:var(--r-l);padding:28px;display:flex;flex-direction:column;gap:10px}
+.crpe-home-v15 .aud-card p{color:var(--ink-2);font-size:15px;margin-bottom:12px}
 .crpe-home-v15 .aud-card .text-link{margin-top:auto}
 
 /* 5. jest / nie jest */
 .crpe-home-v15 .honest{background:var(--surface)}
 .crpe-home-v15 .cols2{display:grid;grid-template-columns:1fr 1fr;gap:64px}
 .crpe-home-v15 .cols2 h3{margin-bottom:20px}
-.crpe-home-v15 .checks li{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:16px 0;border-top:1px solid var(--line);font-size:16px}
+.crpe-home-v15 .checks li{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line);font-size:15px}
 .crpe-home-v15 .checks b{display:block}
 .crpe-home-v15 .checks span:not(.mark){color:var(--ink-2)}
 .crpe-home-v15 .mark{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px}
@@ -230,7 +230,7 @@
 .crpe-home-v15 .faq-lead a,.crpe-home-v15 .faq-list p a{color:var(--brand);font-weight:600}
 .crpe-home-v15 .faq-list details{border-bottom:1px solid var(--line)}
 .crpe-home-v15 .faq-list details:first-child{border-top:1px solid var(--line)}
-.crpe-home-v15 .faq-list summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:24px;padding:22px 0;font-size:18px;font-weight:600}
+.crpe-home-v15 .faq-list summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:24px;padding:18px 0;font-size:17px;font-weight:600}
 .crpe-home-v15 .faq-list summary::-webkit-details-marker{display:none}
 .crpe-home-v15 .faq-list summary::after{content:"";flex:none;width:10px;height:10px;margin-top:8px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(45deg);transition:transform .2s}
 .crpe-home-v15 .faq-list details[open] summary::after{transform:rotate(-135deg)}
@@ -240,8 +240,8 @@
 .crpe-home-v15 .final{padding:0 0 var(--space-section)}
 .crpe-home-v15 .final-box{display:grid;grid-template-columns:7fr 5fr;gap:48px;align-items:end}
 .crpe-home-v15 .final-box::before{content:"";grid-column:1/-1;border-top:1px solid var(--line);margin-bottom:16px}
-.crpe-home-v15 .final-box p{font-size:18px;color:var(--ink-2);margin-bottom:24px}
-.crpe-home-v15 .site-footer{border-top:1px solid var(--line);padding:56px 0 40px;font-size:15px}
+.crpe-home-v15 .final-box p{font-size:17px;color:var(--ink-2);margin-bottom:24px}
+.crpe-home-v15 .site-footer{border-top:1px solid var(--line);padding:48px 0 32px;font-size:14px}
 .crpe-home-v15 .footer-top{display:grid;grid-template-columns:4fr 2fr 2fr 2fr;gap:32px}
 .crpe-home-v15 .footer-brand p{color:var(--ink-2);margin-top:14px;max-width:34ch;font-size:14px}
 .crpe-home-v15 .footer-col{display:grid;gap:10px;align-content:start}
@@ -252,7 +252,7 @@
 
 /* responsywność */
 @media (max-width:980px){
-  .crpe-home-v15{--space-section:96px}
+  .crpe-home-v15{--space-section:80px}
   .crpe-home-v15 .main-nav{display:none}
   .crpe-home-v15 .menu-toggle-btn{display:flex}
   .crpe-home-v15 .hero-grid,.crpe-home-v15 .sec-head,.crpe-home-v15 .tools,.crpe-home-v15 .aud,.crpe-home-v15 .cols2,.crpe-home-v15 .faq,.crpe-home-v15 .final-box,.crpe-home-v15 .panel-cols{grid-template-columns:1fr}
@@ -267,15 +267,15 @@
   .crpe-home-v15 .sec-head{gap:16px;margin-bottom:40px}
 }
 @media (max-width:600px){
-  .crpe-home-v15{--space-section:72px;font-size:16px}
+  .crpe-home-v15{--space-section:64px;font-size:16px}
   .crpe-home-v15 .wrap{padding:0 20px}
   .crpe-home-v15 .header-inner{gap:12px}
   .crpe-home-v15 .header-actions{gap:8px}
   .crpe-home-v15 .header-actions .btn-s{padding:0 12px;font-size:13px}
-  .crpe-home-v15 .hero{padding-top:48px}
+  .crpe-home-v15 .hero{padding-top:36px}
   .crpe-home-v15 .header-actions .btn-ghost{display:none}
   .crpe-home-v15 .panel{padding:20px}
-  .crpe-home-v15 .stage::before{inset:88px -20px 0}
+  .crpe-home-v15 .stage::before{inset:72px -20px 0}
   .crpe-home-v15 .toast{display:none}
   .crpe-home-v15 .ruler-legend{gap:6px 16px;font-size:13px}
   .crpe-home-v15 .panel-cols > div + div{display:none}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import HomeFrame from "@/components/home/HomeFrame";
 import HomeAction from "@/components/home/HomeAction";
+import { MarketingFooter, MarketingNav } from "@/components/home/MarketingChrome";
 import "./home-v15.css";
 
 /*
@@ -13,59 +14,9 @@ import "./home-v15.css";
 
 const Check = () => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.2 4.2L19 7" /></svg>;
 const Alert = () => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 7v6M12 17h.01" /></svg>;
-const Logo = () => <span className="mark"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l7.5 3.2v5.4c0 4.7-3.2 8-7.5 9.4-4.3-1.4-7.5-4.7-7.5-9.4V6.2z" /><path d="M9 12.2l2.1 2.1L15.2 10" /></svg></span>;
 
 export default function Home() {
-  return <HomeFrame className="crpe-home-v15" navigation={<>
-<header className="site-header">
-  <div className="wrap header-inner">
-    <Link href="/" className="logo"><Logo />CRPE</Link>
-    <nav aria-label="Nawigacja główna" className="main-nav" id="mainNav">
-      <Link href="#jak-to-dziala">Jak to działa</Link>
-      <Link href="#narzedzia">Narzędzia</Link>
-      <Link href="#dla-kogo">Dla kogo</Link>
-      <Link href="/baza-szkolen">Baza szkoleń</Link>
-      <Link href="#faq">Pytania</Link>
-    </nav>
-    <div className="header-actions">
-      <Link href="/login" className="btn btn-ghost btn-s">Zaloguj się</Link>
-      <Link href="/rejestracja" className="btn btn-primary btn-s">Załóż konto</Link>
-      <button type="button" className="menu-toggle-btn" id="menuToggle" aria-label="Otwórz menu" aria-expanded="false" aria-controls="sideDrawer"><i></i><i></i><i></i></button>
-    </div>
-  </div>
-</header>
-<button type="button" className="drawer-backdrop" id="drawerBackdrop" tabIndex={-1} aria-hidden="true"></button>
-<nav className="side-drawer" id="sideDrawer" aria-label="Menu" aria-hidden="true">
-  <div className="drawer-head"><span>Menu</span><button type="button" className="drawer-close" id="drawerClose" aria-label="Zamknij menu">✕</button></div>
-  <Link href="#jak-to-dziala">Jak to działa</Link>
-  <Link href="#narzedzia">Narzędzia</Link>
-  <Link href="#dla-kogo">Dla kogo</Link>
-  <Link href="/baza-szkolen">Baza szkoleń</Link>
-  <Link href="#faq">Pytania</Link>
-  <Link href="/pomoc">Centrum pomocy</Link>
-  <div className="drawer-cta">
-    <Link href="/login" className="btn btn-ghost">Zaloguj się</Link>
-    <Link href="/rejestracja" className="btn btn-primary">Załóż konto</Link>
-  </div>
-</nav>
-</>} footer={
-<footer className="site-footer">
-  <div className="wrap">
-    <div className="footer-top">
-      <div className="footer-brand">
-        <span className="logo"><Logo />CRPE</span>
-        <p>Narzędzie do własnej ewidencji aktywności, punktów i dokumentów edukacyjnych.</p>
-      </div>
-      <div className="footer-col"><h2 className="footer-heading">Dla kogo</h2>
-        <Link href="/dla-medyka">Dla medyka</Link><Link href="/dla-placowki">Dla placówki</Link><Link href="/dla-organizatora">Dla organizatora</Link></div>
-      <div className="footer-col"><h2 className="footer-heading">Serwis</h2>
-        <Link href="/baza-szkolen">Baza szkoleń</Link><Link href="/narzedzia">Narzędzia</Link><Link href="/bezpieczenstwo">Bezpieczeństwo</Link><Link href="/pomoc">Centrum pomocy</Link><Link href="/kontakt">Kontakt</Link></div>
-      <div className="footer-col"><h2 className="footer-heading">Dokumenty</h2>
-        <Link href="/regulamin">Regulamin</Link><Link href="/polityka-prywatnosci">Polityka prywatności</Link></div>
-    </div>
-    <div className="footer-bottom">© 2026 CRPE.pl</div>
-  </div>
-</footer>}>
+  return <HomeFrame className="crpe-home-v15" navigation={<MarketingNav onHome />} footer={<MarketingFooter />}>
 
 {/* 1. HERO */}
 <section className="hero" aria-labelledby="hero-title">
