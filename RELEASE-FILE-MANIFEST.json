@@ -1,34 +1,20 @@
 {
-  "version": "6.31",
-  "baseline": "6.29.4",
-  "source": "Full v6.30 inside files (8).zip",
+  "version": "6.32",
+  "baseline": "previous delivered v6.31",
+  "incoming": "files (9).zip / CRPE v6.31 panel",
   "changed": [
     "package.json",
-    "RELEASE-FILE-MANIFEST.json",
-    "app/crpe-visual-v6-28-2.css",
-    "app/home-v15.css",
-    "app/layout.tsx",
-    "app/page.tsx",
-    "app/role-v15.css",
-    "app/bezpieczenstwo/page.tsx",
-    "app/kontakt/page.tsx",
-    "app/narzedzia/page.tsx",
     "app/panel-cpd/CalculatorClient.tsx",
-    "components/AppPageHeader.tsx",
-    "components/Footer.tsx",
-    "components/Header.tsx",
-    "components/RoleLandingPage.tsx",
-    "components/home/MarketingChrome.tsx",
+    "app/panel-cpd/page.tsx",
     "scripts/check-release.mjs",
-    "scripts/check-v6-29-3-role-pages.mjs"
+    "scripts/check-v6-24-overdue-and-actions.mjs",
+    "scripts/check-v6-25-3-panel-views-and-limits.mjs"
   ],
   "added": [
-    "START-TUTAJ-v6.30.md",
-    "START-TUTAJ-v6.31.md",
-    "app/app-v15.css",
-    "components/home/MarketingPage.tsx",
-    "components/home/PlacowkaPreview.tsx",
-    "scripts/check-v6-30-app-style.mjs"
+    "CHANGES-v6.31-PANEL-UPSTREAM.md",
+    "START-TUTAJ-v6.32.md",
+    "scripts/check-v6-31-panel-layout.mjs"
   ],
-  "removed": []
+  "removed": [],
+  "protected_files_identical": 58
 }

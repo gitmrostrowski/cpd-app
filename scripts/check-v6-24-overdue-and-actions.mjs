@@ -79,7 +79,8 @@ assert.match(panel, /from "@\/lib\/cpd\/overdue"/, "Panel musi korzystać z modu
 assert.match(panel, /Rozstrzygnij \$\{overdueCount\}/, "Zaległy termin musi wyprzedzać pozostałe kroki");
 assert.match(panel, /ctaHref: "\/aktywnosci\?filtr=zalegle"/, "Krok musi prowadzić do przefiltrowanej listy");
 assert.match(panel, /incompleteCount > 0 \? incompleteStep : planningStep/, "Braki nie mogą znikać po wykryciu zaległości");
-assert.match(panel, /\.\.\.overdue\.map/, "Oś nie może dublować zaległych pozycji z agendy");
+// v6.31: osobna oś zniknęła – jeden rejestr aktywności obok kolumny terminów.
+assert.match(panel, /aria-label="Oś aktywności"/, "Rejestr aktywności przejmuje rolę osi");
 assert.match(panel, /formatOverdue\(entry\.daysOverdue\)/, "Zaległe wpisy muszą być widoczne w sekcji terminów");
 
 // --- Kolumna akcji: jedna główna, bez numeracji, z ikonami ---
@@ -106,7 +107,7 @@ assert.match(panel, /zostało \$\{Math\.round\(r\.remaining\)\} pkt/, "Zapas mus
 assert.match(panel, /"maksymalnie na jeden wpis"/, "Limit na wpis musi nazywać swoją jednostkę");
 
 // --- Oś aktywności nie dubluje agendy ---
-assert.match(panel, /const agendaIds = new Set/, "Oś musi odfiltrować pozycje z agendy");
+assert.doesNotMatch(panel, /const timelineRows/, "Nie wracamy do drugiej listy tych samych wpisów");
 
 // --- Lista aktywności: osobna zakładka i wejście z adresu ---
 const list = await read("app/aktywnosci/page.tsx");

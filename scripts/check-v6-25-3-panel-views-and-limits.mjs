@@ -12,7 +12,8 @@ const packageJson = JSON.parse(
 
 // Widoki statusu: przebieg pozostaje domyślny, a preferencja jest lokalna.
 assert.match(panel, /const STATUS_VIEW_STORAGE_KEY = "crpe\.panel\.statusView"/);
-assert.match(panel, /useState<"curve" \| "bar">\("curve"\)/);
+// v6.31: domyślnie linijka okresu (jak na Home); wykres „Przebieg” zostaje do wyboru.
+assert.match(panel, /useState<"curve" \| "bar">\("bar"\)/);
 assert.match(panel, /localStorage\.getItem\(STATUS_VIEW_STORAGE_KEY\)/);
 assert.match(panel, /localStorage\.setItem\(STATUS_VIEW_STORAGE_KEY, view\)/);
 assert.match(panel, /\{ id: "curve", label: "Przebieg" \}/);

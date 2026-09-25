@@ -534,7 +534,7 @@ function PointsAccrualChart({
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
-      className="h-auto w-full min-w-[360px]"
+      className="h-auto w-full min-w-0"
       role="img"
       aria-label={`Wykres narastania punktów w okresie ${periodStart}–${periodEnd}. Zdobyte ${series.doneTotal} pkt. ${accessibleTarget}`}
     >
@@ -762,29 +762,27 @@ function PointsProgressBar({
       role="group"
       aria-label={`Pasek postępu w okresie ${periodStart}–${periodEnd}. Zdobyte ${series.doneTotal} z ${series.target} pkt, w tym ${completePoints} pkt z kompletnych wpisów. Minęło ${Math.round(timePct)}% okresu.`}
     >
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-0.5 text-[11px] leading-4 text-slate-500">
-        <span className="font-bold text-slate-700">Postęp cyklu edukacyjnego</span>
-        <span>
-          Równe tempo na dziś: <strong className="text-slate-800">{Math.round(series.targetToday)} pkt</strong>
-        </span>
-      </div>
-
-      <div className="relative pt-6">
+      <div className="relative pt-7">
         <div
-          className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[10px] font-extrabold text-slate-900 shadow-sm ring-1 ring-slate-200"
+          className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[12px] font-bold text-crpe-ink"
           style={{ left: `clamp(1rem, ${timePct}%, calc(100% - 1rem))` }}
         >
           dziś
         </div>
+        <div
+          className="absolute top-5 h-8 w-0 border-l-2 border-dashed border-crpe-ink"
+          style={{ left: `${timePct}%` }}
+          aria-hidden="true"
+        />
 
-        <div className="relative h-9 overflow-hidden rounded-xl bg-slate-100 max-h-6 ring-1 ring-slate-200/90 shadow-[inset_0_1px_2px_rgba(15,23,42,0.05)]">
+        <div className="relative h-4 overflow-hidden rounded-full bg-slate-100">
           <div
-            className="absolute inset-y-0 left-0 bg-crpe-brand"
+            className="absolute inset-y-0 left-0 rounded-full bg-crpe-brand"
             style={{ width: `${donePct}%` }}
           />
           {completePct > 0 ? (
             <div
-              className="absolute bottom-0 left-0 h-1.5 bg-crpe-success"
+              className="absolute bottom-0 left-0 h-1 bg-crpe-success"
               style={{ width: `${completePct}%` }}
               aria-hidden="true"
             />
@@ -796,63 +794,21 @@ function PointsProgressBar({
                 left: `${donePct}%`,
                 width: `${gapPct}%`,
                 backgroundImage:
-                  "repeating-linear-gradient(135deg, rgba(154,70,0,0.36) 0 2px, transparent 2px 7px)",
+                  "repeating-linear-gradient(135deg, rgba(154,70,0,0.32) 0 2px, transparent 2px 7px)",
               }}
+              aria-hidden="true"
             />
           ) : null}
-          {donePct >= 12 ? (
-            <span
-              className="absolute inset-y-0 left-2 flex items-center text-[10px] font-black text-white"
-              aria-hidden="true"
-            >
-              {Math.round(series.doneTotal)} pkt
-            </span>
-          ) : null}
-          {gapPct >= 13 ? (
-            <span
-              className="absolute inset-y-0 flex items-center px-2 text-[10px] font-black text-crpe-warning"
-              style={{ left: `${donePct}%` }}
-              aria-hidden="true"
-            >
-              {gapPoints} pkt
-            </span>
-          ) : null}
-          <div
-            className="absolute -top-1.5 bottom-[-6px] w-[2px] bg-slate-950"
-            style={{ left: `${timePct}%` }}
-            aria-hidden="true"
-          />
         </div>
 
-        <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[10px] font-medium text-slate-400">
-          <span>0 pkt</span>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 text-slate-500">
-              <span className="h-2 w-2 rounded-full bg-crpe-brand" aria-hidden="true" />
-              zdobyte
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-crpe-success">
-              <span className="h-1.5 w-3 rounded-full bg-crpe-success" aria-hidden="true" />
-              kompletne {Math.round(completePoints)} pkt
-            </span>
-            {gapPoints > 0 ? (
-              <span className="inline-flex items-center gap-1.5 text-crpe-warning">
-                <span className="h-2 w-2 rounded-sm bg-crpe-warning-soft ring-1 ring-crpe-warning-border" aria-hidden="true" />
-                luka do tempa
-              </span>
-            ) : null}
-          </div>
-          <span>{series.target} pkt</span>
-        </div>
-
-        <div className="relative mt-1 h-4">
+        <div className="relative mt-2 h-4">
           {visibleYears.map((year) => {
             const index = year - periodStart;
             const left = clamp(((index + 0.5) / years.length) * 100, 0, 100);
             return (
               <span
                 key={year}
-                className="absolute -translate-x-1/2 text-[11px] text-slate-400"
+                className="absolute -translate-x-1/2 text-[12px] text-crpe-subtle"
                 style={{ left: `${left}%` }}
               >
                 {year}
@@ -860,65 +816,77 @@ function PointsProgressBar({
             );
           })}
         </div>
+
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 text-[12px] text-crpe-subtle">
+          <span>0 pkt</span>
+          <div className="order-last flex w-full flex-wrap items-center gap-x-4 gap-y-1 sm:order-none sm:w-auto">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-crpe-brand" aria-hidden="true" />
+              zdobyte
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1 w-3 rounded-full bg-crpe-success" aria-hidden="true" />
+              z kompletnych wpisów
+            </span>
+            {gapPoints > 0 ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-sm bg-crpe-warning-soft ring-1 ring-crpe-warning-border" aria-hidden="true" />
+                luka do równego tempa
+              </span>
+            ) : null}
+          </div>
+          <span>{series.target} pkt</span>
+        </div>
       </div>
 
-      <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
-        <div className="relative overflow-hidden rounded-2xl border border-crpe-brand-border bg-crpe-brand-soft/35 px-3.5 py-3.5 pl-4">
-          <span className="absolute inset-y-0 left-0 w-1 bg-crpe-brand" aria-hidden="true" />
-          <div className="text-[11px] font-semibold text-slate-600">Zebrane</div>
-          <div className="mt-1 text-[24px] font-black leading-none tracking-[-0.04em] text-crpe-brand">
+      <dl className="mt-5 grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100 pt-4">
+        <div className="pr-3 sm:pr-5">
+          <dt className="text-[13px] text-crpe-muted">Zebrane</dt>
+          <dd className="mt-0.5 text-[22px] font-bold leading-tight sm:text-[26px] text-crpe-brand">
             {series.doneTotal}
-            <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
-          </div>
-          <div className="mt-1.5 text-[11px] leading-4 text-slate-500">
-            {Math.round(donePct)}% celu {series.target} pkt
-            <span className="mt-0.5 block font-bold text-crpe-success">
-              {Math.round(completePoints)} pkt z kompletnych wpisów
-            </span>
-          </div>
+            <span className="ml-1 text-[13px] font-medium text-crpe-subtle">pkt</span>
+          </dd>
+          <dd className="text-[13px] leading-5 text-crpe-muted">
+            {Math.round(donePct)}% celu, z kompletnych wpisów {Math.round(completePoints)} pkt
+          </dd>
         </div>
 
-        <div className={`relative overflow-hidden rounded-2xl border px-3.5 py-3.5 pl-4 ${gapPoints > 0 ? "border-crpe-warning-border bg-crpe-warning-soft/40" : "border-crpe-success-border bg-crpe-success-soft/35"}`}>
-          <span
-            className={`absolute inset-y-0 left-0 w-1 ${gapPoints > 0 ? "bg-crpe-warning-border" : "bg-crpe-success"}`}
-            aria-hidden="true"
-          />
-          <div className="text-[11px] font-semibold text-slate-600">
+        <div className="px-3 sm:px-5">
+          <dt className="text-[13px] text-crpe-muted">
             {gapPoints > 0 ? "Luka do tempa" : "Zapas nad tempem"}
-          </div>
-          <div
-            className={`mt-1 text-[24px] font-black leading-none tracking-[-0.04em] ${
+          </dt>
+          <dd
+            className={`mt-0.5 text-[22px] font-bold leading-tight sm:text-[26px] ${
               gapPoints > 0 ? "text-crpe-warning" : "text-crpe-success"
             }`}
           >
             {gapPoints > 0 ? gapPoints : Math.round(series.doneTotal - series.targetToday)}
-            <span className="ml-1 text-xs font-semibold opacity-60">pkt</span>
-          </div>
-          <div className="mt-1.5 text-[11px] leading-4 text-slate-500">
+            <span className="ml-1 text-[13px] font-medium text-crpe-subtle">pkt</span>
+          </dd>
+          <dd className="text-[13px] leading-5 text-crpe-muted">
             {gapPoints > 0
               ? perMonth
                 ? `Do wyrównania ≈ ${perMonth} pkt / mies.`
                 : "Do wyrównania równego tempa"
               : "Jesteś przed równym tempem"}
-          </div>
+          </dd>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/65 px-3.5 py-3.5 pl-4">
-          <span className="absolute inset-y-0 left-0 w-1 bg-slate-300" aria-hidden="true" />
-          <div className="text-[11px] font-semibold text-slate-600">Pozostaje</div>
-          <div className="mt-1 text-[24px] font-black leading-none tracking-[-0.04em] text-slate-950">
+        <div className="pl-3 sm:pl-5">
+          <dt className="text-[13px] text-crpe-muted">Pozostaje</dt>
+          <dd className="mt-0.5 text-[22px] font-bold leading-tight sm:text-[26px] text-crpe-ink">
             {leftPoints}
-            <span className="ml-1 text-xs font-semibold text-slate-400">pkt</span>
-          </div>
-          <div className="mt-1.5 text-[11px] leading-4 text-slate-500">
+            <span className="ml-1 text-[13px] font-medium text-crpe-subtle">pkt</span>
+          </dd>
+          <dd className="text-[13px] leading-5 text-crpe-muted">
             {leftPoints === 0
               ? "Cel osiągnięty"
               : pointsPerYear
                 ? `Tempo ${pointsPerYear} pkt rocznie`
                 : (remainingText ?? "Do końca okresu")}
-          </div>
+          </dd>
         </div>
-      </div>
+      </dl>
     </div>
   );
 }
@@ -1009,12 +977,13 @@ export default function CalculatorClient() {
   const [selectedLimitKey, setSelectedLimitKey] = useState<string | null>(null);
   const [activeNav, setActiveNav] = useState<PanelSectionId>("status");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [limitsOpen, setLimitsOpen] = useState(false);
   /**
    * Wybór widoku statusu zapamiętujemy lokalnie, a nie w profilu: to
    * preferencja czytania jednego ekranu, nie dana rozliczeniowa.
    * Odczyt idzie po montażu, żeby nie rozjechać hydratacji SSR.
    */
-  const [statusView, setStatusView] = useState<"curve" | "bar">("curve");
+  const [statusView, setStatusView] = useState<"curve" | "bar">("bar");
 
   useEffect(() => {
     try {
@@ -1578,33 +1547,10 @@ export default function CalculatorClient() {
     [activities],
   );
   /**
-   * Oś aktywności pokazuje to, co już się wydarzyło.
-   *
-   * Przyszłe terminy mają własną sekcję z odliczaniem, a wcześniej te same
-   * wpisy pojawiały się w trzech miejscach naraz: tutaj, w „Najbliższych
-   * terminach” i jako linia przerywana na wykresie.
+   * v6.31: osobna „Oś aktywności” zniknęła. Te same wpisy pokazywała lista
+   * ostatnich aktywności, więc panel ma teraz jeden zwarty rejestr w okresie
+   * (z filtrami), a przyszłe i zaległe terminy – własną kolumnę obok.
    */
-  const timelineRows = useMemo(() => {
-    const agendaIds = new Set([
-      ...upcoming.map((entry) => entry.id),
-      ...overdue.map((entry) => entry.id),
-    ]);
-
-    return [...recentRows]
-      .filter((activity) => !agendaIds.has(activity.id))
-      .sort((a, b) => {
-        const plannedA = normalizeStatus(a.status) === "planned";
-        const plannedB = normalizeStatus(b.status) === "planned";
-        if (plannedA !== plannedB) return plannedA ? -1 : 1;
-
-        const dateA = timelineDate(a).sort;
-        const dateB = timelineDate(b).sort;
-        return plannedA
-          ? dateA.localeCompare(dateB)
-          : dateB.localeCompare(dateA);
-      })
-      .slice(0, 8);
-  }, [recentRows, upcoming, overdue]);
 
   const isBusy = authLoading || loading;
 
@@ -1817,7 +1763,7 @@ export default function CalculatorClient() {
     "h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400 shadow-[0_3px_10px_rgba(15,45,75,0.04)] transition focus:border-crpe-brand focus:ring-4 focus:ring-crpe-brand-border/80 disabled:bg-slate-50 disabled:text-slate-400";
 
   const cardCls =
-    "scroll-mt-44 relative overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(15,45,75,0.07)] transition-shadow hover:shadow-[0_18px_44px_rgba(15,45,75,0.09)]";
+    "scroll-mt-32 relative overflow-hidden rounded-[22px] border border-crpe-line bg-white";
 
   function scrollToSection(
     id: PanelSectionId,
@@ -1826,8 +1772,9 @@ export default function CalculatorClient() {
     if (!el) return;
 
     setActiveNav(id);
+    if (id === "limity") setLimitsOpen(true);
 
-    const offset = 140;
+    const offset = 120;
     const targetTop = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
   }
@@ -1870,12 +1817,12 @@ export default function CalculatorClient() {
     mobileLabel: string;
     icon: "user" | "chart" | "target" | "shield" | "calendar";
   }[] = [
-    { id: "status", label: "Status i kroki", mobileLabel: "Status", icon: "chart" },
+    { id: "status", label: "Stan okresu", mobileLabel: "Stan", icon: "chart" },
+    { id: "aktywnosci", label: "Aktywności", mobileLabel: "Wpisy", icon: "calendar" },
+    { id: "terminy", label: "Terminy", mobileLabel: "Terminy", icon: "target" },
     ...(hasLimits
       ? [{ id: "limity" as const, label: "Limity", mobileLabel: "Limity", icon: "shield" as const }]
       : []),
-    { id: "aktywnosci", label: "Aktywności", mobileLabel: "Wpisy", icon: "calendar" },
-    { id: "terminy", label: "Najbliższe terminy", mobileLabel: "Terminy", icon: "target" },
   ];
 
   return (
@@ -1920,25 +1867,27 @@ export default function CalculatorClient() {
         ]}
       />
 
-      <nav className="sticky top-[70px] z-30 rounded-[18px] border border-slate-200 bg-white/95 p-1.5 shadow-[0_12px_32px_rgba(15,45,75,0.09)] backdrop-blur sm:top-[70px]">
-        <div className="grid grid-cols-3 gap-1 sm:flex sm:items-center">
-          {panelSections.map(({ id, label, mobileLabel, icon }) => {
+      <nav
+        aria-label="Sekcje panelu"
+        className="sticky top-16 z-30 -mx-4 border-b border-crpe-line bg-crpe-surface/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
+      >
+        <div className="flex gap-1 overflow-x-auto">
+          {panelSections.map(({ id, label, mobileLabel }) => {
             const active = activeNav === id;
             return (
               <button
                 key={id}
                 type="button"
                 onClick={() => scrollToSection(id)}
-                className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-[11px] font-bold transition sm:flex-1 sm:px-3 sm:text-[13px] ${
+                className={`relative shrink-0 px-3 py-3 text-[14px] font-semibold transition after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full ${
                   active
-                    ? "bg-crpe-brand text-white shadow-[0_7px_16px_rgba(29,78,216,0.22)]"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                    ? "text-crpe-ink after:bg-crpe-brand"
+                    : "text-crpe-muted after:bg-transparent hover:text-crpe-ink"
                 }`}
                 aria-current={active ? "location" : undefined}
               >
-                <MiniIcon name={icon} className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-                <span className="truncate sm:hidden">{mobileLabel}</span>
-                <span className="hidden truncate sm:inline">{label}</span>
+                <span className="sm:hidden">{mobileLabel}</span>
+                <span className="hidden sm:inline">{label}</span>
               </button>
             );
           })}
@@ -1975,69 +1924,74 @@ export default function CalculatorClient() {
           ) : null}
 
           <section id="status" className={cardCls}>
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 pb-0 pt-3">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+              <div className="flex min-w-0 items-center gap-3">
                 <IconBubble tone="blue">
                   <MiniIcon name="chart" />
                 </IconBubble>
-                <h2 className="text-base font-extrabold tracking-tight text-slate-950">
-                  Twój status i kolejne kroki
-                </h2>
+                <div className="min-w-0">
+                  <h2 className="text-[17px] font-bold leading-6 text-crpe-ink">
+                    Okres rozliczeniowy {periodStart}–{periodEnd}
+                  </h2>
+                  <p
+                    role="group"
+                    aria-label="Poziomy statusu wyniku"
+                    className="text-[13px] leading-5 text-crpe-muted"
+                  >
+                    <span className="sr-only">
+                      {cycleTargetMode === "rule_set" ? "Reguła CRPE" : "Własny cel"}
+                    </span>
+                    <span className="sr-only">Reguły CRPE:</span>
+                    <span className="sr-only">Status formalny:</span>
+                    {displayProfession(profession, professionOther)} · {hasPointTarget ? `cel ${requiredPoints} pkt` : "cel nieustawiony"} ·{" "}
+                    {periodMode === "custom" ? "okres indywidualny" : "okres standardowy"}
+                  </p>
+                </div>
               </div>
 
-              <span
-                className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold ${paceBadgeClass}`}
-              >
-                {paceBadgeLabel}
-              </span>
-            </div>
-
-            <div className="px-5 pb-2 pt-1">
-              <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
-                <span className="text-[40px] font-black leading-[0.92] tracking-[-0.05em] text-crpe-brand sm:text-[44px]">
-                  {donePoints}
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-[13px] font-semibold ${paceBadgeClass}`}
+                >
+                  {paceBadgeLabel}
                 </span>
-                {hasPointTarget ? (
-                  <>
-                    <span className="text-[15px] font-semibold text-slate-500">
-                      z {requiredPoints} pkt
-                    </span>
-                    <span className="text-[13px] text-slate-500">
-                      brakuje <span className="font-bold text-slate-900">{missingPoints}</span>
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-[13px] font-bold text-crpe-warning">cel nieustawiony</span>
-                )}
-                <span className="text-[13px] text-slate-500">
-                  okres {periodStart}–{periodEnd}, minęło{" "}
-                  <span className="font-bold text-slate-900">
-                    {Math.round(periodTimeProgress)}%
-                  </span>
-                </span>
-              </div>
-
-              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-crpe-success-soft px-2.5 py-1 font-bold text-crpe-success ring-1 ring-crpe-success-border">
-                  <span className="h-1.5 w-1.5 rounded-full bg-crpe-success" aria-hidden="true" />
-                  Kompletne wpisy: {completePoints} pkt
-                </span>
-                {incompletePoints > 0 ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-crpe-warning-soft px-2.5 py-1 font-bold text-crpe-warning ring-1 ring-crpe-warning-border">
-                    <span className="h-1.5 w-1.5 rounded-full bg-crpe-warning-border" aria-hidden="true" />
-                    Do uzupełnienia: {incompletePoints} pkt
-                  </span>
-                ) : null}
-                <span className="text-slate-500">
-                  Planowane wpisy nie zwiększają wyniku.
-                </span>
+                <button
+                  type="button"
+                  aria-expanded={settingsOpen}
+                  onClick={() => {
+                    setSettingsOpen((value) => !value);
+                    if (!settingsOpen) {
+                      window.requestAnimationFrame(() => {
+                        const el = document.getElementById("ustawienia");
+                        if (!el) return;
+                        const targetTop = el.getBoundingClientRect().top + window.scrollY - 140;
+                        window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
+                      });
+                    }
+                  }}
+                  className="inline-flex h-8 shrink-0 items-center justify-center rounded-full border border-crpe-line bg-white px-3.5 text-[13px] font-semibold text-crpe-ink transition hover:border-slate-300"
+                >
+                  {settingsOpen ? "Ukryj ustawienia" : "Zmień ustawienia"}
+                </button>
               </div>
             </div>
 
-            <div className="grid items-start gap-0 lg:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.78fr)]">
-              <div className="min-w-0 px-3 pb-2 pt-0">
-                {hasPointTarget && accrualSeries ? (
-                  <div className="flex flex-wrap items-center justify-between gap-2 px-2 pb-1 pt-1">
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_340px]">
+              <div className="min-w-0 px-5 py-5 sm:px-6">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="text-[56px] font-bold leading-[0.95] tracking-[-0.03em] text-crpe-ink sm:text-[64px]">
+                      {donePoints}
+                    </span>
+                    {hasPointTarget ? (
+                      <span className="text-[18px] font-medium text-crpe-muted">
+                        z {requiredPoints} pkt
+                      </span>
+                    ) : (
+                      <span className="text-[14px] font-semibold text-crpe-warning">cel nieustawiony</span>
+                    )}
+                  </div>
+                  {hasPointTarget && accrualSeries ? (
                     <div
                       role="group"
                       aria-label="Widok wykresu"
@@ -2068,17 +2022,20 @@ export default function CalculatorClient() {
                         );
                       })}
                     </div>
-                    {statusView === "curve" ? (
-                      <span className="text-[11px] leading-4 text-slate-500">
-                        Tempo na dziś: <strong className="text-slate-800">{Math.round(accrualSeries.targetToday)} pkt</strong>
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null}
+                  ) : null}
+                </div>
+                <p className="mt-2 text-[14px] leading-5 text-crpe-muted">
+                  Minęło {Math.round(periodTimeProgress)}% okresu.
+                  {statusView === "curve" && accrualSeries
+                    ? ` Tempo na dziś: ${Math.round(accrualSeries.targetToday)} pkt.`
+                    : ""}{" "}
+                  Planowane wpisy nie zwiększają wyniku.
+                </p>
 
+                <div className="mt-5">
                 {hasPointTarget && accrualSeries ? (
                   statusView === "bar" ? (
-                    <div className="px-2 pb-0 pt-1">
+                    <div>
                       <PointsProgressBar
                         series={accrualSeries}
                         periodStart={periodStart}
@@ -2088,12 +2045,9 @@ export default function CalculatorClient() {
                         yearsLeft={pace ? pace.yearsLeft : null}
                         completePoints={completePoints}
                       />
-                      <p className="mt-2 px-2 text-[12px] leading-[18px] text-slate-500">
-                        Niebieski pokazuje zdobyte punkty, zielona krawędź — część z kompletnych wpisów, a pole zakreskowane — lukę do równego tempa na dziś.
-                      </p>
                     </div>
                   ) : (
-                    <div className="px-2 pb-0 pt-1">
+                    <div>
                       <div className="rounded-2xl border border-slate-200/90 bg-[linear-gradient(180deg,#fbfcff_0%,#ffffff_100%)] px-1.5 pb-1 pt-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
                         <div
                           className="overflow-x-auto pb-1"
@@ -2137,10 +2091,11 @@ export default function CalculatorClient() {
                     Ustaw cel punktowy, żeby zobaczyć, jak Twoje punkty narastają w okresie.
                   </div>
                 )}
+                </div>
               </div>
 
-              <div className="m-3 mt-1 flex self-start flex-col gap-1.5 rounded-2xl border border-slate-200/90 bg-crpe-surface/75 p-3 shadow-[0_10px_28px_rgba(15,23,42,0.035)] lg:ml-1">
-                <p className="text-xs font-bold text-slate-600">
+              <div className="flex flex-col gap-2 border-t border-slate-100 bg-crpe-surface/60 p-5 lg:border-l lg:border-t-0">
+                <p className="mb-1 text-[13px] font-semibold text-crpe-muted">
                   {nextSteps[0]?.priority === "high" ? "Najpierw to" : "Co dalej"}
                 </p>
 
@@ -2218,7 +2173,7 @@ export default function CalculatorClient() {
                           window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
                         });
                       }}
-                      className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 transition-colors hover:border-slate-300 hover:bg-white"
+                      className="flex items-center gap-2.5 rounded-xl border border-crpe-line bg-white px-3 py-2.5 transition-colors hover:border-slate-300"
                     >
                       <MiniIcon name={step.icon} className="h-[18px] w-[18px] shrink-0 text-slate-500" />
                       <span className="min-w-0 flex-1">
@@ -2234,45 +2189,6 @@ export default function CalculatorClient() {
                   );
                 })}
               </div>
-            </div>
-
-            <div
-              role="group"
-              aria-label="Poziomy statusu wyniku"
-              className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/80 px-5 py-2.5 text-[11px] leading-4 text-slate-600"
-            >
-              <span className="sr-only">
-                {cycleTargetMode === "rule_set" ? "Reguła CRPE" : "Własny cel"}
-              </span>
-              <span className="sr-only">Reguły CRPE:</span>
-              <span className="sr-only">Status formalny:</span>
-              <span className="font-semibold text-slate-700">
-                {displayProfession(profession, professionOther)}
-                <span className="mx-1.5 text-slate-300">·</span>
-                {requiredPoints} pkt
-                <span className="mx-1.5 text-slate-300">·</span>
-                {periodStart}–{periodEnd}
-                <span className="mx-1.5 text-slate-300">·</span>
-                {periodMode === "custom" ? "Indywidualny" : "Preset"}
-              </span>
-              <button
-                type="button"
-                aria-expanded={settingsOpen}
-                onClick={() => {
-                  setSettingsOpen((value) => !value);
-                  if (!settingsOpen) {
-                    window.requestAnimationFrame(() => {
-                      const el = document.getElementById("ustawienia");
-                      if (!el) return;
-                      const targetTop = el.getBoundingClientRect().top + window.scrollY - 140;
-                      window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
-                    });
-                  }
-                }}
-                className="inline-flex h-8 shrink-0 items-center justify-center rounded-xl border border-crpe-brand-border bg-white px-3 text-xs font-bold text-crpe-brand shadow-sm transition hover:bg-crpe-brand-soft"
-              >
-                {settingsOpen ? "Ukryj ustawienia" : "Zmień ustawienia"}
-              </button>
             </div>
           </section>
 
@@ -2561,34 +2477,377 @@ export default function CalculatorClient() {
         </>
       )}
 
-      {hasLimits ? (
-      <section id="limity" className={`${cardCls} scroll-mt-44`}>
-        <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <IconBubble tone="blue">
-              <MiniIcon name="shield" />
-            </IconBubble>
 
-            <div>
-              <h2 className="text-base font-extrabold tracking-tight text-slate-950">
-                Twoje limity
-              </h2>
-              <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
-                Wybierz kategorię i sprawdź, ile możesz jeszcze bezpiecznie doliczyć.
-              </p>
+
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <section id="aktywnosci" className={cardCls}>
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+          <div className="min-w-0">
+            <h2 className="text-[17px] font-bold leading-6 text-crpe-ink">
+              Aktywności w okresie
+              {recentRows.length > 0 ? (
+                <span className="ml-2 text-[14px] font-medium text-crpe-subtle">{recentRows.length}</span>
+              ) : null}
+            </h2>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[13px]">
+                {(["all", "missing", "planned", "complete"] as const).map((f) => {
+                  const labels = {
+                    all: "wszystkie",
+                    missing: "do uzupełnienia",
+                    planned: "zaplanowane",
+                    complete: "kompletne",
+                  };
+
+                  const dots = {
+                    all: "",
+                    missing: "bg-crpe-warning-border",
+                    planned: "bg-crpe-brand",
+                    complete: "bg-crpe-success-border",
+                  };
+
+                  const active = {
+                    all: "bg-slate-100 text-slate-800",
+                    missing: "bg-crpe-warning-soft text-crpe-warning",
+                    planned: "bg-crpe-brand-soft text-crpe-brand",
+                    complete: "bg-crpe-success-soft text-crpe-success",
+                  };
+
+                  return (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => filterActivities(f)}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${
+                        activityFilter === f
+                          ? active[f]
+                          : "text-slate-500 hover:bg-slate-50"
+                      }`}
+                    >
+                      {dots[f] ? (
+                        <span className={`h-2 w-2 rounded-full ${dots[f]}`} />
+                      ) : null}
+                      {labels[f]}
+                    </button>
+                  );
+                })}
             </div>
           </div>
-          <div className="shrink-0 text-right text-[11px] leading-4 text-slate-500">
-            <div className="font-bold text-slate-700">{limitsRuleSet?.name_pl}</div>
-            {cycleTargetMode === "custom" ? (
-              <div>Reguła zawodu · okres własny</div>
-            ) : (
-              <div>Reguła przypięta do okresu</div>
-            )}
-          </div>
+          <Link
+            href="/aktywnosci"
+            className="shrink-0 text-[14px] font-semibold text-crpe-brand hover:underline"
+          >
+            Wszystkie aktywności
+          </Link>
         </div>
 
-        <div className="p-4">
+        {recentRows.length === 0 ? (
+          <div className="p-5">
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-8 text-center">
+                <div className="text-sm font-medium text-slate-700">
+                  {emptyStateMsg}
+                </div>
+                <Link
+                  href={emptyStateHref}
+                  className="rounded-xl bg-crpe-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-crpe-brand-hover active:scale-95"
+                >
+                  {emptyStateCta}
+                </Link>
+              </div>
+          </div>
+        ) : (
+          <ol aria-label="Oś aktywności" className="divide-y divide-slate-100">
+            {recentRows.slice(0, 8).map((a) => {
+              const prog = normalizeStatus(a.status);
+              const missing = getRowMissing(a);
+              const hasMissing = prog !== "planned" && missing.length > 0;
+              const counted = adjustedPointsById.get(a.id);
+              const date = timelineDate(a);
+              const isOverdue = overdue.some((entry) => entry.id === a.id);
+              const statusLabel = isOverdue
+                ? "Po terminie"
+                : prog === "planned"
+                  ? "Zaplanowane"
+                  : hasMissing
+                    ? "Do uzupełnienia"
+                    : "Kompletne";
+              const statusTone = isOverdue
+                ? "text-crpe-danger"
+                : prog === "planned"
+                  ? "text-crpe-brand"
+                  : hasMissing
+                    ? "text-crpe-warning"
+                    : "text-crpe-success";
+              const dotTone = isOverdue
+                ? "bg-crpe-danger"
+                : prog === "planned"
+                  ? "bg-crpe-brand"
+                  : hasMissing
+                    ? "bg-crpe-warning"
+                    : "bg-crpe-success";
+
+              return (
+                <li key={a.id}>
+                  <Link
+                    href={`/aktywnosci/${a.id}`}
+                    className="group grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-3 px-5 py-3.5 transition hover:bg-crpe-surface/70 sm:px-6"
+                  >
+                    <span className="text-center">
+                      <span className="block text-[15px] font-bold leading-tight text-crpe-ink">
+                        {date.primary}
+                      </span>
+                      <span className="block whitespace-nowrap text-[12px] leading-4 text-crpe-subtle">
+                        {date.secondary}
+                      </span>
+                    </span>
+
+                    <span className="min-w-0">
+                      <span className="block truncate text-[15px] font-semibold leading-5 text-crpe-ink transition group-hover:text-crpe-brand">
+                        {a.type}
+                      </span>
+                      <span className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 text-[13px] leading-5 text-crpe-muted">
+                        <span className={`inline-flex shrink-0 items-center gap-1.5 font-medium ${statusTone}`}>
+                          <span className={`h-2 w-2 rounded-full ${dotTone}`} aria-hidden="true" />
+                          {statusLabel}
+                        </span>
+                        <span className="truncate">
+                          {a.organizer ? a.organizer : "Aktywność własna"}
+                          {prog === "planned" && a.planned_start_date ? ` · termin ${formatYMD(a.planned_start_date)}` : ""}
+                        </span>
+                      </span>
+                      {hasMissing ? (
+                        <span className="mt-0.5 block text-[13px] leading-5 text-crpe-warning">
+                          Brakuje: {missing.map((item) => item.replace(/^Brak /, "")).join(", ")}
+                        </span>
+                      ) : null}
+                    </span>
+
+                    <span className="flex items-center gap-2 text-right">
+                      <span>
+                        <span className="block whitespace-nowrap text-[17px] font-bold leading-tight text-crpe-ink">
+                          +{counted?.applied ?? a.points}
+                          <span className="ml-0.5 text-[12px] font-medium text-crpe-subtle">pkt</span>
+                        </span>
+                        {counted && counted.over > 0 ? (
+                          <span className="block whitespace-nowrap text-[12px] text-crpe-warning">
+                            wpisano {counted.raw} pkt
+                          </span>
+                        ) : null}
+                      </span>
+                      <ChevronRight className="hidden h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-crpe-brand sm:block" aria-hidden="true" />
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+
+        {recentRows.length > 8 ? (
+          <div className="border-t border-slate-100 px-5 py-3 text-center sm:px-6">
+            <Link href="/aktywnosci" className="text-[14px] font-semibold text-crpe-brand hover:underline">
+              Zobacz wszystkie {recentRows.length} aktywności
+            </Link>
+          </div>
+        ) : null}
+      </section>
+
+      <section id="terminy" className={cardCls}>
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+          <div>
+            <h2 className="text-[17px] font-bold leading-6 text-crpe-ink">Najbliższe terminy</h2>
+            <p className="text-[13px] leading-5 text-crpe-muted">Zaległe plany, nadchodzące wpisy i koniec okresu.</p>
+          </div>
+          <Link href="/profil" className="shrink-0 text-[14px] font-semibold text-crpe-brand hover:underline">
+            Przypomnienia
+          </Link>
+        </div>
+
+                    <ul className="divide-y divide-slate-100">
+                      {overdue.map((entry) => (
+                        <li key={`overdue-${entry.id}`} className="bg-crpe-danger-soft/50">
+                          <Link
+                            href={`/aktywnosci/${entry.id}`}
+                            className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-crpe-danger-soft"
+                          >
+                            <span className="w-10 shrink-0 text-center">
+                              <span className="block text-lg font-extrabold leading-tight tracking-[-0.03em] text-crpe-danger">
+                                {agendaDay(entry.date)}
+                              </span>
+                              <span className="block text-[12px] font-semibold text-crpe-danger">
+                                {agendaMonth(entry.date)}
+                              </span>
+                            </span>
+
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-sm font-bold text-slate-950">
+                                {entry.title}
+                              </span>
+                              <span className="mt-0.5 block text-xs text-crpe-danger">
+                                Nadal oznaczone jako zaplanowane
+                                {entry.detail ? ` · ${entry.detail}` : ""}
+                              </span>
+                            </span>
+
+                            <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-crpe-danger ring-1 ring-crpe-danger-border">
+                              {formatOverdue(entry.daysOverdue)}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+
+                      {upcoming.map((entry) => (
+                        <li key={entry.id}>
+                          <Link
+                            href="/aktywnosci"
+                            className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-slate-50"
+                          >
+                            <span className="w-10 shrink-0 text-center">
+                              <span className="block text-lg font-extrabold leading-tight tracking-[-0.03em] text-slate-950">
+                                {agendaDay(entry.date)}
+                              </span>
+                              <span className="block text-[12px] font-semibold text-slate-400">
+                                {agendaMonth(entry.date)}
+                              </span>
+                            </span>
+
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-sm font-bold text-slate-950">
+                                {entry.title}
+                              </span>
+                              {entry.detail ? (
+                                <span className="mt-0.5 block text-xs text-slate-500">
+                                  {entry.detail}
+                                </span>
+                              ) : null}
+                            </span>
+
+                            <span
+                              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
+                                entry.daysAway <= 30
+                                  ? "bg-crpe-warning-soft text-crpe-warning"
+                                  : "text-slate-500"
+                              }`}
+                            >
+                              {formatCountdown(entry.daysAway)}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+
+                      {upcoming.length === 0 && overdue.length === 0 ? (
+                        <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
+                          <p className="text-[13px] leading-5 text-slate-500">
+                            Nie masz zaplanowanych aktywności. Dodaj termin, a CRPE przypomni o nim
+                            z wyprzedzeniem.
+                          </p>
+                          <Link
+                            href="/baza-szkolen"
+                            className="shrink-0 rounded-xl border border-crpe-brand-border bg-crpe-brand-soft px-3.5 py-2 text-[13px] font-bold text-crpe-brand transition hover:bg-crpe-brand-soft"
+                          >
+                            Znajdź szkolenie →
+                          </Link>
+                        </li>
+                      ) : null}
+
+                      {periodDeadline ? (
+                        <li className="flex items-center gap-4 bg-crpe-surface/60 px-5 py-3">
+                          <span className="grid w-10 shrink-0 place-items-center text-slate-400">
+                            <MiniIcon name="target" />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-bold text-slate-950">
+                              Koniec okresu rozliczeniowego
+                            </span>
+                            <span className="mt-0.5 block text-xs text-slate-500">
+                              {formatYMD(periodDeadline.date)}
+                              {!hasPointTarget ? " · cel nieustawiony" : missingPoints > 0 ? ` · zostało ${missingPoints} pkt do zdobycia` : " · cel osiągnięty"}
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-xs font-bold text-slate-500">
+                            {formatCountdown(periodDeadline.daysAway)}
+                          </span>
+                        </li>
+                      ) : null}
+                    </ul>
+
+                    {deadlineFallbackMessage ? (
+                      <div className="flex flex-col gap-2 border-t border-slate-100 px-5 py-3 text-[12px] leading-5 text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                        <p>{deadlineFallbackMessage}</p>
+                        {cycleTargetMode === "custom" && ruleDeadline?.source !== "period_year" ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSettingsOpen(true);
+                              window.requestAnimationFrame(() => {
+                                const el = document.getElementById("ustawienia");
+                                if (!el) return;
+                                const targetTop = el.getBoundingClientRect().top + window.scrollY - 140;
+                                window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
+                              });
+                            }}
+                            className="shrink-0 font-bold text-crpe-brand hover:underline"
+                          >
+                            Przejdź do ustawień okresu
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+      </section>
+      </div>
+
+      {hasLimits ? (
+      <section id="limity" className={cardCls}>
+        <button
+          type="button"
+          aria-expanded={limitsOpen}
+          aria-controls="limity-szczegoly"
+          onClick={() => setLimitsOpen((value) => !value)}
+          className="flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-crpe-surface/60 sm:px-6"
+        >
+          <span className="min-w-0">
+            <span className="block text-[17px] font-bold leading-6 text-crpe-ink">Limity kategorii</span>
+            <span className="block text-[13px] leading-5 text-crpe-muted">
+              {limitsRuleSet?.name_pl}
+              {" · "}
+              {cycleTargetMode === "custom" ? "Reguła zawodu · okres własny" : "Reguła przypięta do okresu"}
+              {" · "}
+              {usableLimitsCount} z {limitsUsage.length} z wolnym miejscem
+              {blockedLimitsCount > 0 ? `, ${blockedLimitsCount} wyczerpane` : ""}
+            </span>
+          </span>
+          <span className="inline-flex items-center gap-1 text-[14px] font-semibold text-crpe-brand">
+            {limitsOpen ? "Zwiń" : "Pokaż szczegóły"}
+            <ChevronRight className={`h-4 w-4 transition ${limitsOpen ? "-rotate-90" : "rotate-90"}`} aria-hidden="true" />
+          </span>
+        </button>
+
+        {!limitsOpen ? (
+          <ul className="grid gap-x-6 gap-y-3 border-t border-slate-100 px-5 py-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+            {limitsUsage.map((r) => {
+              const isPerItem = r.mode === "per_item";
+              const usedPct = isPerItem ? 0 : clamp((r.used / Math.max(1, r.cap)) * 100, 0, 100);
+              return (
+                <li key={r.key} className="min-w-0">
+                  <div className="flex items-baseline justify-between gap-2 text-[13px]">
+                    <span className="truncate font-semibold text-crpe-ink">{r.label}</span>
+                    <span className="shrink-0 text-crpe-muted">
+                      {isPerItem ? `${r.cap} pkt na wpis` : `${Math.round(r.used)} z ${Math.round(r.cap)}`}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
+                    <div
+                      className={`h-full rounded-full ${r.status === "blocked" ? "bg-crpe-warning" : "bg-crpe-success"}`}
+                      style={{ width: `${usedPct}%` }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
+
+        {limitsOpen ? (
+        <div id="limity-szczegoly" className="border-t border-slate-100 p-4 sm:p-5">
           {planInfo || planErr ? (
             <div className="mb-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs">
               {planInfo ? (
@@ -2990,465 +3249,10 @@ export default function CalculatorClient() {
             </div>
           )}
 
-          <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-            <Link
-              href="/aktywnosci"
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
-            >
-              Aktywności →
-            </Link>
-            <Link
-              href="/aktywnosci?new=1"
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
-            >
-              + Dodaj aktywność
-            </Link>
-            <Link
-              href="/raporty/uzytkownik"
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
-            >
-              Raport / PDF →
-            </Link>
-          </div>
         </div>
+        ) : null}
       </section>
       ) : null}
-
-      <section id="aktywnosci" className={`${cardCls} scroll-mt-44`}>
-        <div className="flex flex-col gap-2 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <IconBubble tone="blue">
-              <MiniIcon name="calendar" />
-            </IconBubble>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-extrabold tracking-tight text-slate-950">
-                  Ostatnie aktywności
-                </h2>
-                {recentRows.length > 0 && (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                    {recentRows.length}
-                  </span>
-                )}
-              </div>
-
-              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
-                {(["all", "missing", "planned", "complete"] as const).map((f) => {
-                  const labels = {
-                    all: "wszystkie",
-                    missing: "do uzupełnienia",
-                    planned: "zaplanowane",
-                    complete: "kompletne",
-                  };
-
-                  const dots = {
-                    all: "",
-                    missing: "bg-crpe-warning-border",
-                    planned: "bg-crpe-brand",
-                    complete: "bg-crpe-success-border",
-                  };
-
-                  const active = {
-                    all: "bg-slate-100 text-slate-800",
-                    missing: "bg-crpe-warning-soft text-crpe-warning",
-                    planned: "bg-crpe-brand-soft text-crpe-brand",
-                    complete: "bg-crpe-success-soft text-crpe-success",
-                  };
-
-                  return (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => filterActivities(f)}
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition ${
-                        activityFilter === f
-                          ? active[f]
-                          : "text-slate-500 hover:bg-slate-50"
-                      }`}
-                    >
-                      {dots[f] ? (
-                        <span className={`h-2 w-2 rounded-full ${dots[f]}`} />
-                      ) : null}
-                      {labels[f]}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <Link
-            href="/aktywnosci"
-            className="shrink-0 text-sm font-medium text-crpe-brand hover:text-crpe-brand"
-          >
-            Przejdź do aktywności
-          </Link>
-        </div>
-
-        <div className="p-5">
-          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="min-w-0 space-y-3">
-            {recentRows.length === 0 ? (
-              <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-8 text-center">
-                <div className="text-sm font-medium text-slate-700">
-                  {emptyStateMsg}
-                </div>
-                <Link
-                  href={emptyStateHref}
-                  className="rounded-xl bg-crpe-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-crpe-brand-hover active:scale-95"
-                >
-                  {emptyStateCta}
-                </Link>
-              </div>
-            ) : (
-              recentRows.slice(0, 6).map((a) => {
-                const prog = normalizeStatus(a.status);
-                const missing = getRowMissing(a);
-                const hasMissing = prog !== "planned" && missing.length > 0;
-                const counted = adjustedPointsById.get(a.id);
-                const date = timelineDate(a);
-                const isOverdue = overdue.some((entry) => entry.id === a.id);
-                const stripe = isOverdue
-                  ? "bg-rose-500"
-                  : prog === "planned"
-                    ? "bg-crpe-brand"
-                    : hasMissing
-                      ? "bg-crpe-warning"
-                      : "bg-crpe-success";
-                const statusLabel = isOverdue
-                  ? "Po terminie"
-                  : prog === "planned"
-                    ? "Zaplanowane"
-                    : hasMissing
-                      ? "Do uzupełnienia"
-                      : "Kompletne";
-                const statusClass = isOverdue
-                  ? "bg-rose-50 text-rose-700 ring-rose-200"
-                  : prog === "planned"
-                    ? "bg-crpe-brand-soft text-crpe-brand ring-crpe-brand-border"
-                    : hasMissing
-                      ? "bg-crpe-warning-soft text-crpe-warning ring-crpe-warning-border"
-                      : "bg-crpe-success-soft text-crpe-success ring-crpe-success-border";
-
-                return (
-                  <article
-                    key={a.id}
-                    className="group relative overflow-hidden rounded-2xl border border-l-[3px] border-slate-200 bg-white p-3.5 shadow-[0_2px_8px_rgba(15,23,42,0.045)] transition hover:border-slate-300 hover:shadow-[0_3px_12px_rgba(15,23,42,0.07)]"
-                    style={{ borderLeftColor: isOverdue ? "#A42F30" : prog === "planned" ? "#1D4ED8" : hasMissing ? "#9A4600" : "#006A4E" }}
-                  >
-                    <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 sm:grid-cols-[64px_minmax(0,1fr)_150px] sm:items-center sm:gap-4">
-                      <div className="flex w-[64px] shrink-0 flex-col items-center self-start text-center sm:self-center">
-                        <span className={`mb-1 h-1 w-6 rounded-full ${stripe}`} aria-hidden="true" />
-                        <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
-                          {date.secondary === "rok" ? "ROK" : date.secondary.split(" ")[0]}
-                        </span>
-                        <span className="mt-0.5 text-[24px] font-black leading-none tracking-[-0.04em] text-slate-950">
-                          {date.primary}
-                        </span>
-                        <span className="mt-1 text-[10px] font-semibold text-slate-400">
-                          {date.secondary === "rok" ? a.year : date.secondary.split(" ").slice(1).join(" ")}
-                        </span>
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${statusClass}`}>
-                            {statusLabel}
-                          </span>
-                        </div>
-                        <h3 className="mt-1.5 text-[15px] font-bold leading-[1.35] tracking-[-0.015em] text-slate-950 transition group-hover:text-crpe-brand">
-                          {a.type}
-                        </h3>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {a.organizer ? a.organizer : "Aktywność własna"}
-                          {prog === "planned" && a.planned_start_date ? ` · termin ${formatYMD(a.planned_start_date)}` : ""}
-                        </p>
-                        {hasMissing ? (
-                          <p className="mt-1.5 text-[11px] font-medium text-crpe-warning">
-                            Brakuje: {missing.join(", ")}
-                          </p>
-                        ) : null}
-                      </div>
-
-                      <div className="col-span-2 flex items-center justify-between gap-3 border-t border-slate-100 pt-3 sm:col-span-1 sm:block sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
-                        <div>
-                          <div className="flex items-baseline gap-1 text-crpe-brand">
-                            <span className="text-[28px] font-black leading-none tracking-[-0.05em]">
-                              +{counted?.applied ?? a.points}
-                            </span>
-                            <span className="text-xs font-bold">pkt</span>
-                          </div>
-                          {counted && counted.over > 0 ? (
-                            <span className="mt-1 block text-[10px] font-medium text-crpe-warning">
-                              wpisano {counted.raw} pkt
-                            </span>
-                          ) : null}
-                        </div>
-                        <Link
-                          href={`/aktywnosci/${a.id}`}
-                          className={`mt-0 inline-flex h-9 items-center justify-center rounded-xl px-3 text-xs font-bold transition sm:mt-2 ${
-                            hasMissing || prog === "planned" || isOverdue
-                              ? "bg-crpe-brand text-white shadow-sm hover:bg-crpe-brand-hover"
-                              : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                          }`}
-                        >
-                          {isOverdue ? "Rozstrzygnij" : hasMissing ? "Uzupełnij" : prog === "planned" ? "Otwórz plan" : "Szczegóły"}
-                        </Link>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })
-            )}
-
-          {recentRows.length > 6 && (
-            <div className="mt-3 border-t border-slate-100 pt-3 text-center">
-              <Link
-                href="/aktywnosci"
-                className="text-sm font-medium text-crpe-brand hover:text-crpe-brand"
-              >
-                Zobacz wszystkie {recentRows.length} aktywności →
-              </Link>
-            </div>
-          )}
-          </div>
-
-          <div className="space-y-4 lg:sticky lg:top-40 lg:self-start">
-          <aside className="overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50/65">
-            <div className="border-b border-slate-200 bg-white px-4 py-3.5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-extrabold text-slate-950">Oś aktywności</h3>
-                  <p className="mt-0.5 text-[11px] text-slate-500">
-                    Okres {periodStart}–{periodEnd}
-                  </p>
-                </div>
-                <MiniIcon name="calendar" className="h-4 w-4 text-crpe-brand" />
-              </div>
-              <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-medium text-slate-500">
-                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-crpe-brand" />plan</span>
-                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-crpe-warning" />braki</span>
-                <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-crpe-success" />kompletne</span>
-              </div>
-            </div>
-
-            {timelineRows.length ? (
-              <ol className="px-4 py-3">
-                {timelineRows.map((activity, index) => {
-                  const planned = normalizeStatus(activity.status) === "planned";
-                  const incomplete = !planned && getRowMissing(activity).length > 0;
-                  const date = timelineDate(activity);
-                  const counted = adjustedPointsById.get(activity.id);
-                  const dotClass = planned
-                    ? "border-crpe-brand-border bg-crpe-brand"
-                    : incomplete
-                      ? "border-crpe-warning-border bg-crpe-warning"
-                      : "border-crpe-success-border bg-crpe-success";
-
-                  return (
-                    <li key={activity.id} className="grid grid-cols-[50px_18px_minmax(0,1fr)] gap-2">
-                      <div className="pt-0.5 text-right">
-                        <div className="text-[12px] font-extrabold leading-4 text-slate-800">{date.primary}</div>
-                        <div className="text-[9px] font-bold uppercase leading-3 text-slate-400">{date.secondary}</div>
-                      </div>
-                      <div className="relative flex justify-center">
-                        {index < timelineRows.length - 1 ? (
-                          <span className="absolute bottom-[-1px] top-3 w-px bg-slate-200" aria-hidden="true" />
-                        ) : null}
-                        <span className={`relative mt-1 h-3 w-3 rounded-full border-[3px] border-white shadow-[0_0_0_1px_rgba(148,163,184,0.28)] ${dotClass}`} />
-                      </div>
-                      <Link
-                        href={`/aktywnosci/${activity.id}`}
-                        className={`group min-w-0 text-left ${index < timelineRows.length - 1 ? "pb-4" : "pb-1"}`}
-                      >
-                        <span className="block truncate text-[12px] font-bold text-slate-900 transition group-hover:text-crpe-brand">
-                          {activity.type}
-                        </span>
-                        <span className="mt-0.5 flex items-center justify-between gap-2 text-[10px] text-slate-500">
-                          <span>{planned ? "Zaplanowane" : incomplete ? "Do uzupełnienia" : "Ukończone"}</span>
-                          <span className="shrink-0 font-bold text-slate-700">+{counted?.applied ?? activity.points} pkt</span>
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ol>
-            ) : (
-              <div className="px-5 py-10 text-center text-xs leading-5 text-slate-500">
-                Brak aktywności dla wybranego filtra.
-              </div>
-            )}
-          </aside>
-
-            <section id="terminy" className="scroll-mt-44 overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-slate-100 px-4 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <IconBubble tone="blue">
-                          <MiniIcon name="bell" />
-                        </IconBubble>
-                        <div>
-                          <h2 className="text-base font-extrabold tracking-tight text-slate-950">
-                            Najbliższe terminy
-                          </h2>
-                          <p className="mt-0.5 text-[13px] leading-5 text-slate-500">
-                            Zaległe plany, nadchodzące wpisy i koniec okresu.
-                          </p>
-                        </div>
-                      </div>
-
-                      <Link
-                        href="/profil"
-                        className="shrink-0 text-[13px] font-bold text-crpe-brand hover:underline"
-                      >
-                        Przypomnienia →
-                      </Link>
-                    </div>
-
-                    <ul className="divide-y divide-slate-100">
-                      {overdue.map((entry) => (
-                        <li key={`overdue-${entry.id}`} className="bg-rose-50/55">
-                          <Link
-                            href={`/aktywnosci/${entry.id}`}
-                            className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-rose-50"
-                          >
-                            <span className="w-10 shrink-0 text-center">
-                              <span className="block text-lg font-extrabold leading-tight tracking-[-0.03em] text-rose-800">
-                                {agendaDay(entry.date)}
-                              </span>
-                              <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-rose-500">
-                                {agendaMonth(entry.date)}
-                              </span>
-                            </span>
-
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm font-bold text-slate-950">
-                                {entry.title}
-                              </span>
-                              <span className="mt-0.5 block truncate text-xs text-rose-700">
-                                Nadal oznaczone jako zaplanowane
-                                {entry.detail ? ` · ${entry.detail}` : ""}
-                              </span>
-                            </span>
-
-                            <span className="shrink-0 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-800">
-                              {formatOverdue(entry.daysOverdue)}
-                            </span>
-                          </Link>
-                        </li>
-                      ))}
-
-                      {upcoming.map((entry) => (
-                        <li key={entry.id}>
-                          <Link
-                            href="/aktywnosci"
-                            className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-slate-50"
-                          >
-                            <span className="w-10 shrink-0 text-center">
-                              <span className="block text-lg font-extrabold leading-tight tracking-[-0.03em] text-slate-950">
-                                {agendaDay(entry.date)}
-                              </span>
-                              <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
-                                {agendaMonth(entry.date)}
-                              </span>
-                            </span>
-
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm font-bold text-slate-950">
-                                {entry.title}
-                              </span>
-                              {entry.detail ? (
-                                <span className="mt-0.5 block truncate text-xs text-slate-500">
-                                  {entry.detail}
-                                </span>
-                              ) : null}
-                            </span>
-
-                            <span
-                              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
-                                entry.daysAway <= 30
-                                  ? "bg-crpe-warning-soft text-crpe-warning"
-                                  : "text-slate-500"
-                              }`}
-                            >
-                              {formatCountdown(entry.daysAway)}
-                            </span>
-                          </Link>
-                        </li>
-                      ))}
-
-                      {upcoming.length === 0 && overdue.length === 0 ? (
-                        <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
-                          <p className="text-[13px] leading-5 text-slate-500">
-                            Nie masz zaplanowanych aktywności. Dodaj termin, a CRPE przypomni o nim
-                            z wyprzedzeniem.
-                          </p>
-                          <Link
-                            href="/baza-szkolen"
-                            className="shrink-0 rounded-xl border border-crpe-brand-border bg-crpe-brand-soft px-3.5 py-2 text-[13px] font-bold text-crpe-brand transition hover:bg-crpe-brand-soft"
-                          >
-                            Znajdź szkolenie →
-                          </Link>
-                        </li>
-                      ) : null}
-
-                      {periodDeadline ? (
-                        <li className="flex items-center gap-4 bg-slate-50/70 px-5 py-3">
-                          <span className="grid w-10 shrink-0 place-items-center text-slate-400">
-                            <MiniIcon name="target" />
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-sm font-bold text-slate-950">
-                              Koniec okresu rozliczeniowego
-                            </span>
-                            <span className="mt-0.5 block truncate text-xs text-slate-500">
-                              {formatYMD(periodDeadline.date)}
-                              {missingPoints > 0 ? ` · zostało ${missingPoints} pkt do zdobycia` : " · cel osiągnięty"}
-                            </span>
-                          </span>
-                          <span className="shrink-0 text-xs font-bold text-slate-500">
-                            {formatCountdown(periodDeadline.daysAway)}
-                          </span>
-                        </li>
-                      ) : null}
-                    </ul>
-
-                    {pace && !pace.achieved ? (
-                      <p className="border-t border-slate-100 px-4 py-3 text-[13px] leading-5 text-slate-600">
-                        Przy pozostałym czasie musisz zdobywać średnio{" "}
-                        <span className="font-bold text-slate-900">{pace.pointsPerYear} pkt rocznie</span>, żeby
-                        zamknąć okres na czas.
-                      </p>
-                    ) : null}
-
-                    {deadlineFallbackMessage ? (
-                      <div className="flex flex-col gap-2 border-t border-slate-100 px-4 py-3 text-[12px] leading-5 text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-                        <p>{deadlineFallbackMessage}</p>
-                        {cycleTargetMode === "custom" && ruleDeadline?.source !== "period_year" ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSettingsOpen(true);
-                              window.requestAnimationFrame(() => {
-                                const el = document.getElementById("ustawienia");
-                                if (!el) return;
-                                const targetTop = el.getBoundingClientRect().top + window.scrollY - 140;
-                                window.scrollTo({ top: Math.max(targetTop, 80), behavior: "smooth" });
-                              });
-                            }}
-                            className="shrink-0 font-bold text-crpe-brand hover:underline"
-                          >
-                            Przejdź do ustawień okresu
-                          </button>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </section>
-          </div>
-          </div>
-        </div>
-      </section>
-
 
     </div>
   );

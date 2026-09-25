@@ -73,7 +73,8 @@
     "check:release": "node scripts/check-release.mjs",
     "check:v6.29": "node scripts/check-v6-29-home.mjs",
     "check:v6.29.3": "node scripts/check-v6-29-3-role-pages.mjs",
-    "check:v6.30": "node scripts/check-v6-30-app-style.mjs"
+    "check:v6.30": "node scripts/check-v6-30-app-style.mjs",
+    "check:v6.31": "node scripts/check-v6-31-panel-layout.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",
